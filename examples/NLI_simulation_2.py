@@ -4,18 +4,13 @@ import sys
 sys.path.insert(0, '../src')
 
 from core import Sequential
-from channels.optical import NonLinearity, CD, ASE, Fiber_Link, Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin
-from dsp.modem import get_alphabet, Modulator, Demodulator
-from dsp.frontend import Upsampler, Downsampler, SRRC_filter, BW_filter
+from channels.optical import NonLinearity, Fiber_Link, Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin
+from dsp.frontend import Upsampler, Downsampler, SRRC_filter
 from dsp.optical import DBP
 from dsp.compensator import Data_Aided_Phase
-from dsp.utils import Amplificator
-from analysers.scope import Spectrum_Scope, IQ_Scope
-from metrics.functional import compute_ser, compute_ber, compute_effective_SNR
-from analysers.logger import Power_Reporter
+from metrics.functional import compute_effective_SNR
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-import json 
 
 # define new modules for non linearity 
 # I use exactly the same expressions as described by Hager (https://github.com/chaeger/LDBP/blob/fd5b6f7c3f2a3409f1c30f1725b1474a4dff9662/ldbp/ldbp.py#L431)
@@ -23,23 +18,38 @@ import json
 
 class NonLinearity_Hager(NonLinearity):
 
-    def __init__(self, z, gamma, gain_cum=1, direction=1, name="nl"):
-        self.nl_param = direction*gamma*z*(gain_cum**2) 
-        self.direction = direction 
-        self.gain = 1
-        self.z = z
+    def __init__(self, z, gamma, gain_cum=1, alpha_dB=0, direction=1, name="nl"):
+        self.z = z  # [m]
+        self.gamma = gamma  # nonlinear parameter [1/(W*m)]
+        self.alpha_dB = alpha_dB
+        self.direction = direction
+        self.gain_cum = gain_cum
         self.name = name
+        self.prepare()
+
+    def prepare(self):
+        self.gain = 1
+        self.nl_param = self.direction * self.gamma * self.z * (self.gain_cum**2)
+
 
 class NonLinearity_DBP_Hager(NonLinearity):
 
-    def __init__(self, z, gamma, alpha_dB=0, direction=1, name="nl"):
-        alpha = (np.log(10)/10) * (alpha_dB)
-
-        self.nl_param = direction*gamma*(1-np.exp(-alpha*z))/alpha
-        self.direction = direction 
-        self.gain = 1
-        self.z = z
+    def __init__(self, z, gamma, gain_cum=1, alpha_dB=0, direction=-1, name="nl"):
+        self.z = z  # [m]
+        self.gamma = gamma  # nonlinear parameter [1/(W*m)]
+        self.alpha_dB = alpha_dB
+        self.direction = direction
+        self.gain_cum = gain_cum
         self.name = name
+        self.prepare()
+
+    def prepare(self):
+        alpha = (np.log(10)/10) * (alpha_dB)
+        L_eff = ((1-np.exp(-alpha*self.z))/alpha)
+
+        self.gain = 1
+        self.nl_param = self.direction * self.gamma * L_eff * (self.gain_cum**2)
+
 
 # Customize Fiber Link and DBP
 
@@ -58,13 +68,11 @@ class  Fiber_Link_Hager(Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin, Fiber
         self.F_s = F_s 
         self.NF_dB = NF_dB
         self.noise_scaling = 2
-        self.direction = 1
         self.name = name 
-
-        self.module_list = self.get_module_list()
+        self.prepare()
 
     def get_non_linear_module(self, dz, gain_cum=1):
-        return NonLinearity_Hager(dz, self.gamma, direction = self.direction, gain_cum = gain_cum)
+        return NonLinearity_Hager(dz, self.gamma, gain_cum = gain_cum)
 
     def get_span_module_list(self):
         """
@@ -104,29 +112,32 @@ class DBP_Hager(DBP):
         self.c = c
         self.alpha_dB = alpha_dB
         self.F_s = F_s 
-        self.direction = -1
         self.name = name 
+        self.prepare()
 
         self.module_list = self.get_module_list()
 
-    def get_non_linear_module(self, dz):
-        return NonLinearity_DBP_Hager(dz, self.gamma, alpha_dB=self.alpha_dB, direction = self.direction)
+    def get_non_linear_module(self, dz, gain_cum=1):
+        return NonLinearity_DBP_Hager(dz, self.gamma, alpha_dB=self.alpha_dB, gain_cum = gain_cum)
 
     def get_span_module_list(self):
         z = self.get_step_size()
-
+        alpha_lin = (np.log(10)/10)*(self.alpha_dB)
+        gain = np.prod(np.exp(-(alpha_lin/2)*z[1:]))
+    
         module_list = []
         for num_step in range(self.StPS):
             dz = z[num_step]
             cd = self.get_cd_module(dz)
-            nl = self.get_non_linear_module(dz)
+            nl = self.get_non_linear_module(dz, gain_cum=gain)
+            gain = gain*np.exp(-(alpha_lin/2)*dz*self.direction)
             module_list.extend([cd, nl])
 
         return module_list
 
 
 ## parameters
-system = 0
+system = 1
 sigma2_s = 1
 alpha_dB =  0.2*1e-3
 lamb = 1.55 * 10**-6
@@ -163,11 +174,12 @@ F_s2 = R_s*oversampling_dsp
 ssfm = Fiber_Link_Hager(N_span, StPS, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, h=h, nu=nu, NF_dB=NF_dB, F_s=F_s)
 ssfm.to_json(path="ssfm_hager.json")
 
-dbp = DBP_Hager(N_span, 2, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, F_s=F_s/3, name="DBP")
+dbp = DBP_Hager(N_span, 3, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, F_s=F_s/3, name="DBP")
 dbp.to_json(path="dbp_hager.json")
 
+
 # reference curve 
-chain_ref = Sequential([
+chain_linear = Sequential([
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRC_filter(rolloff, oversampling_sim, method="fft"),
                 Fiber_Link_Hager(N_span, StPS, L_span, gamma=0, alpha_dB=alpha_dB, c=c, h=h, nu=nu, NF_dB=NF_dB, F_s=F_s),
@@ -177,26 +189,38 @@ chain_ref = Sequential([
                 Downsampler(oversampling_dsp)
                 ])
 
-# SSFM + DBP
-chain_dbp = Sequential([
+# SSFM
+chain_non_linear = Sequential([
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRC_filter(rolloff, oversampling_sim, method="fft"),
                 Fiber_Link_Hager(N_span, StPS, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, h=h, nu=nu, NF_dB=NF_dB, F_s=F_s),
                 SRRC_filter(rolloff, oversampling_sim, method="fft", scale=1/np.sqrt(oversampling_sim)),
-                Downsampler(oversampling_ratio),
-                DBP_Hager(N_span, 1, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, F_s=F_s/oversampling_ratio, name="DBP"),
+                Downsampler(oversampling_ratio)])
+
+
+# construct rx chain with different DBP configuration
+DBP_list = [{"name": "linear", "N_step": 1, "gamma":0}, 
+            {"name": "DBP2", "N_step": 2, "gamma":gamma},
+            {"name": "DBP4", "N_step": 4, "gamma":gamma},
+            {"name": "DBP500", "N_step": 500, "gamma":gamma}]
+
+chain_rx_list = []
+for index, DBP_temp in enumerate(DBP_list):
+    N_step_temp = DBP_temp["N_step"]
+    gamma_temp = DBP_temp["gamma"]
+    chain_dbp = Sequential([
+                DBP_Hager(N_span, N_step_temp, L_span, gamma=gamma_temp, alpha_dB=alpha_dB, c=c, F_s=F_s/oversampling_ratio, name="DBP"),
                 Downsampler(oversampling_dsp)
                 ])
-
+    chain_rx_list.append(chain_dbp)
 
 # perform monte carlo simulation
-N_trial = 20
-N_curves = 2
+N_trial = 10
+N_curves = 1+len(DBP_list)
 N_dBm = len(dBm_list)
 snr_array = np.zeros((N_dBm, N_curves))
 phase_compensator = Data_Aided_Phase()
 
-chain_list = [chain_ref, chain_dbp]
 
 for index in tqdm(range(N_dBm)):
 
@@ -209,20 +233,35 @@ for index in tqdm(range(N_dBm)):
         # transmitted symbols
         x = np.sqrt(sigma2_s/2)*(np.random.randn(N_s)+ 1j*np.random.randn(N_s))
 
-        for index_chain, chain in enumerate(chain_list):
-            y_output = chain(amp*x)
+        # reference chain
+        y_output = chain_linear(amp*x)
+
+        # post process amp+phase
+        x_est = (1/amp)*y_output
+        phase_compensator.fit(x_est, x) 
+        x_est2 = phase_compensator(x_est)
+        snr = compute_effective_SNR(x, x_est2, unit="dB")
+        snr_array[index, 0] += (1/N_trial) * snr
+
+        # non linear channel output
+        z_output = chain_non_linear(amp*x)
+
+        for index_chain, chain_rx in enumerate(chain_rx_list):
+            y_output = chain_rx(z_output)
 
             # post process amp+phase
             x_est = (1/amp)*y_output
             phase_compensator.fit(x_est, x) 
             x_est2 = phase_compensator(x_est)
             snr = compute_effective_SNR(x, x_est2, unit="dB")
-            snr_array[index, index_chain] += (1/N_trial) * snr
+            snr_array[index, index_chain+1] += (1/N_trial) * snr
 
 
 # construct legend name
-legend_names = ["gamma=0", "DBP1"]
-
+legend_names = ["gamma=0"]
+for index, DBP_temp in enumerate(DBP_list):
+    legend_names.append(DBP_temp["name"])
+    
 plt.figure()
 plt.plot(dBm_list, snr_array)
 plt.ylabel("Effective SNR (dB)")

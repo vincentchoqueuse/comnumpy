@@ -1,13 +1,8 @@
-from calendar import c
-from unittest.mock import NonCallableMagicMock
 from .core import Channel
 from analysers.logger import Power_Reporter
 from core import Sequential
 from analysers.logger import Power_Reporter
 import numpy as np
-import copy
-import json
-
 
 class CD(Channel):
     """ Chromatic Dispersion Channel 
@@ -38,7 +33,6 @@ class CD(Channel):
         else:
             gain = 1
 
-        #print("param: D={} c={}".format(self.D,self.c))
         self.gain = gain 
         self.beta2 = beta2
 
@@ -187,6 +181,8 @@ class Fiber_Link(Sequential):
     see: Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems
     """
 
+    direction = 1
+
     def __init__(self, N_span, StPS, L_span, gamma=1.3*1e-3, lamb=1.55 * 10**-6, c=3*(10**8), h = 6.626*10**-34, nu=1.946*(10**14), alpha_dB= 0.2*1e-3, F_s=1, NF_dB = 4, noise_scaling=2, step_type="linear", step_log_factor=0.4, include_edfa=True, name="SSFM span"):
         self.N_span = N_span  
         self.StPS = StPS
@@ -203,9 +199,13 @@ class Fiber_Link(Sequential):
         self.step_type = step_type
         self.step_log_factor = step_log_factor
         self.include_edfa = include_edfa
-        self.direction = 1
         self.name = name 
-
+        self.prepare()
+        
+    def prepare(self):
+        """
+        store the list of module
+        """
         self.module_list = self.get_module_list()
 
     def get_step_size(self):
@@ -294,14 +294,21 @@ class Fiber_Link(Sequential):
 
 class Logarithmic_Step_Size_Mixin:
 
+    """
+    Logarithmically spaced step size
+    
+    reference: 
+    * [1] O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, "Optimization of the split-step Fourier method in modeling optical-fiber communications systems," in Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003, doi: 10.1109/JLT.2003.808628.
+    * [2] J. Zhang, X. Li and Z. Dong, "Digital Nonlinear Compensation Based on the Modified Logarithmic Step Size," in Journal of Lightwave Technology, vol. 31, no. 22, pp. 3546-3555, Nov.15, 2013, doi: 10.1109/JLT.2013.2285648.
+    """
+
     step_log_factor = 0.4
 
     def get_step_size(self):
         """
-        return togarithmically spaced step sizes
+        return logarithmically spaced step sizes (see equation 5 in [1])
         """
         N, L_span = self.StPS, self.L_span
-        # see https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6632915 (equation 3)
         alpha = (np.log(10)/10) * (self.alpha_dB)
         alpha_adj = self.step_log_factor*alpha
         delta = (1-np.exp(-alpha_adj*L_span))/N
@@ -311,13 +318,18 @@ class Logarithmic_Step_Size_Mixin:
         if self.direction == 1:
             N_vect = N_vect[::-1]
 
-        z = -(1/alpha_adj)*np.log((1-(N-N_vect+1)*delta)/(1-(N-N_vect)*delta))
+        n_vect = N-N_vect+1
+        z = -(1/alpha_adj)*np.log((1-n_vect*delta)/(1-(n_vect-1)*delta))
         return z
 
 
 class Scheme_I_Step_Mixin:
+    """
+    SSFM with Loss With Dispersion (Scheme Ia)  / EQ 10
 
-    # Uniform Step Size, Loss With Dispersion (Scheme Ia)  / EQ 10
+    reference: J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems," in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
+    """
+
     def get_cd_module(self, dz):
         return CD(dz, alpha_dB=self.alpha_dB, lamb=self.lamb, c=self.c, F_s=self.F_s, direction=self.direction)
 
@@ -326,8 +338,12 @@ class Scheme_I_Step_Mixin:
     
 
 class Scheme_II_Step_Mixin:
+    """
+    SSFM with Loss With Nonlinearity (Scheme Ia)  / EQ 10
 
-    # Uniform Step Size, Loss With Nonlinearity (Scheme IIa)  / EQ 21
+    reference: J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems," in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
+    """
+
     def get_cd_module(self, dz):
         return CD(dz, lamb=self.lamb, c=self.c, F_s=self.F_s, direction=self.direction)
 

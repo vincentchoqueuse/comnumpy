@@ -239,6 +239,8 @@ class Blind_Phase_Compensation(Processor):
 
 class DBP(Fiber_Link):
 
+    direction = -1
+
     def __init__(self, N_span, StPS, L_span, gamma=1.3*1e-3, lamb=1.55 * 10**-6, c=3*(10**8), alpha_dB= 0.2*1e-3, F_s=1, step_structure="symmetric", step_type="linear", step_log_factor=0.4, step_scheme=1, include_edfa=False, name="DBP"):
         self.N_span = N_span
         self.StPS = StPS
@@ -254,9 +256,8 @@ class DBP(Fiber_Link):
         self.step_scheme = step_scheme # 0: no gain, 1: gain in CD, 2: gain in nl
         self.name = name 
         self.include_edfa = include_edfa
-        self.direction = -1
 
-        self.module_list = self.get_module_list()
+        self.prepare()
 
     def get_step_module_list(self, dz):
         """
