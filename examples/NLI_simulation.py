@@ -28,11 +28,7 @@ class Only_Linear_DBP(Scheme_I_Step_Mixin, DBP):
         """
         return the module list for a single span
         """
-        module_list = []
-        if self.include_edfa:
-            edfa = EDFA(self.alpha_dB, L_span = self.L_span, direction=self.direction)
-            module_list.append(edfa)
-
+        module_list = self.get_pre_span_module_list()
         cd = self.get_cd_module(self.L_span)
         module_list.append(cd)
         return module_list 
@@ -53,11 +49,6 @@ rolloff = 0.1
 StPS = 50
 noise_scaling = 1
 
-# linear propagation
-include_edfa_forward = True
-
-# back propagation
-include_edfa_backward = True
 
 if system == 0:
     R_s = 10.7*(10**9)  # baud rate (number of symbols / second)
@@ -86,17 +77,17 @@ DBP_list = [
 chain_ref = Sequential([
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRC_filter(rolloff, oversampling_sim, method="fft"),
-                Symmetric_Fiber_Link_I(N_span, StPS, L_span, gamma=0, alpha_dB=alpha_dB, NF_dB=NF_dB, F_s=F_s, noise_scaling=noise_scaling, include_edfa = include_edfa_forward),
+                Symmetric_Fiber_Link_I(N_span, StPS, L_span, gamma=0, alpha_dB=alpha_dB, NF_dB=NF_dB, F_s=F_s, noise_scaling=noise_scaling),
                 SRRC_filter(rolloff, oversampling_sim, method="fft", scale=1/np.sqrt(oversampling_sim)),
                 Downsampler(oversampling_ratio),
-                Symmetric_DBP(N_span, StPS, L_span, gamma=0, alpha_dB=alpha_dB, F_s=F_s/oversampling_ratio, include_edfa = include_edfa_backward),
+                Symmetric_DBP(N_span, StPS, L_span, gamma=0, alpha_dB=alpha_dB, F_s=F_s/oversampling_ratio),
                 Downsampler(oversampling_dsp)
                 ])
 
 chain_tx = Sequential([
             Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
             SRRC_filter(rolloff, oversampling_sim, method="fft"),
-            Symmetric_Fiber_Link_I(N_span, StPS, L_span, gamma=gamma, alpha_dB=alpha_dB, NF_dB=NF_dB, F_s=F_s, noise_scaling = noise_scaling, include_edfa=include_edfa_forward),
+            Symmetric_Fiber_Link_I(N_span, StPS, L_span, gamma=gamma, alpha_dB=alpha_dB, NF_dB=NF_dB, F_s=F_s, noise_scaling = noise_scaling),
             SRRC_filter(rolloff, oversampling_sim, method="fft", scale=1/np.sqrt(oversampling_sim)),
             Downsampler(oversampling_ratio)
             ])
@@ -108,7 +99,7 @@ for index_DBP, DBP_temp in enumerate(DBP_list):
     name = DBP_temp["name"]
     technique = DBP_temp["technique"]
     chain_rx_temp = Sequential([
-        technique(N_span, N_step, L_span, gamma=gamma, alpha_dB=alpha_dB, F_s=F_s/oversampling_ratio, include_edfa=include_edfa_backward),
+        technique(N_span, N_step, L_span, gamma=gamma, alpha_dB=alpha_dB, F_s=F_s/oversampling_ratio),
         Downsampler(oversampling_dsp),
         ])
     chain_rx_temp.name = name

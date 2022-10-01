@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, '../src')
 
 from core import Sequential
-from channels.optical import NonLinearity, Fiber_Link, Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin
+from channels.optical import ASE, NonLinearity, Fiber_Link, Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin
 from dsp.frontend import Upsampler, Downsampler, SRRC_filter
 from dsp.optical import DBP
 from dsp.compensator import Data_Aided_Phase
@@ -18,38 +18,25 @@ from tqdm import tqdm
 
 class NonLinearity_Hager(NonLinearity):
 
-    def __init__(self, z, gamma, gain_cum=1, alpha_dB=0, direction=1, name="nl"):
+    def __init__(self, z, gamma, gain_pre=1, alpha_dB=0, direction=1, name="nl"):
         self.z = z  # [m]
         self.gamma = gamma  # nonlinear parameter [1/(W*m)]
         self.alpha_dB = alpha_dB
         self.direction = direction
-        self.gain_cum = gain_cum
+        self.gain_pre = gain_pre
         self.name = name
         self.prepare()
 
     def prepare(self):
-        self.gain = 1
-        self.nl_param = self.direction * self.gamma * self.z * (self.gain_cum**2)
-
-
-class NonLinearity_DBP_Hager(NonLinearity):
-
-    def __init__(self, z, gamma, gain_cum=1, alpha_dB=0, direction=-1, name="nl"):
-        self.z = z  # [m]
-        self.gamma = gamma  # nonlinear parameter [1/(W*m)]
-        self.alpha_dB = alpha_dB
-        self.direction = direction
-        self.gain_cum = gain_cum
-        self.name = name
-        self.prepare()
-
-    def prepare(self):
-        alpha = (np.log(10)/10) * (alpha_dB)
-        L_eff = ((1-np.exp(-alpha*self.z))/alpha)
+        """add gain and nl_parameter. In the Hager implementation the gain is accumulated in the nonlinearity"""
+        if self.direction == 1:
+            L_eff = self.z
+        else:
+            alpha = (np.log(10)/10) * (self.alpha_dB)
+            L_eff = ((1-np.exp(-alpha*self.z))/alpha)
 
         self.gain = 1
-        self.nl_param = self.direction * self.gamma * L_eff * (self.gain_cum**2)
-
+        self.nl_param = self.direction * self.gamma * L_eff * (self.gain_pre**2)
 
 # Customize Fiber Link and DBP
 
@@ -71,8 +58,8 @@ class  Fiber_Link_Hager(Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin, Fiber
         self.name = name 
         self.prepare()
 
-    def get_non_linear_module(self, dz, gain_cum=1):
-        return NonLinearity_Hager(dz, self.gamma, gain_cum = gain_cum)
+    def get_non_linear_module(self, dz, gain_pre=1):
+        return NonLinearity_Hager(dz, self.gamma, gain_pre = gain_pre, direction=1)
 
     def get_span_module_list(self):
         """
@@ -87,17 +74,19 @@ class  Fiber_Link_Hager(Symmetric_Step_Mixin, Logarithmic_Step_Size_Mixin, Fiber
         for num_step in range(self.StPS):
             dz = z[num_step]
             dz_temp = dz/2 + dz_rest
-            
             gain = gain*np.exp(-(alpha_lin/2)*dz_temp*self.direction)
             cd = self.get_cd_module(dz_temp)
-            nl = self.get_non_linear_module(dz, gain)
+            nl = self.get_non_linear_module(dz, gain_pre=gain)
             dz_rest = dz/2
             module_list.extend([cd, nl])
 
         # last step
         cd = self.get_cd_module(dz_rest)
-        ase = self.get_ase_module()
-        module_list.extend([cd, ase])
+        module_list.append(cd)
+
+        # end of span
+        ase = ASE(self.alpha_dB, L_span = self.L_span, h=self.h, nu = self.nu_s, F_s=self.F_s, NF_dB=self.NF_dB, scaling=self.noise_scaling)
+        module_list.append(ase)
         return module_list
 
 
@@ -115,21 +104,20 @@ class DBP_Hager(DBP):
         self.name = name 
         self.prepare()
 
-        self.module_list = self.get_module_list()
-
-    def get_non_linear_module(self, dz, gain_cum=1):
-        return NonLinearity_DBP_Hager(dz, self.gamma, alpha_dB=self.alpha_dB, gain_cum = gain_cum)
+    def get_non_linear_module(self, dz, gain_pre=1):
+        return NonLinearity_Hager(dz, self.gamma, alpha_dB=self.alpha_dB, gain_pre=gain_pre, direction=-1)
 
     def get_span_module_list(self):
         z = self.get_step_size()
         alpha_lin = (np.log(10)/10)*(self.alpha_dB)
         gain = np.prod(np.exp(-(alpha_lin/2)*z[1:]))
+        #gain = np.exp(-(alpha_lin/2)*self.L_span)
     
         module_list = []
         for num_step in range(self.StPS):
             dz = z[num_step]
             cd = self.get_cd_module(dz)
-            nl = self.get_non_linear_module(dz, gain_cum=gain)
+            nl = self.get_non_linear_module(dz, gain_pre=gain)
             gain = gain*np.exp(-(alpha_lin/2)*dz*self.direction)
             module_list.extend([cd, nl])
 
@@ -178,7 +166,7 @@ dbp = DBP_Hager(N_span, 3, L_span, gamma=gamma, alpha_dB=alpha_dB, c=c, F_s=F_s/
 dbp.to_json(path="dbp_hager.json")
 
 
-# reference curve 
+# reference curve (no non-linearity)
 chain_linear = Sequential([
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRC_filter(rolloff, oversampling_sim, method="fft"),
@@ -189,7 +177,7 @@ chain_linear = Sequential([
                 Downsampler(oversampling_dsp)
                 ])
 
-# SSFM
+# SSFM (generate the signal output after the communication chain)
 chain_non_linear = Sequential([
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRC_filter(rolloff, oversampling_sim, method="fft"),
@@ -208,6 +196,7 @@ chain_rx_list = []
 for index, DBP_temp in enumerate(DBP_list):
     N_step_temp = DBP_temp["N_step"]
     gamma_temp = DBP_temp["gamma"]
+    # create a receiver processing
     chain_dbp = Sequential([
                 DBP_Hager(N_span, N_step_temp, L_span, gamma=gamma_temp, alpha_dB=alpha_dB, c=c, F_s=F_s/oversampling_ratio, name="DBP"),
                 Downsampler(oversampling_dsp)

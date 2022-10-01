@@ -259,6 +259,13 @@ class DBP(Fiber_Link):
 
         self.prepare()
 
+    def get_pre_span_module_list(self):
+        """
+        return the module list before a span
+        """
+        edfa = EDFA(self.alpha_dB, L_span = self.L_span, direction=self.direction)
+        return [edfa]
+
     def get_step_module_list(self, dz):
         """
         return the module list for a single step  of length dz
@@ -267,22 +274,10 @@ class DBP(Fiber_Link):
         cd = self.get_CD(dz)
         return [cd, nl]
 
-    def get_span_module_list(self):
+    def get_post_span_module_list(self):
         """
-        return the module list for a single span
+        return the module list after a span
         """
-        z = self.get_step_size()
-        module_list = []
-
-        if self.include_edfa:
-            edfa = EDFA(self.alpha_dB, L_span = self.L_span, direction=self.direction)
-            module_list.append(edfa)
-
-        for num_step in range(self.StPS):
-            dz = z[num_step]
-            step_module_list = self.get_step_module_list(dz)
-            module_list.extend(step_module_list)
-
-        return module_list
+        return []
 
 

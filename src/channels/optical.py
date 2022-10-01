@@ -183,7 +183,7 @@ class Fiber_Link(Sequential):
 
     direction = 1
 
-    def __init__(self, N_span, StPS, L_span, gamma=1.3*1e-3, lamb=1.55 * 10**-6, c=3*(10**8), h = 6.626*10**-34, nu=1.946*(10**14), alpha_dB= 0.2*1e-3, F_s=1, NF_dB = 4, noise_scaling=2, step_type="linear", step_log_factor=0.4, include_edfa=True, name="SSFM span"):
+    def __init__(self, N_span, StPS, L_span, gamma=1.3*1e-3, lamb=1.55 * 10**-6, c=3*(10**8), h = 6.626*10**-34, nu=1.946*(10**14), alpha_dB= 0.2*1e-3, F_s=1, NF_dB = 4, noise_scaling=2, step_type="linear", step_log_factor=0.4, name="SSFM span"):
         self.N_span = N_span  
         self.StPS = StPS
         self.L_span = L_span
@@ -198,7 +198,6 @@ class Fiber_Link(Sequential):
         self.noise_scaling = noise_scaling
         self.step_type = step_type
         self.step_log_factor = step_log_factor
-        self.include_edfa = include_edfa
         self.name = name 
         self.prepare()
         
@@ -228,11 +227,11 @@ class Fiber_Link(Sequential):
         """
         return NonLinearity(dz, self.gamma, alpha_dB=None, direction = self.direction)
 
-    def get_ase_module(self):
+    def get_pre_span_module_list(self):
         """
-        return a noise layer
+        return the module list before a span
         """
-        return ASE(self.alpha_dB, L_span = self.L_span, h=self.h, nu = self.nu_s, F_s=self.F_s, NF_dB=self.NF_dB, scaling=self.noise_scaling)
+        return []
 
     def get_step_module_list(self, dz):
         """
@@ -242,25 +241,32 @@ class Fiber_Link(Sequential):
         cd = self.get_cd_module(dz)
         return [nl, cd]
 
+    def get_post_span_module_list(self):
+        """
+        return the module list after a span
+        """
+        edfa = EDFA(self.alpha_dB, L_span = self.L_span, direction=self.direction)
+        ase = ASE(self.alpha_dB, L_span = self.L_span, h=self.h, nu = self.nu_s, F_s=self.F_s, NF_dB=self.NF_dB, scaling=self.noise_scaling)
+        module_list = [edfa, ase]
+        return module_list
+
     def get_span_module_list(self):
         """
         return the module list for a single span
         """
         z = self.get_step_size()
         
-        module_list = []
+        # start of span
+        module_list = self.get_pre_span_module_list()
+
         for num_step in range(self.StPS):
             dz = z[num_step]
             step_module_list = self.get_step_module_list(dz)
             module_list.extend(step_module_list)
 
-        # end of span: add EDFA and ASE
-        if self.include_edfa:
-            edfa = EDFA(self.alpha_dB, L_span = self.L_span, direction=self.direction)
-            module_list.append(edfa)
-
-        ase = self.get_ase_module()
-        module_list.append(ase)
+        # end of span
+        post_module_list = self.get_post_span_module_list()
+        module_list.extend(post_module_list)
         return module_list
 
     def get_module_list(self):
