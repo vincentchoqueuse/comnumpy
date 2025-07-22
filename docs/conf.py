@@ -64,5 +64,6 @@ html_theme_options = {
     "logo": {
         "image_light": "_static/logo.jpg",
         "text": "Comnumpy",
-    }
+    },
+    "github_url": "https://github.com/vincentchoqueuse/comnumpy.git",
 }
