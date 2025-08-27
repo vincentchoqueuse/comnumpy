@@ -42,6 +42,7 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/mimo';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -408,23 +409,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_ber</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlatFadingRayleighChannel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.detectors</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximumLikelihoodDetector</span><span class="p">,</span> <span class="n">ZeroForcingDetector</span><span class="p">,</span> <span class="n">MinimumMeanSquaredErrorDetector</span><span class="p">,</span> <span class="n">OrderedSuccessiveInterferenceCancellationDetector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlatMIMOChannel</span><span class="p">,</span> <span class="n">AWGN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">rayleigh_channel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.detectors</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximumLikelihoodDetector</span><span class="p">,</span> <span class="n">LinearDetector</span><span class="p">,</span> <span class="n">OrderedSuccessiveInterferenceCancellationDetector</span>
 
-<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
 </pre></div>
 </div>
 </section>
 <section id="define-system-parameters">
 <h2>2. Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h2>
 <p>We define the number of transmit/receive antennas, the modulation order (PSK), and the noise variance:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameters</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># Parameters</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The modulation alphabet is automatically generated from the given parameters.</p>
@@ -436,18 +439,19 @@
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
                     <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
                     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-                    <span class="n">FlatFadingRayleighChannel</span><span class="p">(</span><span class="n">N_r</span><span class="o">=</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="o">=</span><span class="n">N_t</span><span class="p">,</span> <span class="n">noise_value</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">noise_unit</span><span class="o">=</span><span class="s2">&quot;sigma2&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+                    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+                    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">)</span>
                     <span class="p">])</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise.</p>
-</section>
+<p>This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal can be described by :</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]\]</div>
 <section id="visualize-the-received-signal">
-<h2>4. Visualize the Received Signal<a class="headerlink" href="#visualize-the-received-signal" title="Link to this heading">#</a></h2>
+<h3>Visualize the Received Signal<a class="headerlink" href="#visualize-the-received-signal" title="Link to this heading">#</a></h3>
 <p>Let’s inspect the received signal on each receive antenna:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># extract signals</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals</span>
 <span class="n">S_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 
 <span class="c1"># Figure 1: received signal</span>
@@ -459,25 +463,27 @@
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received signal (antenna </span><span class="si">{</span><span class="n">num_channel</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig1.png"><img alt="../_images/monte_carlo_mimo_fig1.png" class="align-center" src="../_images/monte_carlo_mimo_fig1.png" style="width: 100%;" />
 </a>
 <p>You should observe that the received signal consists of noisy superpositions of multiple transmitted streams.</p>
 </section>
+</section>
 <section id="zero-forcing-equalization">
 <h2>5. Zero-Forcing Equalization<a class="headerlink" href="#zero-forcing-equalization" title="Link to this heading">#</a></h2>
 <p>We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the channel matrix:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ZF equalization</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">H</span>
 <span class="n">H_inv</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
 <span class="n">X_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_inv</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This separates the transmitted streams assuming ideal channel knowledge and no noise amplification.</p>
-</section>
+<p>This separates the transmitted streams assuming ideal channel knowledge and no noise contribution. The ZF equalized symbol are given by</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]\]</div>
 <section id="visualize-the-estimated-symbols">
-<h2>6. Visualize the Estimated Symbols<a class="headerlink" href="#visualize-the-estimated-symbols" title="Link to this heading">#</a></h2>
+<h3>Visualize the Estimated Symbols<a class="headerlink" href="#visualize-the-estimated-symbols" title="Link to this heading">#</a></h3>
 <p>We plot the ZF-equalized symbols:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># Figure 2: estimated signal</span>
@@ -496,20 +502,36 @@
 </a>
 <p>The estimated points should cluster near the ideal constellation points, although some noise remains.</p>
 </section>
+</section>
 <section id="compare-detection-algorithms">
 <h2>7. Compare Detection Algorithms<a class="headerlink" href="#compare-detection-algorithms" title="Link to this heading">#</a></h2>
 <p>We now compare four MIMO detection strategies:</p>
 <ul class="simple">
-<li><p><strong>ZF</strong>: Zero-Forcing</p></li>
-<li><p><strong>MMSE</strong>: Minimum Mean Square Error</p></li>
-<li><p><strong>OSIC</strong>: Ordered Successive Interference Cancellation</p></li>
 <li><p><strong>ML</strong>: Maximum Likelihood</p></li>
 </ul>
+<div class="math notranslate nohighlight">
+\[\widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2\]</div>
+<ul class="simple">
+<li><p><strong>ZF</strong>: Zero-Forcing</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\widehat{\mathbf{x}}_{ZF}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+\mathbf{z}[n] &amp;= \mathbf{H}^{\dagger}\mathbf{y}[n]\end{split}\]</div>
+<ul class="simple">
+<li><p><strong>MMSE</strong>: Minimum Mean Square Error</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\widehat{\mathbf{x}}_{MMSE}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+\mathbf{z}[n] &amp;= \left(\left(\mathbf{H}^H\mathbf{H}\right)^{-1}+\sigma^2 \mathbf{I}_{N_t}\right)\mathbf{H}^H\mathbf{y}[n]\end{split}\]</div>
+<ul class="simple">
+<li><p><strong>OSIC</strong>: Ordered Successive Interference Cancellation</p></li>
+</ul>
+<p>These detectors are directly implemented in <cite>comnumpy</cite>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># evaluate the BER for several detectors</span>
 <span class="n">detector_list</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">ZeroForcingDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ZF&quot;</span><span class="p">),</span>
-    <span class="n">MinimumMeanSquaredErrorDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;MMSE&quot;</span><span class="p">),</span>
+    <span class="n">LinearDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ZF&quot;</span><span class="p">),</span>
+    <span class="n">LinearDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mmse&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;MMSE&quot;</span><span class="p">),</span>
     <span class="n">OrderedSuccessiveInterferenceCancellationDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="s2">&quot;sinr&quot;</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OSIC&quot;</span><span class="p">),</span>
     <span class="n">MaximumLikelihoodDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ML&quot;</span><span class="p">)</span>
     <span class="p">]</span>
@@ -533,11 +555,14 @@ outputs:</p>
 <section id="monte-carlo-evaluation">
 <h2>8. Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
 <p>To get a more reliable estimate of the SER, we run a Monte Carlo simulation.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ser_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">detector_list</span><span class="p">)))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform monte carlo simulation</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">N_test</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">ser_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">detector_list</span><span class="p">)))</span>
 
 <span class="k">for</span> <span class="n">index_snr</span><span class="p">,</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">)):</span>
     <span class="n">sigma2</span> <span class="o">=</span> <span class="n">N_t</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span>
-    <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">noise_value</span> <span class="o">=</span> <span class="n">sigma2</span>
+    <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;noise&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">sigma2</span>
 
     <span class="c1"># update sigma2 for the MMSE and OSIC detector</span>
     <span class="n">detector_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">=</span> <span class="n">sigma2</span>
@@ -546,8 +571,8 @@ outputs:</p>
     <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_test</span><span class="p">):</span>
    
         <span class="c1"># new channel realization</span>
-        <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">channel_matrix_rvs</span><span class="p">()</span>
-        <span class="n">H</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">)</span>
+        <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">H</span>
 
         <span class="c1"># generate data</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
@@ -581,13 +606,11 @@ outputs:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">10</span><span class="o">**-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Performance Comparison of several MIMO detectors&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig3.png"><img alt="../_images/monte_carlo_mimo_fig3.png" class="align-center" src="../_images/monte_carlo_mimo_fig3.png" style="width: 100%;" />
 </a>
-<p>This figure illustrates how different detection methods perform as the channel becomes cleaner (higher SNR).</p>
+<p>This figure compares detection methods as a function of the signal-to-noise ratio (SNR). The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost. The OSIC detector performs close to ML.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
@@ -653,10 +676,14 @@ outputs:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">2. Define System Parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-mimo-chain">3. Build the MIMO Chain</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">4. Visualize the Received Signal</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">5. Zero-Forcing Equalization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-estimated-symbols">6. Visualize the Estimated Symbols</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-mimo-chain">3. Build the MIMO Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">Visualize the Received Signal</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">5. Zero-Forcing Equalization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-estimated-symbols">Visualize the Estimated Symbols</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-detection-algorithms">7. Compare Detection Algorithms</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">8. Monte Carlo Evaluation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">9. Plot SER vs SNR</a></li>

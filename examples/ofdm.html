@@ -398,26 +398,27 @@
 <p>Begin by importing the necessary libraries</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEqualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.chains</span><span class="w"> </span><span class="kn">import</span> <span class="n">OFDMTransmitter</span><span class="p">,</span> <span class="n">OFDMReceiver</span>
-
-<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
 </pre></div>
 </div>
 </section>
 <section id="define-simulation-parameters">
 <h2>2. Define Simulation Parameters<a class="headerlink" href="#define-simulation-parameters" title="Link to this heading">#</a></h2>
 <p>We simulate a multipath channel by generating a random impulse response. The first tap is normalized to 1 to preserve energy.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>
-<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.02</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 
 <span class="c1"># generate a random selective channel</span>
@@ -429,7 +430,7 @@
 </section>
 <section id="single-carrier-chain">
 <h2>3. Single Carrier Chain<a class="headerlink" href="#single-carrier-chain" title="Link to this heading">#</a></h2>
-<p>Let’s build a basic SC simulation to illustrate poor performance in a selective channel:</p>
+<p>Let’s build a basic SC simulation to illustrate the performance in a selective channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a simple single carrier chain and simulate</span>
 <span class="n">simple_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
@@ -438,31 +439,52 @@
         <span class="n">FIRChannel</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
         <span class="n">AWGN</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">sigma2</span><span class="p">),</span>
         <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
+        <span class="n">LinearEqualizer</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">),</span>
+        <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx_eq&quot;</span><span class="p">),</span>
         <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
     <span class="p">])</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">s_rx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>You will likely observe a very poor Symbol Error Rate (SER), despite using a relatively strong SNR. This is due to ISI caused by the selectivity of the channel — single-carrier systems suffer unless equalization is used.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals</span>
+<p>We have used a linear Zero-Forcing equalizer to compensate for the channel. This equalizer is based on the computation of a matrix pseudo-inverse, which can drastically increase the computation complexity of the receiver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># extract signals, compute ser and elapsed time</span>
 <span class="n">s_tx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-<span class="n">data_rx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">[</span><span class="s2">&quot;data_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
+<span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
 
 <span class="c1"># plot signal and save</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OFDM Chain: received data (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig1.png&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">indice</span><span class="p">,</span> <span class="n">processor_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s2">&quot;data_rx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx_eq&quot;</span><span class="p">]):</span>
+    <span class="n">data_rx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">[</span><span class="n">processor_name</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received signal (</span><span class="si">{</span><span class="n">processor_name</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Let’s visualize the received signal and compute the SER :</p>
+<p>For the single carrier chain, we obtain :</p>
+<ul class="simple">
+<li><p>A Symbol Error Rate (SER) equals to : 0.007</p></li>
+<li><p>A total computational time equals to: 0.562s</p></li>
+</ul>
+<p>The following figures present the constellation of the the received signal before and after linear equalization.</p>
 <img alt="../_images/one_shot_ofdm_fig1.png" src="../_images/one_shot_ofdm_fig1.png" />
 </section>
 <section id="ofdm-chain">
 <h2>4. OFDM Chain<a class="headerlink" href="#ofdm-chain" title="Link to this heading">#</a></h2>
-<p>We now simulate the same scenario using OFDM, which divides the bandwidth into orthogonal subcarriers. This converts a frequency-selective channel into many flat channels, allowing simple equalization.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
+<p>In frequency-selective channels, the conventional single-carrier chain suffers from suboptimal detection performance and high computational complexity, mainly due to the need to invert a large matrix. A common solution to overcome this limitation is to employ an OFDM chain.</p>
+<p>We now simulate the same scenario using OFDM, which divides the bandwidth into orthogonal subcarriers. This converts a frequency-selective channel into many flat channels, allowing simple optimal equalization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig1.png&quot;</span><span class="p">)</span>
+
+<span class="c1"># create an OFDM chain and simulate</span>
+<span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
 <span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">ofdm_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
@@ -475,20 +497,30 @@
         <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
         <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
     <span class="p">])</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">s_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>OFDM handles the multipath channel far better. You should observe a much lower SER, showing the benefit of dividing the signal across orthogonal subcarriers and using a cyclic prefix.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals and compute ser</span>
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<p>For the OFDM chain, we obtain:</p>
+<ul class="simple">
+<li><p>Symbol Error Rate (SER): 0.004 ( &lt; 0.007)</p></li>
+<li><p>Total computational time: 0.007s ( &lt; 0.562s)</p></li>
+</ul>
+<p>Note that this substantial reduction in computational complexity stems from the fact that channel equalization reduces to the inversion of a diagonal matrix, while the OFDM transmitter and receiver rely on DFT/IDFT operations that can be efficiently implemented using Fast Fourier Transform (FFT) algorithms. Concerning the Symbol Error Rate (SER), the improvement arises from the fact that, under Gaussian noise, the OFDM detector is equivalent to the Maximum Likelihood detector.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals, compute ser and elapsed time</span>
+<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[:</span><span class="n">N</span><span class="p">]</span>
+<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[:</span><span class="n">N</span><span class="p">]</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
+<span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
 
 <span class="c1"># plot signal and save</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OFDM Chain: received data (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig2.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Let’s visualize the received signal :</p>
