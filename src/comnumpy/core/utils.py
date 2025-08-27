@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path as path
+import numpy.linalg as LA
 
 
 def get_alphabet(modulation, order, type="gray", norm=True):
@@ -162,3 +163,32 @@ def compute_sigma2(value, input_unit, sigma2s=1):
         case _:
             raise ValueError(f"Unknown method: {input_unit}")
     return output
+
+
+def zf_estimator(Y, H):
+    r"""
+    Perform Zero Forcing linear equalization using the Channel Matrix Pseudoinverse
+
+    .. math ::
+
+        \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
+
+    """
+    A = LA.pinv(H)
+    Z_est = np.matmul(A, Y)
+    return Z_est
+
+
+def mmse_estimator(Y, H, sigma2):
+    r"""
+    Perform MMSE linear equalization 
+
+    .. math ::
+
+        \mathbf{z}[n] = \left(\left(\mathbf{H}^H\mathbf{H}\right)^{-1}+\sigma^2 \mathbf{I}_{N_t}\right)\mathbf{H}^H\mathbf{y}[n] 
+    """
+    _, N_t = H.shape
+    H_H = np.conjugate(np.transpose(H))
+    A = np.matmul(H_H, H) + sigma2 * np.eye(N_t)
+    Z_est = LA.solve(A, np.matmul(H_H, Y))
+    return Z_est

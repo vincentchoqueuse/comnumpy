@@ -40,11 +40,10 @@ class SymbolGenerator(Processor):
     >>> generator = SymbolGenerator(M=4, seed=42)
     >>> symbols_1D = generator(5)  # Generates a 1D array of size 5
     >>> print(symbols_1D)
-    [3 2 0 3 3]
-    >>> symbols_2D = generator((3, 3))  # Generates a 2D array of shape (3, 3)
+    [0 3 2 1 1]
+    >>> symbols_2D = generator((2, 3))  # Generates a 2D array of shape (2, 3)
     >>> print(symbols_2D)
-    [[2 1 2]
-     [3 2 1]
+    [[3 0 2]
      [0 0 2]]
     """
     M: int

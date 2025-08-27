@@ -46,43 +46,48 @@ class AWGN(Processor):
     value: float = 1.
     unit: Literal["sigma2", "snr", "snr_dB", "snr_dBm"] = "sigma2"
     sigma2s: float = 1.
+    sigma2s_method: Literal["fixed", "measured"] = "fixed"
     seed: int = None
-    estimate_sigma2s: bool = False
     name: str = 'awgn'
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
-    @property
-    def sigma2n(self):
-        return compute_sigma2(self.value, self.unit, self.sigma2s)
+    def get_sigma2s(self, X):
+        # extract signal power
+        match self.sigma2s_method:
+            case "measured": 
+                sigma2s = np.sum(np.abs(x)**2) / np.prod(X.shape)
+            case "fixed":
+                sigma2s = self.value
+            case _:
+                raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
 
-    def update_sigma2s(self, X):
-        self.sigma2 = np.sum(np.abs(X)**2) / np.prod(X.shape)
+        return sigma2s
 
-    def noise_rvs(self, X):
-        is_complex = np.iscomplexobj(X)
-        
-        if self.estimate_sigma2s:
-            self.update_sigma2s(X)
+    def noise_rvs(self, x):
+        is_complex = np.iscomplexobj(x)
 
-        sigma2n = self.sigma2n
-        shape = X.shape
+        # compute sigma2s
+        sigma2s = self.get_sigma2s(x)
+        sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
+        shape = x.shape
         if is_complex:
             scale = np.sqrt(sigma2n/2)
-            B_r = self.rng.normal(scale=scale, size=shape)
-            B_i = self.rng.normal(scale=scale, size=shape)
-            B = B_r + 1j * B_i
+            b_r = self.rng.normal(scale=scale, size=shape)
+            b_i = self.rng.normal(scale=scale, size=shape)
+            b = b_r + 1j * b_i
         else:
             scale = np.sqrt(sigma2n)
-            B = self.rng.normal(scale=scale, size=shape)
+            b = self.rng.normal(scale=scale, size=shape)
 
-        self._B = B
+        self._b = b
+        self.sigma2 = sigma2n
 
-    def forward(self, X: np.ndarray) -> np.ndarray:
-        self.noise_rvs(X)
-        Y = X + self._B
-        return Y
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.noise_rvs(x)
+        y = x + self._b
+        return y
 
 
 @dataclass
@@ -112,9 +117,10 @@ class FIRChannel(Processor):
         The name of the channel instance (default is "fir").
     """
     h: np.array
+    mode: Literal["full", "same", "valid"] = "full"
     is_mimo: bool = False
     name: str = "fir"
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        y = signal.convolve(x, self.h)
+        y = signal.convolve(x, self.h, mode=self.mode)
         return y

@@ -7,8 +7,9 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser, compute_ber
 from comnumpy.core.utils import get_alphabet
-from comnumpy.mimo.channels import FlatFadingRayleighChannel
-from comnumpy.mimo.detectors import MaximumLikelihoodDetector, ZeroForcingDetector, MinimumMeanSquaredErrorDetector, OrderedSuccessiveInterferenceCancellationDetector
+from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
+from comnumpy.mimo.utils import rayleigh_channel
+from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, OrderedSuccessiveInterferenceCancellationDetector
 
 # This script reproduces the figure 2 of the article [1]
 #
@@ -17,22 +18,25 @@ from comnumpy.mimo.detectors import MaximumLikelihoodDetector, ZeroForcingDetect
 
 
 # Parameters
-N_test = 10000  # increase the value for smoothing the ber
+N_test = 500  # increase the value for smoothing the ber
 N = 400
 N_r, N_t = 2, 2
 M = 4
 alphabet = get_alphabet("PSK", M)
 M = len(alphabet)
 
+H = rayleigh_channel(N_r=N_r, N_t=N_t)
+
 # construct chain
 chain = Sequential([SymbolGenerator(M),
                     Recorder(name="data_tx"),
                     SymbolMapper(alphabet),
-                    FlatFadingRayleighChannel(N_r=N_r, N_t=N_t, noise_unit="sigma2", name="channel"),
+                    FlatMIMOChannel(H, name="channel"),
+                    AWGN(0, unit="sigma2", name="noise")
                     ])
 
 # prepare MC trial
-detector_names = ["ML", "ZF"]
+detector_names = ["ML", "ZF", "OSIC"]
 
 # compute snr list from snr per bit in dB
 snr_dB_list = np.arange(0, 45, 5)
@@ -43,13 +47,13 @@ sig_power = N_t
 
 for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     sigma2 = sig_power*(10**(-snr_dB/10))
-    chain["channel"].noise_value = sigma2
+    chain["noise"].value = sigma2
 
     for trial in range(N_test):
    
         # new channel realization
-        chain["channel"].channel_matrix_rvs()
-        H = chain["channel"].H
+        H = rayleigh_channel(N_r=N_r, N_t=N_t)
+        chain["channel"].H = H
 
         # generate data
         Y = chain((N_t, N))
@@ -62,8 +66,10 @@ for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
                 case "ML":
                     detector = MaximumLikelihoodDetector(alphabet=alphabet, H=H)
                 case "ZF":
-                    detector = ZeroForcingDetector(alphabet=alphabet, H=H)
-            
+                    detector = LinearDetector(alphabet=alphabet, H=H, method="zf")
+                case "OSIC":
+                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, "sinr", H, sigma2=sigma2, name="OSIC")
+
             # perform detection
             S_est = detector(Y)
             # evaluate metrics

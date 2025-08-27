@@ -39,7 +39,7 @@ We define the number of transmit/receive antennas, the modulation order (PSK), a
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 16-22
+   :lines: 16-24
 
 The modulation alphabet is automatically generated from the given parameters.
 
@@ -50,18 +50,22 @@ We create a transmission chain consisting of a symbol generator, symbol mapper, 
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 24-30
+   :lines: 26-33
 
-This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise.
+This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal can be described by :
 
-4. Visualize the Received Signal
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. math ::
+    
+   \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]
+
+Visualize the Received Signal
+"""""""""""""""""""""""""""""
 
 Let's inspect the received signal on each receive antenna:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 31-43
+   :lines: 35-47
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
@@ -76,18 +80,23 @@ We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the chan
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 47-50
+   :lines: 50-52
 
-This separates the transmitted streams assuming ideal channel knowledge and no noise amplification.
+This separates the transmitted streams assuming ideal channel knowledge and no noise contribution. The ZF equalized symbol are given by 
 
-6. Visualize the Estimated Symbols
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. math ::
+    
+   \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
+
+
+Visualize the Estimated Symbols
+"""""""""""""""""""""""""""""""
 
 We plot the ZF-equalized symbols:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 51-61
+   :lines: 53-63
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -100,14 +109,32 @@ The estimated points should cluster near the ideal constellation points, althoug
 
 We now compare four MIMO detection strategies:
 
-- **ZF**: Zero-Forcing
-- **MMSE**: Minimum Mean Square Error
-- **OSIC**: Ordered Successive Interference Cancellation
+
 - **ML**: Maximum Likelihood
+
+.. math ::
+
+   \widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2
+
+- **ZF**: Zero-Forcing
+
+.. math ::
+   \widehat{\mathbf{x}}_{ZF}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+   \mathbf{z}[n] &= \mathbf{H}^{\dagger}\mathbf{y}[n]
+
+- **MMSE**: Minimum Mean Square Error
+
+.. math ::
+   \widehat{\mathbf{x}}_{MMSE}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+   \mathbf{z}[n] &= \left(\left(\mathbf{H}^H\mathbf{H}\right)^{-1}+\sigma^2 \mathbf{I}_{N_t}\right)\mathbf{H}^H\mathbf{y}[n]
+
+- **OSIC**: Ordered Successive Interference Cancellation
+
+These detectors are directly implemented in `comnumpy`.
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 63-76
+   :lines: 65-78
 
 Each detector is tested on the same channel realization, and the Symbol Error Rate (SER) is printed. We obtain the following 
 outputs:
@@ -124,7 +151,7 @@ To get a more reliable estimate of the SER, we run a Monte Carlo simulation.
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 81-111
+   :lines: 80-113
 
 This simulates multiple random channels and noise realizations for a range of SNR values.
 
@@ -135,13 +162,13 @@ Finally, we plot the SER for each detection scheme as a function of SNR:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 113-124
+   :lines: 115-124
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
    :align: center
 
-This figure illustrates how different detection methods perform as the channel becomes cleaner (higher SNR).
+This figure compares detection methods as a function of the signal-to-noise ratio (SNR). The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost. The OSIC detector performs close to ML.
 
 Conclusion
 ^^^^^^^^^^

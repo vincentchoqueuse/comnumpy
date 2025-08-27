@@ -8,8 +8,9 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser, compute_ber
 from comnumpy.core.utils import get_alphabet
-from comnumpy.mimo.channels import FlatFadingRayleighChannel
-from comnumpy.mimo.detectors import MaximumLikelihoodDetector, ZeroForcingDetector, MinimumMeanSquaredErrorDetector, OrderedSuccessiveInterferenceCancellationDetector
+from comnumpy.mimo.channels import FlatMIMOChannel, AWGN
+from comnumpy.mimo.utils import rayleigh_channel
+from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, OrderedSuccessiveInterferenceCancellationDetector
 
 img_dir = "../../docs/examples/img/"
 
@@ -20,12 +21,14 @@ M = 4
 alphabet = get_alphabet("PSK", M)
 M = len(alphabet)
 sigma2 = 0.1
+H = rayleigh_channel(N_r, N_t)
 
 # construct chain
 chain = Sequential([SymbolGenerator(M),
                     Recorder(name="data_tx"),
                     SymbolMapper(alphabet),
-                    FlatFadingRayleighChannel(N_r=N_r, N_t=N_t, noise_value=sigma2, noise_unit="sigma2", name="channel"),
+                    FlatMIMOChannel(H, name="channel"),
+                    AWGN(sigma2, name="noise")
                     ])
 Y = chain((N_t, N))
 
@@ -45,7 +48,6 @@ for num_channel in range(N_r):
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
 # ZF equalization
-H = chain["channel"].H
 H_inv = linalg.pinv(H)
 X_est = np.matmul(H_inv, Y)
 
@@ -63,8 +65,8 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
 # evaluate the BER for several detectors
 detector_list = [
-    ZeroForcingDetector(alphabet, H, name="ZF"),
-    MinimumMeanSquaredErrorDetector(alphabet, H, sigma2=sigma2, name="MMSE"),
+    LinearDetector(alphabet, H, method="zf", name="ZF"),
+    LinearDetector(alphabet, H, sigma2=sigma2, method="mmse", name="MMSE"),
     OrderedSuccessiveInterferenceCancellationDetector(alphabet, "sinr", H, sigma2=sigma2, name="OSIC"),
     MaximumLikelihoodDetector(alphabet, H, name="ML")
     ]
@@ -82,7 +84,7 @@ ser_data = np.zeros((len(snr_dB_list), len(detector_list)))
 
 for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     sigma2 = N_t * (10**(-snr_dB/10))
-    chain["channel"].noise_value = sigma2
+    chain["noise"].value = sigma2
 
     # update sigma2 for the MMSE and OSIC detector
     detector_list[1].sigma2 = sigma2
@@ -91,8 +93,8 @@ for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     for trial in range(N_test):
    
         # new channel realization
-        chain["channel"].channel_matrix_rvs()
-        H = chain["channel"].H
+        H = rayleigh_channel(N_r, N_t)
+        chain["channel"].H = H
 
         # generate data
         Y = chain((N_t, N))

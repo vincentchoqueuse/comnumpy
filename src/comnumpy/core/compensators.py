@@ -7,7 +7,7 @@ from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
 from comnumpy.core import Processor, Recorder
-from .utils import hard_projector
+from .utils import hard_projector, zf_estimator, mmse_estimator
 from .processors import Amplifier
 from .validators import validate_data
 
@@ -378,6 +378,47 @@ class BlindPhaseCompensation(Processor):
         if self.should_fit:
             self.fit(X)
         Y = X * np.exp(1j * self.theta)
+        return Y
+
+
+@dataclass
+class LinearEqualizer(Processor):
+    """
+    LinearEqualizer()
+
+    Linear equalizer for the signal model 
+
+    .. math::
+
+        z[n] = h*x[n] + b[n]
+
+    Attributes:
+        method : 'zf'|'mmse'
+        sigma2: noise variance
+
+    """
+    h: np.ndarray
+    method: Literal["zf", "mmse"] = "zf"
+    sigma2: float = 0.0
+    name: str = "equalizer"
+
+
+    def get_H(self, N):
+        Nx = N - len(self.h)
+        c = np.r_[self.h, np.zeros(Nx)]
+        r = np.r_[self.h[0], np.zeros(Nx)]
+        H = toeplitz(c, r)
+        return H
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        X = np.asarray(X).astype(complex)
+        H = self.get_H(X.shape[-1])
+
+        match self.method:
+            case "zf":
+                Y = zf_estimator(X, H)
+            case "mmse":
+                Y = mmse_estimator(X, H, self.sigma2)
         return Y
 
 

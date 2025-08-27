@@ -4,7 +4,7 @@ import numpy.linalg as LA
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core.generics import Processor
-from comnumpy.core.utils import hard_projector, soft_projector
+from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
 
 def validate_H(H):
@@ -103,16 +103,16 @@ class MaximumLikelihoodDetector(Processor):
 
 
 @dataclass
-class ZeroForcingDetector(Processor):
+class LinearDetector(Processor):
     r"""
-    Implements the Zero-Forcing (ZF) MIMO detector.
+    Implements a Linear MIMO detector.
 
     Algorithm
     ---------
 
-    The ZF detector is a two-step detector
+    A linear detector is a two-step detector
 
-    1. Channel Equalization
+    1. Channel Equalization (using zero forcing or MMSE equalization)
     2. Symbol Detection
 
     Attributes
@@ -121,6 +121,10 @@ class ZeroForcingDetector(Processor):
         Symbol constellation.
     H : numpy.ndarray
         Internal storage for the channel matrix.
+    method: zf or mmse
+        linear estimation technique (default: zf)
+    sigma2: float
+        noise variance (used for the mmse equalizer only)
     name : str
         Name of the detector.
 
@@ -130,107 +134,26 @@ class ZeroForcingDetector(Processor):
     """
     alphabet: np.ndarray
     H: Optional[np.ndarray] = None
+    method: Literal["zf", "mmse"] = "zf"
+    sigma2: float = None
     is_mimo: bool = True
     name: str = "ZF Detector"
 
     def linear_estimator(self, Y):
         r"""
-        Perform Zero Forcing linear equalization using the Channel Matrix Pseudoinverse
-
-        .. math ::
-
-            \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
-
+        Perform Zero Forcing or MMSE linear equalization 
         """
-        H_inv = LA.pinv(self.H)
-        Z_est = np.matmul(H_inv, Y)
-        return Z_est
-    
-    def simple_detector(self, Z):
-        r"""
-        Perform SISO detection using the equalized samples
-
-        .. math ::
-
-            \widehat{x}_m[n] = \arg \min_{x\in \mathcal{M}}|z_m[n] - x|^2        
-        """
-        S, _ = hard_projector(Z, self.alphabet)
-        return S
+        match self.method:
+            case "zf":
+                output = zf_estimator(Y, self.H)
+            case "mmse":
+                output = mmse_estimator(Y, self.H, self.sigma2 )
+        return output
 
     def forward(self, Y):
         validate_H(self.H)
-
         Z = self.linear_estimator(Y)
-        S = self.simple_detector(Z)
-        return S
-
-
-@dataclass
-class MinimumMeanSquaredErrorDetector(Processor):
-    """
-    Implements the MMSE MIMO detector.
-
-    Attributes
-    ----------
-    H : numpy.ndarray
-        Internal storage for the channel matrix.
-    sigma2 : float
-        Noise variance.
-    alphabet : numpy.ndarray
-        Symbol constellation.
-    name : str
-        Name of the detector.
-
-    References
-    ----------
-    * Larsson, Erik G., Petre Stoica, and Girish Ganesan. Space-time block coding for wireless communications. Cambridge university press, 2003.
-    """
-    alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    sigma2: float = None
-    is_mimo: bool = True
-    name: str = "MMSE Detector"
-
-    def set_H(self, H):
-        """Set the channel matrix :math:`\mathbf{H}`"""
-        self.H = H
-
-    def set_sigma2(self, sigma2):
-        """Set the noise variance :math:`\sigma^2`"""
-        self.sigma2 = sigma2
-
-    def linear_estimator(self, Y):
-        r"""
-        Perform MMSE linear equalization 
-
-        .. math ::
-
-            \mathbf{z}[n] = \left(\left(\mathbf{H}^H\mathbf{H}\right)^{-1}+\sigma^2 \mathbf{I}_{N_t}\right)\mathbf{H}^H\mathbf{y}[n] 
-        """
-        H = self.H
-        _, N_t = H.shape
-        H_H = np.conjugate(np.transpose(H))
-        A = np.matmul(LA.inv(np.matmul(H_H, H) + self.sigma2 * np.eye(N_t)), H_H)
-        X_est = np.matmul(A, Y)
-        return X_est
-
-    def simple_detector(self, Z):
-        r"""
-        Perform SISO detection using the equalized samples
-
-        .. math ::
-
-            \widehat{x}_m[n] = \arg \min_{x\in \mathcal{M}}|z_m[n] - x|^2        
-        """
         S, _ = hard_projector(Z, self.alphabet)
-        return S
-
-    def forward(self, Y):
-        validate_H(self.H)
-        validate_sigma2(self.sigma2)
-
-        Z = self.linear_estimator(Y)
-        S = self.simple_detector(Z)
         return S
 
 
@@ -252,7 +175,6 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     name : str
         Component name
 
-
     Reference
     ---------
     * Cho, Yong Soo, et al. MIMO-OFDM wireless communications with MATLAB. John Wiley & Sons, 2010.
@@ -260,32 +182,21 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     alphabet: np.ndarray
     osic_type: str = "sinr"  # 'sinr', 'colnorm', or 'snr'
     H: Optional[np.ndarray] = None
+    method: Literal["zf", "mmse"] = "zf"
     sigma2: Optional[float] = None
     name: str = "OSIC Detector"
 
     def __post_init__(self):
         if self.osic_type == "sinr":
-            self.linear_detector = MinimumMeanSquaredErrorDetector(
-                alphabet=self.alphabet, H=self.H, sigma2=self.sigma2
-            )
+            self.method = "mmse"
         elif self.osic_type in ("colnorm", "snr"):
-            self.linear_detector = ZeroForcingDetector(
-                alphabet=self.alphabet, H=self.H
-            )
+            self.method = "zf"
         else:
             raise ValueError("osic_type must be 'sinr', 'colnorm', or 'snr'")
 
-    def set_H(self, H: np.ndarray):
-        self.H = H
-        self.linear_detector.H = H
-
-    def set_sigma2(self, sigma2: float):
-        self.sigma2 = sigma2
-        if isinstance(self.linear_detector, MinimumMeanSquaredErrorDetector):
-            self.linear_detector.sigma2 = sigma2
-
     def ordering(self, H: np.ndarray) -> int:
         NT = H.shape[1]
+
         match self.osic_type:
 
             case "sinr":
@@ -326,14 +237,19 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
             best_current_idx = remaining_idx[idx_local]
             order.append(best_current_idx)
 
+            # perform estimation
+            match self.method:
+                case "zf":
+                    Z = zf_estimator(Y_temp, H_temp)
+                case "mmse":
+                    Z = mmse_estimator(Y_temp, H_temp, self.sigma2 )
+            
             # perform detection
-            self.linear_detector.H = H_temp
-            S = self.linear_detector(Y_temp)
+            S, _ = hard_projector(Z, self.alphabet)
             s_est = S[idx_local, :]
             x_est = self.alphabet[s_est]
 
             # update Y, S and remaining_ix
-            
             Y_temp = Y_temp - H_temp[:, idx_local][:, np.newaxis] * x_est
             S_hat[best_current_idx, :] = s_est
             del remaining_idx[idx_local]

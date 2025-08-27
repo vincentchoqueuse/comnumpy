@@ -8,7 +8,8 @@ from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.processors import Upsampler, Delay_Remover
 from comnumpy.core.utils import get_alphabet, hard_projector
-from comnumpy.mimo.channels import MIMOChannel
+from comnumpy.mimo.channels import SelectiveMIMOChannel, AWGN
+from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.compensators import BlindDualMIMOCompensator
 
 
@@ -63,10 +64,7 @@ commuting_steps = (20000, 90000)
 H_list = []
 size = (N_t, N_t)
 rng = np.random.default_rng()
-for indice in range(N_tap):
-    H_temp = (0.4**indice)*(1*np.eye(2) + 0.8*(rng.normal(size=size) + 1j * rng.normal(size=size)))
-    H_list.append(H_temp)
-
+H_array = rayleigh_channel(N_r, N_t, L=N_tap, rng=rng)
 
 # create chain
 chain = Sequential([
@@ -74,7 +72,8 @@ chain = Sequential([
             SymbolMapper(alphabet),
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
-            MIMOChannel(H_list=H_list, noise_value=sigma2n, name="channel"),
+            SelectiveMIMOChannel(H=H_array, name="channel"),
+            AWGN(sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             Delay_Remover(delay=N_h*4),
             CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),
@@ -115,6 +114,4 @@ plt.axvline(x=commuting_steps[1], color="k")
 plt.ylabel("loss function")
 plt.ylim([0, 1])
 plt.legend()
-
-
 plt.show()
