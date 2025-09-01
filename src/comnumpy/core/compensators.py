@@ -137,18 +137,18 @@ class Normalizer(Amplifier):
         if self.value <= 0:
             raise ValueError("The value for normalization must be positive.")
         self.gain = 1
-
+   
     def prepare(self, X):
         match self.method:
             case "amp":
                 gain = self.value
             case "abs":
-                gain = self.value/np.max(np.abs(x))
+                gain = self.value/np.max(np.abs(X))
             case "var":
-                variance = np.var(x)
+                variance = np.var(X)
                 gain = np.sqrt(self.value)/np.sqrt(variance)
             case "max":
-                max_value = np.max([np.max(np.abs(np.real(x))), np.max(np.abs(np.imag(x)))])
+                max_value = np.max([np.max(np.abs(np.real(X))), np.max(np.abs(np.imag(X)))])
                 gain = self.value/max_value
             case _:
                 gain = 1
@@ -476,12 +476,13 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
 
     Attributes
     ----------
-    recorder_preamble : ndarray
-        The recorded preamble used to compute the complex gain of the channel.
+    target_data : ndarray or Recorder, optional
+        The known preamble sequence used as reference for gain estimation.
+        Can be a NumPy array or a `Recorder` object that stores the preamble.
     position : int
         The place of this recorded preamble in the input signal.
     """
-    target_data = Union[np.array, Recorder]
+    target_data: Optional[Union[np.ndarray, Recorder]] = None
     position: int = 0
     name: str = "complex_gain_compensator"
 
