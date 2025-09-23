@@ -53,7 +53,7 @@ class AWGN(Processor):
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
-    def get_sigma2s(self, X):
+    def get_sigma2s(self, x):
         # extract signal power
         match self.sigma2s_method:
             case "measured": 
