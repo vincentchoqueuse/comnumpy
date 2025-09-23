@@ -1,5 +1,8 @@
 # Comnumpy : A Python Library for Communication System Prototyping and Simulation
 
+[![Tests](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/tests.yml/badge.svg)](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/tests.yml)
+[![Docs](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/docs.yml/badge.svg)](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/docs.yml)
+
 A python library containing several Digital Signal Processing (DSP) algorithms for communication systems, including MIMO, OFDM, and optical fiber simulations.
 
 `comnumpy` is made for **researchers**, **engineers**, and **students** in the field of **digital communications**. It’s ideal for anyone who wants to **simulate and analyze communication systems** without reinventing the wheel.

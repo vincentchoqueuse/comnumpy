@@ -477,13 +477,13 @@ class Complex2Real(Processor):
     validate_input : bool = False
 
     def forward(self, X):
-        match part:
+        match self.part:
             case "real":
-                if self.validate_input and (not np.isclose(np.ravel(X).imag, 0, atol=tol).all()):
+                if self.validate_input and (not np.isclose(np.ravel(X).imag, 0, atol=10**-7).all()):
                     raise ValueError("the input data is not real since the imag part is non zero ")
                 Y = X.real
             case "imag":
-                if self.validate_input and (not np.isclose(np.ravel(X).real, 0, atol=tol).all()):
+                if self.validate_input and (not np.isclose(np.ravel(X).real, 0, atol=10**-7).all()):
                     raise ValueError("the input data is not imaginary since the real part is non zero ")
                 Y = X.imag
 
@@ -582,7 +582,7 @@ class AutoConcatenator(Processor):
                 raise ValueError("The number of True values in input_copy_mask must be equal to the number of True values in output_copy_mask.")
                 
         # check if there is no overlap between allocated value
-        if np.any(np.logical_and(output_original_mask, output_copy_mask)):
+        if np.any(np.logical_and(self.output_original_mask, self.output_copy_mask)):
             raise ValueError("The two output masks overlap.")
                 
 
