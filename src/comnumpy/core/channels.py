@@ -59,7 +59,7 @@ class AWGN(Processor):
             case "measured": 
                 sigma2s = np.sum(np.abs(x)**2) / np.prod(X.shape)
             case "fixed":
-                sigma2s = self.value
+                sigma2s = self.sigma2s
             case _:
                 raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
 
@@ -73,7 +73,7 @@ class AWGN(Processor):
         sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
         shape = x.shape
         if is_complex:
-            scale = np.sqrt(sigma2n/2)
+            scale = np.sqrt(sigma2n / 2)
             b_r = self.rng.normal(scale=scale, size=shape)
             b_i = self.rng.normal(scale=scale, size=shape)
             b = b_r + 1j * b_i

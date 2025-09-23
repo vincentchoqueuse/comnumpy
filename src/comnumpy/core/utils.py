@@ -162,6 +162,7 @@ def compute_sigma2(value, input_unit, sigma2s=1):
             output = sigma2s / (10 ** ((value - 30) / 10))
         case _:
             raise ValueError(f"Unknown method: {input_unit}")
+
     return output
 
 

@@ -10,14 +10,19 @@ This tutorial demonstrates how to simulate a nonlinear optical fiber communicati
 
 This tutorial is ideal for engineers or students interested in optical communications and nonlinear fiber effects.
 
+1. Introduction
+^^^^^^^^^^^^^^^
+
 Prerequisites
-^^^^^^^^^^^^^
+"""""""""""""
 
 Ensure you have the following Python libraries installed:
 
-- ``numpy``
-- ``matplotlib``
-- ``comnumpy``
+.. code::
+
+   numpy
+   matplotlib
+   comnumpy
 
 Note that the simulation can be computationally intensive and may take some time to run depending on your machine.
 

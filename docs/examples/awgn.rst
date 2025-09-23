@@ -1,125 +1,133 @@
-AWGN Chain Tutorial
-===================
+Monte Carlo Simulation over AWGN Channel
+========================================
 
-This tutorial guides you through setting up and running a communication chain simulation using the ``comnumpy`` library. We will simulate a communication chain with a specified modulation scheme and evaluate its performance in terms of Symbol Error Rate (SER) over various Signal-to-Noise Ratios (SNRs).
+In this tutorial, we will simulate a communication chain with **comnumpy** 
+and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).  
+This is done using a **Monte Carlo simulation**, where the chain is executed multiple times 
+for different SNR values and the experimental results are compared with theoretical predictions.
+
+
+Introduction
+^^^^^^^^^^^^
 
 Prerequisites
-^^^^^^^^^^^^^
+"""""""""""""
 
-Ensure you have the following Python libraries installed:
-- ``numpy``
-- ``matplotlib``
-- ``comnumpy``
+Make sure you have the following Python libraries installed:
 
-You can install any missing libraries using pip:
+.. code::
 
-.. code-block:: bash
+   numpy
+   matplotlib
+   comnumpy
+   tqdm
 
-    pip install numpy matplotlib
+Import Libraries
+""""""""""""""""
 
-Simulation Setup
-^^^^^^^^^^^^^^^^
-
-1. Import Libraries
-^^^^^^^^^^^^^^^^^^^
-
-Begin by importing the necessary libraries.
-
-.. code-block:: python
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from comnumpy.core import Sequential, Recorder
-    from comnumpy.core.generators import SymbolGenerator
-    from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-    from comnumpy.core.utils import get_alphabet
-    from comnumpy.core.channels import AWGN
-    from comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
-
-2. Define Parameters
-^^^^^^^^^^^^^^^^^^^^
-
-Set the parameters for the simulation.
-
-.. code-block:: python
-
-    M = 16  # Modulation order
-    N = 1000000  # Number of symbols
-    modulation = "QAM"  # Modulation scheme
-    alphabet = get_alphabet(modulation, M)  # Get alphabet for the modulation scheme
-    snr_dB_list = np.arange(0, 22)  # SNR range in dB
-
-3. Create Communication Chain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Define the communication chain using the ``Sequential`` class.
-
-.. code-block:: python
-
-    chain = Sequential([
-        SymbolGenerator(M),
-        Recorder(name="recorder_tx"),
-        SymbolMapper(alphabet),
-        AWGN(unit="snr_dB", name="awgn_channel"),
-        SymbolDemapper(alphabet),
-    ])
-
-Note that the unit parameters of the AWGN processor specifies the unit for the noise value.
-
-4. Monte Carlo Simulation
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Perform the simulation over the defined SNR range.
-
-.. code-block:: python
-
-    ser_array = np.zeros(len(snr_dB_list))
-
-    print("* Simulation results")
-    for index, snr_dB in enumerate(snr_dB_list):
-        chain["awgn_channel"].value = snr_dB
-        y = chain(N)
-        data_tx = chain["recorder_tx"].get_data()
-        ser = compute_ser(data_tx, y)
-        ser_array[index] = ser
-        print(f"SNR={snr_dB}: ser={ser} (exp)")
-
-5. Compute Theoretical SER
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Calculate the theoretical SER for comparison.
-
-.. code-block:: python
-
-    snr_per_bit = (10**(snr_dB_list/10))/np.log2(M)
-    ser_theo_array = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
-
-6. Plot Results
-^^^^^^^^^^^^^^^
-
-Visualize the SER performance.
-
-.. code-block:: python
-
-    plt.semilogy(snr_dB_list, ser_array, label="exp")
-    plt.semilogy(snr_dB_list, ser_theo_array, "--", label="theo")
-    plt.xlabel("SNR (dB)")
-    plt.ylabel("SER")
-    plt.title(f"SER performance for {M}-{modulation}")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-.. image:: img/monte_carlo_awgn.png
-
-Conclusion
-----------
-
-This tutorial demonstrated how to set up and run a communication chain simulation using the ``comnumpy`` library. You learned how to define the simulation parameters, create the communication chain, perform Monte Carlo simulations, compute theoretical SER, and plot the results.
-
-Complete Code
--------------
+We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :caption: Performance in AWGN Channel
+   :lines: 1-10
+
+
+Define Parameters
+"""""""""""""""""
+
+Next, we set the simulation parameters: the modulation order, number of transmitted symbols, 
+and the SNR range to evaluate.
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 13-18
+
+
+AWGN Communication Chain
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Define Chain
+""""""""""""
+
+We now define the communication chain using the ``Sequential`` object.  
+The chain includes symbol generation, mapping, transmission over an AWGN channel, 
+and symbol demapping.
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 19-26
+
+The processors are:
+
+- ``SymbolGenerator``  
+  Generates a stream of integer-valued symbols to transmit.
+
+- ``Recorder``  
+  Captures the transmitted symbols for later analysis.
+
+- ``SymbolMapper``  
+  Maps integers to QAM constellation points.
+
+- ``AWGN``  
+  Simulates the effect of noise for a given SNR value (here expressed in dB).
+
+- ``SymbolDemapper``  
+  Maps received noisy constellation points back to integers.
+
+Monte Carlo Simulation
+""""""""""""""""""""""
+
+We perform a Monte Carlo simulation over the entire SNR range.  
+At each iteration, we update the SNR value of the AWGN processor, run the chain, 
+and compute the experimental SER.
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 28-45
+
+
+Theoretical SER
+"""""""""""""""
+
+For comparison, we also compute the theoretical SER curve for QAM modulation over AWGN.
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 47-49
+
+
+Results and Visualization
+"""""""""""""""""""""""""
+
+Finally, we plot the experimental and theoretical SER curves.  
+A logarithmic (``semilogy``) scale is used for the SER axis, 
+which is the standard way to represent error rate curves in digital communications.
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 50-58
+
+.. image:: img/monte_carlo_awgn.png
+   :width: 100%
+   :align: center
+
+
+Conclusion
+^^^^^^^^^^
+
+Congratulations 🎉 You have completed a **Monte Carlo simulation of SER performance** 
+for a QAM-modulated communication system over an AWGN channel.
+
+You have learned how to:
+
+- Define a chain with modulation, channel, and demodulation.
+- Run Monte Carlo experiments for varying SNR values.
+- Compare experimental performance with theoretical benchmarks.
+- Plot standard SER performance curves.
+
+From here, you may want to:
+
+- Experiment with different modulation orders (e.g., 4-QAM, 64-QAM).
+- Extend the chain with coding or more realistic channel models.
+- Increase the number of transmitted symbols for more accurate SER estimation.
+

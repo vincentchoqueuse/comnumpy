@@ -15,8 +15,8 @@ img_dir = "../../docs/examples/img/"
 # parameters
 M = 16
 N_h = 5
-N = 1000
-sigma2 = 0.02
+N = 1280
+sigma2 = 0.015
 alphabet = get_alphabet("QAM", M)
 
 # generate a random selective channel
@@ -79,8 +79,8 @@ s_rx = ofdm_chain(N)
 stop_time = time.time()
 
 # extract signals, compute ser and elapsed time
-s_tx = ofdm_chain["data_tx"].get_data()[:N]
-data_rx = ofdm_chain["data_rx"].get_data()[:N]
+s_tx = ofdm_chain["data_tx"].get_data()
+data_rx = ofdm_chain["data_rx"].get_data()
 ser = compute_ser(s_tx, s_rx)
 elapsed_time = stop_time - start_time
 print(f"SER: {ser}")
@@ -89,6 +89,6 @@ print(f"elapsed time: {elapsed_time} s")
 # plot signal and save
 plt.figure()
 plt.plot(np.real(data_rx), np.imag(data_rx), ".")
-plt.title(f"OFDM Chain: received data (SER={ser})")
+plt.title(f"OFDM Chain: received data")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 plt.show()

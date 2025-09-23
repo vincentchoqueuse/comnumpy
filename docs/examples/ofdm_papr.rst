@@ -1,136 +1,142 @@
 PAPR in OFDM Communication
 ==========================
 
-This tutorial guides you through computing the Peak-to-Average Power Ratio (PAPR) of an Orthogonal Frequency-Division Multiplexing (OFDM) signal using the ``comnumpy`` library. We will reproduce the first figure from the following article :
+In this tutorial, we will compute the **Peak-to-Average Power Ratio (PAPR)** 
+of an OFDM signal using the ``comnumpy`` library.  
+We will reproduce the first figure from the article:
 
-* "An overview of peak-to-average power ratio reduction techniques for multicarrier transmission" by Han and Lee (2005).
+* "An overview of peak-to-average power ratio reduction techniques for multicarrier transmission"  
+  by Han and Lee (2005).
 
-Prerequisites
--------------
+You will learn how to:
 
-Ensure you have the following Python libraries installed:
-- ``numpy``
-- ``matplotlib``
-- ``tqdm``
-- ``comnumpy``
-
-You can install any missing libraries using pip:
-
-.. code-block:: bash
-
-    pip install numpy matplotlib tqdm
-
-Simulation Setup
-----------------
-
-1. Import Libraries
-^^^^^^^^^^^^^^^^^^^
-
-Begin by importing the necessary libraries:
-
-.. code-block:: python
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from tqdm import tqdm
-    from comnumpy.core import Sequential
-    from comnumpy.core.generators import SymbolGenerator
-    from comnumpy.core.mappers import SymbolMapper
-    from comnumpy.core.processors import Serial2Parallel
-    from comnumpy.core.utils import get_alphabet
-    from comnumpy.core.metrics import compute_ccdf
-    from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
-    from comnumpy.ofdm.metrics import compute_PAPR
-
-2. Define Parameters
-^^^^^^^^^^^^^^^^^^^^
-
-Set the parameters for the simulation:
-
-.. code-block:: python
-
-    N_cp = 0  # No cyclic prefix
-    N_sc_list = [256, 1024]  # Number of subcarriers to test
-    L = 10000  # Number of OFDM symbols
-    type, M = "PSK", 4  # Modulation type and order
-    alphabet = get_alphabet(type, M)
-    alphabet_generator = np.arange(M)
-    papr_dB_threshold = np.arange(4, 13, 0.1)
-    gamma = 10**(papr_dB_threshold/10)
-    os = 4  # Oversampling factor
-
-3. Create Communication Chain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Define the OFDM communication chain using the ``Sequential`` class:
-
-.. code-block:: python
-
-    chain = Sequential([
-        SymbolGenerator(M),
-        SymbolMapper(alphabet),
-        Serial2Parallel(N_sc_list[0], name="s2p"),
-        CarrierAllocator(carrier_type=[], name="carrier_allocator"),
-        IFFTProcessor(),
-    ])
-
-4. Perform Simulation
-^^^^^^^^^^^^^^^^^^^^^
-
-Run the simulation for each number of subcarriers:
-
-.. code-block:: python
-
-    for N_sc in tqdm(N_sc_list):
-        # Set Serial2Parallel and Carrier Allocation
-        carrier_type = np.zeros(os * N_sc)
-        carrier_type[:N_sc] = 1
-
-        chain["s2p"].set_N_sub(N_sc)
-        chain["carrier_allocator"].set_carrier_type(carrier_type)
-
-        # Generate data
-        N = N_sc * os * L
-        y = chain(N)
-
-        # Compute PAPR
-        papr_dB_array = compute_PAPR(y, unit="dB", axis=0)
-
-        # Compute and plot CCDF
-        papr_dB, ccdf = compute_ccdf(papr_dB_array)
-        plt.semilogy(papr_dB, ccdf, label=f"exp: N_sc={N_sc}")
-
-        # Plot theoretical CCDF
-        ccdf_theo = 1 - (1 - np.exp(-gamma))**(N_sc * os)
-        plt.semilogy(papr_dB_threshold, ccdf_theo, label=f"theo: N_sc={N_sc}")
-
-5. Plot Results
-^^^^^^^^^^^^^^^
-
-Visualize the Complementary Cumulative Distribution Function (CCDF) of the PAPR:
-
-.. code-block:: python
-
-    plt.ylim([1e-4, 1])
-    plt.xlim([6, 13])
-    plt.xlabel("PAPR (dB)")
-    plt.ylabel("CCDF")
-    plt.title("CCDFs of PAPR of an OFDM signal with 256 and 1024 subcarriers")
-    plt.grid()
-    plt.legend()
-    plt.show()
+- Build an OFDM chain with multiple subcarriers.
+- Compute the PAPR of a single OFDM signal.
+- Evaluate the **Complementary Cumulative Distribution Function (CCDF)** of PAPR.
+- Compare simulation results with theoretical curves.
 
 
-.. image:: img/monte_carlo_ofdm_papr.png
+Introduction
+^^^^^^^^^^^^
 
-Conclusion
-----------
+Import Libraries
+""""""""""""""""
 
-This tutorial demonstrated how to compute and visualize the PAPR of an OFDM signal using the ``comnumpy`` library. You learned how to set up the simulation parameters, create the OFDM communication chain, compute the PAPR, and plot the CCDF. The results were compared with theoretical CCDF curves to validate the implementation.
-
-Complete Code
--------------
+We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :caption: PAPR Computation in OFDM Communication
+   :lines: 1-13
+
+
+Define Parameters
+"""""""""""""""""
+
+Next, we define the simulation parameters:  
+the number of subcarriers, modulation, oversampling factor, and thresholds for PAPR analysis.
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 16-25
+
+Here:
+
+- ``N_sc``: number of subcarriers (1024 by default).  
+- ``L``: number of OFDM symbols to generate.  
+- ``os``: oversampling factor, used to better approximate the continuous-time signal.  
+- ``papr_dB_threshold``: thresholds (in dB) for computing theoretical CCDF curves.  
+
+
+OFDM Communication Chain
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We now build an OFDM transmission chain using ``Sequential``.  
+It includes symbol generation, mapping, serial-to-parallel conversion, 
+carrier allocation, and IFFT processing.
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 29-40
+
+
+PAPR metric
+"""""""""""
+
+When applying the Inverse Fourier Transform, we don't control the signal amplitude of the transformed signal. This can 
+be challenging for communications sensible non-linearities.
+
+To evaluate the amplitude of the generated signal, one popular metric is the Peak-to-Average Power Ratio (PAPR).
+Mathematically, the PAPR is defined as:
+
+.. math::
+
+   \mathrm{PAPR} = \frac{\max{|x[n]|^2}}{\mathbb{E}[|x[n]|^2]}
+
+where :math:`x[n]` is the transmitted OFDM signal.
+
+One Shot Signal
+"""""""""""""""
+
+Before running Monte Carlo simulations, we can evaluate the PAPR of a **single OFDM signal** 
+and plot its instantaneous power.   The computed PAPR value is displayed in the title of the figure.
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 42-51
+
+This produces a figure similar to:
+
+.. image:: img/monte_carlo_ofdm_papr_fig1.png
+   :width: 100%
+   :align: center
+   :alt: Instantaneous power of an OFDM signal and its PAPR
+
+
+Monte Carlo Simulation of CCDF
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We now perform a Monte Carlo simulation to estimate the **CCDF of the PAPR** 
+for two configurations (256 and 1024 subcarriers).  
+For each case, we also compare the results with the theoretical CCDF:
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 54-88
+
+The theoretical CCDF is given by:
+
+.. math::
+
+   \mathrm{CCDF} = 1 - \big(1 - e^{-\gamma}\big)^{N_{sc} \cdot os}
+
+where :math:`\gamma` is the normalized PAPR threshold.  
+
+The final figure displays both the experimental and theoretical CCDFs for 
+``N_sc = 256`` and ``N_sc = 1024`` subcarriers.
+
+.. image:: img/monte_carlo_ofdm_papr_fig2.png
+   :width: 100%
+   :align: center
+   :alt: CCDF of PAPR for OFDM with 256 and 1024 subcarriers
+
+As expected, the probability of large PAPR values increases with the number of subcarriers.  
+For example, with 1024 subcarriers and an oversampling factor of 4, 
+a **PAPR around 12 dB** is typically observed at CCDF = 10⁻³.
+
+
+7. Conclusion
+^^^^^^^^^^^^^
+
+Congratulations 🎉 You have successfully simulated the **PAPR of an OFDM signal** 
+and compared experimental results with theoretical CCDFs.  
+
+You have learned how to:
+
+- Define an OFDM chain with adjustable parameters.  
+- Compute the PAPR of a single OFDM waveform.  
+- Estimate the CCDF of the PAPR through Monte Carlo simulation.  
+- Compare simulation results with theoretical benchmarks.  
+
+Key takeaway:  
+**OFDM signals exhibit high PAPR (≈10–13 dB depending on system size), 
+which motivates PAPR reduction techniques such as clipping, coding, or tone reservation.**

@@ -59,7 +59,7 @@ class AWGN(Processor):
             case "measured": 
                 sigma2s = np.sum(np.abs(X)**2) / np.prod(X.shape)
             case "fixed":
-                sigma2s = self.value
+                sigma2s = self.sigma2s
             case _:
                 raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
 
