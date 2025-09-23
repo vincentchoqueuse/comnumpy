@@ -31,7 +31,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c1e2a009" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
   
   <!-- So that users can add custom icons -->
   <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -42,10 +42,19 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'getting_started/first_simulation';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Profiling Chain Performance" href="processor_profiling.html" />
+    <link rel="next" title="Profiling a Communication Chain" href="processor_profiling.html" />
     <link rel="prev" title="Who is this library for?" href="who_is_comnumpy_for.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -310,7 +319,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="who_is_comnumpy_for.html">Who is this library for?</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">First Simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processor_profiling.html">Profiling Chain Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processor_profiling.html">Profiling a Communication Chain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to Comnumpy</a></li>
 </ul>
 </div>
@@ -374,70 +383,137 @@
                   
   <section id="first-simulation">
 <h1>First Simulation<a class="headerlink" href="#first-simulation" title="Link to this heading">#</a></h1>
-<p>This tutorial guides you through running a simple communication simulation using comnumpy.
-You will create a basic QAM communication chain, transmit symbols through an AWGN channel,
+<p>This tutorial will guide you through running a simple communication simulation using <strong>comnumpy</strong>.
+You will build a basic QAM communication chain, transmit symbols through an AWGN channel,
 and evaluate the Symbol Error Rate (SER).</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Make sure you have installed:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">numpy</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">matplotlib</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">comnumpy</span></code></p></li>
-</ul>
-<section id="step-1-import-libraries-and-define-parameters">
-<h3>Step 1: Import Libraries and Define Parameters<a class="headerlink" href="#step-1-import-libraries-and-define-parameters" title="Link to this heading">#</a></h3>
-<p>First, import the necessary libraries and define simulation parameters:</p>
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Make sure you have the following Python libraries installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">matplotlib</span>
+<span class="n">comnumpy</span>
+</pre></div>
+</div>
+</section>
+<section id="import-libraries">
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the necessary libraries and defining the simulation parameters:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
-
-<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/img/&quot;</span>
-
-<span class="c1"># parameters</span>
-<span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>           <span class="c1"># Modulation order (4-QAM)</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>        <span class="c1"># Number of symbols</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
-<span class="n">snr_dB</span> <span class="o">=</span> <span class="mi">10</span>     <span class="c1"># Signal-to-Noise Ratio in dB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_metric_awgn_theo</span>
 </pre></div>
 </div>
 </section>
-<section id="step-2-define-communication-chain">
-<h3>Step 2: Define Communication Chain<a class="headerlink" href="#step-2-define-communication-chain" title="Link to this heading">#</a></h3>
-<p>Define the communication chain using the Sequential class, including symbol generation, mapping, and channel:</p>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>Next, we define some communication parameters such as the modulation order,
+the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
+<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>       <span class="c1"># Modulation order (4-QAM)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span>   <span class="c1"># Number of symbols</span>
+<span class="n">snr_dB</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># Signal-to-Noise Ratio in dB</span>
+
+<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</section>
+</section>
+<section id="awgn-communication-chain">
+<h2>AWGN Communication Chain<a class="headerlink" href="#awgn-communication-chain" title="Link to this heading">#</a></h2>
+<section id="define-the-chain">
+<h3>Define the Chain<a class="headerlink" href="#define-the-chain" title="Link to this heading">#</a></h3>
+<p>To create a communication chain, we use the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
+A <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object takes a list of processor objects as input.
+The <strong>comnumpy</strong> library provides a wide range of processors for modulation,
+coding, channel modeling, and more.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define a communication chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-            <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
+            <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">),</span>
             <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-            <span class="n">AWGN</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
+            <span class="n">AWGN</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">),</span>
+            <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;recorder_rx&quot;</span><span class="p">),</span>
+            <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
         <span class="p">])</span>
-
-<span class="c1"># test chain</span>
+</pre></div>
+</div>
+<p>In this simulation, the communication chain is composed of <strong>six processor objects</strong>:</p>
+<pre  class="mermaid">
+        graph LR;
+   A[Generator] --&gt; B[Recorder];
+   B --&gt; C[Mapper];
+   C --&gt; D[AWGN];
+   D --&gt; E[Recorder];
+   E --&gt; F[Demapper];
+    </pre><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code>
+Generates a sequence of integers in the range <span class="math notranslate nohighlight">\([0, M-1]\)</span>. Each integer represents a symbol to be transmitted.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code>
+Records an input signal at a specific point in the chain.
+This class is particularly useful for extracting signals for analysis (e.g., transmitted or received data).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
+Maps each integer symbol to a corresponding point in the complex constellation (e.g., QAM symbols).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AWGN</span></code>
+Simulates an <strong>Additive White Gaussian Noise</strong> channel, modeling the effect of thermal noise on the transmitted signal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
+Performs the inverse mapping operation by associating each received point with the nearest constellation symbol.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code> (again)
+A second recorder can be inserted after the channel to capture the noisy received symbols for further analysis (e.g., plotting constellations).</p></li>
+</ul>
+</section>
+<section id="simulate-the-chain">
+<h3>Simulate the Chain<a class="headerlink" href="#simulate-the-chain" title="Link to this heading">#</a></h3>
+<p>To run the simulation, simply call the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object with the desired number of symbols:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># test chain</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="step-3-run-the-chain-and-evaluate-performance">
-<h3>Step 3: Run the Chain and Evaluate Performance<a class="headerlink" href="#step-3-run-the-chain-and-evaluate-performance" title="Link to this heading">#</a></h3>
-<p>Run the chain and compute the SER to assess system performance:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate performance</span>
-<span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<section id="evaluate-performance">
+<h3>Evaluate Performance<a class="headerlink" href="#evaluate-performance" title="Link to this heading">#</a></h3>
+<p>Next, we evaluate the performance of the communication system using standard metrics.
+Here, we compute the <strong>Symbol Error Rate (SER)</strong>, estimated from the transmitted and detected symbols.
+This estimated SER is then compared with the theoretical value.</p>
+<p>To extract the transmitted symbols, we use the method <code class="docutils literal notranslate"><span class="pre">get_data()</span></code> of the <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object.
+A <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> can be placed at different locations in the chain depending on your needs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate simulation performance</span>
+<span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">data_tx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER = </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># extract theoretical performance</span>
+<span class="n">snr_per_bit</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<span class="n">ser_theo</span> <span class="o">=</span> <span class="n">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span>
+
+<span class="c1"># display results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (simu)= </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (theo)= </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>For this simulation, we obtain for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span> <span class="p">(</span><span class="n">simu</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0013</span>
+<span class="n">SER</span> <span class="p">(</span><span class="n">theo</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0015647896369451741</span>
+</pre></div>
+</div>
+<p>Note: for small SER values, it is often recommended to increase <code class="docutils literal notranslate"><span class="pre">N</span></code>
+(the number of transmitted symbols) in order to improve the estimation accuracy.</p>
 </section>
-<section id="step-4-visualize-the-received-constellation">
-<h3>Step 4: Visualize the Received Constellation<a class="headerlink" href="#step-4-visualize-the-received-constellation" title="Link to this heading">#</a></h3>
-<p>Finally, plot the received symbols to visualize the effect of noise on the constellation:</p>
+<section id="plot-the-constellation">
+<h3>Plot the Constellation<a class="headerlink" href="#plot-the-constellation" title="Link to this heading">#</a></h3>
+<p>Visualizing the constellation of the received data can also be insightful.
+We again use a <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object to capture the received symbols and then
+plot them with <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot signals</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+<span class="n">data_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;recorder_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Received Constellation Diagram&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;In-phase&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Quadrature&quot;</span><span class="p">)</span>
@@ -445,17 +521,19 @@ and evaluate the Symbol Error Rate (SER).</p>
 
 </pre></div>
 </div>
-<img alt="Received constellation diagram" class="align-center" src="../_images/first_simulation_fig1.png" />
+<a class="reference internal image-reference" href="../_images/first_simulation_fig1.png"><img alt="../_images/first_simulation_fig1.png" class="align-center" src="../_images/first_simulation_fig1.png" style="width: 100%;" />
+</a>
 </section>
-<section id="next-steps">
-<h3>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h3>
-<p>Now that you’ve completed your first simulation, consider exploring:</p>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>Congratulations on completing your first steps with the <strong>comnumpy</strong> library! 🎉</p>
+<p>From here, you may want to explore:</p>
 <ul class="simple">
-<li><p>OFDM and MIMO tutorials for advanced communication techniques.</p></li>
-<li><p>The full comnumpy documentation for detailed API reference.</p></li>
-<li><p>Experimenting by changing modulation orders, SNR, and channel models.</p></li>
+<li><p><strong>OFDM and MIMO tutorials</strong> for more advanced communication techniques.</p></li>
+<li><p>The full <strong>comnumpy documentation</strong> for a detailed API reference.</p></li>
+<li><p>Experiments with different modulation orders, SNR values, and channel models.</p></li>
 </ul>
-</section>
 </section>
 </section>
 
@@ -483,7 +561,7 @@ and evaluate the Symbol Error Rate (SER).</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Profiling Chain Performance</p>
+        <p class="prev-next-title">Profiling a Communication Chain</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -506,14 +584,20 @@ and evaluate the Symbol Error Rate (SER).</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-import-libraries-and-define-parameters">Step 1: Import Libraries and Define Parameters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-define-communication-chain">Step 2: Define Communication Chain</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-run-the-chain-and-evaluate-performance">Step 3: Run the Chain and Evaluate Performance</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-visualize-the-received-constellation">Step 4: Visualize the Received Constellation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#awgn-communication-chain">AWGN Communication Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-the-chain">Define the Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulate-the-chain">Simulate the Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluate-performance">Evaluate Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-constellation">Plot the Constellation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
 

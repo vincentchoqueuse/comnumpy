@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>OFDM Chain Tutorial &#8212; comnumpy  documentation</title>
+    <title>OFDM Tutorial &#8212; comnumpy  documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c1e2a009" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
   
   <!-- So that users can add custom icons -->
   <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -55,7 +55,7 @@ window.addEventListener("load", () => mermaid.run());
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PAPR in OFDM Communication" href="ofdm_papr.html" />
-    <link rel="prev" title="AWGN Chain Tutorial" href="awgn.html" />
+    <link rel="prev" title="Monte Carlo Simulation over AWGN Channel" href="awgn.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -316,8 +316,8 @@ window.addEventListener("load", () => mermaid.run());
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="awgn.html">AWGN Chain Tutorial</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">OFDM Chain Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
@@ -364,7 +364,7 @@ window.addEventListener("load", () => mermaid.run());
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Examples</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">OFDM Chain Tutorial</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">OFDM Tutorial</span></li>
   </ul>
 </nav>
 </div>
@@ -381,30 +381,23 @@ window.addEventListener("load", () => mermaid.run());
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="ofdm-chain-tutorial">
-<h1>OFDM Chain Tutorial<a class="headerlink" href="#ofdm-chain-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial guides you through simulating a selective channel and comparing the performance of a Single Carrier (SC) system and an OFDM system using the  <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You’ll learn how to:</p>
+  <section id="ofdm-tutorial">
+<h1>OFDM Tutorial<a class="headerlink" href="#ofdm-tutorial" title="Link to this heading">#</a></h1>
+<p>In this tutorial, we will compare the performance of a <strong>Single Carrier (SC)</strong> system
+and an <strong>OFDM</strong> system over a <strong>frequency-selective multipath channel</strong> using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.
+You will learn how to:</p>
 <ul class="simple">
-<li><p>Define and simulate realistic communication channels.</p></li>
-<li><p>Evaluate performance using Symbol Error Rate (SER).</p></li>
-<li><p>Understand why OFDM performs better in multipath environments.</p></li>
+<li><p>Define and simulate a frequency-selective channel.</p></li>
+<li><p>Evaluate performance using the Symbol Error Rate (SER).</p></li>
+<li><p>Understand why OFDM outperforms SC in multipath environments.</p></li>
 </ul>
-<p>This tutorial is suitable for both engineers and students interested in digital communications, and serves - as both a practical example and a theoretical insight.</p>
-<section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Ensure you have the following Python libraries installed:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">numpy</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">matplotlib</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">comnumpy</span></code></p></li>
-</ul>
-</section>
-<section id="simulation-setup">
-<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
-</section>
+<p>This tutorial is suitable for both engineers and students interested in digital communications,
+and provides both practical examples and theoretical insights.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="import-libraries">
-<h2>1. Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h2>
-<p>Begin by importing the necessary libraries</p>
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
@@ -419,15 +412,16 @@ window.addEventListener("load", () => mermaid.run());
 </pre></div>
 </div>
 </section>
-<section id="define-simulation-parameters">
-<h2>2. Define Simulation Parameters<a class="headerlink" href="#define-simulation-parameters" title="Link to this heading">#</a></h2>
-<p>Let us define some communication parameters</p>
+<section id="simulation-parameters">
+<h3>Simulation Parameters<a class="headerlink" href="#simulation-parameters" title="Link to this heading">#</a></h3>
+<p>Next, we define the parameters of the communication chain,
+including the modulation order and the channel taps for a frequency-selective channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.02</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1280</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.015</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 
 <span class="c1"># generate a random selective channel</span>
@@ -435,48 +429,40 @@ window.addEventListener("load", () => mermaid.run());
 <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 </pre></div>
 </div>
-<p>The two last lines define the taps of a frequency-selective multipath channel.
-The first tap is normalized to 1 in order to preserve the overall channel energy.</p>
-<p>Mathematically, the input–output relationship of such a channel is given by</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">h</span></code> represents the impulse response of the channel.
+The first tap is normalized to 1 to preserve the overall channel energy.</p>
+</section>
+</section>
+<section id="frequency-selective-channel">
+<h2>Frequency-Selective Channel<a class="headerlink" href="#frequency-selective-channel" title="Link to this heading">#</a></h2>
+<p>The input–output relation of a frequency-selective channel is:</p>
 <div class="math notranslate nohighlight">
-\[z[n] = h * x[n] + b[n] = \sum_{l=0}^{L_{\text{tap}}-1} h[l]\,x[n-l] + b[n]\]</div>
-<p>where <span class="math notranslate nohighlight">\(*\)</span> denotes the convolution operator.
-This type of channel introduces inter-symbol interference (ISI) in single-carrier systems since the received sample <span class="math notranslate nohighlight">\(z[n]\)</span> depends on multiple transmitted symbols <span class="math notranslate nohighlight">\(x[n]\)</span>.</p>
-<p>If we stack <span class="math notranslate nohighlight">\(N\)</span> consecutive received samples into a column vector <span class="math notranslate nohighlight">\(\mathbf{z}\)</span>, we obtain the following compact matrix formulation:</p>
+\[z[n] = \sum_{l=0}^{L-1} h[l]\,x[n-l] + b[n]\]</div>
+<p>where <span class="math notranslate nohighlight">\(h[l]\)</span> are the channel taps and <span class="math notranslate nohighlight">\(b[n]\)</span> is the noise.
+This is also called a Finite Impulse Response (FIR) channel.</p>
+<p>Stacking <span class="math notranslate nohighlight">\(N\)</span> samples into a vector form:</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{z} = \mathbf{H}\mathbf{x} + \mathbf{b}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is a <strong>Toeplitz convolution matrix</strong> constructed from the channel taps. For example, if <span class="math notranslate nohighlight">\(\mathbf{x} = [x[0], x[1], \dots, x[N-1]]^T\)</span>, then <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> takes the form</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}\mathbf{H}=
-\begin{bmatrix}
-h[0]   &amp; 0      &amp; \cdots &amp; 0 \\
-h[1]   &amp; h[0]   &amp; \ddots &amp; \vdots \\
-h[2]   &amp; h[1]   &amp; \ddots &amp; \vdots \\
-\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-0      &amp; 0      &amp; \cdots &amp; h[L-1]
-\end{bmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is a Toeplitz convolution matrix constructed from the taps.
+This formulation highlights that <strong>ISI (Inter-Symbol Interference)</strong> is unavoidable in SC systems.</p>
 </section>
-<section id="single-carrier-chain">
-<h2>3. Single Carrier Chain<a class="headerlink" href="#single-carrier-chain" title="Link to this heading">#</a></h2>
-<section id="signal-model">
-<h3>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h3>
-<p>Let’s build a basic SC simulation to illustrate the performance in a selective channel:</p>
+<section id="single-carrier-communication-chain">
+<h2>Single-Carrier Communication Chain<a class="headerlink" href="#single-carrier-communication-chain" title="Link to this heading">#</a></h2>
+<p>The SC chain is defined as:</p>
 <pre  class="mermaid">
         graph LR;
-   A[Generator] --&gt; C[Mapper];
-   C --&gt; D[Channel];
-   D --&gt; E[AWGN];
-   E --&gt; G[Equalizer];
-   G --&gt; H[Demapper];
-    </pre><p>At the receiver, the channel is compensated using a simple Zero-Forcing (ZF) equalizer:</p>
+   A[Generator] --&gt; B[Mapper];
+   B --&gt; C[Channel];
+   C --&gt; D[AWGN];
+   D --&gt; E[Equalizer];
+   E --&gt; F[Demapper];
+    </pre><p>At the receiver, we apply a <strong>Zero-Forcing (ZF) equalizer</strong>:</p>
 <div class="math notranslate nohighlight">
 \[\widehat{\mathbf{x}} = \mathbf{H}^{\dagger}\mathbf{z}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger}\)</span> denotes the pseudo-inverse of the channel matrix.
-Note that, due to the large number of transmitted samples, the implementation of more sophisticated detectors—such as the Maximum Likelihood (ML) detector—becomes computationally prohibitive.</p>
-</section>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger}\)</span> is the pseudo-inverse of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span>.</p>
 <section id="implementation">
 <h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
-<p>In <strong>comnumpy</strong>, this communication chain can be conveniently implemented as follows:</p>
+<p>The chain is implemented in <strong>comnumpy</strong> as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a simple single carrier chain and simulate</span>
 <span class="n">simple_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
@@ -498,7 +484,8 @@ Note that, due to the large number of transmitted samples, the implementation of
 </section>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
-<p>To evaluate this communication chain, we can evaluate some detection metric (such as SER) and the computational complexity measured in terms of computational time. We can also plot the signal constellation before and after the equalizer to highlight the benefit of the ZF equalizer.</p>
+<p>We now evaluate the performance by computing the SER, the execution time,
+and plotting constellations before and after equalization:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># extract signals, compute ser and elapsed time</span>
 <span class="n">s_tx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
@@ -518,31 +505,32 @@ Note that, due to the large number of transmitted samples, the implementation of
     <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>For the single-carrier chain, we obtain:</p>
+<p>For the SC chain, we obtain:</p>
 <ul class="simple">
-<li><p>A Symbol Error Rate (SER) equals to : 0.007</p></li>
-<li><p>A total computational time equals to: 0.562s</p></li>
+<li><p><strong>SER</strong> = 0.007</p></li>
+<li><p><strong>Execution time</strong> = 0.562 s</p></li>
 </ul>
-<p>The following figures present the constellation of the the received signal before and after linear equalization.</p>
-<img alt="../_images/one_shot_ofdm_fig1.png" src="../_images/one_shot_ofdm_fig1.png" />
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig1.png"><img alt="Constellations before and after equalization (Single Carrier)" class="align-center" src="../_images/one_shot_ofdm_fig1.png" style="width: 100%;" />
+</a>
 </section>
 </section>
-<section id="ofdm-chain">
-<h2>4. OFDM Chain<a class="headerlink" href="#ofdm-chain" title="Link to this heading">#</a></h2>
-<p>In frequency-selective channels, the conventional single-carrier chain suffers from suboptimal detection performance and high computational complexity, mainly due to the need to invert a large matrix. A common solution to overcome this limitation is to employ an OFDM chain.</p>
-<section id="id1">
-<h3>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<section id="ofdm-communication-chain">
+<h2>OFDM Communication chain<a class="headerlink" href="#ofdm-communication-chain" title="Link to this heading">#</a></h2>
+<p>In SC systems, equalization requires matrix inversion, which is computationally expensive.
+OFDM transforms the channel into a set of parallel flat-fading subchannels,
+each equalized with a <strong>simple one-tap filter</strong>.
+This drastically reduces complexity and improves performance.</p>
+<p>The OFDM chain can be visualized as:</p>
 <pre  class="mermaid">
         graph LR;
    A[Generator] --&gt; B[Mapper];
    B --&gt; C[OFDM Tx];
    C --&gt; D[Channel];
    D --&gt; E[AWGN];
-   E --&gt; G[OFDM Rx];
-   G --&gt; H[Demapper];
-    </pre><p>The OFDM transmitter and receiver can be decomposed as follows:</p>
-<ul class="simple">
-<li><p>OFDM TX:</p></li>
+   E --&gt; F[OFDM Rx];
+   F --&gt; G[Demapper];
+    </pre><ul class="simple">
+<li><p>Transmitter (TX)</p></li>
 </ul>
 <pre  class="mermaid">
         graph LR;
@@ -550,39 +538,31 @@ Note that, due to the large number of transmitted samples, the implementation of
    B --&gt; C[IDFT];
    C --&gt; D[CP add];
    D --&gt; E[P2S];
-   E --&gt; G[Channel];
     </pre><ul class="simple">
-<li><p>OFDM RX:</p></li>
+<li><p>Receiver (RX)</p></li>
 </ul>
 <pre  class="mermaid">
         graph LR;
-   A[Channel] --&gt; B[P2S];
-   B --&gt; C[CP del];
-   C --&gt; D[DFT];
-   D --&gt; E[Equalizer];
-   E --&gt; F[P2S];
-    </pre><p>where</p>
+   A[P2S] --&gt; B[CP del];
+   B --&gt; C[DFT];
+   C --&gt; D[Equalizer];
+   D --&gt; E[P2S];
+    </pre><p>Key blocks:</p>
 <ul class="simple">
-<li><p>S2P / P2S: Serial-to-Parallel and Parallel-to-Serial converters. S2P takes the incoming serial bitstream and splits it into :math:N_{sc} parallel symbol streams, while P2S performs the reverse operation.</p></li>
-<li><p>IDFT / DFT: The Inverse Discrete Fourier Transform (TX) generates the time-domain OFDM signal from frequency-domain symbols. At the RX, the DFT transforms the received time-domain samples back into the frequency domain.</p></li>
-<li><p>CP add / CP del: The Cyclic Prefix is appended at the transmitter to mitigate intersymbol interference caused by multipath. At the receiver, this prefix is removed before further processing.</p></li>
-<li><p>Equalizer: Compensates for the distortions introduced by the channel (e.g. frequency-selective fading), restoring the original symbol constellation as closely as possible.</p></li>
+<li><p><strong>S2P / P2S</strong>: Serial-to-Parallel and Parallel-to-Serial converters.</p></li>
+<li><p><strong>IDFT / DFT</strong>: Transform between frequency and time domains.</p></li>
+<li><p><strong>CP add / CP del</strong>: Insert/remove Cyclic Prefix to handle ISI.</p></li>
+<li><p><strong>Equalizer</strong>: One-tap equalization per subcarrier.</p></li>
 </ul>
-<p>The main advantage of this structure is that, before equalization, one can verify that the received vector can be written as</p>
+<p>Mathematically, the received vector is:</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{z} = \mathbf{D}\mathbf{x} + \mathbf{n}\]</div>
-<p>where</p>
-<div class="math notranslate nohighlight">
-\[\mathbf{D} = \textrm{diag}\big(H[0],H[1],\dots,H[N-1]\big)\]</div>
-<p>is a diagonal matrix, and</p>
-<div class="math notranslate nohighlight">
-\[H[k]=\sum_{l=0}^{L-1} h[l]e^{-j\frac{2\pi}{N}kl}\]</div>
-<p>corresponds to the DFT of the channel impulse response.</p>
-<p>In other words, an OFDM system transforms a frequency-selective channel into a bank of parallel flat-fading subchannels, each of which can be equalized independently with a simple one-tap detector (e.g., ML, ZF, or MMSE). This property follows from the cyclic prefix (CP): inserting and removing the CP turns linear convolution into circular convolution, which is diagonalized by the DFT/IDFT matrices. Note that the multiplication with DFT/IDFT matrices can be computed efficiently via the FFT/IFFT, allowing to drastically reduce the computational complexity.</p>
-</section>
-<section id="id2">
-<h3>Implementation<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
-<p>We can easily simulate the OFDM communication chain using <strong>comnumpy</strong> as follows:</p>
+<p>with <span class="math notranslate nohighlight">\(\mathbf{D} = \mathrm{diag}(H[0], H[1], \dots, H[N-1])\)</span>,
+where <span class="math notranslate nohighlight">\(H[k]\)</span> is the channel frequency response.
+Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
+<section id="id1">
+<h3>Implementation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>The OFDM chain in <strong>comnumpy</strong> is implemented as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig1.png&quot;</span><span class="p">)</span>
 
 <span class="c1"># create an OFDM chain and simulate</span>
@@ -606,11 +586,12 @@ Note that, due to the large number of transmitted samples, the implementation of
 </pre></div>
 </div>
 </section>
-<section id="id3">
-<h3>Results<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<section id="id2">
+<h3>Results<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>We compute SER and runtime, and plot the received constellation:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals, compute ser and elapsed time</span>
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[:</span><span class="n">N</span><span class="p">]</span>
-<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[:</span><span class="n">N</span><span class="p">]</span>
+<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="s2">&quot;data_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
 <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -619,35 +600,31 @@ Note that, due to the large number of transmitted samples, the implementation of
 <span class="c1"># plot signal and save</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OFDM Chain: received data (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OFDM Chain: received data&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For the OFDM chain, we obtain the following results:</p>
+<p>For the OFDM chain, we obtain:</p>
 <ul class="simple">
-<li><p>Symbol Error Rate (SER): 0.004 ( &lt; 0.007)</p></li>
-<li><p>Total computational time: 0.007s ( &lt; 0.562s)</p></li>
+<li><p><strong>SER</strong> = 0.004 (improved vs SC)</p></li>
+<li><p><strong>Execution time</strong> = 0.007 s (much lower than SC)</p></li>
 </ul>
-<p>Note that this substantial reduction in computational complexity stems from the fact that channel equalization reduces to the inversion of a diagonal matrix, while the OFDM transmitter and receiver rely on Fast Fourier Transform (FFT) algorithms. Concerning the Symbol Error Rate (SER), the improvement arises from the fact that, under Gaussian noise, the receiver uses a Maximum Likelihood detector under flat fading channels.</p>
-<img alt="../_images/one_shot_ofdm_fig2.png" src="../_images/one_shot_ofdm_fig2.png" />
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Constellation at OFDM receiver" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
+</a>
 </section>
-</section>
-<section id="why-is-ofdm-more-robust">
-<h2>Why is OFDM more robust?<a class="headerlink" href="#why-is-ofdm-more-robust" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>The FIR channel introduces frequency selectivity (some frequencies are attenuated more than others).</p></li>
-<li><p>Single carrier systems suffer from ISI and frequency nulls.</p></li>
-<li><p>OFDM spreads the information over multiple narrowband subcarriers. Each subcarrier experiences a flat channel (or close to flat), equalization becomes trivial (1 tap per subcarrier), and the cyclic prefix prevents ISI, as long as the prefix is longer than the channel.</p></li>
-</ul>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>This tutorial highlighted:</p>
+<p>Congratulations 🎉 You have compared <strong>Single Carrier</strong> and <strong>OFDM</strong> systems in a multipath channel.</p>
+<p>You have learned how to:</p>
 <ul class="simple">
-<li><p>How to use comnumpy to simulate both SC and OFDM systems.</p></li>
-<li><p>Why OFDM is well-suited for real-world channels.</p></li>
-<li><p>How to assess system performance using SER and plots.</p></li>
+<li><p>Model a frequency-selective FIR channel in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
+<li><p>Simulate SC and OFDM systems.</p></li>
+<li><p>Apply ZF equalization in SC vs one-tap equalization in OFDM.</p></li>
+<li><p>Compare performance in terms of SER and computational time.</p></li>
 </ul>
-<p>By building modular processing chains and using the built-in blocks of comnumpy, you can quickly prototype and validate your ideas — whether you’re teaching, learning, or experimenting.</p>
+<p>Key takeaway:
+<strong>OFDM transforms a frequency-selective channel into flat-fading subchannels,
+allowing simple equalization and superior performance in realistic multipath environments.</strong></p>
 </section>
 </section>
 
@@ -667,7 +644,7 @@ Note that, due to the large number of transmitted samples, the implementation of
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">AWGN Chain Tutorial</p>
+        <p class="prev-next-title">Monte Carlo Simulation over AWGN Channel</p>
       </div>
     </a>
     <a class="right-next"
@@ -698,23 +675,22 @@ Note that, due to the large number of transmitted samples, the implementation of
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-simulation-parameters">2. Define Simulation Parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#single-carrier-chain">3. Single Carrier Chain</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#signal-model">Signal Model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-parameters">Simulation Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency-selective-channel">Frequency-Selective Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#single-carrier-communication-chain">Single-Carrier Communication Chain</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ofdm-chain">4. OFDM Chain</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Signal Model</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Implementation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ofdm-communication-chain">OFDM Communication chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Results</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-is-ofdm-more-robust">Why is OFDM more robust?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>

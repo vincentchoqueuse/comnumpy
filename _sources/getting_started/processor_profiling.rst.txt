@@ -1,142 +1,115 @@
-Profiling Chain Performance
-===========================
+Profiling a Communication Chain
+===============================
 
-Understanding the performance of your communication chain is crucial for optimizing simulations and identifying bottlenecks. This tutorial will guide you through profiling the execution time of each processor in a communication chain using ``comnumpy``.
+In this tutorial, we will learn how to **profile** a communication chain using **comnumpy**.  
+Profiling allows us to evaluate the computational cost of each processor, helping to identify performance bottlenecks in complex simulations.
+
+We will build an **OFDM communication chain** with channel effects, run the simulation, and visualize the profiling results.
+
 
 Introduction
-------------
+^^^^^^^^^^^^
 
-Profiling helps you measure the time each component in your communication chain takes to execute. By identifying the most time-consuming processes, you can optimize your simulations for better performance.
+Import Libraries
+""""""""""""""""
 
-Prerequisites
--------------
+We start by importing the necessary libraries:
 
-Ensure you have the following Python libraries installed:
-- ``numpy``
-- ``matplotlib``
-- ``comnumpy``
+.. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
+   :language: python
+   :lines: 1-13
 
-You can install any missing libraries using pip:
+Define Parameters
+"""""""""""""""""
 
-.. code-block:: bash
+Next, we define the communication and channel parameters:
 
-    pip install numpy matplotlib
+.. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
+   :language: python
+   :lines: 16-35
 
-Profiling Example
------------------
 
-Let's walk through an example of profiling an OFDM communication chain. This example will demonstrate how to set up the chain, run the profiling, and visualize the results.
-
-Step 1: Import Libraries
+OFDM Communication Chain
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Begin by importing the necessary libraries:
+Define the Chain
+""""""""""""""""
 
-.. code-block:: python
+We now build a complete OFDM chain using the ``Sequential`` object.  
+This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix insertion, channel effects, equalization, and demapping.
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from comnumpy.core import Sequential, Recorder
-    from comnumpy.core.generators import SymbolGenerator
-    from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-    from comnumpy.core.channels import AWGN, FIRChannel
-    from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
-    from comnumpy.core.utils import get_alphabet
-    from comnumpy.core.metrics import compute_ser
-    from comnumpy.core.visualizers import plot_chain_profiling
-    from comnumpy.ofdm.processors import (
-        CarrierAllocator, FFTProcessor, IFFTProcessor,
-        CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
-    )
-    from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
-    from comnumpy.ofdm.utils import get_standard_carrier_allocation
+.. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
+   :language: python
+   :lines: 38-56
 
-Step 2: Define Parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^
+The chain is composed of the following processors:
 
-Set the parameters for the simulation:
+- ``SymbolGenerator``  
+  Generates a sequence of integer-valued symbols to transmit.
 
-.. code-block:: python
+- ``SymbolMapper``  
+  Maps integers to QAM constellation points.
 
-    M = 16  # Modulation order
-    N_h = 5  # Number of channel taps
-    N_cp = 10  # Cyclic prefix length
-    N = 100000  # Number of symbols
-    sigma2 = 0.01  # Noise variance
-    alphabet = get_alphabet("QAM", M)  # Get alphabet for QAM modulation
-    carrier_type = get_standard_carrier_allocation("802.11ah_128")  # Standard carrier allocation
+- ``Serial2Parallel`` / ``Parallel2Serial``  
+  Reshape data between serial and parallel streams, useful for OFDM.
 
-Step 3: Extract Carrier Information
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- ``CarrierAllocator``  
+  Assigns data and pilot symbols to their designated subcarriers.
 
-Determine the number of carriers and their types:
+- ``IFFTProcessor`` / ``FFTProcessor``  
+  Perform the Inverse Fast Fourier Transform and Fast Fourier Transform operations, respectively.
 
-.. code-block:: python
+- ``CyclicPrefixer`` / ``CyclicPrefixRemover``  
+  Add and remove the cyclic prefix to mitigate inter-symbol interference.
 
-    N_carriers = len(carrier_type)
-    N_carrier_data = np.sum(carrier_type == 1)  # Number of data carriers
-    N_carrier_pilots = np.sum(carrier_type == 2)  # Number of pilot carriers
+- ``FIRChannel``  
+  Models a frequency-selective multipath channel.
 
-Step 4: Generate Channel
-^^^^^^^^^^^^^^^^^^^^^^^^
+- ``AWGN``  
+  Adds white Gaussian noise.
 
-Create a random channel impulse response:
+- ``FrequencyDomainEqualizer``  
+  Compensates for channel distortions in the frequency domain.
 
-.. code-block:: python
+- ``CarrierExtractor``  
+  Extracts data and pilot carriers after equalization.
 
-    h = 0.1 * (np.random.randn(N_h) + 1j * np.random.randn(N_h))
-    h[0] = 1
-    pilots = 10 * np.ones(N_carrier_pilots)  # Pilot values
+- ``SymbolDemapper``  
+  Maps received constellation points back to integer symbols.
 
-Step 5: Create Communication Chain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Define the OFDM communication chain using the ``Sequential`` class:
+Profiling the Chain
+^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: python
+To profile the chain, we use the ``plot_chain_profiling`` function.  
+This function measures the execution time of each processor for a given input size 
+and produces a bar chart of the results.
 
-    chain = Sequential([
-        SymbolGenerator(M),
-        Recorder(name="data_tx"),
-        SymbolMapper(alphabet, name="mapper_tx"),
-        Serial2Parallel(N_carrier_data),
-        CarrierAllocator(carrier_type=carrier_type, pilots=pilots, name="carrier_allocator_tx"),
-        IFFTProcessor(),
-        CyclicPrefixer(N_cp),
-        Parallel2Serial(),
-        FIRChannel(h),
-        AWGN(sigma2),
-        Serial2Parallel(N_carriers + N_cp),
-        CyclicPrefixRemover(N_cp),
-        FFTProcessor(),
-        FrequencyDomainEqualizer(h=h),
-        CarrierExtractor(carrier_type),
-        Recorder(name="data_rx"),
-        Parallel2Serial(),
-        SymbolDemapper(alphabet)
-    ])
 
-Step 6: Profile the Chain
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
+   :language: python
+   :lines: 57-58
 
-Run the profiling and visualize the execution time of each processor:
+The profiling figure shows the time spent in each block, allowing you to quickly identify which stages of the chain dominate the computation.
 
-.. code-block:: python
-
-    plot_chain_profiling(chain, input=N)
-    plt.show()
-
-Interpreting the Results
-------------------------
-
-The ``plot_chain_profiling`` function generates a box plot showing the execution time of each processor in the chain. By analyzing this plot, you can identify which components are the most time-consuming and may require optimization.
-
-.. image:: img/monte_carlo_profiling.png
+.. image:: img/profiling_chain_fig1.png
+   :width: 100%
+   :align: center
 
 
 Conclusion
-----------
+^^^^^^^^^^
 
-Profiling your communication chain is an essential step in optimizing performance. By understanding the execution time of each component, you can make informed decisions to improve the efficiency of your simulations.
+Congratulations 🎉 You have successfully profiled an **OFDM communication chain** with **comnumpy**.  
 
- 
+Profiling is a powerful tool to:
+
+- Detect computational bottlenecks in complex simulations.
+- Compare the efficiency of different processors or chain configurations.
+- Optimize large-scale communication scenarios.
+
+From here, you may want to explore:
+
+- Profiling different modulation schemes or OFDM sizes.
+- Comparing different equalization techniques.
+- Combining profiling with performance metrics such as SER or BER.

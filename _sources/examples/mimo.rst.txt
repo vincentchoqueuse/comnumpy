@@ -10,15 +10,19 @@ This tutorial demonstrates how to simulate a basic MIMO (Multiple-Input Multiple
 
 This tutorial is ideal for engineers or students learning about MIMO systems, and offers both practical insights and theoretical understanding.
 
+1. Introduction
+^^^^^^^^^^^^^^^
+
 Prerequisites
-^^^^^^^^^^^^^
+"""""""""""""
 
 Ensure you have the following Python libraries installed:
 
-- ``numpy``
-- ``matplotlib``
-- ``comnumpy``
-- ``tqdm``
+.. code::
+
+   numpy
+   matplotlib
+   comnumpy
 
 Simulation Setup
 ^^^^^^^^^^^^^^^^

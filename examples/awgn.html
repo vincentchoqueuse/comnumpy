@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AWGN Chain Tutorial &#8212; comnumpy  documentation</title>
+    <title>Monte Carlo Simulation over AWGN Channel &#8212; comnumpy  documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c1e2a009" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
   
   <!-- So that users can add custom icons -->
   <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/awgn';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="OFDM Chain Tutorial" href="ofdm.html" />
+    <link rel="next" title="OFDM Tutorial" href="ofdm.html" />
     <link rel="prev" title="Examples" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -307,8 +307,8 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">AWGN Chain Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Chain Tutorial</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
@@ -355,7 +355,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Examples</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">AWGN Chain Tutorial</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Monte Carlo Simulation over AWGN Channel</span></li>
   </ul>
 </nav>
 </div>
@@ -372,108 +372,27 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="awgn-chain-tutorial">
-<h1>AWGN Chain Tutorial<a class="headerlink" href="#awgn-chain-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial guides you through setting up and running a communication chain simulation using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. We will simulate a communication chain with a specified modulation scheme and evaluate its performance in terms of Symbol Error Rate (SER) over various Signal-to-Noise Ratios (SNRs).</p>
+  <section id="monte-carlo-simulation-over-awgn-channel">
+<h1>Monte Carlo Simulation over AWGN Channel<a class="headerlink" href="#monte-carlo-simulation-over-awgn-channel" title="Link to this heading">#</a></h1>
+<p>In this tutorial, we will simulate a communication chain with <strong>comnumpy</strong>
+and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).
+This is done using a <strong>Monte Carlo simulation</strong>, where the chain is executed multiple times
+for different SNR values and the experimental results are compared with theoretical predictions.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Ensure you have the following Python libraries installed:
-- <code class="docutils literal notranslate"><span class="pre">numpy</span></code>
-- <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>
-- <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code></p>
-<p>You can install any missing libraries using pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>matplotlib
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Make sure you have the following Python libraries installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">matplotlib</span>
+<span class="n">comnumpy</span>
+<span class="n">tqdm</span>
 </pre></div>
 </div>
-</section>
-<section id="simulation-setup">
-<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
 </section>
 <section id="import-libraries">
-<h2>1. Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h2>
-<p>Begin by importing the necessary libraries.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_metric_awgn_theo</span>
-</pre></div>
-</div>
-</section>
-<section id="define-parameters">
-<h2>2. Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h2>
-<p>Set the parameters for the simulation.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>  <span class="c1"># Modulation order</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">1000000</span>  <span class="c1"># Number of symbols</span>
-<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>  <span class="c1"># Modulation scheme</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for the modulation scheme</span>
-<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>  <span class="c1"># SNR range in dB</span>
-</pre></div>
-</div>
-</section>
-<section id="create-communication-chain">
-<h2>3. Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h2>
-<p>Define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> class.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-    <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-    <span class="n">AWGN</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
-    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-<span class="p">])</span>
-</pre></div>
-</div>
-<p>Note that the unit parameters of the AWGN processor specifies the unit for the noise value.</p>
-</section>
-<section id="monte-carlo-simulation">
-<h2>4. Monte Carlo Simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">#</a></h2>
-<p>Perform the simulation over the defined SNR range.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ser_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">))</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;* Simulation results&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">):</span>
-    <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">snr_dB</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-    <span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-    <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">data_tx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-    <span class="n">ser_array</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">ser</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNR=</span><span class="si">{</span><span class="n">snr_dB</span><span class="si">}</span><span class="s2">: ser=</span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2"> (exp)&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="compute-theoretical-ser">
-<h2>5. Compute Theoretical SER<a class="headerlink" href="#compute-theoretical-ser" title="Link to this heading">#</a></h2>
-<p>Calculate the theoretical SER for comparison.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr_per_bit</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<span class="n">ser_theo_array</span> <span class="o">=</span> <span class="n">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="plot-results">
-<h2>6. Plot Results<a class="headerlink" href="#plot-results" title="Link to this heading">#</a></h2>
-<p>Visualize the SER performance.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_array</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;exp&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_theo_array</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;theo&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;SNR (dB)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<img alt="../_images/monte_carlo_awgn.png" src="../_images/monte_carlo_awgn.png" />
-<section id="conclusion">
-<h3>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h3>
-<p>This tutorial demonstrated how to set up and run a communication chain simulation using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You learned how to define the simulation parameters, create the communication chain, perform Monte Carlo simulations, compute theoretical SER, and plot the results.</p>
-</section>
-<section id="complete-code">
-<h3>Complete Code<a class="headerlink" href="#complete-code" title="Link to this heading">#</a></h3>
-<div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">Performance in AWGN Channel</span><a class="headerlink" href="#id1" title="Link to this code">#</a></div>
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
@@ -484,15 +403,31 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_metric_awgn_theo</span>
 
-
-<span class="c1"># parameters</span>
-<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
+</pre></div>
+</div>
+</section>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>Next, we set the simulation parameters: the modulation order, number of transmitted symbols,
+and the SNR range to evaluate.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1000000</span>
 <span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
 
-<span class="c1"># create chain</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="awgn-communication-chain">
+<h2>AWGN Communication Chain<a class="headerlink" href="#awgn-communication-chain" title="Link to this heading">#</a></h2>
+<section id="define-chain">
+<h3>Define Chain<a class="headerlink" href="#define-chain" title="Link to this heading">#</a></h3>
+<p>We now define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
+The chain includes symbol generation, mapping, transmission over an AWGN channel,
+and symbol demapping.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
     <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">),</span>
@@ -500,8 +435,28 @@
     <span class="n">AWGN</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
     <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
     <span class="p">])</span>
-
-<span class="c1"># perform monte Carlo simulation</span>
+</pre></div>
+</div>
+<p>The processors are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code>
+Generates a stream of integer-valued symbols to transmit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code>
+Captures the transmitted symbols for later analysis.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
+Maps integers to QAM constellation points.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AWGN</span></code>
+Simulates the effect of noise for a given SNR value (here expressed in dB).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
+Maps received noisy constellation points back to integers.</p></li>
+</ul>
+</section>
+<section id="monte-carlo-simulation">
+<h3>Monte Carlo Simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">#</a></h3>
+<p>We perform a Monte Carlo simulation over the entire SNR range.
+At each iteration, we update the SNR value of the AWGN processor, run the chain,
+and compute the experimental SER.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform monte Carlo simulation</span>
 <span class="n">ser_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">))</span>
 
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">)):</span>
@@ -519,11 +474,24 @@
     <span class="c1"># save and display metrics</span>
     <span class="n">ser_array</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">ser</span>
 
-
-<span class="c1"># compute theoretical SER metric</span>
+</pre></div>
+</div>
+</section>
+<section id="theoretical-ser">
+<h3>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h3>
+<p>For comparison, we also compute the theoretical SER curve for QAM modulation over AWGN.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># compute theoretical SER metric</span>
 <span class="n">snr_per_bit</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">ser_theo_array</span> <span class="o">=</span> <span class="n">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span>
-
+</pre></div>
+</div>
+</section>
+<section id="results-and-visualization">
+<h3>Results and Visualization<a class="headerlink" href="#results-and-visualization" title="Link to this heading">#</a></h3>
+<p>Finally, we plot the experimental and theoretical SER curves.
+A logarithmic (<code class="docutils literal notranslate"><span class="pre">semilogy</span></code>) scale is used for the SER axis,
+which is the standard way to represent error rate curves in digital communications.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_array</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;exp&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_theo_array</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;theo&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;SNR (dB)&quot;</span><span class="p">)</span>
@@ -534,8 +502,27 @@
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
+<a class="reference internal image-reference" href="../_images/monte_carlo_awgn.png"><img alt="../_images/monte_carlo_awgn.png" class="align-center" src="../_images/monte_carlo_awgn.png" style="width: 100%;" />
+</a>
 </section>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>Congratulations 🎉 You have completed a <strong>Monte Carlo simulation of SER performance</strong>
+for a QAM-modulated communication system over an AWGN channel.</p>
+<p>You have learned how to:</p>
+<ul class="simple">
+<li><p>Define a chain with modulation, channel, and demodulation.</p></li>
+<li><p>Run Monte Carlo experiments for varying SNR values.</p></li>
+<li><p>Compare experimental performance with theoretical benchmarks.</p></li>
+<li><p>Plot standard SER performance curves.</p></li>
+</ul>
+<p>From here, you may want to:</p>
+<ul class="simple">
+<li><p>Experiment with different modulation orders (e.g., 4-QAM, 64-QAM).</p></li>
+<li><p>Extend the chain with coding or more realistic channel models.</p></li>
+<li><p>Increase the number of transmitted symbols for more accurate SER estimation.</p></li>
+</ul>
 </section>
 </section>
 
@@ -563,7 +550,7 @@
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">OFDM Chain Tutorial</p>
+        <p class="prev-next-title">OFDM Tutorial</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -586,18 +573,20 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">2. Define Parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-communication-chain">3. Create Communication Chain</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-simulation">4. Monte Carlo Simulation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-theoretical-ser">5. Compute Theoretical SER</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results">6. Plot Results</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-code">Complete Code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#awgn-communication-chain">AWGN Communication Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-chain">Define Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-simulation">Monte Carlo Simulation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#theoretical-ser">Theoretical SER</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results-and-visualization">Results and Visualization</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
 

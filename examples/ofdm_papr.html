@@ -31,7 +31,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c1e2a009" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
   
   <!-- So that users can add custom icons -->
   <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -42,11 +42,12 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/ofdm_papr';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="MIMO Chain Tutorial" href="mimo.html" />
-    <link rel="prev" title="OFDM Chain Tutorial" href="ofdm.html" />
+    <link rel="prev" title="OFDM Tutorial" href="ofdm.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -307,8 +308,8 @@
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="awgn.html">AWGN Chain Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Chain Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
@@ -374,158 +375,124 @@
                   
   <section id="papr-in-ofdm-communication">
 <h1>PAPR in OFDM Communication<a class="headerlink" href="#papr-in-ofdm-communication" title="Link to this heading">#</a></h1>
-<p>This tutorial guides you through computing the Peak-to-Average Power Ratio (PAPR) of an Orthogonal Frequency-Division Multiplexing (OFDM) signal using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. We will reproduce the first figure from the following article :</p>
+<p>In this tutorial, we will compute the <strong>Peak-to-Average Power Ratio (PAPR)</strong>
+of an OFDM signal using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.
+We will reproduce the first figure from the article:</p>
 <ul class="simple">
-<li><p>“An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).</p></li>
+<li><p>“An overview of peak-to-average power ratio reduction techniques for multicarrier transmission”
+by Han and Lee (2005).</p></li>
 </ul>
-<section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Ensure you have the following Python libraries installed:
-- <code class="docutils literal notranslate"><span class="pre">numpy</span></code>
-- <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>
-- <code class="docutils literal notranslate"><span class="pre">tqdm</span></code>
-- <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code></p>
-<p>You can install any missing libraries using pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>matplotlib<span class="w"> </span>tqdm
-</pre></div>
-</div>
-</section>
-<section id="simulation-setup">
-<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
+<p>You will learn how to:</p>
+<ul class="simple">
+<li><p>Build an OFDM chain with multiple subcarriers.</p></li>
+<li><p>Compute the PAPR of a single OFDM signal.</p></li>
+<li><p>Evaluate the <strong>Complementary Cumulative Distribution Function (CCDF)</strong> of PAPR.</p></li>
+<li><p>Compare simulation results with theoretical curves.</p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="import-libraries">
-<h3>1. Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<p>Begin by importing the necessary libraries:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ccdf</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">IFFTProcessor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_PAPR</span>
-</pre></div>
-</div>
-</section>
-<section id="define-parameters">
-<h3>2. Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
-<p>Set the parameters for the simulation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_cp</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># No cyclic prefix</span>
-<span class="n">N_sc_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]</span>  <span class="c1"># Number of subcarriers to test</span>
-<span class="n">L</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c1"># Number of OFDM symbols</span>
-<span class="nb">type</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span>  <span class="c1"># Modulation type and order</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
-<span class="n">alphabet_generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<span class="n">papr_dB_threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-<span class="n">gamma</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">papr_dB_threshold</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">os</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># Oversampling factor</span>
-</pre></div>
-</div>
-</section>
-<section id="create-communication-chain">
-<h3>3. Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h3>
-<p>Define the OFDM communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> class:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-    <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_sc_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s2p&quot;</span><span class="p">),</span>
-    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
-    <span class="n">IFFTProcessor</span><span class="p">(),</span>
-<span class="p">])</span>
-</pre></div>
-</div>
-</section>
-<section id="perform-simulation">
-<h3>4. Perform Simulation<a class="headerlink" href="#perform-simulation" title="Link to this heading">#</a></h3>
-<p>Run the simulation for each number of subcarriers:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">N_sc</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">N_sc_list</span><span class="p">):</span>
-    <span class="c1"># Set Serial2Parallel and Carrier Allocation</span>
-    <span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">)</span>
-    <span class="n">carrier_type</span><span class="p">[:</span><span class="n">N_sc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-
-    <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;s2p&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_N_sub</span><span class="p">(</span><span class="n">N_sc</span><span class="p">)</span>
-    <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_carrier_type</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">)</span>
-
-    <span class="c1"># Generate data</span>
-    <span class="n">N</span> <span class="o">=</span> <span class="n">N_sc</span> <span class="o">*</span> <span class="n">os</span> <span class="o">*</span> <span class="n">L</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-
-    <span class="c1"># Compute PAPR</span>
-    <span class="n">papr_dB_array</span> <span class="o">=</span> <span class="n">compute_PAPR</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="c1"># Compute and plot CCDF</span>
-    <span class="n">papr_dB</span><span class="p">,</span> <span class="n">ccdf</span> <span class="o">=</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">papr_dB_array</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">papr_dB</span><span class="p">,</span> <span class="n">ccdf</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;exp: N_sc=</span><span class="si">{</span><span class="n">N_sc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="c1"># Plot theoretical CCDF</span>
-    <span class="n">ccdf_theo</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">gamma</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="n">N_sc</span> <span class="o">*</span> <span class="n">os</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">papr_dB_threshold</span><span class="p">,</span> <span class="n">ccdf_theo</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;theo: N_sc=</span><span class="si">{</span><span class="n">N_sc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="plot-results">
-<h3>5. Plot Results<a class="headerlink" href="#plot-results" title="Link to this heading">#</a></h3>
-<p>Visualize the Complementary Cumulative Distribution Function (CCDF) of the PAPR:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mi">6</span><span class="p">,</span> <span class="mi">13</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;PAPR (dB)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;CCDF&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;CCDFs of PAPR of an OFDM signal with 256 and 1024 subcarriers&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<img alt="../_images/monte_carlo_ofdm_papr.png" src="../_images/monte_carlo_ofdm_papr.png" />
-</section>
-</section>
-<section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>This tutorial demonstrated how to compute and visualize the PAPR of an OFDM signal using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You learned how to set up the simulation parameters, create the OFDM communication chain, compute the PAPR, and plot the CCDF. The results were compared with theoretical CCDF curves to validate the implementation.</p>
-</section>
-<section id="complete-code">
-<h2>Complete Code<a class="headerlink" href="#complete-code" title="Link to this heading">#</a></h2>
-<div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">PAPR Computation in OFDM Communication</span><a class="headerlink" href="#id1" title="Link to this code">#</a></div>
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span> 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span><span class="p">,</span> <span class="n">Parallel2Serial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ccdf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">IFFTProcessor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_PAPR</span>
 
 <span class="c1"># This script reproduces the first figure of the following article :</span>
-<span class="c1"># - “An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).</span>
+</pre></div>
+</div>
+</section>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>Next, we define the simulation parameters:
+the number of subcarriers, modulation, oversampling factor, and thresholds for PAPR analysis.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
 
 
 <span class="c1"># parameters</span>
-<span class="n">N_cp</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">N_sc</span> <span class="o">=</span> <span class="mi">256</span>
+<span class="n">N_sc</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="n">L</span> <span class="o">=</span> <span class="mi">10000</span>
 <span class="nb">type</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">alphabet_generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">papr_dB_threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-<span class="n">gamma</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">papr_dB_threshold</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">os</span> <span class="o">=</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<p>Here:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">N_sc</span></code>: number of subcarriers (1024 by default).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">L</span></code>: number of OFDM symbols to generate.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">os</span></code>: oversampling factor, used to better approximate the continuous-time signal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">papr_dB_threshold</span></code>: thresholds (in dB) for computing theoretical CCDF curves.</p></li>
+</ul>
+</section>
+</section>
+<section id="ofdm-communication-chain">
+<h2>OFDM Communication Chain<a class="headerlink" href="#ofdm-communication-chain" title="Link to this heading">#</a></h2>
+<p>We now build an OFDM transmission chain using <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>.
+It includes symbol generation, mapping, serial-to-parallel conversion,
+carrier allocation, and IFFT processing.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># defaut carrier type</span>
+<span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span><span class="o">*</span><span class="n">N_sc</span><span class="p">)</span>
+<span class="n">carrier_type</span><span class="p">[:</span><span class="n">N_sc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
 <span class="c1"># perform simulation</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
         <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
         <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_sc</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s2p&quot;</span><span class="p">),</span>
-        <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="p">[],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
-        <span class="n">IFFTProcessor</span><span class="p">(),</span>
+        <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
+        <span class="n">IFFTProcessor</span><span class="p">()</span>
     <span class="p">])</span>
+</pre></div>
+</div>
+<section id="papr-metric">
+<h3>PAPR metric<a class="headerlink" href="#papr-metric" title="Link to this heading">#</a></h3>
+<p>When applying the Inverse Fourier Transform, we don’t control the signal amplitude of the transformed signal. This can
+be challenging for communications sensible non-linearities.</p>
+<p>To evaluate the amplitude of the generated signal, one popular metric is the Peak-to-Average Power Ratio (PAPR).
+Mathematically, the PAPR is defined as:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{PAPR} = \frac{\max{|x[n]|^2}}{\mathbb{E}[|x[n]|^2]}\]</div>
+<p>where <span class="math notranslate nohighlight">\(x[n]\)</span> is the transmitted OFDM signal.</p>
+</section>
+<section id="one-shot-signal">
+<h3>One Shot Signal<a class="headerlink" href="#one-shot-signal" title="Link to this heading">#</a></h3>
+<p>Before running Monte Carlo simulations, we can evaluate the PAPR of a <strong>single OFDM signal</strong>
+and plot its instantaneous power.   The computed PAPR value is displayed in the title of the figure.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># evaluate PAPR for one signal</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">N_sc</span><span class="o">*</span><span class="n">os</span><span class="o">*</span><span class="n">L</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span> <span class="c1"># perform parallel2serial conversion</span>
 
+<span class="n">papr_dB</span> <span class="o">=</span> <span class="n">compute_PAPR</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;$|x[n]|^2$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$n$ [sample]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PAPR=</span><span class="si">{</span><span class="n">papr_dB</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">dB&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This produces a figure similar to:</p>
+<a class="reference internal image-reference" href="../_images/monte_carlo_ofdm_papr_fig1.png"><img alt="Instantaneous power of an OFDM signal and its PAPR" class="align-center" src="../_images/monte_carlo_ofdm_papr_fig1.png" style="width: 100%;" />
+</a>
+</section>
+</section>
+<section id="monte-carlo-simulation-of-ccdf">
+<h2>Monte Carlo Simulation of CCDF<a class="headerlink" href="#monte-carlo-simulation-of-ccdf" title="Link to this heading">#</a></h2>
+<p>We now perform a Monte Carlo simulation to estimate the <strong>CCDF of the PAPR</strong>
+for two configurations (256 and 1024 subcarriers).
+For each case, we also compare the results with the theoretical CCDF:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">N_sc_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]</span>
+
 <span class="k">for</span> <span class="n">N_sc</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">N_sc_list</span><span class="p">):</span>
  
     <span class="c1"># set S2P and carrier allocation</span>
@@ -558,10 +525,34 @@
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;CCDFs of PAPR of an OFDM signal with 256 and 1024 subcarriers&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
+<p>The theoretical CCDF is given by:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{CCDF} = 1 - \big(1 - e^{-\gamma}\big)^{N_{sc} \cdot os}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\gamma\)</span> is the normalized PAPR threshold.</p>
+<p>The final figure displays both the experimental and theoretical CCDFs for
+<code class="docutils literal notranslate"><span class="pre">N_sc</span> <span class="pre">=</span> <span class="pre">256</span></code> and <code class="docutils literal notranslate"><span class="pre">N_sc</span> <span class="pre">=</span> <span class="pre">1024</span></code> subcarriers.</p>
+<a class="reference internal image-reference" href="../_images/monte_carlo_ofdm_papr_fig2.png"><img alt="CCDF of PAPR for OFDM with 256 and 1024 subcarriers" class="align-center" src="../_images/monte_carlo_ofdm_papr_fig2.png" style="width: 100%;" />
+</a>
+<p>As expected, the probability of large PAPR values increases with the number of subcarriers.
+For example, with 1024 subcarriers and an oversampling factor of 4,
+a <strong>PAPR around 12 dB</strong> is typically observed at CCDF = 10⁻³.</p>
+</section>
+<section id="conclusion">
+<h2>7. Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>Congratulations 🎉 You have successfully simulated the <strong>PAPR of an OFDM signal</strong>
+and compared experimental results with theoretical CCDFs.</p>
+<p>You have learned how to:</p>
+<ul class="simple">
+<li><p>Define an OFDM chain with adjustable parameters.</p></li>
+<li><p>Compute the PAPR of a single OFDM waveform.</p></li>
+<li><p>Estimate the CCDF of the PAPR through Monte Carlo simulation.</p></li>
+<li><p>Compare simulation results with theoretical benchmarks.</p></li>
+</ul>
+<p>Key takeaway:
+<strong>OFDM signals exhibit high PAPR (≈10–13 dB depending on system size),
+which motivates PAPR reduction techniques such as clipping, coding, or tone reservation.</strong></p>
 </section>
 </section>
 
@@ -581,7 +572,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">OFDM Chain Tutorial</p>
+        <p class="prev-next-title">OFDM Tutorial</p>
       </div>
     </a>
     <a class="right-next"
@@ -612,17 +603,18 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">2. Define Parameters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-communication-chain">3. Create Communication Chain</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#perform-simulation">4. Perform Simulation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results">5. Plot Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-code">Complete Code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ofdm-communication-chain">OFDM Communication Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#papr-metric">PAPR metric</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-signal">One Shot Signal</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-simulation-of-ccdf">Monte Carlo Simulation of CCDF</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">7. Conclusion</a></li>
 </ul>
   </nav></div>
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Profiling Chain Performance &#8212; comnumpy  documentation</title>
+    <title>Profiling a Communication Chain &#8212; comnumpy  documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c1e2a009" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
   
   <!-- So that users can add custom icons -->
   <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -310,7 +310,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="who_is_comnumpy_for.html">Who is this library for?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="first_simulation.html">First Simulation</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Profiling Chain Performance</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Profiling a Communication Chain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to Comnumpy</a></li>
 </ul>
 </div>
@@ -355,7 +355,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Getting Started</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Profiling Chain Performance</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Profiling a Communication Chain</span></li>
   </ul>
 </nav>
 </div>
@@ -372,30 +372,16 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="profiling-chain-performance">
-<h1>Profiling Chain Performance<a class="headerlink" href="#profiling-chain-performance" title="Link to this heading">#</a></h1>
-<p>Understanding the performance of your communication chain is crucial for optimizing simulations and identifying bottlenecks. This tutorial will guide you through profiling the execution time of each processor in a communication chain using <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p>
+  <section id="profiling-a-communication-chain">
+<h1>Profiling a Communication Chain<a class="headerlink" href="#profiling-a-communication-chain" title="Link to this heading">#</a></h1>
+<p>In this tutorial, we will learn how to <strong>profile</strong> a communication chain using <strong>comnumpy</strong>.
+Profiling allows us to evaluate the computational cost of each processor, helping to identify performance bottlenecks in complex simulations.</p>
+<p>We will build an <strong>OFDM communication chain</strong> with channel effects, run the simulation, and visualize the profiling results.</p>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<p>Profiling helps you measure the time each component in your communication chain takes to execute. By identifying the most time-consuming processes, you can optimize your simulations for better performance.</p>
-</section>
-<section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
-<p>Ensure you have the following Python libraries installed:
-- <code class="docutils literal notranslate"><span class="pre">numpy</span></code>
-- <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>
-- <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code></p>
-<p>You can install any missing libraries using pip:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>matplotlib
-</pre></div>
-</div>
-</section>
-<section id="profiling-example">
-<h2>Profiling Example<a class="headerlink" href="#profiling-example" title="Link to this heading">#</a></h2>
-<p>Let’s walk through an example of profiling an OFDM communication chain. This example will demonstrate how to set up the chain, run the profiling, and visualize the results.</p>
-<section id="step-1-import-libraries">
-<h3>Step 1: Import Libraries<a class="headerlink" href="#step-1-import-libraries" title="Link to this heading">#</a></h3>
-<p>Begin by importing the necessary libraries:</p>
+<section id="import-libraries">
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
@@ -406,55 +392,50 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_chain_profiling</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span>
-    <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span><span class="p">,</span> <span class="n">CarrierExtractor</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span> <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span><span class="p">,</span> <span class="n">CarrierExtractor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrequencyDomainEqualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_standard_carrier_allocation</span>
 </pre></div>
 </div>
 </section>
-<section id="step-2-define-parameters">
-<h3>Step 2: Define Parameters<a class="headerlink" href="#step-2-define-parameters" title="Link to this heading">#</a></h3>
-<p>Set the parameters for the simulation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>  <span class="c1"># Modulation order</span>
-<span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># Number of channel taps</span>
-<span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Cyclic prefix length</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>  <span class="c1"># Number of symbols</span>
-<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># Noise variance</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for QAM modulation</span>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>Next, we define the communication and channel parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
+<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>          <span class="c1"># Modulation order</span>
+<span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>         <span class="c1"># Number of channel taps</span>
+<span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>       <span class="c1"># Cyclic prefix length</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>      <span class="c1"># Number of symbols</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Noise variance</span>
+
+<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for QAM modulation</span>
 <span class="n">carrier_type</span> <span class="o">=</span> <span class="n">get_standard_carrier_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ah_128&quot;</span><span class="p">)</span>  <span class="c1"># Standard carrier allocation</span>
-</pre></div>
-</div>
-</section>
-<section id="step-3-extract-carrier-information">
-<h3>Step 3: Extract Carrier Information<a class="headerlink" href="#step-3-extract-carrier-information" title="Link to this heading">#</a></h3>
-<p>Determine the number of carriers and their types:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">)</span>
+
+<span class="c1"># extract carrier information</span>
+<span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">)</span>
 <span class="n">N_carrier_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">carrier_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Number of data carriers</span>
 <span class="n">N_carrier_pilots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">carrier_type</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Number of pilot carriers</span>
-</pre></div>
-</div>
-</section>
-<section id="step-4-generate-channel">
-<h3>Step 4: Generate Channel<a class="headerlink" href="#step-4-generate-channel" title="Link to this heading">#</a></h3>
-<p>Create a random channel impulse response:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
+
+<span class="c1"># channel parameters</span>
+<span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
 <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">pilots</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N_carrier_pilots</span><span class="p">)</span>  <span class="c1"># Pilot values</span>
 </pre></div>
 </div>
 </section>
-<section id="step-5-create-communication-chain">
-<h3>Step 5: Create Communication Chain<a class="headerlink" href="#step-5-create-communication-chain" title="Link to this heading">#</a></h3>
-<p>Define the OFDM communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> class:</p>
+</section>
+<section id="ofdm-communication-chain">
+<h2>OFDM Communication Chain<a class="headerlink" href="#ofdm-communication-chain" title="Link to this heading">#</a></h2>
+<section id="define-the-chain">
+<h3>Define the Chain<a class="headerlink" href="#define-the-chain" title="Link to this heading">#</a></h3>
+<p>We now build a complete OFDM chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
+This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix insertion, channel effects, equalization, and demapping.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-    <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mapper_tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
     <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_carrier_data</span><span class="p">),</span>
-    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="n">pilots</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator_tx&quot;</span><span class="p">),</span>
+    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="n">pilots</span><span class="p">),</span>
     <span class="n">IFFTProcessor</span><span class="p">(),</span>
     <span class="n">CyclicPrefixer</span><span class="p">(</span><span class="n">N_cp</span><span class="p">),</span>
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
@@ -465,30 +446,67 @@
     <span class="n">FFTProcessor</span><span class="p">(),</span>
     <span class="n">FrequencyDomainEqualizer</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">),</span>
     <span class="n">CarrierExtractor</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">),</span>
-    <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
     <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 <span class="p">])</span>
+
 </pre></div>
 </div>
+<p>The chain is composed of the following processors:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code>
+Generates a sequence of integer-valued symbols to transmit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
+Maps integers to QAM constellation points.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Serial2Parallel</span></code> / <code class="docutils literal notranslate"><span class="pre">Parallel2Serial</span></code>
+Reshape data between serial and parallel streams, useful for OFDM.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CarrierAllocator</span></code>
+Assigns data and pilot symbols to their designated subcarriers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IFFTProcessor</span></code> / <code class="docutils literal notranslate"><span class="pre">FFTProcessor</span></code>
+Perform the Inverse Fast Fourier Transform and Fast Fourier Transform operations, respectively.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CyclicPrefixer</span></code> / <code class="docutils literal notranslate"><span class="pre">CyclicPrefixRemover</span></code>
+Add and remove the cyclic prefix to mitigate inter-symbol interference.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FIRChannel</span></code>
+Models a frequency-selective multipath channel.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AWGN</span></code>
+Adds white Gaussian noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code>
+Compensates for channel distortions in the frequency domain.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CarrierExtractor</span></code>
+Extracts data and pilot carriers after equalization.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
+Maps received constellation points back to integer symbols.</p></li>
+</ul>
 </section>
-<section id="step-6-profile-the-chain">
-<h3>Step 6: Profile the Chain<a class="headerlink" href="#step-6-profile-the-chain" title="Link to this heading">#</a></h3>
-<p>Run the profiling and visualize the execution time of each processor:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plot_chain_profiling</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</section>
+<section id="profiling-the-chain">
+<h2>Profiling the Chain<a class="headerlink" href="#profiling-the-chain" title="Link to this heading">#</a></h2>
+<p>To profile the chain, we use the <code class="docutils literal notranslate"><span class="pre">plot_chain_profiling</span></code> function.
+This function measures the execution time of each processor for a given input size
+and produces a bar chart of the results.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># profiling chain</span>
+<span class="n">plot_chain_profiling</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="interpreting-the-results">
-<h2>Interpreting the Results<a class="headerlink" href="#interpreting-the-results" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">plot_chain_profiling</span></code> function generates a box plot showing the execution time of each processor in the chain. By analyzing this plot, you can identify which components are the most time-consuming and may require optimization.</p>
-<img alt="../_images/monte_carlo_profiling.png" src="../_images/monte_carlo_profiling.png" />
+<p>The profiling figure shows the time spent in each block, allowing you to quickly identify which stages of the chain dominate the computation.</p>
+<a class="reference internal image-reference" href="../_images/profiling_chain_fig1.png"><img alt="../_images/profiling_chain_fig1.png" class="align-center" src="../_images/profiling_chain_fig1.png" style="width: 100%;" />
+</a>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>Profiling your communication chain is an essential step in optimizing performance. By understanding the execution time of each component, you can make informed decisions to improve the efficiency of your simulations.</p>
+<p>Congratulations 🎉 You have successfully profiled an <strong>OFDM communication chain</strong> with <strong>comnumpy</strong>.</p>
+<p>Profiling is a powerful tool to:</p>
+<ul class="simple">
+<li><p>Detect computational bottlenecks in complex simulations.</p></li>
+<li><p>Compare the efficiency of different processors or chain configurations.</p></li>
+<li><p>Optimize large-scale communication scenarios.</p></li>
+</ul>
+<p>From here, you may want to explore:</p>
+<ul class="simple">
+<li><p>Profiling different modulation schemes or OFDM sizes.</p></li>
+<li><p>Comparing different equalization techniques.</p></li>
+<li><p>Combining profiling with performance metrics such as SER or BER.</p></li>
+</ul>
 </section>
 </section>
 
@@ -539,18 +557,16 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#profiling-example">Profiling Example</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-import-libraries">Step 1: Import Libraries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-define-parameters">Step 2: Define Parameters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-extract-carrier-information">Step 3: Extract Carrier Information</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-generate-channel">Step 4: Generate Channel</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-create-communication-chain">Step 5: Create Communication Chain</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-profile-the-chain">Step 6: Profile the Chain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-results">Interpreting the Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ofdm-communication-chain">OFDM Communication Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-the-chain">Define the Chain</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#profiling-the-chain">Profiling the Chain</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
