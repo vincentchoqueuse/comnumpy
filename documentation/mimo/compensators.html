@@ -42,6 +42,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/mimo/compensators';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -408,8 +409,85 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="compensators">
-<h1>Compensators<a class="headerlink" href="#compensators" title="Link to this heading">#</a></h1>
+  <section id="module-comnumpy.mimo.compensators">
+<span id="compensators"></span><h1>Compensators<a class="headerlink" href="#module-comnumpy.mimo.compensators" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.compensators.BlindDualMIMOCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlindDualMIMOCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'cma'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rde'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'dd'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mimo</span> <span class="pre">filter'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.mimo.compensators.BlindDualMIMOCompensator" title="Link to this definition">#</a></dt>
+<dd><p>BlindDualMIMOCompensator for 2x2 MIMO channels.</p>
+<p>This class implements a blind dual MIMO compensator designed for 2x2 MIMO channels. It uses various loss functions to estimate filter weights without requiring a training sequence. The compensator supports different modes of operation, including Constant Modulus Algorithm (CMA), Radius Directed Equalization (RDE), and Decision Directed (DD) algorithms.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<p>The signal model is defined as:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{y}[n] = \mathbf{H}^H[n] \tilde{\mathbf{x}}[n]\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathbf{H}[n]\)</span> is a matrix of size <span class="math notranslate nohighlight">\(2 \times (2(2L+1))\)</span> containing the filter weights at step <span class="math notranslate nohighlight">\(n\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{y}[n]\)</span> is a vector of size 2 containing the two polarisation data</p></li>
+<li><p><span class="math notranslate nohighlight">\(\tilde{\mathbf{x}}[n]\)</span> is a <span class="math notranslate nohighlight">\(2(2L+1)\)</span> vector containing the <span class="math notranslate nohighlight">\(L^{th}\)</span> previous transmitted data on the two polarizations. This vector is obtained by stacking vertically the two polarizations as follows:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{\mathbf{x}}[n] = \begin{bmatrix}
+x_0[n+L]\\
+\vdots\\
+x_0[n]\\
+\vdots\\
+x_0[n-L]\\
+x_1[n+L]\\
+\vdots\\
+x_1[n]\\
+\vdots\\
+x_1[n-L]\\
+\end{bmatrix}\end{split}\]</div>
+<p>The filter weights are estimated using one of the following loss functions:</p>
+<ul>
+<li><p><strong>Constant Modulus Algorithm (CMA)</strong>: Minimizes the metric:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{CMA}(y[n]) = | R - |y[n]|^2 |^2\]</div>
+<p>where <span class="math notranslate nohighlight">\(R = \frac{E[|s|^4]}{E[|s|^2]}\)</span> is derived from the alphabet.</p>
+</li>
+<li><p><strong>Radius Directed Equalization (RDE)</strong>: Minimizes the metric:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{RDE}(y[n]) = | \mathcal{P}_{rad}^2(|y[n]|) - |y[n]|^2 |^2\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathcal{P}_{rad}(|y[n]|)\)</span> is the orthogonal projector into the list of radius alphabet.</p>
+</li>
+<li><p><strong>Decision Directed (DD)</strong>: Minimizes the metric:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L}_{DD}(y[n]) = | \mathcal{P}_{\mathcal{M}}(y[n]) - y[n] |^2\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathcal{P}_{\mathcal{M}}(y[n])\)</span> is the orthogonal projector into the alphabet.</p>
+</li>
+</ul>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>L<span class="classifier">int</span></dt><dd><p>Length of the filter.</p>
+</dd>
+<dt>alphabet<span class="classifier">np.ndarray</span></dt><dd><p>Alphabet used for modulation.</p>
+</dd>
+<dt>mu<span class="classifier">float, optional</span></dt><dd><p>Step size for the update (default is 1e-4).</p>
+</dd>
+<dt>oversampling<span class="classifier">int, optional</span></dt><dd><p>Oversampling factor (default is 1). When the oversampling is greater than one, the algorithm implements a fractionaly spaced equalizer</p>
+</dd>
+<dt>norm<span class="classifier">bool, optional</span></dt><dd><p>Flag to normalize the filter weights (default is True).</p>
+</dd>
+<dt>mode<span class="classifier">Literal[“cma”, “rde”, “dd”], optional</span></dt><dd><p>Mode of operation (default is “cma”).</p>
+</dd>
+<dt>sub_block_length<span class="classifier">int, optional</span></dt><dd><p>Length of sub-blocks for processing (default is 20).</p>
+</dd>
+<dt>name<span class="classifier">str, optional</span></dt><dd><p>Name of the processor (default is “mimo filter”).</p>
+</dd>
+</dl>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Faruk, Md Saifuddin, and Seb J. Savory. “Digital signal processing for coherent transceivers employing multilevel formats.” Journal of Lightwave Technology 35.5 (2017): 1125-1141.</p></li>
+</ul>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -450,6 +528,18 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.compensators.BlindDualMIMOCompensator"><code class="docutils literal notranslate"><span class="pre">BlindDualMIMOCompensator</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

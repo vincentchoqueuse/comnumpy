@@ -42,6 +42,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/core/mappers';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -408,8 +409,93 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="mappers">
-<h1>Mappers<a class="headerlink" href="#mappers" title="Link to this heading">#</a></h1>
+  <section id="module-comnumpy.core.mappers">
+<span id="mappers"></span><h1>Mappers<a class="headerlink" href="#module-comnumpy.core.mappers" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.mappers.SymbolMapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SymbolMapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mimo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Symbol</span> <span class="pre">Mapper'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.mappers.SymbolMapper" title="Link to this definition">#</a></dt>
+<dd><p>Symbol Mapper for converting digital data to symbols based on a predefined alphabet.</p>
+<p>This class maps an array of integers (representing digital data) to complex symbols according to a specified alphabet.
+It’s used in digital communication systems where digital bits need to be mapped to symbols for modulation.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y[n] = f_{\mathcal{M}}(x[n])\]</div>
+<p>where :</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(f_{\mathcal{M}}(.)\)</span> is a mapper function that converts an integer <span class="math notranslate nohighlight">\(\{0, \cdots, M-1\}\)</span> into a symbol belonging to an alphabet <span class="math notranslate nohighlight">\(\mathcal{M}\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathcal{M}=\{s_0, \cdots, s_{M-1}\}\)</span> corresponds to the alphabet.</p></li>
+</ul>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>alphabet<span class="classifier">np.ndarray</span></dt><dd><p>An array of complex symbols representing the modulation alphabet.</p>
+</dd>
+<dt>name<span class="classifier">str</span></dt><dd><p>Name of the symbol mapper instance. Default is “SymbolMapper”.</p>
+</dd>
+</dl>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">generator</span> <span class="o">=</span> <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mapper</span> <span class="o">=</span> <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">input</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+<span class="go">[0 3 2 1 1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">symbols</span> <span class="o">=</span> <span class="n">mapper</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
+<span class="go">[-0.70710678+0.70710678j  0.70710678-0.70710678j  0.70710678+0.70710678j -0.70710678-0.70710678j -0.70710678-0.70710678j]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.mappers.SymbolDemapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SymbolDemapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Symbol</span> <span class="pre">Demapper'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.mappers.SymbolDemapper" title="Link to this definition">#</a></dt>
+<dd><p>Symbol Demapper for converting symbols to digital data based on a predefined alphabet.</p>
+<p>This class demaps complex symbols to the nearest symbols in a specified alphabet, effectively performing the inverse operation of a symbol mapper.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y[n] = \mathcal{P}_{\mathcal{M}}(x[n]) = \arg \min_{m \in \{0, \cdots, M-1\}} |x[n]-s_m|^2\]</div>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathcal{P}_{\mathcal{M}}(.)\)</span> corresponds to the orthogonal projector into the constellation <span class="math notranslate nohighlight">\(\mathcal{M}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathcal{M}=\{s_0, \cdots, s_{M-1}\}\)</span> corresponds to the alphabet.</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>Attributes<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>alphabet<span class="classifier">np.ndarray</span></dt><dd><p>An array of complex symbols representing the modulation alphabet.</p>
+</dd>
+<dt>name<span class="classifier">str</span></dt><dd><p>Name of the symbol demapper instance. Default is “SymbolDemapper”.</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h2>Examples<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">demapper</span> <span class="o">=</span> <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.70710678</span><span class="o">+</span><span class="mf">0.70710678</span><span class="n">j</span><span class="p">,</span> <span class="mf">0.70710678</span><span class="o">-</span><span class="mf">0.70710678</span><span class="n">j</span><span class="p">,</span> <span class="mf">0.70710678</span><span class="o">+</span><span class="mf">0.70710678</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.70710678</span><span class="o">-</span><span class="mf">0.70710678</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.70710678</span><span class="o">-</span><span class="mf">0.70710678</span><span class="n">j</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">demapper</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="go">[0 3 2 1 1]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -450,6 +536,19 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.mappers.SymbolMapper"><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.mappers.SymbolDemapper"><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

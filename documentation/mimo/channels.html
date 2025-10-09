@@ -42,6 +42,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/mimo/channels';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -408,8 +409,87 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="channels">
-<h1>Channels<a class="headerlink" href="#channels" title="Link to this heading">#</a></h1>
+  <section id="module-comnumpy.mimo.channels">
+<span id="channels"></span><h1>Channels<a class="headerlink" href="#module-comnumpy.mimo.channels" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.channels.AWGN">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWGN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'sigma2'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'snr'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'snr_dB'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'snr_dBm'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sigma2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2s_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'fixed'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'measured'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fixed'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'awgn'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.mimo.channels.AWGN" title="Link to this definition">#</a></dt>
+<dd><p>A class representing an Additive White Gaussian Noise (AWGN) for MIMO channel.</p>
+<p>This class models an AWGN channel, which adds complex Gaussian noise to a signal.
+It is characterized by a noise power specified by sigma squared (sigma2).</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y_u[n] = x_u[n] + b_u[n]\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(b[n]\sim \mathcal{N}(0, \sigma^2)\)</span> is a Gaussian additive noise.</p></li>
+</ul>
+<p>For complex signals, a circular Gaussian noise is applied to the signal.
+The value of <span class="math notranslate nohighlight">\(\sigma^2\)</span> is computed with respect to the method specified as input.</p>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>value<span class="classifier">float, optional</span></dt><dd><p>The value associated with the given method. Defaut is 1</p>
+</dd>
+<dt>unit<span class="classifier">str, optional</span></dt><dd><p>The unit to compute the noise power (“nat”, “dB”, “dBm”). Default is “var_nat”</p>
+</dd>
+<dt>sigma2s<span class="classifier">float, optional</span></dt><dd><p>Signal power. default is 1</p>
+</dd>
+<dt>seed<span class="classifier">int, optional</span></dt><dd><p>The seed for the noise generator.</p>
+</dd>
+<dt>sigma2s_method: Literal[“fixed”, “measured”]</dt><dd><p>The method used to obtain the signal power</p>
+</dd>
+<dt>name<span class="classifier">str</span></dt><dd><p>Name of the channel instance.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.channels.BaseMIMOChannel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BaseMIMOChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mimo_channel'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.mimo.channels.BaseMIMOChannel" title="Link to this definition">#</a></dt>
+<dd><p>A base class for modeling Multiple-Input Multiple-Output (MIMO) channels.</p>
+<p>This class provides a framework for simulating MIMO communication channels,
+including methods for setting channel matrices, configuring signal-to-noise
+ratios (SNR), generating noise, and processing input signals.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[\mathbf{y}[n] = \sum_{l=0}^{L}\mathbf{H}[l]x[n-l] + \mathbf{b}[n]\]</div>
+<p>where</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathbf{H}[l]\)</span> is a channel matrix of size <span class="math notranslate nohighlight">\(N_r \times N_t\)</span> corresponding the <span class="math notranslate nohighlight">\(l^{th}\)</span> channel tap,</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{x}[n]\)</span> is a <span class="math notranslate nohighlight">\(N_t\)</span> vector containing the transmitted data,</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{b}[n]\sim \mathcal{N}_c(\mathbf{0},\sigma^2\mathbf{I}_{N_r})\)</span> is a <span class="math notranslate nohighlight">\(N_r\)</span> vector containing the additive white Gaussian noise.</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>Attributes<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>P<span class="classifier">float</span></dt><dd><p>Transmit power.</p>
+</dd>
+<dt>H<span class="classifier">Optional[np.array]</span></dt><dd><p>List of channel matrices for each tap. Each matrice should have equal dimension.</p>
+</dd>
+<dt>extend<span class="classifier">bool</span></dt><dd><p>Flag to extend the input signal.</p>
+</dd>
+<dt>name<span class="classifier">str</span></dt><dd><p>Name of the processor.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.channels.FlatMIMOChannel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FlatMIMOChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">H:</span> <span class="pre">Optional[&lt;built-in</span> <span class="pre">function</span> <span class="pre">array&gt;]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'mimo_channel'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.mimo.channels.FlatMIMOChannel" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.channels.SelectiveMIMOChannel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SelectiveMIMOChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">H:</span> <span class="pre">Optional[&lt;built-in</span> <span class="pre">function</span> <span class="pre">array&gt;]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'mimo_channel'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.mimo.channels.SelectiveMIMOChannel" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </section>
 
 
@@ -450,6 +530,21 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.channels.AWGN"><code class="docutils literal notranslate"><span class="pre">AWGN</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.channels.BaseMIMOChannel"><code class="docutils literal notranslate"><span class="pre">BaseMIMOChannel</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.channels.FlatMIMOChannel"><code class="docutils literal notranslate"><span class="pre">FlatMIMOChannel</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.channels.SelectiveMIMOChannel"><code class="docutils literal notranslate"><span class="pre">SelectiveMIMOChannel</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

@@ -42,6 +42,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/core/metrics';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -408,8 +409,307 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="metrics">
-<h1>Metrics<a class="headerlink" href="#metrics" title="Link to this heading">#</a></h1>
+  <section id="module-comnumpy.core.metrics">
+<span id="metrics"></span><h1>Metrics<a class="headerlink" href="#module-comnumpy.core.metrics" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ser">
+<span class="sig-name descname"><span class="pre">compute_ser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_detected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_ser" title="Link to this definition">#</a></dt>
+<dd><p>Compute the Symbol Error Rate (SER) between the target and detected signals along the specified axis.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>X_target<span class="classifier">ndarray</span></dt><dd><p>The target signal array.</p>
+</dd>
+<dt>X_detected<span class="classifier">ndarray</span></dt><dd><p>The detected signal array after some transmission or processing.</p>
+</dd>
+<dt>axis<span class="classifier">int or None, optional</span></dt><dd><p>Axis along which to compute the SER. If None, the arrays are raveled into 1D arrays.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float or ndarray</dt><dd><p>The computed SER value. If axis is None, returns a float. Otherwise, returns an array.</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
+<p>The SER is computed using the formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{SER} = \frac{\|\mathbf{x}_{\text{tar}} - \mathbf{x}_{\text{est}}\|_0}{N}\]</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ber">
+<span class="sig-name descname"><span class="pre">compute_ber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_detected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_ber" title="Link to this definition">#</a></dt>
+<dd><p>Compute the Bit Error Rate (BER) between target and detected symbols along the specified axis.</p>
+<section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>X_target<span class="classifier">ndarray</span></dt><dd><p>The target symbols to be compared against. Should be convertible to a 1-D array.</p>
+</dd>
+<dt>X_detected<span class="classifier">ndarray</span></dt><dd><p>The detected symbols obtained from a transmission system or a decoder.
+Should be convertible to a 1-D array.</p>
+</dd>
+<dt>width<span class="classifier">int</span></dt><dd><p>The number of bits used to represent each symbol.</p>
+</dd>
+<dt>axis<span class="classifier">int or None, optional</span></dt><dd><p>Axis along which to compute the BER. If None, the arrays are raveled into 1D arrays.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float or ndarray</dt><dd><p>The Bit Error Rate (BER), computed as the number of differing bits between <cite>s_target</cite> and <cite>s_detected</cite> divided by the total number of bits.</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h2>Notes<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>The function assumes that <cite>sym_2_bin</cite> is a predefined function that converts symbols to their binary representation. The formula for BER is:</p>
+<div class="math notranslate nohighlight">
+\[ext{BER} = \frac{N_e}{N_b}\]</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_evm">
+<span class="sig-name descname"><span class="pre">compute_evm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_estimated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_evm" title="Link to this definition">#</a></dt>
+<dd><p>Compute the Error Vector Magnitude (EVM) between the target and estimated signals along the given axis.</p>
+<section id="id4">
+<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>X_target<span class="classifier">ndarray</span></dt><dd><p>The target signal array.</p>
+</dd>
+<dt>X_estimated<span class="classifier">ndarray</span></dt><dd><p>The estimated signal array.</p>
+</dd>
+<dt>axis<span class="classifier">int or None, optional</span></dt><dd><p>Axis along which to compute the mean. If None, the mean is computed over all dimensions.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float or ndarray</dt><dd><p>The computed EVM value. If axis is None, returns a float. Otherwise, returns an array.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h2>Notes<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p>The EVM is computed using the formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{EVM} = \sqrt{\frac{\sum_{i} |x_{\text{target},i} - x_{\text{estimated},i}|^2}{\sum_{i} |x_{\text{target},i}|^2}}\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(x_{\text{target},i}\)</span> is the ith element of the target signal.</p></li>
+<li><p><span class="math notranslate nohighlight">\(x_{\text{estimated},i}\)</span> is the ith element of the estimated signal.</p></li>
+</ul>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X_target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_estimated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mf">3.9</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">compute_evm</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">)</span>
+<span class="go">0.05057216690580728</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">compute_evm</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">0.05057216690580728</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_effective_SNR">
+<span class="sig-name descname"><span class="pre">compute_effective_SNR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_estimated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'natural'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_effective_SNR" title="Link to this definition">#</a></dt>
+<dd><p>Compute the effective Signal-to-Noise Ratio (SNR) between a target and an estimated signal.</p>
+<section id="id7">
+<h2>Parameters<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>X_target<span class="classifier">ndarray</span></dt><dd><p>The target signal array.</p>
+</dd>
+<dt>X_estimated<span class="classifier">ndarray</span></dt><dd><p>The estimated signal array.</p>
+</dd>
+<dt>sigma2_s<span class="classifier">float, optional</span></dt><dd><p>The variance of the signal. The default is 1.</p>
+</dd>
+<dt>unit<span class="classifier">str, optional</span></dt><dd><p>Unit of the output SNR. Can be “natural” (linear scale), “dB” (decibels),
+or “dBm” (decibel-milliwatts). The default is “natural”.</p>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h2>Returns<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>The effective SNR in the specified unit.</p>
+</dd>
+</dl>
+</section>
+<section id="raises">
+<h2>Raises<a class="headerlink" href="#raises" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>ValueError</dt><dd><p>If the specified unit is not one of “natural”, “dB”, or “dBm”.</p>
+</dd>
+</dl>
+</section>
+<section id="id9">
+<h2>Notes<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>The effective SNR is calculated as the ratio of the signal variance to the mean squared error between
+the target and estimated signals.</p></li>
+<li><p>For “dB” unit, the SNR is converted using the formula: ( text{SNR}_{dB} = 10 log_{10}(text{SNR}) ).</p></li>
+<li><p>For “dBm” unit, the SNR is converted using the formula: ( text{SNR}_{dBm} = 10 log_{10}(text{SNR}) + 30 ).</p></li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_power">
+<span class="sig-name descname"><span class="pre">compute_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'natural'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_power" title="Link to this definition">#</a></dt>
+<dd><p>Compute the mean power of an input array.</p>
+<section id="id10">
+<h2>Parameters<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>x<span class="classifier">ndarray</span></dt><dd><p>Input array containing the signal values.</p>
+</dd>
+<dt>unit<span class="classifier">str, optional</span></dt><dd><p>Unit of the output power. Can be “natural” (Watts), “dB” (decibels),
+or “dBm” (decibel-milliwatts). The default is “natural”.</p>
+</dd>
+</dl>
+</section>
+<section id="id11">
+<h2>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>Mean power value in the specified unit.</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h2>Raises<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>ValueError</dt><dd><p>If the specified unit is not one of “natural”, “dB”, or “dBm”.</p>
+</dd>
+</dl>
+</section>
+<section id="id13">
+<h2>Notes<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>The mean power is calculated as the average of the squared magnitudes of the input array.</p></li>
+<li><p>For “dB” and “dBm” units, the power is converted using the formula: ( P_{dB} = 10 log_{10}(P) )
+and ( P_{dBm} = 10 log_{10}(P) + 30 ), respectively.</p></li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ccdf">
+<span class="sig-name descname"><span class="pre">compute_ccdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.compute_ccdf" title="Link to this definition">#</a></dt>
+<dd><p>Compute the Complementary Cumulative Distribution Function (CCDF) for a given dataset along a specified axis.</p>
+<section id="id14">
+<h2>Parameters<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>data<span class="classifier">array-like</span></dt><dd><p>Input data for which the CCDF needs to be calculated.</p>
+</dd>
+<dt>axis<span class="classifier">int, optional</span></dt><dd><p>Axis along which to compute the CCDF. Default is the last axis.</p>
+</dd>
+</dl>
+</section>
+<section id="id15">
+<h2>Returns<a class="headerlink" href="#id15" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>sorted_data<span class="classifier">np.ndarray</span></dt><dd><p>The input data sorted in ascending order along the specified axis.</p>
+</dd>
+<dt>ccdf<span class="classifier">np.ndarray</span></dt><dd><p>The computed CCDF values corresponding to the sorted data.</p>
+</dd>
+</dl>
+</section>
+<section id="id16">
+<h2>Notes<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
+<p>The CCDF is computed using the formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{CCDF}(x) = 1 - \text{CDF}(x)\]</div>
+<p>where the CDF is the cumulative distribution function.</p>
+</section>
+<section id="id17">
+<h2>Examples<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sorted_data</span><span class="p">,</span> <span class="n">ccdf</span> <span class="o">=</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sorted_data</span>
+<span class="go">array([[1, 2, 3],</span>
+<span class="go">       [4, 5, 6]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ccdf</span>
+<span class="go">array([[0.66666667, 0.33333333, 0.        ],</span>
+<span class="go">       [0.66666667, 0.33333333, 0.        ]])</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.calculate_acpr">
+<span class="sig-name descname"><span class="pre">calculate_acpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bandwidth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.calculate_acpr" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.</p>
+<p>ACPR is a measure of spectral regrowth and quantifies the ratio between the power in the main 
+transmission band and the power leaked into adjacent frequency bands. This function computes 
+ACPR on both the left and right adjacent channels.</p>
+<section id="id18">
+<h2>Parameters<a class="headerlink" href="#id18" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>signal<span class="classifier">np.ndarray</span></dt><dd><p>The input time-domain signal.</p>
+</dd>
+<dt>bandwidth<span class="classifier">float</span></dt><dd><p>The bandwidth of the main signal in Hz.</p>
+</dd>
+<dt>sampling_rate<span class="classifier">float</span></dt><dd><p>The sampling rate of the signal in Hz.</p>
+</dd>
+</dl>
+</section>
+<section id="id19">
+<h2>Returns<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>acpr_right<span class="classifier">float</span></dt><dd><p>ACPR value (in dB) for the right adjacent channel.</p>
+</dd>
+<dt>acpr_left<span class="classifier">float</span></dt><dd><p>ACPR value (in dB) for the left adjacent channel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.MetricRecorder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MetricRecorder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_fn:</span> <span class="pre">~typing.Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params:</span> <span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'metric</span> <span class="pre">recorder'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.metrics.MetricRecorder" title="Link to this definition">#</a></dt>
+<dd><p>A class to compute and record the result of a metric function applied to input data.</p>
+<p>This class encapsulates a callable metric function with optional parameters.
+When the object is called with data, it evaluates the metric and stores the result
+in the <cite>data</cite> attribute, while returning the original input unchanged (for pipeline use).</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>metric_fn<span class="classifier">Callable</span></dt><dd><p>The metric function to be applied. Must take the input <cite>X</cite> as first argument.</p>
+</dd>
+<dt>params<span class="classifier">dict</span></dt><dd><p>Optional keyword arguments to be passed to the metric function.</p>
+</dd>
+<dt>data<span class="classifier">Any</span></dt><dd><p>The result of the metric function, stored after calling the object.</p>
+</dd>
+</dl>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">mean_std</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">),</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recorder</span> <span class="o">=</span> <span class="n">MetricRecorder</span><span class="p">(</span><span class="n">metric_fn</span><span class="o">=</span><span class="n">mean_std</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;axis&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recorder</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="go">array([[1, 2, 3],</span>
+<span class="go">       [4, 5, 6]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recorder</span><span class="o">.</span><span class="n">data</span>
+<span class="go">{&#39;mean&#39;: array([2., 5.]), &#39;std&#39;: array([0.81649658, 0.81649658])}</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -450,6 +750,25 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser"><code class="docutils literal notranslate"><span class="pre">compute_ser()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ber"><code class="docutils literal notranslate"><span class="pre">compute_ber()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_evm"><code class="docutils literal notranslate"><span class="pre">compute_evm()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_effective_SNR"><code class="docutils literal notranslate"><span class="pre">compute_effective_SNR()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_power"><code class="docutils literal notranslate"><span class="pre">compute_power()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ccdf"><code class="docutils literal notranslate"><span class="pre">compute_ccdf()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.calculate_acpr"><code class="docutils literal notranslate"><span class="pre">calculate_acpr()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.MetricRecorder"><code class="docutils literal notranslate"><span class="pre">MetricRecorder</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

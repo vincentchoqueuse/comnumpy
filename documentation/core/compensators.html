@@ -42,6 +42,7 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/core/compensators';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -408,8 +409,253 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="compensators">
-<h1>Compensators<a class="headerlink" href="#compensators" title="Link to this heading">#</a></h1>
+  <section id="module-comnumpy.core.compensators">
+<span id="compensators"></span><h1>Compensators<a class="headerlink" href="#module-comnumpy.core.compensators" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedMixin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TrainedBasedMixin</span></span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedMixin" title="Link to this definition">#</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedMixin.get_target_data">
+<span class="sig-name descname"><span class="pre">get_target_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedMixin.get_target_data" title="Link to this definition">#</a></dt>
+<dd><p>Retrieve the target data associated with the model.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>numpy.ndarray or array-like: The target data.</p>
+</dd>
+<dt>Raises:</dt><dd><p>TypeError: If <cite>target_data</cite> is neither a numpy array nor
+an instance of Recorder.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.DCCorrector">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DCCorrector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean_corrector'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.DCCorrector" title="Link to this definition">#</a></dt>
+<dd><p>A class for correcting the mean of a dataset along a specified axis.</p>
+<p>This class adjusts the input data so that its mean along the specified axis matches a target value.
+This is useful for normalizing data or removing bias.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y[n] = x[n] + \alpha\]</div>
+<p>where the coefficient <span class="math notranslate nohighlight">\(\alpha\)</span> is adjusted to meet the DC constraint</p>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>value<span class="classifier">float</span></dt><dd><p>The target mean value to which the data should be adjusted (default: 0)</p>
+</dd>
+<dt>axis<span class="classifier">int</span></dt><dd><p>The axis along which to compute the mean.</p>
+</dd>
+<dt>name<span class="classifier">str</span></dt><dd><p>Name of the mean corrector instance.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.Normalizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Normalizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'signal_amplifier'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'amp'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'abs'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'var'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'max'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'amp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.Normalizer" title="Link to this definition">#</a></dt>
+<dd><p>A class for normalizing data based on the specified normalization type.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y[n] = \alpha x[n]\]</div>
+<p>where the normalization coefficient <span class="math notranslate nohighlight">\(\alpha\)</span> depends on the normalization technique.</p>
+<ul>
+<li><p><strong>‘amp’</strong>: Scales the signal by a constant factor <span class="math notranslate nohighlight">\(\alpha = \text{value}\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\alpha = \text{value}\]</div>
+</li>
+<li><p><strong>‘abs’</strong>: Normalizes the signal by the maximum absolute value.</p>
+<div class="math notranslate nohighlight">
+\[\alpha = \frac{\text{value}}{\max(|x[n]|)}\]</div>
+</li>
+<li><p><strong>‘var’</strong>: Normalizes the signal based on its variance.</p>
+<div class="math notranslate nohighlight">
+\[\alpha = \sqrt{\frac{\text{value}}{\sigma_x^2}}\]</div>
+</li>
+<li><p><strong>‘max’</strong>: Normalizes the signal by the maximum absolute value of the real and imaginary parts.</p>
+<div class="math notranslate nohighlight">
+\[\alpha = \frac{\text{value}}{\max(\max(|\text{Re}(x[n])|), \max(|\text{Im}(x[n])|))}\]</div>
+</li>
+</ul>
+</section>
+<section id="id2">
+<h2>Attributes<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>method<span class="classifier">str</span></dt><dd><p>Type of normalization to be applied. Supported types are ‘amp’ for scaling coefficient, ‘max’ for maximum value normalization, ‘var’ for variance-based normalization, and ‘abs’ for absolute maximum value normalization.</p>
+</dd>
+<dt>value<span class="classifier">float, optional</span></dt><dd><p>The target value for the normalization type. Default is 1.0.</p>
+</dd>
+</dl>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">normalizer</span> <span class="o">=</span> <span class="n">Normalizer</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">normalizer</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+<span class="go">[0.5 1.  1.5 2. ]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindIQCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlindIQCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'iq_compensator'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.BlindIQCompensator" title="Link to this definition">#</a></dt>
+<dd><p>Blind IQ compensator based on the diagonalisation of the augmented covariance matrix.
+This compensation assumes the circularity of compensated signal</p>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>This class implements the following transformation</p>
+<div class="math notranslate nohighlight">
+\[y[n] = \alpha \Re e(x[n]) + \beta \Im m(x[n])\]</div>
+</section>
+<section id="algorithm">
+<h2>Algorithm<a class="headerlink" href="#algorithm" title="Link to this heading">#</a></h2>
+<p>such as :</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[\Re e^2(y[n])] &amp;= E[\Im m^2(y[n])] = 1\\
+E[\Re e(y[n])\Im m(y[n])] &amp; = 0\end{split}\]</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindCFOCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlindCFOCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0_init</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_search</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'grad'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'newton'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_search_tuple</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(-0.1,</span> <span class="pre">0.1,</span> <span class="pre">0.0001)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cfo_compensator'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.BlindCFOCompensator" title="Link to this definition">#</a></dt>
+<dd><p>Blind CFO compensator based on the maximisation of the periodogram
+of 4th order statistic.</p>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y[n] = x[n]e^{-j\widehat{\omega}_0 n}\]</div>
+</section>
+<section id="id5">
+<h2>Algorithm<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[\widehat{\omega}_0 = \frac{1}{4} \arg \max_{\omega} \left|\sum_{n=0}^{N-1} x^4[n]e^{-j\omega n}\right|^2\]</div>
+<p>The maximisation is performed using the Newton Algorithm</p>
+</section>
+<section id="id6">
+<h2>Attributes<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>w0_init<span class="classifier">float</span></dt><dd><p>Initialisation in rad/samples</p>
+</dd>
+<dt>N_iter<span class="classifier">int</span></dt><dd><p>Number of iterations</p>
+</dd>
+<dt>method<span class="classifier">str</span></dt><dd><p>method used for maximisation</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindPhaseCompensation">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlindPhaseCompensation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'phase</span> <span class="pre">correction'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.BlindPhaseCompensation" title="Link to this definition">#</a></dt>
+<dd><p>A class to perform blind phase compensation on a given signal.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>alphabet (np.ndarray): The alphabet used for phase compensation.
+theta (float): Initial phase angle. Default is 0.
+name (str): Name of the processor. Default is “phase”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.LinearEqualizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LinearEqualizer</span></span><a class="headerlink" href="#comnumpy.core.compensators.LinearEqualizer" title="Link to this definition">#</a></dt>
+<dd><p>Linear equalizer for the signal model</p>
+<div class="math notranslate nohighlight">
+\[z[n] = h*x[n] + b[n]\]</div>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>method : ‘zf’|’mmse’
+sigma2: noise variance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedFIRCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DataAidedFIRCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data_aided_fir'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.DataAidedFIRCompensator" title="Link to this definition">#</a></dt>
+<dd><p>Data_Aided_FIR()</p>
+<p>Data aided estimation of a FIR filter using ZF estimation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedPhaseCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TrainedBasedPhaseCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">target_data:</span> <span class="pre">Union[&lt;built-in</span> <span class="pre">function</span> <span class="pre">array&gt;,</span> <span class="pre">comnumpy.core.monitors.Recorder],</span> <span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'data_aided_phase'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedPhaseCompensator" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedComplexGainCompensator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TrainedBasedComplexGainCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extractor:</span> <span class="pre">Field(name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fee856e3e00&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;function</span> <span class="pre">TrainedBasedComplexGainCompensator.&lt;lambda&gt;</span> <span class="pre">at</span> <span class="pre">0x7fee5d3153a0&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repr=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hash=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compare=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata=mappingproxy({})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kw_only=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fee856e3e00&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_field_type=None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain:</span> <span class="pre">complex</span> <span class="pre">=</span> <span class="pre">(1+0j)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'complex_gain_compensator'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedComplexGainCompensator" title="Link to this definition">#</a></dt>
+<dd><p>This class performs the complex-gain channel estimation and compensation</p>
+<section id="id7">
+<h2>Attributes<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>recorder_preamble<span class="classifier">ndarray</span></dt><dd><p>The recorded preamble used to compute the complex gain of the channel.</p>
+</dd>
+<dt>extractor<span class="classifier">Data Extractor</span></dt><dd><p>How to extract the data in the received samples.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedSimpleSynchronizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TrainedBasedSimpleSynchronizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_correction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_cross_correlation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'synchronizer'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedSimpleSynchronizer" title="Link to this definition">#</a></dt>
+<dd><p>Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.</p>
+<section id="id8">
+<h2>Attributes<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>target_data<span class="classifier">ndarray</span></dt><dd><p>The reference preamble signal to which the input signals will
+be synchronized.</p>
+</dd>
+<dt>scale_correction<span class="classifier">bool, optional</span></dt><dd><p>If True, applies a scaling correction based on the peak of the
+cross-correlation. Default is True.</p>
+</dd>
+<dt>save_cross_corr<span class="classifier">bool, optional</span></dt><dd><p>If True, saves the computed cross-correlation and the associated
+lag vector. Default is True.</p>
+</dd>
+<dt>signal_len<span class="classifier">integer, optional</span></dt><dd><p>Truncates the signal to the given length after synchronization</p>
+</dd>
+<dt>name<span class="classifier">str, optional</span></dt><dd><p>Name of the synchronizer instance. Default is “synchronizer”.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.TrainedBasedFineSynchronizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TrainedBasedFineSynchronizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_correction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_cross_correlation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'synchronizer'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.core.compensators.TrainedBasedFineSynchronizer" title="Link to this definition">#</a></dt>
+<dd><p>Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.</p>
+<section id="id9">
+<h2>Attributes<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>target_data<span class="classifier">ndarray</span></dt><dd><p>The reference preamble signal to which the input signals will
+be synchronized.</p>
+</dd>
+<dt>up_factor<span class="classifier">int</span></dt><dd><p>The upsampling factor made before cross-correlation</p>
+</dd>
+<dt>scale_correction<span class="classifier">bool, optional</span></dt><dd><p>If True, applies a scaling correction based on the peak of the
+cross-correlation. Default is True.</p>
+</dd>
+<dt>save_cross_corr<span class="classifier">bool, optional</span></dt><dd><p>If True, saves the computed cross-correlation and the associated
+lag vector. Default is True.</p>
+</dd>
+<dt>signal_len<span class="classifier">integer, optional</span></dt><dd><p>Truncates the signal to the given length after synchronization</p>
+</dd>
+<dt>d_max :integer, optional</dt><dd><p>The maximum expected delay [number of samples of x]</p>
+</dd>
+<dt>name<span class="classifier">str, optional</span></dt><dd><p>Name of the synchronizer instance. Default is “synchronizer”.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -450,6 +696,32 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedMixin"><code class="docutils literal notranslate"><span class="pre">TrainedBasedMixin</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedMixin.get_target_data"><code class="docutils literal notranslate"><span class="pre">TrainedBasedMixin.get_target_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DCCorrector"><code class="docutils literal notranslate"><span class="pre">DCCorrector</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.Normalizer"><code class="docutils literal notranslate"><span class="pre">Normalizer</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindIQCompensator"><code class="docutils literal notranslate"><span class="pre">BlindIQCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindCFOCompensator"><code class="docutils literal notranslate"><span class="pre">BlindCFOCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseCompensation"><code class="docutils literal notranslate"><span class="pre">BlindPhaseCompensation</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.LinearEqualizer"><code class="docutils literal notranslate"><span class="pre">LinearEqualizer</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedFIRCompensator"><code class="docutils literal notranslate"><span class="pre">DataAidedFIRCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedPhaseCompensator"><code class="docutils literal notranslate"><span class="pre">TrainedBasedPhaseCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedComplexGainCompensator"><code class="docutils literal notranslate"><span class="pre">TrainedBasedComplexGainCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedSimpleSynchronizer"><code class="docutils literal notranslate"><span class="pre">TrainedBasedSimpleSynchronizer</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.TrainedBasedFineSynchronizer"><code class="docutils literal notranslate"><span class="pre">TrainedBasedFineSynchronizer</span></code></a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">
