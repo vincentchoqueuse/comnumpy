@@ -14,12 +14,26 @@ class PhaseNoise(Processor):
     is altered by a random process. The phase noise is characterized by a variance
     specified by sigma squared (sigma2).
 
+    .. math ::
+
+        y[n] = x[n]e^{j \phi[n]}
+
+    where :
+
+    .. math ::
+
+        \phi[n] = \sum_{k=0}^{n} \phi_k
+
+    with :math:`\phi_k \sim \mathcal{N}(0, \sigma^2)`.
+
     Attributes
     ----------
+
     sigma2 : float
         The variance of the phase noise.
     name : str
         Name of the channel instance. Default is "phase noise".
+    
     """
     sigma2: float
     name: str = "phase noise"

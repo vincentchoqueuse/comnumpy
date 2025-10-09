@@ -1,6 +1,7 @@
 import numpy as np
 from dataclasses import dataclass
 from comnumpy.core.generics import Processor
+from .processors import DataExtractor
 
 
 @dataclass
@@ -23,7 +24,9 @@ class Recorder(Processor):
 
     Attributes
     ----------
-    name : str
+    extractor: DataExtractor (optional)
+        : data extraction 
+    name : str (optional)
         Name of the recorder instance. Default is 'recorder'.
 
     Methods
@@ -33,6 +36,7 @@ class Recorder(Processor):
 
     """
     is_mimo: bool = True
+    extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
     name: str = "recorder"
 
     def __post_init__(self):

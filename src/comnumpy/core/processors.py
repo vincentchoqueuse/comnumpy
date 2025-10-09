@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
-from typing import Optional, Literal
+from typing import Optional, Literal, Union, Tuple, List
 from scipy import signal
 from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
@@ -655,7 +655,7 @@ class SampleRemover(Processor):
 
 
 @dataclass
-class Delay_Remover(Processor):
+class DelayRemover(Processor):
     """
     Removes an initial delay from a signal.
 
@@ -709,45 +709,63 @@ class DataAdder(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.validate_input(x)
-
         y = np.concatenate((x[:self.N_start], self.symbol, x[self.N_start:]))
         return y
 
 
 @dataclass
-class Signal_Extractor(Processor):
+class DataExtractor(Processor):
     """
-    A class for extracting a segment from a signal.
+    Extract a segment from a signal using NumPy-style indexing.
 
-    This class is used to extract a specific portion of a signal, starting from a specified index.
-    It can extract either until the end of the signal or for a specified number of samples.
-
-    Attributes
+    Parameters
     ----------
-    N_start : int
-        The starting index from where the extraction begins.
-    N : Optional[int]
-        The number of samples to extract. If None, extracts until the end of the signal.
+    selector : int, slice, tuple, list, ndarray or None
+        - int -> a single index
+        - tuple(start, stop[, step]) -> converted to slice
+        - list/ndarray -> explicit indices
+        - None -> passthrough (no extraction)
     name : str
-        Name of the extractor instance. Default is "DataExtractor".
+        Instance name
 
+    Examples
+    --------
+    >>> x = np.arange(10)
+
+    # single index
+    >>> extractor1 = DataExtractor(3)
+    >>> extractor1(x)
+    array([3])
+
+    # slice with tuple
+    >>> extractor2 = DataExtractor((2, 8))
+    >>> extractor2(x)
+    array([2, 3, 4, 5, 6, 7])
+
+    # slice with step
+    >>> extractor3 = DataExtractor((1, 9, 2))
+    >>> extractor3(x)
+    array([1, 3, 5, 7])
+
+    # multidimensional example
+    >>> x2d = np.arange(20).reshape(4, 5)
+    >>> extractor4 = DataExtractor((1, 3))
+    >>> extractor4(x2d)
+    array([[ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14]])
     """
-    N_start: int = 0
-    N: Optional[int] = None
-    name: str = "Signal Extractor"
-
-    def validate_input(self, x: np.ndarray):
-        if self.N_start < 0 or self.N_start >= len(x):
-            raise ValueError("N_start is out of bounds for the input signal.")
+    selector: Optional[Union[int, slice, tuple, list, np.ndarray]] = None
+    name: str = "Data Extractor"
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.validate_input(x)
+        if self.selector is None:
+            return x
 
-        if self.N is None:
-            y = x[self.N_start:]
-        else:
-            y = x[self.N_start:self.N_start+self.N]
-        return y
+        # transformer un tuple en slice si c'est un tuple simple
+        if isinstance(self.selector, tuple):
+            self.selector = slice(*self.selector)
+
+        return x[self.selector]
 
 
 @dataclass

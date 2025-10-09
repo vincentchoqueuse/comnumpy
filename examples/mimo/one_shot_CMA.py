@@ -6,7 +6,7 @@ from comnumpy.core import Sequential, Scope, Recorder
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
-from comnumpy.core.processors import Upsampler, Delay_Remover
+from comnumpy.core.processors import Upsampler, DelayRemover
 from comnumpy.core.utils import get_alphabet, hard_projector
 from comnumpy.mimo.channels import SelectiveMIMOChannel, AWGN
 from comnumpy.mimo.utils import rayleigh_channel
@@ -75,10 +75,10 @@ chain = Sequential([
             SelectiveMIMOChannel(H=H_array, name="channel"),
             AWGN(sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
-            Delay_Remover(delay=N_h*4),
+            DelayRemover(delay=N_h*4),
             CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),
             Recorder(name="post_cma"),
-            Delay_Remover(delay=int(0.9*N)),
+            DelayRemover(delay=int(0.9*N)),
             Scope(num="scope2", scope_type="iq", fig_indices=fig_indices)
             ])
 

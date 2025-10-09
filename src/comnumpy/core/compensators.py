@@ -8,7 +8,7 @@ from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
 from comnumpy.core import Processor, Recorder
 from .utils import hard_projector, zf_estimator, mmse_estimator
-from .processors import Amplifier
+from .processors import Amplifier, DataExtractor
 from .validators import validate_data
 
 
@@ -125,7 +125,7 @@ class Normalizer(Amplifier):
     -------
     >>> normalizer = Normalizer(method='max', value=2.0)
     >>> X = np.array([1, 2, 3, 4])
-    >>> Y = normalizer.forward(X)
+    >>> Y = normalizer(X)
     >>> print(Y)
     [0.5 1.  1.5 2. ]
     """
@@ -143,13 +143,12 @@ class Normalizer(Amplifier):
             case "amp":
                 gain = self.value
             case "abs":
-                gain = self.value/np.max(np.abs(x))
+                gain = self.value / np.max(np.abs(X))
             case "var":
-                variance = np.var(x)
-                gain = np.sqrt(self.value)/np.sqrt(variance)
+                gain = np.sqrt(self.value / np.var(X))
             case "max":
-                max_value = np.max([np.max(np.abs(np.real(x))), np.max(np.abs(np.imag(x)))])
-                gain = self.value/max_value
+                max_value = np.max([np.max(np.abs(np.real(X))), np.max(np.abs(np.imag(X)))])
+                gain = self.value / max_value
             case _:
                 gain = 1
 
@@ -478,26 +477,29 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
     ----------
     recorder_preamble : ndarray
         The recorded preamble used to compute the complex gain of the channel.
-    position : int
-        The place of this recorded preamble in the input signal.
+    extractor : Data Extractor
+        How to extract the data in the received samples.
     """
     target_data = Union[np.array, Recorder]
-    position: int = 0
+    extractor: field(default_factory=lambda: DataExtractor())
+    gain: complex = 1+0j
+    should_fit: bool = True
     name: str = "complex_gain_compensator"
 
+    def fit(self, x, x_target):
+        x_preamble_resized = np.resize(x_preamble, (N_preamble, 1))
+        x_preamble_pinv = np.linalg.pinv(x_preamble_resized)
+        gain = np.dot(x_preamble_pinv, x_target)
+        self.gain = gain
+
     def forward(self, x: np.ndarray) -> np.ndarray:
-        ref_preamble = self.get_target_data()
-        N_preamble = len(ref_preamble)
+        if self.should_fit:
+            x_target_preamble = self.get_target_data()
+            N_preamble = len(x_target)
+            x_preamble = self.extractor(x)
+            self.fit(x_preamble, x_target_preamble)
 
-        if N_preamble > 0:
-            x_preamble = x[self.position:self.position+N_preamble]
-            x_preamble_resized = np.resize(x_preamble, (N_preamble, 1))
-            x_preamble_pinv = np.linalg.pinv(x_preamble_resized)
-            complex_correction = np.dot(x_preamble_pinv, ref_preamble)
-        else:
-            complex_correction = 1
-
-        y = x*complex_correction
+        y = x * self.gain
         return y
 
 
