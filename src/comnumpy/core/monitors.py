@@ -1,5 +1,5 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core.generics import Processor
 from .processors import DataExtractor
 
