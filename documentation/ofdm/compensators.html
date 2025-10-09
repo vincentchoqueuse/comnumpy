@@ -42,7 +42,6 @@
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/ofdm/compensators';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -409,51 +408,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-comnumpy.ofdm.compensators">
-<span id="compensators"></span><h1>Compensators<a class="headerlink" href="#module-comnumpy.ofdm.compensators" title="Link to this heading">#</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="comnumpy.ofdm.compensators.FrequencyDomainEqualizer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FrequencyDomainEqualizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'frequency</span> <span class="pre">domain</span> <span class="pre">equalizer'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'ortho'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backward'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'forward'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ortho'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.ofdm.compensators.FrequencyDomainEqualizer" title="Link to this definition">#</a></dt>
-<dd><p>A frequency domain equalizer that applies weights to compensate for channel effects in the frequency domain.</p>
-<p>This class extends the <cite>WeightAmplifier</cite> to operate in the frequency domain, using the Fast Fourier Transform (FFT) to compute weights that equalize the input signal. The equalizer can optionally shift the zero-frequency component to the center of the spectrum.</p>
-<section id="signal-model">
-<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
-<p>Given a channel impulse response <span class="math notranslate nohighlight">\(h[l]\)</span>, the Frequency Domain Equalizer applies the following weight amplifier</p>
-<div class="math notranslate nohighlight">
-\[y[n] = \left(\frac{1}{H[n]}\right) \cdot x[n]\]</div>
-<ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(H[n]\)</span> corresponds to the inverse of the <span class="math notranslate nohighlight">\(n\)</span>-th bin of the channel’s Discrete Fourier Transform (DFT).</p></li>
-</ul>
-</section>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>h<span class="classifier">np.ndarray, optional</span></dt><dd><p>The impulse response of the channel to be equalized. Default is None.</p>
-</dd>
-<dt>shift<span class="classifier">bool, optional</span></dt><dd><p>If True, applies a frequency shift to center the zero-frequency component. Default is True.</p>
-</dd>
-<dt>axis<span class="classifier">int, optional</span></dt><dd><p>The axis along which to compute the FFT and apply the weights. Default is -2.</p>
-</dd>
-<dt>name<span class="classifier">str</span></dt><dd><p>Name of the frequency domain equalizer instance.</p>
-</dd>
-</dl>
-</section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">equalizer</span> <span class="o">=</span> <span class="n">FrequencyDomainEqualizer</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Example input tensor</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">equalizer</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="py method">
-<dt class="sig sig-object py" id="comnumpy.ofdm.compensators.FrequencyDomainEqualizer.prepare">
-<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.ofdm.compensators.FrequencyDomainEqualizer.prepare" title="Link to this definition">#</a></dt>
-<dd><p>Compute the amplifier weight from the channel impulse response</p>
-</dd></dl>
-
-</section>
-</dd></dl>
-
+  <section id="compensators">
+<h1>Compensators<a class="headerlink" href="#compensators" title="Link to this heading">#</a></h1>
 </section>
 
 
@@ -494,21 +450,6 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
-
-  <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.compensators.FrequencyDomainEqualizer"><code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.compensators.FrequencyDomainEqualizer.prepare"><code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer.prepare()</span></code></a></li>
-</ul>
-</li>
-</ul>
-  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">

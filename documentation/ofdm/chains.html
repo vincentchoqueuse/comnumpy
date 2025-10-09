@@ -408,77 +408,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-comnumpy.ofdm.chains">
-<span id="chains"></span><h1>Chains<a class="headerlink" href="#module-comnumpy.ofdm.chains" title="Link to this heading">#</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="comnumpy.ofdm.chains.OFDMTransmitter">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OFDMTransmitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N_carrier_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carrier_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pilots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.ofdm.chains.OFDMTransmitter" title="Link to this definition">#</a></dt>
-<dd><p>OFDM transmitter processing chain.</p>
-<p>This class encapsulates the sequence of operations to generate
-an OFDM time-domain transmit signal from input data symbols.</p>
-<p>Processing steps:
-- Serial to parallel conversion
-- Allocation of data and pilot symbols to OFDM subcarriers
-- IFFT to move from frequency to time domain
-- Addition of cyclic prefix to mitigate inter-symbol interference
-- Parallel to serial conversion to output the time-domain signal</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>N_carrier_data<span class="classifier">int</span></dt><dd><p>Number of carriers (subcarriers) for data</p>
-</dd>
-<dt>carrier_type<span class="classifier">np.ndarray or list</span></dt><dd><p>Array indicating the carrier allocation types (e.g., data, pilot, null).</p>
-</dd>
-<dt>N_cp<span class="classifier">int</span></dt><dd><p>Length of the cyclic prefix.</p>
-</dd>
-<dt>pilots<span class="classifier">list or np.ndarray</span></dt><dd><p>Pilot symbols to be inserted on pilot subcarriers.</p>
-</dd>
-</dl>
-</section>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>chain<span class="classifier">Processor</span></dt><dd><p>Sequential processor implementing the transmitter chain.</p>
-</dd>
-</dl>
-</section>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="comnumpy.ofdm.chains.OFDMReceiver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OFDMReceiver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N_carrier_data:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_cp:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h:</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carrier_type:</span> <span class="pre">~numpy.ndarray</span> <span class="pre">|</span> <span class="pre">list</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.ofdm.chains.OFDMReceiver" title="Link to this definition">#</a></dt>
-<dd><p>OFDM receiver processing chain.</p>
-<p>This class encapsulates the sequence of operations to recover
-data symbols from a received OFDM time-domain signal.</p>
-<p>Processing steps:
-- Serial to parallel conversion
-- Cyclic prefix removal
-- FFT to transform to frequency domain
-- Frequency-domain equalization using channel response
-- Extraction of data and pilot subcarriers
-- Parallel to serial conversion to output recovered data symbols</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>N_carrier_data<span class="classifier">int</span></dt><dd><p>Number of carriers (subcarriers) for data</p>
-</dd>
-<dt>carrier_type<span class="classifier">np.ndarray or list</span></dt><dd><p>Array indicating the carrier allocation types (e.g., data, pilot, null).</p>
-</dd>
-<dt>N_cp<span class="classifier">int</span></dt><dd><p>Length of the cyclic prefix.</p>
-</dd>
-<dt>h<span class="classifier">np.ndarray or list</span></dt><dd><p>Channel impulse or frequency response used for equalization.</p>
-</dd>
-</dl>
-</section>
-<section id="id2">
-<h2>Attributes<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt>chain<span class="classifier">Processor</span></dt><dd><p>Sequential processor implementing the receiver chain.</p>
-</dd>
-</dl>
-</section>
-</dd></dl>
-
+  <section id="chains">
+<h1>Chains<a class="headerlink" href="#chains" title="Link to this heading">#</a></h1>
 </section>
 
 
@@ -519,19 +450,6 @@ data symbols from a received OFDM time-domain signal.</p>
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
-
-  <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.chains.OFDMTransmitter"><code class="docutils literal notranslate"><span class="pre">OFDMTransmitter</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.chains.OFDMReceiver"><code class="docutils literal notranslate"><span class="pre">OFDMReceiver</span></code></a></li>
-</ul>
-  </nav></div>
 
   <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">
