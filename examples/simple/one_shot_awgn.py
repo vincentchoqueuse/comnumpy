@@ -7,7 +7,7 @@ from comnumpy.core.utils import get_alphabet
 from comnumpy.core.channels import AWGN
 from comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
 
-img_dir = "../../docs/getting_started/img/"
+img_dir = "docs/getting_started/img"
 
 # parameters
 modulation = "QAM"

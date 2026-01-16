@@ -1,0 +1,112 @@
+from dataclasses import dataclass, field
+from typing import Any, List, Generator, Optional, Dict, Union, Callable
+import copy
+import numpy as np
+from comnumpy.core.generics import Sequential, Processor
+import matplotlib.pyplot as plt
+
+
+@dataclass
+class PDMWrapper(Sequential):
+    """A PDM Wrapper encapsulates a SISO processor object to apply for each the input stream."""
+
+    module_list: Any
+    debug: bool = False
+    name: str = "PDM_Wrapper"
+    callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
+    N_t: int = field(default=2, init=False)
+    
+    def __post_init__(self):
+        """Initialize PDM-specific attributes."""
+        # N_t is already set to 2 by default via field()
+
+    def get_module_by_name(self, module_name: str) -> Any:
+        """Retrieve a module by its name."""
+        if hasattr(self.module_list, 'name'):
+            if self.module_list.name == module_name:
+                return self.module_list
+        raise AttributeError(f"Module '{module_name}' not found in class {self.__class__.__name__}.")
+
+    def get_module(self, index: int) -> Any:
+        module = copy.deepcopy(self.module_list)
+        if isinstance(module, Sequential):
+            for submodule in module.module_list:
+                submodule.name = f"{submodule.name}_pol{index}"
+        return module
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        Y_list = []
+        if X.ndim == 1:
+            X = X.reshape((2, -1))
+        
+        if isinstance(self.module_list, Processor):
+            sequential = self.module_list
+            for index in range(self.N_t):
+                x_temp = X[index, :]
+                y = sequential(x_temp)
+                Y_list.append(y)
+        elif isinstance(self.module_list, Sequential):
+            for index in range(self.N_t):
+                sequential = self.get_module(index)
+                x_temp = X[index, :]
+                y = sequential(x_temp)
+                Y_list.append(y)
+        Y = np.array(Y_list)
+        return Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
+
+
+
+@dataclass
+class ChannelWrapper(Sequential):
+    """A Channel Wrapper simulates multiple segments of polarization-multiplexed communication channels."""
+
+    module_list: List = field(default_factory=list)
+    seq_obj: Any = None
+    L: int = 1
+    params: Any = None
+    debug: bool = False
+    name: str = 'channel_wrapper'
+    callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
+    dgd_gen: Optional[Generator] = field(default=None, init=False, repr=False)
+    theta_gen: Optional[Generator] = field(default=None, init=False, repr=False)
+
+    def __post_init__(self):
+        """Initialize ChannelWrapper attributes."""
+        if self.params is not None:
+            self.dgd_gen = (dgd for dgd in self.params[1][0])
+            self.theta_gen = (theta for theta in self.params[1][1])
+
+    def set_params(self) -> Sequential:
+        module = copy.deepcopy(self.seq_obj)
+        # Accept raw list of processors by wrapping into Sequential
+        if isinstance(module, list):
+            module = Sequential(module_list=module)
+        # Duck typing: any object with a module_list attribute is treated as sequential
+        if not hasattr(module, 'module_list'):
+            print("[ChannelWrapper debug] seq_obj type:", type(self.seq_obj))
+            print("[ChannelWrapper debug] dir(seq_obj):", dir(self.seq_obj))
+            raise AttributeError('Object does not provide a module_list attribute; cannot set params')
+        for submodule in module.module_list:
+            if getattr(submodule, 'name', None) == 'SOP_Drift':
+                submodule.linewidth = self.params[0]
+            if getattr(submodule, 'name', None) == 'PMD':
+                submodule.t_dgd = next(self.dgd_gen)
+                submodule.theta = next(self.theta_gen)
+            if getattr(submodule, 'name', None) == 'PDL':
+                submodule.gamma_db = np.random.choice(self.params[2])
+        return module
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        Y = X
+        for _ in range(self.L):
+            sequential = self.set_params()
+            Y = sequential(Y)
+        return Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
