@@ -33,7 +33,7 @@ from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, 
 from comnumpy.optical.pdm.utils import *
 
 # parameters
-type, M = "QAM", 4
+type, M = "QAM", 16
 N = 1_200_000
 alphabet = get_alphabet(type, M)
 
@@ -107,7 +107,7 @@ step_DD = 1e-4
 step_PMD = 1e-4
 step_MCMA = 1e-3
 # step_CMA_list = np.linspace(1e-5, 1e-2, num=2)
-step_MIMO_list = np.logspace(-3, -3, num = 1)
+step_MIMO_list = np.logspace(-5, -2, num = 5)
 
 recorder_before_CMA = Recorder(name='data_before_CMA')
 recorder_emision = Recorder(name='tx_symbols_emision')
@@ -177,7 +177,7 @@ plt.show()
 
 ####### Monte Carlo ######
 ber_vs_step = []
-nr_repetitions = 1
+nr_repetitions = 3
 avg_ber_per_step = []
 
 for mu in step_MIMO_list:

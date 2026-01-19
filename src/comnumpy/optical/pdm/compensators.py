@@ -694,6 +694,8 @@ class MCMA:
         return self.forward(X)
 '''
 
+
+'''
 def mcma_targets(alphabet, p=2):
     aR = np.real(alphabet)
     aI = np.imag(alphabet)
@@ -742,3 +744,61 @@ class MCMA(Processor):
             self.W -= self.mu * np.outer(e, np.conj(x))
 
         return Y
+'''
+
+
+import numpy as np
+from dataclasses import dataclass, field
+
+def mcma_targets(alphabet: np.ndarray, p: int = 2):
+    # Rp,R = E[|a_R|^{2p}] / E[|a_R|^p],  Rp,I = E[|a_I|^{2p}] / E[|a_I|^p]
+    aR = np.real(alphabet)
+    aI = np.imag(alphabet)
+    RpR = np.mean(np.abs(aR) ** (2 * p)) / np.mean(np.abs(aR) ** p)
+    RpI = np.mean(np.abs(aI) ** (2 * p)) / np.mean(np.abs(aI) ** p)
+    return float(RpR), float(RpI)
+
+@dataclass
+class MCMA:
+    alphabet: np.ndarray
+    mu: float = 1e-3
+    p: int = 2  # p ≥ 2
+    W: np.ndarray = field(init=False, repr=False)
+    RpR: float = field(init=False)
+    RpI: float = field(init=False)
+    name: str = "MCMA"
+
+    def __post_init__(self):
+        assert self.p >= 2, "p>= 2"
+        self.RpR, self.RpI = mcma_targets(self.alphabet, self.p)
+        self.reset()
+
+    def reset(self):
+        self.W = np.eye(2, dtype=complex)
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        assert X.ndim == 2 and X.shape[0] == 2, "MCMA expects input of shape (2, N)"
+        N = X.shape[1]
+        Y = np.zeros_like(X, dtype=complex)
+
+        for k in range(N):
+            x = X[:, k]
+            y = self.W @ x
+            Y[:, k] = y
+
+
+            yR = np.real(y)
+            yI = np.imag(y)
+            abs_yR = np.abs(yR)
+            abs_yI = np.abs(yI)
+
+            eR = yR * (abs_yR ** (self.p - 2)) * (abs_yR ** self.p - self.RpR)
+            eI = yI * (abs_yI ** (self.p - 2)) * (abs_yI ** self.p - self.RpI)
+            e = eR + 1j * eI
+
+            self.W -= self.mu * np.outer(e, np.conj(x))
+
+        return Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
