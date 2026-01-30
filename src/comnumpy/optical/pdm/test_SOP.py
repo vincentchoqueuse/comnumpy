@@ -10,8 +10,8 @@ from matplotlib.ticker import LogLocator, ScalarFormatter, NullFormatter, LogFor
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
-# import sys
-# sys.path.insert(0, r"D:\comnumpy\src\comnumpy")
+import sys
+sys.path.insert(0, "comnumpy\\src\\")
 
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN
@@ -107,7 +107,7 @@ step_DD = 1e-4
 step_PMD = 1e-4
 step_MCMA = 1e-3
 # step_CMA_list = np.linspace(1e-5, 1e-2, num=2)
-step_MIMO_list = np.logspace(-5, -2, num = 5)
+step_MIMO_list = np.logspace(-3, -3, num = 1)
 
 recorder_before_CMA = Recorder(name='data_before_CMA')
 recorder_emision = Recorder(name='tx_symbols_emision')

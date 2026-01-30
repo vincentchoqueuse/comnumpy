@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 import numpy as np
 from scipy.stats import maxwell
+import pathlib
+import pandas as pd
+
+from comnumpy.core.generics import Processor
+from comnumpy.core.utils import hard_projector
+
+
 
 
 def build_pmd_segments(L_km: float, D_pmd_ps_sqrt_km: float, N_segments: int) -> tuple[np.ndarray, np.ndarray]:
@@ -42,3 +49,354 @@ def build_pmd_segments(L_km: float, D_pmd_ps_sqrt_km: float, N_segments: int) ->
     theta_k = np.random.uniform(0.0, np.pi, size=N_segments)
 
     return tau_k, theta_k
+
+
+# @dataclass
+# class DifferentialEncoding(Processor):
+#     modulation:str
+#     order:int
+#     norm:bool = True
+
+#     def get_binary_repr(self):
+#         pathname = pathlib.Path("src/comnumpy/core/data")
+#         filename = "{}/{}_{}_bin.csv".format(pathname, self.modulation, self.order)
+#         data = pd.read_csv(filename, dtype={'bin':str})
+#         bin_list = data['bin'].to_numpy().reshape(-1,1)
+#         return bin_list
+    
+#     def diff_encode(self, data_bin):
+#         # 1. Define the Gray-coded positions for the first quadrant
+#         # bits (b3, b4) -> complex position
+#         first_quad_map = {
+#         (0,0): 1+1j,
+#         (0,1): 1+3j,
+#         (1,1): 3+3j,
+#         (1,0): 3+1j
+#         }
+
+#         # 2. Differential Mapping for (b1, b2) -> Quadrant Shift
+#         # Using Gray-like mapping for shifts too: 00=0, 01=1, 11=2, 10=3
+#         diff_map = {(0,0): 0, (0,1): 1, (1,1): 2, (1,0): 3}
+#         symbols = np.zeros(len(data_bin), dtype=complex)
+#         state_q = 0 # Current quadrant state
+#         for i in range(len(data_bin)):
+#             # Get data_bin
+#             b_diff = tuple(map(int, data_bin[i][0:2]))
+
+#             b_gray = tuple(map(int, data_bin[i][2:]))
+#             # Update quadrant state (Differential)
+#             shift = diff_map[b_diff]
+#             state_q = (state_q + shift) % 4
+            
+#             # Get base symbol (Gray)
+#             base_sym = first_quad_map[b_gray]
+            
+#             # Rotate base symbol to the current quadrant
+#             # 0 -> *1, 1 -> *j, 2 -> *-1, 3 -> *-j
+#             symbols[i] = base_sym * np.exp(1j*state_q*np.pi/2)
+#         return symbols
+
+    
+#     def forward(self, x):
+#         bin_repr = self.get_binary_repr()
+#         data_bin = bin_repr[x].ravel()
+#         diff_symb = self.diff_encode(data_bin)
+#         if self.norm:
+#             encoded_symb = diff_symb/np.sqrt(np.mean(np.abs(diff_symb)**2))
+#         print(encoded_symb[-5:])
+#         return encoded_symb
+
+# @dataclass
+# class Differential_Decoding(Processor):
+#     modulation: str
+#     order: int
+#     alphabet : np.ndarray
+
+#     def get_bin_to_int_map(self):
+#         pathname = pathlib.Path("src/comnumpy/core/data")
+#         filename = "{}/{}_{}_bin.csv".format(pathname, self.modulation, self.order)
+#         data = pd.read_csv(filename, dtype={'bin':str})
+#         bin_array = data['bin'].to_numpy()
+#         int_array = data['s'].to_numpy()
+#         bin_to_int_map = {}
+#         for i in range(len(bin_array)):
+#             bin_to_int_map.update( {bin_array[i]:int_array[:]} )
+#         return bin_to_int_map
+
+#     def get_lsb(self, y, q):
+#         _,y_projected = hard_projector(y, alphabet=self.alphabet)
+#         first_quad_symb_norm = np.array([self.alphabet[9], self.alphabet[8], self.alphabet[12], self.alphabet[13]])
+#         first_quad_bits = {
+#             first_quad_symb_norm[0]:'00',
+#             first_quad_symb_norm[1]:'01',
+#             first_quad_symb_norm[2]:'11',
+#             first_quad_symb_norm[3]:'10'
+#         }
+#         print(y_projected)
+#         lsb = first_quad_bits[y_projected]
+#         return lsb
+
+
+#     def forward(self, x):
+#         bin_to_int_map = self.get_bin_to_int_map()
+#         int_symb = np.zeros_like(x)
+#         bits_symb = []
+#         phase_map = {0:'00', 1:'01', 2:'11', 3:'10'}
+#         prev = x[0]
+#         theta = 0
+#         decoded = np.zeros_like(x)
+
+#         for k in range(1, len(x)):
+#             z = x[k] * np.conj(prev)
+#             # 1. detect quadrant (differential)
+#             angle = (np.angle(z)) % (2*np.pi)
+#             q = int(np.round(angle / (np.pi/2))) % 4
+#             bin_msb = phase_map[q]
+#             phi_hat = q * (np.pi/2)
+#             # update cumulative estimated phase
+#             theta += phi_hat
+#             theta %= (2*np.pi)
+#             # 2. remove estimated phase
+#             y = x[k] * np.exp(-1j * theta)
+#             bin_lsb = self.get_lsb(y, q)
+#             bits_symb.append( bin_msb+bin_lsb )
+#             decoded[k] = y
+#             int_symb[k] = bin_to_int_map[bits_symb[k]]
+#             prev = x[k]
+
+#         return int_symb
+
+# @dataclass
+# class DifferentialEncoding(Processor):
+#     M: int
+#     norm:bool = True
+#     modulation = 'QAM'
+    
+#     def get_binary_repr(self):
+#         pathname = pathlib.Path("src/comnumpy/core/data")
+#         filename = "{}/{}_{}_bin.csv".format(pathname, self.modulation, self.M)
+#         data = pd.read_csv(filename, dtype={'bin':str})
+#         bin_list = data['bin'].to_numpy().reshape(-1,1)
+#         return bin_list
+    
+#     def get_map(self):
+#         harta = { '00':0, '01': np.pi/2, '11': np.pi, '10':3*np.pi/2}
+#         return harta
+    
+#     def forward(self, x:np.ndarray) -> np.ndarray:
+#         harta = self.get_map()
+#         bin_repr = self.get_binary_repr()
+#         data_bin = bin_repr[x].ravel()
+#         R = 2*np.sqrt(2)
+#         r = np.sqrt(2)
+#         Ci_1 = R*np.exp(1j*np.pi/4)
+#         Di_1 = r*np.exp(1j*np.pi/4)
+#         S0 = Ci_1 + Di_1
+#         Es = 2*(self.M-1)/3
+#         encoded_symb = []
+#         for bits_group in data_bin:
+#             phi1 = harta[bits_group[:2]]
+#             phi2 = harta[bits_group[2:]]
+#             Ci = Ci_1 * np.exp(1j*phi1)
+#             Di = Di_1 * np.exp(1j*phi2)
+#             Si = Ci + Di
+#             encoded_symb.append(Si)
+#             Ci_1 = Ci
+#             Di_1 = Di
+
+#         y = np.array(encoded_symb) / np.sqrt(Es)
+#         return y
+    
+# @dataclass
+# class DifferentialDecoding(DifferentialEncoding):
+#     def sgn(self, data):
+#         if data > 0:
+#             return 1
+#         elif data < 0:
+#             return -1
+#         else:
+#             return 0
+        
+#     def get_dibits(self, val):
+#         if val == 0:
+#             return '00'
+#         elif val == np.pi/2:
+#             return '01'
+#         elif val == np.pi:
+#             return '11'
+#         elif val == 1.5*np.pi:
+#             return '10'
+
+#     def get_ph(self, prod, R):
+#         if np.isclose(prod, R**2, atol=1e-5):
+#             return 0
+#         elif np.isclose(prod, 1j*R**2, atol=1e-5):
+#             return np.pi/2
+#         elif np.isclose(prod,-R**2, atol=1e-5):
+#             return np.pi
+#         elif np.isclose(prod,-1j*R**2, atol=1e-5):
+#             return 1.5*np.pi
+
+
+
+#     def forward(self, x:np.ndarray)->np.ndarray:
+#         Es = 2*(self.M-1)/3
+#         x *= np.sqrt(Es)
+#         R = 2*np.sqrt(2)
+#         r = np.sqrt(2)
+#         Ci_1 = R*np.exp(1j*np.pi/4)
+#         Di_1 = r*np.exp(1j*np.pi/4)
+#         bits = []
+#         decoded_symb = []
+#         for symb in x:
+#             Cpi = R/np.sqrt(2) * ( self.sgn(np.real(symb)) + 1j*self.sgn(np.imag(symb)) )
+#             prod_cp = Cpi * np.conj(Ci_1)
+#             phi_est1 = self.get_ph(prod_cp, R)
+#             bits1 = self.get_dibits(phi_est1)
+#             Dpi = r/np.sqrt(2) * ( self.sgn( np.real(symb - Cpi) ) + 1j*self.sgn( np.imag(symb-Cpi) ) )
+#             prod_dp = Dpi * np.conj(Di_1)
+#             phi_est2 = self.get_ph(prod_dp, r)
+#             decod = Cpi + Dpi
+#             decoded_symb.append(decod)
+#             bits2 = self.get_dibits(phi_est2)
+#             bits.append( bits1 + bits2 )
+#             Ci_1 = Cpi
+#             Di_1 = Dpi
+
+#         x_est = np.array(decoded_symb) / np.sqrt(Es)
+#         integers = np.array([int(b, 2) for b in bits])
+#         return integers
+
+
+@dataclass
+class DifferentialEncoding(Processor):
+    M: int
+    norm: bool = True
+    modulation = 'QAM'
+
+    def get_binary_repr(self):
+        pathname = pathlib.Path("src/comnumpy/core/data")
+        filename = f"{pathname}/{self.modulation}_{self.M}_bin.csv"
+        data = pd.read_csv(filename, dtype={'bin': str})
+        return data['bin'].to_numpy()
+
+    def get_map_array(self):
+        # Vectorized mapping for 2-bit strings → angle
+        mapping = {
+            '00': 0.0,
+            '01': np.pi/2,
+            '11': np.pi,
+            '10': 3*np.pi/2
+        }
+        keys = np.array(list(mapping.keys()))
+        values = np.array(list(mapping.values()))
+        return keys, values
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        bin_repr = self.get_binary_repr()
+        data_bin = bin_repr[x]  # shape: (N,)
+
+        keys, values = self.get_map_array()
+        map_dict = dict(zip(keys, values))  # needed for np.vectorize
+
+
+        # Extract phi1 and phi2 for each symbol
+        phi1_strs = np.array([b[:2] for b in data_bin])
+        phi2_strs = np.array([b[2:] for b in data_bin])
+        phi1 = np.vectorize(map_dict.get)(phi1_strs)
+        phi2 = np.vectorize(map_dict.get)(phi2_strs)
+
+
+        R = 2 * np.sqrt(2)
+        r = np.sqrt(2)
+        Es = 2 * (self.M - 1) / 3
+
+        # Preallocate arrays
+        n = len(x)
+        Ci = np.zeros(n, dtype=complex)
+        Di = np.zeros(n, dtype=complex)
+        Si = np.zeros(n, dtype=complex)
+
+        # Initial vectors
+        Ci_prev = R * np.exp(1j * np.pi / 4)
+        Di_prev = r * np.exp(1j * np.pi / 4)
+
+        # Loop is still needed due to recurrence
+        for i in range(n):
+            Ci[i] = Ci_prev * np.exp(1j * phi1[i])
+            Di[i] = Di_prev * np.exp(1j * phi2[i])
+            Si[i] = Ci[i] + Di[i]
+            Ci_prev = Ci[i]
+            Di_prev = Di[i]
+
+        return Si / np.sqrt(Es)
+
+
+@dataclass
+class DifferentialDecoding(DifferentialEncoding):
+    def sgn_arr(self, arr):
+        return np.sign(arr).astype(int)
+    
+    def angle_to_dibit(self, angles):
+        # Map rounded angles to dibits using a lookup array
+        angle_lookup = {
+            0.0: '00',
+            np.pi/2: '01',
+            np.pi: '11',
+            1.5*np.pi: '10'
+        }
+        return np.vectorize(angle_lookup.get)(angles)
+    
+    def quantize_angle(self, angles):
+        # Round angle to nearest quadrant (0, pi/2, pi, 3pi/2)
+        angles = np.angle(angles) % (2*np.pi)
+        idx = np.round(angles / (np.pi/2)) % 4
+        return idx * (np.pi/2)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        Es = 2 * (self.M - 1) / 3
+        x_scaled = x * np.sqrt(Es)
+
+        R = 2 * np.sqrt(2)
+        r = np.sqrt(2)
+
+        # Initialize memory
+        n = len(x)
+        Ci_1 = np.full(n, R*np.exp(1j*np.pi/4), dtype=complex)
+        Di_1 = np.full(n, r*np.exp(1j*np.pi/4), dtype=complex)
+
+        # Pre-allocate output
+        Cpi = np.zeros(n, dtype=complex)
+        Dpi = np.zeros(n, dtype=complex)
+        decoded = np.zeros(n, dtype=complex)
+        phi1_list = np.zeros(n)
+        phi2_list = np.zeros(n)
+
+        # Vectorized loop (loop kept, but minimal logic inside)
+        for i in range(n):
+            symb = x_scaled[i]
+            # Estimate quadrant center
+            re, im = np.real(symb), np.imag(symb)
+            Cpi[i] = R / np.sqrt(2) * (self.sgn_arr(re) + 1j * self.sgn_arr(im))
+            prod_cp = Cpi[i] * np.conj(Ci_1[i])
+            phi1_list[i] = self.quantize_angle(prod_cp)
+
+            # Estimate displacement
+            residual = symb - Cpi[i]
+            re_d, im_d = np.real(residual), np.imag(residual)
+            Dpi[i] = r / np.sqrt(2) * (self.sgn_arr(re_d) + 1j * self.sgn_arr(im_d))
+            prod_dp = Dpi[i] * np.conj(Di_1[i])
+            phi2_list[i] = self.quantize_angle(prod_dp)
+
+            decoded[i] = Cpi[i] + Dpi[i]
+
+            if i + 1 < n:
+                Ci_1[i+1] = Cpi[i]
+                Di_1[i+1] = Dpi[i]
+
+        bits1 = self.angle_to_dibit(phi1_list)
+        bits2 = self.angle_to_dibit(phi2_list)
+        bit_strings = np.char.add(bits1, bits2)
+
+        integers = np.array([int(b, 2) for b in bit_strings])
+        return integers
