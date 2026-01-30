@@ -42,7 +42,7 @@ Ts = 1 / 28e9
 
 Fiber_length = 500 # Km
 D_pmd = 0.1e-12 # ps/sqrt(km), for aggresive cases, choose 0.1
-seg = 1 # number of fiber segments
+seg = 20 # number of fiber segments
 
 t_dgd_k, rot_angle_k = build_pmd_segments(Fiber_length, D_pmd, seg)
 pmd_params = [t_dgd_k, rot_angle_k]
@@ -61,7 +61,7 @@ t_dgd = 1e-12
 rot_angle = np.pi/4
 
 # SOP drift
-pol_linewidth = 1e4
+pol_linewidth = 1e3
 
 # PN
 laser_linewidth = 1e5
@@ -177,7 +177,7 @@ plt.show()
 
 ####### Monte Carlo ######
 ber_vs_step = []
-nr_repetitions = 3
+nr_repetitions = 1
 avg_ber_per_step = []
 
 for mu in step_MIMO_list:
