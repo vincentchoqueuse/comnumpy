@@ -91,17 +91,17 @@ chain = Sequential([
             SymbolGenerator(M),
             Recorder(name='data_tx'),
             #PDMWrapper(SymbolMapper(alphabet)),
-            PDMWrapper(DifferentialEncoding('QAM', 16)),
+            PDMWrapper(DifferentialEncoding(M)),
             PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             recorder_real_symb,
             PDMWrapper(tx, 'tx'),
             recorder_emision,
-            #ChannelWrapper(seq_obj=channel, L=seg, params=channel_params),
-            #PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
+            ChannelWrapper(seq_obj=channel, L=seg, params=channel_params),
+            PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
             recorder_before_CMA,
             #PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
-            #MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
+            MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
             #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
             # PDM_Wrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             # Switch(cma_taps, alphabet, step_MIMO_list, oversampling, tx_before_CMA=recorder_before_CMA, name='adaptive_channel'),
@@ -112,7 +112,7 @@ chain = Sequential([
             # PhUnGrid(None, name='PhUnCor'),
             PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             # PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
-            PDMWrapper( Differential_Decoding('QAM', 16) ),
+            PDMWrapper(DifferentialDecoding(M)),
             Recorder(name='data_rx'),
             ])
 
@@ -125,13 +125,13 @@ data_tx1 = np.reshape(data_tx, (2,-1))[0,conv:]
 data_tx2 = np.reshape(data_tx, (2,-1))[1,conv:]
 
 ser1  = compute_ser(data_tx1, y[0,:])
-# ber1 = compute_ber( data_tx1, y[0,:], width=int(np.log2(M)) )
+ber1 = compute_ber( data_tx1, y[0,:], width=int(np.log2(M)) )
 ser2  = compute_ser(data_tx2, y[1,:])
-# ber2 = compute_ber( data_tx2, y[1,:], width=int(np.log2(M)) )
+ber2 = compute_ber( data_tx2, y[1,:], width=int(np.log2(M)) )
 ser = np.mean( [ser1, ser2] )
-# ber = np.mean( [ber1, ber2] )
-# print(f'SNR={SNR}:', 'SER:', ser1, '\tBER:', ber1)
-# print(f'SNR={SNR}:', 'SER:', ser2, '\tBER:', ber2)
+ber = np.mean( [ber1, ber2] )
+print(f'SNR={SNR}:', 'SER:', ser1, '\tBER:', ber1)
+print(f'SNR={SNR}:', 'SER:', ser2, '\tBER:', ber2)
 print(f'SNR={SNR}:', 'SER:', ser1)
 print(f'SNR={SNR}:', 'SER:', ser2)
 plt.show()
