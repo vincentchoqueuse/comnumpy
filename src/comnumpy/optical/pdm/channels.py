@@ -215,6 +215,7 @@ class SOP(Processor):
         return p1, p2, p3
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        # sigma = 2 * np.pi * self.linewidth * self.T_symb
         sigma = 2 * np.pi * self.linewidth * self.T_symb
         _, N = X.shape
         Y = np.zeros_like(X)
