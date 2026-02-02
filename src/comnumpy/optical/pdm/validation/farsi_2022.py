@@ -31,7 +31,7 @@ alphabet = get_alphabet(type, M, type='bin')
 Fs = 56e9 
 Ts = 1 / 28e9
 
-seg = 1 # number of fiber segments
+seg = 20 # number of fiber segments
 
 # SRRC filter
 roll_off = 0.35
@@ -42,7 +42,7 @@ oversampling = 2
 
 ### Impairments parameters ###
 # SOP drift
-pol_linewidth = 1.4e4
+pol_linewidth = 1.4e3
 
 #PDL parameters
 pdl_db = 3
@@ -96,10 +96,9 @@ chain = Sequential([
             recorder_real_symb,
             PDMWrapper(tx, 'tx'),
             recorder_emision,
-            ChannelWrapper(seq_obj=channel, L=seg, params=channel_params),
+            #ChannelWrapper(seq_obj=channel, L=seg, params=channel_params),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
-            recorder_before_CMA,
             #PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
             MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
             #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
@@ -132,8 +131,6 @@ ser = np.mean( [ser1, ser2] )
 ber = np.mean( [ber1, ber2] )
 print(f'SNR={SNR}:', 'SER:', ser1, '\tBER:', ber1)
 print(f'SNR={SNR}:', 'SER:', ser2, '\tBER:', ber2)
-print(f'SNR={SNR}:', 'SER:', ser1)
-print(f'SNR={SNR}:', 'SER:', ser2)
 plt.show()
 
 
