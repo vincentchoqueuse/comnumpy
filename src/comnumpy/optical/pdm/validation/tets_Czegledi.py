@@ -104,8 +104,8 @@ chain = Sequential([
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
             recorder_before_CMA,
             #PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
-            MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
-            #DD_Czegledi(alphabet=alphabet, mu=1e-3, P=1, name="DD_Czegledi"),
+            # MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
+            DD_Czegledi(alphabet=alphabet, mu=1e-3, P=1, name="DD_Czegledi"),
             #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
             # PDM_Wrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             # Switch(cma_taps, alphabet, step_MIMO_list, oversampling, tx_before_CMA=recorder_before_CMA, name='adaptive_channel'),
@@ -127,7 +127,8 @@ nr_repetitions = 3
 ser_list = []
 dp_tot_T_list = []
 
-linewidth_list = [1.4e2, 4.2e2, 1.4e3, 4.2e3, 1.4e4, 4.2e4, 1.4e5, 4.2e5, 1.4e6, 4.2e6]
+linewidth_list = [1.4e1, 1.4e2, 4.2e2, 1.4e3, 4.2e3, 1.4e4, 4.2e4, 1.4e5, 4.2e5, 1.4e6, 4.2e6]
+# linewidth_list = [1.4e2]
 
 for pol_linewidth in linewidth_list:
     channel = Sequential([
@@ -137,8 +138,8 @@ for pol_linewidth in linewidth_list:
     
     ser_runs = []
 
-    for _ in range(nr_repetitions):
-        chain["MCMA"].reset()
+    for rep in range(nr_repetitions):
+        chain["DD_Czegledi"].reset()
 
         # actualizează canalul în chain
         for idx, mod in enumerate(chain.module_list):
@@ -159,6 +160,9 @@ for pol_linewidth in linewidth_list:
         ser2 = compute_ser(tx2, y[1])
         ser_runs.append([ser1, ser2])
 
+        print(f"[Repetition {rep+1}/{nr_repetitions}] linewidth={pol_linewidth:.1e} Hz → SER_pol1={ser1:.3e}, SER_pol2={ser2:.3e}")
+
+    # După toate repetările:
     ser1_avg = np.mean([s[0] for s in ser_runs])
     ser2_avg = np.mean([s[1] for s in ser_runs])
     ser_avg = 0.5 * (ser1_avg + ser2_avg)
@@ -175,7 +179,7 @@ for pol_linewidth in linewidth_list:
         "SER_pol2": ser2_avg
     })
 
-    print(f"linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → SER={ser_avg:.3e}")
+    print(f"Final → linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → Mean SER={ser_avg:.3e}\n")
 
 df = pd.DataFrame(ser_vs_linewidth)
 df.to_csv(f"SER_vs_dpTotT_seg{seg}_SNR{SNR}_MCMA.csv", index=False)
@@ -197,3 +201,4 @@ ax.yaxis.set_minor_formatter(NullFormatter())
 
 plt.tight_layout()
 plt.show()
+

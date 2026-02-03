@@ -7,6 +7,7 @@ from typing import Literal, Optional
 from dataclasses import dataclass, field
 from typing import Any
 import pandas as pd
+from scipy.linalg import expm
 import os
 
 
@@ -747,9 +748,6 @@ class MCMA(Processor):
 '''
 
 
-import numpy as np
-from dataclasses import dataclass, field
-
 def mcma_targets(alphabet: np.ndarray, p: int = 2):
     # Rp,R = E[|a_R|^{2p}] / E[|a_R|^p],  Rp,I = E[|a_I|^{2p}] / E[|a_I|^p]
     aR = np.real(alphabet)
@@ -802,3 +800,64 @@ class MCMA:
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
         return self.forward(X)
+    
+
+@dataclass
+class DD_Czegledi(Processor):
+    alphabet: np.ndarray
+    mu: float = 1e-3
+    P: int = 1
+    name: str = "DD_Czegledi"  
+
+    def __post_init__(self):
+        self.reset()
+
+    def reset(self):
+        self.G = np.eye(2, dtype=np.complex128)
+        self.k = 0
+
+        self.s1 = np.array([[1,0], [0,-1]], dtype=np.complex128)
+        self.s2 = np.array([[0,1], [1,0]], dtype=np.complex128)
+        self.s3 = np.array([[0,-1j], [1j,0]], dtype=np.complex128)
+
+    def nearest_symbol(self, z):
+        idx = np.argmin(np.abs(self.alphabet - z)**2)
+        return self.alphabet[idx]
+    
+    def decision(self, x):
+        return np.array([self.nearest_symbol(x[0]), self.nearest_symbol(x[1])], dtype=np.complex128)
+    
+    def forward(self, X: np.ndarray) -> np.ndarray:
+
+        X = np.asarray(X, dtype=np.complex128)
+        _, N = X.shape
+        Y = np.zeros_like(X)
+        
+        for i in range(N):
+            self.k += 1
+            r_k = X[:, i]
+
+            x_k = self.G @ r_k
+            u_hat = self.decision(x_k)
+
+            e_k = x_k - u_hat  
+
+            if (self.k % self.P) == 0:
+               t1 = self.G @ (self.s1 @ r_k)
+               t2 = self.G @ (self.s2 @ r_k)
+               t3 = self.G @ (self.s3 @ r_k)    
+
+               a1 = -2*self.mu*np.real(1j*np.vdot(e_k, t1))
+               a2 = -2*self.mu*np.real(1j*np.vdot(e_k, t2)) 
+               a3 = -2*self.mu*np.real(1j*np.vdot(e_k, t3))
+
+               alpha = np.array([a1, a2, a3])
+            else:
+                alpha = np.zeros(3)
+
+            A = alpha[0]*self.s1 + alpha[1]*self.s2 + alpha[2]*self.s3
+            self.G = self.G @ expm(1j*A)
+
+            Y[:, i] = x_k
+        return Y
+    
