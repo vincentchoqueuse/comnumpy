@@ -8,8 +8,6 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
 
 
-
-
 def build_pmd_segments(L_km: float, D_pmd_ps_sqrt_km: float, N_segments: int) -> tuple[np.ndarray, np.ndarray]:
     """Build PMD segment parameters with Maxwellian-distributed DGDs.
     
@@ -400,3 +398,88 @@ class DifferentialDecoding(DifferentialEncoding):
 
         integers = np.array([int(b, 2) for b in bit_strings])
         return integers
+
+
+@dataclass
+class MCMA(Processor):
+    alphabet: np.ndarray
+    L:int
+    mu: float
+    p:int = 2
+    os:int = 2
+
+    def __post_init__(self):
+        self.RpR,self.RpI = self.compute_mcma_radii()
+
+    def compute_mcma_radii(self):
+        aR = np.real(self.alphabet)
+        aI = np.imag(self.alphabet)
+
+        RpR = np.mean(aR**4) / np.mean(aR**2)
+        RpI = np.mean(aI**4) / np.mean(aI**2)
+        return RpR, RpI
+
+
+    def get_filter_taps(self):
+        h11 = np.zeros(self.L, dtype=complex)
+        h12 = np.zeros(self.L, dtype=complex)
+        h21 = np.zeros(self.L, dtype=complex)
+        h22 = np.zeros(self.L, dtype=complex)
+        h11[0] = 1
+        h22[0] = 1
+        return h11,h12,h21,h22
+
+    def grad(self, x, y):
+        # y: shape (2,)  -> [y1, y2]
+        # x: shape (2, L)
+
+        y1, y2 = y
+        x1, x2 = x
+
+        e1 = (
+            np.real(y1) * (np.real(y1)**2 - self.RpR)
+            + 1j * np.imag(y1) * (np.imag(y1)**2 - self.RpI)
+        )
+
+        e2 = (
+            np.real(y2) * (np.real(y2)**2 - self.RpR)
+            + 1j * np.imag(y2) * (np.imag(y2)**2 - self.RpI)
+        )
+
+        grad = np.zeros((4, self.L), dtype=complex)
+
+        grad[0] = e1 * np.conj(x1)  # h11
+        grad[1] = e1 * np.conj(x2)  # h12
+        grad[2] = e2 * np.conj(x1)  # h21
+        grad[3] = e2 * np.conj(x2)  # h22
+
+        return grad
+
+
+    def forward(self, X):
+        Y = np.zeros_like(X)
+        N = X.shape[1]
+        h11,h12,h21,h22 = self.get_filter_taps()
+        for n in range(self.L + 1, N):
+            input = X[:, n : n - self.L : -1]
+            x_1 = input[0, :]
+            x_2 = input[1, :]
+            y_1 = np.dot(h11, x_1) + np.dot(h12, x_2)
+            y_2 = np.dot(h21, x_1) + np.dot(h22, x_2)
+            output = np.array([y_1, y_2])
+            if (n % self.os) == 0:
+                grad = self.grad(input, output)
+                h11 = h11 - self.mu * grad[0, :]
+                h22 = h22 - self.mu * grad[3, :]
+                h12 = h12 - self.mu * grad[1, :]
+                h21 = h21 - self.mu * grad[2, :]
+
+            Y[:, n] = output
+        self.Y = Y
+        return Y
+
+    def get_data(self):
+        return self.Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)

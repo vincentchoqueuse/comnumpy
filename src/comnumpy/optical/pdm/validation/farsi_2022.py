@@ -20,7 +20,7 @@ from comnumpy.core.metrics import compute_ser, compute_ber, compute_evm
 
 from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper
 from comnumpy.optical.pdm.channels import SOP, PDL
-from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch, MCMA
+from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch
 from comnumpy.optical.pdm.utils import *
 
 # parameters
@@ -31,7 +31,7 @@ alphabet = get_alphabet(type, M, type='bin')
 Fs = 56e9 
 Ts = 1 / 28e9
 
-seg = 20 # number of fiber segments
+seg = 1 # number of fiber segments
 
 # SRRC filter
 roll_off = 0.35
@@ -99,8 +99,8 @@ chain = Sequential([
             #ChannelWrapper(seq_obj=channel, L=seg, params=channel_params),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
+            #MCMA(alphabet, 7, 1e-3),
             #PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
-            MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
             #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
             # PDM_Wrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             # Switch(cma_taps, alphabet, step_MIMO_list, oversampling, tx_before_CMA=recorder_before_CMA, name='adaptive_channel'),
