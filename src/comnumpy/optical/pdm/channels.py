@@ -198,7 +198,7 @@ class SOP(Processor):
     T_symb : float
         Symbol period (time between symbols) [seconds].
     linewidth : float
-        Laser linewidth or phase noise bandwidth [Hz].
+        Polarization linewidth [Hz].
     name : str
         Name of the SOP drift instance. Default is "SOP_Drift".
 
@@ -215,7 +215,6 @@ class SOP(Processor):
         return p1, p2, p3
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        # sigma = 2 * np.pi * self.linewidth * self.T_symb
         sigma = 2 * np.pi * self.linewidth * self.T_symb
         _, N = X.shape
         Y = np.zeros_like(X)
@@ -230,3 +229,75 @@ class SOP(Processor):
             Y[:, i] = np.matmul(rot_mat, X[:, i])
 
         return Y
+
+
+
+@dataclass
+class SOP_(Processor):
+    """
+    Stateful SOP drift model (paper-correct, optimized).
+
+    J_{k+1} = exp(-j * alpha_k · sigma) J_k
+    alpha_k ~ N(0, 2π Δp T_symb I_3)
+    """
+
+    T_symb: float
+    linewidth: float
+    segments: int         
+    name: str = "SOP_Drift"
+
+    def __post_init__(self):
+        # Wiener variance (Eq. 5)
+        self.sigma2 = 2 * np.pi * (self.linewidth/self.segments) * self.T_symb
+
+        # Pauli matrices
+        self.p1 = np.array([[1, 0], [0, -1]], dtype=complex)
+        self.p2 = np.array([[0, 1], [1, 0]], dtype=complex)
+        self.p3 = np.array([[0, -1j], [1j, 0]], dtype=complex)
+
+        # Persistent Jones matrix (J_0)
+        self.J = np.eye(2, dtype=complex)
+
+    def _su2_expm(self, alpha: np.ndarray) -> np.ndarray:
+        """
+        Closed-form exp(-j * alpha · Pauli)
+        """
+        ax, ay, az = alpha
+        theta = np.sqrt(ax**2 + ay**2 + az**2)
+
+        if theta < 1e-14:
+            return np.eye(2, dtype=complex)
+
+        nx, ny, nz = alpha / theta
+        P = nx*self.p1 + ny*self.p2 + nz*self.p3
+
+        return (
+            np.cos(theta) * np.eye(2)
+            - 1j * np.sin(theta) * P
+        )
+
+    def _step(self):
+        """
+        One SOP Wiener increment.
+        """
+        alpha = np.random.normal(
+            scale=np.sqrt(self.sigma2),
+            size=3
+        )
+        U = self._su2_expm(alpha)
+        self.J = U @ self.J
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        Apply SOP drift symbol-by-symbol.
+        """
+        Y = np.empty_like(X)
+        _, N = X.shape
+
+        for k in range(N):
+            self._step()
+            Y[:, k] = self.J @ X[:, k]
+
+        return Y
+
+

@@ -100,13 +100,92 @@ class ChannelWrapper(Sequential):
                 submodule.gamma_db = np.random.choice(self.params[2])
         return module
 
+
     def forward(self, X: np.ndarray) -> np.ndarray:
+        # Build the chain once if it's static, or just optimize the params
+        # instead of deepcopying in a loop.
         Y = X
-        for _ in range(self.L):
-            sequential = self.set_params()
-            Y = sequential(Y)
+        # Create the segments once
+        segments = [self.set_params() for _ in range(self.L)]
+        
+        # Process the signal
+        for seq in segments:
+            Y = seq(Y)
         return Y
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
         return self.forward(X)
 
+@dataclass
+class ChannelWrapper_(Sequential):
+    """
+    DP-PDL channel wrapper following Farsi et al., JLT 2022.
+
+    H_k = Π_{n=1}^L Γ_n J_{k,n}
+    """
+
+    module_list: List = field(default_factory=list)
+    seq_obj: Any = None
+    L: int = 1                     # number of segments
+    params: Any = None
+    debug: bool = False
+    name: str = 'channel_wrapper'
+    callbacks: Optional[Dict] = field(default_factory=dict)
+
+    dgd_gen: Optional[Generator] = field(default=None, init=False, repr=False)
+    theta_gen: Optional[Generator] = field(default=None, init=False, repr=False)
+
+    segments: List = field(default_factory=list, init=False)
+
+    def __post_init__(self):
+        """
+        Build the channel ONCE.
+        """
+        if self.params is None:
+            raise ValueError("ChannelWrapper requires params")
+
+        # --- generators for PMD ---
+        if self.params[1] is not None:
+            self.dgd_gen = iter(self.params[1][0])
+            self.theta_gen = iter(self.params[1][1])
+
+        delta_p_tot = self.params[0]
+        delta_p_seg = delta_p_tot / self.L   # Eq. (7)
+
+        # --- build segments ---
+        self.segments = []
+        for seg_idx in range(self.L):
+
+            module = copy.deepcopy(self.seq_obj)
+            if isinstance(module, list):
+                module = Sequential(module_list=module)
+
+            for submodule in module.module_list:
+
+                # SOP: per-segment linewidth
+                if getattr(submodule, 'name', None) == 'SOP_Drift':
+                    submodule.linewidth = delta_p_seg
+
+                # PMD: static per segment
+                if getattr(submodule, 'name', None) == 'PMD':
+                    submodule.t_dgd = next(self.dgd_gen)
+                    submodule.theta = next(self.theta_gen)
+
+                # PDL: static per segment
+                if getattr(submodule, 'name', None) == 'PDL':
+                    submodule.gamma_db = np.random.choice(self.params[2])
+
+            self.segments.append(module)
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        Propagate through all segments.
+        SOP memory is preserved across calls.
+        """
+        Y = X
+        for seg in self.segments:
+            Y = seg(Y)
+        return Y
+
+    def __call__(self, X):
+        return self.forward(X)

@@ -401,10 +401,12 @@ class DifferentialDecoding(DifferentialEncoding):
 
 
 @dataclass
-class MCMA(Processor):
+class MCMA_(Processor):
     alphabet: np.ndarray
     L:int
-    mu: float
+    mu1: float
+    mu2: float
+    switch: int
     p:int = 2
     os:int = 2
 
@@ -461,7 +463,11 @@ class MCMA(Processor):
         N = X.shape[1]
         h11,h12,h21,h22 = self.get_filter_taps()
         for n in range(self.L + 1, N):
-            input = X[:, n : n - self.L : -1]
+            if n < self.switch :
+                mu = self.mu1
+            else:
+                mu = self.mu2 
+            input = X[:, n : n - self.L : -1] # X[:, n-self.L+1:n+1][:, ::-1]
             x_1 = input[0, :]
             x_2 = input[1, :]
             y_1 = np.dot(h11, x_1) + np.dot(h12, x_2)
@@ -469,10 +475,10 @@ class MCMA(Processor):
             output = np.array([y_1, y_2])
             if (n % self.os) == 0:
                 grad = self.grad(input, output)
-                h11 = h11 - self.mu * grad[0, :]
-                h22 = h22 - self.mu * grad[3, :]
-                h12 = h12 - self.mu * grad[1, :]
-                h21 = h21 - self.mu * grad[2, :]
+                h11 = h11 - mu * grad[0, :]
+                h22 = h22 - mu * grad[3, :]
+                h12 = h12 - mu * grad[1, :]
+                h21 = h21 - mu * grad[2, :]
 
             Y[:, n] = output
         self.Y = Y
