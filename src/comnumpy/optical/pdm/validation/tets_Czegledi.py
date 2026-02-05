@@ -21,7 +21,7 @@ from comnumpy.core.metrics import compute_ser, compute_ber, compute_evm
 
 from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper_
 from comnumpy.optical.pdm.channels import SOP, SOP_, PDL
-from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch, MCMA, DD_Czegledi
+from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch, MCMA, DD_Czegledi, PhaseRecoveryDualPol
 from comnumpy.optical.pdm.utils import *
 
 # parameters
@@ -48,13 +48,14 @@ pol_linewidth = 28e3
 pdl_db = 3
 pdl_theta = np.pi/4
 
-Fiber_length = 500 # Km
+Fiber_length = 1000 # Km
 D_pmd = 0.1e-12 # ps/sqrt(km), for aggresive cases, choose 0.1
 t_dgd_k, rot_angle_k = build_pmd_segments(Fiber_length, D_pmd, seg)
 pmd_params = [t_dgd_k, rot_angle_k]
 
 P_total = 0 # in dB
-p_seg = P_total / np.sqrt(seg)
+# p_seg = P_total / np.sqrt(seg)
+p_seg = 0.02574
 pdl_params = np.random.uniform(0, np.sqrt(3)*p_seg, seg )
 # step_MIMO_list = np.logspace(-5, -2, num = 5)
 step_MIMO_list = [1e-3]
@@ -73,7 +74,7 @@ tx = Sequential( [
 
 
 channel = Sequential( [
-            #PDL(pdl_db, pdl_theta),
+            # PDL(pdl_db, pdl_theta),
             SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
 ] )
 
@@ -82,7 +83,7 @@ rx = Sequential( [
 ] )
 
 channel_params = [ pol_linewidth, pmd_params, pdl_params ]
-step_CMA_list = np.logspace(-3, -3, num = 1)
+# step_CMA_list = np.logspace(1, 1, num = 1)
 
 recorder_before_CMA = Recorder(name='data_before_CMA')
 recorder_emision = Recorder(name='tx_symbols_emision')
@@ -103,14 +104,16 @@ chain = Sequential([
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             #PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
             recorder_before_CMA,
-            #PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
+            PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
             # MCMA(alphabet=alphabet, mu=1e-3, p=2, name="MCMA"),
-            DD_Czegledi(alphabet=alphabet, mu=6e-3, P=1, name="DD_Czegledi"),
+            DD_Czegledi(alphabet=alphabet, mu=6*1e-3, P=1, name="DD_Czegledi"),
             #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
             # PDM_Wrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             # Switch(cma_taps, alphabet, step_MIMO_list, oversampling, tx_before_CMA=recorder_before_CMA, name='adaptive_channel'),
             #PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             PDMWrapper(rx,'rx'),
+            PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
+            PhaseRecoveryDualPol(alphabet=alphabet, B=32, N=9),
             recorder_reception,
             # MSE(recorder_real_symb, alphabet, name='mse'),
             # PhUnGrid(None, name='PhUnCor'),

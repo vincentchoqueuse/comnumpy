@@ -300,4 +300,3 @@ class SOP_(Processor):
 
         return Y
 
-

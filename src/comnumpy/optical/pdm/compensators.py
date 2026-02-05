@@ -859,5 +859,45 @@ class DD_Czegledi(Processor):
             self.G = self.G @ expm(1j*A)
 
             Y[:, i] = x_k
+        # return Y*np.exp(-1j*3*np.pi/7)
         return Y
-    
+
+
+@dataclass
+class PhaseRecoveryDualPol:
+    alphabet: np.ndarray
+    B: int = 64      # număr faze test
+    N: int = 9       # jumătate fereastră
+    test_phases: np.ndarray = field(init=False)
+
+    def __post_init__(self):
+        self.test_phases = np.linspace(0, np.pi / 2, self.B, endpoint=False)
+
+    def project(self, x: np.ndarray) -> np.ndarray:
+        idx = np.argmin(np.abs(x[:, None] - self.alphabet[None, :])**2, axis=1)
+        return self.alphabet[idx]
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        assert X.shape[0] == 2, "Expected dual-pol input (2, N)"
+        pols, L = X.shape
+
+        best_phi = 0
+        min_error = np.inf
+
+        for phi in self.test_phases:
+            rotated = X * np.exp(1j * phi)
+            proj_0 = self.project(rotated[0])
+            proj_1 = self.project(rotated[1])
+            err_0 = np.abs(rotated[0] - proj_0) ** 2
+            err_1 = np.abs(rotated[1] - proj_1) ** 2
+            filt = np.ones(2 * self.N + 1)
+            total_error = np.sum(np.convolve(err_0, filt, mode='same') + np.convolve(err_1, filt, mode='same'))
+
+            if total_error < min_error:
+                min_error = total_error
+                best_phi = phi
+
+        return X * np.exp(1j * best_phi)
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
