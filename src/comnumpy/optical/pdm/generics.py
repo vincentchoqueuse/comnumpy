@@ -147,7 +147,6 @@ class ChannelWrapper_(Sequential):
         # --- generators for PMD ---
         if self.params[1] is not None:
             self.dgd_gen = iter(self.params[1][0])
-            self.theta_gen = iter(self.params[1][1])
 
         delta_p_tot = self.params[0]
         delta_p_seg = delta_p_tot / self.L   # Eq. (7)
@@ -169,11 +168,10 @@ class ChannelWrapper_(Sequential):
                 # PMD: static per segment
                 if getattr(submodule, 'name', None) == 'PMD':
                     submodule.t_dgd = next(self.dgd_gen)
-                    submodule.theta = next(self.theta_gen)
 
                 # PDL: static per segment
                 if getattr(submodule, 'name', None) == 'PDL':
-                    submodule.gamma_db = np.random.choice(self.params[2])
+                    submodule.gamma_db = self.params[2]
 
             self.segments.append(module)
 

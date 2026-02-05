@@ -125,6 +125,61 @@ class PMD(Processor):
 
         return X_out
 
+
+@dataclass
+class PMD_(Processor):
+    r"""
+    A class representing a Polarization Mode Dispersion (PMD) channel.
+
+    This class models the Polarization Mode Dispersion effect in dual-polarization optical signals.
+    PMD occurs due to differential group delay (DGD) between the two principal polarization axes
+    of an optical fiber. The PMD effect is computed in the frequency domain using rotation matrices.
+
+    .. math ::
+
+        \mathbf{X}_{out} = \mathbf{H}_2(\theta) \cdot \mathbf{J}_{PMD} \cdot \mathbf{H}_1(\theta) \cdot \mathbf{X}_{in}
+
+    where :math:`\mathbf{H}_1` and :math:`\mathbf{H}_2` are rotation matrices that transform between
+    the observed and principal polarization axes, and :math:`\mathbf{J}_{PMD}` applies the differential
+    phase delay in the frequency domain.
+
+    Attributes
+    ----------
+    t_dgd : float
+        Differential group delay (DGD) between the two polarization axes [seconds].
+    fs : float
+        Sampling frequency [Hz].
+    theta : float
+        Rotation angle of the principal axes relative to the observed axes [radians]. Default is 0.0.
+    name : str
+        Name of the channel instance. Default is "PMD".
+
+    References
+    ----------
+    * [1] Ip, Ezra, and Joseph M. Kahn. "Digital equalization of chromatic dispersion and
+      polarization mode dispersion." Journal of Lightwave Technology 25.8 (2007): 2033-2043.
+
+    """
+    t_dgd: float
+    fs: float
+    name: str = "PMD"
+
+    def forward(self, X_in: np.ndarray, update_params: bool = False) -> np.ndarray:
+        N = X_in.shape[1]
+        w = 2 * np.pi * np.linspace(-self.fs / 2, self.fs / 2, N, endpoint=False)
+
+        X_in_freq = np.fft.fftshift(np.fft.fft(np.fft.ifftshift(X_in, axes=1), axis=1), axes=1)
+
+        J_PMD = np.vstack((
+            np.exp(1j * w * self.t_dgd / 2),
+            np.exp(-1j * w * self.t_dgd / 2)
+        ))
+        X_bir_freq = J_PMD * X_in_freq
+
+        X_out = np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(X_bir_freq, axes=1), axis=1), axes=1)
+
+        return X_out
+
     
 @dataclass
 class PDL(Processor):
@@ -174,7 +229,44 @@ class PDL(Processor):
         H2 = pdl_vect * H1
         X_out = np.matmul(rot_mat, H2)
         return X_out
-    
+
+@dataclass
+class PDL_(Processor):
+    r"""
+    A class representing Polarization-Dependent Loss (PDL) in optical communication systems.
+
+    This class models the Polarization-Dependent Loss effect on a dual-polarization signal.
+    PDL causes differential attenuation between the two principal polarization states of light.
+    The effect is computed using rotation matrices to align the signal with the principal PDL axes.
+
+    .. math ::
+
+        \mathbf{X}_{out} = \mathbf{H}(\theta) \cdot \mathbf{L} \cdot \mathbf{H}^{-1}(\theta) \cdot \mathbf{X}_{in}
+
+    where :math:`\mathbf{H}(\theta)` is a rotation matrix, :math:`\mathbf{L}` is a diagonal matrix
+    representing the differential loss between the two polarization states, and :math:`\mathbf{X}_{in}`
+    is the input polarization state vector.
+
+    Attributes
+    ----------
+    gamma_db : float
+        Polarization-Dependent Loss in decibels [dB].
+    theta : float
+        Rotation angle of the principal PDL axes relative to the observed axes [radians].
+    name : str
+        Name of the PDL instance. Default is "PDL".
+    """
+    gamma_db: float
+    name: str = "PDL"
+
+    def __post_init__(self):
+        self.gamma = (10 ** (self.gamma_db / 10) - 1) / (10 ** (self.gamma_db / 10) + 1)
+
+    def forward(self, X_in: np.ndarray) -> np.ndarray:
+        pdl_vect = np.array([[(1 + self.gamma) ** 0.5], [(1 - self.gamma) ** 0.5]])
+        X_out = pdl_vect * X_in
+        return X_out
+
 @dataclass
 class SOP(Processor):
     r"""

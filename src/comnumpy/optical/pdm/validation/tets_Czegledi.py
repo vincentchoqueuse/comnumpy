@@ -20,7 +20,7 @@ from comnumpy.core.monitors import Recorder
 from comnumpy.core.metrics import compute_ser, compute_ber, compute_evm
 
 from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper_
-from comnumpy.optical.pdm.channels import SOP, SOP_, PDL
+from comnumpy.optical.pdm.channels import SOP, SOP_, PDL_
 from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch, MCMA, DD_Czegledi, PhaseRecoveryDualPol
 from comnumpy.optical.pdm.utils import *
 
@@ -44,19 +44,13 @@ Fs = (1/Ts) * oversampling
 # SOP drift
 pol_linewidth = 28e3
 
-#PDL parameters
-pdl_db = 3
-pdl_theta = np.pi/4
-
 Fiber_length = 1000 # Km
 D_pmd = 0.1e-12 # ps/sqrt(km), for aggresive cases, choose 0.1
 t_dgd_k, rot_angle_k = build_pmd_segments(Fiber_length, D_pmd, seg)
 pmd_params = [t_dgd_k, rot_angle_k]
 
-P_total = 0 # in dB
-# p_seg = P_total / np.sqrt(seg)
-p_seg = 0.02574
-pdl_params = np.random.uniform(0, np.sqrt(3)*p_seg, seg )
+
+pdl_params = 0.2 # segment-wise
 # step_MIMO_list = np.logspace(-5, -2, num = 5)
 step_MIMO_list = [1e-3]
 
@@ -74,8 +68,8 @@ tx = Sequential( [
 
 
 channel = Sequential( [
-            # PDL(pdl_db, pdl_theta),
             SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
+            PDL_(pdl_params),
 ] )
 
 rx = Sequential( [

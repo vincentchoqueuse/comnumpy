@@ -859,7 +859,6 @@ class DD_Czegledi(Processor):
             self.G = self.G @ expm(1j*A)
 
             Y[:, i] = x_k
-        # return Y*np.exp(-1j*3*np.pi/7)
         return Y
 
 
