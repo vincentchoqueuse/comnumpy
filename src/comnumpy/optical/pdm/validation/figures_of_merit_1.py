@@ -21,12 +21,12 @@ from comnumpy.core.metrics import compute_ser, compute_ber, compute_evm
 
 from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper_
 from comnumpy.optical.pdm.channels import SOP, SOP_, PDL_, PMD_, PMD
-from comnumpy.optical.pdm.compensators import CMA, RDE, DDLMS, AdaptiveChannel, Switch, MCMA, DD_Czegledi, PhaseRecoveryDualPol
+from comnumpy.optical.pdm.compensators import MCMA_to_DD_Czegledi, DD_Czegledi
 from comnumpy.optical.pdm.utils import *
 
 # parameters
 type, M = "QAM", 16
-N = 1_200_00
+N = 1_200_000
 alphabet = get_alphabet(type, M, type='bin')
 
 Ts = 1 / 28e9
@@ -50,26 +50,21 @@ t_dgd_k, rot_angle_k = build_pmd_segments(Fiber_length, D_pmd, seg)
 pmd_params = [t_dgd_k]
 
 pdl_params = 0.2 # segment-wise
-# step_MIMO_list = np.logspace(-5, -2, num = 5)
 step_MIMO_list = [1e-3]
 
 
-# CMA #
-cma_taps = 16
-
-# CMA convergence #
-conv = 500_00
-
+# Convergence #
+conv = 500_000
 tx = Sequential( [
             Upsampler(oversampling),
-            #SRRCFilter(roll_off, oversampling, srrc_taps, method='fft')
+            SRRCFilter(roll_off, oversampling, srrc_taps, method='fft')
 ] )
 
 
 channel = Sequential( [
             SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
             PDL_(pdl_params),
-            #PMD_(t_dgd_k, Fs)
+            PMD_(t_dgd_k, Fs)
 ] )
 
 rx = Sequential( [
@@ -78,7 +73,17 @@ rx = Sequential( [
 
 channel_params = [ pol_linewidth, pmd_params, pdl_params ]
 
-SNR = 18
+mcma = MCMA_(alphabet, L=7, mu1=6e-3, mu2=6e-3, switch=0, os=oversampling)
+dd = DD_Czegledi(alphabet, mu=6e-3)
+
+eq = MCMA_to_DD_Czegledi(
+    mcma=mcma,
+    dd=dd,
+    switch=oversampling*conv,
+    name="MCMA_to_DD_"
+)
+
+SNR = 20
 chain = Sequential([
             SymbolGenerator(M),
             Recorder(name='data_tx'),
@@ -86,18 +91,18 @@ chain = Sequential([
             PDMWrapper(tx, 'tx'),
             ChannelWrapper_(seq_obj=channel, L=seg, params=channel_params),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
-            #PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
-            PDMWrapper(IQ_Scope_PostProcessing(axis='equal', nlim=(-10000,N))),
-            DD_Czegledi(alphabet=alphabet, mu=1e-3, P=1, name="DD_Czegledi"),
-            #CMA(L=cma_taps, alphabet=alphabet, mu=1e-3, oversampling=oversampling, name='CMA'),
-            # Switch(cma_taps, alphabet, step_MIMO_list, oversampling, tx_before_CMA=recorder_before_CMA, name='adaptive_channel'),
+            PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
+            MCMA_SoftContinuation(alphabet=alphabet, L=7, mu1=1e-3, mu2=1e-3, switch=conv*oversampling, sigma2=0.01, alpha=1),
             PDMWrapper(rx,'rx'),
-            PhaseRecoveryDualPol(alphabet=alphabet, B=32, N=9),
             PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             PDMWrapper(DifferentialDecoding(M)),
             Recorder(name='data_rx'),
             ])
 
+# start = time()
+# y = chain(N)[:,conv:]
+# stop = time()
+# print('Ellapsed time:', stop-start)
 # data_tx = chain['data_tx'].get_data()
 # data_tx1 = np.reshape(data_tx, (2,-1))[0,conv:]
 # data_tx2 = np.reshape(data_tx, (2,-1))[1,conv:]
@@ -111,25 +116,27 @@ chain = Sequential([
 # print(f'SNR={SNR}:', 'SER:', ser1, '\tBER:', ber1)
 # print(f'SNR={SNR}:', 'SER:', ser2, '\tBER:', ber2)
 # plt.show()
-####### Monte Carlo: SER vs Δp_tot·T #######
+##### Monte Carlo: SER vs Δp_tot·T #######
 start = time()
 ser_vs_linewidth = []
-nr_repetitions = 1
+nr_repetitions = 3
 ser_list = []
 dp_tot_T_list = []
 
-linewidth_list = [28e3]
+linewidth_list = [28e1, 5*28e1, 28e2, 5*28e2, 28e3, 5*28e3, 28e4, 5*28e4, 28e5]
 
 for pol_linewidth in linewidth_list:
-    channel = Sequential([
-        SOP(T_symb=Ts, linewidth=pol_linewidth)
-    ])
+    channel = Sequential( [
+                SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
+                PDL_(pdl_params),
+                PMD_(t_dgd_k, Fs)
+    ] )
     channel_params = [pol_linewidth, pmd_params, pdl_params]
     
     ser_runs = []
 
     for rep in range(nr_repetitions):
-        chain["DD_Czegledi"].reset()
+        chain["MCMA_Soft"].reset()
 
         # actualizează canalul în chain
         for idx, mod in enumerate(chain.module_list):
@@ -172,7 +179,7 @@ for pol_linewidth in linewidth_list:
     print(f"Final → linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → Mean SER={ser_avg:.3e}\n")
 
 df = pd.DataFrame(ser_vs_linewidth)
-df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["DD_Czegledi"].name}.csv", index=False)
+df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA_Soft"].name}_S3.csv", index=False)
 
 
 plt.figure(figsize=(7, 5))

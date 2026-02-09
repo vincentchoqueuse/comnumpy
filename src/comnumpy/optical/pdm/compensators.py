@@ -24,7 +24,7 @@ class CMA(Processor):
     mu: float = 0.00001
     oversampling: int = 1
     norm: bool = True
-    debug: bool = False
+    #debug: bool = False
     mix: bool = True
     name: str = "cma"
 
@@ -827,9 +827,17 @@ class DD_Czegledi(Processor):
     def decision(self, x):
         return np.array([self.nearest_symbol(x[0]), self.nearest_symbol(x[1])], dtype=np.complex128)
     
-    def forward(self, X: np.ndarray) -> np.ndarray:
+    def whiten_2pol(self, X: np.ndarray, eps: float = 1e-10) -> np.ndarray:
+        # X shape (2, N)
+        R = (X @ X.conj().T) / X.shape[1]
+        # eigen-decomposition (2x2)
+        w, V = np.linalg.eigh(R)
+        Wm12 = V @ np.diag(1.0 / np.sqrt(w + eps)) @ V.conj().T
+        return Wm12 @ X
 
-        X = np.asarray(X, dtype=np.complex128)
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        #X = np.asarray(X, dtype=np.complex128)
+        X /= np.sqrt(np.mean(np.abs(X)**2, axis=1, keepdims=True))
         _, N = X.shape
         Y = np.zeros_like(X)
         
@@ -863,7 +871,7 @@ class DD_Czegledi(Processor):
 
 
 @dataclass
-class PhaseRecoveryDualPol:
+class PhaseRecoveryDualPol(Processor):
     alphabet: np.ndarray
     B: int = 64      # număr faze test
     N: int = 9       # jumătate fereastră
@@ -878,10 +886,10 @@ class PhaseRecoveryDualPol:
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         assert X.shape[0] == 2, "Expected dual-pol input (2, N)"
-        pols, L = X.shape
 
-        best_phi = 0
-        min_error = np.inf
+        best_phi = np.zeros(2)
+        min_error0 = np.inf
+        min_error1 = np.inf
 
         for phi in self.test_phases:
             rotated = X * np.exp(1j * phi)
@@ -890,13 +898,450 @@ class PhaseRecoveryDualPol:
             err_0 = np.abs(rotated[0] - proj_0) ** 2
             err_1 = np.abs(rotated[1] - proj_1) ** 2
             filt = np.ones(2 * self.N + 1)
-            total_error = np.sum(np.convolve(err_0, filt, mode='same') + np.convolve(err_1, filt, mode='same'))
+            total_err0 = np.mean(np.convolve(err_0, filt, mode='same'))
+            total_err1 = np.mean(np.convolve(err_1, filt, mode='same'))
+            if total_err0 < min_error0:
+                min_error0 = total_err0
+                best_phi[0] = phi
+            if total_err1 < min_error1:
+                min_error1 = total_err1
+                best_phi[1] = phi
 
-            if total_error < min_error:
-                min_error = total_error
-                best_phi = phi
+        return X * np.exp(1j * best_phi.reshape((-1,1)))
 
-        return X * np.exp(1j * best_phi)
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
+
+@dataclass
+class BlindPhaseSearchDualPol(Processor):
+    r"""
+    Blind Phase Search (BPS) feed-forward carrier phase recovery
+    for dual-polarization M-QAM signals.
+
+    This class implements the Blind Phase Search (BPS) algorithm
+    using sliding windows, as described in:
+
+        T. Pfau, S. Hoffmann, and R. Noé,
+        "Hardware-Efficient Coherent Digital Receiver Concept
+         With Feedforward Carrier Recovery for M-QAM Constellations",
+        Journal of Lightwave Technology, vol. 27, no. 8, pp. 989–999, Apr. 2009.
+
+    The algorithm estimates a time-varying carrier phase by testing
+    a finite set of candidate phases and selecting, for each polarization,
+    the phase that minimizes the decision-directed Euclidean error
+    accumulated over a sliding window.
+
+    Unlike static phase alignment, this method tracks Wiener phase noise
+    in a feed-forward manner and does not rely on feedback loops (PLL).
+
+    Notes
+    -----
+    * Phase ambiguity is resolved modulo π/2 for square QAM constellations.
+    * Phase estimation is performed independently per polarization,
+      which is robust when CMA leaves different residual phases on each pol.
+    * SOP should be compensated prior to applying this block.
+
+    Attributes
+    ----------
+    alphabet : np.ndarray
+        Complex QAM constellation symbols.
+    B : int
+        Number of test phases uniformly spanning [0, π/2).
+    N : int
+        Half window length; total window size is 2N+1 symbols.
+    test_phases : np.ndarray
+        Array of candidate phase rotations (initialized internally).
+
+    References
+    ----------
+    Pfau et al., JLT 2009, Sec. III-A, Eq. (8)–(10).
+    """
+
+    alphabet: np.ndarray
+    B: int = 64          # number of test phases
+    N: int = 9           # half window size
+    name: str = "BPS_DualPol"
+
+    test_phases: np.ndarray = field(init=False, repr=False)
+
+    def __post_init__(self):
+        # QAM phase ambiguity: π/2
+        self.test_phases = np.linspace(
+            0.0, np.pi / 2, self.B, endpoint=False
+        )
+
+    def project(self, x: np.ndarray) -> np.ndarray:
+        """
+        Hard decision (nearest-neighbor projection) onto the constellation.
+        """
+        idx = np.argmin(
+            np.abs(x[:, None] - self.alphabet[None, :]) ** 2,
+            axis=1
+        )
+        return self.alphabet[idx]
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        Apply blind phase tracking to a dual-polarization signal.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input signal of shape (2, Nsym), where each row corresponds
+            to one polarization.
+
+        Returns
+        -------
+        Y : np.ndarray
+            Phase-corrected signal of shape (2, Nsym).
+        """
+        assert X.shape[0] == 2, "Expected dual-pol input of shape (2, Nsym)"
+
+        _, Nsym = X.shape
+        Y = np.zeros_like(X, dtype=complex)
+
+        # sliding window filter
+        filt = np.ones(2 * self.N + 1)
+
+        # process symbol-by-symbol (centered window)
+        for k in range(Nsym):
+            best_phi = np.zeros(2)
+            min_err = np.full(2, np.inf)
+
+            # window indices
+            k0 = max(0, k - self.N)
+            k1 = min(Nsym, k + self.N + 1)
+
+            Xw = X[:, k0:k1]
+
+            for phi in self.test_phases:
+                rotated = Xw * np.exp(1j * phi)
+
+                # per-polarization projection
+                proj0 = self.project(rotated[0])
+                proj1 = self.project(rotated[1])
+
+                err0 = np.abs(rotated[0] - proj0) ** 2
+                err1 = np.abs(rotated[1] - proj1) ** 2
+
+                # accumulate error over window
+                cost0 = np.mean(np.convolve(err0, filt[:len(err0)], mode="same"))
+                cost1 = np.mean(np.convolve(err1, filt[:len(err1)], mode="same"))
+
+                if cost0 < min_err[0]:
+                    min_err[0] = cost0
+                    best_phi[0] = phi
+
+                if cost1 < min_err[1]:
+                    min_err[1] = cost1
+                    best_phi[1] = phi
+
+            # apply instantaneous phase estimate
+            Y[0, k] = X[0, k] * np.exp(1j * best_phi[0])
+            Y[1, k] = X[1, k] * np.exp(1j * best_phi[1])
+
+        return Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
+@dataclass
+class MCMA_to_DD_Czegledi(Processor):
+    """
+    MCMA → (unitary projection) → DD-Czegledi
+
+    - MCMA compensates ISI / PMD / slow PN
+    - Channel is frozen after `switch`
+    - Signal is whitened to remove PDL
+    - DD-Czegledi tracks fast SOP only
+    """
+
+    mcma: Processor
+    dd: Processor
+    switch: int
+    name: str = "MCMA_to_DD"
+
+    _whitened: bool = field(default=False, init=False, repr=False)
+
+    def reset(self):
+        self.mcma.reset()
+        self.dd.reset()
+        self._whitened = False
+
+    @staticmethod
+    def _whiten_2pol(X: np.ndarray, eps: float = 1e-10) -> np.ndarray:
+        """
+        Unitary projection / polarization whitening
+        """
+        R = (X @ X.conj().T) / X.shape[1]
+        w, V = np.linalg.eigh(R)
+        Wm12 = V @ np.diag(1.0 / np.sqrt(w + eps)) @ V.conj().T
+        return Wm12 @ X
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        X shape: (2, N)
+        """
+        assert X.shape[0] == 2, "Expected dual-pol signal"
+
+        # --- Stage 1: MCMA ---
+        Y_mcma = self.mcma(X)
+
+        # --- Freeze + unitarize ONCE ---
+        if not self._whitened:
+            Y_mcma[:, self.switch:] = self._whiten_2pol(
+                Y_mcma[:, self.switch:]
+            )
+            self._whitened = True
+
+        # --- Stage 2: DD-Czegledi ---
+        Y_out = np.zeros_like(Y_mcma)
+        Y_out[:, :self.switch] = Y_mcma[:, :self.switch]
+        Y_out[:, self.switch:] = self.dd(Y_mcma[:, self.switch:])
+
+        return Y_out
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
+
+
+@dataclass
+class CMA_to_DD_Czegledi(Processor):
+    """
+    CMA → (unitary projection) → DD-Czegledi
+
+    Cleaner chain than MCMA→DD when PDL is present.
+    """
+
+    cma: Processor
+    dd: Processor
+    switch: int
+    name: str = "CMA_to_DD"
+
+    _whitened: bool = field(default=False, init=False, repr=False)
+
+    def reset(self):
+        self.cma.reset()
+        self.dd.reset()
+        self._whitened = False
+
+    @staticmethod
+    def _whiten_2pol(X: np.ndarray, eps: float = 1e-10) -> np.ndarray:
+        R = (X @ X.conj().T) / X.shape[1]
+        w, V = np.linalg.eigh(R)
+        Wm12 = V @ np.diag(1.0 / np.sqrt(w + eps)) @ V.conj().T
+        return Wm12 @ X
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        assert X.shape[0] == 2, "Expected dual-pol signal"
+
+        # --- Stage 1: CMA ---
+        Y_cma = self.cma(X)
+
+        # --- Unitarize once ---
+        if not self._whitened:
+            Y_cma[:, self.switch:] = self._whiten_2pol(
+                Y_cma[:, self.switch:]
+            )
+            self._whitened = True
+
+        # --- Stage 2: DD-Czegledi ---
+        Y_out = np.zeros_like(Y_cma)
+        Y_out[:, :self.switch] = Y_cma[:, :self.switch]
+        Y_out[:, self.switch:] = self.dd(Y_cma[:, self.switch:])
+
+        return Y_out
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+
+
+@dataclass
+class IdealPhaseAlignDualPol(Processor):
+    """
+    Ideal constant phase alignment (simulation-aided).
+
+    Use after DD-Czegledi when you want a nicely aligned constellation.
+    With differential decoding, a constant rotation is harmless.
+
+    Parameters
+    ----------
+    tx_ref : np.ndarray
+        Reference complex symbols, shape (2, N) (must be aligned in time with Y).
+        For your case, this is typically the DIFFERENTIALLY ENCODED symbol stream
+        at symbol rate (before pulse shaping), delayed to match Rx.
+    start : int
+        Start index for estimation window (avoid transients).
+    length : int | None
+        Number of symbols used to estimate phase (None = use all from start).
+    common : bool
+        If True: estimate one global phase for both polarizations (recommended).
+        If False: estimate per-pol phases (not recommended unless you know why).
+    """
+
+    tx_ref: Processor
+    start: int = 0
+    length: int | None = None
+    common: bool = True
+    name: str = "IdealPhaseAlignDualPol"
+
+    last_phi: np.ndarray = field(default_factory=lambda: np.zeros(2), init=False, repr=False)
+
+    def reset(self):
+        self.last_phi[:] = 0.0
+
+    def forward(self, Y: np.ndarray) -> np.ndarray:
+        self.tx_ref = self.tx_ref.get_data()
+        assert Y.shape[0] == 2, "Expected (2, N)"
+        assert self.tx_ref.shape[0] == 2, "tx_ref must be (2, N)"
+
+        N = Y.shape[1]
+        k0 = int(self.start)
+        k1 = N if (self.length is None) else min(N, k0 + int(self.length))
+
+        Yw = Y[:, k0:k1]
+        Sw = self.tx_ref[:, k0:k1]
+
+        # Avoid zeros / invalids
+        mask = np.isfinite(Yw) & np.isfinite(Sw)
+        # If mask is all False, just return original
+        if not np.any(mask):
+            return Y
+
+        if self.common:
+            # One phase for both pols
+            num = np.sum((Yw[mask]) * np.conj(Sw[mask]))
+            phi = np.angle(num)
+            self.last_phi[:] = phi
+            return Y * np.exp(-1j * phi)
+
+        else:
+            # Separate phases per pol (use only if really needed)
+            Yout = Y.copy()
+            for p in range(2):
+                mp = mask[p]
+                if np.any(mp):
+                    num = np.sum(Yw[p, mp] * np.conj(Sw[p, mp]))
+                    phi = np.angle(num)
+                    self.last_phi[p] = phi
+                    Yout[p] *= np.exp(-1j * phi)
+            return Yout
+
+    def __call__(self, Y: np.ndarray) -> np.ndarray:
+        return self.forward(Y)
+
+@dataclass
+class CMA_to_DD_Czegledi_CP(Processor):
+    """
+    CMA → (unitary projection) → DD-Czegledi → Constant phase correction
+
+    - CMA: blind MIMO equalization
+    - Whitening: remove PDL, enforce unitary channel
+    - DD-Czegledi: fine SOP + residual phase tracking
+    """
+
+    cma: Processor
+    dd: Processor
+    bps: ProcessLookupError
+    alphabet: np.ndarray
+    switch: int                 # CMA → BPS/DD switch
+    name: str = "CMA_BPS_DD"
+
+    _whitened: bool = field(default=False, init=False, repr=False)
+
+    def reset(self):
+        self.cma.reset()
+        self.dd.reset()
+        self._whitened = False
+
+    @staticmethod
+    def _whiten_2pol(X: np.ndarray, eps: float = 1e-10) -> np.ndarray:
+        """
+        Polarization whitening / unitary projection
+        """
+        R = (X @ X.conj().T) / X.shape[1]
+        w, V = np.linalg.eigh(R)
+        Wm12 = V @ np.diag(1.0 / np.sqrt(w + eps)) @ V.conj().T
+        return Wm12 @ X
+
+    def align_const_phase_dd_2pol(self,Y: np.ndarray, alphabet: np.ndarray) -> np.ndarray:
+        """
+        Constant phase alignment AFTER DD-Czegledi.
+        Estimates one constant phase per polarization (LS sense).
+
+        Parameters
+        ----------
+        Y : np.ndarray
+            Equalized signal after DD-Czegledi, shape (2, N)
+        alphabet : np.ndarray
+            QAM alphabet
+
+        Returns
+        -------
+        Y_aligned : np.ndarray
+            Phase-aligned signal, shape (2, N)
+        """
+
+        # Hard decisions per polarization
+        idx0 = np.argmin(
+            np.abs(Y[0][:, None] - alphabet[None, :])**2,
+            axis=1
+        )
+        idx1 = np.argmin(
+            np.abs(Y[1][:, None] - alphabet[None, :])**2,
+            axis=1
+        )
+
+        S0 = alphabet[idx0]
+        S1 = alphabet[idx1]
+
+        # LS phase estimates (per polarization)
+        phi0 = np.angle(np.sum(Y[0] * np.conj(S0)))
+        phi1 = np.angle(np.sum(Y[1] * np.conj(S1)))
+
+        # Apply per-pol constant rotation
+        Y_out = np.empty_like(Y)
+        Y_out[0] = Y[0] * np.exp(-1j * phi0)
+        Y_out[1] = Y[1] * np.exp(-1j * phi1)
+
+        return Y_out
+
+
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        assert X.shape[0] == 2, "Expected dual-pol input (2, N)"
+
+        # -------------------------------------------------
+        # Stage 1: CMA (blind equalization)
+        # -------------------------------------------------
+        Y_cma = self.cma(X)
+
+        # Split timeline
+        Y_pre  = Y_cma[:, :self.switch]
+        Y_post = Y_cma[:, self.switch:]
+
+        # -------------------------------------------------
+        # Stage 2: Unitary projection (once)
+        # -------------------------------------------------
+        if not self._whitened:
+            Y_post = self._whiten_2pol(Y_post)
+            self._whitened = True
+
+        # -------------------------------------------------
+        # Stage 3: DD-Czegledi (fine SOP + phase)
+        # -------------------------------------------------
+        Y_post = self.dd(Y_post)
+
+        # -------------------------------------------------
+        # Reassemble output
+        # -------------------------------------------------
+        Y_out = np.zeros_like(Y_cma)
+        Y_out[:, :self.switch] = Y_pre
+        Y_out[:, self.switch:] = Y_post
+
+        return Y_out
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
         return self.forward(X)

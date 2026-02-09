@@ -407,8 +407,8 @@ class MCMA_(Processor):
     mu1: float
     mu2: float
     switch: int
-    p:int = 2
     os:int = 2
+    name:str="MCMA"
 
     def __post_init__(self):
         self.RpR,self.RpI = self.compute_mcma_radii()
@@ -422,14 +422,14 @@ class MCMA_(Processor):
         return RpR, RpI
 
 
-    def get_filter_taps(self):
-        h11 = np.zeros(self.L, dtype=complex)
-        h12 = np.zeros(self.L, dtype=complex)
-        h21 = np.zeros(self.L, dtype=complex)
-        h22 = np.zeros(self.L, dtype=complex)
-        h11[0] = 1
-        h22[0] = 1
-        return h11,h12,h21,h22
+    def reset(self):
+        self.h11 = np.zeros(self.L, dtype=complex)
+        self.h12 = np.zeros(self.L, dtype=complex)
+        self.h21 = np.zeros(self.L, dtype=complex)
+        self.h22 = np.zeros(self.L, dtype=complex)
+        self.h11[0] = 1
+        self.h22[0] = 1
+        return self.h11,self.h12,self.h21,self.h22
 
     def grad(self, x, y):
         # y: shape (2,)  -> [y1, y2]
@@ -461,7 +461,7 @@ class MCMA_(Processor):
     def forward(self, X):
         Y = np.zeros_like(X)
         N = X.shape[1]
-        h11,h12,h21,h22 = self.get_filter_taps()
+        self.h11,self.h12,self.h21,self.h22 = self.reset()
         for n in range(self.L + 1, N):
             if n < self.switch :
                 mu = self.mu1
@@ -470,17 +470,150 @@ class MCMA_(Processor):
             input = X[:, n : n - self.L : -1] # X[:, n-self.L+1:n+1][:, ::-1]
             x_1 = input[0, :]
             x_2 = input[1, :]
-            y_1 = np.dot(h11, x_1) + np.dot(h12, x_2)
-            y_2 = np.dot(h21, x_1) + np.dot(h22, x_2)
+            y_1 = np.dot(self.h11, x_1) + np.dot(self.h12, x_2)
+            y_2 = np.dot(self.h21, x_1) + np.dot(self.h22, x_2)
             output = np.array([y_1, y_2])
             if (n % self.os) == 0:
                 grad = self.grad(input, output)
-                h11 = h11 - mu * grad[0, :]
-                h22 = h22 - mu * grad[3, :]
-                h12 = h12 - mu * grad[1, :]
-                h21 = h21 - mu * grad[2, :]
+                self.h11 = self.h11 - mu * grad[0, :]
+                self.h22 = self.h22 - mu * grad[3, :]
+                self.h12 = self.h12 - mu * grad[1, :]
+                self.h21 = self.h21 - mu * grad[2, :]
 
             Y[:, n] = output
+        self.Y = Y
+        return Y
+
+    def get_data(self):
+        return self.Y
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        return self.forward(X)
+    
+
+
+@dataclass
+class MCMA_SoftContinuation(Processor):
+    """
+    MCMA → soft-decision MCMA continuation
+
+    - Pure MCMA before `switch`
+    - After `switch`, blends MCMA gradient with soft-decision gradient
+    """
+
+    alphabet: np.ndarray
+    L: int
+    mu1: float
+    mu2: float
+    switch: int
+    alpha: float = 0.1        # soft-decision weight
+    sigma2: float = 0.5       # softness (≈ noise variance)
+    os: int = 2
+    name: str = "MCMA_Soft"
+
+    def __post_init__(self):
+        self.RpR, self.RpI = self.compute_mcma_radii()
+
+    # -------------------------------------------------
+    # MCMA radii
+    # -------------------------------------------------
+    def compute_mcma_radii(self):
+        aR = np.real(self.alphabet)
+        aI = np.imag(self.alphabet)
+        RpR = np.mean(aR**4) / np.mean(aR**2)
+        RpI = np.mean(aI**4) / np.mean(aI**2)
+        return RpR, RpI
+
+    # -------------------------------------------------
+    # Reset taps
+    # -------------------------------------------------
+    def reset(self):
+        self.h11 = np.zeros(self.L, dtype=complex)
+        self.h12 = np.zeros(self.L, dtype=complex)
+        self.h21 = np.zeros(self.L, dtype=complex)
+        self.h22 = np.zeros(self.L, dtype=complex)
+        self.h11[0] = 1
+        self.h22[0] = 1
+        return self.h11, self.h12, self.h21, self.h22
+
+    # -------------------------------------------------
+    # Soft symbol estimator
+    # -------------------------------------------------
+    def soft_symbol(self, y):
+        # y shape: (N,)
+        d2 = np.abs(y[:, None] - self.alphabet[None, :])**2
+        w = np.exp(-d2 / self.sigma2)
+        w /= np.sum(w, axis=1, keepdims=True)
+        return w @ self.alphabet
+
+    # -------------------------------------------------
+    # Gradient
+    # -------------------------------------------------
+    def grad(self, x, y, use_soft=False):
+        y1, y2 = y
+        x1, x2 = x
+
+        # --- MCMA error ---
+        e1_mcma = (
+            np.real(y1) * (np.real(y1)**2 - self.RpR)
+            + 1j * np.imag(y1) * (np.imag(y1)**2 - self.RpI)
+        )
+        e2_mcma = (
+            np.real(y2) * (np.real(y2)**2 - self.RpR)
+            + 1j * np.imag(y2) * (np.imag(y2)**2 - self.RpI)
+        )
+
+        if not use_soft:
+            e1, e2 = e1_mcma, e2_mcma
+        else:
+            # --- Soft-decision error ---
+            s1 = self.soft_symbol(np.array([y1]))[0]
+            s2 = self.soft_symbol(np.array([y2]))[0]
+
+            e1_sd = y1 - s1
+            e2_sd = y2 - s2
+
+            # --- Blend ---
+            e1 = (1 - self.alpha) * e1_mcma + self.alpha * e1_sd
+            e2 = (1 - self.alpha) * e2_mcma + self.alpha * e2_sd
+
+        grad = np.zeros((4, self.L), dtype=complex)
+        grad[0] = e1 * np.conj(x1)
+        grad[1] = e1 * np.conj(x2)
+        grad[2] = e2 * np.conj(x1)
+        grad[3] = e2 * np.conj(x2)
+
+        return grad
+
+    # -------------------------------------------------
+    # Forward
+    # -------------------------------------------------
+    def forward(self, X):
+        Y = np.zeros_like(X)
+        N = X.shape[1]
+        self.h11, self.h12, self.h21, self.h22 = self.reset()
+
+        for n in range(self.L + 1, N):
+            mu = self.mu1 if n < self.switch else self.mu2
+
+            input = X[:, n : n - self.L : -1]
+            x1, x2 = input[0], input[1]
+
+            y1 = np.dot(self.h11, x1) + np.dot(self.h12, x2)
+            y2 = np.dot(self.h21, x1) + np.dot(self.h22, x2)
+            output = np.array([y1, y2])
+
+            if (n % self.os) == 0:
+                use_soft = n >= self.switch
+                grad = self.grad(input, output, use_soft=use_soft)
+
+                self.h11 -= mu * grad[0]
+                self.h12 -= mu * grad[1]
+                self.h21 -= mu * grad[2]
+                self.h22 -= mu * grad[3]
+
+            Y[:, n] = output
+
         self.Y = Y
         return Y
 
