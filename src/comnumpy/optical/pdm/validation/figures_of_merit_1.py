@@ -94,7 +94,7 @@ chain = Sequential([
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
             MCMA_SoftContinuation(alphabet=alphabet, L=7, mu1=1e-3, mu2=1e-3, switch=conv*oversampling, sigma2=0.01, alpha=1),
             PDMWrapper(rx,'rx'),
-            PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
+            #PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             PDMWrapper(DifferentialDecoding(M)),
             Recorder(name='data_rx'),
             ])
