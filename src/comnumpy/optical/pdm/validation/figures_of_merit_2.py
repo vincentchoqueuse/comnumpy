@@ -42,7 +42,7 @@ Fs = (1/Ts) * oversampling
 
 ### Impairments parameters ###
 # SOP drift
-pol_linewidth = 28e3
+pol_linewidth = 28e2
 
 Fiber_length = 1000 # Km
 D_pmd = 0.1e-12 # ps/sqrt(km), for aggresive cases, choose 0.1
@@ -73,14 +73,14 @@ rx = Sequential( [
 
 channel_params = [ pol_linewidth, pmd_params, pdl_params ]
 
-mcma = MCMA_(alphabet, L=7, mu1=6e-3, mu2=6e-3, switch=0, os=oversampling)
-dd = DD_Czegledi(alphabet, mu=6e-3)
+mcma = MCMA_(alphabet, L=7, mu1=1e-3, mu2=1e-3, switch=0, os=oversampling)
+dd = DD_Czegledi(alphabet, mu=1e-3)
 
 eq = MCMA_to_DD_Czegledi(
     mcma=mcma,
     dd=dd,
     switch=oversampling*conv,
-    name="MCMA_to_DD_"
+    name="MCMA_to_DD"
 )
 
 SNR = 20
@@ -92,7 +92,8 @@ chain = Sequential([
             ChannelWrapper_(seq_obj=channel, L=seg, params=channel_params),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
-            MCMA_(alphabet, 7, 1e-3, 1e-3, 0, os=oversampling, name="MCMA"),
+            MCMA_SoftContinuation(alphabet=alphabet, L=7, mu1=1e-3, mu2=1e-3, switch=conv*oversampling, sigma2=0.01, alpha=1),
+            #PolarizationPowerNormalizer(),
             PDMWrapper(rx,'rx'),
             PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             PDMWrapper(DifferentialDecoding(M)),
@@ -104,6 +105,10 @@ chain = Sequential([
 # stop = time()
 # print('Ellapsed time:', stop-start)
 # data_tx = chain['data_tx'].get_data()
+
+# genie = GenieAidedPolResolverInteger()
+# y = genie.resolve(y, data_tx.reshape(2,-1)[:,conv:])
+
 # data_tx1 = np.reshape(data_tx, (2,-1))[0,conv:]
 # data_tx2 = np.reshape(data_tx, (2,-1))[1,conv:]
 
@@ -119,9 +124,10 @@ chain = Sequential([
 ##### Monte Carlo: SER vs Δp_tot·T #######
 start = time()
 ser_vs_linewidth = []
-nr_repetitions = 3
+nr_repetitions = 1
 ser_list = []
 dp_tot_T_list = []
+genie = GenieAidedPolResolverInteger()
 
 linewidth_list = [28e1, 5*28e1, 28e2, 5*28e2, 28e3, 5*28e3, 28e4, 5*28e4, 28e5]
 
@@ -136,7 +142,7 @@ for pol_linewidth in linewidth_list:
     ser_runs = []
 
     for rep in range(nr_repetitions):
-        chain["MCMA"].reset()
+        chain["MCMA_Soft"].reset()
 
         # actualizează canalul în chain
         for idx, mod in enumerate(chain.module_list):
@@ -150,6 +156,8 @@ for pol_linewidth in linewidth_list:
 
         y = chain(N)[:, conv:]
         data_tx = chain['data_tx'].get_data()
+        y = genie.resolve(y, data_tx.reshape(2,-1)[:,conv:])
+
         tx1 = np.reshape(data_tx, (2, -1))[0, conv:]
         tx2 = np.reshape(data_tx, (2, -1))[1, conv:]
 
@@ -179,7 +187,7 @@ for pol_linewidth in linewidth_list:
     print(f"Final → linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → Mean SER={ser_avg:.3e}\n")
 
 df = pd.DataFrame(ser_vs_linewidth)
-df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA"].name}_S3.csv", index=False)
+df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA_Soft"].name}_S3_1.csv", index=False)
 
 
 plt.figure(figsize=(7, 5))

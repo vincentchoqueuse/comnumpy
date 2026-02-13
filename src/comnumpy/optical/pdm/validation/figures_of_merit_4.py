@@ -92,7 +92,7 @@ chain = Sequential([
             ChannelWrapper_(seq_obj=channel, L=seg, params=channel_params),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
-            eq,
+            DD_Czegledi(alphabet, mu=1e-3),
             PDMWrapper(rx,'rx'),
             PDMWrapper(IQ_Scope(axis='equal', nlim=(-10000,N))),
             PDMWrapper(DifferentialDecoding(M)),
@@ -123,7 +123,7 @@ chain = Sequential([
 ##### Monte Carlo: SER vs Δp_tot·T #######
 start = time()
 ser_vs_linewidth = []
-nr_repetitions = 10
+nr_repetitions = 1
 ser_list = []
 dp_tot_T_list = []
 genie = GenieAidedPolResolverInteger()
@@ -141,7 +141,7 @@ for pol_linewidth in linewidth_list:
     ser_runs = []
 
     for rep in range(nr_repetitions):
-        chain["MCMA_to_DD"].reset()
+        chain["DD_Czegledi"].reset()
 
         # actualizează canalul în chain
         for idx, mod in enumerate(chain.module_list):
@@ -186,7 +186,7 @@ for pol_linewidth in linewidth_list:
     print(f"Final → linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → Mean SER={ser_avg:.3e}\n")
 
 df = pd.DataFrame(ser_vs_linewidth)
-df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA_to_DD"].name}_S3_1.csv", index=False)
+df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["DD_Czegledi"].name}_S3_1.csv", index=False)
 
 
 plt.figure(figsize=(7, 5))
