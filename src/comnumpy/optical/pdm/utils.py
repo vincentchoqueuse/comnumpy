@@ -404,9 +404,7 @@ class DifferentialDecoding(DifferentialEncoding):
 class MCMA_(Processor):
     alphabet: np.ndarray
     L:int
-    mu1: float
-    mu2: float
-    switch: int
+    mu: float
     os:int = 2
     name:str="MCMA"
 
@@ -463,10 +461,7 @@ class MCMA_(Processor):
         N = X.shape[1]
         self.h11,self.h12,self.h21,self.h22 = self.reset()
         for n in range(self.L + 1, N):
-            if n < self.switch :
-                mu = self.mu1
-            else:
-                mu = self.mu2 
+            mu = self.mu 
             input = X[:, n : n - self.L : -1] # X[:, n-self.L+1:n+1][:, ::-1]
             x_1 = input[0, :]
             x_2 = input[1, :]
@@ -574,8 +569,8 @@ class MCMA_SoftContinuation(Processor):
             e2_sd = y2 - s2
 
             # --- Blend ---
-            e1 = (1 - self.alpha) * e1_mcma + self.alpha * e1_sd
-            e2 = (1 - self.alpha) * e2_mcma + self.alpha * e2_sd
+            e1 = self.alpha * e1_mcma + (1-self.alpha) * e1_sd
+            e2 = self.alpha * e2_mcma + (1-self.alpha) * e2_sd
 
         grad = np.zeros((4, self.L), dtype=complex)
         grad[0] = e1 * np.conj(x1)
@@ -604,7 +599,7 @@ class MCMA_SoftContinuation(Processor):
             output = np.array([y1, y2])
 
             if (n % self.os) == 0:
-                use_soft = n >= self.switch
+                use_soft = n <= self.switch
                 grad = self.grad(input, output, use_soft=use_soft)
 
                 self.h11 -= mu * grad[0]
@@ -622,3 +617,97 @@ class MCMA_SoftContinuation(Processor):
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
         return self.forward(X)
+
+
+from dataclasses import dataclass
+import numpy as np
+
+from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class GenieAidedPolResolverInteger:
+    """
+    Genie-aided polarization ambiguity resolution
+    operating on integer symbol indices.
+
+    This is evaluation-only.
+    Applied AFTER differential decoding.
+    """
+
+    name: str = "GenieAidedPolResolverInteger"
+
+    def resolve(self, D_hat: np.ndarray, D_true: np.ndarray) -> np.ndarray:
+        """
+        Parameters
+        ----------
+        D_hat : ndarray (2, N)
+            Detected integer symbols (after differential decoding)
+
+        D_true : ndarray (2, N)
+            True integer symbols (after differential decoding)
+
+        Returns
+        -------
+        D_best : ndarray (2, N)
+            Ambiguity-resolved symbols
+        """
+
+        if D_hat.shape != D_true.shape:
+            raise ValueError("Shape mismatch between detected and true symbols.")
+
+        # Candidate 1: no swap
+        cand_identity = D_hat
+
+        # Candidate 2: polarization swap
+        cand_swap = D_hat[::-1]
+
+        # Compute SER for both
+        err_identity = np.mean(cand_identity != D_true)
+        err_swap = np.mean(cand_swap != D_true)
+
+        if err_identity <= err_swap:
+            return cand_identity
+        else:
+            return cand_swap
+
+
+class PolarizationPowerNormalizer(Processor):
+    """
+    Simple per-polarization power normalization.
+
+    Ensures each polarization has unit average power:
+        y_i <- y_i / sqrt(E[|y_i|^2])
+
+    This is NOT whitening.
+    This is a scalar normalization per polarization.
+    """
+
+    eps: float = 1e-12
+    name: str = "PolPowerNorm"
+
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        Parameters
+        ----------
+        X : ndarray (2, N)
+            Equalized complex symbols
+
+        Returns
+        -------
+        X_norm : ndarray (2, N)
+            Power-normalized symbols
+        """
+
+        if X.shape[0] != 2:
+            raise ValueError("Expected dual-polarization signal (2, N)")
+
+        X_norm = X.copy()
+
+        for pol in range(2):
+            power = np.mean(np.abs(X[pol])**2)
+            gain = np.sqrt(power + self.eps)
+            X_norm[pol] /= gain
+
+        return X_norm
