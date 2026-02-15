@@ -335,7 +335,7 @@ class SOP_(Processor):
 
     T_symb: float
     linewidth: float
-    segments: int         
+    segments: int
     name: str = "SOP_Drift"
 
     def __post_init__(self):
@@ -391,4 +391,106 @@ class SOP_(Processor):
             Y[:, k] = self.J @ X[:, k]
 
         return Y
+
+@dataclass
+class SOP__(Processor):
+    """
+    Stateful SOP drift model, one independent process per instance.
+
+    J_{k+1} = exp(-j * alpha_k · sigma) J_k
+    alpha_k ~ N(0, 2π Δp_seg T_symb I_3)
+
+    NOTE:
+    - Keep `segments` only for backward compatibility with your script.
+    - Do NOT divide linewidth by segments here; ChannelWrapper_ will set linewidth = Δp_seg.
+    """
+    T_symb: float
+    linewidth: float
+    segments: int = 1
+    name: str = "SOP_Drift"
+
+    def __post_init__(self):
+        # use linewidth as the PER-SEGMENT linewidth already
+        self.sigma2 = 2 * np.pi * self.linewidth * self.T_symb/2
+
+        self.p1 = np.array([[1, 0], [0, -1]], dtype=complex)
+        self.p2 = np.array([[0, 1], [1, 0]], dtype=complex)
+        self.p3 = np.array([[0, -1j], [1j, 0]], dtype=complex)
+
+        self.J = np.eye(2, dtype=complex)
+
+    def _su2_expm(self, alpha: np.ndarray) -> np.ndarray:
+        ax, ay, az = alpha
+        theta = np.sqrt(ax*ax + ay*ay + az*az)
+
+        if theta < 1e-14:
+            return np.eye(2, dtype=complex)
+
+        nx, ny, nz = alpha / theta
+        P = nx*self.p1 + ny*self.p2 + nz*self.p3
+
+        return np.cos(theta) * np.eye(2, dtype=complex) - 1j * np.sin(theta) * P
+
+    def _step(self):
+        alpha = np.random.normal(scale=np.sqrt(self.sigma2), size=3)
+        U = self._su2_expm(alpha)
+        self.J = U @ self.J
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        Y = np.empty_like(X)
+        _, N = X.shape
+        for k in range(N):
+            self._step()
+            Y[:, k] = self.J @ X[:, k]
+        return Y
+
+
+@dataclass
+class PDL__(Processor):
+    gamma_db: float
+    name: str = "PDL"
+
+    def __post_init__(self):
+        self._recompute()
+
+    def _recompute(self):
+        self.gamma = (10 ** (self.gamma_db / 10) - 1) / (10 ** (self.gamma_db / 10) + 1)
+
+    def forward(self, X_in: np.ndarray) -> np.ndarray:
+        pdl_vect = np.array([[(1 + self.gamma) ** 0.5], [(1 - self.gamma) ** 0.5]])
+        return pdl_vect * X_in
+    
+@dataclass
+class PMD__(Processor):
+    t_dgd: float
+    fs: float
+    name: str = "PMD"
+
+    def __post_init__(self):
+        # random static rotation per segment
+        theta = np.random.uniform(0, 2*np.pi)
+
+        self.R = np.array([
+            [np.cos(theta),  np.sin(theta)],
+            [-np.sin(theta), np.cos(theta)]
+        ], dtype=complex)
+
+    def forward(self, X_in: np.ndarray) -> np.ndarray:
+
+        N = X_in.shape[1]
+        w = 2*np.pi*np.linspace(-self.fs/2, self.fs/2, N, endpoint=False)
+
+        Xf = np.fft.fftshift(np.fft.fft(np.fft.ifftshift(X_in, axes=1), axis=1), axes=1)
+
+        J = np.vstack((
+            np.exp(1j*w*self.t_dgd/2),
+            np.exp(-1j*w*self.t_dgd/2)
+        ))
+
+        # Apply R * D * R^-1
+        Xf = self.R @ (J * (self.R.conj().T @ Xf))
+
+        X_out = np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(Xf, axes=1), axis=1), axes=1)
+
+        return X_out
 

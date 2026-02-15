@@ -164,6 +164,7 @@ class ChannelWrapper_(Sequential):
                 # SOP: per-segment linewidth
                 if getattr(submodule, 'name', None) == 'SOP_Drift':
                     submodule.linewidth = delta_p_seg
+                    submodule.seg = 1
 
                 # PMD: static per segment
                 if getattr(submodule, 'name', None) == 'PMD':
@@ -172,8 +173,10 @@ class ChannelWrapper_(Sequential):
                 # PDL: static per segment
                 if getattr(submodule, 'name', None) == 'PDL':
                     submodule.gamma_db = self.params[2]
+                    submodule.gamma = (10**(submodule.gamma_db/10)-1)/(10**(submodule.gamma_db/10)+1)
 
             self.segments.append(module)
+
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         """
@@ -184,6 +187,144 @@ class ChannelWrapper_(Sequential):
         for seg in self.segments:
             Y = seg(Y)
         return Y
+
+    def __call__(self, X):
+        return self.forward(X)
+
+
+@dataclass
+class ChannelWrapper__(Sequential):
+
+    module_list: List = field(default_factory=list)
+    seq_obj: Any = None
+    L: int = 1
+    params: Any = None
+    debug: bool = False
+    name: str = 'channel_wrapper'
+    callbacks: Optional[Dict] = field(default_factory=dict)
+
+    dgd_gen: Optional[Generator] = field(default=None, init=False, repr=False)
+    segments: List = field(default_factory=list, init=False)
+
+    # store instantaneous PDL values
+    rho_k: List = field(default_factory=list, init=False)
+
+    # -------------------------------------------------------------
+    # Initialization
+    # -------------------------------------------------------------
+    def __post_init__(self):
+
+        if self.params is None:
+            raise ValueError("ChannelWrapper requires params")
+
+        delta_p_tot = self.params[0]
+        pmd_params  = self.params[1]
+        phi_seg_db  = self.params[2]
+
+        delta_p_seg = delta_p_tot / self.L
+
+        if pmd_params is not None:
+            self.dgd_gen = iter(pmd_params[0])
+
+        self.segments = []
+
+        for _ in range(self.L):
+
+            module = copy.deepcopy(self.seq_obj)
+            if isinstance(module, list):
+                module = Sequential(module_list=module)
+
+            for submodule in module.module_list:
+
+                nm = getattr(submodule, 'name', None)
+
+                if nm == 'SOP_Drift':
+                    submodule.linewidth = delta_p_seg
+                    submodule.segments = 1
+                    submodule.sigma2 = 2 * np.pi * submodule.linewidth * submodule.T_symb
+
+                elif nm == 'PMD' and self.dgd_gen is not None:
+                    submodule.t_dgd = next(self.dgd_gen)
+
+                elif nm == 'PDL':
+                    submodule.gamma_db = phi_seg_db
+                    submodule.gamma = (10**(phi_seg_db/10)-1) / \
+                                      (10**(phi_seg_db/10)+1)
+
+            self.segments.append(module)
+
+    # -------------------------------------------------------------
+    # Average aggregated PDL (Eq. 10)
+    # -------------------------------------------------------------
+    def average_aggregated_pdl_db(self, H_list):
+
+        rho_vals = []
+
+        for Hk in H_list:
+            s = np.linalg.svd(Hk, compute_uv=False)
+            rho_lin = (s[0]**2) / (s[1]**2)
+            rho_vals.append(rho_lin)
+
+        rho_mean = np.mean(rho_vals)
+
+        return 10 * np.log10(rho_mean)
+
+    # -------------------------------------------------------------
+    # Forward
+    # -------------------------------------------------------------
+    def forward(self, X: np.ndarray) -> np.ndarray:
+
+        Y = np.zeros_like(X)
+        self.rho_k = []
+
+        Nsym = X.shape[1]
+        H_list = []
+
+        for k in range(Nsym):
+
+            H_k = np.eye(2, dtype=complex)
+            x_k = X[:, k:k+1]
+
+            # propagate through segments
+            for seg in self.segments:
+
+                x_k = seg(x_k)
+
+                # ----- extract linear action of segment -----
+                e1 = np.array([[1],[0]], dtype=complex)
+                e2 = np.array([[0],[1]], dtype=complex)
+
+                h1 = seg(e1)
+                h2 = seg(e2)
+
+                H_seg = np.hstack([h1, h2])
+
+                # accumulate full channel
+                H_k = H_seg @ H_k
+
+            # store final full channel only
+            H_list.append(H_k)
+
+            Y[:, k:k+1] = x_k
+
+            # instantaneous aggregated PDL (Eq. 9)
+            s = np.linalg.svd(H_k, compute_uv=False)
+            rho_db = 20 * np.log10(s[0] / s[1])
+
+            self.rho_k.append(rho_db)
+
+        if self.debug:
+            print("Mean instantaneous PDL (dB):", np.mean(self.rho_k))
+            print("Aggregated PDL Eq(10) (dB):",
+                  self.average_aggregated_pdl_db(H_list))
+
+        return Y
+
+    # -------------------------------------------------------------
+    # Utilities
+    # -------------------------------------------------------------
+    def mean_pdl(self):
+        return np.mean(self.rho_k)
 
     def __call__(self, X):
         return self.forward(X)

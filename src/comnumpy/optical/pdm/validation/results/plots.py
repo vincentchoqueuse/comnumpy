@@ -40,15 +40,15 @@ from matplotlib.ticker import NullFormatter, LogFormatterMathtext
 # df4 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S2\\SER_vs_dpTotT_seg20_SNR20_DD_Czegledi_S2.csv")
 
 
-df1 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S1\\SER_vs_dpTotT_seg20_SNR20_MCMA_S1.csv")
-df2 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S1\\SER_vs_dpTotT_seg20_SNR20_MCMA_to_DD_S1.csv")
-df3 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S1\\SER_vs_dpTotT_seg20_SNR20_MCMA_Soft_S1.csv")
-df4 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S1\\SER_vs_dpTotT_seg20_SNR20_DD_Czegledi_S1.csv")
+df1 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S3\\SER_vs_dpTotT_seg20_SNR20_MCMA_S3_1.csv")
+df2 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S3\\SER_vs_dpTotT_seg20_SNR20_MCMA_to_DD_S3_1.csv")
+df3 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S3\\SER_vs_dpTotT_seg20_SNR20_MCMA_Soft_S3_1.csv")
+df4 = pd.read_csv("src\\comnumpy\\optical\\pdm\\validation\\results\\S3\\SER_vs_dpTotT_seg20_SNR20_DD_Czegledi_S3_1.csv")
 
 plt.figure(figsize=(7, 5))
 plt.loglog(df1['dp_tot_T'], df1["SER"], marker='o', linewidth=2, label='MCMA')
 plt.loglog(df2['dp_tot_T'], df2["SER"], marker='o', linewidth=2, label='MCMA to Czegledi')
-plt.loglog(df3['dp_tot_T'], df3["SER"], marker='o', linewidth=2, label=f'MCMA Soft alpha=1')
+plt.loglog(df3['dp_tot_T'], df3["SER"], marker='o', linewidth=2, label=f'MCMA Soft')
 #plt.loglog(df5['dp_tot_T'], df5["SER"], marker='o', linewidth=2, label=f'MCMA Soft alpha=0.5')
 plt.loglog(df4['dp_tot_T'], df4["SER"], marker='o', linewidth=2, label=f'DD-Czegledi')
 plt.xlabel(r'$\Delta p_{\mathrm{tot}} \cdot T$')

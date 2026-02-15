@@ -19,8 +19,8 @@ from comnumpy.core.processors import Upsampler, Downsampler
 from comnumpy.core.monitors import Recorder
 from comnumpy.core.metrics import compute_ser, compute_ber, compute_evm
 
-from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper_
-from comnumpy.optical.pdm.channels import SOP, SOP_, PDL_, PMD_, PMD
+from comnumpy.optical.pdm.generics import PDMWrapper, ChannelWrapper_, ChannelWrapper__, ChannelWrapper
+from comnumpy.optical.pdm.channels import SOP, SOP_, PDL_, PMD_, PMD, PDL__, SOP__, PMD__
 from comnumpy.optical.pdm.compensators import MCMA_to_DD_Czegledi, DD_Czegledi
 from comnumpy.optical.pdm.utils import *
 
@@ -42,15 +42,13 @@ Fs = (1/Ts) * oversampling
 
 ### Impairments parameters ###
 # SOP drift
-pol_linewidth = 28e2
+pol_linewidth = 28e3
 
 Fiber_length = 1000 # Km
 D_pmd = 0.1e-12 # ps/sqrt(km), for aggresive cases, choose 0.1
 t_dgd_k, rot_angle_k = build_pmd_segments(Fiber_length, D_pmd, seg)
-pmd_params = [t_dgd_k]
-
-pdl_params = 0.2 # segment-wise
-step_MIMO_list = [1e-3]
+pmd_params = [t_dgd_k, rot_angle_k]
+pdl_params = 0.05 # segment-wise [1e-3]
 
 
 # Convergence #
@@ -62,9 +60,10 @@ tx = Sequential( [
 
 
 channel = Sequential( [
-            SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
             PDL_(pdl_params),
-            PMD_(t_dgd_k, Fs)
+            PMD_(t_dgd_k, Fs),
+            SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
+
 ] )
 
 rx = Sequential( [
@@ -89,7 +88,7 @@ chain = Sequential([
             Recorder(name='data_tx'),
             PDMWrapper(DifferentialEncoding(M)),
             PDMWrapper(tx, 'tx'),
-            ChannelWrapper_(seq_obj=channel, L=seg, params=channel_params),
+            ChannelWrapper_(seq_obj=channel, L=seg, params=channel_params, debug=True),
             PDMWrapper( AWGN(value=SNR, unit='snr_dB'), name='noise'),
             PDMWrapper( SRRCFilter(roll_off, oversampling, srrc_taps, method='fft') ),
             MCMA_(alphabet, 7, 1e-3, oversampling),
@@ -123,7 +122,7 @@ chain = Sequential([
 ##### Monte Carlo: SER vs Δp_tot·T #######
 start = time()
 ser_vs_linewidth = []
-nr_repetitions = 1
+nr_repetitions = 9
 ser_list = []
 dp_tot_T_list = []
 genie = GenieAidedPolResolverInteger()
@@ -133,8 +132,8 @@ linewidth_list = [28e1, 5*28e1, 28e2, 5*28e2, 28e3, 5*28e3, 28e4, 5*28e4, 28e5]
 for pol_linewidth in linewidth_list:
     channel = Sequential( [
                 SOP_(T_symb=Ts, linewidth=pol_linewidth, segments=seg),
-                #PDL_(pdl_params),
-                #PMD_(t_dgd_k, Fs)
+                PDL_(pdl_params),
+                PMD_(t_dgd_k, Fs)
     ] )
     channel_params = [pol_linewidth, pmd_params, pdl_params]
     
@@ -186,7 +185,7 @@ for pol_linewidth in linewidth_list:
     print(f"Final → linewidth={pol_linewidth:.1e} Hz → dp·T={dp_tot_T:.2e} → Mean SER={ser_avg:.3e}\n")
 
 df = pd.DataFrame(ser_vs_linewidth)
-df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA"].name}_S1.csv", index=False)
+df.to_csv(f"src\\comnumpy\\optical\\pdm\\validation\\results\\SER_vs_dpTotT_seg{seg}_SNR{SNR}_{ chain["MCMA"].name}_S3_2.csv", index=False)
 
 
 plt.figure(figsize=(7, 5))

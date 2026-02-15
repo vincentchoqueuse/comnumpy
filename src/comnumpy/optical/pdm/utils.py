@@ -457,11 +457,15 @@ class MCMA_(Processor):
 
 
     def forward(self, X):
+        #print("PDL MCMA:",10*np.log10(np.mean(np.abs(X[0,:])**2)/np.mean(np.abs(X[1,:])**2)))
         Y = np.zeros_like(X)
         N = X.shape[1]
         self.h11,self.h12,self.h21,self.h22 = self.reset()
         for n in range(self.L + 1, N):
-            mu = self.mu 
+            # if n < self.os * 500_000:
+            #     mu = self.mu * 5
+            # else:
+            mu = self.mu
             input = X[:, n : n - self.L : -1] # X[:, n-self.L+1:n+1][:, ::-1]
             x_1 = input[0, :]
             x_2 = input[1, :]
