@@ -36,7 +36,10 @@ def get_alphabet(modulation, order, type="gray", norm=True):
     pathname = path.dirname(path.abspath(__file__))
     filename = "{}/data/{}_{}_{}.csv".format(pathname, modulation, order, type)
     data = np.loadtxt(filename, delimiter=',', skiprows=1)
-    alphabet = data[:, 1] + 1j*data[:, 2]
+    if type=='gray':
+        alphabet = data[:, 1] + 1j*data[:, 2]
+    elif type=='bin':
+        alphabet = data[:, 2] + 1j*data[:, 3]
 
     if norm:
         alphabet = alphabet/np.sqrt(np.mean(np.abs(alphabet)**2))
