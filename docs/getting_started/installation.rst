@@ -3,18 +3,11 @@ Installation
 
 To get started with **comnumpy**, you need **Python 3.11+** and ``pip`` installed on your system.
 
-As the library has not yet reached a stable release, it is not available on PyPI.
-In the meantime, you can install the latest development version directly from GitHub:
-
 .. code-block:: bash
 
-    pip install git+https://github.com/vincentchoqueuse/comnumpy.git
+    pip install comnumpy
 
-This will fetch the latest version and install all required dependencies (``numpy``, ``scipy``, ``matplotlib``, etc.).
-
-.. note::
-
-   Once the library reaches a stable release, it will be published on `PyPI <https://pypi.org/>`_ for easier installation.
+This will install all required dependencies (``numpy``, ``scipy``, ``matplotlib``, etc.).
 
 
 Developer Installation

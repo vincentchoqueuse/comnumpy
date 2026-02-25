@@ -36,10 +36,8 @@ print(f"SER = {compute_ser(tx_symbols, rx_symbols)}")
 
 ## Installation
 
-Install directly from GitHub:
-
 ```bash
-pip install git+https://github.com/vincentchoqueuse/comnumpy.git
+pip install comnumpy
 ```
 
 For development (editable mode):
