@@ -57,6 +57,12 @@ pip install -e .
 | **mimo** | Rayleigh fading channel, ZF/MMSE/OSIC/ML detection, Monte Carlo evaluation |
 | **optical** | Fiber propagation (SSFM), chromatic dispersion, Kerr nonlinearity, EDFA noise, digital back-propagation |
 
+## Examples
+
+Ready-to-run example scripts are available at:
+
+**[https://github.com/vincentchoqueuse/comnumpy/tree/main/examples](https://github.com/vincentchoqueuse/comnumpy/tree/main/examples)**
+
 ## Documentation
 
 Full documentation with tutorials and API reference:
