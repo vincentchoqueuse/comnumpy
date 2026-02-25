@@ -19,11 +19,7 @@
 ## Quick Example
 
 ```python
-from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.channels import AWGN
-from comnumpy.core.generics import Sequential
-from comnumpy.core.metrics import get_ser
+from comnumpy import Sequential, SymbolGenerator, SymbolMapper, SymbolDemapper, AWGN, compute_ser
 
 # Build a 16-QAM communication chain
 chain = Sequential([
@@ -35,7 +31,7 @@ chain = Sequential([
 
 # Transmit 10,000 symbols and evaluate performance
 tx_symbols, rx_symbols = chain(10000)
-print(f"SER = {get_ser(tx_symbols, rx_symbols)}")
+print(f"SER = {compute_ser(tx_symbols, rx_symbols)}")
 ```
 
 ## Installation

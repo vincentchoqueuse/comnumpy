@@ -6,7 +6,6 @@ from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN, FIRChannel
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.core.utils import get_alphabet
-from comnumpy.core.metrics import compute_ser
 from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
