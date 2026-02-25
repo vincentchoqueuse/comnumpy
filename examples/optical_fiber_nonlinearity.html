@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/optical_fiber_nonlinearity';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -374,16 +374,16 @@
                   
   <section id="optical-fiber-link-simulation-tutorial">
 <h1>Optical Fiber Link Simulation Tutorial<a class="headerlink" href="#optical-fiber-link-simulation-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You will learn how to:</p>
+<p>This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>. You will learn how to:</p>
 <ul class="simple">
 <li><p>Build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.</p></li>
 <li><p>Visualize received signals before and after linear and nonlinear equalization.</p></li>
 <li><p>Apply digital back-propagation (DBP) for nonlinear compensation.</p></li>
 <li><p>Compute Symbol Error Rate (SER) to quantify performance.</p></li>
 </ul>
-<p>This tutorial is ideal for engineers or students interested in optical communications and nonlinear fiber effects.</p>
+<p>This tutorial is suited for engineers and students interested in optical communications and nonlinear fiber effects.</p>
 <section id="introduction">
-<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
 <p>Ensure you have the following Python libraries installed:</p>
@@ -397,147 +397,42 @@
 </section>
 <section id="simulation-setup">
 <h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
-</section>
 <section id="import-libraries">
-<h2>1. Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h2>
-<p>First, import necessary Python libraries and components from <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span><span class="p">,</span> <span class="n">hard_projector</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Upsampler</span><span class="p">,</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Amplifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">SRRCFilter</span><span class="p">,</span> <span class="n">BWFilter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberLink</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.dbp</span><span class="w"> </span><span class="kn">import</span> <span class="n">DBP</span>
-
-<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
-</pre></div>
-</div>
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>First, import the necessary libraries and <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> components:</p>
 </section>
 <section id="define-system-parameters">
-<h2>2. Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h2>
+<h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
 <p>Set key parameters such as modulation order, oversampling factors, fiber link properties, and noise figure:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
-<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
-<span class="n">N_s</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">9</span>  <span class="c1"># number of symbols</span>
-<span class="n">oversampling_sim</span> <span class="o">=</span> <span class="mi">6</span>  <span class="c1"># number of samples/symbol for simulated channel</span>
-<span class="n">oversampling_dsp</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># number of samples/symbol for dsp processing</span>
-<span class="n">NF_dB</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># noise figure in dB</span>
-<span class="n">rolloff</span> <span class="o">=</span> <span class="mf">0.1</span>
-<span class="n">StPS</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">StPS_DBP</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">R_s</span> <span class="o">=</span> <span class="mf">10.7</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="mi">9</span><span class="p">)</span>  <span class="c1"># baud rate</span>
-<span class="n">L_span</span> <span class="o">=</span> <span class="mi">80</span>  <span class="c1"># in km</span>
-<span class="n">N_span</span> <span class="o">=</span> <span class="mi">25</span>
-<span class="n">dBm</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
-
-<span class="c1"># compute simulation parameter</span>
-<span class="n">N</span> <span class="o">=</span> <span class="n">N_s</span><span class="o">*</span><span class="n">oversampling_sim</span>   <span class="c1"># signal length in number of samples</span>
-<span class="n">fs</span> <span class="o">=</span> <span class="n">R_s</span><span class="o">*</span><span class="n">oversampling_sim</span>
-<span class="n">oversampling_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="o">/</span><span class="n">oversampling_dsp</span><span class="p">)</span>
-<span class="n">fs2</span> <span class="o">=</span> <span class="n">R_s</span><span class="o">*</span><span class="n">oversampling_dsp</span>
-<span class="n">Po</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="mf">0.1</span><span class="o">*</span><span class="n">dBm</span><span class="p">))</span>
-<span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Po</span><span class="p">)</span>
-</pre></div>
-</div>
 </section>
 <section id="create-communication-chain">
-<h2>3. Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h2>
-<p>Build a processing chain consisting of symbol generation, mapping, pulse shaping (SRRC filter), amplification, fiber propagation via <code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>, and final filtering/downsampling:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a communication chain</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-                <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-                <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
-                <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-                <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">),</span>
-                <span class="n">Upsampler</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">)),</span>
-                <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">),</span>
-                <span class="n">Amplifier</span><span class="p">(</span><span class="n">amp</span><span class="p">),</span>
-                <span class="n">FiberLink</span><span class="p">(</span><span class="n">N_spans</span><span class="o">=</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">StPS</span><span class="p">,</span> <span class="n">NF_dB</span><span class="o">=</span><span class="n">NF_dB</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;link&quot;</span><span class="p">),</span>
-                <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">oversampling_sim</span><span class="p">),</span>
-                <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">)</span>
-                <span class="p">])</span>
-</pre></div>
-</div>
+<h3>Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h3>
+<p>Build a processing chain consisting of symbol generation, mapping, pulse shaping (SRRC filter), amplification, fiber propagation via <code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>, and matched filtering with downsampling:</p>
 <p>This simulates the full transmission over an optical fiber with nonlinear effects and noise.</p>
-<p>The optical channel (<code class="docutils literal notranslate"><span class="pre">Fiber_Link</span></code>) is modeled as a concatenation of multiple spans of standard single-mode fiber (SMF), denoted by <code class="docutils literal notranslate"><span class="pre">N_span</span></code>. Each span has a fixed length <code class="docutils literal notranslate"><span class="pre">L_span</span></code> (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA) which compensates for the fiber loss and introduces amplified spontaneous emission noise (characterized by the noise figure <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>).</p>
-<p>Within each fiber span, the signal undergoes chromatic dispersion as well as nonlinear Kerr effects (simulated using Split Step Fourier Method), which distort the signal amplitude and phase. This complex interplay between dispersion and nonlinearity significantly affects system performance and motivates the use of advanced digital signal processing techniques.</p>
+<p>The optical channel (<code class="docutils literal notranslate"><span class="pre">Fiber_Link</span></code>) is modeled as a concatenation of <code class="docutils literal notranslate"><span class="pre">N_span</span></code> spans of standard single-mode fiber (SMF). Each span has a fixed length <code class="docutils literal notranslate"><span class="pre">L_span</span></code> (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>).</p>
+<p>Within each span, the signal undergoes chromatic dispersion and nonlinear Kerr effects, simulated using the Split-Step Fourier Method (SSFM). The interplay between dispersion and nonlinearity distorts the signal amplitude and phase, motivating the use of advanced digital signal processing techniques at the receiver.</p>
 </section>
 <section id="run-simulation-and-extract-signals">
-<h2>4. Run Simulation and Extract Signals<a class="headerlink" href="#run-simulation-and-extract-signals" title="Link to this heading">#</a></h2>
-<p>Execute the chain to obtain the received signal. Extract transmitted data and signal for analysis. Then, plot the received constellation diagram to inspect signal quality at the receiver input.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform simulation</span>
-<span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-
-<span class="c1"># extract signal</span>
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-<span class="n">x_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-
-<span class="c1"># plot signal</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received Signal (oversampling=</span><span class="si">{</span><span class="n">oversampling_dsp</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2">dBm)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_NLI_fig1.png&quot;</span><span class="p">)</span>
-
-</pre></div>
-</div>
+<h3>Run Simulation and Extract Signals<a class="headerlink" href="#run-simulation-and-extract-signals" title="Link to this heading">#</a></h3>
+<p>Execute the chain and extract the transmitted and received signals. Then, plot the received constellation diagram to inspect signal quality at the receiver.</p>
 </section>
-<section id="visualize-received-signal">
-<h2>5. Visualize Received Signal<a class="headerlink" href="#visualize-received-signal" title="Link to this heading">#</a></h2>
-<a class="reference internal image-reference" href="../_images/one_shot_NLI_fig1.png"><img alt="../_images/one_shot_NLI_fig1.png" class="align-center" src="../_images/one_shot_NLI_fig1.png" style="width: 100%;" />
+</section>
+<section id="received-signal">
+<h2>Received Signal<a class="headerlink" href="#received-signal" title="Link to this heading">#</a></h2>
+<a class="reference internal image-reference" href="examples/img/one_shot_nli_fig1.png"><img alt="examples/img/one_shot_nli_fig1.png" class="align-center" src="examples/img/one_shot_nli_fig1.png" style="width: 100%;" />
 </a>
 </section>
-<section id="perform-linear-and-nonlinear-compensation">
-<h2>6. Perform Linear and Nonlinear Compensation<a class="headerlink" href="#perform-linear-and-nonlinear-compensation" title="Link to this heading">#</a></h2>
-<p>Apply two compensation strategies using Digital Back-Propagation (DBP):</p>
+<section id="linear-and-nonlinear-compensation">
+<h2>Linear and Nonlinear Compensation<a class="headerlink" href="#linear-and-nonlinear-compensation" title="Link to this heading">#</a></h2>
+<p>We apply two compensation strategies:</p>
 <ul class="simple">
-<li><p>Linear equalization only : compensates for linear impairments such as chromatic dispersion and attenuation.</p></li>
-<li><p>Nonlinear equalization with Digital Back Propagation (DBP): performs full Digital Back-Propagation (DBP), which mitigates nonlinear fiber effects by numerically inverting the propagation through the fiber using a reversed Split-Step Fourier Method..</p></li>
+<li><p><strong>Linear equalization</strong>: compensates for linear impairments such as chromatic dispersion and attenuation.</p></li>
+<li><p><strong>Nonlinear equalization (DBP)</strong>: performs full Digital Back-Propagation, which mitigates nonlinear fiber effects by numerically inverting the propagation using a reversed Split-Step Fourier Method.</p></li>
 </ul>
-<p>Note that after compensation, the received signal may experience a residual phase rotation. Therefore, for each compensation technique, phase correction is applied before computing the Symbol Error Rate (SER).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># perform compensation</span>
-<span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
-
-    <span class="k">if</span> <span class="n">num_compensator</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">technique_name</span> <span class="o">=</span> <span class="s2">&quot;linear equalization&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">technique_name</span> <span class="o">=</span> <span class="s2">&quot;nonlinear equalization&quot;</span>
-
-    <span class="n">receiver</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-                    <span class="n">DBP</span><span class="p">(</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="p">,</span> <span class="n">StPS_DBP</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">use_only_linear</span><span class="o">=</span><span class="n">use_only_linear</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="o">/</span><span class="n">oversampling_ratio</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbp&quot;</span><span class="p">),</span>
-                    <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_dsp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">)),</span>
-                    <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">),</span>
-                    <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">amp</span><span class="p">),</span>
-                    <span class="n">Recorder</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;signal_rx_compensated&quot;</span><span class="p">)</span>
-            <span class="p">])</span>
-
-    <span class="c1"># apply conventional chain</span>
-    <span class="n">x_rx</span> <span class="o">=</span> <span class="n">receiver</span><span class="p">(</span><span class="n">y_rx</span><span class="p">)</span>
-
-    <span class="c1"># perform phase correction and evaluate metric</span>
-    <span class="n">theta_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x_rx</span><span class="p">)</span><span class="o">*</span><span class="n">x_tx</span><span class="p">))</span>
-    <span class="n">x_rx_phase_compensated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">theta_est</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_rx</span>
-    <span class="n">s_rx</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
-    <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
-
-    <span class="c1"># plot signal</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;before phase correction&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;after phase correction&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">}</span><span class="s2"> (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<a class="reference internal image-reference" href="../_images/one_shot_NLI_fig2.png"><img alt="../_images/one_shot_NLI_fig2.png" class="align-center" src="../_images/one_shot_NLI_fig2.png" style="width: 100%;" />
+<p>After compensation, the received signal may exhibit a residual phase rotation. Therefore, phase correction is applied before computing the Symbol Error Rate (SER).</p>
+<a class="reference internal image-reference" href="examples/img/one_shot_nli_fig2.png"><img alt="examples/img/one_shot_nli_fig2.png" class="align-center" src="examples/img/one_shot_nli_fig2.png" style="width: 100%;" />
 </a>
-<a class="reference internal image-reference" href="../_images/one_shot_NLI_fig3.png"><img alt="../_images/one_shot_NLI_fig3.png" class="align-center" src="../_images/one_shot_NLI_fig3.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="examples/img/one_shot_nli_fig3.png"><img alt="examples/img/one_shot_nli_fig3.png" class="align-center" src="examples/img/one_shot_nli_fig3.png" style="width: 100%;" />
 </a>
 </section>
 <section id="conclusion">
@@ -550,7 +445,7 @@
 <li><p>Apply linear and nonlinear compensation techniques (DBP).</p></li>
 <li><p>Quantify performance improvements via SER metrics.</p></li>
 </ul>
-<p>The simulation provides valuable insights into advanced fiber-optic communication design and compensation methods using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> framework.</p>
+<p>This simulation illustrates how <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> can be used to study advanced fiber-optic communication design and compensation techniques.</p>
 </section>
 </section>
 
@@ -601,17 +496,19 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">1. Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">2. Define System Parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-communication-chain">3. Create Communication Chain</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-simulation-and-extract-signals">4. Run Simulation and Extract Signals</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-received-signal">5. Visualize Received Signal</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#perform-linear-and-nonlinear-compensation">6. Perform Linear and Nonlinear Compensation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">Define System Parameters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-communication-chain">Create Communication Chain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-simulation-and-extract-signals">Run Simulation and Extract Signals</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#received-signal">Received Signal</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-and-nonlinear-compensation">Linear and Nonlinear Compensation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
@@ -659,7 +556,7 @@
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

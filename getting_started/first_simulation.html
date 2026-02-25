@@ -40,17 +40,444 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-    <script type="module">
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
-window.addEventListener("load", () => mermaid.run());
-</script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'getting_started/first_simulation';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -383,9 +810,16 @@ window.addEventListener("load", () => mermaid.run());
                   
   <section id="first-simulation">
 <h1>First Simulation<a class="headerlink" href="#first-simulation" title="Link to this heading">#</a></h1>
-<p>This tutorial will guide you through running a simple communication simulation using <strong>comnumpy</strong>.
+<p>This tutorial guides you through a simple communication simulation using <strong>comnumpy</strong>.
 You will build a basic QAM communication chain, transmit symbols through an AWGN channel,
 and evaluate the Symbol Error Rate (SER).</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul class="simple">
+<li><p>Creating a communication chain using <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> and built-in processors.</p></li>
+<li><p>Transmitting QAM symbols through an AWGN channel.</p></li>
+<li><p>Measuring the Symbol Error Rate (SER) and comparing it with theory.</p></li>
+<li><p>Using <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> objects to capture and visualize signals.</p></li>
+</ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="prerequisites">
@@ -399,7 +833,7 @@ and evaluate the Symbol Error Rate (SER).</p>
 </section>
 <section id="import-libraries">
 <h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<p>We start by importing the necessary libraries and defining the simulation parameters:</p>
+<p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">Recorder</span>
@@ -413,7 +847,7 @@ and evaluate the Symbol Error Rate (SER).</p>
 </section>
 <section id="define-parameters">
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
-<p>Next, we define some communication parameters such as the modulation order,
+<p>Next, we define the key simulation parameters: the modulation order,
 the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
 <span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
@@ -431,10 +865,9 @@ the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
 <h2>AWGN Communication Chain<a class="headerlink" href="#awgn-communication-chain" title="Link to this heading">#</a></h2>
 <section id="define-the-chain">
 <h3>Define the Chain<a class="headerlink" href="#define-the-chain" title="Link to this heading">#</a></h3>
-<p>To create a communication chain, we use the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
-A <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object takes a list of processor objects as input.
-The <strong>comnumpy</strong> library provides a wide range of processors for modulation,
-coding, channel modeling, and more.</p>
+<p>We define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object, which takes a list of
+processors as input. The <strong>comnumpy</strong> library provides a wide range of built-in processors
+for modulation, coding, channel modeling, and more.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define a communication chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
@@ -456,18 +889,17 @@ coding, channel modeling, and more.</p>
    E --&gt; F[Demapper];
     </pre><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code>
-Generates a sequence of integers in the range <span class="math notranslate nohighlight">\([0, M-1]\)</span>. Each integer represents a symbol to be transmitted.</p></li>
+Generates a sequence of random integers in the range <span class="math notranslate nohighlight">\([0, M-1]\)</span>, where each integer represents a symbol to transmit.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code>
-Records an input signal at a specific point in the chain.
-This class is particularly useful for extracting signals for analysis (e.g., transmitted or received data).</p></li>
+Captures the signal at a specific point in the chain for later analysis (e.g., comparing transmitted vs. received data).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
-Maps each integer symbol to a corresponding point in the complex constellation (e.g., QAM symbols).</p></li>
+Maps each integer symbol to a point in the complex QAM constellation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">AWGN</span></code>
 Simulates an <strong>Additive White Gaussian Noise</strong> channel, modeling the effect of thermal noise on the transmitted signal.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
-Performs the inverse mapping operation by associating each received point with the nearest constellation symbol.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code> (again)
-A second recorder can be inserted after the channel to capture the noisy received symbols for further analysis (e.g., plotting constellations).</p></li>
+Performs hard-decision demapping by associating each received point with the nearest constellation symbol.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Recorder</span></code> (second instance)
+A second recorder placed after the channel captures the noisy received symbols for visualization (e.g., constellation diagrams).</p></li>
 </ul>
 </section>
 <section id="simulate-the-chain">
@@ -480,11 +912,10 @@ A second recorder can be inserted after the channel to capture the noisy receive
 </section>
 <section id="evaluate-performance">
 <h3>Evaluate Performance<a class="headerlink" href="#evaluate-performance" title="Link to this heading">#</a></h3>
-<p>Next, we evaluate the performance of the communication system using standard metrics.
-Here, we compute the <strong>Symbol Error Rate (SER)</strong>, estimated from the transmitted and detected symbols.
-This estimated SER is then compared with the theoretical value.</p>
-<p>To extract the transmitted symbols, we use the method <code class="docutils literal notranslate"><span class="pre">get_data()</span></code> of the <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object.
-A <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> can be placed at different locations in the chain depending on your needs.</p>
+<p>We evaluate the performance of the communication system by computing the <strong>Symbol Error Rate (SER)</strong>
+from the transmitted and detected symbols, then comparing it with the theoretical value.</p>
+<p>To retrieve the transmitted symbols, we call the <code class="docutils literal notranslate"><span class="pre">get_data()</span></code> method on the <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object.
+Recorders can be placed at any point in the chain, depending on which signal you want to inspect.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate simulation performance</span>
 <span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;recorder_tx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">data_tx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -498,19 +929,19 @@ A <code class="docutils literal notranslate"><span class="pre">Recorder</span></
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (theo)= </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For this simulation, we obtain for example:</p>
+<p>For this simulation, typical output looks like:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span> <span class="p">(</span><span class="n">simu</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0013</span>
 <span class="n">SER</span> <span class="p">(</span><span class="n">theo</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0015647896369451741</span>
 </pre></div>
 </div>
-<p>Note: for small SER values, it is often recommended to increase <code class="docutils literal notranslate"><span class="pre">N</span></code>
-(the number of transmitted symbols) in order to improve the estimation accuracy.</p>
+<p>Note: for small SER values, increasing <code class="docutils literal notranslate"><span class="pre">N</span></code> (the number of transmitted symbols)
+improves the estimation accuracy.</p>
 </section>
 <section id="plot-the-constellation">
 <h3>Plot the Constellation<a class="headerlink" href="#plot-the-constellation" title="Link to this heading">#</a></h3>
-<p>Visualizing the constellation of the received data can also be insightful.
-We again use a <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object to capture the received symbols and then
-plot them with <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>:</p>
+<p>Visualizing the received constellation is a useful way to assess signal quality.
+We use a <code class="docutils literal notranslate"><span class="pre">Recorder</span></code> object to capture the received symbols and plot them
+with <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot signals</span>
 <span class="n">data_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;recorder_rx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">))</span>
@@ -527,12 +958,12 @@ plot them with <code class="docutils literal notranslate"><span class="pre">matp
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>Congratulations on completing your first steps with the <strong>comnumpy</strong> library! 🎉</p>
-<p>From here, you may want to explore:</p>
+<p>You have successfully built and simulated your first communication chain with <strong>comnumpy</strong>.</p>
+<p>From here, you can explore:</p>
 <ul class="simple">
-<li><p><strong>OFDM and MIMO tutorials</strong> for more advanced communication techniques.</p></li>
-<li><p>The full <strong>comnumpy documentation</strong> for a detailed API reference.</p></li>
-<li><p>Experiments with different modulation orders, SNR values, and channel models.</p></li>
+<li><p>The <strong>OFDM and MIMO tutorials</strong> for more advanced communication techniques.</p></li>
+<li><p>The <strong>API reference</strong> for a complete list of available processors.</p></li>
+<li><p>Different modulation orders, SNR values, and channel models to deepen your understanding.</p></li>
 </ul>
 </section>
 </section>
@@ -644,7 +1075,7 @@ plot them with <code class="docutils literal notranslate"><span class="pre">matp
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

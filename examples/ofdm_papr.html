@@ -40,9 +40,9 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/ofdm_papr';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -375,9 +375,9 @@
                   
   <section id="papr-in-ofdm-communication">
 <h1>PAPR in OFDM Communication<a class="headerlink" href="#papr-in-ofdm-communication" title="Link to this heading">#</a></h1>
-<p>In this tutorial, we will compute the <strong>Peak-to-Average Power Ratio (PAPR)</strong>
+<p>In this tutorial, we compute the <strong>Peak-to-Average Power Ratio (PAPR)</strong>
 of an OFDM signal using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.
-We will reproduce the first figure from the article:</p>
+We reproduce the first figure from the article:</p>
 <ul class="simple">
 <li><p>“An overview of peak-to-average power ratio reduction techniques for multicarrier transmission”
 by Han and Lee (2005).</p></li>
@@ -456,18 +456,18 @@ carrier allocation, and IFFT processing.</p>
 </div>
 <section id="papr-metric">
 <h3>PAPR metric<a class="headerlink" href="#papr-metric" title="Link to this heading">#</a></h3>
-<p>When applying the Inverse Fourier Transform, we don’t control the signal amplitude of the transformed signal. This can
-be challenging for communications sensible non-linearities.</p>
-<p>To evaluate the amplitude of the generated signal, one popular metric is the Peak-to-Average Power Ratio (PAPR).
-Mathematically, the PAPR is defined as:</p>
+<p>After the Inverse Fourier Transform, the resulting time-domain signal can exhibit large amplitude peaks.
+This is problematic for systems sensitive to nonlinearities (e.g., power amplifiers).</p>
+<p>A widely used metric to quantify this effect is the Peak-to-Average Power Ratio (PAPR),
+defined as:</p>
 <div class="math notranslate nohighlight">
 \[\mathrm{PAPR} = \frac{\max{|x[n]|^2}}{\mathbb{E}[|x[n]|^2]}\]</div>
 <p>where <span class="math notranslate nohighlight">\(x[n]\)</span> is the transmitted OFDM signal.</p>
 </section>
 <section id="one-shot-signal">
 <h3>One Shot Signal<a class="headerlink" href="#one-shot-signal" title="Link to this heading">#</a></h3>
-<p>Before running Monte Carlo simulations, we can evaluate the PAPR of a <strong>single OFDM signal</strong>
-and plot its instantaneous power.   The computed PAPR value is displayed in the title of the figure.</p>
+<p>Before running Monte Carlo simulations, we evaluate the PAPR of a <strong>single OFDM signal</strong>
+and plot its instantaneous power. The computed PAPR value is displayed in the figure title.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># evaluate PAPR for one signal</span>
 <span class="n">N</span> <span class="o">=</span> <span class="n">N_sc</span><span class="o">*</span><span class="n">os</span><span class="o">*</span><span class="n">L</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
@@ -489,7 +489,7 @@ and plot its instantaneous power.   The computed PAPR value is displayed in the 
 <h2>Monte Carlo Simulation of CCDF<a class="headerlink" href="#monte-carlo-simulation-of-ccdf" title="Link to this heading">#</a></h2>
 <p>We now perform a Monte Carlo simulation to estimate the <strong>CCDF of the PAPR</strong>
 for two configurations (256 and 1024 subcarriers).
-For each case, we also compare the results with the theoretical CCDF:</p>
+For each case, we compare the simulation results with the theoretical CCDF:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">N_sc_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]</span>
 
@@ -531,7 +531,7 @@ For each case, we also compare the results with the theoretical CCDF:</p>
 <div class="math notranslate nohighlight">
 \[\mathrm{CCDF} = 1 - \big(1 - e^{-\gamma}\big)^{N_{sc} \cdot os}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\gamma\)</span> is the normalized PAPR threshold.</p>
-<p>The final figure displays both the experimental and theoretical CCDFs for
+<p>The resulting figure displays both the experimental and theoretical CCDFs for
 <code class="docutils literal notranslate"><span class="pre">N_sc</span> <span class="pre">=</span> <span class="pre">256</span></code> and <code class="docutils literal notranslate"><span class="pre">N_sc</span> <span class="pre">=</span> <span class="pre">1024</span></code> subcarriers.</p>
 <a class="reference internal image-reference" href="../_images/monte_carlo_ofdm_papr_fig2.png"><img alt="CCDF of PAPR for OFDM with 256 and 1024 subcarriers" class="align-center" src="../_images/monte_carlo_ofdm_papr_fig2.png" style="width: 100%;" />
 </a>
@@ -540,8 +540,8 @@ For example, with 1024 subcarriers and an oversampling factor of 4,
 a <strong>PAPR around 12 dB</strong> is typically observed at CCDF = 10⁻³.</p>
 </section>
 <section id="conclusion">
-<h2>7. Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>Congratulations 🎉 You have successfully simulated the <strong>PAPR of an OFDM signal</strong>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>You have successfully simulated the <strong>PAPR of an OFDM signal</strong>
 and compared experimental results with theoretical CCDFs.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
@@ -551,7 +551,7 @@ and compared experimental results with theoretical CCDFs.</p>
 <li><p>Compare simulation results with theoretical benchmarks.</p></li>
 </ul>
 <p>Key takeaway:
-<strong>OFDM signals exhibit high PAPR (≈10–13 dB depending on system size),
+<strong>OFDM signals exhibit high PAPR (around 10-13 dB depending on system size),
 which motivates PAPR reduction techniques such as clipping, coding, or tone reservation.</strong></p>
 </section>
 </section>
@@ -614,7 +614,7 @@ which motivates PAPR reduction techniques such as clipping, coding, or tone rese
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-simulation-of-ccdf">Monte Carlo Simulation of CCDF</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">7. Conclusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
 
@@ -661,7 +661,7 @@ which motivates PAPR reduction techniques such as clipping, coding, or tone rese
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

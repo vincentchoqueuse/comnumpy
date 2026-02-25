@@ -1,34 +1,44 @@
 Who is this library for?
 ========================
 
-The ``comnumpy`` library is designed for researchers, engineers, and students working in the field of digital communications. It is particularly useful for those who wish to simulate and analyze communication systems without having to implement basic algorithms from scratch.
+The ``comnumpy`` library is designed for researchers, engineers, and students working in digital communications. It is particularly useful for anyone who wants to simulate and analyze communication systems without implementing standard algorithms from scratch.
 
 Prerequisites
 -------------
 
-``comnumpy`` uses only classical numerical computing libraries such as ``numpy`` and ``scipy``. This means you don't need to install complex or domain-specific dependencies. If you have a standard Python installation, you can install ``comnumpy`` and start using it right away.
+``comnumpy`` relies only on standard numerical computing libraries such as ``numpy`` and ``scipy``. There are no complex or domain-specific dependencies to install. With a standard Python environment, you can install ``comnumpy`` and start using it right away.
 
 Comparison with Other Solutions
 -------------------------------
 
 1. **Numpy from Scratch**:
 
-   - **Advantages**: Using ``numpy`` directly offers maximum flexibility and customization.
-   - **Disadvantages**: Implementing and testing complex communication algorithms from scratch can be time-consuming. ``comnumpy`` provides ready-to-use implementations for many common algorithms, allowing you to focus on research and analysis.
+   - **Advantages**: Using ``numpy`` directly offers maximum flexibility and control.
+   - **Disadvantages**: Implementing and testing communication algorithms from scratch can be time-consuming and error-prone. ``comnumpy`` provides ready-to-use, tested implementations of common algorithms, letting you focus on research and analysis.
 
 2. **MATLAB**:
 
-   - **Advantages**: MATLAB is widely used in industry and academia for communication simulations. It offers many specialized toolboxes.
-   - **Disadvantages**: MATLAB requires a paid license, which can be a barrier for students or small businesses. Additionally, it is less flexible for integration with other programming languages and tools. ``comnumpy``, being Python-based, integrates seamlessly with the Python ecosystem, including machine learning and visualization libraries.
+   - **Advantages**: MATLAB is widely used in industry and academia for communication simulations and offers many specialized toolboxes.
+   - **Disadvantages**: MATLAB requires a paid license, which can be a barrier for students and small teams. It is also less flexible when integrating with other programming languages and tools. ``comnumpy``, being Python-based, integrates seamlessly with the broader Python ecosystem, including machine learning frameworks and visualization libraries.
 
 3. **Sionna**:
 
-   - **Advantages**: Sionna is a Python library that leverages TensorFlow for end-to-end learning in communication systems. It is particularly powerful for applications requiring deep learning and neural network integration.
-   - **Disadvantages**: While Sionna is highly specialized and advanced, it may be more complex than necessary for users seeking straightforward communication simulations. ``comnumpy`` aims to provide a simpler, more accessible approach to communication system simulation, focusing on ease of use and modularity.
+   - **Advantages**: Sionna is a Python library that leverages TensorFlow for end-to-end learning in communication systems. It is particularly powerful for applications that require deep learning and neural network integration.
+   - **Disadvantages**: Sionna is highly specialized and may be more complex than necessary for users who need straightforward communication simulations. ``comnumpy`` aims to provide a simpler, more accessible alternative, with an emphasis on ease of use and modularity.
 
 Why Choose ``comnumpy``?
 ------------------------
 
-- **Modularity**: The modular design of ``comnumpy`` allows you to easily create custom communication chains.
-- **Ease of Use**: With clear examples and comprehensive documentation, you can quickly set up complex simulations.
-- **Community and Support**: As an open-source project, ``comnumpy`` encourages collaboration and continuous improvement.
+- **Modularity**: Build custom communication chains by combining reusable processor blocks.
+- **Ease of Use**: Get started quickly with clear examples and comprehensive documentation.
+- **Open Source**: As a community-driven project, ``comnumpy`` encourages collaboration and continuous improvement.
+
+Core Concepts
+-------------
+
+Before diving into the tutorials, it helps to understand two key abstractions in ``comnumpy``:
+
+- **Processor**: The basic building block. Each ``Processor`` represents a single signal-processing operation (e.g., modulation, channel, equalization). It takes an input signal and returns an output signal.
+- **Sequential**: A container that chains multiple ``Processor`` objects together. When called, a ``Sequential`` passes data through each processor in order, forming a complete communication chain.
+
+This composable design lets you build complex simulations by snapping together simple, reusable components.

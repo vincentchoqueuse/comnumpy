@@ -40,9 +40,9 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/mimo';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -375,16 +375,16 @@
                   
   <section id="mimo-chain-tutorial">
 <h1>MIMO Chain Tutorial<a class="headerlink" href="#mimo-chain-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial demonstrates how to simulate a basic MIMO (Multiple-Input Multiple-Output) communication system using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You will learn how to:</p>
+<p>This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library. You will learn how to:</p>
 <ul class="simple">
 <li><p>Build a MIMO simulation chain with Rayleigh fading.</p></li>
 <li><p>Visualize received and equalized signals.</p></li>
 <li><p>Compare detection algorithms (ZF, MMSE, OSIC, ML).</p></li>
 <li><p>Perform a Monte Carlo evaluation of Symbol Error Rate (SER).</p></li>
 </ul>
-<p>This tutorial is ideal for engineers or students learning about MIMO systems, and offers both practical insights and theoretical understanding.</p>
+<p>This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.</p>
 <section id="introduction">
-<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
 <p>Ensure you have the following Python libraries installed:</p>
@@ -397,10 +397,9 @@
 </section>
 <section id="simulation-setup">
 <h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
-</section>
 <section id="import-libraries">
-<h2>1. Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h2>
-<p>We start by importing the required Python libraries and <cite>comnumpy</cite> components:</p>
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the required libraries and <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> components:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">linalg</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -419,7 +418,7 @@
 </div>
 </section>
 <section id="define-system-parameters">
-<h2>2. Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h2>
+<h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
 <p>We define the number of transmit/receive antennas, the modulation order (PSK), and the noise variance:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># Parameters</span>
@@ -435,7 +434,7 @@
 <p>The modulation alphabet is automatically generated from the given parameters.</p>
 </section>
 <section id="build-the-mimo-chain">
-<h2>3. Build the MIMO Chain<a class="headerlink" href="#build-the-mimo-chain" title="Link to this heading">#</a></h2>
+<h3>Build the MIMO Chain<a class="headerlink" href="#build-the-mimo-chain" title="Link to this heading">#</a></h3>
 <p>We create a transmission chain consisting of a symbol generator, symbol mapper, and Rayleigh fading channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># construct chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
@@ -447,9 +446,13 @@
 <span class="n">Y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal can be described by :</p>
+<p>This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal is described by:</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]\]</div>
+</section>
+</section>
+<section id="one-shot-simulation">
+<h2>One-Shot Simulation<a class="headerlink" href="#one-shot-simulation" title="Link to this heading">#</a></h2>
 <section id="visualize-the-received-signal">
 <h3>Visualize the Received Signal<a class="headerlink" href="#visualize-the-received-signal" title="Link to this heading">#</a></h3>
 <p>Let’s inspect the received signal on each receive antenna:</p>
@@ -472,18 +475,18 @@
 </a>
 <p>You should observe that the received signal consists of noisy superpositions of multiple transmitted streams.</p>
 </section>
-</section>
 <section id="zero-forcing-equalization">
-<h2>5. Zero-Forcing Equalization<a class="headerlink" href="#zero-forcing-equalization" title="Link to this heading">#</a></h2>
+<h3>Zero-Forcing Equalization<a class="headerlink" href="#zero-forcing-equalization" title="Link to this heading">#</a></h3>
 <p>We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the channel matrix:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ZF equalization</span>
 <span class="n">H_inv</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
 <span class="n">X_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_inv</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This separates the transmitted streams assuming ideal channel knowledge and no noise contribution. The ZF equalized symbol are given by</p>
+<p>This separates the transmitted streams assuming perfect channel knowledge while ignoring noise enhancement. The ZF-equalized symbols are given by</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]\]</div>
+</section>
 <section id="visualize-the-estimated-symbols">
 <h3>Visualize the Estimated Symbols<a class="headerlink" href="#visualize-the-estimated-symbols" title="Link to this heading">#</a></h3>
 <p>We plot the ZF-equalized symbols:</p>
@@ -502,11 +505,11 @@
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig2.png"><img alt="../_images/monte_carlo_mimo_fig2.png" class="align-center" src="../_images/monte_carlo_mimo_fig2.png" style="width: 100%;" />
 </a>
-<p>The estimated points should cluster near the ideal constellation points, although some noise remains.</p>
+<p>The estimated points should cluster around the ideal constellation points, although residual noise remains visible.</p>
 </section>
 </section>
-<section id="compare-detection-algorithms">
-<h2>7. Compare Detection Algorithms<a class="headerlink" href="#compare-detection-algorithms" title="Link to this heading">#</a></h2>
+<section id="detection-comparison">
+<h2>Detection Comparison<a class="headerlink" href="#detection-comparison" title="Link to this heading">#</a></h2>
 <p>We now compare four MIMO detection strategies:</p>
 <ul class="simple">
 <li><p><strong>ML</strong>: Maximum Likelihood</p></li>
@@ -528,7 +531,7 @@
 <ul class="simple">
 <li><p><strong>OSIC</strong>: Ordered Successive Interference Cancellation</p></li>
 </ul>
-<p>These detectors are directly implemented in <cite>comnumpy</cite>.</p>
+<p>All four detectors are available in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># evaluate the BER for several detectors</span>
 <span class="n">detector_list</span> <span class="o">=</span> <span class="p">[</span>
@@ -545,8 +548,7 @@
 
 </pre></div>
 </div>
-<p>Each detector is tested on the same channel realization, and the Symbol Error Rate (SER) is printed. We obtain the following
-outputs:</p>
+<p>Each detector is tested on the same channel realization, and the SER is printed. Typical output:</p>
 <ul class="simple">
 <li><p>detector ZF: ser=0.005</p></li>
 <li><p>detector MMSE: ser=0.004</p></li>
@@ -555,7 +557,7 @@ outputs:</p>
 </ul>
 </section>
 <section id="monte-carlo-evaluation">
-<h2>8. Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
+<h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
 <p>To get a more reliable estimate of the SER, we run a Monte Carlo simulation.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform monte carlo simulation</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -594,9 +596,8 @@ outputs:</p>
 </pre></div>
 </div>
 <p>This simulates multiple random channels and noise realizations for a range of SNR values.</p>
-</section>
 <section id="plot-ser-vs-snr">
-<h2>9. Plot SER vs SNR<a class="headerlink" href="#plot-ser-vs-snr" title="Link to this heading">#</a></h2>
+<h3>Plot SER vs SNR<a class="headerlink" href="#plot-ser-vs-snr" title="Link to this heading">#</a></h3>
 <p>Finally, we plot the SER for each detection scheme as a function of SNR:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot figures</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
@@ -612,18 +613,19 @@ outputs:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig3.png"><img alt="../_images/monte_carlo_mimo_fig3.png" class="align-center" src="../_images/monte_carlo_mimo_fig3.png" style="width: 100%;" />
 </a>
-<p>This figure compares detection methods as a function of the signal-to-noise ratio (SNR). The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost. The OSIC detector performs close to ML.</p>
+<p>This figure compares detection methods as a function of SNR. The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost, while the OSIC detector performs close to ML.</p>
+</section>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
 <p>This tutorial highlighted:</p>
 <ul class="simple">
-<li><p>How to simulate a MIMO transmission with <cite>comnumpy</cite>.</p></li>
+<li><p>How to simulate a MIMO transmission with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
 <li><p>How ZF equalization recovers the signal from a multi-stream mixture.</p></li>
-<li><p>How various MIMO detectors behave under different SNR conditions.</p></li>
-<li><p>Why advanced detection schemes like OSIC and ML outperform linear methods in difficult channel conditions.</p></li>
+<li><p>How various MIMO detectors compare under different SNR conditions.</p></li>
+<li><p>Why advanced detection schemes like OSIC and ML outperform linear methods in challenging channel conditions.</p></li>
 </ul>
-<p>With <cite>comnumpy</cite>, you can rapidly prototype, test, and visualize MIMO systems — whether for research, teaching, or personal learning.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.</p>
 </section>
 </section>
 
@@ -674,24 +676,27 @@ outputs:</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">1. Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">1. Import Libraries</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">2. Define System Parameters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-mimo-chain">3. Build the MIMO Chain</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">Visualize the Received Signal</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">Define System Parameters</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-mimo-chain">Build the MIMO Chain</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">5. Zero-Forcing Equalization</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-simulation">One-Shot Simulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">Visualize the Received Signal</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">Zero-Forcing Equalization</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-estimated-symbols">Visualize the Estimated Symbols</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-detection-algorithms">7. Compare Detection Algorithms</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">8. Monte Carlo Evaluation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">9. Plot SER vs SNR</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-comparison">Detection Comparison</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">Plot SER vs SNR</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
@@ -739,7 +744,7 @@ outputs:</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

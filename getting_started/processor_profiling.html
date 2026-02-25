@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'getting_started/processor_profiling';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -374,9 +374,15 @@
                   
   <section id="profiling-a-communication-chain">
 <h1>Profiling a Communication Chain<a class="headerlink" href="#profiling-a-communication-chain" title="Link to this heading">#</a></h1>
-<p>In this tutorial, we will learn how to <strong>profile</strong> a communication chain using <strong>comnumpy</strong>.
-Profiling allows us to evaluate the computational cost of each processor, helping to identify performance bottlenecks in complex simulations.</p>
-<p>We will build an <strong>OFDM communication chain</strong> with channel effects, run the simulation, and visualize the profiling results.</p>
+<p>In this tutorial, you will learn how to <strong>profile</strong> a communication chain using <strong>comnumpy</strong>.
+Profiling measures the computational cost of each processor, helping you identify performance bottlenecks in complex simulations.</p>
+<p>You will build an <strong>OFDM communication chain</strong> with channel effects, run the simulation, and visualize the profiling results.</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul class="simple">
+<li><p>How to build an OFDM communication chain with channel effects.</p></li>
+<li><p>How to use <code class="docutils literal notranslate"><span class="pre">plot_chain_profiling</span></code> to measure per-processor execution time.</p></li>
+<li><p>How to identify computational bottlenecks in a simulation chain.</p></li>
+</ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <section id="import-libraries">
@@ -429,8 +435,8 @@ Profiling allows us to evaluate the computational cost of each processor, helpin
 <h2>OFDM Communication Chain<a class="headerlink" href="#ofdm-communication-chain" title="Link to this heading">#</a></h2>
 <section id="define-the-chain">
 <h3>Define the Chain<a class="headerlink" href="#define-the-chain" title="Link to this heading">#</a></h3>
-<p>We now build a complete OFDM chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
-This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix insertion, channel effects, equalization, and demapping.</p>
+<p>We build a complete OFDM chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
+This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix handling, channel effects, equalization, and demapping.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
@@ -459,19 +465,19 @@ Generates a sequence of integer-valued symbols to transmit.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
 Maps integers to QAM constellation points.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Serial2Parallel</span></code> / <code class="docutils literal notranslate"><span class="pre">Parallel2Serial</span></code>
-Reshape data between serial and parallel streams, useful for OFDM.</p></li>
+Reshape data between serial and parallel streams, as required by OFDM processing.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CarrierAllocator</span></code>
 Assigns data and pilot symbols to their designated subcarriers.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">IFFTProcessor</span></code> / <code class="docutils literal notranslate"><span class="pre">FFTProcessor</span></code>
 Perform the Inverse Fast Fourier Transform and Fast Fourier Transform operations, respectively.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CyclicPrefixer</span></code> / <code class="docutils literal notranslate"><span class="pre">CyclicPrefixRemover</span></code>
-Add and remove the cyclic prefix to mitigate inter-symbol interference.</p></li>
+Add and remove the cyclic prefix to prevent inter-symbol interference.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FIRChannel</span></code>
 Models a frequency-selective multipath channel.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">AWGN</span></code>
 Adds white Gaussian noise.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code>
-Compensates for channel distortions in the frequency domain.</p></li>
+Compensates for channel distortion in the frequency domain.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CarrierExtractor</span></code>
 Extracts data and pilot carriers after equalization.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
@@ -488,13 +494,13 @@ and produces a bar chart of the results.</p>
 <span class="n">plot_chain_profiling</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The profiling figure shows the time spent in each block, allowing you to quickly identify which stages of the chain dominate the computation.</p>
+<p>The resulting figure shows the time spent in each processor, making it easy to identify which stages dominate the computation.</p>
 <a class="reference internal image-reference" href="../_images/profiling_chain_fig1.png"><img alt="../_images/profiling_chain_fig1.png" class="align-center" src="../_images/profiling_chain_fig1.png" style="width: 100%;" />
 </a>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>Congratulations 🎉 You have successfully profiled an <strong>OFDM communication chain</strong> with <strong>comnumpy</strong>.</p>
+<p>You have successfully profiled an <strong>OFDM communication chain</strong> with <strong>comnumpy</strong>.</p>
 <p>Profiling is a powerful tool to:</p>
 <ul class="simple">
 <li><p>Detect computational bottlenecks in complex simulations.</p></li>
@@ -614,7 +620,7 @@ and produces a bar chart of the results.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

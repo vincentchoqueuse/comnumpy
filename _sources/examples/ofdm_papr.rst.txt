@@ -1,9 +1,9 @@
 PAPR in OFDM Communication
 ==========================
 
-In this tutorial, we will compute the **Peak-to-Average Power Ratio (PAPR)** 
-of an OFDM signal using the ``comnumpy`` library.  
-We will reproduce the first figure from the article:
+In this tutorial, we compute the **Peak-to-Average Power Ratio (PAPR)**
+of an OFDM signal using the ``comnumpy`` library.
+We reproduce the first figure from the article:
 
 * "An overview of peak-to-average power ratio reduction techniques for multicarrier transmission"  
   by Han and Lee (2005).
@@ -62,11 +62,11 @@ carrier allocation, and IFFT processing.
 PAPR metric
 """""""""""
 
-When applying the Inverse Fourier Transform, we don't control the signal amplitude of the transformed signal. This can 
-be challenging for communications sensible non-linearities.
+After the Inverse Fourier Transform, the resulting time-domain signal can exhibit large amplitude peaks.
+This is problematic for systems sensitive to nonlinearities (e.g., power amplifiers).
 
-To evaluate the amplitude of the generated signal, one popular metric is the Peak-to-Average Power Ratio (PAPR).
-Mathematically, the PAPR is defined as:
+A widely used metric to quantify this effect is the Peak-to-Average Power Ratio (PAPR),
+defined as:
 
 .. math::
 
@@ -77,8 +77,8 @@ where :math:`x[n]` is the transmitted OFDM signal.
 One Shot Signal
 """""""""""""""
 
-Before running Monte Carlo simulations, we can evaluate the PAPR of a **single OFDM signal** 
-and plot its instantaneous power.   The computed PAPR value is displayed in the title of the figure.
+Before running Monte Carlo simulations, we evaluate the PAPR of a **single OFDM signal**
+and plot its instantaneous power. The computed PAPR value is displayed in the figure title.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
@@ -95,9 +95,9 @@ This produces a figure similar to:
 Monte Carlo Simulation of CCDF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We now perform a Monte Carlo simulation to estimate the **CCDF of the PAPR** 
-for two configurations (256 and 1024 subcarriers).  
-For each case, we also compare the results with the theoretical CCDF:
+We now perform a Monte Carlo simulation to estimate the **CCDF of the PAPR**
+for two configurations (256 and 1024 subcarriers).
+For each case, we compare the simulation results with the theoretical CCDF:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
@@ -111,7 +111,7 @@ The theoretical CCDF is given by:
 
 where :math:`\gamma` is the normalized PAPR threshold.  
 
-The final figure displays both the experimental and theoretical CCDFs for 
+The resulting figure displays both the experimental and theoretical CCDFs for
 ``N_sc = 256`` and ``N_sc = 1024`` subcarriers.
 
 .. image:: img/monte_carlo_ofdm_papr_fig2.png
@@ -124,19 +124,19 @@ For example, with 1024 subcarriers and an oversampling factor of 4,
 a **PAPR around 12 dB** is typically observed at CCDF = 10⁻³.
 
 
-7. Conclusion
-^^^^^^^^^^^^^
+Conclusion
+^^^^^^^^^^
 
-Congratulations 🎉 You have successfully simulated the **PAPR of an OFDM signal** 
-and compared experimental results with theoretical CCDFs.  
+You have successfully simulated the **PAPR of an OFDM signal**
+and compared experimental results with theoretical CCDFs.
 
 You have learned how to:
 
-- Define an OFDM chain with adjustable parameters.  
-- Compute the PAPR of a single OFDM waveform.  
-- Estimate the CCDF of the PAPR through Monte Carlo simulation.  
-- Compare simulation results with theoretical benchmarks.  
+- Define an OFDM chain with adjustable parameters.
+- Compute the PAPR of a single OFDM waveform.
+- Estimate the CCDF of the PAPR through Monte Carlo simulation.
+- Compare simulation results with theoretical benchmarks.
 
-Key takeaway:  
-**OFDM signals exhibit high PAPR (≈10–13 dB depending on system size), 
+Key takeaway:
+**OFDM signals exhibit high PAPR (around 10-13 dB depending on system size),
 which motivates PAPR reduction techniques such as clipping, coding, or tone reservation.**

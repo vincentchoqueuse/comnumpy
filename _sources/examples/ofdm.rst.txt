@@ -1,16 +1,16 @@
 OFDM Tutorial
 =============
 
-In this tutorial, we will compare the performance of a **Single Carrier (SC)** system 
-and an **OFDM** system over a **frequency-selective multipath channel** using the ``comnumpy`` library.  
+In this tutorial, we compare the performance of a **Single Carrier (SC)** system
+and an **OFDM** system over a **frequency-selective multipath channel** using the ``comnumpy`` library.
 You will learn how to:
 
 - Define and simulate a frequency-selective channel.
 - Evaluate performance using the Symbol Error Rate (SER).
 - Understand why OFDM outperforms SC in multipath environments.
 
-This tutorial is suitable for both engineers and students interested in digital communications, 
-and provides both practical examples and theoretical insights.
+This tutorial is suitable for engineers and students interested in digital communications,
+combining practical examples with theoretical insights.
 
 
 Introduction
@@ -28,21 +28,21 @@ We start by importing the necessary libraries:
 Simulation Parameters
 """""""""""""""""""""
 
-Next, we define the parameters of the communication chain, 
-including the modulation order and the channel taps for a frequency-selective channel:
+Next, we define the parameters of the communication chain,
+including the modulation order and the channel impulse response for a frequency-selective channel:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
    :lines: 14-24
 
-Here, ``h`` represents the impulse response of the channel.  
-The first tap is normalized to 1 to preserve the overall channel energy.  
+Here, ``h`` represents the channel impulse response.
+The first tap is normalized to 1 to preserve the overall channel energy.
 
 
 Frequency-Selective Channel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The input–output relation of a frequency-selective channel is:
+The input-output relation of a frequency-selective channel is:
 
 .. math::
 
@@ -95,8 +95,8 @@ The chain is implemented in **comnumpy** as follows:
 Results
 """""""
 
-We now evaluate the performance by computing the SER, the execution time, 
-and plotting constellations before and after equalization:
+We evaluate the performance by computing the SER and the execution time,
+then plot the constellation before and after equalization:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
@@ -113,13 +113,13 @@ For the SC chain, we obtain:
    :alt: Constellations before and after equalization (Single Carrier)
 
 
-OFDM Communication chain
+OFDM Communication Chain
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-In SC systems, equalization requires matrix inversion, which is computationally expensive.  
-OFDM transforms the channel into a set of parallel flat-fading subchannels, 
-each equalized with a **simple one-tap filter**.  
-This drastically reduces complexity and improves performance.
+In SC systems, equalization requires matrix inversion, which is computationally expensive.
+OFDM transforms the channel into a set of parallel flat-fading subchannels,
+each equalized with a **simple one-tap filter**.
+This drastically reduces computational complexity and improves performance.
 
 The OFDM chain can be visualized as:
 
@@ -182,7 +182,7 @@ The OFDM chain in **comnumpy** is implemented as:
 Results
 """""""
 
-We compute SER and runtime, and plot the received constellation:
+We compute the SER and runtime, then plot the received constellation:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
@@ -202,16 +202,16 @@ For the OFDM chain, we obtain:
 Conclusion
 ^^^^^^^^^^
 
-Congratulations 🎉 You have compared **Single Carrier** and **OFDM** systems in a multipath channel.
+You have compared **Single Carrier** and **OFDM** systems over a multipath channel.
 
 You have learned how to:
 
 - Model a frequency-selective FIR channel in ``comnumpy``.
-- Simulate SC and OFDM systems.
-- Apply ZF equalization in SC vs one-tap equalization in OFDM.
-- Compare performance in terms of SER and computational time.
+- Simulate both SC and OFDM systems.
+- Apply ZF equalization (SC) vs. one-tap equalization (OFDM).
+- Compare performance in terms of SER and computational cost.
 
-Key takeaway:  
-**OFDM transforms a frequency-selective channel into flat-fading subchannels, 
-allowing simple equalization and superior performance in realistic multipath environments.**
+Key takeaway:
+**OFDM transforms a frequency-selective channel into flat-fading subchannels,
+enabling simple per-subcarrier equalization and superior performance in realistic multipath environments.**
 

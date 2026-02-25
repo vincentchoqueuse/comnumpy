@@ -1,17 +1,17 @@
 MIMO Chain Tutorial
 ===================
 
-This tutorial demonstrates how to simulate a basic MIMO (Multiple-Input Multiple-Output) communication system using the ``comnumpy`` library. You will learn how to:
+This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the ``comnumpy`` library. You will learn how to:
 
 - Build a MIMO simulation chain with Rayleigh fading.
 - Visualize received and equalized signals.
 - Compare detection algorithms (ZF, MMSE, OSIC, ML).
 - Perform a Monte Carlo evaluation of Symbol Error Rate (SER).
 
-This tutorial is ideal for engineers or students learning about MIMO systems, and offers both practical insights and theoretical understanding.
+This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.
 
-1. Introduction
-^^^^^^^^^^^^^^^
+Introduction
+^^^^^^^^^^^^
 
 Prerequisites
 """""""""""""
@@ -27,17 +27,17 @@ Ensure you have the following Python libraries installed:
 Simulation Setup
 ^^^^^^^^^^^^^^^^
 
-1. Import Libraries
-^^^^^^^^^^^^^^^^^^^
+Import Libraries
+""""""""""""""""
 
-We start by importing the required Python libraries and `comnumpy` components:
+We start by importing the required libraries and ``comnumpy`` components:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
    :lines: 1-14
 
-2. Define System Parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Define System Parameters
+""""""""""""""""""""""""
 
 We define the number of transmit/receive antennas, the modulation order (PSK), and the noise variance:
 
@@ -47,8 +47,8 @@ We define the number of transmit/receive antennas, the modulation order (PSK), a
 
 The modulation alphabet is automatically generated from the given parameters.
 
-3. Build the MIMO Chain
-^^^^^^^^^^^^^^^^^^^^^^^
+Build the MIMO Chain
+""""""""""""""""""""
 
 We create a transmission chain consisting of a symbol generator, symbol mapper, and Rayleigh fading channel:
 
@@ -56,11 +56,14 @@ We create a transmission chain consisting of a symbol generator, symbol mapper, 
    :language: python
    :lines: 26-33
 
-This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal can be described by :
+This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal is described by:
 
 .. math ::
-    
+
    \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]
+
+One-Shot Simulation
+^^^^^^^^^^^^^^^^^^^
 
 Visualize the Received Signal
 """""""""""""""""""""""""""""
@@ -77,8 +80,8 @@ Let's inspect the received signal on each receive antenna:
 
 You should observe that the received signal consists of noisy superpositions of multiple transmitted streams.
 
-5. Zero-Forcing Equalization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Zero-Forcing Equalization
+"""""""""""""""""""""""""
 
 We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the channel matrix:
 
@@ -86,10 +89,10 @@ We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the chan
    :language: python
    :lines: 50-52
 
-This separates the transmitted streams assuming ideal channel knowledge and no noise contribution. The ZF equalized symbol are given by 
+This separates the transmitted streams assuming perfect channel knowledge while ignoring noise enhancement. The ZF-equalized symbols are given by
 
 .. math ::
-    
+
    \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
 
 
@@ -106,10 +109,10 @@ We plot the ZF-equalized symbols:
    :width: 100%
    :align: center
 
-The estimated points should cluster near the ideal constellation points, although some noise remains.
+The estimated points should cluster around the ideal constellation points, although residual noise remains visible.
 
-7. Compare Detection Algorithms
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Detection Comparison
+^^^^^^^^^^^^^^^^^^^^
 
 We now compare four MIMO detection strategies:
 
@@ -134,22 +137,21 @@ We now compare four MIMO detection strategies:
 
 - **OSIC**: Ordered Successive Interference Cancellation
 
-These detectors are directly implemented in `comnumpy`.
+All four detectors are available in ``comnumpy``.
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
    :lines: 65-78
 
-Each detector is tested on the same channel realization, and the Symbol Error Rate (SER) is printed. We obtain the following 
-outputs:
+Each detector is tested on the same channel realization, and the SER is printed. Typical output:
 
 * detector ZF: ser=0.005
 * detector MMSE: ser=0.004
 * detector OSIC: ser=0.001
 * detector ML: ser=0.0005
 
-8. Monte Carlo Evaluation
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Monte Carlo Evaluation
+^^^^^^^^^^^^^^^^^^^^^^
 
 To get a more reliable estimate of the SER, we run a Monte Carlo simulation.
 
@@ -159,8 +161,8 @@ To get a more reliable estimate of the SER, we run a Monte Carlo simulation.
 
 This simulates multiple random channels and noise realizations for a range of SNR values.
 
-9. Plot SER vs SNR
-^^^^^^^^^^^^^^^^^^
+Plot SER vs SNR
+"""""""""""""""
 
 Finally, we plot the SER for each detection scheme as a function of SNR:
 
@@ -172,16 +174,16 @@ Finally, we plot the SER for each detection scheme as a function of SNR:
    :width: 100%
    :align: center
 
-This figure compares detection methods as a function of the signal-to-noise ratio (SNR). The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost. The OSIC detector performs close to ML.
+This figure compares detection methods as a function of SNR. The maximum-likelihood (ML) detector delivers the best performance, albeit at higher computational cost, while the OSIC detector performs close to ML.
 
 Conclusion
 ^^^^^^^^^^
 
 This tutorial highlighted:
 
-- How to simulate a MIMO transmission with `comnumpy`.
+- How to simulate a MIMO transmission with ``comnumpy``.
 - How ZF equalization recovers the signal from a multi-stream mixture.
-- How various MIMO detectors behave under different SNR conditions.
-- Why advanced detection schemes like OSIC and ML outperform linear methods in difficult channel conditions.
+- How various MIMO detectors compare under different SNR conditions.
+- Why advanced detection schemes like OSIC and ML outperform linear methods in challenging channel conditions.
 
-With `comnumpy`, you can rapidly prototype, test, and visualize MIMO systems — whether for research, teaching, or personal learning.
+With ``comnumpy``, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.

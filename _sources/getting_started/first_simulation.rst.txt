@@ -1,9 +1,16 @@
 First Simulation
 ================
 
-This tutorial will guide you through running a simple communication simulation using **comnumpy**.
-You will build a basic QAM communication chain, transmit symbols through an AWGN channel, 
+This tutorial guides you through a simple communication simulation using **comnumpy**.
+You will build a basic QAM communication chain, transmit symbols through an AWGN channel,
 and evaluate the Symbol Error Rate (SER).
+
+**What you'll learn:**
+
+- Creating a communication chain using ``Sequential`` and built-in processors.
+- Transmitting QAM symbols through an AWGN channel.
+- Measuring the Symbol Error Rate (SER) and comparing it with theory.
+- Using ``Recorder`` objects to capture and visualize signals.
 
 
 Introduction
@@ -23,7 +30,7 @@ Make sure you have the following Python libraries installed:
 Import Libraries
 """"""""""""""""
 
-We start by importing the necessary libraries and defining the simulation parameters:
+We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
@@ -32,7 +39,7 @@ We start by importing the necessary libraries and defining the simulation parame
 Define Parameters
 """""""""""""""""
 
-Next, we define some communication parameters such as the modulation order, 
+Next, we define the key simulation parameters: the modulation order,
 the number of transmitted symbols, and the signal-to-noise ratio (SNR):
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
@@ -46,10 +53,9 @@ AWGN Communication Chain
 Define the Chain
 """"""""""""""""
 
-To create a communication chain, we use the ``Sequential`` object.  
-A ``Sequential`` object takes a list of processor objects as input.  
-The **comnumpy** library provides a wide range of processors for modulation, 
-coding, channel modeling, and more.
+We define the communication chain using the ``Sequential`` object, which takes a list of
+processors as input. The **comnumpy** library provides a wide range of built-in processors
+for modulation, coding, channel modeling, and more.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
@@ -67,24 +73,23 @@ In this simulation, the communication chain is composed of **six processor objec
       D --> E[Recorder];
       E --> F[Demapper];
 
-- ``SymbolGenerator``  
-  Generates a sequence of integers in the range :math:`[0, M-1]`. Each integer represents a symbol to be transmitted.
+- ``SymbolGenerator``
+  Generates a sequence of random integers in the range :math:`[0, M-1]`, where each integer represents a symbol to transmit.
 
-- ``Recorder``  
-  Records an input signal at a specific point in the chain.  
-  This class is particularly useful for extracting signals for analysis (e.g., transmitted or received data).
+- ``Recorder``
+  Captures the signal at a specific point in the chain for later analysis (e.g., comparing transmitted vs. received data).
 
-- ``SymbolMapper``  
-  Maps each integer symbol to a corresponding point in the complex constellation (e.g., QAM symbols).
+- ``SymbolMapper``
+  Maps each integer symbol to a point in the complex QAM constellation.
 
-- ``AWGN``  
+- ``AWGN``
   Simulates an **Additive White Gaussian Noise** channel, modeling the effect of thermal noise on the transmitted signal.
 
-- ``SymbolDemapper``  
-  Performs the inverse mapping operation by associating each received point with the nearest constellation symbol.
+- ``SymbolDemapper``
+  Performs hard-decision demapping by associating each received point with the nearest constellation symbol.
 
-- ``Recorder`` (again)  
-  A second recorder can be inserted after the channel to capture the noisy received symbols for further analysis (e.g., plotting constellations).
+- ``Recorder`` (second instance)
+  A second recorder placed after the channel captures the noisy received symbols for visualization (e.g., constellation diagrams).
 
 
 Simulate the Chain
@@ -99,33 +104,32 @@ To run the simulation, simply call the ``Sequential`` object with the desired nu
 Evaluate Performance
 """"""""""""""""""""
 
-Next, we evaluate the performance of the communication system using standard metrics.  
-Here, we compute the **Symbol Error Rate (SER)**, estimated from the transmitted and detected symbols.  
-This estimated SER is then compared with the theoretical value.  
+We evaluate the performance of the communication system by computing the **Symbol Error Rate (SER)**
+from the transmitted and detected symbols, then comparing it with the theoretical value.
 
-To extract the transmitted symbols, we use the method ``get_data()`` of the ``Recorder`` object.  
-A ``Recorder`` can be placed at different locations in the chain depending on your needs.
+To retrieve the transmitted symbols, we call the ``get_data()`` method on the ``Recorder`` object.
+Recorders can be placed at any point in the chain, depending on which signal you want to inspect.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
    :lines: 33-43
 
-For this simulation, we obtain for example:
+For this simulation, typical output looks like:
 
 .. code::
 
    SER (simu) = 0.0013
    SER (theo) = 0.0015647896369451741
 
-Note: for small SER values, it is often recommended to increase ``N`` 
-(the number of transmitted symbols) in order to improve the estimation accuracy.
+Note: for small SER values, increasing ``N`` (the number of transmitted symbols)
+improves the estimation accuracy.
 
 Plot the Constellation
 """"""""""""""""""""""
 
-Visualizing the constellation of the received data can also be insightful.  
-We again use a ``Recorder`` object to capture the received symbols and then 
-plot them with ``matplotlib``:
+Visualizing the received constellation is a useful way to assess signal quality.
+We use a ``Recorder`` object to capture the received symbols and plot them
+with ``matplotlib``:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
@@ -139,10 +143,10 @@ plot them with ``matplotlib``:
 Conclusion
 ^^^^^^^^^^
 
-Congratulations on completing your first steps with the **comnumpy** library! 🎉
+You have successfully built and simulated your first communication chain with **comnumpy**.
 
-From here, you may want to explore:
+From here, you can explore:
 
-- **OFDM and MIMO tutorials** for more advanced communication techniques.
-- The full **comnumpy documentation** for a detailed API reference.
-- Experiments with different modulation orders, SNR values, and channel models.
+- The **OFDM and MIMO tutorials** for more advanced communication techniques.
+- The **API reference** for a complete list of available processors.
+- Different modulation orders, SNR values, and channel models to deepen your understanding.

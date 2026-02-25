@@ -1,10 +1,16 @@
 Monte Carlo Simulation over AWGN Channel
 ========================================
 
-In this tutorial, we will simulate a communication chain with **comnumpy** 
-and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).  
-This is done using a **Monte Carlo simulation**, where the chain is executed multiple times 
-for different SNR values and the experimental results are compared with theoretical predictions.
+In this tutorial, we simulate a communication chain with **comnumpy**
+and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).
+Using a **Monte Carlo simulation**, the chain is executed repeatedly at each SNR value
+and the experimental results are compared with theoretical predictions.
+
+**What you'll learn:**
+
+- How to run a Monte Carlo simulation over a range of SNR values.
+- How to compute experimental and theoretical SER for QAM over AWGN.
+- How to plot standard SER performance curves on a logarithmic scale.
 
 
 Introduction
@@ -35,8 +41,8 @@ We start by importing the necessary libraries:
 Define Parameters
 """""""""""""""""
 
-Next, we set the simulation parameters: the modulation order, number of transmitted symbols, 
-and the SNR range to evaluate.
+Next, we set the simulation parameters: modulation order, number of transmitted symbols,
+and the SNR range to sweep.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
@@ -49,8 +55,8 @@ AWGN Communication Chain
 Define Chain
 """"""""""""
 
-We now define the communication chain using the ``Sequential`` object.  
-The chain includes symbol generation, mapping, transmission over an AWGN channel, 
+We define the communication chain using the ``Sequential`` object.
+The chain includes symbol generation, mapping, transmission over an AWGN channel,
 and symbol demapping.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
@@ -77,8 +83,8 @@ The processors are:
 Monte Carlo Simulation
 """"""""""""""""""""""
 
-We perform a Monte Carlo simulation over the entire SNR range.  
-At each iteration, we update the SNR value of the AWGN processor, run the chain, 
+We perform a Monte Carlo simulation over the entire SNR range.
+At each SNR value, we update the AWGN processor, run the chain,
 and compute the experimental SER.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
@@ -99,9 +105,9 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 Results and Visualization
 """""""""""""""""""""""""
 
-Finally, we plot the experimental and theoretical SER curves.  
-A logarithmic (``semilogy``) scale is used for the SER axis, 
-which is the standard way to represent error rate curves in digital communications.
+Finally, we plot the experimental and theoretical SER curves.
+A logarithmic (``semilogy``) scale is used for the SER axis,
+which is the standard representation for error rate curves in digital communications.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
@@ -115,19 +121,19 @@ which is the standard way to represent error rate curves in digital communicatio
 Conclusion
 ^^^^^^^^^^
 
-Congratulations 🎉 You have completed a **Monte Carlo simulation of SER performance** 
+You have completed a **Monte Carlo simulation of SER performance**
 for a QAM-modulated communication system over an AWGN channel.
 
 You have learned how to:
 
-- Define a chain with modulation, channel, and demodulation.
-- Run Monte Carlo experiments for varying SNR values.
-- Compare experimental performance with theoretical benchmarks.
+- Build a chain with modulation, channel, and demodulation.
+- Run Monte Carlo experiments over a range of SNR values.
+- Compare experimental results with theoretical benchmarks.
 - Plot standard SER performance curves.
 
-From here, you may want to:
+From here, you can:
 
 - Experiment with different modulation orders (e.g., 4-QAM, 64-QAM).
-- Extend the chain with coding or more realistic channel models.
-- Increase the number of transmitted symbols for more accurate SER estimation.
+- Extend the chain with channel coding or more realistic channel models.
+- Increase the number of transmitted symbols to improve SER estimation accuracy.
 

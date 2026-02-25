@@ -40,9 +40,9 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/optical/utils';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -414,8 +414,8 @@
 <dt class="sig sig-object py" id="comnumpy.optical.utils.compute_beta2">
 <span class="sig-name descname"><span class="pre">compute_beta2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lamb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cd_coefficient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_of_light</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.compute_beta2" title="Link to this definition">#</a></dt>
 <dd><p>Compute the Chromatic Dispersion coefficient β₂ in ps²/km</p>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>lamb<span class="classifier">float</span></dt><dd><p>Wavelength (nm)</p>
 </dd>
@@ -471,12 +471,12 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.optical.utils.apply_chromatic_dispersion">
 <span class="sig-name descname"><span class="pre">apply_chromatic_dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.apply_chromatic_dispersion" title="Link to this definition">#</a></dt>
-<dd><p>Implements chromatic dispersion effects in optical fiber communications.</p>
-<p>This class models the chromatic dispersion effect in the frequency domain for
+<dd><p>Apply chromatic dispersion effects in optical fiber communications.</p>
+<p>Apply chromatic dispersion effects in the frequency domain for
 fiber-optic communication systems. It applies a dispersion-induced phase shift
 to the input signal in the frequency domain and considers signal attenuation [1].</p>
 <section id="id1">
-<h2>Attributes<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <dl class="simple">
 <dt>x: numpy array</dt><dd><p>Complex signal</p>
 </dd>
@@ -509,13 +509,63 @@ to the input signal in the frequency domain and considers signal attenuation [1]
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.apply_kerr_nonlinearity">
+<span class="sig-name descname"><span class="pre">apply_kerr_nonlinearity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.apply_kerr_nonlinearity" title="Link to this definition">#</a></dt>
+<dd><p>Apply Kerr nonlinearity phase rotation to a signal.</p>
+<section id="id4">
+<h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>x<span class="classifier">np.ndarray</span></dt><dd><p>Input complex signal.</p>
+</dd>
+<dt>z<span class="classifier">float</span></dt><dd><p>Fiber length in km.</p>
+</dd>
+<dt>gamma<span class="classifier">float</span></dt><dd><p>Kerr coefficient in rad/W/km.</p>
+</dd>
+<dt>gain<span class="classifier">float, optional</span></dt><dd><p>Gain factor. Default is 1.</p>
+</dd>
+<dt>direction<span class="classifier">int, optional</span></dt><dd><p>Propagation direction (1=forward, -1=backward). Default is 1.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>Signal after Kerr nonlinear phase rotation.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.compute_erbium_doped_fiber_amplifier_gain">
+<span class="sig-name descname"><span class="pre">compute_erbium_doped_fiber_amplifier_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_span</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.compute_erbium_doped_fiber_amplifier_gain" title="Link to this definition">#</a></dt>
+<dd><p>Compute the amplitude gain of an EDFA that compensates for fiber loss.</p>
+<section id="id6">
+<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>alpha_dB<span class="classifier">float</span></dt><dd><p>Fiber loss in dB/km.</p>
+</dd>
+<dt>L_span<span class="classifier">float</span></dt><dd><p>Span length in km.</p>
+</dd>
+</dl>
+</section>
+<section id="id7">
+<h2>Returns<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>float</dt><dd><p>Amplitude gain factor.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase">
 <span class="sig-name descname"><span class="pre">compute_erbium_doped_fiber_N_ase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_span</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">NF_dB</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.62607015e-34</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">193414489032258.06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase" title="Link to this definition">#</a></dt>
 <dd><p>Compute ASENoise params</p>
-<section id="id4">
-<h2>Attributes<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>Parameters<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <dl class="simple">
-<dt>alpha_dB<span class="classifier">float</span></dt><dd><p>Wavelength (nm)</p>
+<dt>alpha_dB<span class="classifier">float</span></dt><dd><p>Fiber loss (dB/km)</p>
 </dd>
 <dt>L_span<span class="classifier">float</span></dt><dd><p>Length of the link (in km)</p>
 </dd>
@@ -529,8 +579,8 @@ to the input signal in the frequency domain and considers signal attenuation [1]
 <div class="math notranslate nohighlight">
 \[\alpha =\alpha_{dB}/10 \log_{10}(e)\]</div>
 </section>
-<section id="id5">
-<h2>References<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>References<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>[1] Essiambre, René-Jean, Gerhard Kramer, Peter J. Winzer, Gerard J. Foschini, and Bernhard Goebel. “Capacity limits of optical fiber networks.” Journal of Lightwave technology 28, no. 4 (2010): 662-701.</p></li>
 </ul>
@@ -540,18 +590,55 @@ to the input signal in the frequency domain and considers signal attenuation [1]
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.optical.utils.get_linear_step_size">
 <span class="sig-name descname"><span class="pre">get_linear_step_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L_span</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">StPS</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.get_linear_step_size" title="Link to this definition">#</a></dt>
-<dd><p>Linear Step Size</p>
+<dd><p>Compute uniformly spaced step sizes for the split-step Fourier method.</p>
+<section id="id10">
+<h2>Parameters<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>L_span<span class="classifier">float</span></dt><dd><p>Span length in km.</p>
+</dd>
+<dt>StPS<span class="classifier">int</span></dt><dd><p>Number of steps per span.</p>
+</dd>
+</dl>
+</section>
+<section id="id11">
+<h2>Returns<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>Array of step sizes, each equal to <code class="docutils literal notranslate"><span class="pre">L_span</span> <span class="pre">/</span> <span class="pre">StPS</span></code>.</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.optical.utils.get_logarithmic_step_size">
 <span class="sig-name descname"><span class="pre">get_logarithmic_step_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L_span</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">StPS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_log_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#comnumpy.optical.utils.get_logarithmic_step_size" title="Link to this definition">#</a></dt>
-<dd><p>Logarithmically spaced step size</p>
-<p>See also:</p>
-<section id="id6">
-<h2>References<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<dd><p>Compute logarithmically spaced step sizes for the split-step Fourier method.</p>
+<section id="id12">
+<h2>Parameters<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>L_span<span class="classifier">float</span></dt><dd><p>Span length in km.</p>
+</dd>
+<dt>StPS<span class="classifier">int</span></dt><dd><p>Number of steps per span.</p>
+</dd>
+<dt>alpha_dB<span class="classifier">float, optional</span></dt><dd><p>Fiber loss in dB/km. Default is 0.</p>
+</dd>
+<dt>step_log_factor<span class="classifier">float, optional</span></dt><dd><p>Logarithmic step factor. Default is 0.4.</p>
+</dd>
+</dl>
+</section>
+<section id="id13">
+<h2>Returns<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>Array of logarithmically spaced step sizes.</p>
+</dd>
+</dl>
+</section>
+<section id="id14">
+<h2>References<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>[1] O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, “Optimization of the split-step Fourier method in modeling optical-fiber communications systems,”  in Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003, doi: 10.1109/JLT.2003.808628.</p></li>
+<li><p>[1] O. V. Sinkin et al., “Optimization of the split-step Fourier method in
+modeling optical-fiber communications systems,” J. Lightwave Technol., vol. 21,
+no. 1, pp. 61-68, Jan. 2003.</p></li>
 </ul>
 </section>
 </dd></dl>
@@ -598,6 +685,8 @@ to the input signal in the frequency domain and considers signal attenuation [1]
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.compute_beta2"><code class="docutils literal notranslate"><span class="pre">compute_beta2()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.apply_chromatic_dispersion"><code class="docutils literal notranslate"><span class="pre">apply_chromatic_dispersion()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.apply_kerr_nonlinearity"><code class="docutils literal notranslate"><span class="pre">apply_kerr_nonlinearity()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.compute_erbium_doped_fiber_amplifier_gain"><code class="docutils literal notranslate"><span class="pre">compute_erbium_doped_fiber_amplifier_gain()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase"><code class="docutils literal notranslate"><span class="pre">compute_erbium_doped_fiber_N_ase()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.get_linear_step_size"><code class="docutils literal notranslate"><span class="pre">get_linear_step_size()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.get_logarithmic_step_size"><code class="docutils literal notranslate"><span class="pre">get_logarithmic_step_size()</span></code></a></li>
@@ -647,7 +736,7 @@ to the input signal in the frequency domain and considers signal attenuation [1]
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
