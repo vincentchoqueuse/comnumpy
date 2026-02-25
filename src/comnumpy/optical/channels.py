@@ -66,7 +66,7 @@ class ChromaticDispersion(Processor):
     Attributes
     ----------
     z : float
-        Step length in meters (km).
+        Fiber length in km.
     fs : float
         Sampling frequency in hertz (Hz). Default is 1 Hz.
     alpha_dB : float, optional

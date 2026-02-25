@@ -1,10 +1,16 @@
 Profiling a Communication Chain
 ===============================
 
-In this tutorial, we will learn how to **profile** a communication chain using **comnumpy**.  
-Profiling allows us to evaluate the computational cost of each processor, helping to identify performance bottlenecks in complex simulations.
+In this tutorial, you will learn how to **profile** a communication chain using **comnumpy**.
+Profiling measures the computational cost of each processor, helping you identify performance bottlenecks in complex simulations.
 
-We will build an **OFDM communication chain** with channel effects, run the simulation, and visualize the profiling results.
+You will build an **OFDM communication chain** with channel effects, run the simulation, and visualize the profiling results.
+
+**What you'll learn:**
+
+- How to build an OFDM communication chain with channel effects.
+- How to use ``plot_chain_profiling`` to measure per-processor execution time.
+- How to identify computational bottlenecks in a simulation chain.
 
 
 Introduction
@@ -35,8 +41,8 @@ OFDM Communication Chain
 Define the Chain
 """"""""""""""""
 
-We now build a complete OFDM chain using the ``Sequential`` object.  
-This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix insertion, channel effects, equalization, and demapping.
+We build a complete OFDM chain using the ``Sequential`` object.
+This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix handling, channel effects, equalization, and demapping.
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
@@ -50,8 +56,8 @@ The chain is composed of the following processors:
 - ``SymbolMapper``  
   Maps integers to QAM constellation points.
 
-- ``Serial2Parallel`` / ``Parallel2Serial``  
-  Reshape data between serial and parallel streams, useful for OFDM.
+- ``Serial2Parallel`` / ``Parallel2Serial``
+  Reshape data between serial and parallel streams, as required by OFDM processing.
 
 - ``CarrierAllocator``  
   Assigns data and pilot symbols to their designated subcarriers.
@@ -59,8 +65,8 @@ The chain is composed of the following processors:
 - ``IFFTProcessor`` / ``FFTProcessor``  
   Perform the Inverse Fast Fourier Transform and Fast Fourier Transform operations, respectively.
 
-- ``CyclicPrefixer`` / ``CyclicPrefixRemover``  
-  Add and remove the cyclic prefix to mitigate inter-symbol interference.
+- ``CyclicPrefixer`` / ``CyclicPrefixRemover``
+  Add and remove the cyclic prefix to prevent inter-symbol interference.
 
 - ``FIRChannel``  
   Models a frequency-selective multipath channel.
@@ -68,8 +74,8 @@ The chain is composed of the following processors:
 - ``AWGN``  
   Adds white Gaussian noise.
 
-- ``FrequencyDomainEqualizer``  
-  Compensates for channel distortions in the frequency domain.
+- ``FrequencyDomainEqualizer``
+  Compensates for channel distortion in the frequency domain.
 
 - ``CarrierExtractor``  
   Extracts data and pilot carriers after equalization.
@@ -82,7 +88,7 @@ Profiling the Chain
 ^^^^^^^^^^^^^^^^^^^
 
 To profile the chain, we use the ``plot_chain_profiling`` function.  
-This function measures the execution time of each processor for a given input size 
+This function measures the execution time of each processor for a given input size
 and produces a bar chart of the results.
 
 
@@ -90,7 +96,7 @@ and produces a bar chart of the results.
    :language: python
    :lines: 57-58
 
-The profiling figure shows the time spent in each block, allowing you to quickly identify which stages of the chain dominate the computation.
+The resulting figure shows the time spent in each processor, making it easy to identify which stages dominate the computation.
 
 .. image:: img/profiling_chain_fig1.png
    :width: 100%
@@ -100,7 +106,7 @@ The profiling figure shows the time spent in each block, allowing you to quickly
 Conclusion
 ^^^^^^^^^^
 
-Congratulations 🎉 You have successfully profiled an **OFDM communication chain** with **comnumpy**.  
+You have successfully profiled an **OFDM communication chain** with **comnumpy**.
 
 Profiling is a powerful tool to:
 

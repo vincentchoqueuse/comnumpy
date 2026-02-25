@@ -15,7 +15,7 @@ from comnumpy.optical.dbp import DBP
 # https://arxiv.org/pdf/2010.14258.pdf
 # this simulation try to reproduce the curves of the publication using classicial SSFM and DBP layers.
 #
-# Be aware: The default configuration (N_trial=10) results in an execution time of approximately 30 minutes.
+# Be aware: The default configuration (N_trial=10) results in an execution time of approximately 5-10 minutes.
 # parameters
 
 system = 1
@@ -110,12 +110,12 @@ for index in tqdm(range(N_dBm)):
         x = generator(N_s)
         x_scaled = amp * x
 
-        for indice in range(len(receiver_list)):
+        # compute channel outputs once (avoid redundant SSFM runs)
+        z_linear = linear_channel(x_scaled)
+        z_nonlinear = non_linear_channel(x_scaled)
 
-            if indice == 0:  # linear channel
-                z = linear_channel(x_scaled)
-            else:
-                z = non_linear_channel(x_scaled)
+        for indice in range(len(receiver_list)):
+            z = z_linear if indice == 0 else z_nonlinear
 
             # get receiver
             receiver = receiver_list[indice]
@@ -125,7 +125,7 @@ for index in tqdm(range(N_dBm)):
             theta_est = np.angle(np.sum(np.conj(y)*x_scaled))   # estimate phase
             coef = (1/amp)*np.exp(1j*theta_est)                 # compute estimated phase + deterministic amplitude correction
             x_est = coef * y                                    # compensate signal
-        
+
             # compute metric
             snr = compute_effective_SNR(x, x_est)
             snr_array[index, indice] += (1/N_trial) * snr

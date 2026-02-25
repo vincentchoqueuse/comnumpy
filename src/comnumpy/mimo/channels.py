@@ -31,9 +31,9 @@ class AWGN(Processor):
     Attributes
     ----------
     value : float, optional
-        The value associated with the given method. Defaut is 1
+        The value associated with the given method. Default is 1
     unit : str, optional
-        The unit to compute the noise power ("nat", "dB", "dBm"). Default is "var_nat"
+        The unit to compute the noise power ("sigma2", "snr", "snr_dB", "snr_dBm"). Default is "sigma2"
     sigma2s : float, optional
         Signal power. default is 1
     seed : int, optional
@@ -122,7 +122,7 @@ class BaseMIMOChannel(Processor):
     P : float
         Transmit power.
     H : Optional[np.array]
-        List of channel matrices for each tap. Each matrice should have equal dimension.
+        List of channel matrices for each tap. Each matrix should have equal dimensions.
     extend : bool
         Flag to extend the input signal.
     name : str
@@ -154,17 +154,29 @@ class BaseMIMOChannel(Processor):
         raise NotImplementedError
 
 
-@dataclass 
+@dataclass
 class FlatMIMOChannel(BaseMIMOChannel):
+    r"""
+    Flat (frequency-non-selective) MIMO channel.
+
+    Applies a single matrix multiplication :math:`\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n]`
+    without frequency selectivity.
+    """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         validate_input(X, self.H.shape[1])
         return np.matmul(self.H, X)
 
     
-@dataclass 
+@dataclass
 class SelectiveMIMOChannel(BaseMIMOChannel):
-    
+    r"""
+    Frequency-selective MIMO channel.
+
+    Applies a multi-tap convolution using the channel matrices stored in ``H``.
+    The ``extend`` flag controls whether the output signal is extended or truncated.
+    """
+
     def forward(self, X: np.ndarray) -> np.ndarray:
         validate_input(X, self.H.shape[1])
         L, N_r, N_t = self.H.shape

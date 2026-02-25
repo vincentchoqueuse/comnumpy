@@ -6,7 +6,7 @@ from .processors import DataExtractor
 
 @dataclass
 class Recorder(Processor):
-    """
+    r"""
     Implements a basic Recorder for signal processing.
 
     This class acts as a recorder in a signal processing chain. It stores the input signal and allows for later retrieval. 
@@ -73,7 +73,7 @@ class Logger(Processor):
 @dataclass
 class Debugger(Processor):
     """
-    This class prints several information about the incomming signal for debugging purposes
+    Prints several properties of the incoming signal for debugging purposes.
 
     Attributes
     ----------

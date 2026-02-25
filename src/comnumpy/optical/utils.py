@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.fft import fft, ifft, fftfreq
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
 
@@ -6,7 +7,7 @@ def compute_beta2(lamb, cd_coefficient, speed_of_light):
     r"""
     Compute the Chromatic Dispersion coefficient β₂ in ps²/km
 
-    Attributes
+    Parameters
     ----------
     lamb : float
         Wavelength (nm)
@@ -70,13 +71,13 @@ def compute_beta2(lamb, cd_coefficient, speed_of_light):
 
 def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
     """
-    Implements chromatic dispersion effects in optical fiber communications.
+    Apply chromatic dispersion effects in optical fiber communications.
 
-    This class models the chromatic dispersion effect in the frequency domain for
+    Apply chromatic dispersion effects in the frequency domain for
     fiber-optic communication systems. It applies a dispersion-induced phase shift
     to the input signal in the frequency domain and considers signal attenuation [1].
 
-    Attributes
+    Parameters
     ----------
     x: numpy array
         Complex signal
@@ -110,20 +111,56 @@ def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
 
     beta2_s2_per_km = ((10**-12)**2) * beta2  # convert into s^2/km
     NFFT = len(x)
-    w = (2*np.pi*fs)*np.fft.fftfreq(NFFT, d=1)
+    w = (2*np.pi*fs)*fftfreq(NFFT, d=1)
     H = np.exp(1j * (beta2_s2_per_km/2) * z * (w**2) * direction)  # see equation 4
-    fftx = np.fft.fft(x)
+    fftx = fft(x)
     ffty = H * fftx
-    y = gain * np.fft.ifft(ffty)
+    y = gain * ifft(ffty)
     return y
 
 
 def apply_kerr_nonlinearity(x, z, gamma, gain=1, direction=1):
+    """
+    Apply Kerr nonlinearity phase rotation to a signal.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Input complex signal.
+    z : float
+        Fiber length in km.
+    gamma : float
+        Kerr coefficient in rad/W/km.
+    gain : float, optional
+        Gain factor. Default is 1.
+    direction : int, optional
+        Propagation direction (1=forward, -1=backward). Default is 1.
+
+    Returns
+    -------
+    np.ndarray
+        Signal after Kerr nonlinear phase rotation.
+    """
     nl_param = direction * gamma * z
     return gain * x * np.exp(1j*nl_param*(np.abs(x)**2))
 
 
 def compute_erbium_doped_fiber_amplifier_gain(alpha_dB, L_span):
+    """
+    Compute the amplitude gain of an EDFA that compensates for fiber loss.
+
+    Parameters
+    ----------
+    alpha_dB : float
+        Fiber loss in dB/km.
+    L_span : float
+        Span length in km.
+
+    Returns
+    -------
+    float
+        Amplitude gain factor.
+    """
     G = 10**(alpha_dB*L_span/10)
     gain = np.sqrt(G)
     return gain
@@ -133,10 +170,10 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
     r"""
     Compute ASENoise params
 
-    Attributes
+    Parameters
     ----------
     alpha_dB : float
-        Wavelength (nm)
+        Fiber loss (dB/km)
     L_span : float
         Length of the link (in km)
     NF_dB: float
@@ -179,20 +216,48 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
 
 def get_linear_step_size(L_span, StPS):
     """
-    Linear Step Size
+    Compute uniformly spaced step sizes for the split-step Fourier method.
+
+    Parameters
+    ----------
+    L_span : float
+        Span length in km.
+    StPS : int
+        Number of steps per span.
+
+    Returns
+    -------
+    np.ndarray
+        Array of step sizes, each equal to ``L_span / StPS``.
     """
     return (L_span/StPS)*np.ones(StPS)
 
 
 def get_logarithmic_step_size(L_span, StPS, alpha_dB=0, step_log_factor=0.4):
     """
-    Logarithmically spaced step size
+    Compute logarithmically spaced step sizes for the split-step Fourier method.
 
-    See also:
+    Parameters
+    ----------
+    L_span : float
+        Span length in km.
+    StPS : int
+        Number of steps per span.
+    alpha_dB : float, optional
+        Fiber loss in dB/km. Default is 0.
+    step_log_factor : float, optional
+        Logarithmic step factor. Default is 0.4.
+
+    Returns
+    -------
+    np.ndarray
+        Array of logarithmically spaced step sizes.
 
     References
     ----------
-    * [1] O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, "Optimization of the split-step Fourier method in modeling optical-fiber communications systems,"  in Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003, doi: 10.1109/JLT.2003.808628.
+    * [1] O. V. Sinkin et al., "Optimization of the split-step Fourier method in
+      modeling optical-fiber communications systems," J. Lightwave Technol., vol. 21,
+      no. 1, pp. 61-68, Jan. 2003.
     """
     alpha = (np.log(10)/10) * (alpha_dB)
     alpha_adj = step_log_factor*alpha

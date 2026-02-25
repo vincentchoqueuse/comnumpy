@@ -6,7 +6,21 @@ from comnumpy.core.generics import Processor
 
 
 def sym_2_bin(sym, width):
+    """
+    Convert an array of integer symbols to a binary array.
 
+    Parameters
+    ----------
+    sym : array-like
+        Array of integer symbols.
+    width : int
+        Number of bits per symbol.
+
+    Returns
+    -------
+    np.ndarray
+        1-D array of binary digits (0s and 1s).
+    """
     data = []
     for indice in range(len(sym)):
         data.append(np.binary_repr(sym[indice], width))
@@ -17,7 +31,25 @@ def sym_2_bin(sym, width):
 
 
 def compute_ser_awgn_psk(order, snr_per_bit):
+    r"""
+    Compute the theoretical Symbol Error Rate (SER) for PSK modulation over an AWGN channel.
 
+    Parameters
+    ----------
+    order : int
+        Modulation order (e.g., 2, 4, 8, 16).
+    snr_per_bit : float or np.ndarray
+        Signal-to-noise ratio per bit in linear scale.
+
+    Returns
+    -------
+    float or np.ndarray
+        Theoretical SER value(s).
+
+    References
+    ----------
+    * Proakis, John G. *Digital Communications*. McGraw-Hill, 2001.
+    """
     gamma_b = snr_per_bit
     k = int(np.log2(order))
 
@@ -44,7 +76,25 @@ def compute_ser_awgn_psk(order, snr_per_bit):
 
 
 def compute_ser_awgn_qam(order, snr_per_bit):
+    r"""
+    Compute the theoretical Symbol Error Rate (SER) for QAM modulation over an AWGN channel.
 
+    Parameters
+    ----------
+    order : int
+        Modulation order (e.g., 4, 16, 64, 256).
+    snr_per_bit : float or np.ndarray
+        Signal-to-noise ratio per bit in linear scale.
+
+    Returns
+    -------
+    float or np.ndarray
+        Theoretical SER value(s).
+
+    References
+    ----------
+    * Proakis, John G. *Digital Communications*. McGraw-Hill, 2001, p. 280.
+    """
     gamma_b = snr_per_bit
 
     # see book Proakis "Digital communication", p 280
@@ -59,7 +109,26 @@ def compute_ser_awgn_qam(order, snr_per_bit):
 
 
 def compute_metric_awgn_theo(modulation, order, snr_per_bit, type="ser"):
+    r"""
+    Compute the theoretical error rate for a given modulation over an AWGN channel.
 
+    Parameters
+    ----------
+    modulation : str
+        Modulation type: ``"PSK"`` or ``"QAM"``.
+    order : int
+        Modulation order (e.g., 4, 16, 64).
+    snr_per_bit : float or np.ndarray
+        Signal-to-noise ratio per bit in linear scale.
+    type : str, optional
+        Error metric type: ``"ser"`` for Symbol Error Rate or ``"bin"``
+        for Bit Error Rate. Default is ``"ser"``.
+
+    Returns
+    -------
+    float or np.ndarray
+        Theoretical error rate value(s).
+    """
     if modulation == "PSK":
         value = compute_ser_awgn_psk(order, snr_per_bit)
 
@@ -240,8 +309,8 @@ def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
     -----
     - The effective SNR is calculated as the ratio of the signal variance to the mean squared error between
       the target and estimated signals.
-    - For "dB" unit, the SNR is converted using the formula: \( \text{SNR}_{dB} = 10 \log_{10}(\text{SNR}) \).
-    - For "dBm" unit, the SNR is converted using the formula: \( \text{SNR}_{dBm} = 10 \log_{10}(\text{SNR}) + 30 \).
+    - For ``"dB"`` unit, the SNR is converted using :math:`\text{SNR}_{dB} = 10 \log_{10}(\text{SNR})`.
+    - For ``"dBm"`` unit, the SNR is converted using :math:`\text{SNR}_{dBm} = 10 \log_{10}(\text{SNR}) + 30`.
     """
     x_target = np.ravel(X_target)
     x_estimated = np.ravel(X_estimated)
@@ -287,8 +356,8 @@ def compute_power(x, unit="natural"):
     Notes
     -----
     - The mean power is calculated as the average of the squared magnitudes of the input array.
-    - For "dB" and "dBm" units, the power is converted using the formula: \( P_{dB} = 10 \log_{10}(P) \)
-      and \( P_{dBm} = 10 \log_{10}(P) + 30 \), respectively.
+    - For ``"dB"`` and ``"dBm"`` units, the power is converted using
+      :math:`P_{dB} = 10 \log_{10}(P)` and :math:`P_{dBm} = 10 \log_{10}(P) + 30`, respectively.
     """
     Px = np.mean(np.abs(x)**2)
 

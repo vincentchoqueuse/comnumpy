@@ -751,8 +751,7 @@ class DataExtractor(Processor):
     >>> x2d = np.arange(20).reshape(4, 5)
     >>> extractor4 = DataExtractor((1, 3))
     >>> extractor4(x2d)
-    array([[ 5,  6,  7,  8,  9],
-           [10, 11, 12, 13, 14]])
+    array([[ 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]])
     """
     selector: Optional[Union[int, slice, tuple, list, np.ndarray]] = None
     name: str = "Data Extractor"
@@ -829,7 +828,7 @@ class Clipper(Processor):
 
 
 
-class Blind_Phase_Tracker(Processor):
+class BlindPhaseTracker(Processor):
     """
     A class implementing a blind phase tracking algorithm using a grid search approach.
 

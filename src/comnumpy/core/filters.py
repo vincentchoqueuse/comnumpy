@@ -2,33 +2,41 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Literal
 from scipy import signal
+from scipy.fft import fft, ifft, fftfreq
 from comnumpy.core.generics import Processor
 
 
 @dataclass
 class SRRCFilter(Processor):
-    """
-    Implement a Square-Root Raised Cosine (SRRC) FIR filter.
+    r"""
+    Square-Root Raised Cosine (SRRC) FIR filter.
 
-    This filter corresponds to a square-root raised cosine FIR filter.
-    It has a rolloff factor specified by beta.
-    The filter is truncated to span symbols, and each symbol period contains sps samples. The order of the filter, sps*span, must be even. 
-    
-    The filter energy is normalized to 1.
+    This filter implements a square-root raised cosine FIR filter with a roll-off factor
+    :math:`\rho`. The filter is truncated to span ``N_h`` symbol periods, with each
+    symbol period containing ``oversampling`` samples.
+
+    The filter energy is normalized to 1 by default.
 
     Attributes
     ----------
     rho : float
-        Roll-off factor for the filter.
-    N_h : int
-        Length of the filter before oversampling.
+        Roll-off factor :math:`\rho \in [0, 1]`.
     oversampling : int
-        Oversampling factor for the filter.
-    scale : float
-        Amplitude scaling factor for the filter.
-    method : Literal["auto", "time", "fft"]
-        Method for filter design ("auto", "time", "fft").
-
+        Oversampling factor (samples per symbol).
+    N_h : int, optional
+        Half-length of the filter in symbol periods. Default is 10.
+    norm : bool, optional
+        If True, normalizes the filter energy to 1. Default is True.
+    scale : float, optional
+        Amplitude scaling factor for the filter output. Default is 1.0.
+    method : Literal["lfilter", "time", "fft"], optional
+        Filtering method. Default is ``"lfilter"``.
+    is_mimo : bool, optional
+        Whether the filter supports MIMO input. Default is True.
+    axis : int, optional
+        Axis along which to apply the filter. Default is -1.
+    name : str, optional
+        Name of the filter instance. Default is ``"SRRCFilter"``.
     """
 
     rho: float
@@ -82,7 +90,7 @@ class SRRCFilter(Processor):
         filter_delay = self.oversampling*self.N_h
         H_tmp = np.concatenate((h, np.zeros(NFFT-len(h))))
         H_tmp = np.roll(H_tmp, -filter_delay)
-        H = np.fft.fft(H_tmp, n=NFFT)
+        H = fft(H_tmp, n=NFFT)
         return H
 
     def get_delay(self):
@@ -96,9 +104,9 @@ class SRRCFilter(Processor):
 
         if self.method == "fft":
             NFFT = len(x)
-            fft_x = np.fft.fft(x, NFFT)
+            fft_x = fft(x, NFFT)
             fft_h = self.H(NFFT)
-            y = self.scale*np.fft.ifft(fft_x*fft_h, NFFT)
+            y = self.scale*ifft(fft_x*fft_h, NFFT)
 
         return y
 
@@ -152,8 +160,8 @@ class BWFilter(Processor):
             raise NotImplementedError("BW Filter: only 1D signals are supported.")
 
         NFFT = len(x)
-        w = np.fft.fftfreq(NFFT, d=1)
+        w = fftfreq(NFFT, d=1)
         H = (abs(w) <= self.wn).astype(float)
-        fft_x = np.fft.fft(x, NFFT)
-        y = np.fft.ifft(H*fft_x, NFFT)
+        fft_x = fft(x, NFFT)
+        y = ifft(H*fft_x, NFFT)
         return y

@@ -8,7 +8,7 @@ from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
-from comnumpy.ofdm.predistorders import ICT_PAPR_Reductor
+from comnumpy.ofdm.predistorders import IctPaprReductor
 from comnumpy.ofdm.metrics import compute_PAPR
 
 
@@ -40,9 +40,9 @@ x = chain(N)
 # create list of processors
 processor_list = [
     IFFTProcessor(name="no reduction"),
-    ICT_PAPR_Reductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=1, name="ICT 1 iteration"),
-    ICT_PAPR_Reductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=8, name="ICT 8 iterations"),
-    ICT_PAPR_Reductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=16, name="ICT 16 iterations")
+    IctPaprReductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=1, name="ICT 1 iteration"),
+    IctPaprReductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=8, name="ICT 8 iterations"),
+    IctPaprReductor(PAPR_max_dB=5, filter_weight=carrier_type, N_it=16, name="ICT 16 iterations")
 ]
 
 # test the different processors

@@ -1,69 +1,78 @@
-# Comnumpy : A Python Library for Communication System Prototyping and Simulation
+# comnumpy
+
+**A Python library for communication system prototyping and simulation.**
 
 [![Tests](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/tests.yml/badge.svg)](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/tests.yml)
 [![Docs](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/docs.yml/badge.svg)](https://github.com/vincentchoqueuse/comnumpy/actions/workflows/docs.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-A python library containing several Digital Signal Processing (DSP) algorithms for communication systems, including MIMO, OFDM, and optical fiber simulations.
+`comnumpy` provides Digital Signal Processing (DSP) algorithms for communication systems, covering MIMO, OFDM, and optical fiber simulations. It is designed for **researchers**, **engineers**, and **students** who want to simulate and analyze communication systems without implementing standard algorithms from scratch.
 
-`comnumpy` is made for **researchers**, **engineers**, and **students** in the field of **digital communications**. It’s ideal for anyone who wants to **simulate and analyze communication systems** without reinventing the wheel.
+## Why comnumpy?
 
-## Why choose `comnumpy`?
+- **Modular design** — Build custom communication chains by combining reusable `Processor` blocks with `Sequential`, inspired by PyTorch’s `nn.Module` pattern.
+- **Lightweight** — Around 400 KB of clean code. Only requires `numpy` and `scipy`.
+- **Comprehensive** — Covers AWGN, OFDM, MIMO, and optical fiber channels with nonlinear propagation.
+- **Well documented** — Tutorials with math, diagrams, and ready-to-run examples.
 
-* 🧩 **Modular design**: Build and customize your own communication chains easily.
-* ⚡ **Lightweight and efficient**: Around 400 KB of clean, well-structured code, without unnecessary dependencies.
-* 📚 **Easy to use**: Clear API, comprehensive documentation, and ready-to-run examples.
-* 🤝 **Open to contributions**: Developers are encouraged to add new submodules and extend the core capabilities.
+## Quick Example
 
-## Prerequisites
+```python
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
+from comnumpy.core.channels import AWGN
+from comnumpy.core.generics import Sequential
+from comnumpy.core.metrics import get_ser
 
-All you need is a standard Python >3.11 setup with `numpy` and `scipy`. No need for bulky or domain-specific packages — `comnumpy` is ready to go with minimal setup.
+# Build a 16-QAM communication chain
+chain = Sequential([
+    SymbolGenerator(M=16),
+    SymbolMapper(M=16),
+    AWGN(snr_dB=15),
+    SymbolDemapper(M=16),
+])
 
+# Transmit 10,000 symbols and evaluate performance
+tx_symbols, rx_symbols = chain(10000)
+print(f"SER = {get_ser(tx_symbols, rx_symbols)}")
+```
 
-## 📖 Documentation
+## Installation
 
-The full documentation is available at:
-
-👉 [https://vincentchoqueuse.github.io/comnumpy/](https://vincentchoqueuse.github.io/comnumpy/)
-
-It includes:
-
-* Quickstart tutorials
-* API reference
-* Examples for common use cases
-* Developer guide for contributing new modules
-
-## Getting Started
-
-To use the package, you need to install it first. You can install directly from GitHub using pip:
+Install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/vincentchoqueuse/comnumpy.git
 ```
 
+For development (editable mode):
+
+```bash
+git clone https://github.com/vincentchoqueuse/comnumpy.git
+cd comnumpy
+pip install -e .
+```
+
 ## Features
 
-* MIMO signal processing algorithms
-* OFDM modulation and demodulation
-* Optical fiber link simulation with nonlinear effects
-* Digital back-propagation for nonlinear compensation
-* Symbol Error Rate (SER) computation and visualization tools
+| Module | Capabilities |
+|--------|-------------|
+| **core** | QAM/PSK mapping, AWGN channel, FIR filtering, pulse shaping, SER/BER metrics |
+| **ofdm** | IFFT/FFT processing, cyclic prefix, carrier allocation, frequency-domain equalization, PAPR analysis |
+| **mimo** | Rayleigh fading channel, ZF/MMSE/OSIC/ML detection, Monte Carlo evaluation |
+| **optical** | Fiber propagation (SSFM), chromatic dispersion, Kerr nonlinearity, EDFA noise, digital back-propagation |
 
-## Requirements
+## Documentation
 
-* Python 3.11
-* numpy
-* matplotlib
+Full documentation with tutorials and API reference:
 
-(see `requirements.txt`)
-
-## Usage
-
-Check out the `examples/` folder for usage demos, including MIMO, OFDM, and optical communication simulations.
+**[https://vincentchoqueuse.github.io/comnumpy/](https://vincentchoqueuse.github.io/comnumpy/)**
 
 ## Contributing
 
-Feel free to open issues or submit pull requests to improve the library.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up a development environment, coding standards, and how to add new submodules.
 
 ## License
 
-This project is licensed under the GNU GENERAL PUBLIC LICENSE License. See the LICENSE file for details.
+This project is licensed under the [MIT License](LICENSE).

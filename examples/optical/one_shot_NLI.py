@@ -61,7 +61,7 @@ x_tx = chain["signal_tx"].get_data()
 plt.figure()
 plt.plot(np.real(y_rx), np.imag(y_rx), ".")
 plt.title(f"Received Signal (oversampling={oversampling_dsp}, {dBm}dBm)")
-plt.savefig(f"{img_dir}/one_shot_NLI_fig1.png")
+plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 # perform compensation
 for num_compensator in range(2):
@@ -96,6 +96,6 @@ for num_compensator in range(2):
     plt.plot(np.real(x_rx_phase_compensated), np.imag(x_rx_phase_compensated), ".", label="after phase correction")
     plt.legend()
     plt.title(f"{technique_name} (SER={ser:.3f})")
-    plt.savefig(f"{img_dir}/one_shot_NLI_fig{num_compensator+2}.png")
+    plt.savefig(f"{img_dir}/one_shot_nli_fig{num_compensator+2}.png")
 
 plt.show()

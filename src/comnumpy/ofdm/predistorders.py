@@ -6,11 +6,11 @@ from comnumpy.core import Processor
 from .metrics import compute_PAPR
 
 @dataclass
-class Hard_Clipper(Processor):
+class HardClipper(Processor):
     """
     Implements a hard clipping method to reduce the Peak-to-Average Power Ratio (PAPR) of a signal.
 
-    The Hard_Clipper class is designed to apply a hard clipping technique to a signal, which reduces its PAPR.
+    The HardClipper class applies a hard clipping technique to a signal, which reduces its PAPR.
     Hard clipping limits the amplitude of the signal to a certain threshold, reducing the peaks of the signal
     while keeping the average power relatively unchanged.
 
@@ -42,11 +42,11 @@ class Hard_Clipper(Processor):
 
 
 @dataclass
-class ICT_PAPR_Reductor(Processor):
+class IctPaprReductor(Processor):
     """
     Implements the Iterative Clipping and Filtering (ICT) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
 
-    The ICT_PAPR_Reductor class is designed to reduce the PAPR of an Orthogonal Frequency Division Multiplexing (OFDM) signal using the ICT method.
+    The IctPaprReductor class reduces the PAPR of an OFDM signal using the ICT method.
     This method involves iteratively clipping and filtering the signal to achieve a target PAPR level.
 
     Attributes
@@ -107,11 +107,11 @@ class ICT_PAPR_Reductor(Processor):
 
 
 @dataclass
-class PTS_PAPR_Reductor(Processor):
+class PtsPaprReductor(Processor):
     """
     Implements the Partial Transmit Sequences (PTS) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
 
-    The PTS_PAPR_Reductor class is designed to reduce the PAPR of an Orthogonal Frequency Division Multiplexing (OFDM) signal.
+    The PtsPaprReductor class reduces the PAPR of an OFDM signal.
     It employs the PTS method, which involves dividing the signal into sub-blocks, applying different phase factors to each block,
     and then selecting the combination of phase factors that minimizes the PAPR.
 

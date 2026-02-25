@@ -21,12 +21,15 @@ class TrainedBasedMixin():
         """
         Retrieve the target data associated with the model.
 
-        Returns:
-            numpy.ndarray or array-like: The target data.
+        Returns
+        -------
+        np.ndarray
+            The target data array.
 
-        Raises:
-            TypeError: If `target_data` is neither a numpy array nor
-            an instance of Recorder.
+        Raises
+        ------
+        TypeError
+            If ``target_data`` is neither a numpy array nor an instance of Recorder.
         """
         if isinstance(self.target_data, np.ndarray):
             return self.target_data
@@ -349,13 +352,28 @@ class BlindCFOCompensator(Processor):
 
 @dataclass
 class BlindPhaseCompensation(Processor):
-    """
-    A class to perform blind phase compensation on a given signal.
+    r"""
+    Blind phase compensator based on least-squares minimization of the EVM.
 
-    Attributes:
-        alphabet (np.ndarray): The alphabet used for phase compensation.
-        theta (float): Initial phase angle. Default is 0.
-        name (str): Name of the processor. Default is "phase".
+    Signal Model
+    ------------
+
+    .. math::
+        y[n] = x[n] e^{j\hat{\theta}}
+
+    where :math:`\hat{\theta}` is the estimated phase offset that minimizes
+    the distance to the nearest constellation point.
+
+    Attributes
+    ----------
+    alphabet : np.ndarray
+        The modulation alphabet used for phase compensation.
+    theta : float, optional
+        Initial phase angle in radians. Default is 0.
+    should_fit : bool, optional
+        Whether to estimate the phase from the input signal. Default is True.
+    name : str, optional
+        Name of the processor. Default is ``"phase correction"``.
     """
     alphabet: np.ndarray
     theta: float = 0.0
@@ -382,19 +400,29 @@ class BlindPhaseCompensation(Processor):
 
 @dataclass
 class LinearEqualizer(Processor):
-    """
-    LinearEqualizer()
+    r"""
+    Linear equalizer for the signal model with inter-symbol interference (ISI).
 
-    Linear equalizer for the signal model 
+    Signal Model
+    ------------
 
     .. math::
 
-        z[n] = h*x[n] + b[n]
+        z[n] = \sum_{l=0}^{L-1} h[l] x[n-l] + b[n]
 
-    Attributes:
-        method : 'zf'|'mmse'
-        sigma2: noise variance
+    The equalizer constructs a Toeplitz channel matrix from the impulse response
+    and applies ZF or MMSE equalization.
 
+    Attributes
+    ----------
+    h : np.ndarray
+        Channel impulse response.
+    method : Literal["zf", "mmse"], optional
+        Equalization method. Default is ``"zf"``.
+    sigma2 : float, optional
+        Noise variance (used only for MMSE). Default is 0.
+    name : str, optional
+        Name of the equalizer instance. Default is ``"equalizer"``.
     """
     h: np.ndarray
     method: Literal["zf", "mmse"] = "zf"
@@ -423,10 +451,22 @@ class LinearEqualizer(Processor):
 
 @dataclass
 class DataAidedFIRCompensator(Processor):
-    """
-    Data_Aided_FIR()
+    r"""
+    Data-aided FIR compensator using Zero Forcing estimation.
 
-    Data aided estimation of a FIR filter using ZF estimation.
+    Estimates the channel impulse response from a known reference (target data)
+    and applies deconvolution to equalize the received signal.
+
+    Attributes
+    ----------
+    h : np.ndarray
+        Initial or estimated impulse response.
+    target_data : np.ndarray or Recorder
+        Known reference data for channel estimation.
+    should_fit : bool, optional
+        Whether to estimate the channel on each call. Default is True.
+    name : str, optional
+        Name of the processor. Default is ``"data_aided_fir"``.
     """
 
     h: np.array
@@ -453,7 +493,22 @@ class DataAidedFIRCompensator(Processor):
 
 @dataclass
 class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
+    r"""
+    Trained-based phase compensator using cross-correlation.
 
+    Estimates a phase offset :math:`\theta` from the cross-correlation
+    between the input and reference signals, then applies a correction.
+
+    .. math::
+        y[n] = x[n] e^{j\hat{\theta}}
+
+    Attributes
+    ----------
+    target_data : np.ndarray or Recorder
+        Reference signal for phase estimation.
+    name : str, optional
+        Name of the processor. Default is ``"data_aided_phase"``.
+    """
     target_data: Union[np.array, Recorder]
     name: str = "data_aided_phase"
 

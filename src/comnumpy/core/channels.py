@@ -9,7 +9,7 @@ from .utils import compute_sigma2
 @dataclass
 class AWGN(Processor):
     r"""
-    A class representing an Additive White Gaussian Noise (AWGN) channel.
+    Additive White Gaussian Noise (AWGN) channel.
 
     This class models an AWGN channel, which adds complex Gaussian noise to a signal.
     It is characterized by a noise power specified by sigma squared (sigma2).
@@ -31,17 +31,18 @@ class AWGN(Processor):
     Attributes
     ----------
     value : float, optional
-        The value associated with the given method. Defaut is 1
-    unit : str, optional
-        The unit to compute the noise power ("nat", "dB", "dBm"). Default is "var_nat"
+        The value associated with the given method. Default is 1.
+    unit : Literal["sigma2", "snr", "snr_dB", "snr_dBm"], optional
+        The unit to compute the noise power. Default is ``"sigma2"``.
     sigma2s : float, optional
-        Signal power. default is 1
+        Signal power. Default is 1.
+    sigma2s_method : Literal["fixed", "measured"], optional
+        Method used to obtain the signal power. If ``"measured"``, the signal
+        power is estimated from the input signal. Default is ``"fixed"``.
     seed : int, optional
-        The seed for the noise generator.
-    estimate_sigma2s : bool
-        Whether to estimate the signal power.
-    name : str
-        Name of the channel instance.
+        The seed for the noise generator. Default is None.
+    name : str, optional
+        Name of the channel instance. Default is ``"awgn"``.
     """
     value: float = 1.
     unit: Literal["sigma2", "snr", "snr_dB", "snr_dBm"] = "sigma2"
@@ -57,7 +58,7 @@ class AWGN(Processor):
         # extract signal power
         match self.sigma2s_method:
             case "measured": 
-                sigma2s = np.sum(np.abs(x)**2) / np.prod(X.shape)
+                sigma2s = np.sum(np.abs(x)**2) / np.prod(x.shape)
             case "fixed":
                 sigma2s = self.sigma2s
             case _:
@@ -112,9 +113,13 @@ class FIRChannel(Processor):
     Attributes
     ----------
     h : np.ndarray
-        The impulse response of the FIR channel. This should be a 1-dimensional numpy array.
+        The impulse response of the FIR channel. Should be a 1-dimensional numpy array.
+    mode : Literal["full", "same", "valid"], optional
+        Convolution mode passed to ``scipy.signal.convolve``. Default is ``"full"``.
+    is_mimo : bool, optional
+        Whether the channel supports MIMO input. Default is False.
     name : str, optional
-        The name of the channel instance (default is "fir").
+        The name of the channel instance. Default is ``"fir"``.
     """
     h: np.array
     mode: Literal["full", "same", "valid"] = "full"

@@ -10,7 +10,7 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     This function generates a subcarrier allocation array based on the given configuration name or custom parameters.
     It supports various OFDM configurations and allows for oversampling, Hermitian symmetry, and optional shifting.
 
-    Parameters:
+    Parameters
     ----------
     config_name : str
         The name of the OFDM configuration to use. If "Custom", the `custom` parameter must be provided.
@@ -25,7 +25,7 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     shift : bool, optional
         If False, apply FFT shift to the subcarrier allocation. Default is False.
 
-    Returns:
+    Returns
     -------
     np.ndarray
         An array representing the subcarrier allocation, where:
@@ -34,8 +34,8 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
         - 2 indicates a pilot subcarrier,
         - -1 indicates Hermitian symmetry (if applicable).
 
-    Notes:
-    ------
+    Notes
+    -----
     - The function supports predefined configurations for various OFDM standards.
     - Hermitian symmetry, when applied, affects the allocation of data subcarriers.
     - Oversampling adds nulled subcarriers to the array.
@@ -107,7 +107,7 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
 
     This function visualizes the allocation of subcarriers in a carrier type array. It uses different colors and markers to represent different subcarrier types, such as Hermitian, null, data, and pilots. The plot can be shifted and customized with various parameters.
 
-    Parameters:
+    Parameters
     ----------
     carrier_type : np.ndarray
         An array representing the type of each subcarrier. The values in the array correspond to different subcarrier types:
@@ -130,13 +130,13 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
     title : str, optional
         The title of the plot. Default is "Carrier allocation".
 
-    Notes:
-    ------
+    Notes
+    -----
     - The function uses `matplotlib.pyplot` to create the plot.
     - The `stem` plot is used to visualize the subcarrier types with vertical lines and markers.
     - Ensure that `color_list` and `label_list` have the correct length and order corresponding to the subcarrier types.
 
-    Example:
+    Examples
     --------
     ```python
     import numpy as np

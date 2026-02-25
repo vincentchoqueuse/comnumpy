@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from comnumpy.core import Sequential, Recorder, Scope
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.processors import Upsampler, Downsampler, Signal_Extractor
+from comnumpy.core.processors import Upsampler, Downsampler, DataExtractor
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.channels import AWGN
@@ -32,7 +32,7 @@ chain = Sequential([
     Scope(num=1, scope_type="spectrum", title="received signal"),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     Downsampler(oversampling, phase=2*oversampling*N_h),
-    Signal_Extractor(N=N),
+    DataExtractor(selector=(0, N)),
     Scope(num=2, scope_type="iq", title="after SRRC+downsampling+extractor"),
     SymbolDemapper(alphabet),
     ])

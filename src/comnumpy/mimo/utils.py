@@ -26,7 +26,7 @@ def rayleigh_channel(N_r: int, N_t: int,
     (L, N_r, N_t), with L the number of taps, N_r the number of receive
     antennas, and N_t the number of transmit antennas.
 
-    Attributes
+    Parameters
     ----------
     N_r : int
         Number of receive antennas.
@@ -93,7 +93,7 @@ def rician_channel(N_r: int, N_t: int, K: float,
     (CN(0, scale_per_tap[l])), α = sqrt(K/(K+1)) and β = sqrt(1/(K+1)).
     The output has shape (L, N_r, N_t).
 
-    Attributes
+    Parameters
     ----------
     N_r : int
         Number of receive antennas.
@@ -179,7 +179,7 @@ def kronecker_rayleigh_channel(N_r: int, N_t: int,
     factors of the receive/transmit correlation matrices R_rx and R_tx.
     The output has shape (L, N_r, N_t).
 
-    Attributes
+    Parameters
     ----------
     N_r : int
         Number of receive antennas.
@@ -258,7 +258,7 @@ def pdp_to_scales(pdp_db: Sequence[float]) -> np.ndarray:
     that the variances across taps sum to one. The output can be used as
     `scale_per_tap` for channel generators.
 
-    Attributes
+    Parameters
     ----------
     pdp_db : sequence of float
         Per-tap powers in dB (length L).
