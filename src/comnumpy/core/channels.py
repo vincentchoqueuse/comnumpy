@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional, Literal
+from typing import Literal
 from scipy import signal
 from comnumpy.core.generics import Processor
 from .utils import compute_sigma2
@@ -57,7 +57,7 @@ class AWGN(Processor):
     def get_sigma2s(self, x):
         # extract signal power
         match self.sigma2s_method:
-            case "measured": 
+            case "measured":
                 sigma2s = np.sum(np.abs(x)**2) / np.prod(x.shape)
             case "fixed":
                 sigma2s = self.sigma2s

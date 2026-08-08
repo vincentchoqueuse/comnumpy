@@ -4,7 +4,8 @@ from typing import Optional, Literal, Callable, Dict
 from comnumpy.core import Processor
 from .devices import ErbiumDopedFiberAmplifier
 from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
-from .utils import compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain, compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity
+from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
+                    compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
 @dataclass
 class FiberLink(Processor):
@@ -58,7 +59,8 @@ class FiberLink(Processor):
 
     References
     ----------
-    * [1] J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems," in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
+    * [1] J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems,"
+      in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
     """
     N_spans: int = 1
     L_span: float = 80
@@ -75,7 +77,7 @@ class FiberLink(Processor):
     lamb: float = WAVELENGTH               # nm
     alpha_dB: float = FIBER_LOSS           # in dB/km
     cd_coefficient: float = CD_COEFFICIENT  # in ps/nm/km
-    nu: float = OPTICAL_CARRIER_FREQUENCY  # optical carrier frequency 
+    nu: float = OPTICAL_CARRIER_FREQUENCY  # optical carrier frequency
     step_log_factor: float = 0.4
     name: str = "fiber link"
     callbacks: Optional[Dict[str, Callable[[np.ndarray], None]]] = field(default_factory=dict)
@@ -88,7 +90,7 @@ class FiberLink(Processor):
                 self.step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.alpha_dB, step_log_factor=self.step_log_factor)
             case _:
                 raise NotImplementedError(f"Step type {self.step_type} is not implemented")
-            
+
         self.beta2 = compute_beta2(self.lamb, self.cd_coefficient, self.c)
         self.edfa_gain = compute_erbium_doped_fiber_amplifier_gain(self.alpha_dB, self.L_span)
         self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(self.alpha_dB, self.L_span, self.NF_dB, h=self.h, nu=self.nu)
@@ -120,6 +122,6 @@ class FiberLink(Processor):
             # callback after span if needed
             if 'post_span' in self.callbacks:
                 self.callbacks['post_span'](y, num_span=num_span)
-        
+
         return y
 

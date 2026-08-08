@@ -50,7 +50,7 @@ class DCCorrector(Processor):
 
     Signal Model
     ------------
-    
+
     .. math::
 
        y[n] = x[n] + \alpha
@@ -119,7 +119,8 @@ class Normalizer(Amplifier):
     Attributes
     ----------
     method : str
-        Type of normalization to be applied. Supported types are 'amp' for scaling coefficient, 'max' for maximum value normalization, 'var' for variance-based normalization, and 'abs' for absolute maximum value normalization.
+        Type of normalization to be applied. Supported types are 'amp' for scaling coefficient, 'max' for maximum value normalization,
+        'var' for variance-based normalization, and 'abs' for absolute maximum value normalization.
     value : float, optional
         The target value for the normalization type. Default is 1.0.
 
@@ -135,7 +136,7 @@ class Normalizer(Amplifier):
     method: Literal['amp', 'abs', 'var', 'max'] = "amp"
     value: float = 1.
     gain: float = 1
-    
+
     def __post_init__(self):
         if self.value <= 0:
             raise ValueError("The value for normalization must be positive.")
@@ -168,12 +169,12 @@ class BlindIQCompensator(Processor):
     Signal Model
     ------------
 
-    This class implements the following transformation 
+    This class implements the following transformation
 
     .. math ::
 
         y[n] = \alpha \Re e(x[n]) + \beta \Im m(x[n])
-    
+
     Algorithm
     ---------
 
@@ -215,7 +216,7 @@ class BlindIQCompensator(Processor):
         # implementation of the gram schmit orthogonalization
         # Reference
         # ---------
-        # * [1] I. Fatadin, S. J. Savory and D. Ives,  "Compensation of Quadrature Imbalance in an Optical QPSK Coherent Receiver," 
+        # * [1] I. Fatadin, S. J. Savory and D. Ives,  "Compensation of Quadrature Imbalance in an Optical QPSK Coherent Receiver,"
         # in IEEE Photonics Technology Letters, vol. 20, no. 20, pp. 1733-1735, Oct.15, 2008, doi: 10.1109/LPT.2008.2004630.
         x_r = np.real(x)
         r_11 = np.mean(x_r**2)
@@ -295,7 +296,7 @@ class BlindCFOCompensator(Processor):
         N_vect = np.arange(N)
         dtft = np.sum(x*np.exp(-1j*w*N_vect))
         return dtft
-    
+
     def callback(self, intermediate_result):
         if self.save_history:
             self.history.append(intermediate_result)
@@ -509,10 +510,11 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
     name : str, optional
         Name of the processor. Default is ``"data_aided_phase"``.
     """
-    target_data: Union[np.array, Recorder]
+    target_data: Union[np.ndarray, Recorder]
     name: str = "data_aided_phase"
 
-    def __post__init__(self):
+    def __post_init__(self):
+        super().__post_init__()
         self.theta = 0
 
     def fit(self, x, x_target):
@@ -530,27 +532,26 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
 
     Attributes
     ----------
-    recorder_preamble : ndarray
-        The recorded preamble used to compute the complex gain of the channel.
-    extractor : Data Extractor
-        How to extract the data in the received samples.
+    target_data : np.ndarray or Recorder
+        The known preamble used to compute the complex gain of the channel.
+    extractor : DataExtractor
+        How to extract the preamble in the received samples.
     """
-    target_data = Union[np.array, Recorder]
-    extractor: field(default_factory=lambda: DataExtractor())
+    target_data: Union[np.ndarray, Recorder]
+    extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
     gain: complex = 1+0j
     should_fit: bool = True
     name: str = "complex_gain_compensator"
 
     def fit(self, x, x_target):
-        x_preamble_resized = np.resize(x_preamble, (N_preamble, 1))
-        x_preamble_pinv = np.linalg.pinv(x_preamble_resized)
-        gain = np.dot(x_preamble_pinv, x_target)
+        x_resized = np.resize(x, (len(x), 1))
+        x_pinv = np.linalg.pinv(x_resized)
+        gain = np.dot(x_pinv, x_target).item()
         self.gain = gain
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.should_fit:
             x_target_preamble = self.get_target_data()
-            N_preamble = len(x_target)
             x_preamble = self.extractor(x)
             self.fit(x_preamble, x_target_preamble)
 

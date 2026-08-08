@@ -10,7 +10,9 @@ class BlindDualMIMOCompensator(Processor):
     r"""
     BlindDualMIMOCompensator for 2x2 MIMO channels.
 
-    This class implements a blind dual MIMO compensator designed for 2x2 MIMO channels. It uses various loss functions to estimate filter weights without requiring a training sequence. The compensator supports different modes of operation, including Constant Modulus Algorithm (CMA), Radius Directed Equalization (RDE), and Decision Directed (DD) algorithms.
+    This class implements a blind dual MIMO compensator designed for 2x2 MIMO channels. It uses various loss functions to estimate filter weights
+    without requiring a training sequence. The compensator supports different modes of operation, including Constant Modulus Algorithm (CMA),
+    Radius Directed Equalization (RDE), and Decision Directed (DD) algorithms.
 
     Signal Model
     ------------
@@ -21,10 +23,11 @@ class BlindDualMIMOCompensator(Processor):
         \mathbf{y}[n] = \mathbf{H}^H[n] \tilde{\mathbf{x}}[n]
 
     where:
-    
+
     * :math:`\mathbf{H}[n]` is a matrix of size :math:`2 \times (2(2L+1))` containing the filter weights at step :math:`n`.
     * :math:`\mathbf{y}[n]` is a vector of size 2 containing the two polarisation data
-    * :math:`\tilde{\mathbf{x}}[n]` is a :math:`2(2L+1)` vector containing the :math:`L^{th}` previous transmitted data on the two polarizations. This vector is obtained by stacking vertically the two polarizations as follows:
+    * :math:`\tilde{\mathbf{x}}[n]` is a :math:`2(2L+1)` vector containing the :math:`L^{th}` previous transmitted data on the two polarizations.
+      This vector is obtained by stacking vertically the two polarizations as follows:
 
     .. math::
 
@@ -88,7 +91,8 @@ class BlindDualMIMOCompensator(Processor):
 
     References
     ----------
-    * Faruk, Md Saifuddin, and Seb J. Savory. "Digital signal processing for coherent transceivers employing multilevel formats." Journal of Lightwave Technology 35.5 (2017): 1125-1141.
+    * Faruk, Md Saifuddin, and Seb J. Savory. "Digital signal processing for coherent transceivers employing multilevel formats."
+      Journal of Lightwave Technology 35.5 (2017): 1125-1141.
     """
     L: int = 10
     alphabet: np.ndarray = None
@@ -120,7 +124,7 @@ class BlindDualMIMOCompensator(Processor):
             error = self.radius_cma - np.abs(output)**2
             term1 = (error * np.conjugate(output))
             grad = (term1.reshape(-1, 1)) * input
-        
+
         if self.mode == "rde":
             _, radius_est = hard_projector(np.abs(output), self.radius_list)
             error = radius_est**2 - np.abs(output)**2
@@ -134,7 +138,7 @@ class BlindDualMIMOCompensator(Processor):
             grad = (term1.reshape(-1, 1)) * input
 
         return grad
-    
+
     def process_after_iteration(self, n, Y_sub):
         pass
 

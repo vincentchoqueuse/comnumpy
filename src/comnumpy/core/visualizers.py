@@ -1,14 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-import seaborn as sns
 from dataclasses import dataclass
 from typing import Optional, Tuple, Literal
 from comnumpy.core.generics import Processor
 from scipy.signal import welch
-
-
-mpl.rcParams['agg.path.chunksize'] = 10000
+from scipy.stats import gaussian_kde
 
 
 def create_subplots(num, fig_indices):
@@ -58,9 +54,9 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
         The title of the box plot. Default is 'Box Plot of Method Timings'.
 
     N_test : int, optional
-        The number of times to run the chain and collect profiling results. Default is 100. 
-        
-        
+        The number of times to run the chain and collect profiling results. Default is 100.
+
+
     .. note::
         Increasing the number :code:`N_test` provides a more accurate representation of the execution time distribution but takes longer to compute.
 
@@ -74,7 +70,7 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
     # run chain
     results = []
 
-    for num_test in range(N_test):
+    for _ in range(N_test):
         output = chain.profile_execution_time(input)
         results.append(output)
 
@@ -134,7 +130,7 @@ class TimeScope(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
 
-        for ax, idx in zip(axes, self.fig_indices):
+        for ax, idx in zip(axes, self.fig_indices, strict=True):
             x_sliced = get_sliced_data(X, idx, axis=self.axis)
             t = np.arange(len(x_sliced)) / self.fs  # Assuming the specified axis is time
 
@@ -210,7 +206,7 @@ class SpectrumScope(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
 
-        for ax, idx in zip(axes, self.fig_indices):
+        for ax, idx in zip(axes, self.fig_indices, strict=True):
 
             x_sliced = get_sliced_data(X, idx, axis=self.axis)
             fft_x = np.fft.fft(x_sliced, axis=-1)
@@ -271,7 +267,7 @@ class IQScope(Processor):
 
     """
     num: Optional[int] = None
-    title: str = "IQ Scope"  
+    title: str = "IQ Scope"
     fig_indices: Tuple[int, ...] = (0,)
     slices: Tuple[slice, ...] = (slice(None),)
     is_mimo: bool = True
@@ -281,7 +277,7 @@ class IQScope(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
 
-        for ax, idx in zip(axes, self.fig_indices):
+        for ax, idx in zip(axes, self.fig_indices, strict=True):
             x_sliced = get_sliced_data(X, idx, axis=self.axis)
             ax.plot(np.real(x_sliced), np.imag(x_sliced), ".", label=f"Stream {idx}")
             ax.set_xlabel("real part")
@@ -299,7 +295,7 @@ class KDEScope(Processor):
     A basic Kernel Density Estimation (KDE) Scope for visualizing bivariate distributions.
 
     This class provides functionality to plot the kernel density estimation of a complex signal's In-phase (I) and Quadrature (Q) components.
-    It uses Seaborn's kdeplot for visualization.
+    It uses a Gaussian kernel density estimate (scipy.stats.gaussian_kde) for visualization.
 
     Attributes
     ----------
@@ -322,9 +318,23 @@ class KDEScope(Processor):
     name: str = "KDE Scope"
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        fig, axes = create_subplots(self.num, self.fig_indices)
+        fig, axes = create_subplots(self.num, (0,))
+        ax = axes[0]
 
-        sns.kdeplot(x=np.real(x), y=np.imag(x), bw_adjust=self.bw_adjust, thresh=self.thresh, fill=True)
+        data = np.vstack([np.real(x).ravel(), np.imag(x).ravel()])
+        kde = gaussian_kde(data)
+        kde.set_bandwidth(kde.factor * self.bw_adjust)
+
+        xi, yi = np.mgrid[
+            data[0].min():data[0].max():100j,
+            data[1].min():data[1].max():100j,
+        ]
+        zi = kde(np.vstack([xi.ravel(), yi.ravel()])).reshape(xi.shape)
+        zi_masked = np.ma.masked_less(zi, self.thresh * zi.max())
+
+        ax.contourf(xi, yi, zi_masked, levels=10)
+        ax.set_xlabel("real part")
+        ax.set_ylabel("imag part")
         return x
 
 
@@ -395,7 +405,7 @@ class WelchScope(Processor):
         self.fs = fs
         self.norm = norm
         self.nperseg = nperseg
-        self.xlim = xlim 
+        self.xlim = xlim
         self.ylim = ylim
         self.dB = dB
         self.title = title

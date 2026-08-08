@@ -8,7 +8,7 @@ from comnumpy.core import Processor  # À garder selon ton infra réelle
 @dataclass
 class FFTMonitor(Processor):
     """
-    A monitoring tool for visualizing the amplitude of frequency-domain signals 
+    A monitoring tool for visualizing the amplitude of frequency-domain signals
     (e.g., before an IFFT or after a FFT block in an OFDM system).
 
     Attributes
@@ -17,10 +17,10 @@ class FFTMonitor(Processor):
         Method used to reduce the 2D input matrix before plotting.
         - "mean" : Computes the average amplitude across all OFDM symbols.
         - None   : Plots each symbol’s amplitude individually (superimposed).
-        
+
     title : str
         Title of the plot.
-    
+
     name : str
         Identifier for the monitor instance.
     """

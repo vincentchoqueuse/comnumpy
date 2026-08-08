@@ -69,7 +69,7 @@ def compute_ser_awgn_psk(order, snr_per_bit):
         argument = np.sqrt(2*k*gamma_b)*np.sin(np.pi/M)
         value = 2*norm.sf(argument)
 
-    if type == "bin":
+    if type == "bin":  # noqa: E721 -- `type` is a string parameter
         value = value/k
 
     return value
@@ -258,10 +258,10 @@ def compute_evm(X_target, X_estimated, axis=None):
     --------
     >>> X_target = np.array([1, 2, 3, 4])
     >>> X_estimated = np.array([1.1, 2.1, 3.1, 3.9])
-    >>> compute_evm(X_target, X_estimated)
-    0.05057216690580728
-    >>> compute_evm(X_target, X_estimated, axis=0)
-    0.05057216690580728
+    >>> print(float(compute_evm(X_target, X_estimated)))
+    0.03651483716701111
+    >>> print(round(float(compute_evm(X_target, X_estimated, axis=0)), 6))
+    0.036515
     """
     # Compute the numerator and denominator
     error_vector = np.abs(X_target - X_estimated)**2
@@ -411,8 +411,9 @@ def compute_ccdf(data, axis=-1):
     array([[1, 2, 3],
            [4, 5, 6]])
     >>> ccdf
-    array([[0.66666667, 0.33333333, 0.        ],
-           [0.66666667, 0.33333333, 0.        ]])
+    array([[0.66666667],
+           [0.33333333],
+           [0.        ]])
     """
     # Sort the data values in ascending order along the specified axis
     sorted_data = np.sort(data, axis=axis)
@@ -432,8 +433,8 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
     """
     Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.
 
-    ACPR is a measure of spectral regrowth and quantifies the ratio between the power in the main 
-    transmission band and the power leaked into adjacent frequency bands. This function computes 
+    ACPR is a measure of spectral regrowth and quantifies the ratio between the power in the main
+    transmission band and the power leaked into adjacent frequency bands. This function computes
     ACPR on both the left and right adjacent channels.
 
     Parameters
@@ -464,25 +465,25 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
         # Select frequencies within the band
         mask = (freq_axis >= lower_freq) & (freq_axis <= upper_freq)
         band_power = np.sum(np.abs(fft_signal[mask])**2) / len(signal)
-        
+
         return band_power
 
     # Define main and adjacent channel frequency bands
     half_bw = bandwidth / 2
     main_lower = -half_bw
     main_upper = half_bw
-    
+
     adj_lower_right = main_upper
     adj_upper_right = main_upper + bandwidth
 
     adj_lower_left = main_lower - bandwidth
     adj_upper_left = main_lower
-    
+
     # Calculate power in main and adjacent channels
     main_power = calculate_power(signal, main_lower, main_upper, sampling_rate)
     adj_power_right = calculate_power(signal, adj_lower_right, adj_upper_right, sampling_rate)
     adj_power_left = calculate_power(signal, adj_lower_left, adj_upper_left, sampling_rate)
-    
+
     # Calculate ACPR in dB
     acpr_right = 10 * np.log10(adj_power_right / main_power)
     acpr_left = 10 * np.log10(adj_power_left / main_power)

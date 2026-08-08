@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
@@ -22,8 +21,9 @@ class SymbolMapper(Processor):
        y[n] = f_{\mathcal{M}}(x[n])
 
     where :
-     
-    * :math:`f_{\mathcal{M}}(.)` is a mapper function that converts an integer :math:`\{0, \cdots, M-1\}` into a symbol belonging to an alphabet :math:`\mathcal{M}`,
+
+    * :math:`f_{\mathcal{M}}(.)` is a mapper function that converts an integer :math:`\{0, \cdots, M-1\}` into a symbol
+      belonging to an alphabet :math:`\mathcal{M}`,
     * :math:`\mathcal{M}=\{s_0, \cdots, s_{M-1}\}` corresponds to the alphabet.
 
     Attributes

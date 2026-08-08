@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 from comnumpy.core import Processor
 from .utils import apply_chromatic_dispersion, apply_kerr_nonlinearity, compute_beta2
-from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT, PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
+from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT
 
 
 @dataclass
@@ -31,11 +31,14 @@ class PhaseNoise(Processor):
 
     sigma2 : float
         The variance of the phase noise.
+    seed : int, optional
+        The seed for the noise generator. Default is None.
     name : str
         Name of the channel instance. Default is "phase noise".
-    
+
     """
     sigma2: float
+    seed: int = None
     name: str = "phase noise"
 
     def __post_init__(self):
@@ -49,7 +52,7 @@ class PhaseNoise(Processor):
         self._b = np.cumsum(noise)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.rvs(x)
+        self.noise_rvs(x)
         y = x * np.exp(1j*self._b)
         return y
 

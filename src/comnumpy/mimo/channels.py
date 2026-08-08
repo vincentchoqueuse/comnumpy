@@ -56,7 +56,7 @@ class AWGN(Processor):
     def get_sigma2s(self, X):
         # extract signal power
         match self.sigma2s_method:
-            case "measured": 
+            case "measured":
                 sigma2s = np.sum(np.abs(X)**2) / np.prod(X.shape)
             case "fixed":
                 sigma2s = self.sigma2s
@@ -70,7 +70,7 @@ class AWGN(Processor):
 
         # compute signal variance
         sigma2s = self.get_sigma2s(X)
-        
+
         # compute noise variance
         sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
 
@@ -108,14 +108,14 @@ class BaseMIMOChannel(Processor):
     ------------
 
     .. math ::
-    
+
         \mathbf{y}[n] = \sum_{l=0}^{L}\mathbf{H}[l]x[n-l] + \mathbf{b}[n]
 
     where
 
     * :math:`\mathbf{H}[l]` is a channel matrix of size :math:`N_r \times N_t` corresponding the :math:`l^{th}` channel tap,
     * :math:`\mathbf{x}[n]` is a :math:`N_t` vector containing the transmitted data,
-    * :math:`\mathbf{b}[n]\sim \mathcal{N}_c(\mathbf{0},\sigma^2\mathbf{I}_{N_r})` is a :math:`N_r` vector containing the additive white Gaussian noise.        
+    * :math:`\mathbf{b}[n]\sim \mathcal{N}_c(\mathbf{0},\sigma^2\mathbf{I}_{N_r})` is a :math:`N_r` vector containing the additive white Gaussian noise.
 
     Attributes
     ----------
@@ -134,7 +134,7 @@ class BaseMIMOChannel(Processor):
 
     def info(self):
         H = self.H
-        if H.ndims == 2:
+        if H.ndim == 2:
             H = H[None, :, :]
 
         L, N_r, N_t = H.shape
@@ -167,7 +167,7 @@ class FlatMIMOChannel(BaseMIMOChannel):
         validate_input(X, self.H.shape[1])
         return np.matmul(self.H, X)
 
-    
+
 @dataclass
 class SelectiveMIMOChannel(BaseMIMOChannel):
     r"""

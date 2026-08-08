@@ -7,7 +7,7 @@ from comnumpy.core import Processor
 class IQImbalance(Processor):
     r"""
     Apply IQ imbalance impairments.
-    
+
     Signal Model
     ------------
 
@@ -15,7 +15,7 @@ class IQImbalance(Processor):
         y[n] = \alpha x[n] + \beta x^*[n]
 
     where :
-    
+
     * :math:`(\alpha,\beta) \in \mathbb{C}^2` corresponds to the complex weights for the signal and its complex conjugate.
 
     Attributes
@@ -24,7 +24,7 @@ class IQImbalance(Processor):
         A complex number specifying the :math:`\alpha` parameter
     beta : complex number
         A complex number specifying the :math:`\beta` parameter
-        
+
     """
     alpha: complex
     beta: complex
@@ -47,7 +47,7 @@ class CFO(Processor):
         y[n] = x[n] e^{j\omega_0 n}
 
     where :
-    
+
     * :math:`\omega_0` corresponds to the normalized carrier frequency offset (in rad/samples).
 
     Attributes
@@ -78,7 +78,7 @@ class Delay(Processor):
         y[n] = x[n - \tau]
 
     where :
-    
+
     * :math:`\tau \in \mathbb{N}^+` is the number of samples to delay the input signal (non-negative integer)
 
     Attributes

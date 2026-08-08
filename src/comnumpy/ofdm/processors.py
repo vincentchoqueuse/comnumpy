@@ -4,7 +4,6 @@ from typing import Optional, Literal, Callable
 from scipy.fft import fft, ifft, fftshift, ifftshift
 from comnumpy.core import Sequential, Processor
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial, AutoConcatenator
-from comnumpy.core.validators import validate_real
 from .utils import plot_carrier_allocation
 
 
@@ -94,7 +93,7 @@ class CyclicPrefixer(AutoConcatenator):
 
     >>> X = np.arange(10)
     >>> prefixer = CyclicPrefixer(N_cp=3)
-    >>> Y = prefixer(X)
+    >>> print(prefixer(X))
     [7 8 9 0 1 2 3 4 5 6 7 8 9]
 
     Example 2
@@ -102,12 +101,12 @@ class CyclicPrefixer(AutoConcatenator):
 
     >>> X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
     >>> prefixer = CyclicPrefixer(N_cp=2)
-    >>> Y = prefixer(X)
+    >>> print(prefixer(X))
     [[2 5 8]
-    [3 6 9]
-    [1 4 7]
-    [2 5 8]
-    [3 6 9]]      
+     [3 6 9]
+     [1 4 7]
+     [2 5 8]
+     [3 6 9]]
     """
     N_cp: int = 10
     axis: int = 0
@@ -127,7 +126,7 @@ class CyclicPrefixer(AutoConcatenator):
 
         output_original_mask = np.zeros(output_mask_length)
         output_original_mask[self.N_cp:] = 1
-        
+
         output_copy_mask = np.zeros(output_mask_length)
         output_copy_mask[:self.N_cp] = 1
 
@@ -150,7 +149,7 @@ class CyclicPrefixRemover(Processor):
     Mathematically, if `X` is the input signal with a cyclic prefix, the operation can be described as:
 
     .. math::
-        \mathbf{y}[n] =\begin{bmatrix} 
+        \mathbf{y}[n] =\begin{bmatrix}
         \mathbf{0}_{N,N_{cp}} & \mathbf{I}_{N,N}
         \end{bmatrix}
         \mathbf{x}[n]
@@ -196,12 +195,12 @@ class HermitianPrefixer(AutoConcatenator):
     The HermitianPrefixer generates masks that can be used to enforce Hermitian symmetry on a given signal.
 
     Mathematically, the masks are designed to handle the input signal `X` and prepare it for Hermitian operations.
-    The process involves creating masks that identify the portions of the signal to be copied and transformed. When shift is false, the output 
+    The process involves creating masks that identify the portions of the signal to be copied and transformed. When shift is false, the output
     is given by
 
     .. math ::
 
-        y[n] = \left\{\begin{array}{cl}  
+        y[n] = \left\{\begin{array}{cl}
         0 &\text{if }n=0, N+2,\\
         x[n] &\text{for }n=1, \cdots, N+1,\\
         x^*[n-N+2)] &\text{for }n=N+2, \cdots, 2N+1.
@@ -221,7 +220,7 @@ class HermitianPrefixer(AutoConcatenator):
 
     >>> X = np.arange(1, 4) + 1j*np.arange(1, 4)
     >>> prefixer = HermitianPrefixer()
-    >>> Y = prefixer(X)
+    >>> print(prefixer(X))
     [0.+0.j 1.+1.j 2.+2.j 3.+3.j 0.+0.j 3.-3.j 2.-2.j 1.-1.j]
 
     Example 2
@@ -230,15 +229,15 @@ class HermitianPrefixer(AutoConcatenator):
     >>> x = np.arange(1, 7) + 1j*np.arange(1, 7)
     >>> X = np.reshape(x, (3, 2), order="F")
     >>> prefixer = HermitianPrefixer(shift=True)
-    >>> Y = prefixer(X)
+    >>> print(prefixer(X))
     [[0.+0.j 0.+0.j]
-    [3.-3.j 6.-6.j]
-    [2.-2.j 5.-5.j]
-    [1.-1.j 4.-4.j]
-    [0.+0.j 0.+0.j]
-    [1.+1.j 4.+4.j]
-    [2.+2.j 5.+5.j]
-    [3.+3.j 6.+6.j]]
+     [3.-3.j 6.-6.j]
+     [2.-2.j 5.-5.j]
+     [1.-1.j 4.-4.j]
+     [0.+0.j 0.+0.j]
+     [1.+1.j 4.+4.j]
+     [2.+2.j 5.+5.j]
+     [3.+3.j 6.+6.j]]
     """
     axis: int = 0
     shift: bool = False
@@ -257,31 +256,31 @@ class HermitianPrefixer(AutoConcatenator):
 
         output_original_mask = np.zeros(output_mask_length)
         output_original_mask[1:input_length+1] = 1
-        
+
         output_copy_mask = np.zeros(output_mask_length)
         output_copy_mask[-input_length:] = 1
-        
+
         # construct copy mask for original data
         output_original_mask = np.zeros(output_mask_length)
         if self.shift:
             output_original_mask[-input_length:] = 1
         else:
             output_original_mask[1:input_length+1] = 1
-            
+
         # construct copy mask for duplicated data
         output_copy_mask = np.zeros(output_mask_length)
         if self.shift:
             output_copy_mask[1:input_length+1] = 1
         else:
             output_copy_mask[-input_length:] = 1
-            
+
         self.input_copy_mask = input_copy_mask.astype(bool)
         self.output_original_mask = output_original_mask.astype(bool)
         self.output_copy_mask = output_copy_mask.astype(bool)
-        
+
     def process_copy(self, X: np.ndarray):
         return np.conjugate(np.flip(X, axis=self.axis))
-    
+
 
 
 @dataclass
@@ -423,8 +422,7 @@ class CarrierAllocator(Processor):
     >>> pilots = np.array([-1, -1])
     >>> allocator = CarrierAllocator(carrier_type=carrier_type, pilots=pilots)
     >>> X = np.array([1, 2, 3])
-    [1 2 3]
-    >>> Y = allocator(X)
+    >>> print(allocator(X))
     [ 1 -1  0  2 -1  3]
 
     Example 2
@@ -432,13 +430,10 @@ class CarrierAllocator(Processor):
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
     >>> allocator = CarrierAllocator(carrier_type=carrier_type, axis=-1)
     >>> X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
-    [[1 4 7]
-    [2 5 8]
-    [3 6 9]]
-    >>> Y = allocator(X)
+    >>> print(allocator(X))
     [[1 0 0 4 7]
-    [2 0 0 5 8]
-    [3 0 0 6 9]]
+     [2 0 0 5 8]
+     [3 0 0 6 9]]
     """
     carrier_type: np.ndarray
     pilots: Optional[np.ndarray] = None
@@ -486,10 +481,13 @@ class CarrierAllocator(Processor):
         slices[self.axis] = self.index_data
         Y[tuple(slices)] = X
 
-        # Assign pilots
+        # Assign pilots (reshaped to broadcast along the allocation axis,
+        # so that 1D and N-D inputs are both supported)
         if self.N_pilots > 0:
             slices[self.axis] = self.index_pilots
-            Y[tuple(slices)] = self.pilots[:, np.newaxis]
+            pilot_shape = [1] * Y.ndim
+            pilot_shape[self.axis % Y.ndim] = self.N_pilots
+            Y[tuple(slices)] = np.asarray(self.pilots).reshape(pilot_shape)
 
         return Y
 
@@ -534,17 +532,15 @@ class CarrierExtractor(Processor):
 
     Example 1
     ---------
+    >>> from comnumpy.core import Recorder
     >>> carrier_type = np.array([1, 2, 0, 1, 2, 1])
-    >>> pilots = np.array([-1, -2])
     >>> pilot_recorder = Recorder()
-    >>> allocator = CarrierAllocator(carrier_type=carrier_type, pilots=pilots)
+    >>> allocator = CarrierAllocator(carrier_type=carrier_type, pilots=np.array([-1, -2]))
     >>> extractor = CarrierExtractor(carrier_type=carrier_type, pilot_recorder=pilot_recorder)
-    >>> X = np.array([1, 2, 3])
-    >>> Z = allocator(X)
-    [ 1 -1  0  2 -2  3]
-    >>> Y = extractor(Z)
+    >>> Z = allocator(np.array([1, 2, 3]))
+    >>> print(extractor(Z))
     [1 2 3]
-    >>> pilot_recorded = pilot_recorder.get_data()
+    >>> print(pilot_recorder.get_data())
     [-1 -2]
 
     Example 2
@@ -554,12 +550,12 @@ class CarrierExtractor(Processor):
     >>> extractor = CarrierExtractor(carrier_type=carrier_type, axis=-1)
     >>> X = np.array([[1, 4, 7], [2, 5, 8]])
     >>> Z = allocator(X)
+    >>> print(Z)
     [[1 0 0 4 7]
-    [2 0 0 5 8]]
-    >>> Y = extractor(Z)
+     [2 0 0 5 8]]
+    >>> print(extractor(Z))
     [[1 4 7]
-    [2 5 8]]
-
+     [2 5 8]]
     """
     carrier_type: np.ndarray
     pilot_recorder: Optional[Callable] = None

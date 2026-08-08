@@ -5,7 +5,7 @@ from comnumpy.core import Processor, Sequential
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.ofdm.processors import (
     CarrierAllocator, CarrierExtractor, IFFTProcessor, FFTProcessor,
-    CyclicPrefixer, CyclicPrefixRemover 
+    CyclicPrefixer, CyclicPrefixRemover
 )
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 
@@ -51,7 +51,7 @@ class OFDMTransmitter(Processor):
     def __post_init__(self):
 
         if self.carrier_type is None:
-            self.carrier_type = np.ones(self.N_carrier_data, dtype=int) 
+            self.carrier_type = np.ones(self.N_carrier_data, dtype=int)
 
         self.chain = Sequential([
             Serial2Parallel(self.N_carrier_data),
