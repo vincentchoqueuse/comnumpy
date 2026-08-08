@@ -46,6 +46,7 @@ _SCAN_MODULES = [
     "comnumpy.ofdm.compensators", "comnumpy.ofdm.predistorders",
     "comnumpy.mimo.channels", "comnumpy.mimo.detectors",
     "comnumpy.mimo.compensators",
+    "comnumpy.fec.convolutional",
     "comnumpy.optical.channels", "comnumpy.optical.links",
     "comnumpy.optical.dbp", "comnumpy.optical.devices",
     "comnumpy.optical.compensators",
