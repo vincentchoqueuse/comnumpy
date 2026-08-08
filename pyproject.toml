@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comnumpy"
-version = "0.91"
+version = "1.0.0.dev0"
 description = "A Python Library for Communication System Prototyping and Simulation"
 authors = [
   { name = "Vincent Choqueuse" },
@@ -31,13 +31,12 @@ dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
   "matplotlib",
-  "seaborn",
-  "tqdm",
 ]
 
 [project.optional-dependencies]
-plot = ["matplotlib", "seaborn"]
-dev = ["matplotlib", "seaborn", "tqdm", "sphinx", "pydata-sphinx-theme", "sphinxcontrib-mermaid"]
+test = ["pytest", "pytest-cov", "ruff"]
+doc = ["sphinx", "pydata-sphinx-theme", "sphinxcontrib-mermaid"]
+dev = ["comnumpy[test,doc]", "pre-commit"]
 
 [project.urls]
 Homepage = "https://github.com/vincentchoqueuse/comnumpy"
@@ -53,3 +52,31 @@ comnumpy = ["core/data/*.csv"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "src"]
+addopts = "--doctest-modules"
+doctest_optionflags = ["NORMALIZE_WHITESPACE"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+ignore = [
+  "E741",  # ambiguous variable names (l, I): common in signal processing notation
+]
+
+[tool.coverage.run]
+source = ["comnumpy"]
+
+[tool.coverage.report]
+# Ratchet threshold (D39): the measured value is the floor, it can only go up.
+# Measured 31.60% on 2026-08-08 (unit tests + doctests).
+fail_under = 31
+
+[tool.ruff.lint.per-file-ignores]
+# __init__.py files re-export the public API; explicit __all__ comes with D36.
+"__init__.py" = ["F401"]

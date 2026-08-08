@@ -12,26 +12,30 @@
 ## Why comnumpy?
 
 - **Modular design** — Build custom communication chains by combining reusable `Processor` blocks with `Sequential`, inspired by PyTorch’s `nn.Module` pattern.
-- **Lightweight** — Around 400 KB of clean code. Only requires `numpy` and `scipy`.
+- **Lightweight** — Around 400 KB of clean code. Only requires `numpy`, `scipy` and `matplotlib`.
 - **Comprehensive** — Covers AWGN, OFDM, MIMO, and optical fiber channels with nonlinear propagation.
 - **Well documented** — Tutorials with math, diagrams, and ready-to-run examples.
 
 ## Quick Example
 
 ```python
-from comnumpy import Sequential, SymbolGenerator, SymbolMapper, SymbolDemapper, AWGN, compute_ser
+from comnumpy import (Sequential, SymbolGenerator, SymbolMapper,
+                      SymbolDemapper, AWGN, Recorder, compute_ser, get_alphabet)
 
 # Build a 16-QAM communication chain
+alphabet = get_alphabet("QAM", 16)
+recorder = Recorder()
 chain = Sequential([
-    SymbolGenerator(M=16),
-    SymbolMapper(M=16),
-    AWGN(snr_dB=15),
-    SymbolDemapper(M=16),
+    SymbolGenerator(M=16, seed=42),
+    recorder,
+    SymbolMapper(alphabet),
+    AWGN(value=15, unit="snr_dB", sigma2s_method="measured"),
+    SymbolDemapper(alphabet),
 ])
 
 # Transmit 10,000 symbols and evaluate performance
-tx_symbols, rx_symbols = chain(10000)
-print(f"SER = {compute_ser(tx_symbols, rx_symbols)}")
+detected = chain(10_000)
+print(f"SER = {compute_ser(recorder.get_data(), detected)}")  # SER = 0.0172
 ```
 
 ## Installation
