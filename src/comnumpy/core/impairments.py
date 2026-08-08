@@ -1,9 +1,9 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class IQImbalance(Processor):
     r"""
     Apply IQ imbalance impairments.
@@ -28,14 +28,14 @@ class IQImbalance(Processor):
     """
     alpha: complex
     beta: complex
-    name: str = "iq_impairment"
+    name: str = field(default="iq_impairment", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = self.alpha*x + self.beta*np.conj(x)
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class CFO(Processor):
     r"""
     Apply Carrier Frequency Offset (CFO).
@@ -57,7 +57,7 @@ class CFO(Processor):
 
     """
     cfo: float
-    name: str = "cfo_impairment"
+    name: str = field(default="cfo_impairment", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         N = len(x)
@@ -66,7 +66,7 @@ class CFO(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class Delay(Processor):
     r"""
     Introduces a delay to the input signal.
@@ -89,8 +89,8 @@ class Delay(Processor):
         If True, pads the delayed signal with zeros to match the input size.
     """
     tau: int
-    pad_zeros: bool = True
-    name: str = "delay_impairment"
+    pad_zeros: bool = field(default=True, kw_only=True)
+    name: str = field(default="delay_impairment", kw_only=True)
 
     def __post_init__(self):
         if self.tau < 0:

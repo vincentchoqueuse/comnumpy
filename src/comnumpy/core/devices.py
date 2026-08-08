@@ -1,9 +1,9 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core.generics import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class RappAmplifier(Processor):
     r"""
     A class representing a Solid State Power Amplifier with nonlinear characteristics.
@@ -40,16 +40,16 @@ class RappAmplifier(Processor):
       Behavioral modeling and predistortion of wideband wireless transmitters. John Wiley & Sons, 2015.
     """
     a_sat: float
-    l: int = 2
-    g_ss: float = 1
-    name: str = "Rapp Amplifier"
+    l: int = field(default=2, kw_only=True)
+    g_ss: float = field(default=1, kw_only=True)
+    name: str = field(default="Rapp Amplifier", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         coef = self.g_ss * (1+(np.abs(x) / self.a_sat)**(2*self.l))**(-1/(2*self.l))
         y = coef * x
         return y
 
-@dataclass
+@dataclass(slots=True)
 class SalehAmplifier(Processor):
     r"""
     A class representing a Saleh model of a Traveling Wave Tube Amplifier (TWTA).
@@ -93,11 +93,11 @@ class SalehAmplifier(Processor):
         The name of the amplifier (default is "Saleh Amplifier").
     """
     a_sat: float = 1
-    alpha_am: float = 1.9638
-    beta_am: float = 0.9945
-    alpha_pm: float = 2.5293
-    beta_pm: float = 2.8168
-    name: str = "Saleh Amplifier"
+    alpha_am: float = field(default=1.9638, kw_only=True)
+    beta_am: float = field(default=0.9945, kw_only=True)
+    alpha_pm: float = field(default=2.5293, kw_only=True)
+    beta_pm: float = field(default=2.8168, kw_only=True)
+    name: str = field(default="Saleh Amplifier", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         a_norm = np.abs(x/self.a_sat)

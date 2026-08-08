@@ -11,7 +11,7 @@ from .processors import Amplifier, DataExtractor
 from .validators import validate_data
 
 
-@dataclass
+@dataclass(slots=True)
 class TrainedBasedMixin():
     def __post_init__(self):
         validate_data(self.target_data)
@@ -38,7 +38,7 @@ class TrainedBasedMixin():
             raise TypeError("target_data must be a numpy array or Recorder.")
 
 
-@dataclass
+@dataclass(slots=True)
 class DCCorrector(Processor):
     r"""
     A class for correcting the mean of a dataset along a specified axis.
@@ -67,8 +67,8 @@ class DCCorrector(Processor):
 
     """
     value: float = 0.0
-    axis: int = 0
-    name: str = "mean_corrector"
+    axis: int = field(default=0, kw_only=True)
+    name: str = field(default="mean_corrector", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         x_mean = np.mean(x, axis=self.axis)
@@ -76,7 +76,7 @@ class DCCorrector(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class Normalizer(Amplifier):
     r"""
     A class for normalizing data based on the specified normalization type.
@@ -133,7 +133,7 @@ class Normalizer(Amplifier):
     [0.5 1.  1.5 2. ]
     """
     method: Literal['amp', 'abs', 'var', 'max'] = "amp"
-    value: float = 1.
+    value: float = field(default=1., kw_only=True)
     gain: float = 1
 
     def __post_init__(self):
@@ -158,7 +158,7 @@ class Normalizer(Amplifier):
         self.gain = gain
 
 
-@dataclass
+@dataclass(slots=True)
 class BlindIQCompensator(Processor):
 
     r"""
@@ -186,8 +186,11 @@ class BlindIQCompensator(Processor):
 
     """
     should_fit: bool = True
-    coef: float = 1
-    name: str = "iq_compensator"
+    coef: float = field(default=1, kw_only=True)
+    name: str = field(default="iq_compensator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    alpha: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    beta: complex = field(init=False, repr=False, default_factory=lambda: 0)
 
     def __post_init__(self):
         self.alpha = 1
@@ -240,7 +243,7 @@ class BlindIQCompensator(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class BlindCFOCompensator(Processor):
     r"""
     Blind CFO compensator based on the maximisation of the periodogram
@@ -271,14 +274,18 @@ class BlindCFOCompensator(Processor):
 
     """
     w0_init: float = 0.0
-    N_iter: int = 3
-    should_fit: bool = True
-    grid_search: bool = True
-    save_history: bool = False
-    method: Literal["grad", "newton"] = "newton"
-    step_size: float = 1e-8
-    grid_search_tuple: tuple = (-0.1, 0.1, 0.0001)
-    name: str = "cfo_compensator"
+    N_iter: int = field(default=3, kw_only=True)
+    should_fit: bool = field(default=True, kw_only=True)
+    grid_search: bool = field(default=True, kw_only=True)
+    save_history: bool = field(default=False, kw_only=True)
+    method: Literal["grad", "newton"] = field(default="newton", kw_only=True)
+    step_size: float = field(default=1e-8, kw_only=True)
+    grid_search_tuple: tuple = field(default=(-0.1, 0.1, 0.0001), kw_only=True)
+    name: str = field(default="cfo_compensator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    grid_search_array: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    history: list = field(init=False, repr=False, default_factory=list)
+    w0: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.grid_search_array = np.arange(self.grid_search_tuple[0], self.grid_search_tuple[1], self.grid_search_tuple[2])
@@ -350,7 +357,7 @@ class BlindCFOCompensator(Processor):
         return x
 
 
-@dataclass
+@dataclass(slots=True)
 class BlindPhaseCompensation(Processor):
     r"""
     Blind phase compensator based on least-squares minimization of the EVM.
@@ -376,9 +383,9 @@ class BlindPhaseCompensation(Processor):
         Name of the processor. Default is ``"phase correction"``.
     """
     alphabet: np.ndarray
-    theta: float = 0.0
-    should_fit: bool = True
-    name: str = "phase correction"
+    theta: float = field(default=0.0, kw_only=True)
+    should_fit: bool = field(default=True, kw_only=True)
+    name: str = field(default="phase correction", kw_only=True)
 
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
@@ -398,7 +405,7 @@ class BlindPhaseCompensation(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class LinearEqualizer(Processor):
     r"""
     Linear equalizer for the signal model with inter-symbol interference (ISI).
@@ -425,9 +432,9 @@ class LinearEqualizer(Processor):
         Name of the equalizer instance. Default is ``"equalizer"``.
     """
     h: np.ndarray
-    method: Literal["zf", "mmse"] = "zf"
-    sigma2: float = 0.0
-    name: str = "equalizer"
+    method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
+    sigma2: float = field(default=0.0, kw_only=True)
+    name: str = field(default="equalizer", kw_only=True)
 
 
     def get_H(self, N):
@@ -449,7 +456,7 @@ class LinearEqualizer(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class DataAidedFIRCompensator(Processor):
     r"""
     Data-aided FIR compensator using Zero Forcing estimation.
@@ -470,9 +477,9 @@ class DataAidedFIRCompensator(Processor):
     """
 
     h: np.array
-    target_data = Union[np.array, Recorder]
-    should_fit: bool = True
-    name: str = "data_aided_fir"
+    target_data: Union[np.ndarray, Recorder]
+    should_fit: bool = field(default=True, kw_only=True)
+    name: str = field(default="data_aided_fir", kw_only=True)
 
     def fit(self, x, x_target):
         L = len(x)
@@ -491,7 +498,7 @@ class DataAidedFIRCompensator(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
     r"""
     Trained-based phase compensator using cross-correlation.
@@ -510,10 +517,14 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
         Name of the processor. Default is ``"data_aided_phase"``.
     """
     target_data: Union[np.ndarray, Recorder]
-    name: str = "data_aided_phase"
+    name: str = field(default="data_aided_phase", kw_only=True)
+    # internal state (declared for slots, D40a)
+    theta: float = field(init=False, repr=False, default_factory=lambda: 0)
 
     def __post_init__(self):
-        super().__post_init__()
+        # explicit parent call: zero-arg super() breaks with slots=True
+        # (the dataclass decorator recreates the class)
+        TrainedBasedMixin.__post_init__(self)
         self.theta = 0
 
     def fit(self, x, x_target):
@@ -525,7 +536,7 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
         return x*np.exp(1j*self.theta)
 
 
-@dataclass
+@dataclass(slots=True)
 class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
     """This class performs the complex-gain channel estimation and compensation
 
@@ -537,10 +548,10 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
         How to extract the preamble in the received samples.
     """
     target_data: Union[np.ndarray, Recorder]
-    extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
-    gain: complex = 1+0j
-    should_fit: bool = True
-    name: str = "complex_gain_compensator"
+    extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
+    gain: complex = field(default=1+0j, kw_only=True)
+    should_fit: bool = field(default=True, kw_only=True)
+    name: str = field(default="complex_gain_compensator", kw_only=True)
 
     def fit(self, x, x_target):
         x_resized = np.resize(x, (len(x), 1))
@@ -558,7 +569,7 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
     """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
 
@@ -578,11 +589,16 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data = Union[np.array, Recorder]
+    target_data: Union[np.ndarray, Recorder]
     scale_correction: bool = True
-    save_cross_correlation: bool = True
-    signal_len: Optional[int] = None
-    name: str = "synchronizer"
+    save_cross_correlation: bool = field(default=True, kw_only=True)
+    signal_len: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="synchronizer", kw_only=True)
+    # internal state (declared for slots, D40a)
+    delay: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
+    scale: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    cross_corr: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    n_vect: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.delay = None
@@ -636,7 +652,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
 
     """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
@@ -661,12 +677,17 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data = Union[np.array, Recorder]
+    target_data: Union[np.ndarray, Recorder]
     scale_correction: bool = True
-    save_cross_correlation: bool = True
-    signal_len: Optional[int] = None
-    d_max: Optional[int] = None
-    name: str = "synchronizer"
+    save_cross_correlation: bool = field(default=True, kw_only=True)
+    signal_len: Optional[int] = field(default=None, kw_only=True)
+    d_max: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="synchronizer", kw_only=True)
+    # internal state (declared for slots, D40a)
+    delay: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
+    scale: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    cross_corr: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    n_vect: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.delay = None

@@ -1,10 +1,10 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 from comnumpy.core.generics import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class SRRCFilter(Processor):
     r"""
     Square-Root Raised Cosine (SRRC) FIR filter.
@@ -37,12 +37,12 @@ class SRRCFilter(Processor):
 
     rho: float
     oversampling: int
-    N_h: int = 10
-    norm: bool = True
-    scale: float = 1.0
-    method: Literal['lfilter', 'time', 'fft'] = "lfilter"
-    axis: int = -1
-    name: str = "SRRCFilter"
+    N_h: int = field(default=10, kw_only=True)
+    norm: bool = field(default=True, kw_only=True)
+    scale: float = field(default=1.0, kw_only=True)
+    method: Literal['lfilter', 'time', 'fft'] = field(default="lfilter", kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
+    name: str = field(default="SRRCFilter", kw_only=True)
 
     def h(self, t=None):
 
@@ -109,7 +109,7 @@ class SRRCFilter(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class BWFilter(Processor):
     r"""
     Implements a frequency domain low-pass brick wall filter.

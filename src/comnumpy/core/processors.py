@@ -5,7 +5,7 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
 
 
-@dataclass
+@dataclass(slots=True)
 class Upsampler(Processor):
     r"""
     Upsampler class for increasing the sampling rate of a signal along a specified axis.
@@ -65,11 +65,13 @@ class Upsampler(Processor):
     [3. 0. 4. 0.]]
     """
     L: int
-    phase: int = 0
-    scale: float = 1.0
-    axis: int = -1
-    use_filter: bool = False
-    name: str = "upsampler"
+    phase: int = field(default=0, kw_only=True)
+    scale: float = field(default=1.0, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
+    use_filter: bool = field(default=False, kw_only=True)
+    name: str = field(default="upsampler", kw_only=True)
+    # internal state (declared for slots, D40a)
+    filter: Optional[BWFilter] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.filter = BWFilter(1/self.L)
@@ -96,7 +98,7 @@ class Upsampler(Processor):
         return self.scale * Y
 
 
-@dataclass
+@dataclass(slots=True)
 class Downsampler(Processor):
     r"""
     Downsampler class for decreasing the sampling rate of a signal along a specified axis.
@@ -137,11 +139,11 @@ class Downsampler(Processor):
     [1. 3. 5.]
     """
     L: int
-    phase: int = 0
-    scale: float = 1.0
-    axis: int = -1
-    use_filter: bool = False
-    name: str = "downsampler"
+    phase: int = field(default=0, kw_only=True)
+    scale: float = field(default=1.0, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
+    use_filter: bool = field(default=False, kw_only=True)
+    name: str = field(default="downsampler", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
 
@@ -157,7 +159,7 @@ class Downsampler(Processor):
         return self.scale * Y
 
 
-@dataclass
+@dataclass(slots=True)
 class Serial2Parallel(Processor):
     r"""
     A class for converting a serial data stream into parallel data streams.
@@ -209,8 +211,8 @@ class Serial2Parallel(Processor):
 
     """
     N_sub: int
-    method: Literal["zero-padding", "truncate"] = "zero-padding"
-    name: str = "S2P"
+    method: Literal["zero-padding", "truncate"] = field(default="zero-padding", kw_only=True)
+    name: str = field(default="S2P", kw_only=True)
 
     def __post_init__(self):
         if not (self.N_sub > 0):
@@ -241,7 +243,7 @@ class Serial2Parallel(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class Parallel2Serial(Processor):
     """
     A class for converting parallel data streams into a serial data stream.
@@ -285,7 +287,7 @@ class Parallel2Serial(Processor):
         x = X.reshape(new_shape)
         return x
 
-@dataclass
+@dataclass(slots=True)
 class Amplifier(Processor):
     """
     A class for amplifying or attenuating a signal along a specified axis.
@@ -327,8 +329,8 @@ class Amplifier(Processor):
      [ 3 12]]
     """
     gain: float = 1.0
-    axis: int | None = None
-    name: str = "signal_amplifier"
+    axis: int | None = field(default=None, kw_only=True)
+    name: str = field(default="signal_amplifier", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         gain = self.gain
@@ -343,7 +345,7 @@ class Amplifier(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class WeightAmplifier(Processor):
     """
     Applies weights to a MIMO (Multiple Input Multiple Output) parallel signal along a specified axis.
@@ -394,8 +396,8 @@ class WeightAmplifier(Processor):
      [ 6 12]]
     """
     weight: Optional[np.ndarray] = None
-    axis: int = -1
-    name: str = "parallel_signal_weight"
+    axis: int = field(default=-1, kw_only=True)
+    name: str = field(default="parallel_signal_weight", kw_only=True)
 
     def __post_init__(self):
         if self.weight.ndim != 1:
@@ -418,7 +420,7 @@ class WeightAmplifier(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class Complex2Real(Processor):
     r"""
     A processor class to extract the real or imaginary part of a complex array.
@@ -459,7 +461,7 @@ class Complex2Real(Processor):
     """
 
     part: Literal["real", "imag"] = "real"
-    validate_input : bool = False
+    validate_input: bool = field(default=False, kw_only=True)
 
     def forward(self, X):
         match self.part:
@@ -475,7 +477,7 @@ class Complex2Real(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class AutoConcatenator(Processor):
     r"""
     A class to automatically concatenate data along a specified axis using masks.
@@ -610,7 +612,7 @@ class AutoConcatenator(Processor):
 
 
 
-@dataclass
+@dataclass(slots=True)
 class SampleRemover(Processor):
     """
     Deletes samples from a signal.
@@ -627,8 +629,8 @@ class SampleRemover(Processor):
         Name of the symbol remover instance. Default is "SymbolRemover".
     """
     N_start: int = 0
-    length: int = 0
-    name: str = "symbol remover"
+    length: int = field(default=0, kw_only=True)
+    name: str = field(default="symbol remover", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = np.zeros(len(x) - self.length, dtype=x.dtype)
@@ -637,7 +639,7 @@ class SampleRemover(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class DelayRemover(Processor):
     """
     Removes an initial delay from a signal.
@@ -652,8 +654,8 @@ class DelayRemover(Processor):
         Name of the delay remover instance. Default is "DelayRemover".
     """
     delay: int
-    axis: int = -1
-    name: str = "delay remover"
+    axis: int = field(default=-1, kw_only=True)
+    name: str = field(default="delay remover", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # Create a slice object for the specified axis
@@ -665,7 +667,7 @@ class DelayRemover(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class DataAdder(Processor):
     """
     Inserts symbol samples into a signal.
@@ -682,8 +684,8 @@ class DataAdder(Processor):
         Name of the data adder instance. Default is "DataAdder".
     """
     symbol: np.ndarray
-    N_start: int = 0
-    name: str = "Data Adder"
+    N_start: int = field(default=0, kw_only=True)
+    name: str = field(default="Data Adder", kw_only=True)
 
     def validate_input(self, x: np.ndarray):
         if self.N_start < 0 or self.N_start > len(x):
@@ -695,7 +697,7 @@ class DataAdder(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class DataExtractor(Processor):
     """
     Extract a segment from a signal using NumPy-style indexing.
@@ -736,7 +738,7 @@ class DataExtractor(Processor):
     array([[ 5, 6, 7, 8, 9], [10, 11, 12, 13, 14]])
     """
     selector: Optional[Union[int, slice, tuple, list, np.ndarray]] = None
-    name: str = "Data Extractor"
+    name: str = field(default="Data Extractor", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.selector is None:
@@ -749,7 +751,7 @@ class DataExtractor(Processor):
         return x[self.selector]
 
 
-@dataclass
+@dataclass(slots=True)
 class Resampler(Processor):
     """
     A class for resampling a signal.
@@ -770,7 +772,7 @@ class Resampler(Processor):
     """
     up: int
     down: int
-    name: str = "Resampler"
+    name: str = field(default="Resampler", kw_only=True)
 
     def __post_init__(self):
 
@@ -783,7 +785,7 @@ class Resampler(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class Clipper(Processor):
     r"""
     Clipper class for clipping signal values to a specified threshold.
@@ -804,7 +806,7 @@ class Clipper(Processor):
 
     """
     threshold: float
-    name: str = "Clipper"
+    name: str = field(default="Clipper", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = np.clip(x, -self.threshold, self.threshold)

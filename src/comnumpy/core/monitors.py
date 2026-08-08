@@ -1,10 +1,11 @@
 import numpy as np
 from dataclasses import dataclass, field
+from typing import Optional
 from comnumpy.core.generics import Processor
 from .processors import DataExtractor
 
 
-@dataclass
+@dataclass(slots=True)
 class Recorder(Processor):
     r"""
     Implements a basic Recorder for signal processing.
@@ -36,7 +37,9 @@ class Recorder(Processor):
 
     """
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
-    name: str = "recorder"
+    name: str = field(default="recorder", kw_only=True)
+    # internal state (declared for slots, D40a)
+    data: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.data = None
@@ -49,7 +52,7 @@ class Recorder(Processor):
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class Logger(Processor):
     """
     This class implements a basic Logger that lets the signal pass through.
@@ -61,15 +64,15 @@ class Logger(Processor):
     name : str
         Name of the logger instance.
     """
-    num: int = None
-    name: str = "logger"
+    num: Optional[int] = None
+    name: str = field(default="logger", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         print(f"Data logger ({self.num}, {self.name}): {X}")
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class Debugger(Processor):
     """
     Prints several properties of the incoming signal for debugging purposes.
@@ -89,7 +92,7 @@ class Debugger(Processor):
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerReporter(Processor):
     """
     This class implements a basic Power Reporter that lets the signal pass through.
@@ -103,9 +106,9 @@ class PowerReporter(Processor):
     name : str
         Name of the power reporter instance.
     """
-    num: int = None
-    verbose: bool = True
-    name: str = "power"
+    num: Optional[int] = None
+    verbose: bool = field(default=True, kw_only=True)
+    name: str = field(default="power", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.verbose:
