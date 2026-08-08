@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Callable, Union, Dict
 
 
-@dataclass
+@dataclass(slots=True)
 class Processor():
     r"""
     Base class for processing modules.
@@ -34,7 +34,10 @@ class Processor():
         A processor is not necessarly fully deterministic. Some processor can also contain a stochastic part.
 
     """
-    debug: bool = field(default=False, init=False)
+    # init=False fields use default_factory: with slots=True a plain default
+    # would live on the (removed) class attribute and never reach the instance
+    debug: bool = field(default_factory=bool, init=False)
+    Y: Optional[np.ndarray] = field(default_factory=lambda: None, init=False, repr=False)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +78,7 @@ class Processor():
             return self.forward(X)
 
 
-@dataclass
+@dataclass(slots=True)
 class Sequential():
     r"""
     A sequential container for processing modules.

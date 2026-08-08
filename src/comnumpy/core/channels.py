@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class AWGN(Processor):
     r"""Additive white Gaussian noise channel.
 
@@ -64,6 +64,10 @@ class AWGN(Processor):
     sigma2: Optional[float] = field(default=None, kw_only=True)
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="awgn", kw_only=True)
+    # internal state (created in __post_init__ / forward; declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    sigma2_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    _b: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         if (self.snr_dB is None) == (self.sigma2 is None):
@@ -100,7 +104,7 @@ class AWGN(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class FIRChannel(Processor):
     r"""
     Finite Impulse Response (FIR) channel with given impulse response.
