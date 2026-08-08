@@ -13,50 +13,48 @@ from .utils import plot_carrier_allocation
 @dataclass(slots=True)
 class CyclicPrefixer(AutoConcatenator):
     r"""
-    Processor for adding a cyclic prefix to combat multi-path interference.
+    Processor for adding a cyclic prefix to combat multipath interference.
 
     Signal Model
     ------------
-    The cyclic prefix is a portion of the signal that is prepended to the original data to combat
-    multipath interference and inter-symbol interference in communication systems. The addition of
-    the cyclic prefix involves copying the last `N_cp` samples of the original data and placing
-    them at the beginning along the specified axis.
-
-    Mathematically, if `X` is the original input signal, the operation can be described as:
+    The cyclic prefix is a copy of the last :math:`N_{cp}` samples of each
+    block, prepended to the block to combat multipath interference and
+    inter-symbol interference:
 
     .. math::
-        \mathbf{y}[n] = \begin{bmatrix}
-        \mathbf{0}_{N_{cp},N-N_{cp}} & \mathbf{I}_{N_{cp},N_{cp}} \\
-        \mathbf{I}_{N-N_{cp},N-N_{cp}} & \mathbf{0}_{N-N_{cp},N_{cp}}\\
-        \mathbf{0}_{N_{cp},N-N_{cp}} & \mathbf{I}_{N_{cp},N_{cp}}\\
-        \end{bmatrix}
-        \mathbf{x}[n]
+        y[n] = \left\{\begin{array}{cl}
+        x[N - N_{cp} + n] & \text{for } 0 \le n < N_{cp},\\
+        x[n - N_{cp}] & \text{for } N_{cp} \le n < N + N_{cp},
+        \end{array}\right.
 
     where:
 
-    * :math:`N_{cp}` is the length of the cyclic prefix,
-    * :math:`\mathbf{x}[n]` is the input signal of size :math:`N`,
-    * :math:`\mathbf{y}[n]` is the output signal of size :math:`N+N_{cp}` after adding the cyclic prefix.
+    * :math:`x[n]` is the input block of length :math:`N`,
+    * :math:`y[n]` is the output block of length :math:`N + N_{cp}`,
+    * :math:`N_{cp}` is the length of the cyclic prefix.
 
     Axes: *axis -1* -- the prefix is prepended along the block content
     axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
 
-    Attributes
+    Parameters
     ----------
     N_cp : int
-        Length of the cyclic prefix to be added. Must be a non-negative integer.
+        Length :math:`N_{cp}` of the cyclic prefix to be added. Must be a
+        non-negative integer. Default is 10.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"cp adder"``.
 
-    Example 1
-    ---------
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 2.
 
+    Examples
+    --------
     >>> X = np.arange(10)
     >>> prefixer = CyclicPrefixer(N_cp=3)
     >>> print(prefixer(X))
     [7 8 9 0 1 2 3 4 5 6 7 8 9]
-
-    Example 2
-    ---------
-
     >>> X = np.array([[1, 2, 3], [4, 5, 6]])
     >>> prefixer = CyclicPrefixer(N_cp=2)
     >>> print(prefixer(X))
@@ -96,31 +94,40 @@ class CyclicPrefixRemover(Processor):
 
     Signal Model
     ------------
-    The cyclic prefix is a portion of the signal that is prepended to the original data to combat
-    multipath interference and inter-symbol interference in communication systems. The removal of
-    the cyclic prefix involves discarding the first `N_cp` samples along the specified axis.
-
-    Mathematically, if `X` is the input signal with a cyclic prefix, the operation can be described as:
+    The removal of the cyclic prefix discards the first :math:`N_{cp}`
+    samples of each block:
 
     .. math::
-        \mathbf{y}[n] =\begin{bmatrix}
-        \mathbf{0}_{N,N_{cp}} & \mathbf{I}_{N,N}
-        \end{bmatrix}
-        \mathbf{x}[n]
+        y[n] = x[n + N_{cp}], \qquad 0 \le n < N,
 
     where:
 
-    * :math:`N_{cp}` is the length of the cyclic prefix,
-    * :math:`\mathbf{x}[n]` is the input signal of size :math:`N+N_{cp}` that contains the cyclic prefix,
-    * :math:`\mathbf{y}[n]` is the output signal of size :math:`N` after removing the cyclic prefix.
+    * :math:`x[n]` is the input block of length :math:`N + N_{cp}` that contains the cyclic prefix,
+    * :math:`y[n]` is the output block of length :math:`N` after removing the cyclic prefix,
+    * :math:`N_{cp}` is the length of the cyclic prefix.
 
     Axes: *axis -1* -- the prefix is removed along the block content
     axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
 
-    Attributes
+    Parameters
     ----------
     N_cp : int
-        Length of the cyclic prefix to be removed. Must be a non-negative integer.
+        Length :math:`N_{cp}` of the cyclic prefix to be removed. Must be a
+        non-negative integer.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"cp remover"``.
+
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 2.
+
+    Examples
+    --------
+    >>> X = np.arange(13)
+    >>> remover = CyclicPrefixRemover(N_cp=3)
+    >>> print(remover(X))
+    [ 3  4  5  6  7  8  9 10 11 12]
     """
     N_cp: int
     name: str = field(default="cp remover", kw_only=True)
@@ -137,45 +144,52 @@ class CyclicPrefixRemover(Processor):
 @dataclass(slots=True)
 class HermitianPrefixer(AutoConcatenator):
     r"""
-    Processor for preparing data to enforce Hermitian symmetry, useful in signal processing applications.
+    Processor for enforcing Hermitian symmetry on frequency-domain blocks, so that the IDFT output is real-valued.
 
     Signal Model
     ------------
-    The HermitianPrefixer generates masks that can be used to enforce Hermitian symmetry on a given signal.
+    Each input block of length :math:`N` is extended to a block of length
+    :math:`2(N+1)` whose spectrum is Hermitian symmetric: the DC and Nyquist
+    subcarriers are set to zero and the conjugate mirror of the data is
+    appended. When ``shift`` is False, the output is given by
 
-    Mathematically, the masks are designed to handle the input signal `X` and prepare it for Hermitian operations.
-    The process involves creating masks that identify the portions of the signal to be copied and transformed. When shift is false, the output
-    is given by
+    .. math::
 
-    .. math ::
-
-        y[n] = \left\{\begin{array}{cl}
-        0 &\text{if }n=0, N+2,\\
-        x[n] &\text{for }n=1, \cdots, N+1,\\
-        x^*[n-N+2)] &\text{for }n=N+2, \cdots, 2N+1.
+        y[k] = \left\{\begin{array}{cl}
+        0 &\text{for }k=0 \text{ and } k=N+1,\\
+        x[k-1] &\text{for }k=1, \cdots, N,\\
+        x^*[2N+1-k] &\text{for }k=N+2, \cdots, 2N+1,
         \end{array}\right.
+
+    where:
+
+    * :math:`x[k]` is the input block of length :math:`N`,
+    * :math:`y[k]` is the Hermitian-symmetric output block of length :math:`2(N+1)`.
+
+    When ``shift`` is True, the two halves are swapped (conjugate copy
+    first), matching an fftshift-ed subcarrier ordering.
 
     Axes: *axis -1* -- the Hermitian extension is built along the block
     content axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
 
-    Attributes
+    Parameters
     ----------
-    shift : bool, keyword-only
-        Whether to apply a shift to the masks. Default is False.
-    name : str, keyword-only
-        The name of the prefixer. Default is "hermitian prefixer".
+    shift : bool, optional, keyword-only
+        Whether to swap the original and conjugate halves. Default is False.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"hermitian prefixer"``.
 
-    Example 1
-    ---------
+    References
+    ----------
+    J. Armstrong, "OFDM for Optical Communications", Journal of Lightwave
+    Technology, vol. 27, no. 3, pp. 189-204, 2009.
 
+    Examples
+    --------
     >>> X = np.arange(1, 4) + 1j*np.arange(1, 4)
     >>> prefixer = HermitianPrefixer()
     >>> print(prefixer(X))
     [0.+0.j 1.+1.j 2.+2.j 3.+3.j 0.+0.j 3.-3.j 2.-2.j 1.-1.j]
-
-    Example 2
-    ---------
-
     >>> x = np.arange(1, 7) + 1j*np.arange(1, 7)
     >>> X = np.reshape(x, (2, 3))
     >>> prefixer = HermitianPrefixer(shift=True)
@@ -233,36 +247,45 @@ class FFTProcessor(Processor):
 
     Signal Model
     ------------
-    The Fast Fourier Transform (FFT) is an algorithm to compute the Discrete Fourier Transform (DFT)
-    and its inverse efficiently. The DFT transforms a sequence of values in the time domain into
-    a sequence of values in the frequency domain.
-
-    Mathematically, the DFT of a sequence :math:`x[n]` of length :math:`N` is given by:
-
-    .. math::
-        y[k] = \frac{1}{\sqrt{N}}\sum_{l=0}^{N-1} x[l] \cdot e^{-i 2 \pi k l / N}
-
-
-    The FFT operation can be represented in matrix form as:
+    The FFT computes the Discrete Fourier Transform (DFT), which maps a
+    block of time-domain samples to its frequency-domain representation.
+    With the default orthonormal normalization (``norm="ortho"``), the DFT
+    of a block of length :math:`N` is given by:
 
     .. math::
-        \mathbf{y}[n] = \mathbf{W} \mathbf{x}[n]
+        y[k] = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x[n] \cdot e^{-i 2 \pi k n / N}
 
-    * :math:`\mathbf{W}` is the DFT matrix of size \( N \times N \),
-    * :math:`\mathbf{x}[n]` is the input vector of time-domain samples,
-    * :math:`\mathbf{y}[n]` is the output vector of frequency-domain samples.
+    where:
+
+    * :math:`x[n]` is the input block of time-domain samples,
+    * :math:`y[k]` is the output value at subcarrier :math:`k`,
+    * :math:`N` is the block length.
 
     Axes: *axis -1* -- the FFT changes the meaning of axis -1
     (time -> frequency), never its position (see CONVENTIONS.md).
 
-    Attributes
+    Parameters
     ----------
     shift : bool, optional
         If True, applies the FFT shift which swaps the low and high frequency components.
         Default is False.
-    norm : {"ortho", "backward", "forward"}, optional
+    norm : {"ortho", "backward", "forward"}, optional, keyword-only
         Normalization mode for FFT. "ortho" means orthonormal FFT is computed.
-        None means no normalization is applied. Default is "ortho".
+        Default is "ortho".
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"fft"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Section 11.2.
+
+    Examples
+    --------
+    >>> fft_processor = FFTProcessor()
+    >>> x = np.ones(4)
+    >>> print(np.round(np.abs(fft_processor(x)), 3))
+    [2. 0. 0. 0.]
     """
     shift: bool = False
     norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
@@ -282,34 +305,45 @@ class IFFTProcessor(Processor):
 
     Signal Model
     ------------
-    The Inverse Fast Fourier Transform (IFFT) is an algorithm to compute the Inverse Discrete Fourier Transform (IDFT)
-    efficiently. The IDFT transforms a sequence of values in the frequency domain back into the time domain.
-
-    Mathematically, the IDFT of a sequence :math:`x[k]` of length :math:`N` is given by:
-
-    .. math::
-        y[l] = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} x[k] \cdot e^{i 2 \pi k n / N}
-
-    The IFFT operation can be represented in matrix form as:
+    The IFFT computes the Inverse Discrete Fourier Transform (IDFT), which
+    maps a block of frequency-domain samples back to the time domain. With
+    the default orthonormal normalization (``norm="ortho"``), the IDFT of a
+    block of length :math:`N` is given by:
 
     .. math::
-        \mathbf{y}[n] = \mathbf{W}^{H} \mathbf{x}[n]
+        y[n] = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} x[k] \cdot e^{i 2 \pi k n / N}
 
-    * :math:`\mathbf{W}^{H}` is the inverse DFT matrix of size :math:`N \times N`,
-    * :math:`\mathbf{x}[n]` is the input vector of frequency-domain samples,
-    * :math:`\mathbf{y}[n]` is the output vector of time-domain samples.
+    where:
+
+    * :math:`x[k]` is the input value at subcarrier :math:`k`,
+    * :math:`y[n]` is the output block of time-domain samples,
+    * :math:`N` is the block length.
 
     Axes: *axis -1* -- the IFFT changes the meaning of axis -1
     (frequency -> time), never its position (see CONVENTIONS.md).
 
-    Attributes
+    Parameters
     ----------
     shift : bool, optional
         If True, applies the IFFT shift which swaps the low and high frequency components.
         Default is False.
-    norm : {"ortho", "backward", "forward"}, optional
-        Normalization mode for IFFT. "ortho" means orthonormal FFT is computed.
-        None means no normalization is applied. Default is "ortho".
+    norm : {"ortho", "backward", "forward"}, optional, keyword-only
+        Normalization mode for IFFT. "ortho" means orthonormal IFFT is computed.
+        Default is "ortho".
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"ifft"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Section 11.2.
+
+    Examples
+    --------
+    >>> ifft_processor = IFFTProcessor()
+    >>> X = np.array([2.0, 0.0, 0.0, 0.0])
+    >>> print(np.round(np.abs(ifft_processor(X)), 3))
+    [1. 1. 1. 1.]
     """
     shift: bool = False
     norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
@@ -329,26 +363,25 @@ class CarrierAllocator(Processor):
 
     Signal Model
     ------------
-    The Carrier Allocator assigns data to specific subcarriers based on a predefined subcarrier type array.
-    It supports the insertion of pilot values and ensures Hermitian symmetry for certain subcarriers.
-
-    Mathematically, the allocation can be described as:
+    The Carrier Allocator assigns data to specific subcarriers based on a
+    predefined subcarrier type array. It supports the insertion of pilot
+    values on the pilot subcarriers and zeros on the null subcarriers:
 
     .. math::
-        y[n] = \left\{\begin{array}{cl}
-        x[m] & \text{if } s[n] = 1 \\
-        p[k] & \text{if } s[n] = 2 \\
-        0 & \text{if } s[n] = 0 \\
+        y[k] = \left\{\begin{array}{cl}
+        x[m_k] & \text{if } s[k] = 1 \text{ (data)}\\
+        p[j_k] & \text{if } s[k] = 2 \text{ (pilot)}\\
+        0 & \text{if } s[k] = 0 \text{ (null)}\\
         \end{array}\right.
 
     where:
 
-    * :math:`x[m]` is the input data vector, with :math:`m` indexing the data subcarriers,
-    * :math:`p[k]` is the pilot value vector, with :math:`k` indexing the pilot subcarriers,
-    * :math:`s[n]` is the subcarrier type array, where each element specifies the type of the :math:`n`-th subcarrier,
-    * :math:`y[n]` is the output data vector, with allocated subcarriers.
+    * :math:`x[m]` is the input data vector, with :math:`m_k` indexing the data subcarriers in increasing subcarrier index :math:`k`,
+    * :math:`p[j]` is the pilot value vector, with :math:`j_k` indexing the pilot subcarriers in increasing :math:`k`,
+    * :math:`s[k]` is the subcarrier type array, where each element specifies the type of the :math:`k`-th subcarrier,
+    * :math:`y[k]` is the output data vector over the full set of subcarriers.
 
-    The indices :math:`m` and :math:`k` are determined by the positions in the `carrier_type` array where the values are 1 and 2, respectively.
+    The indices :math:`m_k` and :math:`j_k` are determined by the positions in the `carrier_type` array where the values are 1 and 2, respectively.
 
     Axes: *declared axis* -- expects the Block layout ``(..., T, F)``
     (or ``(..., N_data)`` for a period-1 allocation) and validates it in
@@ -357,18 +390,34 @@ class CarrierAllocator(Processor):
     :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object, which
     removes the "diverging masks" class of bugs.
 
-    Attributes
+    Parameters
     ----------
     carrier_type : CarrierAllocation or np.ndarray
-        The allocation. A :class:`CarrierAllocation` is described in
-        physical order and converted once with ``to_fft_order()``
-        (decision D16); a raw 1D array is taken as an FFT-order mask.
-    pilots : np.ndarray or scalar, optional
-        Pilot values, one per PILOT subcarrier of an OFDM symbol (or a
-        scalar broadcast to all of them). Default is an empty array.
+        The allocation, providing the subcarrier type array :math:`s[k]`.
+        A :class:`CarrierAllocation` is described in physical order and
+        converted once with ``to_fft_order()`` (decision D16); a raw 1D
+        array is taken as an FFT-order mask.
+    pilots : np.ndarray or scalar, optional, keyword-only
+        Pilot values :math:`p[j]`, one per PILOT subcarrier of an OFDM
+        symbol (or a scalar broadcast to all of them). Default is an
+        empty array.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"carrier allocator"``.
 
-    Example 1
-    ---------
+    Raises
+    ------
+    ShapeError
+        If the last axis of the input does not hold ``N_data`` data
+        subcarriers, or if a periodic (scattered) allocation is fed a 1D
+        signal without the OFDM-symbol axis.
+
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 2.
+
+    Examples
+    --------
     >>> carrier_type = np.array([1, 2, 0, 1, 2, 1])
     >>> pilots = np.array([-1, -1])
     >>> allocator = CarrierAllocator(carrier_type=carrier_type, pilots=pilots)
@@ -376,8 +425,6 @@ class CarrierAllocator(Processor):
     >>> print(allocator(X))
     [ 1 -1  0  2 -1  3]
 
-    Example 2
-    ---------
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
     >>> allocator = CarrierAllocator(carrier_type=carrier_type)
     >>> X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
@@ -386,8 +433,6 @@ class CarrierAllocator(Processor):
      [2 0 0 5 8]
      [3 0 0 6 9]]
 
-    Example 3
-    ---------
     >>> from comnumpy.ofdm.allocation import get_allocation
     >>> allocator = CarrierAllocator(get_allocation("802.11a"), pilots=1.0)
     >>> Y = allocator(np.ones((10, 48)))
@@ -489,21 +534,21 @@ class CarrierExtractor(Processor):
 
     Signal Model
     ------------
-    The Carrier Extractor extracts data from specific subcarriers based on a predefined subcarrier type array.
-    It supports the extraction of pilot values and ensures Hermitian symmetry for certain subcarriers.
-
-    Mathematically, the extraction can be described as:
+    The Carrier Extractor extracts the data subcarriers based on a
+    predefined subcarrier type array, undoing the mapping of the
+    :class:`CarrierAllocator`:
 
     .. math::
-        y[n] = x[k_n]
+        y[m] = x[k_m]
 
     where:
 
-    * :math:`x[n]` is the input data,
+    * :math:`x[k]` is the input data over the full set of subcarriers,
     * :math:`k_m` is the index of the :math:`m`-th subcarrier of type 1 (data subcarrier) in the input vector,
-    * :math:`y[n]` is the output data.
+    * :math:`y[m]` is the output data vector.
 
     The indices :math:`k_m` are determined by the positions in the `carrier_type` array where the value is 1.
+    The content of the pilot subcarriers (type 2) can be recorded with ``pilot_recorder``.
 
     Axes: *declared axis* -- expects the Block layout ``(..., T, N_fft)``
     (or ``(..., N_fft)`` for a period-1 allocation) and validates it in
@@ -511,17 +556,33 @@ class CarrierExtractor(Processor):
     :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object with the
     transmitter's :class:`CarrierAllocator`.
 
-    Attributes
+    Parameters
     ----------
     carrier_type : CarrierAllocation or np.ndarray
-        The allocation. A :class:`CarrierAllocation` is described in
-        physical order and converted once with ``to_fft_order()``
-        (decision D16); a raw 1D array is taken as an FFT-order mask.
-    pilot_recorder : callable, optional
+        The allocation, providing the subcarrier type array used to find
+        the data indices :math:`k_m`. A :class:`CarrierAllocation` is
+        described in physical order and converted once with
+        ``to_fft_order()`` (decision D16); a raw 1D array is taken as an
+        FFT-order mask.
+    pilot_recorder : callable, optional, keyword-only
         Function to record the content associated to pilot values if required. Default is None.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"carrier extractor"``.
 
-    Example 1
-    ---------
+    Raises
+    ------
+    ShapeError
+        If the last axis of the input does not hold ``N_fft`` subcarriers,
+        or if a periodic (scattered) allocation is fed a 1D signal without
+        the OFDM-symbol axis.
+
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 2.
+
+    Examples
+    --------
     >>> from comnumpy.core import Recorder
     >>> carrier_type = np.array([1, 2, 0, 1, 2, 1])
     >>> pilot_recorder = Recorder()
@@ -533,8 +594,6 @@ class CarrierExtractor(Processor):
     >>> print(pilot_recorder.get_data())
     [-1 -2]
 
-    Example 2
-    ---------
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
     >>> allocator = CarrierAllocator(carrier_type=carrier_type)
     >>> extractor = CarrierExtractor(carrier_type=carrier_type)

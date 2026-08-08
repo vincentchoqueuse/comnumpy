@@ -8,24 +8,56 @@ from .metrics import compute_PAPR
 
 @dataclass(slots=True)
 class HardClipper(Processor):
-    """
+    r"""
     Implements a hard clipping method to reduce the Peak-to-Average Power Ratio (PAPR) of a signal.
 
-    The HardClipper class applies a hard clipping technique to a signal, which reduces its PAPR.
-    Hard clipping limits the amplitude of the signal to a certain threshold, reducing the peaks of the signal
-    while keeping the average power relatively unchanged.
+    Signal Model
+    ------------
+    Hard clipping limits the amplitude of the signal to a threshold
+    :math:`T_m` while preserving the phase, reducing the peaks of the
+    signal while keeping the average power relatively unchanged:
 
-    Attributes
+    .. math::
+        y[n] = \left\{\begin{array}{cl}
+        x[n] & \text{if } |x[n]| \le T_m,\\
+        T_m \, e^{i \angle x[n]} & \text{if } |x[n]| > T_m,
+        \end{array}\right.
+        \qquad T_m = \gamma \sqrt{P_x}
+
+    where:
+
+    * :math:`x[n]` is the input signal and :math:`y[n]` the clipped output,
+    * :math:`P_x = \mathbb{E}\left[|x[n]|^2\right]` is the mean input power,
+    * :math:`\gamma = 10^{\mathrm{CR_{dB}}/20}` is the clipping ratio.
+
+    For real-valued inputs, :math:`T_m \, \mathrm{sign}(x[n])` replaces the
+    polar form.
+
+    Axes: *element-wise* -- the clipping is applied pointwise; the
+    threshold :math:`T_m` is computed from the mean power of the whole
+    array.
+
+    Parameters
     ----------
     cr_dB : float
-        Clipping ratio in decibels (dB). Determines the threshold for clipping.
-    name : str
-        Name of the processor.
+        Clipping ratio :math:`\mathrm{CR_{dB}}` in decibels (dB).
+        Determines the threshold for clipping.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"hard_clipping"``.
 
-    Reference
-    ---------
-    * [1] Y. Rahmatallah et S. Mohan, « Peak-To-Average Power Ratio Reduction in OFDM Systems: A Survey And Taxonomy »,
-      IEEE Commun. Surv. Tutorials, vol. 15, no 4, p. 1567 1592, 2013, doi: 10.1109/SURV.2013.021313.00164.
+    References
+    ----------
+    Y. Rahmatallah, S. Mohan, "Peak-To-Average Power Ratio Reduction in
+    OFDM Systems: A Survey And Taxonomy", IEEE Communications Surveys &
+    Tutorials, vol. 15, no. 4, pp. 1567-1592, 2013,
+    doi: 10.1109/SURV.2013.021313.00164.
+
+    Examples
+    --------
+    >>> x = np.array([0.5, 2.0, -3.0])
+    >>> clipper = HardClipper(cr_dB=0)
+    >>> print(np.round(clipper(x), 3))
+    [ 0.5    2.    -2.102]
     """
     cr_dB: float
     name: str = field(default="hard_clipping", kw_only=True)
@@ -47,31 +79,68 @@ class HardClipper(Processor):
 
 @dataclass(slots=True)
 class IctPaprReductor(Processor):
-    """
+    r"""
     Implements the Iterative Clipping and Filtering (ICT) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
 
-    The IctPaprReductor class reduces the PAPR of an OFDM signal using the ICT method.
-    This method involves iteratively clipping and filtering the signal to achieve a target PAPR level.
+    Signal Model
+    ------------
+    The frequency-domain input is iteratively transformed to the time
+    domain, clipped, transformed back and filtered. Starting from
+    :math:`X^{(0)}[k] = x[k]`, each iteration :math:`i = 1, \dots, N_{it}`
+    computes:
 
-    Attributes
+    .. math::
+        s^{(i)}[n] = \mathrm{IDFT}\{X^{(i-1)}\}[n], \qquad
+        X^{(i)}[k] = w \, \mathrm{DFT}\{\mathrm{clip}(s^{(i)})\}[k]
+
+    where :math:`\mathrm{clip}(\cdot)` is the phase-preserving amplitude
+    clipping of :class:`HardClipper` with the per-block threshold:
+
+    .. math::
+        T_m = \gamma \sqrt{P_s}, \qquad
+        \gamma = \sqrt{10^{\mathrm{PAPR_{max}}/10}},
+
+    and where:
+
+    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,
+    * :math:`P_s` is the mean power of the current time-domain block :math:`s^{(i)}[n]`,
+    * :math:`\mathrm{PAPR_{max}}` is the target maximum PAPR in dB,
+    * :math:`w` is the filtering weight applied in the frequency domain.
+
+    The output is the time-domain signal
+    :math:`y[n] = \mathrm{IDFT}\{X^{(N_{it})}\}[n]`.
+
+    Axes: *axis -1* -- each block of the Block layout ``(..., T, F)`` is
+    processed along the block content axis.
+
+    Parameters
     ----------
     PAPR_max_dB : float
-        Target maximum PAPR in decibels (dB).
+        Target maximum PAPR :math:`\mathrm{PAPR_{max}}` in decibels (dB).
     filter_weight : float
-        Weighting factor applied during the filtering step.
-    N_it : int
-        Number of iterations for the clipping and filtering process. Default is 16.
-    shift : bool
-        Whether to apply an inverse FFT shift to the processed signal. Default is False.
-    norm : str
-        Normalization mode for FFT and IFFT operations. Default is "ortho".
-    name : str
+        Weighting factor :math:`w` applied during the filtering step.
+    N_it : int, optional, keyword-only
+        Number of iterations :math:`N_{it}` for the clipping and filtering process. Default is 16.
+    shift : bool, optional, keyword-only
+        Whether to apply an inverse FFT shift before the final IFFT. Default is False.
+    norm : str, optional, keyword-only
+        Normalization mode for the final IFFT. Default is "ortho".
+    name : str, optional, keyword-only
         Name of the processor. Default is "ICT".
 
-    Reference
-    ---------
-    * [1] Wang, Y-C., and Z-Q. Luo. "Optimized iterative clipping and filtering for PAPR reduction of OFDM signals."
-      IEEE Transactions on communications 59.1 (2010): 33-37.
+    References
+    ----------
+    Y.-C. Wang, Z.-Q. Luo, "Optimized iterative clipping and filtering for
+    PAPR reduction of OFDM signals", IEEE Transactions on Communications,
+    vol. 59, no. 1, pp. 33-37, 2011.
+
+    Examples
+    --------
+    >>> X = np.array([[1, 1, -1, 1, 1, -1, -1, 1]], dtype=complex)
+    >>> reductor = IctPaprReductor(PAPR_max_dB=2.0, filter_weight=1.0)
+    >>> y = reductor(X)
+    >>> print(round(float(compute_PAPR(y[0], unit="dB")), 2))
+    2.0
     """
     PAPR_max_dB: float
     filter_weight: float
@@ -111,27 +180,64 @@ class IctPaprReductor(Processor):
 
 @dataclass(slots=True)
 class PtsPaprReductor(Processor):
-    """
+    r"""
     Implements the Partial Transmit Sequences (PTS) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
 
-    The PtsPaprReductor class reduces the PAPR of an OFDM signal.
-    It employs the PTS method, which involves dividing the signal into sub-blocks, applying different phase factors to each block,
-    and then selecting the combination of phase factors that minimizes the PAPR.
+    Signal Model
+    ------------
+    Each frequency-domain block :math:`x[k]` of length :math:`N` is
+    partitioned into :math:`M` disjoint adjacent sub-blocks
+    :math:`x_m[k]` (each keeping its :math:`N/M` contiguous subcarriers
+    and zeros elsewhere). The transmitted time-domain block is the
+    phase-rotated combination:
 
-    Attributes
+    .. math::
+        y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{x_m\}[n]
+
+    where the phase factors are selected by exhaustive search over the
+    phase alphabet :math:`\mathcal{B}` to minimize the PAPR:
+
+    .. math::
+        (\hat{b}_1, \dots, \hat{b}_M) =
+        \arg\min_{b_m \in \mathcal{B}}
+        \mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{x_m\}\right)
+
+    and where:
+
+    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,
+    * :math:`M` is the number of sub-blocks,
+    * :math:`\mathcal{B}` is the phase factor alphabet,
+    * :math:`y[n]` is the time-domain output block.
+
+    Axes: *declared axis* -- expects the Block layout ``(T, F)``; one
+    phase combination is optimized per block and the IDFT runs along the
+    block content axis.
+
+    Parameters
     ----------
     phase_alphabet : list
-        List of phase factors to be used in the PTS method.
-    N_sub : int
-        Number of sub-blocks the OFDM signal is divided into.
-    name : str
+        Phase factor alphabet :math:`\mathcal{B}` used in the PTS method
+        (e.g. ``[1, -1]``).
+    N_sub : int, optional, keyword-only
+        Number of sub-blocks :math:`M` the OFDM signal is divided into. Default is 16.
+    name : str, optional, keyword-only
         Name of the processor. Default is "PTS".
 
-    Reference
-    ---------
-    * [1] L. J. Cimini and N. R. Sollenberger, "Peak-to-average power ratio reduction of an OFDM signal using partial transmit sequences,"
-      1999 IEEE International Conference on Communications (Cat. No. 99CH36311), Vancouver, BC, Canada, 1999, pp. 511-515 vol.1,
-      doi: 10.1109/ICC.1999.767992.
+    References
+    ----------
+    L. J. Cimini, N. R. Sollenberger, "Peak-to-average power ratio
+    reduction of an OFDM signal using partial transmit sequences", 1999
+    IEEE International Conference on Communications, Vancouver, BC,
+    Canada, 1999, pp. 511-515 vol. 1, doi: 10.1109/ICC.1999.767992.
+
+    Examples
+    --------
+    >>> reductor = PtsPaprReductor([1, -1], N_sub=2)
+    >>> Y = reductor(np.ones((1, 4), dtype=complex))
+    >>> print(np.round(Y, 3))
+    [[0.+0.j 1.+1.j 0.+0.j 1.-1.j]]
+    >>> print(round(float(compute_PAPR(Y[0], unit="dB")), 2))
+    3.01
     """
     phase_alphabet: Optional[list]
     N_sub: int = field(default=16, kw_only=True)

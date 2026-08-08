@@ -396,7 +396,8 @@ class WelchScope(Processor):
 
     """
 
-    def __init__(self, fs=1, nperseg=None, norm=True, dB= True, xlim=None, ylim=None, num=None, title="PSD_scope", name="spectrum_scope"):
+    def __init__(self, fs=1, nperseg=None, norm=True, dB=True, xlim=None, ylim=None, num=None, title="PSD_scope", name="spectrum_scope"):
+        super().__init__()  # initialize the Processor base fields (debug, Y)
         self.num = num
         self.fs = fs
         self.norm = norm

@@ -8,39 +8,62 @@ from comnumpy.core.processors import WeightAmplifier
 @dataclass(slots=True)
 class FrequencyDomainEqualizer(WeightAmplifier):
     r"""
-    A frequency domain equalizer that applies weights to compensate for channel effects in the frequency domain.
+    One-tap zero-forcing equalizer that compensates the channel per subcarrier in the frequency domain.
 
-    This class extends the `WeightAmplifier` to operate in the frequency domain, using the Fast Fourier Transform (FFT) to compute weights
-    that equalize the input signal. The equalizer can optionally shift the zero-frequency component to the center of the spectrum.
+    This class extends the `WeightAmplifier`: the weights are computed once
+    from the channel impulse response, then each subcarrier is divided by
+    the corresponding bin of the channel frequency response.
 
     Signal Model
     ------------
-
-    Given a channel impulse response :math:`h[l]`, the Frequency Domain Equalizer applies the following weight amplifier
+    Given a channel impulse response :math:`h[l]`, the Frequency Domain
+    Equalizer applies the following weight amplifier:
 
     .. math::
 
-        y[n] = \left(\frac{1}{H[n]}\right) \cdot x[n]
+        y[k] = \frac{x[k]}{H[k]}, \qquad
+        H[k] = \sum_{l=0}^{L-1} h[l] \, e^{-i 2 \pi k l / N}
 
-    * :math:`H[n]` corresponds to the inverse of the :math:`n`-th bin of the channel's Discrete Fourier Transform (DFT).
+    where:
 
-    Attributes
+    * :math:`x[k]` is the input value at subcarrier :math:`k`,
+    * :math:`h[l]` is the channel impulse response of length :math:`L`,
+    * :math:`H[k]` is the :math:`N`-point DFT of :math:`h[l]`, with :math:`N` the number of subcarriers (taken from the input shape),
+    * :math:`y[k]` is the equalized output at subcarrier :math:`k`.
+
+    Axes: *declared axis* -- the weights :math:`1/H[k]` are computed and
+    applied along ``axis`` (default -1, the block content axis of the
+    Block layout ``(..., T, F)``).
+
+    Parameters
     ----------
-    h : np.ndarray, optional
-        The impulse response of the channel to be equalized. Default is None.
-    shift : bool, optional
-        If True, applies a frequency shift to center the zero-frequency component. Default is True.
-    axis : int, optional
-        The axis along which to compute the FFT and apply the weights. Default is -1,
-        the block content axis of the Block layout ``(..., T, F)``.
-    name : str
-        Name of the frequency domain equalizer instance.
+    h : np.ndarray
+        The impulse response :math:`h[l]` of the channel to be equalized.
+        Required (a ValueError is raised when it is missing).
+    axis : int, optional, keyword-only
+        The axis along which to compute the DFT and apply the weights.
+        Default is -1.
+    shift : bool, optional, keyword-only
+        If True, applies an fftshift to the weights, for inputs whose
+        zero-frequency subcarrier is centered. Default is False.
+    norm : {"ortho", "backward", "forward"}, optional, keyword-only
+        FFT normalization mode. Default is "ortho".
+    name : str, optional, keyword-only
+        Name of the equalizer instance. Default is
+        ``"frequency domain equalizer"``.
 
-    Example
-    -------
-    >>> equalizer = FrequencyDomainEqualizer(h=np.array([1, 0.5, 0.2]))
-    >>> X = np.random.randn(4, 3, 2)  # Example input tensor
-    >>> Y = equalizer(X)
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 2.
+
+    Examples
+    --------
+    >>> h = np.array([1.0, 0.5])
+    >>> equalizer = FrequencyDomainEqualizer(h=h)
+    >>> X = np.fft.fft(h, 4)  # the channel frequency response itself
+    >>> print(np.round(equalizer(X), 3))
+    [1.+0.j 1.+0.j 1.+0.j 1.+0.j]
     """
     h: Optional[np.ndarray] = None
     axis: int = field(default=-1, kw_only=True)
