@@ -22,34 +22,35 @@ class TestCoreProcessor(unittest.TestCase):
 
 
     def test_autoconcatenator(self):
-        # test 1
-        input_copy_mask = np.array([True, False, True])
-        output_original_mask = np.array([True, True, True, False, False])
-        output_copy_mask = np.array([False, False, False, True, True])
+        # test 1: 1D input, default axis -1
+        concatenator = AutoConcatenator(
+            input_copy_mask=np.array([True, False, True]),
+            output_original_mask=np.array([True, True, True, False, False]),
+            output_copy_mask=np.array([False, False, False, True, True]))
         X = np.array([1, 2, 3])
-        concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
         Y = concatenator(X)
         Y_ref = np.array([1, 2, 3, 1, 3])
         np.testing.assert_allclose(Y, Y_ref, atol=self.atol)
 
-        # test 2
-        input_copy_mask = np.array([True, False])
-        output_original_mask = np.array([True, True, False, False, False])
-        output_copy_mask = np.array([False, False, False, True, False])
+        # test 2: 2D input, declared axis 0
+        concatenator = AutoConcatenator(
+            input_copy_mask=np.array([True, False]),
+            output_original_mask=np.array([True, True, False, False, False]),
+            output_copy_mask=np.array([False, False, False, True, False]),
+            axis=0)
         X = np.array([[1, 2, 3], [4, 5, 6]])
-        concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
         Y = concatenator(X)
         Y_ref = np.array([[1, 2, 3], [4, 5, 6], [0, 0, 0], [1, 2, 3], [0, 0, 0]])
         np.testing.assert_allclose(Y, Y_ref, atol=self.atol)
 
-        # test 3
-        input_copy_mask = np.array([False, True, True])
-        output_original_mask = np.array([False, True, True, True, False])
-        output_copy_mask = np.array([True, False, False, False, True])
+        # test 3: 2D input, default axis -1 (block content axis)
+        concatenator = AutoConcatenator(
+            input_copy_mask=np.array([False, True, True]),
+            output_original_mask=np.array([False, True, True, True, False]),
+            output_copy_mask=np.array([True, False, False, False, True]))
         X = np.array([[1, 2, 3], [4, 5, 6]])
-        concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask, axis=-1)
         Y = concatenator(X)
-        Y_ref = np.array([[2, 1, 2, 3, 3],[5, 4, 5, 6, 6]])
+        Y_ref = np.array([[2, 1, 2, 3, 3], [5, 4, 5, 6, 6]])
         np.testing.assert_allclose(Y, Y_ref, atol=self.atol)
 
     def test_extractor(self):

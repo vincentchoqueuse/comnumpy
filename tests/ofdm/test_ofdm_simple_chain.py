@@ -49,7 +49,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
             CyclicPrefixer(self.N_cp),
             Parallel2Serial(),
             FIRChannel(self.h),
-            AWGN(value=self.sigma2),
+            AWGN(sigma2=self.sigma2),
             Serial2Parallel(len(self.carrier_type) + self.N_cp),
             CyclicPrefixRemover(self.N_cp),
             FFTProcessor(),
@@ -71,7 +71,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
                 pilots=self.pilots
             ),
             FIRChannel(self.h),
-            AWGN(value=self.sigma2),
+            AWGN(sigma2=self.sigma2),
             OFDMReceiver(
                 N_carrier_data=self.N_carrier_data,
                 N_cp=self.N_cp,

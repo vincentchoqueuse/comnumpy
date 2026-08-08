@@ -21,7 +21,7 @@ chain = Sequential([
     SymbolGenerator(M),
     Recorder(name="recorder_tx"),
     SymbolMapper(alphabet),
-    AWGN(unit="snr_dB", name="awgn_channel"),
+    AWGN(snr_dB=0, name="awgn_channel"),
     SymbolDemapper(alphabet),
     ])
 
@@ -31,7 +31,7 @@ ser_array = np.zeros(len(snr_dB_list))
 for index, snr_dB in enumerate(tqdm(snr_dB_list)):
 
     # change simulation parameters
-    chain["awgn_channel"].value = snr_dB
+    chain["awgn_channel"].snr_dB = snr_dB
 
     # run chain
     y = chain(N)

@@ -28,7 +28,7 @@ chain = Sequential([
     SymbolMapper(alphabet),
     Upsampler(oversampling),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
-    AWGN(value=sigma2, name="awgn_channel"),
+    AWGN(sigma2=sigma2, name="awgn_channel"),
     Scope(num=1, scope_type="spectrum", title="received signal"),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     Downsampler(oversampling, phase=2*oversampling*N_h),

@@ -3,12 +3,11 @@ import unittest
 import numpy as np
 from src.comnumpy.core import Sequential, Recorder
 from src.comnumpy.core.generators import SymbolGenerator
-from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
+from src.comnumpy.core.mappers import SymbolMapper
 from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.channels import AWGN, FIRChannel
-from src.comnumpy.core.compensators import LinearEqualizer
-from src.comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
-from src.comnumpy.mimo.channels import FlatMIMOChannel, AWGN
+from src.comnumpy.core.channels import AWGN
+from src.comnumpy.core.metrics import compute_ser
+from src.comnumpy.mimo.channels import FlatMIMOChannel
 from src.comnumpy.mimo.utils import rayleigh_channel
 from src.comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
 
@@ -21,17 +20,17 @@ class TestMIMOChannelChain(unittest.TestCase):
         self.M = 4
         self.sigma2 = 10**-3
         self.N = 10
-        self.alphabet = get_alphabet("PSK", self.M)    
-        self.H = rayleigh_channel(self.N_r, self.N_t)    
+        self.alphabet = get_alphabet("PSK", self.M)
+        self.H = rayleigh_channel(self.N_r, self.N_t)
 
     def _compute_detector_ser(self, detector):
-        
+
         chain = Sequential([
             SymbolGenerator(self.M),
             Recorder(name="recorder_tx"),
             SymbolMapper(self.alphabet),
             FlatMIMOChannel(self.H),
-            AWGN(self.sigma2),
+            AWGN(sigma2=self.sigma2),
             detector
             ])
 

@@ -1,55 +1,11 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Literal, Callable
 from scipy.fft import fft, ifft, fftshift, ifftshift
-from comnumpy.core import Sequential, Processor
-from comnumpy.core.processors import Serial2Parallel, Parallel2Serial, AutoConcatenator
+from comnumpy.core import Processor
+from comnumpy.core.processors import AutoConcatenator
 from .utils import plot_carrier_allocation
 
-
-
-@dataclass
-class OFDMTransmitter(Processor):
-    """
-    OFDM Transmitter for converting digital data into an OFDM signal.
-
-    Signal Model
-    ------------
-    The OFDM Transmitter processes input data through a series of steps:
-
-    1. Serial to Parallel Conversion: Converts the serial data stream into parallel sub-streams.
-    2. Carrier Allocation: Allocates data to specific subcarriers.
-    3. Inverse Fast Fourier Transform (IFFT): Transforms the frequency-domain data into time-domain signals.
-    4. Cyclic Prefixing: Adds a cyclic prefix to combat multipath interference.
-    5. Parallel to Serial Conversion: Converts the parallel streams back into a serial data stream.
-
-    Attributes
-    ----------
-    nb_carrier_data : int
-        Number of data carriers used in OFDM.
-    carrier_type : np.ndarray
-        Array specifying the carrier type.
-    nb_cp : int
-        Number of samples in the Cyclic Prefix (CP).
-    chain : Sequential
-        Processing chain encapsulating the sequence of OFDM transmission steps.
-    """
-    nb_carrier_data: int
-    carrier_type: np.ndarray
-    nb_cp: int
-    chain: Sequential = None
-
-    def __post_init__(self):
-        self.chain = Sequential([
-            Serial2Parallel(self.nb_carrier_data),
-            CarrierAllocator(self.carrier_type),
-            IFFTProcessor(),
-            CyclicPrefixer(self.nb_cp),
-            Parallel2Serial()
-        ])
-
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        return self.chain(x)
 
 
 @dataclass
@@ -80,13 +36,13 @@ class CyclicPrefixer(AutoConcatenator):
     * :math:`\mathbf{x}[n]` is the input signal of size :math:`N`,
     * :math:`\mathbf{y}[n]` is the output signal of size :math:`N+N_{cp}` after adding the cyclic prefix.
 
+    Axes: *axis -1* -- the prefix is prepended along the block content
+    axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
+
     Attributes
     ----------
     N_cp : int
         Length of the cyclic prefix to be added. Must be a non-negative integer.
-    axis : int, optional
-        Axis along which to add the cyclic prefix. Default is the first dimension
-
 
     Example 1
     ---------
@@ -99,18 +55,14 @@ class CyclicPrefixer(AutoConcatenator):
     Example 2
     ---------
 
-    >>> X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
+    >>> X = np.array([[1, 2, 3], [4, 5, 6]])
     >>> prefixer = CyclicPrefixer(N_cp=2)
     >>> print(prefixer(X))
-    [[2 5 8]
-     [3 6 9]
-     [1 4 7]
-     [2 5 8]
-     [3 6 9]]
+    [[2 3 1 2 3]
+     [5 6 4 5 6]]
     """
     N_cp: int = 10
-    axis: int = 0
-    name: str = "cp adder"
+    name: str = field(default="cp adder", kw_only=True)
 
     def __post_init__(self):
         if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
@@ -118,7 +70,7 @@ class CyclicPrefixer(AutoConcatenator):
 
     def prepare(self, X: np.ndarray):
         """Initialize the mask based on the signal shape"""
-        input_length = X.shape[self.axis]
+        input_length = X.shape[-1]
         output_mask_length = input_length + self.N_cp
 
         input_copy_mask = np.zeros(input_length)
@@ -160,29 +112,24 @@ class CyclicPrefixRemover(Processor):
     * :math:`\mathbf{x}[n]` is the input signal of size :math:`N+N_{cp}` that contains the cyclic prefix,
     * :math:`\mathbf{y}[n]` is the output signal of size :math:`N` after removing the cyclic prefix.
 
+    Axes: *axis -1* -- the prefix is removed along the block content
+    axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
+
     Attributes
     ----------
     N_cp : int
         Length of the cyclic prefix to be removed. Must be a non-negative integer.
-    axis : int, optional
-        Axis along which to remove the cyclic prefix. Default is the first dimension
     """
     N_cp: int
-    axis: int = 0
-    name: str = "cp remover"
+    name: str = field(default="cp remover", kw_only=True)
 
     def __post_init__(self):
         if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
             raise ValueError("N_cp must be a positive integer.")
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        # Define slices for removing the cyclic prefix
-        slices = [slice(None)] * X.ndim
-        data_slice = slices.copy()
-        data_slice[self.axis] = slice(self.N_cp, None)
-
-        # Remove the cyclic prefix
-        return X[tuple(data_slice)]
+        # Remove the cyclic prefix along the block content axis
+        return X[..., self.N_cp:]
 
 
 @dataclass
@@ -206,13 +153,14 @@ class HermitianPrefixer(AutoConcatenator):
         x^*[n-N+2)] &\text{for }n=N+2, \cdots, 2N+1.
         \end{array}\right.
 
+    Axes: *axis -1* -- the Hermitian extension is built along the block
+    content axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).
+
     Attributes
     ----------
-    axis : int
-        The axis along which to apply the Hermitian operation. Default is 0.
-    shift : bool
+    shift : bool, keyword-only
         Whether to apply a shift to the masks. Default is False.
-    name : str
+    name : str, keyword-only
         The name of the prefixer. Default is "hermitian prefixer".
 
     Example 1
@@ -227,21 +175,14 @@ class HermitianPrefixer(AutoConcatenator):
     ---------
 
     >>> x = np.arange(1, 7) + 1j*np.arange(1, 7)
-    >>> X = np.reshape(x, (3, 2), order="F")
+    >>> X = np.reshape(x, (2, 3))
     >>> prefixer = HermitianPrefixer(shift=True)
     >>> print(prefixer(X))
-    [[0.+0.j 0.+0.j]
-     [3.-3.j 6.-6.j]
-     [2.-2.j 5.-5.j]
-     [1.-1.j 4.-4.j]
-     [0.+0.j 0.+0.j]
-     [1.+1.j 4.+4.j]
-     [2.+2.j 5.+5.j]
-     [3.+3.j 6.+6.j]]
+    [[0.+0.j 3.-3.j 2.-2.j 1.-1.j 0.+0.j 1.+1.j 2.+2.j 3.+3.j]
+     [0.+0.j 6.-6.j 5.-5.j 4.-4.j 0.+0.j 4.+4.j 5.+5.j 6.+6.j]]
     """
-    axis: int = 0
-    shift: bool = False
-    name: str = "hermitian prefixer"
+    shift: bool = field(default=False, kw_only=True)
+    name: str = field(default="hermitian prefixer", kw_only=True)
 
     def __post_init__(self):
         self.input_copy_mask = None
@@ -249,7 +190,7 @@ class HermitianPrefixer(AutoConcatenator):
         self.output_copy_mask = None
 
     def prepare(self, X: np.ndarray):
-        input_length = X.shape[self.axis]
+        input_length = X.shape[-1]
         output_mask_length = 2*(input_length + 1)  # add 0 for the DC and nyquist componetns.
 
         input_copy_mask = np.ones(input_length)
@@ -279,7 +220,7 @@ class HermitianPrefixer(AutoConcatenator):
         self.output_copy_mask = output_copy_mask.astype(bool)
 
     def process_copy(self, X: np.ndarray):
-        return np.conjugate(np.flip(X, axis=self.axis))
+        return np.conjugate(np.flip(X, axis=-1))
 
 
 
@@ -309,10 +250,11 @@ class FFTProcessor(Processor):
     * :math:`\mathbf{x}[n]` is the input vector of time-domain samples,
     * :math:`\mathbf{y}[n]` is the output vector of frequency-domain samples.
 
+    Axes: *axis -1* -- the FFT changes the meaning of axis -1
+    (time -> frequency), never its position (see CONVENTIONS.md).
+
     Attributes
     ----------
-    axis : int, optional
-        Axis along which to perform the FFT. Default is the first axis
     shift : bool, optional
         If True, applies the FFT shift which swaps the low and high frequency components.
         Default is False.
@@ -320,15 +262,14 @@ class FFTProcessor(Processor):
         Normalization mode for FFT. "ortho" means orthonormal FFT is computed.
         None means no normalization is applied. Default is "ortho".
     """
-    axis: int = 0
     shift: bool = False
     norm: Literal["ortho", "backward", "forward"] = "ortho"
     name: str = "fft"
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        Y = fft(X, norm=self.norm, axis=self.axis)
+        Y = fft(X, norm=self.norm, axis=-1)
         if self.shift:
-            Y = fftshift(Y, axes=self.axis)
+            Y = fftshift(Y, axes=-1)
         return Y
 
 
@@ -356,26 +297,26 @@ class IFFTProcessor(Processor):
     * :math:`\mathbf{x}[n]` is the input vector of frequency-domain samples,
     * :math:`\mathbf{y}[n]` is the output vector of time-domain samples.
 
+    Axes: *axis -1* -- the IFFT changes the meaning of axis -1
+    (frequency -> time), never its position (see CONVENTIONS.md).
+
     Attributes
     ----------
-    axis : int, optional
-        Axis along which to perform the FFT. Default is the first axis
     shift : bool, optional
         If True, applies the IFFT shift which swaps the low and high frequency components.
-        Default is True.
+        Default is False.
     norm : {"ortho", "backward", "forward"}, optional
         Normalization mode for IFFT. "ortho" means orthonormal FFT is computed.
         None means no normalization is applied. Default is "ortho".
     """
-    axis: int = 0
     shift: bool = False
     norm: Literal["ortho", "backward", "forward"] = "ortho"
     name: str = "ifft"
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.shift:
-            X = ifftshift(X, axes=self.axis)
-        Y = ifft(X, norm=self.norm, axis=self.axis)
+            X = ifftshift(X, axes=-1)
+        Y = ifft(X, norm=self.norm, axis=-1)
         return Y
 
 
@@ -414,7 +355,8 @@ class CarrierAllocator(Processor):
     pilots : np.ndarray, optional
         Array of pilot values to be inserted into the subcarriers. Default is an empty array.
     axis : int, optional
-        Axis along which to allocate subcarriers. Default is the first dimension.
+        Axis along which to allocate subcarriers. Default is -1, the
+        block content axis of the Block layout ``(..., T, F)``.
 
     Example 1
     ---------
@@ -428,7 +370,7 @@ class CarrierAllocator(Processor):
     Example 2
     ---------
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
-    >>> allocator = CarrierAllocator(carrier_type=carrier_type, axis=-1)
+    >>> allocator = CarrierAllocator(carrier_type=carrier_type)
     >>> X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
     >>> print(allocator(X))
     [[1 0 0 4 7]
@@ -437,8 +379,8 @@ class CarrierAllocator(Processor):
     """
     carrier_type: np.ndarray
     pilots: Optional[np.ndarray] = None
-    axis: int = 0
-    name: str = "carrier allocator"
+    axis: int = -1
+    name: str = field(default="carrier allocator", kw_only=True)
 
     def __post_init__(self):
         self.initialize_masks()
@@ -528,7 +470,8 @@ class CarrierExtractor(Processor):
     pilot_recorder : callable, optional
         Function to record the content associated to pilot values if required. Default is None.
     axis : int, optional
-        Axis along which to extract subcarriers. Default is the first dimension
+        Axis along which to extract subcarriers. Default is -1, the
+        block content axis of the Block layout ``(..., T, F)``.
 
     Example 1
     ---------
@@ -546,8 +489,8 @@ class CarrierExtractor(Processor):
     Example 2
     ---------
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
-    >>> allocator = CarrierAllocator(carrier_type=carrier_type, axis=-1)
-    >>> extractor = CarrierExtractor(carrier_type=carrier_type, axis=-1)
+    >>> allocator = CarrierAllocator(carrier_type=carrier_type)
+    >>> extractor = CarrierExtractor(carrier_type=carrier_type)
     >>> X = np.array([[1, 4, 7], [2, 5, 8]])
     >>> Z = allocator(X)
     >>> print(Z)
@@ -559,8 +502,8 @@ class CarrierExtractor(Processor):
     """
     carrier_type: np.ndarray
     pilot_recorder: Optional[Callable] = None
-    axis: int = 0
-    name: str = "carrier extractor"
+    axis: int = -1
+    name: str = field(default="carrier extractor", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         # Create a slicing object to index along the specified axis

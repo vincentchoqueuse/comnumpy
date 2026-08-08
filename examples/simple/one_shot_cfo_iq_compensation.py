@@ -29,7 +29,7 @@ chain = Sequential([
             signal_recorder_tx,
             CFO(0.001),
             IQImbalance(iq_params[0], iq_params[1]),
-            AWGN(value=0.005),
+            AWGN(sigma2=0.005),
             Scope(num=1, scope_type="iq", title="received signal"),
             BlindIQCompensator(),
             Scope(num=2, scope_type="iq", title="after GSOP"),

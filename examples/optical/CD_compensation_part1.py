@@ -50,7 +50,7 @@ chain = Sequential([
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             ChromaticDispersion(z, fs=fs),
-            AWGN(value=0, unit="sigma2", name="noise")
+            AWGN(sigma2=0, name="noise")
             ])
 
 full_compensator1 = Sequential([

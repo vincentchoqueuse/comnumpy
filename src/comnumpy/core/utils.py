@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import os.path as path
 import numpy.linalg as LA
 
@@ -60,6 +59,7 @@ def plot_alphabet(alphabet, num=None, label="alphabet", title="Constellation"):
     title : str, optional
         Title of the plot. Default is ``"Constellation"``.
     """
+    import matplotlib.pyplot as plt  # local import (D36)
     plt.figure(num)
     plt.plot(np.real(alphabet), np.imag(alphabet), "o", label=label)
     plt.xlabel("real part")
@@ -163,57 +163,77 @@ def soft_projector(z: np.array, alphabet: np.array, sigma2: float, kernel: bool 
     return num / den
 
 
-def compute_sigma2(value, input_unit, sigma2s=1):
+def esn0_to_snr_dB(esn0_dB, oversampling=1):
     r"""
-    Compute the noise variance :math:`\sigma^2` based on the input value and its unit.
+    Convert a symbol-energy-to-noise ratio :math:`E_s/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
+
+    At one sample per symbol the two quantities coincide; with an
+    oversampling factor :math:`L` the noise bandwidth is :math:`L` times
+    larger, hence
+
+    .. math::
+
+        \mathrm{SNR_{dB}} = E_s/N_0\big|_{dB} - 10\log_{10}(L)
 
     Parameters
     ----------
-    value : float
-        The input value representing the signal-to-noise ratio (SNR) or noise variance.
-    input_unit : str
-        The unit of the input value. Supported units are:
-
-        - ``"sigma2"``: Natural noise variance :math:`\sigma^2`.
-        - ``"snr"``: Natural SNR :math:`\sigma_s^2 / \sigma_n^2`.
-        - ``"snr_dB"``: SNR in decibels (dB).
-        - ``"snr_dBm"``: SNR in decibels-milliwatts (dBm).
-    sigma2s : float, optional
-        The signal variance :math:`\sigma_s^2`. Default is 1.
+    esn0_dB : float
+        Symbol energy to noise spectral density ratio, in dB.
+    oversampling : int, optional
+        Number of samples per symbol :math:`L`. Default is 1.
 
     Returns
     -------
     float
-        The computed noise variance :math:`\sigma^2`.
-
-    Raises
-    ------
-    ValueError
-        If ``input_unit`` is not one of the supported units.
+        The SNR in dB, relative to the measured signal power.
 
     Examples
     --------
-    >>> compute_sigma2(10, "snr_dB")
-    0.1
-    >>> compute_sigma2(2, "sigma2")
-    2
+    >>> print(float(esn0_to_snr_dB(10)))
+    10.0
+    >>> print(round(float(esn0_to_snr_dB(10, oversampling=4)), 4))
+    3.9794
     """
-    match input_unit:
-        case "sigma2":
-            output = value
-        case "snr":
-            # SNR : SNR = sigma_s^2 / sigma_n^2
-            output = sigma2s / value
-        case "snr_dB":
-            # SNRdB : SNRdB = 10log10(sigma_s^2 / sigma_n^2) -> 10^(SNRdB/10) = sigma_s^2 / sigma_n^2
-            output = sigma2s / (10 ** (value / 10))
-        case "snr_dBm":
-            # SNRdBm : SNRdBm = 10log10(sigma_s^2 / sigma_n^2) - 30 -> 10^((SNRdBm + 30)/10) = sigma_s^2 / sigma_n^2
-            output = sigma2s / (10 ** ((value - 30) / 10))
-        case _:
-            raise ValueError(f"Unknown method: {input_unit}")
+    return esn0_dB - 10 * np.log10(oversampling)
 
-    return output
+
+def ebn0_to_snr_dB(ebn0_dB, bits_per_symbol, code_rate=1.0, oversampling=1):
+    r"""
+    Convert a bit-energy-to-noise ratio :math:`E_b/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
+
+    The conversion requires chain-level knowledge (bits per symbol
+    :math:`k`, code rate :math:`R`, oversampling :math:`L`), which is why
+    it lives here and not inside the ``AWGN`` block (decision D41):
+
+    .. math::
+
+        \mathrm{SNR_{dB}} = E_b/N_0\big|_{dB} + 10\log_{10}(k R) - 10\log_{10}(L)
+
+    Parameters
+    ----------
+    ebn0_dB : float
+        Bit energy to noise spectral density ratio, in dB.
+    bits_per_symbol : int
+        Number of bits carried by one constellation symbol :math:`k`
+        (e.g. 4 for 16-QAM).
+    code_rate : float, optional
+        FEC code rate :math:`R \in (0, 1]`. Default is 1.0 (uncoded).
+    oversampling : int, optional
+        Number of samples per symbol :math:`L`. Default is 1.
+
+    Returns
+    -------
+    float
+        The SNR in dB, relative to the measured signal power.
+
+    Examples
+    --------
+    >>> print(round(float(ebn0_to_snr_dB(10, bits_per_symbol=4)), 4))
+    16.0206
+    >>> print(round(float(ebn0_to_snr_dB(10, bits_per_symbol=2, code_rate=0.5)), 4))
+    10.0
+    """
+    return ebn0_dB + 10 * np.log10(bits_per_symbol * code_rate) - 10 * np.log10(oversampling)
 
 
 def zf_estimator(Y, H):

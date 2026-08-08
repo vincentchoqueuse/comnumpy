@@ -22,7 +22,7 @@ class TestAWGNChainPerformance(unittest.TestCase):
             SymbolGenerator(M),
             Recorder(name="recorder_tx"),
             SymbolMapper(alphabet),
-            AWGN(SNR_dB, unit="snr_dB"),
+            AWGN(snr_dB=SNR_dB),
             SymbolDemapper(alphabet),
             ])
 

@@ -28,7 +28,7 @@ chain = Sequential([SymbolGenerator(M),
                     Recorder(name="data_tx"),
                     SymbolMapper(alphabet),
                     FlatMIMOChannel(H, name="channel"),
-                    AWGN(sigma2, name="noise")
+                    AWGN(sigma2=sigma2, name="noise")
                     ])
 Y = chain((N_t, N))
 
@@ -84,7 +84,7 @@ ser_data = np.zeros((len(snr_dB_list), len(detector_list)))
 
 for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     sigma2 = N_t * (10**(-snr_dB/10))
-    chain["noise"].value = sigma2
+    chain["noise"].sigma2 = sigma2
 
     # update sigma2 for the MMSE and OSIC detector
     detector_list[1].sigma2 = sigma2

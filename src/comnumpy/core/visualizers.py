@@ -122,7 +122,6 @@ class TimeScope(Processor):
     fig_indices: Tuple[int, ...] = (0,)
     slices: Tuple[slice, ...] = (slice(None),)
     marker: str = "-"
-    is_mimo: bool = True
     axis: int = 0
     title: str = "Time Scope"
     name: str = "time_scope"
@@ -198,7 +197,6 @@ class SpectrumScope(Processor):
     shift: bool = False
     fig_indices: Tuple[int, ...] = (0,)
     slices: Tuple[slice, ...] = (slice(None),)
-    is_mimo: bool = False
     axis: int = 0
     title: str = "Spectrum Scope"
     name: str = "SpectrumScope"
@@ -270,7 +268,6 @@ class IQScope(Processor):
     title: str = "IQ Scope"
     fig_indices: Tuple[int, ...] = (0,)
     slices: Tuple[slice, ...] = (slice(None),)
-    is_mimo: bool = True
     axis: int = 0
     name: str = "IQScope"
 
@@ -314,7 +311,6 @@ class KDEScope(Processor):
     bw_adjust: float = 1.0
     thresh: float = 0.05
     num: Optional[int] = None
-    is_mimo: bool = False
     name: str = "KDE Scope"
 
     def forward(self, x: np.ndarray) -> np.ndarray:

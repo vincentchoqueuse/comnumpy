@@ -30,23 +30,25 @@ class FFTMonitor(Processor):
     name: str = "Ifft_monitor"
 
     def get_reduction(self, X: np.ndarray) -> Union[np.ndarray, float]:
+        # Block layout (..., T, F): average over the block axis T
         amplitudes = np.abs(X)
         if self.reduction is None:
             return amplitudes  # superimpose all
         elif self.reduction == "mean":
-            return np.mean(amplitudes, axis=1)
+            return np.mean(amplitudes, axis=-2)
         else:
             raise ValueError("Invalid reduction option. Choose None or 'mean'.")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         values_to_plot = self.get_reduction(x)
-        subcarrier_indices = np.arange(-x.shape[0] // 2, x.shape[0] // 2)
+        N_sc = x.shape[-1]
+        subcarrier_indices = np.arange(-N_sc // 2, N_sc // 2)
 
         plt.figure(figsize=(8, 6))
 
         if self.reduction is None:
-            for col in range(values_to_plot.shape[1]):
-                plt.stem(subcarrier_indices, values_to_plot[:, col])
+            for row in range(values_to_plot.shape[-2]):
+                plt.stem(subcarrier_indices, values_to_plot[row, :])
         else:
             plt.stem(subcarrier_indices, values_to_plot)
 

@@ -1,1 +1,31 @@
-from .core import Processor, Sequential, Recorder, Scope, SymbolGenerator, SymbolMapper, SymbolDemapper, AWGN, compute_ser, get_alphabet
+"""comnumpy: a Python library for communication system prototyping and simulation.
+
+The root package exposes what the canonical example needs (decision D36);
+everything else lives in its subpackage (``comnumpy.core``, ``comnumpy.ofdm``,
+``comnumpy.mimo``, ``comnumpy.optical``).
+"""
+
+__version__ = "1.0.0.dev0"
+
+from .exceptions import ComnumpyError, ShapeError, NotFittedError
+from .core import (
+    Processor, Sequential, Recorder,
+    SymbolGenerator, SymbolMapper, SymbolDemapper,
+    AWGN, compute_ser, get_alphabet, ebn0_to_snr_dB, esn0_to_snr_dB,
+)
+
+__all__ = [
+    "ComnumpyError", "ShapeError", "NotFittedError",
+    "Processor", "Sequential", "Recorder",
+    "SymbolGenerator", "SymbolMapper", "SymbolDemapper",
+    "AWGN", "compute_ser", "get_alphabet", "ebn0_to_snr_dB", "esn0_to_snr_dB",
+    "Scope",
+]
+
+
+def __getattr__(name):
+    # Scope pulls matplotlib; keep `import comnumpy` matplotlib-free (D36)
+    if name == "Scope":
+        from .core import Scope
+        return Scope
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

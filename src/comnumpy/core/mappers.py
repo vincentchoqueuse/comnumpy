@@ -50,7 +50,6 @@ class SymbolMapper(Processor):
     [-0.70710678+0.70710678j  0.70710678-0.70710678j  0.70710678+0.70710678j -0.70710678-0.70710678j -0.70710678-0.70710678j]
     """
     alphabet: np.ndarray
-    is_mimo: bool = True
     name: str = "Symbol Mapper"
 
     def get_alphabet(self):

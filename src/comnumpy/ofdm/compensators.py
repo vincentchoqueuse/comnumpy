@@ -31,7 +31,8 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     shift : bool, optional
         If True, applies a frequency shift to center the zero-frequency component. Default is True.
     axis : int, optional
-        The axis along which to compute the FFT and apply the weights. Default is -2.
+        The axis along which to compute the FFT and apply the weights. Default is -1,
+        the block content axis of the Block layout ``(..., T, F)``.
     name : str
         Name of the frequency domain equalizer instance.
 
@@ -42,7 +43,7 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     >>> Y = equalizer(X)
     """
     h : np.ndarray = None
-    axis: int = 0
+    axis: int = -1
     shift: bool = False
     norm: Literal["ortho", "backward", "forward"] = "ortho"
     weight: np.ndarray = field(init=False, default=None)

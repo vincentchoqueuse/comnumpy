@@ -1,8 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from typing import Optional, Literal, Union
-from scipy import signal
 from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
 
@@ -69,7 +67,6 @@ class Upsampler(Processor):
     L: int
     phase: int = 0
     scale: float = 1.0
-    is_mimo: bool = True
     axis: int = -1
     use_filter: bool = False
     name: str = "upsampler"
@@ -142,7 +139,6 @@ class Downsampler(Processor):
     L: int
     phase: int = 0
     scale: float = 1.0
-    is_mimo: bool = True
     axis: int = -1
     use_filter: bool = False
     name: str = "downsampler"
@@ -166,17 +162,21 @@ class Serial2Parallel(Processor):
     r"""
     A class for converting a serial data stream into parallel data streams.
 
-    This class reshapes a multi-dimensional array (serial stream) into another multi-dimensional array (parallel data streams)
-    using a specified number of subcarriers and an ordering scheme. If necessary, the input data is either padded with zeros
-    to fit the specified structure or is truncated.
+    This class reshapes the serial axis (last axis) of the input into the
+    canonical Block layout ``(..., T, F)``: the block index :math:`T` on
+    axis -2, the block content :math:`F` (``N_sub`` samples) on axis -1.
+    The conversion is a pure C-order reshape (see CONVENTIONS.md); if the
+    serial length is not a multiple of ``N_sub``, the input is either
+    zero-padded or truncated.
+
+    Axes: *declared axis* -- consumes the serial axis -1, produces ``(..., T, F)``.
 
     Attributes
     ----------
     N_sub : int
-        The number of subcarriers, which defines the size of the last dimension in the reshaped array. Must be a positive integer.
-    order : str, optional
-        The order in which to reshape the array. 'F' means to reshape in column-major (Fortran-style) order,
-        and 'C' means to reshape in row-major (C-style) order. Default is 'F'.
+        The block length :math:`F` (e.g. number of subcarriers), which defines
+        the size of the last dimension in the reshaped array. Must be a
+        positive integer.
     method : Literal["zero-padding", "truncate"], optional
         The method to handle data that does not fit perfectly into the reshaped structure.
         Options are 'zero-padding' to pad with zeros or 'truncate' to remove excess data. Default is 'zero-padding'.
@@ -188,41 +188,27 @@ class Serial2Parallel(Processor):
 
     >>> processor = Serial2Parallel(3)
     >>> X = np.arange(5)
-    >>> print(X)
-    [0 1 2 3 4]
-    >>> print(X.shape)
-    (5,)
     >>> Y = processor(X)
     >>> print(Y.shape)
-    (3, 2)
-    >>> print(Y[:, 0])
-    [0 1 2]
-    >>> print(Y[:, 1])
-    [3 4 0]
+    (2, 3)
+    >>> print(Y)
+    [[0 1 2]
+     [3 4 0]]
 
     Example 2
     ---------
 
     >>> processor = Serial2Parallel(3)
     >>> X = np.arange(10).reshape(2, 5)
-    >>> print(X)
-    [[0 1 2 3 4]
-    [5 6 7 8 9]]
-    >>> print(X.shape)
-    (2, 5)
-    >>> print(X[0, :])
-    [0 1 2 3 4]
     >>> Y = processor(X)
     >>> print(Y.shape)
-    (2, 3, 2)
-    >>> print(Y[0, :, 0])
-    [0 1 2]
-    >>> print(Y[0, :, 1])
-    [3 4 0]
+    (2, 2, 3)
+    >>> print(Y[0])
+    [[0 1 2]
+     [3 4 0]]
 
     """
     N_sub: int
-    order: str = "F"
     method: Literal["zero-padding", "truncate"] = "zero-padding"
     name: str = "S2P"
 
@@ -249,9 +235,9 @@ class Serial2Parallel(Processor):
         else:
             X_processed = X
 
-        # Reshape along the last axis
-        new_shape = X_processed.shape[:-1] + (N_sub, M)
-        Y = X_processed.reshape(new_shape, order=self.order)
+        # Pure C-order reshape into the Block layout (..., T, F)
+        new_shape = X_processed.shape[:-1] + (M, N_sub)
+        Y = X_processed.reshape(new_shape)
         return Y
 
 
@@ -260,23 +246,21 @@ class Parallel2Serial(Processor):
     """
     A class for converting parallel data streams into a serial data stream.
 
-    This class reshapes a multi-dimensional array (parallel data streams) into another multi-dimensional array
-    where the last dimension is flattened into a serial data stream, using a specified ordering scheme.
+    Inverse of :class:`Serial2Parallel`: flattens the Block layout
+    ``(..., T, F)`` back into a serial axis ``(..., T*F)`` with a pure
+    C-order reshape (see CONVENTIONS.md).
+
+    Axes: *declared axis* -- consumes ``(..., T, F)``, produces ``(..., T*F)``.
 
     Attributes
     ----------
-    order : str, optional
-        The order in which to reshape the array. 'F' means to reshape in column-major (Fortran-style) order,
-        and 'C' means to reshape in row-major (C-style) order. Default is 'F'.
     name : str, optional
         Name of the instance. Default is "P2S".
 
     Example 1
     ---------
     >>> processor = Parallel2Serial()
-    >>> X = np.array([[0, 3], [1, 4], [2, 0]])
-    >>> print(X.shape)
-    (3, 2)
+    >>> X = np.array([[0, 1, 2], [3, 4, 0]])
     >>> Y = processor(X)
     >>> print(Y.shape)
     (6,)
@@ -286,22 +270,19 @@ class Parallel2Serial(Processor):
     Example 2
     ---------
     >>> processor = Parallel2Serial()
-    >>> X = np.array([[[0, 3],[1, 4], [2, 0]], [[5, 8], [6, 9], [7, 0]]])
-    >>> print(X.shape)
-    (2, 3, 2)
-    >>> Y =processor(X)
+    >>> X = np.array([[[0, 1, 2], [3, 4, 0]], [[5, 6, 7], [8, 9, 0]]])
+    >>> Y = processor(X)
     >>> print(Y.shape)
     (2, 6)
     >>> print(Y[0, :])
     [0 1 2 3 4 0]
     """
-    order: str = "F"
     name: str = "P2S"
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        # Reshape the array to flatten the last dimension
+        # Pure C-order reshape flattening the last two axes
         new_shape = X.shape[:-2] + (X.shape[-2] * X.shape[-1],)
-        x = X.reshape(new_shape, order=self.order)
+        x = X.reshape(new_shape)
         return x
 
 @dataclass
@@ -514,31 +495,44 @@ class AutoConcatenator(Processor):
     output_copy_mask : Optional[np.ndarray]
         A boolean mask indicating where the copied data should be placed in the output array.
 
-    axis : int
-        The axis along which to perform the concatenation. Default is 0.
+    axis : int, keyword-only
+        The axis along which to perform the concatenation. Default is -1.
 
-    name : str
+    name : str, keyword-only
         The name of the processor. Default is "auto concatenator".
 
     Example 1
     ---------
 
-    >>> input_copy_mask = np.array([True, False, True])
-    >>> output_original_mask = np.array([True, True, True, False, False])
-    >>> output_copy_mask = np.array([False, False, False, True, True])
+    >>> concatenator = AutoConcatenator(
+    ...     input_copy_mask=np.array([True, False, True]),
+    ...     output_original_mask=np.array([True, True, True, False, False]),
+    ...     output_copy_mask=np.array([False, False, False, True, True]))
     >>> X = np.array([1, 2, 3])
-    >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
     >>> print(concatenator(X))
     [1 2 3 1 3]
 
     Example 2
     ---------
 
-    >>> input_copy_mask = np.array([True, False])
-    >>> output_original_mask = np.array([True, True, False, False, False])
-    >>> output_copy_mask = np.array([False, False, False, True, False])
+    >>> concatenator = AutoConcatenator(
+    ...     input_copy_mask=np.array([True, False, True]),
+    ...     output_original_mask=np.array([True, True, True, False, False]),
+    ...     output_copy_mask=np.array([False, False, False, True, True]))
     >>> X = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
+    >>> print(concatenator(X))
+    [[1 2 3 1 3]
+     [4 5 6 4 6]]
+
+    Example 3
+    ---------
+
+    >>> concatenator = AutoConcatenator(
+    ...     input_copy_mask=np.array([True, False]),
+    ...     output_original_mask=np.array([True, True, False, False, False]),
+    ...     output_copy_mask=np.array([False, False, False, True, False]),
+    ...     axis=0)
+    >>> X = np.array([[1, 2, 3], [4, 5, 6]])
     >>> print(concatenator(X))
     [[1 2 3]
      [4 5 6]
@@ -546,26 +540,17 @@ class AutoConcatenator(Processor):
      [1 2 3]
      [0 0 0]]
 
-    Example 3
-    ---------
-
-    >>> input_copy_mask = np.array([False, True, True])
-    >>> output_original_mask = np.array([False, True, True, True, False])
-    >>> output_copy_mask = np.array([True, False, False, False, True])
-    >>> X = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask, axis=-1)
-    >>> print(concatenator(X))
-    [[2 1 2 3 3]
-     [5 4 5 6 6]]
-
     """
-    input_copy_mask: Optional[np.ndarray] = None
-    output_original_mask: Optional[np.ndarray] = None
-    output_copy_mask: Optional[np.ndarray] = None
-    axis: int = 0
-    name: str = "auto concatenator"
+    input_copy_mask: Optional[np.ndarray] = field(default=None, kw_only=True)
+    output_original_mask: Optional[np.ndarray] = field(default=None, kw_only=True)
+    output_copy_mask: Optional[np.ndarray] = field(default=None, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
+    name: str = field(default="auto concatenator", kw_only=True)
 
     def __post_init__(self):
+        # Subclasses build their masks in prepare(); nothing to validate yet
+        if self.output_original_mask is None and self.output_copy_mask is None:
+            return
 
         # Check if the sizes of output_original_mask and output_copy_mask are the same
         if self.output_original_mask.shape != self.output_copy_mask.shape:
@@ -667,7 +652,6 @@ class DelayRemover(Processor):
         Name of the delay remover instance. Default is "DelayRemover".
     """
     delay: int
-    is_mimo: bool = True
     axis: int = -1
     name: str = "delay remover"
 
@@ -794,6 +778,7 @@ class Resampler(Processor):
             raise ValueError("Both 'up' and 'down' factors must be positive integers.")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        from scipy import signal  # local import (D36)
         y = signal.resample_poly(x, self.up, self.down)
         return y
 
@@ -898,6 +883,7 @@ class BlindPhaseTracker(Processor):
 
         # Plot estimated phase evolution
         if self.plot:
+            import matplotlib.pyplot as plt  # local import (D36)
             plt.figure(figsize=(10, 4))
             plt.plot(optimal_phases, label="Estimated Phase (rad)")
             plt.title("Estimated Phase per Sample")

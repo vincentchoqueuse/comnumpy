@@ -1,98 +1,10 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional, Literal
+from typing import Optional
 from comnumpy.core import Processor
-from comnumpy.core.utils import compute_sigma2
+from comnumpy.core.channels import AWGN  # noqa: F401 -- AWGN is element-wise (shape-agnostic); re-exported here for convenience
 from .validators import validate_input
 
-
-@dataclass
-class AWGN(Processor):
-    r"""
-    A class representing an Additive White Gaussian Noise (AWGN) for MIMO channel.
-
-    This class models an AWGN channel, which adds complex Gaussian noise to a signal.
-    It is characterized by a noise power specified by sigma squared (sigma2).
-
-    Signal Model
-    ------------
-
-    .. math::
-
-       y_u[n] = x_u[n] + b_u[n]
-
-    where:
-
-    * :math:`b[n]\sim \mathcal{N}(0, \sigma^2)` is a Gaussian additive noise.
-
-    For complex signals, a circular Gaussian noise is applied to the signal.
-    The value of :math:`\sigma^2` is computed with respect to the method specified as input.
-
-    Attributes
-    ----------
-    value : float, optional
-        The value associated with the given method. Default is 1
-    unit : str, optional
-        The unit to compute the noise power ("sigma2", "snr", "snr_dB", "snr_dBm"). Default is "sigma2"
-    sigma2s : float, optional
-        Signal power. default is 1
-    seed : int, optional
-        The seed for the noise generator.
-    sigma2s_method: Literal["fixed", "measured"]
-        The method used to obtain the signal power
-    name : str
-        Name of the channel instance.
-    """
-    value: float = 1.
-    unit: Literal["sigma2", "snr", "snr_dB", "snr_dBm"] = "sigma2"
-    sigma2s: float = 1.
-    sigma2s_method: Literal["fixed", "measured"] = "fixed"
-    seed: int = None
-    name: str = 'awgn'
-
-    def __post_init__(self):
-        self.rng = np.random.default_rng(self.seed)
-
-    def get_sigma2s(self, X):
-        # extract signal power
-        match self.sigma2s_method:
-            case "measured":
-                sigma2s = np.sum(np.abs(X)**2) / np.prod(X.shape)
-            case "fixed":
-                sigma2s = self.sigma2s
-            case _:
-                raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
-
-        return sigma2s
-
-    def noise_rvs(self, X):
-        is_complex = np.iscomplexobj(X)
-
-        # compute signal variance
-        sigma2s = self.get_sigma2s(X)
-
-        # compute noise variance
-        sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
-
-        # apply noise
-        shape = X.shape
-        if is_complex:
-            scale = np.sqrt(sigma2n/2)
-            B_r = self.rng.normal(scale=scale, size=shape)
-            B_i = self.rng.normal(scale=scale, size=shape)
-            B = B_r + 1j * B_i
-        else:
-            scale = np.sqrt(sigma2n)
-            B = self.rng.normal(scale=scale, size=shape)
-
-        # save values
-        self.sigma2n = sigma2n
-        self._B = B
-
-    def forward(self, X: np.ndarray) -> np.ndarray:
-        self.noise_rvs(X)
-        Y = X + self._B
-        return Y
 
 @dataclass
 class BaseMIMOChannel(Processor):

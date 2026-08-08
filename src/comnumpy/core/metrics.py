@@ -1,7 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Callable, Dict, Any
-from scipy.stats import norm
 from comnumpy.core.generics import Processor
 
 
@@ -50,6 +49,8 @@ def compute_ser_awgn_psk(order, snr_per_bit):
     ----------
     * Proakis, John G. *Digital Communications*. McGraw-Hill, 2001.
     """
+    from scipy.stats import norm  # local import (D36)
+
     gamma_b = snr_per_bit
     k = int(np.log2(order))
 
@@ -95,6 +96,8 @@ def compute_ser_awgn_qam(order, snr_per_bit):
     ----------
     * Proakis, John G. *Digital Communications*. McGraw-Hill, 2001, p. 280.
     """
+    from scipy.stats import norm  # local import (D36)
+
     gamma_b = snr_per_bit
 
     # see book Proakis "Digital communication", p 280

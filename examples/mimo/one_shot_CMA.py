@@ -73,7 +73,7 @@ chain = Sequential([
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             SelectiveMIMOChannel(H=H_array, name="channel"),
-            AWGN(sigma2n, name="noise"),
+            AWGN(sigma2=sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             DelayRemover(delay=N_h*4),
             CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),

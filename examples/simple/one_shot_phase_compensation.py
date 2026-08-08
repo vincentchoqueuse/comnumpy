@@ -31,7 +31,7 @@ chain = Sequential([
             SymbolMapper(alphabet),
             signal_recorder_tx,
             Amplifier(amplifier_param),
-            AWGN(value=sigma2),
+            AWGN(sigma2=sigma2),
             Scope(num=1, scope_type="iq", title="received data"),
             BlindPhaseCompensation(alphabet, name="phase_compensation"),
             Scope(num=4, scope_type="iq", title="after phase correction"),

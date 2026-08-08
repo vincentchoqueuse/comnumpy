@@ -29,13 +29,13 @@ chain = Sequential([
     SymbolGenerator(M=16, seed=42),
     recorder,
     SymbolMapper(alphabet),
-    AWGN(value=15, unit="snr_dB", sigma2s_method="measured"),
+    AWGN(snr_dB=15, seed=123),
     SymbolDemapper(alphabet),
 ])
 
 # Transmit 10,000 symbols and evaluate performance
 detected = chain(10_000)
-print(f"SER = {compute_ser(recorder.get_data(), detected)}")  # SER = 0.0172
+print(f"SER = {compute_ser(recorder.get_data(), detected)}")  # SER = 0.016
 ```
 
 ## Installation

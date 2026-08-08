@@ -29,7 +29,7 @@ simple_chain = Sequential([
         Recorder(name="data_tx"),
         SymbolMapper(alphabet),
         FIRChannel(h),
-        AWGN(value=sigma2),
+        AWGN(sigma2=sigma2),
         Recorder(name="data_rx"),
         LinearEqualizer(h, method="zf"),
         Recorder(name="data_rx_eq"),
@@ -68,7 +68,7 @@ ofdm_chain = Sequential([
         SymbolMapper(alphabet),
         OFDMTransmitter(N_carrier, N_cp),   # <- add OFDM transmitter
         FIRChannel(h),
-        AWGN(value=sigma2),
+        AWGN(sigma2=sigma2),
         OFDMReceiver(N_carrier, N_cp, h=h), # <- add OFDM receiver
         Recorder(name="data_rx"),
         SymbolDemapper(alphabet)
