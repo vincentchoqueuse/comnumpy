@@ -106,31 +106,42 @@ class AWGN(Processor):
 
 @dataclass(slots=True)
 class FIRChannel(Processor):
-    r"""
-    Finite Impulse Response (FIR) channel with given impulse response.
+    r"""Finite impulse response (FIR) channel with a given impulse response.
 
     Signal Model
     ------------
-
-    The output signal :math:`y[n]` is computed as the convolution of the input signal :math:`x[n]` with the impulse response :math:`h[l]`:
+    The output :math:`y[n]` is the convolution of the input :math:`x[n]`
+    with the impulse response :math:`h[l]` of length :math:`L`:
 
     .. math::
 
-       y[n] = \sum_{l=0}^{L-1} h[l] x[n-l]
+       y[n] = \sum_{l=0}^{L-1} h[l] \, x[n-l]
 
-    where:
+    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``
+    (``scipy.signal.convolve`` semantics; output length depends on
+    ``mode``).
 
-    - :math:`h[l]` is the impulse response of the channel.
-    - :math:`L` is the length of the impulse response.
-
-    Attributes
+    Parameters
     ----------
     h : np.ndarray
-        The impulse response of the FIR channel. Should be a 1-dimensional numpy array.
+        The impulse response :math:`h[l]` of the channel, a 1D array of
+        length :math:`L`.
     mode : Literal["full", "same", "valid"], optional
-        Convolution mode passed to ``scipy.signal.convolve``. Default is ``"full"``.
+        Convolution mode passed to ``scipy.signal.convolve``. Default is
+        ``"full"`` (output length :math:`N + L - 1`).
     name : str, optional
         The name of the channel instance. Default is ``"fir"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Section 9.3 (channels with ISI).
+
+    Examples
+    --------
+    >>> channel = FIRChannel(np.array([1.0, 0.5]))
+    >>> print(channel(np.array([1.0, 0.0, 2.0])))
+    [1.  0.5 2.  1. ]
     """
     h: np.array
     mode: Literal["full", "same", "valid"] = "full"
