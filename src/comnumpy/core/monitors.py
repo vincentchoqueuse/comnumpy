@@ -7,34 +7,35 @@ from .processors import DataExtractor
 
 @dataclass(slots=True)
 class Recorder(Processor):
-    r"""
-    Implements a basic Recorder for signal processing.
+    r"""Pass-through recorder that stores the signal for later retrieval.
 
-    This class acts as a recorder in a signal processing chain. It stores the input signal and allows for later retrieval.
-
-    .. HINT::
-        Putting a recorder on a chain allows to store the signal for later purpose (such as plotting, criterion computation, pilot extraction, ...).
+    The recorded array is available afterwards via :meth:`get_data`,
+    e.g. for plotting, criterion computation or pilot extraction.
 
     Signal Model
     ------------
-
-    The input data is not modified and is directly sent to the output.
+    The input signal is stored and passed through unchanged:
 
     .. math::
-        \mathbf{Y} = \mathbf{X}
 
-    Attributes
+        y[n] = x[n]
+
+    Axes: *element-wise* -- identity pass-through, shape-agnostic.
+
+    Parameters
     ----------
-    extractor: DataExtractor (optional)
-        : data extraction
-    name : str (optional)
-        Name of the recorder instance. Default is 'recorder'.
+    extractor : DataExtractor, optional
+        Data extractor associated with the recorder. Default is a
+        ``DataExtractor`` with ``selector=None``.
+    name : str, optional, keyword-only
+        Name of the recorder instance. Default is ``"recorder"``.
 
-    Methods
-    -------
-    get_data():
-        Retrieves the recorded data.
-
+    Examples
+    --------
+    >>> recorder = Recorder()
+    >>> y = recorder(np.array([1.0, 2.0]))
+    >>> print(recorder.get_data())
+    [1. 2.]
     """
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
     name: str = field(default="recorder", kw_only=True)
@@ -54,15 +55,30 @@ class Recorder(Processor):
 
 @dataclass(slots=True)
 class Logger(Processor):
-    """
-    This class implements a basic Logger that lets the signal pass through.
+    r"""Pass-through logger that prints the signal content.
 
-    Attributes
+    Signal Model
+    ------------
+    The input signal is printed and passed through unchanged:
+
+    .. math::
+
+        y[n] = x[n]
+
+    Axes: *element-wise* -- identity pass-through, shape-agnostic.
+
+    Parameters
     ----------
     num : int, optional
-        A number associated with the logger.
-    name : str
-        Name of the logger instance.
+        A number associated with the logger, shown in the printed line.
+    name : str, optional, keyword-only
+        Name of the logger instance. Default is ``"logger"``.
+
+    Examples
+    --------
+    >>> logger = Logger(num=1)
+    >>> y = logger(np.array([1, 2]))
+    Data logger (1, logger): [1 2]
     """
     num: Optional[int] = None
     name: str = field(default="logger", kw_only=True)
@@ -74,14 +90,30 @@ class Logger(Processor):
 
 @dataclass(slots=True)
 class Debugger(Processor):
-    """
-    Prints several properties of the incoming signal for debugging purposes.
+    r"""Pass-through debugger that prints properties of the incoming signal.
 
-    Attributes
-    ----------
-    name : str
-        Name of the logger instance.
+    Signal Model
+    ------------
+    The input signal is passed through unchanged while its shape and
+    basic statistics (max of real/imaginary parts, mean, variance) are
+    printed:
+
+    .. math::
+
+        y[n] = x[n]
+
+    Axes: *element-wise* -- identity pass-through, shape-agnostic
+    (statistics are computed over all elements).
+
+    This class takes no constructor parameters.
+
+    Examples
+    --------
+    >>> Debugger()
+    Debugger(debug=False, name='debugger')
     """
+    name: str = field(default="debugger", kw_only=True)
+
     def forward(self, X: np.ndarray) -> np.ndarray:
         print(f"Data logger : {self.name}")
         print(f"shape: {X.shape}")
@@ -94,17 +126,37 @@ class Debugger(Processor):
 
 @dataclass(slots=True)
 class PowerReporter(Processor):
-    """
-    This class implements a basic Power Reporter that lets the signal pass through.
+    r"""Pass-through reporter that prints the average power of the signal.
 
-    Attributes
+    Signal Model
+    ------------
+    The input signal is passed through unchanged while its empirical
+    average power is printed:
+
+    .. math::
+
+        y[n] = x[n], \qquad
+        \widehat{P} = \frac{1}{N} \sum_{n=0}^{N-1} \left|x[n]\right|^2
+
+    where :math:`N` is the total number of samples.
+
+    Axes: *element-wise* -- identity pass-through, shape-agnostic (the
+    power is averaged over all elements).
+
+    Parameters
     ----------
     num : int, optional
         A number associated with the power reporter.
-    verbose : bool
-        Whether to print detailed information.
-    name : str
-        Name of the power reporter instance.
+    verbose : bool, optional, keyword-only
+        If True (default), prints the measured power :math:`\widehat{P}`.
+    name : str, optional, keyword-only
+        Name of the power reporter instance. Default is ``"power"``.
+
+    Examples
+    --------
+    >>> reporter = PowerReporter()
+    >>> y = reporter(np.array([1.0+0.0j, 0.0+1.0j]))
+    Power reporter (power): 1.0
     """
     num: Optional[int] = None
     verbose: bool = field(default=True, kw_only=True)
@@ -118,28 +170,51 @@ class PowerReporter(Processor):
 
 
 class TimeSignalMonitor(Processor):
-    """
-    A signal analysis processor for computing and displaying basic amplitude and power statistics.
+    r"""Pass-through monitor printing amplitude and power statistics of the signal.
 
-    This class takes a real or complex signal and computes key characteristics such as:
-    minimum, maximum, mean, standard deviation, RMS, energy, average power, and optionally PAPR.
-    The results are printed in a clean and formatted table in the terminal.
+    Signal Model
+    ------------
+    The input signal is passed through unchanged while statistics of its
+    modulus :math:`|x[n]|` (min, max, mean, standard deviation, RMS,
+    energy, average power and optionally PAPR) are printed as a table:
+
+    .. math::
+
+        y[n] = x[n]
+
+    Axes: *element-wise* -- identity pass-through, shape-agnostic
+    (statistics are computed over all elements).
 
     Parameters
     ----------
     compute_PAPR : bool, default=False
-        If True, computes and displays the Peak-to-Average Power Ratio (PAPR).
-
+        If True, computes and displays the Peak-to-Average Power Ratio
+        (PAPR).
     PAPR_unit : str, default="dB"
-        Unit for displaying PAPR. Options are "dB" or "linear".
-
+        Unit for displaying PAPR. Options are ``"dB"`` or ``"linear"``.
     title : str, default="Signal Information"
         Title displayed at the top of the output summary table.
-
     name : str, default="signal_info_printer"
         Internal identifier for the processor.
+
+    Examples
+    --------
+    >>> monitor = TimeSignalMonitor(title="Stats")
+    >>> y = monitor.forward(np.array([1.0, 1.0]))
+    <BLANKLINE>
+    Stats
+    -----
+    Min            : 1.0000
+    Max            : 1.0000
+    Mean           : 1.0000
+    Std Dev        : 0.0000
+    RMS            : 1.0000
+    Energy         : 2.0000
+    Avg Power      : 1.0000
+    -----
     """
     def __init__(self, compute_PAPR=False, PAPR_unit="dB", title="Signal Information", name="signal_info_printer"):
+        super().__init__()  # initialize the Processor base fields (debug, Y)
         self.compute_PAPR = compute_PAPR
         self.PAPR_unit = PAPR_unit
         self.title = title

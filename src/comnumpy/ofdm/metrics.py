@@ -3,13 +3,35 @@ import numpy as np
 
 def compute_PAPR(x_data, unit="natural", axis=None):
     r"""
-    Compute the Peak-to-Average Power Ratio (PAPR) of the input data.
+    Compute the Peak-to-Average Power Ratio (PAPR) of the input signal.
+
+    Signal Model
+    ------------
+    With the peak amplitude :math:`x_{max} = \max_n |x[n]|` and the mean
+    power :math:`P_x = \mathbb{E}\left[|x[n]|^2\right]` of the input signal
+    :math:`x[n]`, the returned metric is:
+
+    * for natural units (amplitude ratio):
+
+    .. math::
+
+        \mathrm{PAPR} = \frac{x_{max}}{\sqrt{P_x}}
+
+    * for dB units (power ratio):
+
+    .. math::
+
+        \mathrm{PAPR_{dB}} = 10 \log_{10} \left( \frac{x_{max}^2}{P_x} \right)
+
+    Axes: *declared axis* -- the peak :math:`x_{max}` and the mean power
+    :math:`P_x` are reduced along ``axis`` (default ``None``: over the
+    whole array).
 
     Parameters
     ----------
     x_data : np.ndarray
-        Input data for which PAPR needs to be calculated.
-    unit : str, optional
+        Input signal :math:`x[n]` for which the PAPR needs to be calculated.
+    unit : {"natural", "dB"}, optional
         The unit for PAPR calculation. It can be either "natural" for natural units or
         "dB" for logarithmic units. Default is "natural".
     axis : int or None, optional
@@ -23,29 +45,15 @@ def compute_PAPR(x_data, unit="natural", axis=None):
 
     Raises
     ------
+    TypeError
+        If `x_data` is not a NumPy array.
     NotImplementedError
         If the specified unit is not supported.
 
-    Notes
-    -----
-    The PAPR is computed using the formulas:
-
-    * For natural units:
-
-    .. math::
-
-        \text{PAPR} = \frac{x_{\text{max}}}{\sqrt{P_{\text{moy}}}}
-
-    * For dB units:
-
-    .. math::
-
-        \text{PAPR} = 10 \log_{10} \left( \frac{x_{\text{max}}^2}{P_{\text{moy}}} \right)
-
-    where:
-
-    - :math:`x_{\text{max}}` is the maximum power value in `x_data`,
-    - :math:`P_{\text{moy}}` is the mean power value in `x_data`.
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 6.
 
     Examples
     --------

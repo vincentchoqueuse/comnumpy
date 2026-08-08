@@ -110,5 +110,41 @@ class TestCodingGain(unittest.TestCase):
         self.assertLess(ber_soft, ber_hard / 10)
 
 
+class TestCodedQamChain(unittest.TestCase):
+    """End-to-end D4+D12: coded 16-QAM with soft demapping."""
+
+    def test_soft_demapper_feeds_viterbi(self):
+        from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
+        from comnumpy.core.utils import get_alphabet
+
+        rng = np.random.default_rng(5)
+        M, k = 16, 4
+        alphabet = get_alphabet("QAM", M)
+        bits = rng.integers(0, 2, 10_000)
+
+        encoder = ConvolutionalEncoder()
+        coded = encoder(bits)
+        # pad the coded stream to a multiple of k, group bits MSB-first
+        pad = (-len(coded)) % k
+        coded_padded = np.concatenate([coded, np.zeros(pad, dtype=int)])
+        weights = 1 << np.arange(k - 1, -1, -1)
+        symbols = coded_padded.reshape(-1, k) @ weights
+
+        sigma2 = 0.02
+        y = alphabet[symbols] + rng.normal(scale=np.sqrt(sigma2 / 2), size=symbols.shape) \
+            + 1j * rng.normal(scale=np.sqrt(sigma2 / 2), size=symbols.shape)
+
+        llr = SymbolDemapper(alphabet, soft=True, sigma2=sigma2)(y)
+        llr = llr[:len(coded)]  # drop the padding LLRs
+        decoded = ViterbiDecoder(soft=True)(llr)
+        ber = np.mean(decoded != bits)
+        self.assertLess(ber, 1e-4)
+
+        # SymbolMapper/Demapper consistency in the same chain, noiseless
+        z = SymbolMapper(alphabet)(symbols)
+        llr0 = SymbolDemapper(alphabet, soft=True)(z)[:len(coded)]
+        np.testing.assert_array_equal(ViterbiDecoder(soft=True)(llr0), bits)
+
+
 if __name__ == "__main__":
     unittest.main()

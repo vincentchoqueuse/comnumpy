@@ -6,33 +6,38 @@ from comnumpy.core.generics import Processor
 
 @dataclass(slots=True)
 class SymbolGenerator(Processor):
-    r"""
-    A generator for creating independent and identically distributed (IID) symbols.
-
-    This class generates a sequence of integer randomly chosen uniformly from the set :math:`\{0, 1, ..., M-1\}`.
-
+    r"""Generator of independent and identically distributed (IID) uniform integer symbols.
 
     Signal Model
     ------------
+    Each output symbol :math:`y[n]` is drawn independently and uniformly
+    from the integer alphabet :math:`\{0, 1, \ldots, M-1\}`:
 
-    Each symbol :math:`y[n]` is drawn independently from the same distribution :
+    .. math::
 
-    .. math ::
+        \Pr\left(y[n] = m\right) = \frac{1}{M}, \qquad
+        m \in \{0, 1, \ldots, M-1\}
 
-        p(y[n]=m) = \begin{cases}
-            \frac{1}{M} & \text{if } m \in \{0, 1, \ldots, M-1 \}, \\
-            0 & \text{otherwise}.
-            \end{cases}
+    This is a source block: the call argument is not an input signal
+    :math:`x` but the requested output size.
 
-    Attributes
+    Axes: *element-wise* -- each symbol is drawn independently; the output
+    shape is the requested size (int or tuple).
+
+    Parameters
     ----------
     M : int
-        The size of the alphabet.
-    seed : int, optional
-        Seed for the random number generator, for reproducibility.
-        Default is None, which initializes the generator without a fixed seed.
-    name : str, optional
-        Name of the generator instance (default: "generator").
+        Alphabet size :math:`M`; symbols are drawn from
+        :math:`\{0, 1, \ldots, M-1\}`.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the generator instance. Default is ``"generator"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 1.
 
     Examples
     --------
@@ -68,29 +73,38 @@ class SymbolGenerator(Processor):
 
 @dataclass(slots=True)
 class GaussianGenerator(Processor):
-    r"""
-    A generator for creating Gaussian-distributed symbols.
-
-    This class generates a sequence of symbols drawn from a Gaussian distribution with mean 0 and standard deviation `sigma`.
+    r"""Generator of IID circularly-symmetric complex Gaussian samples.
 
     Signal Model
     ------------
+    Each output sample :math:`y[n]` is drawn independently from a
+    zero-mean circular complex Gaussian distribution of variance
+    :math:`\sigma^2`:
 
-    Each symbol :math:`\mathbf{y}[n]` is drawn independently from a Gaussian distribution:
+    .. math::
 
-    .. math ::
+        y[n] \sim \mathcal{CN}\left(0, \sigma^2\right)
 
-        \mathbf{y}[n] \sim \mathcal{N}_c(0, \sigma^2)
+    This is a source block: the call argument is not an input signal
+    :math:`x` but the requested output size.
 
-    Attributes
+    Axes: *element-wise* -- each sample is drawn independently; the output
+    shape is the requested size (int or tuple).
+
+    Parameters
     ----------
     sigma2 : float
-        The variance of the Gaussian distribution.
-    seed : int, optional
-        Seed for the random number generator, for reproducibility.
-        Default is None, which initializes the generator without a fixed seed.
-    name : str, optional
-        Name of the generator instance (default: "gaussian_generator").
+        Variance :math:`\sigma^2` of the complex Gaussian distribution.
+        Default is 1.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the generator instance. Default is ``"gaussian_generator"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 2.
 
     Examples
     --------
