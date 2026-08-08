@@ -211,6 +211,10 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
     # by using the fact exp(a ln(b)) = b^a, we obtain
     # G = 10 ^(alpha_dB*L /10)
     G = 10**(alpha_dB*L_span/10)
+    if G <= 1:
+        # lossless span: no loss to compensate, no amplifier, no ASE noise
+        # (the n_sp formula below diverges at G=1)
+        return 0.0
     NF = 10**(NF_dB/10)
     n_sp = (NF/2) / (1-1/G)  # see Hager paper after equation 11
     N_ase = (G-1) * h * nu * n_sp   # see code of Hager https://github.com/chaeger/LDBP/blob/master/ldbp/ldbp.py
