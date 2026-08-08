@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.fft import fftshift
 
@@ -5,6 +7,11 @@ from scipy.fft import fftshift
 def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False):
     """
     Allocate subcarriers based on a specified OFDM configuration.
+
+    .. deprecated:: 1.0
+        Use :func:`comnumpy.ofdm.allocation.get_allocation`, which returns a
+        :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object carrying
+        its metadata and self-checked against the standard's tables.
 
     This function generates a subcarrier allocation array based on the given configuration name or custom parameters.
     It supports various OFDM configurations and allows for oversampling, Hermitian symmetry, and optional shifting.
@@ -39,6 +46,11 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     - Hermitian symmetry, when applied, affects the allocation of data subcarriers.
     - Oversampling adds nulled subcarriers to the array.
     """
+    warnings.warn(
+        "get_standard_carrier_allocation is deprecated; use "
+        "comnumpy.ofdm.allocation.get_allocation instead",
+        DeprecationWarning, stacklevel=2)
+
     ofdm_config_dict = {
         'IQtools_128': [128, 3, 6, 5, [16, 28, 40, 52, 76, 88, 100, 112]],
         '802.11ah_32': [32, 1, 3, 2, [9, 23]],
