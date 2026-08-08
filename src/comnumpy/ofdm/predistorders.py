@@ -1,11 +1,12 @@
 import numpy as np
 import itertools
+from typing import Optional
 from dataclasses import dataclass, field
 from scipy.fft import fft, ifft, ifftshift
 from comnumpy.core import Processor
 from .metrics import compute_PAPR
 
-@dataclass
+@dataclass(slots=True)
 class HardClipper(Processor):
     """
     Implements a hard clipping method to reduce the Peak-to-Average Power Ratio (PAPR) of a signal.
@@ -27,7 +28,9 @@ class HardClipper(Processor):
       IEEE Commun. Surv. Tutorials, vol. 15, no 4, p. 1567 1592, 2013, doi: 10.1109/SURV.2013.021313.00164.
     """
     cr_dB: float
-    name: str = "hard_clipping"
+    name: str = field(default="hard_clipping", kw_only=True)
+    # internal state (declared for slots, D40a): always assigned in __post_init__
+    cr: float = field(init=False, repr=False)
 
     def __post_init__(self):
         self.cr = 10 ** (self.cr_dB / 20)
@@ -42,7 +45,7 @@ class HardClipper(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class IctPaprReductor(Processor):
     """
     Implements the Iterative Clipping and Filtering (ICT) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
@@ -72,10 +75,12 @@ class IctPaprReductor(Processor):
     """
     PAPR_max_dB: float
     filter_weight: float
-    N_it: int = 16
-    shift: bool = False
-    norm: str = "ortho"
-    name: str = "ICT"
+    N_it: int = field(default=16, kw_only=True)
+    shift: bool = field(default=False, kw_only=True)
+    norm: str = field(default="ortho", kw_only=True)
+    name: str = field(default="ICT", kw_only=True)
+    # internal state (declared for slots, D40a): always assigned in __post_init__
+    cr: float = field(init=False, repr=False)
 
     def __post_init__(self):
         PAPR_max = 10 ** (self.PAPR_max_dB / 10)
@@ -104,7 +109,7 @@ class IctPaprReductor(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class PtsPaprReductor(Processor):
     """
     Implements the Partial Transmit Sequences (PTS) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.
@@ -128,10 +133,11 @@ class PtsPaprReductor(Processor):
       1999 IEEE International Conference on Communications (Cat. No. 99CH36311), Vancouver, BC, Canada, 1999, pp. 511-515 vol.1,
       doi: 10.1109/ICC.1999.767992.
     """
-    phase_alphabet: None
-    N_sub: int = 16
-    name: str = "PTS"
-    combinations: np.ndarray = field(init=False)
+    phase_alphabet: Optional[list]
+    N_sub: int = field(default=16, kw_only=True)
+    name: str = field(default="PTS", kw_only=True)
+    # internal state (declared for slots, D40a): always assigned in __post_init__
+    combinations: np.ndarray = field(init=False, repr=False)
 
     def __post_init__(self):
         self.combinations = np.array(list(itertools.product(self.phase_alphabet, repeat=self.N_sub)))

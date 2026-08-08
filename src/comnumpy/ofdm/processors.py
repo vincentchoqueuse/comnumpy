@@ -8,7 +8,7 @@ from .utils import plot_carrier_allocation
 
 
 
-@dataclass
+@dataclass(slots=True)
 class CyclicPrefixer(AutoConcatenator):
     r"""
     Processor for adding a cyclic prefix to combat multi-path interference.
@@ -87,7 +87,7 @@ class CyclicPrefixer(AutoConcatenator):
         self.output_copy_mask = output_copy_mask.astype(bool)
 
 
-@dataclass
+@dataclass(slots=True)
 class CyclicPrefixRemover(Processor):
     r"""
     Processor for removing a cyclic prefix from the input data.
@@ -132,7 +132,7 @@ class CyclicPrefixRemover(Processor):
         return X[..., self.N_cp:]
 
 
-@dataclass
+@dataclass(slots=True)
 class HermitianPrefixer(AutoConcatenator):
     r"""
     Processor for preparing data to enforce Hermitian symmetry, useful in signal processing applications.
@@ -224,7 +224,7 @@ class HermitianPrefixer(AutoConcatenator):
 
 
 
-@dataclass
+@dataclass(slots=True)
 class FFTProcessor(Processor):
     r"""
     Processor for performing Fast Fourier Transform (FFT) on the input data.
@@ -263,8 +263,8 @@ class FFTProcessor(Processor):
         None means no normalization is applied. Default is "ortho".
     """
     shift: bool = False
-    norm: Literal["ortho", "backward", "forward"] = "ortho"
-    name: str = "fft"
+    norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
+    name: str = field(default="fft", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         Y = fft(X, norm=self.norm, axis=-1)
@@ -273,7 +273,7 @@ class FFTProcessor(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class IFFTProcessor(Processor):
     r"""
     Processor for performing Inverse Fast Fourier Transform (IFFT) on the input data.
@@ -310,8 +310,8 @@ class IFFTProcessor(Processor):
         None means no normalization is applied. Default is "ortho".
     """
     shift: bool = False
-    norm: Literal["ortho", "backward", "forward"] = "ortho"
-    name: str = "ifft"
+    norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
+    name: str = field(default="ifft", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.shift:
@@ -320,7 +320,7 @@ class IFFTProcessor(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class CarrierAllocator(Processor):
     r"""
     Processor for allocating data to specific subcarriers.
@@ -378,9 +378,15 @@ class CarrierAllocator(Processor):
      [3 0 0 6 9]]
     """
     carrier_type: np.ndarray
-    pilots: Optional[np.ndarray] = None
-    axis: int = -1
+    pilots: Optional[np.ndarray] = field(default=None, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
     name: str = field(default="carrier allocator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    N: int = field(init=False, repr=False)
+    N_data: int = field(init=False, repr=False)
+    N_pilots: int = field(init=False, repr=False)
+    index_data: np.ndarray = field(init=False, repr=False)
+    index_pilots: np.ndarray = field(init=False, repr=False)
 
     def __post_init__(self):
         self.initialize_masks()
@@ -440,7 +446,7 @@ class CarrierAllocator(Processor):
         plot_carrier_allocation(self.carrier_type, shift=shift, title="Carrier Allocation")
 
 
-@dataclass
+@dataclass(slots=True)
 class CarrierExtractor(Processor):
     r"""
     Processor for extracting data from specific subcarriers.
@@ -501,8 +507,8 @@ class CarrierExtractor(Processor):
      [2 5 8]]
     """
     carrier_type: np.ndarray
-    pilot_recorder: Optional[Callable] = None
-    axis: int = -1
+    pilot_recorder: Optional[Callable] = field(default=None, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
     name: str = field(default="carrier extractor", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:

@@ -10,7 +10,7 @@ from comnumpy.ofdm.processors import (
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 
 
-@dataclass
+@dataclass(slots=True)
 class OFDMTransmitter(Processor):
     r"""
     OFDM transmitter processing chain.
@@ -44,9 +44,10 @@ class OFDMTransmitter(Processor):
     """
     N_carrier_data: int
     N_cp: int
-    carrier_type: Optional[Union[np.ndarray, list]] = None
-    pilots: Optional[Union[np.ndarray, list]] = None
-    chain: Processor = field(init=False)
+    carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    pilots: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    # internal state (declared for slots, D40a): always assigned in __post_init__
+    chain: Processor = field(init=False, repr=False)
 
     def __post_init__(self):
 
@@ -65,7 +66,7 @@ class OFDMTransmitter(Processor):
         return self.chain(X)
 
 
-@dataclass
+@dataclass(slots=True)
 class OFDMReceiver(Processor):
     r"""
     OFDM receiver processing chain.
@@ -99,9 +100,10 @@ class OFDMReceiver(Processor):
     """
     N_carrier_data: int
     N_cp: int
-    h: Union[np.ndarray, list] = field(default_factory=lambda: np.array([1.0]))
-    carrier_type: Optional[Union[np.ndarray, list]] = None
-    chain: Processor = field(init=False)
+    h: Union[np.ndarray, list] = field(default_factory=lambda: np.array([1.0]), kw_only=True)
+    carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    # internal state (declared for slots, D40a): always assigned in __post_init__
+    chain: Processor = field(init=False, repr=False)
 
     def __post_init__(self):
         if self.carrier_type is None:

@@ -1,11 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Literal, Union
 import numpy as np
 import matplotlib.pyplot as plt
 from comnumpy.core import Processor  # À garder selon ton infra réelle
 
 
-@dataclass
+@dataclass(slots=True)
 class FFTMonitor(Processor):
     """
     A monitoring tool for visualizing the amplitude of frequency-domain signals
@@ -26,8 +26,8 @@ class FFTMonitor(Processor):
     """
 
     reduction: Optional[Literal["mean"]] = "mean"
-    title: str = "IFFT_Monitor"
-    name: str = "Ifft_monitor"
+    title: str = field(default="IFFT_Monitor", kw_only=True)
+    name: str = field(default="Ifft_monitor", kw_only=True)
 
     def get_reduction(self, X: np.ndarray) -> Union[np.ndarray, float]:
         # Block layout (..., T, F): average over the block axis T

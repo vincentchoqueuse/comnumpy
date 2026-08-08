@@ -1,11 +1,11 @@
 import numpy as np
-from typing import Literal
+from typing import Literal, Optional
 from dataclasses import dataclass, field
 from scipy.fft import fft, fftshift
 from comnumpy.core.processors import WeightAmplifier
 
 
-@dataclass
+@dataclass(slots=True)
 class FrequencyDomainEqualizer(WeightAmplifier):
     r"""
     A frequency domain equalizer that applies weights to compensate for channel effects in the frequency domain.
@@ -42,12 +42,13 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     >>> X = np.random.randn(4, 3, 2)  # Example input tensor
     >>> Y = equalizer(X)
     """
-    h : np.ndarray = None
-    axis: int = -1
-    shift: bool = False
-    norm: Literal["ortho", "backward", "forward"] = "ortho"
-    weight: np.ndarray = field(init=False, default=None)
-    name : str = "frequency domain equalizer"
+    h: Optional[np.ndarray] = None
+    axis: int = field(default=-1, kw_only=True)
+    shift: bool = field(default=False, kw_only=True)
+    norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
+    name: str = field(default="frequency domain equalizer", kw_only=True)
+    # internal state (declared for slots, D40a)
+    weight: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         if self.h is None:
