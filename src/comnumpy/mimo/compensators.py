@@ -1,11 +1,11 @@
 import numpy as np
-from dataclasses import dataclass
-from typing import Literal
+from dataclasses import dataclass, field
+from typing import Literal, Optional
 from comnumpy.core import Processor
 from comnumpy.core.utils import hard_projector
 
 
-@dataclass
+@dataclass(slots=True)
 class BlindDualMIMOCompensator(Processor):
     r"""
     BlindDualMIMOCompensator for 2x2 MIMO channels.
@@ -95,13 +95,17 @@ class BlindDualMIMOCompensator(Processor):
       Journal of Lightwave Technology 35.5 (2017): 1125-1141.
     """
     L: int = 10
-    alphabet: np.ndarray = None
-    mu: float = 1e-4
-    oversampling: int = 1
-    norm: bool = True
-    mode: Literal["cma", "rde", "dd"] = "cma"
+    alphabet: np.ndarray = field(default=None, kw_only=True)
+    mu: float = field(default=1e-4, kw_only=True)
+    oversampling: int = field(default=1, kw_only=True)
+    norm: bool = field(default=True, kw_only=True)
+    mode: Literal["cma", "rde", "dd"] = field(default="cma", kw_only=True)
     sub_block_length = 20
-    name: str = "mimo filter"
+    name: str = field(default="mimo filter", kw_only=True)
+    # internal state (declared for slots, D40a)
+    H: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    radius_cma: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    radius_list: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         """

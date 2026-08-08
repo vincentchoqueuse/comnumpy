@@ -1,13 +1,13 @@
 import numpy as np
-from dataclasses import dataclass
-from typing import Literal
+from dataclasses import dataclass, field
+from typing import Literal, Optional
 from comnumpy.core import Processor
 from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
 from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
 
-@dataclass
+@dataclass(slots=True)
 class DBP(Processor):
     r"""
     A class that implements Digital Back Propagation (DBP).
@@ -66,21 +66,25 @@ class DBP(Processor):
     """
 
     N_spans: int = 1
-    L_span: float = 80
-    StPS: int = 1
-    fs: float = 1
-    step_type: Literal["linear", "logarithmic"] = "linear"
-    step_method: Literal["symmetric", "asymetric"] = "symmetric"
-    use_only_linear: bool = False
-    c: float = SPEED_OF_LIGHT
-    h: float = PLANCK_CONSTANT
-    gamma: float = KERR_COEFFICIENT
-    lamb: float = WAVELENGTH
-    alpha_dB: float = FIBER_LOSS
-    cd_coefficient: float = CD_COEFFICIENT
-    nu: float = OPTICAL_CARRIER_FREQUENCY
-    step_log_factor: float = 0.4
-    name: str = "dbp"
+    L_span: float = field(default=80, kw_only=True)
+    StPS: int = field(default=1, kw_only=True)
+    fs: float = field(default=1, kw_only=True)
+    step_type: Literal["linear", "logarithmic"] = field(default="linear", kw_only=True)
+    step_method: Literal["symmetric", "asymetric"] = field(default="symmetric", kw_only=True)
+    use_only_linear: bool = field(default=False, kw_only=True)
+    c: float = field(default=SPEED_OF_LIGHT, kw_only=True)
+    h: float = field(default=PLANCK_CONSTANT, kw_only=True)
+    gamma: float = field(default=KERR_COEFFICIENT, kw_only=True)
+    lamb: float = field(default=WAVELENGTH, kw_only=True)
+    alpha_dB: float = field(default=FIBER_LOSS, kw_only=True)
+    cd_coefficient: float = field(default=CD_COEFFICIENT, kw_only=True)
+    nu: float = field(default=OPTICAL_CARRIER_FREQUENCY, kw_only=True)
+    step_log_factor: float = field(default=0.4, kw_only=True)
+    name: str = field(default="dbp", kw_only=True)
+    # internal state (declared for slots, D40a)
+    step_size: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def prepare(self, x: np.ndarray) -> np.ndarray:
         match self.step_type:

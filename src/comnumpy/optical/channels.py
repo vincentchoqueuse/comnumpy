@@ -1,11 +1,12 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Optional
 from comnumpy.core import Processor
 from .utils import apply_chromatic_dispersion, apply_kerr_nonlinearity, compute_beta2
 from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT
 
 
-@dataclass
+@dataclass(slots=True)
 class PhaseNoise(Processor):
     r"""
     A class representing a Phase Noise channel.
@@ -38,8 +39,11 @@ class PhaseNoise(Processor):
 
     """
     sigma2: float
-    seed: int = None
-    name: str = "phase noise"
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="phase noise", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    _b: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
@@ -57,7 +61,7 @@ class PhaseNoise(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class ChromaticDispersion(Processor):
     r"""
     Implements chromatic dispersion effects in optical fiber communications.
@@ -101,13 +105,13 @@ class ChromaticDispersion(Processor):
     fiber loss is also considered if `alpha_dB` is non-zero.
     """
     z: float
-    fs: float = 1
-    alpha_dB: float = 0
-    direction: int = 1
-    name: str = "cd"
-    lamb: float = WAVELENGTH
-    D: float = CD_COEFFICIENT
-    c: float = SPEED_OF_LIGHT
+    fs: float = field(default=1, kw_only=True)
+    alpha_dB: float = field(default=0, kw_only=True)
+    direction: int = field(default=1, kw_only=True)
+    name: str = field(default="cd", kw_only=True)
+    lamb: float = field(default=WAVELENGTH, kw_only=True)
+    D: float = field(default=CD_COEFFICIENT, kw_only=True)
+    c: float = field(default=SPEED_OF_LIGHT, kw_only=True)
 
     @property
     def beta2(self):
@@ -117,7 +121,7 @@ class ChromaticDispersion(Processor):
         y = apply_chromatic_dispersion(x, self.z, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=self.direction)
         return y
 
-@dataclass
+@dataclass(slots=True)
 class KerrNonLinearity(Processor):
     r"""
     Models the Kerr nonlinearity effect in optical fibers.
@@ -156,10 +160,10 @@ class KerrNonLinearity(Processor):
     """
 
     z: float
-    direction: int = 1
-    name: str = "nl"
-    gamma: float = KERR_COEFFICIENT
-    gain: float = 1
+    direction: int = field(default=1, kw_only=True)
+    name: str = field(default="nl", kw_only=True)
+    gamma: float = field(default=KERR_COEFFICIENT, kw_only=True)
+    gain: float = field(default=1, kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = apply_kerr_nonlinearity(x, self.z, self.gamma, gain=self.gain, direction=self.direction)

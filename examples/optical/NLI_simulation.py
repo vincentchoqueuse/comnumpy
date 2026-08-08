@@ -82,7 +82,7 @@ receiver_config_list = [
 receiver_list = []
 for index, scenario_temp in enumerate(receiver_config_list):
     receiver = Sequential([
-                DBP(N_span, L_span, scenario_temp["StPS"], step_type=scenario_temp["step_type"], fs=fs/oversampling_ratio, use_only_linear=scenario_temp["use_only_linear"], name="dbp"),
+                DBP(N_span, L_span=L_span, StPS=scenario_temp["StPS"], step_type=scenario_temp["step_type"], fs=fs/oversampling_ratio, use_only_linear=scenario_temp["use_only_linear"], name="dbp"),
                 SRRCFilter(rolloff, oversampling_dsp, method="fft", scale=1/np.sqrt(oversampling_dsp)),
                 Downsampler(oversampling_dsp),
                 ])

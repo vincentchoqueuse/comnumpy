@@ -65,10 +65,10 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
 # evaluate the BER for several detectors
 detector_list = [
-    LinearDetector(alphabet, H, method="zf", name="ZF"),
-    LinearDetector(alphabet, H, sigma2=sigma2, method="mmse", name="MMSE"),
-    OrderedSuccessiveInterferenceCancellationDetector(alphabet, "sinr", H, sigma2=sigma2, name="OSIC"),
-    MaximumLikelihoodDetector(alphabet, H, name="ML")
+    LinearDetector(alphabet, H=H, method="zf", name="ZF"),
+    LinearDetector(alphabet, H=H, sigma2=sigma2, method="mmse", name="MMSE"),
+    OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC"),
+    MaximumLikelihoodDetector(alphabet, H=H, name="ML")
     ]
 for detector in detector_list:
     S_est = detector(Y)

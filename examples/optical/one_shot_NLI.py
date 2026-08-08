@@ -74,7 +74,7 @@ for num_compensator in range(2):
         technique_name = "nonlinear equalization"
 
     receiver = Sequential([
-                    DBP(N_span, L_span, StPS_DBP, step_type="linear", use_only_linear=use_only_linear, fs=fs/oversampling_ratio, name="dbp"),
+                    DBP(N_span, L_span=L_span, StPS=StPS_DBP, step_type="linear", use_only_linear=use_only_linear, fs=fs/oversampling_ratio, name="dbp"),
                     SRRCFilter(rolloff, oversampling_dsp, method="fft", scale=1/np.sqrt(oversampling_dsp)),
                     Downsampler(oversampling_dsp),
                     Amplifier(1/amp),

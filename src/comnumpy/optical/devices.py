@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from comnumpy.core import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class Laser(Processor):
     r"""
     A class representing a laser.
@@ -30,13 +30,14 @@ class Laser(Processor):
 
     """
     P_dBm: float = -10
-    linewidth: float = 0
-    theta0: float = None
-    seed: int = None
-    fs: float = 1e9
-    freq_offset: float = 0
-    name: str = "Laser"
-    rng: np.random.Generator = field(init=False)
+    linewidth: float = field(default=0, kw_only=True)
+    theta0: Optional[float] = field(default=None, kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    fs: float = field(default=1e9, kw_only=True)
+    freq_offset: float = field(default=0, kw_only=True)
+    name: str = field(default="Laser", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
@@ -56,7 +57,7 @@ class Laser(Processor):
         return E_laser
 
 
-@dataclass
+@dataclass(slots=True)
 class Optical90HybridCircuit(Processor):
     """
     Models an optical 90-degree hybrid circuit for coherent detection in optical communication systems.
@@ -87,9 +88,9 @@ class Optical90HybridCircuit(Processor):
     signal processing.
     """
     is_ideal: bool = True
-    sensitivity: float = 0.6
-    laser_in: Optional[Laser] = None
-    name: str = "Optical90HybridCircuit"
+    sensitivity: float = field(default=0.6, kw_only=True)
+    laser_in: Optional[Laser] = field(default=None, kw_only=True)
+    name: str = field(default="Optical90HybridCircuit", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.is_ideal:
@@ -105,7 +106,7 @@ class Optical90HybridCircuit(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerControl(Processor):
     """
     Implements a simple power control mechanism for signal processing.
@@ -131,8 +132,8 @@ class PowerControl(Processor):
     adjustment of signal power according to the specified target level and unit.
     """
     P_moy: float = 1
-    unit: Literal["natural", "dBm"] = "natural"
-    name: str = "power_control"
+    unit: Literal["natural", "dBm"] = field(default="natural", kw_only=True)
+    name: str = field(default="power_control", kw_only=True)
 
     def get_gain(self, P_moy_x):
         if self.unit == 'dBm':
@@ -148,7 +149,7 @@ class PowerControl(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class ErbiumDopedFiberAmplifier(Processor):
     """
     Models an Erbium-Doped Fiber Amplifier (ErbiumDopedFiberAmplifier) in optical communication systems.
@@ -178,9 +179,10 @@ class ErbiumDopedFiberAmplifier(Processor):
     """
     gain: float
     N_ase: float
-    name: str = "ErbiumDopedFiberAmplifier"
-    seed: int = None
-    rng: np.random.Generator = field(init=False)
+    name: str = field(default="ErbiumDopedFiberAmplifier", kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
@@ -193,7 +195,7 @@ class ErbiumDopedFiberAmplifier(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class MachZehnderModulator(Processor):
     """
     Mach-Zehnder Modulator (MZM) with IQ modulation.
@@ -229,16 +231,16 @@ class MachZehnderModulator(Processor):
     """
 
     is_ideal: bool = False
-    Vpi: float = 6
-    k: float = 1
-    gI: float = 1
-    Phi: float = np.pi / 2
-    laser_in: Optional[callable] = None
-    name: str = "MachZehnderModulator"
-
-    Vpp: float = field(init=False)
-    VdcI: float = field(init=False)
-    VdcQ: float = field(init=False)
+    Vpi: float = field(default=6, kw_only=True)
+    k: float = field(default=1, kw_only=True)
+    gI: float = field(default=1, kw_only=True)
+    Phi: float = field(default=np.pi / 2, kw_only=True)
+    laser_in: Optional[callable] = field(default=None, kw_only=True)
+    name: str = field(default="MachZehnderModulator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    Vpp: float = field(init=False, repr=False, default_factory=lambda: None)
+    VdcI: float = field(init=False, repr=False, default_factory=lambda: None)
+    VdcQ: float = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.Vpp = self.k * self.Vpi
