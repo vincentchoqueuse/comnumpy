@@ -44,7 +44,7 @@ N = N_sc*os*L
 y = chain(2**16)
 y = np.ravel(y, order="F") # perform parallel2serial conversion
 
-papr_dB = compute_PAPR(y, unit="dB", axis=0)
+papr_dB = compute_PAPR(y, unit="dB", axis=-1)
 plt.plot(np.abs(y))
 plt.ylabel("$|x[n]|^2$")
 plt.xlabel("$n$ [sample]")
@@ -68,7 +68,7 @@ for N_sc in tqdm(N_sc_list):
     y = chain(N)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=0)
+    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
 
     # display experimental curves
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
