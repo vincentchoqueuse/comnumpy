@@ -82,7 +82,7 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
 
     # Create a box plot
     plt.figure(figsize=(12, 6))
-    plt.boxplot(data_array, labels=keys, orientation=orientation)
+    plt.boxplot(data_array, tick_labels=list(keys), orientation=orientation)
     plt.title(title)
     plt.xlabel('Time (s)')
     plt.grid(True)

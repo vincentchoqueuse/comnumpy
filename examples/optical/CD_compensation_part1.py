@@ -100,7 +100,7 @@ for k in k_vect:
 
         # perform MC simulations
         N0 = epsilon_b/snr_per_bit  # snr_bit = epsilon_b/N0 = (epsilon_s/log2(order))/N0
-        chain["noise"].value = N0  # change noise variance
+        chain["noise"].sigma2 = N0  # change noise variance
         y = chain(N)
 
         # evaluate metric

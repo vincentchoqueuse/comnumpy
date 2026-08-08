@@ -42,7 +42,7 @@ chain = Sequential([
 # evaluate PAPR for one signal
 N = N_sc*os*L
 y = chain(2**16)
-y = np.ravel(y, order="F") # perform parallel2serial conversion
+y = np.ravel(y) # perform parallel2serial conversion (C-order flatten of (..., T, F) blocks)
 
 papr_dB = compute_PAPR(y, unit="dB", axis=-1)
 plt.plot(np.abs(y))
