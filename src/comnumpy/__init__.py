@@ -8,6 +8,7 @@ everything else lives in its subpackage (``comnumpy.core``, ``comnumpy.ofdm``,
 __version__ = "1.0.0.dev0"
 
 from .exceptions import ComnumpyError, ShapeError, NotFittedError
+from .serialization import to_json, from_json
 from .core import (
     Processor, Sequential, Recorder,
     SymbolGenerator, SymbolMapper, SymbolDemapper,
@@ -19,6 +20,7 @@ __all__ = [
     "Processor", "Sequential", "Recorder",
     "SymbolGenerator", "SymbolMapper", "SymbolDemapper",
     "AWGN", "compute_ser", "get_alphabet", "ebn0_to_snr_dB", "esn0_to_snr_dB",
+    "to_json", "from_json",
     "Scope",
 ]
 

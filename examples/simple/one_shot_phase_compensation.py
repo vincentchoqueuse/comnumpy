@@ -42,7 +42,7 @@ chain = Sequential([
 y = chain(N)
 
 # print phase estimation
-estimated_phase = chain["phase_compensation"].theta
+estimated_phase = chain["phase_compensation"].theta_
 print(f"true phase: {true_phase}")
 print(f"compensation phase: {estimated_phase}")
 

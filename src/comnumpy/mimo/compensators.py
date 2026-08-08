@@ -102,8 +102,9 @@ class BlindDualMIMOCompensator(Processor):
     mode: Literal["cma", "rde", "dd"] = field(default="cma", kw_only=True)
     sub_block_length = 20
     name: str = field(default="mimo filter", kw_only=True)
-    # internal state (declared for slots, D40a)
-    H: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated equalizer matrix (D23: underscore distinguishes it from the
+    # *configured* channel H of FlatMIMOChannel), declared for slots (D40a)
+    H_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     radius_cma: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     radius_list: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
@@ -119,7 +120,7 @@ class BlindDualMIMOCompensator(Processor):
         H = np.zeros((2, 2*(2*self.L+1)), dtype=complex)
         H[0, self.L] = 1
         H[1, (2*self.L+1)+self.L] = 1
-        self.H = H
+        self.H_ = H
 
     def grad(self, input: np.ndarray, output: np.ndarray, target=None) -> np.ndarray:
 
@@ -146,6 +147,14 @@ class BlindDualMIMOCompensator(Processor):
     def process_after_iteration(self, n, Y_sub):
         pass
 
+    def partial_fit(self, X: np.ndarray):
+        """
+        One adaptation pass over ``X`` (adaptive regime of decision D22):
+        the estimate ``H_`` keeps evolving from its current state.
+        """
+        self.forward(X)
+        return self
+
     def forward(self, X: np.ndarray) -> np.ndarray:
 
         if X.shape[0] != 2:
@@ -158,9 +167,9 @@ class BlindDualMIMOCompensator(Processor):
 
         for n in range(2*L + 1, N, os):
             x_sub = np.ravel(X[:, n:n-(2*L+1):-1])
-            y_sub = np.matmul(np.conjugate(self.H), x_sub)  # filter output
+            y_sub = np.matmul(np.conjugate(self.H_), x_sub)  # filter output
             grad = self.grad(x_sub, y_sub)
-            self.H += self.mu*grad  # implement equation in matrix form directly
+            self.H_ += self.mu*grad  # implement equation in matrix form directly
             Y[:, n//os] = y_sub
 
             # perform process after_iteration

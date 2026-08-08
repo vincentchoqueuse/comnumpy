@@ -29,6 +29,38 @@ one release; there is no compatibility layer.
 | Bare `ValueError` on shape mismatch | `comnumpy.ShapeError` (still a `ValueError` subclass — existing `except ValueError` keeps working) |
 | `import comnumpy` loaded matplotlib (~1 s) | lazy imports: no matplotlib at import time, ~90 ms (enforced in CI) |
 
+### Added (milestones 2-5)
+
+- `validation/` scripts pinning the optical module to analytical
+  references (chromatic dispersion, SPM, fundamental soliton, DBP round
+  trip) plus a Monte-Carlo SER-vs-theory check; fast golden versions run
+  in CI (`tests/optical/`).
+- `comnumpy.ofdm.allocation`: `CarrierType`, frozen `CarrierAllocation`
+  (physical-order 2D mask + metadata + standard clause, ASCII spectral
+  map repr), `band_allocation`/`scattered_allocation`, registry-backed
+  `get_allocation()` catalog (802.11a/n/ac, LTE, 5G-NR) with
+  construction-time self-checks; `CarrierAllocator`/`CarrierExtractor`
+  accept a shared allocation object and validate the Block layout.
+- `itu_grid_frequency(n, m)` (ITU-T G.694.1 flexible grid); `FiberLink`
+  and `DBP` now refuse multi-channel arrays (full-field guard).
+- `Sequential.set_params(**{"awgn.snr_dB": 10})` with dotted addressing
+  and parametric re-precompute (D34); `block_ids()`.
+- Introspection (D33): structural `__repr__`, `summary(N)` table,
+  `to_mermaid()`.
+- Serialization (D31/D32): `to_json`/`from_json` with array sidecar
+  (.npz), explicit `inputs` field, `@register_block` for user blocks,
+  and a normative round-trip test.
+- Frame structures (D28): `FieldRole`, `FrameField`, `FrameStructure`
+  (frozen, ASCII frame map), `Framer`/`Deframer` sharing one structure.
+- Synchronization sequences (D29): `zadoff_chu`, `schmidl_cox_preamble`,
+  `barker`, `golay_pair`, `m_sequence`, each with property tests.
+- Estimator conventions (D22/D23): unified `fit(x, y=None)` returning
+  `self` (`y=None` = blind), `partial_fit` on the adaptive CMA/RDE/DD
+  compensator, trailing underscore on estimated quantities (`theta_`,
+  `gain_`, and `H_` on the MIMO equalizer -- formerly homonymous with
+  the *configured* channel `H`), `NotFittedError` when `forward` runs
+  with `should_fit=False` before any fit.
+
 ### Sanitation batch (Lot 0)
 
 No new feature; the published package becomes consistent with what the

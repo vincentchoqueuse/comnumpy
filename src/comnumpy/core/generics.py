@@ -1,6 +1,5 @@
 import numpy as np
 import dataclasses
-import pprint
 import time
 from dataclasses import dataclass, field
 from typing import Optional, Callable, Union, Dict
@@ -131,19 +130,144 @@ class Sequential():
     callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
 
 
-    def asdict(self):
-        dict = {}
-        for index, module in enumerate(self.module_list):
-            dict[f"id{index}"] = dataclasses.asdict(module)
+    def block_ids(self):
+        """
+        Return the addressable identifier of each block (decision D31/D34).
 
-        return dict
+        The identifier is the block's ``name`` field when it has one
+        (lower snake case), otherwise the class name in snake case; a
+        numeric suffix disambiguates duplicates (``awgn``, ``awgn_2``).
+        """
+        import re
+
+        def base_id(module):
+            name = getattr(module, "name", None)
+            if not name:
+                name = type(module).__name__
+            slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(name))
+            slug = re.sub(r"[^0-9a-zA-Z]+", "_", slug).strip("_").lower()
+            return slug or "block"
+
+        ids, seen = [], {}
+        for module in self.module_list:
+            base = base_id(module)
+            seen[base] = seen.get(base, 0) + 1
+            ids.append(base if seen[base] == 1 else f"{base}_{seen[base]}")
+        return ids
+
+    def get_module_by_id(self, block_id: str):
+        """Retrieve a module by its :meth:`block_ids` identifier."""
+        ids = self.block_ids()
+        if block_id not in ids:
+            raise KeyError(f"unknown block id {block_id!r}; known: {ids}")
+        return self.module_list[ids.index(block_id)]
+
+    def set_params(self, **params):
+        """
+        Reconfigure blocks after construction (decision D34).
+
+        Parameters are addressed with the dotted notation
+        ``"<block_id>.<field>"`` where ``<block_id>`` comes from
+        :meth:`block_ids`. After all assignments, the parametric
+        precomputation of each touched block (``__post_init__``) is
+        re-run, so the block state stays consistent.
+
+        Examples
+        --------
+        >>> from comnumpy.core.channels import AWGN
+        >>> chain = Sequential([AWGN(sigma2=0.1)])
+        >>> _ = chain.set_params(**{"awgn.sigma2": 0.01})
+        >>> chain[0].sigma2
+        0.01
+        """
+        touched = []
+        for dotted, value in params.items():
+            block_id, _, field_name = dotted.partition(".")
+            if not field_name:
+                raise ValueError(
+                    f"parameter {dotted!r} is not in the dotted form "
+                    f"'<block_id>.<field>' (block ids: {self.block_ids()})")
+            module = self.get_module_by_id(block_id)
+            field_names = {f.name for f in dataclasses.fields(module) if f.init}
+            if field_name not in field_names:
+                raise AttributeError(
+                    f"{type(module).__name__} has no parameter {field_name!r}; "
+                    f"available: {sorted(field_names)}")
+            setattr(module, field_name, value)
+            if module not in touched:
+                touched.append(module)
+
+        # re-run the parametric precomputation once per touched block
+        for module in touched:
+            post_init = getattr(module, "__post_init__", None)
+            if post_init is not None:
+                post_init()
+        return self
+
+    @staticmethod
+    def _format_value(value):
+        if isinstance(value, np.ndarray):
+            return f"ndarray{value.shape}"
+        if isinstance(value, Sequential):
+            return "Sequential(...)"
+        return repr(value)
+
+    def _block_repr(self, module):
+        if dataclasses.is_dataclass(module):
+            args = ", ".join(
+                f"{f.name}={self._format_value(getattr(module, f.name))}"
+                for f in dataclasses.fields(module) if f.repr and f.init)
+            return f"{type(module).__name__}({args})"
+        return repr(module)
 
     def __repr__(self):
+        """Structural view of the chain (decision D33a)."""
+        lines = [f"{type(self).__name__}("]
+        for index, module in enumerate(self.module_list):
+            lines.append(f"  ({index}): {self._block_repr(module)}")
+        lines.append(")")
+        return "\n".join(lines)
+
+    def summary(self, X, print_out=True):
         """
-        Show content of a sequential object
+        Run the chain on ``X`` and tabulate each block's output shape,
+        dtype and execution time (decision D33b). Returns the rows.
         """
-        object_dict = self.asdict()
-        return pprint.pformat(object_dict, indent=4)
+        rows = []
+        Y = X
+        for index, (block_id, module) in enumerate(
+                zip(self.block_ids(), self.module_list, strict=True)):
+            start_time = time.time()
+            Y = module(Y)
+            elapsed_ms = (time.time() - start_time) * 1e3
+            shape = getattr(Y, "shape", None)
+            dtype = getattr(Y, "dtype", type(Y).__name__)
+            rows.append((index, type(module).__name__, block_id,
+                         tuple(shape) if shape is not None else None,
+                         str(dtype), elapsed_ms))
+
+        if print_out:
+            header = (f"{'#':<4} {'block':<28} {'id':<20} "
+                      f"{'output shape':<18} {'dtype':<12} {'time ms':>8}")
+            print(header)
+            print("-" * len(header))
+            for index, cls, block_id, shape, dtype, ms in rows:
+                print(f"{index:<4} {cls:<28} {block_id:<20} "
+                      f"{str(shape):<18} {dtype:<12} {ms:>8.2f}")
+        return rows
+
+    def to_mermaid(self):
+        """
+        Mermaid flowchart of the chain (decision D33c), renderable by
+        sphinxcontrib-mermaid or any mermaid viewer.
+        """
+        lines = ["flowchart LR"]
+        ids = self.block_ids()
+        for block_id, module in zip(ids, self.module_list, strict=True):
+            lines.append(f'    {block_id}["{type(module).__name__}"]')
+        for a, b in zip(ids[:-1], ids[1:], strict=True):
+            lines.append(f"    {a} --> {b}")
+        return "\n".join(lines)
 
     def set_debug(self, debug=None):
         """
