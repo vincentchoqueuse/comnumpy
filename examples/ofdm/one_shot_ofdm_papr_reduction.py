@@ -51,7 +51,7 @@ for processor in processor_list:
     y = processor(x)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=0)
+    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
     plt.semilogy(papr_dB, ccdf, label=processor.name)
 
