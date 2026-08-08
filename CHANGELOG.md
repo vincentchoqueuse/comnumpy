@@ -7,8 +7,32 @@ and this project adheres to [PEP 440](https://peps.python.org/pep-0440/) version
 
 ## [Unreleased] — 1.0.0.dev0
 
-Sanitation batch ("Lot 0" of the architecture document): no new feature,
-but the published package becomes consistent with what the code actually does.
+Two batches so far: the sanitation batch ("Lot 0" of the architecture
+document) and the single breaking-change window of milestone 1
+(decisions D2, D36, D38, D40, D41). All breaking changes land in this
+one release; there is no compatibility layer.
+
+### Breaking changes — migration table
+
+| Before (0.91) | After (1.0.0) |
+|---|---|
+| `Serial2Parallel(N, order="F")` → shape `(N_sub, M)` | `Serial2Parallel(N)` → Block layout `(..., T, F)` = `(..., M, N_sub)`, pure C-order reshape; `order` removed |
+| `Parallel2Serial(order="F")` | `Parallel2Serial()` — C-order flatten of `(..., T, F)`; `order` removed |
+| OFDM blocks operate on axis 0 by default | OFDM blocks operate on the block content axis -1 (`FFTProcessor`/`IFFTProcessor` hardcode it; `axis` removed there) |
+| `AWGN(value=15, unit="snr_dB", sigma2s_method="measured")` | `AWGN(snr_dB=15)` — exactly one of `snr_dB=` / `sigma2=`; applied variance exposed as `sigma2_` |
+| `AWGN(0.01)` / `AWGN(value=0.01)` | `AWGN(sigma2=0.01)` |
+| `compute_sigma2(value, unit)` | removed — use `AWGN(snr_dB=…)` / `AWGN(sigma2=…)`, and `ebn0_to_snr_dB()` / `esn0_to_snr_dB()` for chain-level conversions |
+| `comnumpy.mimo.channels.AWGN` (duplicate class) | re-export of `comnumpy.core.channels.AWGN` (element-wise, shape-agnostic) |
+| `is_mimo=` parameter on many blocks | removed (it was never read); blocks declare an axis category instead (see CONVENTIONS.md) |
+| `ofdm.processors.OFDMTransmitter` (legacy duplicate) | removed — use `ofdm.chains.OFDMTransmitter` |
+| Optional block parameters accepted positionally | keyword-only (D40b): only the principal first argument is positional |
+| Bare `ValueError` on shape mismatch | `comnumpy.ShapeError` (still a `ValueError` subclass — existing `except ValueError` keeps working) |
+| `import comnumpy` loaded matplotlib (~1 s) | lazy imports: no matplotlib at import time, ~90 ms (enforced in CI) |
+
+### Sanitation batch (Lot 0)
+
+No new feature; the published package becomes consistent with what the
+code actually does.
 
 ### Fixed
 
