@@ -162,6 +162,40 @@ class Sequential():
             raise KeyError(f"unknown block id {block_id!r}; known: {ids}")
         return self.module_list[ids.index(block_id)]
 
+    def seed(self, seed):
+        """
+        Seed every stochastic block deterministically (decision D6).
+
+        A ``numpy.random.SeedSequence`` spawned from ``seed`` gives each
+        block that declares a ``seed`` field its own independent child
+        seed, then re-runs its parametric initialization so the RNG is
+        rebuilt. Same chain + same seed = same signal, whatever the
+        number or order of stochastic blocks.
+
+        Examples
+        --------
+        >>> from comnumpy.core.generators import SymbolGenerator
+        >>> chain = Sequential([SymbolGenerator(4)])
+        >>> _ = chain.seed(42)
+        >>> x1 = chain(5)
+        >>> _ = chain.seed(42)
+        >>> print(all(chain(5) == x1))
+        True
+        """
+        seed_sequence = np.random.SeedSequence(seed)
+        stochastic = [
+            module for module in self.module_list
+            if dataclasses.is_dataclass(module)
+            and "seed" in {f.name for f in dataclasses.fields(module)}
+        ]
+        for module, child in zip(stochastic, seed_sequence.spawn(len(stochastic)),
+                                 strict=True):
+            module.seed = int(child.generate_state(1)[0])
+            post_init = getattr(module, "__post_init__", None)
+            if post_init is not None:
+                post_init()
+        return self
+
     def set_params(self, **params):
         """
         Reconfigure blocks after construction (decision D34).
