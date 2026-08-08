@@ -1,11 +1,11 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
 from .utils import plot_alphabet
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolMapper(Processor):
     r"""
     Symbol Mapper for converting digital data to symbols based on a predefined alphabet.
@@ -50,7 +50,7 @@ class SymbolMapper(Processor):
     [-0.70710678+0.70710678j  0.70710678-0.70710678j  0.70710678+0.70710678j -0.70710678-0.70710678j -0.70710678-0.70710678j]
     """
     alphabet: np.ndarray
-    name: str = "Symbol Mapper"
+    name: str = field(default="Symbol Mapper", kw_only=True)
 
     def get_alphabet(self):
         return self.alphabet
@@ -63,7 +63,7 @@ class SymbolMapper(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolDemapper(Processor):
     r"""
     Symbol Demapper for converting symbols to digital data based on a predefined alphabet.
@@ -103,7 +103,7 @@ class SymbolDemapper(Processor):
     [0 3 2 1 1]
     """
     alphabet: np.ndarray
-    name: str = "Symbol Demapper"
+    name: str = field(default="Symbol Demapper", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         s, x = hard_projector(X, self.alphabet)

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Tuple, Literal
 from comnumpy.core.generics import Processor
 from scipy.signal import welch
@@ -88,7 +88,7 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
     plt.grid(True)
 
 
-@dataclass
+@dataclass(slots=True)
 class TimeScope(Processor):
     """
     A basic Time Scope for visualizing signals in the time domain.
@@ -117,14 +117,14 @@ class TimeScope(Processor):
 
     """
     num: Optional[int]
-    fs: float = 1.0
-    plot_type: Literal["full", "real", "abs", "pow"] = "real"
-    fig_indices: Tuple[int, ...] = (0,)
-    slices: Tuple[slice, ...] = (slice(None),)
-    marker: str = "-"
-    axis: int = 0
-    title: str = "Time Scope"
-    name: str = "time_scope"
+    fs: float = field(default=1.0, kw_only=True)
+    plot_type: Literal["full", "real", "abs", "pow"] = field(default="real", kw_only=True)
+    fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
+    slices: Tuple[slice, ...] = field(default=(slice(None),), kw_only=True)
+    marker: str = field(default="-", kw_only=True)
+    axis: int = field(default=0, kw_only=True)
+    title: str = field(default="Time Scope", kw_only=True)
+    name: str = field(default="time_scope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
@@ -151,7 +151,7 @@ class TimeScope(Processor):
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class SpectrumScope(Processor):
     """
     A basic Spectrum Scope for visualizing the power spectral density (PSD) of a signal.
@@ -189,17 +189,17 @@ class SpectrumScope(Processor):
 
     """
     fs: float = 1.0
-    norm: bool = True
-    dB: bool = True
-    xlim: Optional[Tuple[float, float]] = None
-    ylim: Optional[Tuple[float, float]] = None
-    num: Optional[int] = None
-    shift: bool = False
-    fig_indices: Tuple[int, ...] = (0,)
-    slices: Tuple[slice, ...] = (slice(None),)
-    axis: int = 0
-    title: str = "Spectrum Scope"
-    name: str = "SpectrumScope"
+    norm: bool = field(default=True, kw_only=True)
+    dB: bool = field(default=True, kw_only=True)
+    xlim: Optional[Tuple[float, float]] = field(default=None, kw_only=True)
+    ylim: Optional[Tuple[float, float]] = field(default=None, kw_only=True)
+    num: Optional[int] = field(default=None, kw_only=True)
+    shift: bool = field(default=False, kw_only=True)
+    fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
+    slices: Tuple[slice, ...] = field(default=(slice(None),), kw_only=True)
+    axis: int = field(default=0, kw_only=True)
+    title: str = field(default="Spectrum Scope", kw_only=True)
+    name: str = field(default="SpectrumScope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
@@ -238,7 +238,7 @@ class SpectrumScope(Processor):
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class IQScope(Processor):
     """
     A basic IQ Scope for visualizing the In-phase (I) and Quadrature (Q) components
@@ -265,11 +265,11 @@ class IQScope(Processor):
 
     """
     num: Optional[int] = None
-    title: str = "IQ Scope"
-    fig_indices: Tuple[int, ...] = (0,)
-    slices: Tuple[slice, ...] = (slice(None),)
-    axis: int = 0
-    name: str = "IQScope"
+    title: str = field(default="IQ Scope", kw_only=True)
+    fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
+    slices: Tuple[slice, ...] = field(default=(slice(None),), kw_only=True)
+    axis: int = field(default=0, kw_only=True)
+    name: str = field(default="IQScope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, self.fig_indices)
@@ -286,7 +286,7 @@ class IQScope(Processor):
         return X
 
 
-@dataclass
+@dataclass(slots=True)
 class KDEScope(Processor):
     """
     A basic Kernel Density Estimation (KDE) Scope for visualizing bivariate distributions.
@@ -309,9 +309,9 @@ class KDEScope(Processor):
 
     """
     bw_adjust: float = 1.0
-    thresh: float = 0.05
-    num: Optional[int] = None
-    name: str = "KDE Scope"
+    thresh: float = field(default=0.05, kw_only=True)
+    num: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="KDE Scope", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         fig, axes = create_subplots(self.num, (0,))

@@ -1,9 +1,10 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Optional
 from comnumpy.core.generics import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolGenerator(Processor):
     r"""
     A generator for creating independent and identically distributed (IID) symbols.
@@ -45,8 +46,10 @@ class SymbolGenerator(Processor):
      [0 0 2]]
     """
     M: int
-    seed: int = None
-    name: str = "generator"
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="generator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
@@ -63,7 +66,7 @@ class SymbolGenerator(Processor):
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class GaussianGenerator(Processor):
     r"""
     A generator for creating Gaussian-distributed symbols.
@@ -100,8 +103,10 @@ class GaussianGenerator(Processor):
     (3, 3)
     """
     sigma2: float = 1
-    seed: int = None
-    name: str = "gaussian_generator"
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="gaussian_generator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
