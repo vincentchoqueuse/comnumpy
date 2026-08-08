@@ -2,6 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core import Processor
+from comnumpy.exceptions import ShapeError
 from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
 from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     apply_chromatic_dispersion, apply_kerr_nonlinearity)
@@ -87,6 +88,14 @@ class DBP(Processor):
     gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def prepare(self, x: np.ndarray) -> np.ndarray:
+        if x.ndim != 1:
+            raise ShapeError(
+                f"nonlinear propagation requires a full-field signal (N,); "
+                f"got {x.shape}. A pointwise Kerr step on a multi-channel "
+                f"array would silently produce SPM only (no XPM, no FWM). "
+                f"Multiplex the channels into a single full-field waveform "
+                f"first, or use a coupled-NLSE model (not implemented)."
+            )
         match self.step_type:
             case "linear":
                 step_size = get_linear_step_size(self.L_span, self.StPS)

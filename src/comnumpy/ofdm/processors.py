@@ -4,6 +4,8 @@ from typing import Optional, Literal, Callable
 from scipy.fft import fft, ifft, fftshift, ifftshift
 from comnumpy.core import Processor
 from comnumpy.core.processors import AutoConcatenator
+from comnumpy.exceptions import ShapeError
+from .allocation import CarrierAllocation
 from .utils import plot_carrier_allocation
 
 
@@ -348,15 +350,22 @@ class CarrierAllocator(Processor):
 
     The indices :math:`m` and :math:`k` are determined by the positions in the `carrier_type` array where the values are 1 and 2, respectively.
 
+    Axes: *declared axis* -- expects the Block layout ``(..., T, F)``
+    (or ``(..., N_data)`` for a period-1 allocation) and validates it in
+    ``prepare()`` (decision D18). The mask says *where*, the ``pilots``
+    argument says *what*: transmitter and receiver share the same
+    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object, which
+    removes the "diverging masks" class of bugs.
+
     Attributes
     ----------
-    carrier_type : np.ndarray
-        Array specifying the type of each subcarrier.
-    pilots : np.ndarray, optional
-        Array of pilot values to be inserted into the subcarriers. Default is an empty array.
-    axis : int, optional
-        Axis along which to allocate subcarriers. Default is -1, the
-        block content axis of the Block layout ``(..., T, F)``.
+    carrier_type : CarrierAllocation or np.ndarray
+        The allocation. A :class:`CarrierAllocation` is described in
+        physical order and converted once with ``to_fft_order()``
+        (decision D16); a raw 1D array is taken as an FFT-order mask.
+    pilots : np.ndarray or scalar, optional
+        Pilot values, one per PILOT subcarrier of an OFDM symbol (or a
+        scalar broadcast to all of them). Default is an empty array.
 
     Example 1
     ---------
@@ -376,74 +385,101 @@ class CarrierAllocator(Processor):
     [[1 0 0 4 7]
      [2 0 0 5 8]
      [3 0 0 6 9]]
+
+    Example 3
+    ---------
+    >>> from comnumpy.ofdm.allocation import get_allocation
+    >>> allocator = CarrierAllocator(get_allocation("802.11a"), pilots=1.0)
+    >>> Y = allocator(np.ones((10, 48)))
+    >>> print(Y.shape)
+    (10, 64)
     """
-    carrier_type: np.ndarray
+    carrier_type: object
     pilots: Optional[np.ndarray] = field(default=None, kw_only=True)
-    axis: int = field(default=-1, kw_only=True)
     name: str = field(default="carrier allocator", kw_only=True)
     # internal state (declared for slots, D40a)
+    mask: np.ndarray = field(init=False, repr=False)
     N: int = field(init=False, repr=False)
     N_data: int = field(init=False, repr=False)
-    N_pilots: int = field(init=False, repr=False)
-    index_data: np.ndarray = field(init=False, repr=False)
-    index_pilots: np.ndarray = field(init=False, repr=False)
+    period: int = field(init=False, repr=False)
 
     def __post_init__(self):
         self.initialize_masks()
 
     def initialize_masks(self):
-        self.N = len(self.carrier_type)
-        self.N_data = np.sum(self.carrier_type == 1)
-        self.N_pilots = np.sum(self.carrier_type == 2)
+        if isinstance(self.carrier_type, CarrierAllocation):
+            # physical order -> FFT order, once and explicitly (D16)
+            self.mask = self.carrier_type.to_fft_order()
+        else:
+            self.mask = np.atleast_2d(np.asarray(self.carrier_type))
 
-        # Check carrier dimension
+        self.period = self.mask.shape[0]
+        self.N = self.mask.shape[1]
+        n_data = np.sum(self.mask == 1, axis=1)
+        if not np.all(n_data == n_data[0]):
+            raise ValueError(
+                f"the number of data subcarriers must be constant over the "
+                f"period, got {n_data.tolist()}")
+        self.N_data = int(n_data[0])
+
         if self.pilots is None:
             self.pilots = np.array([])
 
-        if self.N_pilots != len(self.pilots):
-            raise ValueError(f"Incompatible number of pilots ({self.N_pilots} needed, {len(self.pilots)} provided)")
-
-        # Initialize vector
-        self.index_data = (self.carrier_type == 1)
-        self.index_pilots = (self.carrier_type == 2)
+    def _pilot_values(self, n_pilots):
+        pilots = np.asarray(self.pilots)
+        if pilots.ndim == 0:
+            return np.broadcast_to(pilots, (n_pilots,))
+        if len(pilots) != n_pilots:
+            raise ValueError(
+                f"incompatible number of pilots ({n_pilots} needed for this "
+                f"OFDM symbol, {len(pilots)} provided)")
+        return pilots
 
     def set_carrier_type(self, carrier_type):
         self.carrier_type = carrier_type
         self.initialize_masks()
 
-    def forward(self, X: np.ndarray) -> np.ndarray:
-        # validate size
-        N_data_validation = X.shape[self.axis]
-        if self.N_data != N_data_validation:
-            raise ValueError(f"Incompatible number of subcarriers ({N_data_validation} provided in input data, {self.N_data} expected in carrier type)")
+    def prepare(self, X: np.ndarray):
+        if X.shape[-1] != self.N_data:
+            raise ShapeError(
+                f"CarrierAllocator expects (..., T, {self.N_data}) "
+                f"(N_data={self.N_data} data subcarriers per OFDM symbol), "
+                f"got {X.shape} -- fix Serial2Parallel(N_sub={self.N_data}) "
+                f"or the allocation.")
+        if self.period > 1 and X.ndim < 2:
+            raise ShapeError(
+                f"CarrierAllocator with a period-{self.period} allocation "
+                f"expects a Block layout (..., T, {self.N_data}), got 1D "
+                f"{X.shape} -- add the OFDM-symbol axis with Serial2Parallel.")
 
-        # Initialize the output array
-        new_shape = list(X.shape)
-        new_shape[self.axis] = self.N
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        new_shape = X.shape[:-1] + (self.N,)
         Y = np.zeros(new_shape, dtype=X.dtype)
 
-        # Create a slicing object to index along the specified axis
-        slices = [slice(None)] * len(X.shape)
-
-        # Assign data
-        slices[self.axis] = self.index_data
-        Y[tuple(slices)] = X
-
-        # Assign pilots (reshaped to broadcast along the allocation axis,
-        # so that 1D and N-D inputs are both supported)
-        if self.N_pilots > 0:
-            slices[self.axis] = self.index_pilots
-            pilot_shape = [1] * Y.ndim
-            pilot_shape[self.axis % Y.ndim] = self.N_pilots
-            Y[tuple(slices)] = np.asarray(self.pilots).reshape(pilot_shape)
-
+        if self.period == 1:
+            row = self.mask[0]
+            Y[..., row == 1] = X
+            n_pilots = int(np.sum(row == 2))
+            if n_pilots > 0:
+                Y[..., row == 2] = self._pilot_values(n_pilots)
+        else:
+            # scattered pattern: mask row l applies to OFDM symbol t = l mod period
+            T = X.shape[-2]
+            for t in range(T):
+                row = self.mask[t % self.period]
+                Y[..., t, row == 1] = X[..., t, :]
+                n_pilots = int(np.sum(row == 2))
+                if n_pilots > 0:
+                    Y[..., t, row == 2] = self._pilot_values(n_pilots)
         return Y
 
     def plot(self, shift=False):
         """
         Plot the carrier allocation
         """
-        plot_carrier_allocation(self.carrier_type, shift=shift, title="Carrier Allocation")
+        if isinstance(self.carrier_type, CarrierAllocation):
+            return self.carrier_type.plot()
+        plot_carrier_allocation(np.ravel(self.mask), shift=shift, title="Carrier Allocation")
 
 
 @dataclass(slots=True)
@@ -469,15 +505,20 @@ class CarrierExtractor(Processor):
 
     The indices :math:`k_m` are determined by the positions in the `carrier_type` array where the value is 1.
 
+    Axes: *declared axis* -- expects the Block layout ``(..., T, N_fft)``
+    (or ``(..., N_fft)`` for a period-1 allocation) and validates it in
+    ``prepare()`` (decision D18). Share the same
+    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object with the
+    transmitter's :class:`CarrierAllocator`.
+
     Attributes
     ----------
-    carrier_type : np.ndarray
-        Array specifying the type of each subcarrier.
+    carrier_type : CarrierAllocation or np.ndarray
+        The allocation. A :class:`CarrierAllocation` is described in
+        physical order and converted once with ``to_fft_order()``
+        (decision D16); a raw 1D array is taken as an FFT-order mask.
     pilot_recorder : callable, optional
         Function to record the content associated to pilot values if required. Default is None.
-    axis : int, optional
-        Axis along which to extract subcarriers. Default is -1, the
-        block content axis of the Block layout ``(..., T, F)``.
 
     Example 1
     ---------
@@ -506,24 +547,49 @@ class CarrierExtractor(Processor):
     [[1 4 7]
      [2 5 8]]
     """
-    carrier_type: np.ndarray
+    carrier_type: object
     pilot_recorder: Optional[Callable] = field(default=None, kw_only=True)
-    axis: int = field(default=-1, kw_only=True)
     name: str = field(default="carrier extractor", kw_only=True)
+    # internal state (declared for slots, D40a)
+    mask: np.ndarray = field(init=False, repr=False)
+    period: int = field(init=False, repr=False)
+
+    def __post_init__(self):
+        if isinstance(self.carrier_type, CarrierAllocation):
+            self.mask = self.carrier_type.to_fft_order()
+        else:
+            self.mask = np.atleast_2d(np.asarray(self.carrier_type))
+        self.period = self.mask.shape[0]
+
+    def prepare(self, X: np.ndarray):
+        N_fft = self.mask.shape[1]
+        if X.shape[-1] != N_fft:
+            raise ShapeError(
+                f"CarrierExtractor expects (..., T, {N_fft}) "
+                f"(N_fft={N_fft} subcarriers), got {X.shape} -- use the "
+                f"same allocation as the transmitter's CarrierAllocator.")
+        if self.period > 1 and X.ndim < 2:
+            raise ShapeError(
+                f"CarrierExtractor with a period-{self.period} allocation "
+                f"expects a Block layout (..., T, {N_fft}), got 1D {X.shape}.")
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        # Create a slicing object to index along the specified axis
-        slices = [slice(None)] * X.ndim
+        if self.period == 1:
+            row = self.mask[0]
+            X_data = X[..., row == 1]
+            X_pilots = X[..., row == 2]
+        else:
+            T = X.shape[-2]
+            data_parts, pilot_parts = [], []
+            for t_index in range(T):
+                row = self.mask[t_index % self.period]
+                data_parts.append(X[..., t_index, row == 1])
+                pilot_parts.append(X[..., t_index, row == 2])
+            X_data = np.stack(data_parts, axis=-2)
+            # pilot counts may differ per symbol: keep the raw list then
+            X_pilots = pilot_parts
 
-        # Extract data
-        slices[self.axis] = self.carrier_type == 1
-        X_data = X[tuple(slices)]
-
-        # Extract pilots
-        slices[self.axis] = self.carrier_type == 2
-        X_pilots = X[tuple(slices)]
-
-        # Save pilot if needed
+        # Save pilots if needed
         if self.pilot_recorder:
             self.pilot_recorder(X_pilots)
 
@@ -533,5 +599,7 @@ class CarrierExtractor(Processor):
         """
         Plot the carrier allocation
         """
-        plot_carrier_allocation(self.carrier_type, shift=shift, title="Carrier Allocation")
+        if isinstance(self.carrier_type, CarrierAllocation):
+            return self.carrier_type.plot()
+        plot_carrier_allocation(np.ravel(self.mask), shift=shift, title="Carrier Allocation")
 

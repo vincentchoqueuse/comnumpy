@@ -272,3 +272,50 @@ def get_logarithmic_step_size(L_span, StPS, alpha_dB=0, step_log_factor=0.4):
     n_vect = 1 + np.arange(StPS)
     z = -(1/alpha_adj)*np.log((1-n_vect*delta)/(1-(n_vect-1)*delta))
     return z
+
+
+def itu_grid_frequency(n, m=1):
+    r"""
+    Center frequency and slot width of an ITU-T G.694.1 flexible-grid channel.
+
+    A WDM channel is described by the integer couple :math:`(n, m)`
+    (decision D19): the center frequency is
+    :math:`193.1 + n \times 0.00625` THz and the slot width is
+    :math:`12.5 \times m` GHz. The fixed grids are particular cases
+    (e.g. the 50 GHz grid uses even :math:`n` multiples of 8 and
+    :math:`m = 4`).
+
+    Parameters
+    ----------
+    n : int
+        Signed channel index on the 6.25 GHz granularity.
+    m : int, optional
+        Slot width multiplier (slot width = 12.5 * m GHz). Default is 1.
+
+    Returns
+    -------
+    center_Hz : float
+        Channel center frequency in Hz.
+    width_Hz : float
+        Slot width in Hz.
+
+    References
+    ----------
+    ITU-T Recommendation G.694.1 (2020), section 7 (flexible DWDM grid).
+
+    Examples
+    --------
+    >>> center, width = itu_grid_frequency(0, m=4)
+    >>> print(f"{center/1e12:.4f} THz, {width/1e9:.1f} GHz")
+    193.1000 THz, 50.0 GHz
+    >>> center, width = itu_grid_frequency(-32, m=4)
+    >>> print(f"{center/1e12:.4f} THz")
+    192.9000 THz
+    """
+    if not (isinstance(n, (int, np.integer)) and isinstance(m, (int, np.integer))):
+        raise TypeError(f"ITU G.694.1 channels are described by integers (n, m), got ({n!r}, {m!r})")
+    if m < 1:
+        raise ValueError(f"slot width multiplier m must be >= 1, got {m}")
+    center_Hz = (193.1e12) + n * 6.25e9
+    width_Hz = 12.5e9 * m
+    return center_Hz, width_Hz
