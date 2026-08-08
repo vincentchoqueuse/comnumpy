@@ -68,7 +68,7 @@ for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
                 case "ZF":
                     detector = LinearDetector(alphabet=alphabet, H=H, method="zf")
                 case "OSIC":
-                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, "sinr", H, sigma2=sigma2, name="OSIC")
+                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC")
 
             # perform detection
             S_est = detector(Y)

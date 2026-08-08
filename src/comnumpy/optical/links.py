@@ -7,7 +7,7 @@ from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFIC
 from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
-@dataclass
+@dataclass(slots=True)
 class FiberLink(Processor):
     """
     Represents a multi-span fiber link for optical communication systems. Each span
@@ -63,24 +63,29 @@ class FiberLink(Processor):
       in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
     """
     N_spans: int = 1
-    L_span: float = 80
-    StPS: int = 1
-    fs: float = 1
-    NF_dB: float = 4
-    noise_scaling: float = 1
-    step_type: Literal["linear", "logarithmic"] = "linear"
-    step_method: Literal["symmetric", "asymetric"] = "symmetric"
-    use_only_linear: bool = False
-    c: float = SPEED_OF_LIGHT              # in meters per second
-    h: float = PLANCK_CONSTANT             # in Joule seconds
-    gamma: float = KERR_COEFFICIENT        # in rad/W/km
-    lamb: float = WAVELENGTH               # nm
-    alpha_dB: float = FIBER_LOSS           # in dB/km
-    cd_coefficient: float = CD_COEFFICIENT  # in ps/nm/km
-    nu: float = OPTICAL_CARRIER_FREQUENCY  # optical carrier frequency
-    step_log_factor: float = 0.4
-    name: str = "fiber link"
-    callbacks: Optional[Dict[str, Callable[[np.ndarray], None]]] = field(default_factory=dict)
+    L_span: float = field(default=80, kw_only=True)
+    StPS: int = field(default=1, kw_only=True)
+    fs: float = field(default=1, kw_only=True)
+    NF_dB: float = field(default=4, kw_only=True)
+    noise_scaling: float = field(default=1, kw_only=True)
+    step_type: Literal["linear", "logarithmic"] = field(default="linear", kw_only=True)
+    step_method: Literal["symmetric", "asymetric"] = field(default="symmetric", kw_only=True)
+    use_only_linear: bool = field(default=False, kw_only=True)
+    c: float = field(default=SPEED_OF_LIGHT, kw_only=True)              # in meters per second
+    h: float = field(default=PLANCK_CONSTANT, kw_only=True)             # in Joule seconds
+    gamma: float = field(default=KERR_COEFFICIENT, kw_only=True)        # in rad/W/km
+    lamb: float = field(default=WAVELENGTH, kw_only=True)               # nm
+    alpha_dB: float = field(default=FIBER_LOSS, kw_only=True)           # in dB/km
+    cd_coefficient: float = field(default=CD_COEFFICIENT, kw_only=True)  # in ps/nm/km
+    nu: float = field(default=OPTICAL_CARRIER_FREQUENCY, kw_only=True)  # optical carrier frequency
+    step_log_factor: float = field(default=0.4, kw_only=True)
+    name: str = field(default="fiber link", kw_only=True)
+    callbacks: Optional[Dict[str, Callable[[np.ndarray], None]]] = field(default_factory=dict, kw_only=True)
+    # internal state (declared for slots, D40a)
+    step_size: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    edfa_gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    edfa_N_ase: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def prepare(self, x: np.ndarray) -> np.ndarray:
         match self.step_type:

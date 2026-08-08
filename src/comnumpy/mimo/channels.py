@@ -1,12 +1,12 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from comnumpy.core import Processor
 from comnumpy.core.channels import AWGN  # noqa: F401 -- AWGN is element-wise (shape-agnostic); re-exported here for convenience
 from .validators import validate_input
 
 
-@dataclass
+@dataclass(slots=True)
 class BaseMIMOChannel(Processor):
 
     r"""
@@ -41,8 +41,8 @@ class BaseMIMOChannel(Processor):
         Name of the processor.
     """
     H: Optional[np.array] = None
-    extend: bool = True
-    name: str = "mimo_channel"
+    extend: bool = field(default=True, kw_only=True)
+    name: str = field(default="mimo_channel", kw_only=True)
 
     def info(self):
         H = self.H
@@ -66,7 +66,7 @@ class BaseMIMOChannel(Processor):
         raise NotImplementedError
 
 
-@dataclass
+@dataclass(slots=True)
 class FlatMIMOChannel(BaseMIMOChannel):
     r"""
     Flat (frequency-non-selective) MIMO channel.
@@ -80,7 +80,7 @@ class FlatMIMOChannel(BaseMIMOChannel):
         return np.matmul(self.H, X)
 
 
-@dataclass
+@dataclass(slots=True)
 class SelectiveMIMOChannel(BaseMIMOChannel):
     r"""
     Frequency-selective MIMO channel.

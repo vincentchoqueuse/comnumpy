@@ -10,7 +10,7 @@ from .utils import compute_beta2
 from .constants import WAVELENGTH, CD_COEFFICIENT, SPEED_OF_LIGHT
 
 
-@dataclass
+@dataclass(slots=True)
 class ChromaticDispersionFIRCompensator(Processor):
     """
     FIR-based chromatic dispersion compensator using the Savory method.
@@ -29,10 +29,11 @@ class ChromaticDispersionFIRCompensator(Processor):
     c: ClassVar[float] = SPEED_OF_LIGHT
 
     z: float  # in km
-    fs: float = 1.0
-    name: str = "fir cd compensator"
-    h: np.ndarray = field(init=False)
-    K: float = field(init=False)
+    fs: float = field(default=1.0, kw_only=True)
+    name: str = field(default="fir cd compensator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    h: np.ndarray = field(init=False, repr=False, default_factory=lambda: None)
+    K: float = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         beta2_ps2_per_km = compute_beta2(self.lamb, self.D, self.c)
@@ -50,7 +51,7 @@ class ChromaticDispersionFIRCompensator(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class ChromaticDispersionLSFIRCompensator(Processor):
     """
     Least-Squares FIR Compensator for Chromatic Dispersion.
@@ -79,11 +80,12 @@ class ChromaticDispersionLSFIRCompensator(Processor):
 
     z: float
     N: int
-    fs: float = 1.0
-    w_vect: List[float] = field(default_factory=lambda: [-np.pi, np.pi])
-    name: str = "optimal"
-    h: np.ndarray = field(init=False)
-    K: float = field(init=False)
+    fs: float = field(default=1.0, kw_only=True)
+    w_vect: List[float] = field(default_factory=lambda: [-np.pi, np.pi], kw_only=True)
+    name: str = field(default="optimal", kw_only=True)
+    # internal state (declared for slots, D40a)
+    h: np.ndarray = field(init=False, repr=False, default_factory=lambda: None)
+    K: float = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         if self.N % 2 == 0:

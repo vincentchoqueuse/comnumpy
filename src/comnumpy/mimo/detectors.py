@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 import numpy.linalg as LA
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
@@ -21,7 +21,7 @@ def validate_sigma2(sigma2):
         raise TypeError("Noise variance sigma2 should be greater than 0.")
 
 
-@dataclass
+@dataclass(slots=True)
 class MaximumLikelihoodDetector(Processor):
     r"""
     Implements the ML (Maximum Likelihood) Detector for white Gaussian noise in a MIMO (Multiple-Input, Multiple-Output) communication system.
@@ -54,8 +54,10 @@ class MaximumLikelihoodDetector(Processor):
     """
 
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    name: str = "ML Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    name: str = field(default="ML Detector", kw_only=True)
+    # internal state (declared for slots, D40a)
+    S: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def get_nb_candidates(self):
         _, N_t = self.H.shape
@@ -101,7 +103,7 @@ class MaximumLikelihoodDetector(Processor):
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class LinearDetector(Processor):
     r"""
     Implements a Linear MIMO detector.
@@ -132,10 +134,10 @@ class LinearDetector(Processor):
     * Larsson, Erik G., Petre Stoica, and Girish Ganesan. Space-time block coding for wireless communications. Cambridge university press, 2003.
     """
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    method: Literal["zf", "mmse"] = "zf"
-    sigma2: float = None
-    name: str = "ZF Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    name: str = field(default="ZF Detector", kw_only=True)
 
     def linear_estimator(self, Y):
         r"""
@@ -155,7 +157,7 @@ class LinearDetector(Processor):
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     """
     Ordered Successive Interference Cancellation (OSIC) detector.
@@ -178,11 +180,11 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     * Cho, Yong Soo, et al. MIMO-OFDM wireless communications with MATLAB. John Wiley & Sons, 2010.
     """
     alphabet: np.ndarray
-    osic_type: str = "sinr"  # 'sinr', 'colnorm', or 'snr'
-    H: Optional[np.ndarray] = None
-    method: Literal["zf", "mmse"] = "zf"
-    sigma2: Optional[float] = None
-    name: str = "OSIC Detector"
+    osic_type: str = field(default="sinr", kw_only=True)  # 'sinr', 'colnorm', or 'snr'
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    name: str = field(default="OSIC Detector", kw_only=True)
 
     def __post_init__(self):
         if self.osic_type == "sinr":
@@ -255,7 +257,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
         return S_hat
 
 
-@dataclass
+@dataclass(slots=True)
 class ApproximateMessagePassingDetector(Processor):
     """
     Implements the AMP (Approximate Message Passing) MIMO detector.
@@ -277,11 +279,11 @@ class ApproximateMessagePassingDetector(Processor):
         Name of the detector.
     """
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    sigma2: float = None
-    alpha: float = 1
-    N_it: int = 100
-    name: str = "AMP Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    alpha: float = field(default=1, kw_only=True)
+    N_it: int = field(default=100, kw_only=True)
+    name: str = field(default="AMP Detector", kw_only=True)
 
     def fit(self, y):
         # see Algorithm 2
@@ -323,7 +325,7 @@ class ApproximateMessagePassingDetector(Processor):
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class OrthogonalApproximateMessagePassingDetector(Processor):
     """
     Implements the OAMP (Orthogonal AMP) MIMO detector.
@@ -347,12 +349,12 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
     """
 
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    sigma2: float = None
-    alpha: float = 1
-    N_it: int = 100
-    type: Literal["H", "pinv", "MMSE"] = "MMSE"
-    name: str = "OAMP Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    alpha: float = field(default=1, kw_only=True)
+    N_it: int = field(default=100, kw_only=True)
+    type: Literal["H", "pinv", "MMSE"] = field(default="MMSE", kw_only=True)
+    name: str = field(default="OAMP Detector", kw_only=True)
 
     def get_W(self, vt_2=0):
         H = self.H

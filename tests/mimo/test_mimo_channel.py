@@ -39,17 +39,17 @@ class TestMIMOChannelChain(unittest.TestCase):
         return compute_ser(data_tx, Y)
 
     def test_zf_one_shot(self):
-        detector = LinearDetector(self.alphabet, self.H, method="zf")
+        detector = LinearDetector(self.alphabet, H=self.H, method="zf")
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
     def test_mmse_one_shot(self):
-        detector = LinearDetector(self.alphabet, self.H, sigma2=self.sigma2, method="mmse")
+        detector = LinearDetector(self.alphabet, H=self.H, sigma2=self.sigma2, method="mmse")
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
     def test_ml_one_shot(self):
-        detector = MaximumLikelihoodDetector(self.alphabet, self.H)
+        detector = MaximumLikelihoodDetector(self.alphabet, H=self.H)
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
