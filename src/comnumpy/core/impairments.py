@@ -29,6 +29,12 @@ class IQImbalance(Processor):
     name : str, optional, keyword-only
         Name of the impairment instance. Default is ``"iq_impairment"``.
 
+    References
+    ----------
+    I. Fatadin, S. J. Savory, D. Ives, "Compensation of Quadrature
+    Imbalance in an Optical QPSK Coherent Receiver," IEEE Photonics
+    Technology Letters 20(20), 2008.
+
     Examples
     --------
     >>> iq = IQImbalance(alpha=1.0, beta=0.1)
@@ -126,6 +132,11 @@ class Delay(Processor):
     ------
     ValueError
         If ``tau`` is negative (validated at construction).
+
+    References
+    ----------
+    H. Meyr, M. Moeneclaey, S. Fechtel, *Digital Communication
+    Receivers*, Wiley, 1998, Chapter 4 (timing offsets).
 
     Examples
     --------

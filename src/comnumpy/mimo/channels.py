@@ -9,36 +9,46 @@ from .validators import validate_input
 @dataclass(slots=True)
 class BaseMIMOChannel(Processor):
 
-    r"""
-    A base class for modeling Multiple-Input Multiple-Output (MIMO) channels.
-
-    This class provides a framework for simulating MIMO communication channels,
-    including methods for setting channel matrices, configuring signal-to-noise
-    ratios (SNR), generating noise, and processing input signals.
+    r"""Base class for Multiple-Input Multiple-Output (MIMO) channels.
 
     Signal Model
     ------------
+    Subclasses implement the deterministic part of the MIMO observation
+    model
 
-    .. math ::
+    .. math::
 
-        \mathbf{y}[n] = \sum_{l=0}^{L}\mathbf{H}[l]x[n-l] + \mathbf{b}[n]
+        \mathbf{y}[n] = \sum_{l=0}^{L-1} \mathbf{H}[l] \, \mathbf{x}[n-l]
+        + \mathbf{b}[n]
 
     where
 
-    * :math:`\mathbf{H}[l]` is a channel matrix of size :math:`N_r \times N_t` corresponding the :math:`l^{th}` channel tap,
-    * :math:`\mathbf{x}[n]` is a :math:`N_t` vector containing the transmitted data,
-    * :math:`\mathbf{b}[n]\sim \mathcal{N}_c(\mathbf{0},\sigma^2\mathbf{I}_{N_r})` is a :math:`N_r` vector containing the additive white Gaussian noise.
+    * :math:`\mathbf{H}[l]` is the channel matrix of size
+      :math:`N_r \times N_t` of the :math:`l`-th tap,
+    * :math:`\mathbf{x}[n]` is the :math:`N_t \times 1` transmitted vector,
+    * :math:`\mathbf{b}[n]` is the additive noise, contributed by chaining
+      a separate element-wise :class:`~comnumpy.core.channels.AWGN` block
+      (this class applies only the noiseless convolution).
 
-    Attributes
+    Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    P : float
-        Transmit power.
-    H : Optional[np.array]
-        List of channel matrices for each tap. Each matrix should have equal dimensions.
-    extend : bool
-        Flag to extend the input signal.
-    name : str
-        Name of the processor.
+    H : np.ndarray, optional
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)`` (flat
+        channel) or stacked taps ``(L, N_r, N_t)`` (selective channel).
+    extend : bool, keyword-only
+        If True, a selective channel outputs the full convolution
+        (``N + L - 1`` samples); if False, the output is truncated to
+        ``N`` samples. Default is True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
+
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
     """
     H: Optional[np.array] = None
     extend: bool = field(default=True, kw_only=True)
@@ -68,11 +78,50 @@ class BaseMIMOChannel(Processor):
 
 @dataclass(slots=True)
 class FlatMIMOChannel(BaseMIMOChannel):
-    r"""
-    Flat (frequency-non-selective) MIMO channel.
+    r"""Flat (frequency-non-selective) MIMO channel.
 
-    Applies a single matrix multiplication :math:`\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n]`
-    without frequency selectivity.
+    Signal Model
+    ------------
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n]
+
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t`, :math:`\mathbf{x}[n]` the
+    :math:`N_t \times 1` transmitted vector and :math:`\mathbf{b}[n]`
+    the additive noise, contributed by chaining a separate element-wise
+    :class:`~comnumpy.core.channels.AWGN` block (this class applies only
+    the noiseless product).
+
+    Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on
+    axis -2, validated against :math:`N_t`.
+
+    Parameters
+    ----------
+    H : np.ndarray, optional
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.
+    extend : bool, keyword-only
+        Unused for a flat channel (inherited). Default is True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
+
+    Raises
+    ------
+    ShapeError
+        If the antenna axis of the input does not match :math:`N_t`.
+
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
+
+    Examples
+    --------
+    >>> H = np.array([[1.0, 0.0], [0.0, 2.0]])
+    >>> x = np.array([[1.0, 1.0], [1.0, -1.0]])
+    >>> FlatMIMOChannel(H)(x)
+    array([[ 1.,  1.],
+           [ 2., -2.]])
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -82,11 +131,53 @@ class FlatMIMOChannel(BaseMIMOChannel):
 
 @dataclass(slots=True)
 class SelectiveMIMOChannel(BaseMIMOChannel):
-    r"""
-    Frequency-selective MIMO channel.
+    r"""Frequency-selective (multi-tap) MIMO channel.
 
-    Applies a multi-tap convolution using the channel matrices stored in ``H``.
-    The ``extend`` flag controls whether the output signal is extended or truncated.
+    Signal Model
+    ------------
+    .. math::
+
+        \mathbf{y}[n] = \sum_{l=0}^{L-1} \mathbf{H}[l] \, \mathbf{x}[n-l]
+        + \mathbf{b}[n]
+
+    where :math:`\mathbf{H}[l]` is the channel matrix of size
+    :math:`N_r \times N_t` of the :math:`l`-th of :math:`L` taps,
+    :math:`\mathbf{x}[n]` the :math:`N_t \times 1` transmitted vector and
+    :math:`\mathbf{b}[n]` the additive noise, contributed by chaining a
+    separate element-wise :class:`~comnumpy.core.channels.AWGN` block
+    (this class applies only the noiseless convolution).
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2, validated against :math:`N_t`.
+
+    Parameters
+    ----------
+    H : np.ndarray, optional
+        Stacked channel matrices :math:`\mathbf{H}[l]` of shape
+        ``(L, N_r, N_t)``.
+    extend : bool, keyword-only
+        If True, the output holds the full convolution (``N + L - 1``
+        samples); if False, it is truncated to ``N`` samples. Default is
+        True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
+
+    Raises
+    ------
+    ShapeError
+        If the antenna axis of the input does not match :math:`N_t`.
+
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
+
+    Examples
+    --------
+    >>> H = np.array([[[1.0]], [[0.5]]])
+    >>> x = np.array([[1.0, 0.0, 0.0]])
+    >>> SelectiveMIMOChannel(H)(x)
+    array([[1. +0.j, 0.5+0.j, 0. +0.j, 0. +0.j]])
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
