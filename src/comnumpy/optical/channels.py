@@ -8,35 +8,46 @@ from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICI
 
 @dataclass(slots=True)
 class PhaseNoise(Processor):
-    r"""
-    A class representing a Phase Noise channel.
+    r"""Wiener (random-walk) phase noise channel.
 
-    This class models a phase noise effect in a channel, where the phase of the signal
-    is altered by a random process. The phase noise is characterized by a variance
-    specified by sigma squared (sigma2).
+    Signal Model
+    ------------
+    .. math::
 
-    .. math ::
+        y[n] = x[n] \, e^{j \phi[n]}, \qquad
+        \phi[n] = \sum_{k=0}^{n} \delta\phi_k, \qquad
+        \delta\phi_k \sim \mathcal{N}\left(0, \sigma^2\right)
 
-        y[n] = x[n]e^{j \phi[n]}
+    where :math:`\sigma^2` is the variance of the independent phase
+    increments :math:`\delta\phi_k` (a Wiener process accumulated along
+    the samples). The magnitude :math:`|y[n]| = |x[n]|` is preserved.
 
-    where :
+    Axes: *axis -1* -- expects a 1D signal (N,); the phase random walk
+    accumulates along the samples.
 
-    .. math ::
-
-        \phi[n] = \sum_{k=0}^{n} \phi_k
-
-    with :math:`\phi_k \sim \mathcal{N}(0, \sigma^2)`.
-
-    Attributes
+    Parameters
     ----------
-
     sigma2 : float
-        The variance of the phase noise.
-    seed : int, optional
-        The seed for the noise generator. Default is None.
-    name : str
-        Name of the channel instance. Default is "phase noise".
+        Variance :math:`\sigma^2` of the per-sample phase increments, in
+        rad^2.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the channel instance. Default is ``"phase noise"``.
 
+    References
+    ----------
+    T. Pfau, S. Hoffmann, R. Noe, "Hardware-Efficient Coherent Digital
+    Receiver Concept With Feedforward Carrier Recovery for M-QAM
+    Constellations," Journal of Lightwave Technology, vol. 27, no. 8,
+    pp. 989-999, 2009.
+
+    Examples
+    --------
+    >>> x = np.ones(3, dtype=complex)
+    >>> y = PhaseNoise(0.01, seed=0)(x)
+    >>> print(np.round(np.abs(y), 6))
+    [1. 1. 1.]
     """
     sigma2: float
     seed: Optional[int] = field(default=None, kw_only=True)
@@ -63,46 +74,82 @@ class PhaseNoise(Processor):
 
 @dataclass(slots=True)
 class ChromaticDispersion(Processor):
-    r"""
-    Implements chromatic dispersion effects in optical fiber communications.
+    r"""Chromatic dispersion (CD) of a fiber span, applied exactly in the frequency domain.
 
-    This class models the chromatic dispersion effect in the frequency domain for
-    fiber-optic communication systems. It applies a dispersion-induced phase shift
-    to the input signal in the frequency domain and considers signal attenuation [1].
+    Signal Model
+    ------------
+    The block solves the linear part of the nonlinear Schroedinger
+    equation (NLSE) for the complex field envelope :math:`A(z, t)`:
 
-    Attributes
+    .. math::
+
+        \frac{\partial A(z, t)}{\partial z} =
+        -j \frac{\beta_2}{2} \frac{\partial^2 A(z, t)}{\partial t^2}
+        - \frac{\alpha}{2} A(z, t)
+
+    whose exact solution over a fiber of length :math:`z` is applied in
+    the frequency domain:
+
+    .. math::
+
+        \hat{A}(z, \omega) = \hat{A}(0, \omega) \,
+        e^{j \frac{\beta_2}{2} z \omega^2} \, e^{-\frac{\alpha}{2} z}
+
+    with the group velocity dispersion :math:`\beta_2` (ps^2/km) derived
+    from the dispersion coefficient :math:`D`, the wavelength
+    :math:`\lambda` and the speed of light :math:`c`, and the attenuation
+    :math:`\alpha = \frac{\ln 10}{10} \, \alpha_{dB}` (Np/km):
+
+    .. math::
+
+        \beta_2 = -\frac{10^3 \, D \lambda^2}{2 \pi c}
+
+    With ``direction=-1`` the phase shift and the attenuation are both
+    inverted (backward propagation, used for CD compensation).
+
+    Axes: *declared axis* -- requires a full-field 1D signal (N,).
+
+    Parameters
     ----------
     z : float
-        Fiber length in km.
-    fs : float
-        Sampling frequency in hertz (Hz). Default is 1 Hz.
-    alpha_dB : float, optional
-        Attenuation factor in decibels (dB). Default is 0 dB.
-    direction : int, optional
-        Propagation direction, 1 for forward and -1 for backward. Default is 1.
-    name : str, optional
-        Identifier for the dispersion instance. Default is "cd".
-    lamb : float
-        Wavelength of the signal in meters. Default is WAVELENGTH.
-    D : float
-        Dispersion coefficient. Default is CD_COEFFICIENT.
-    c : float
-        Speed of light in meters per second. Default is SPEED_OF_LIGHT.
+        Fiber length :math:`z` in km.
+    fs : float, keyword-only
+        Sampling frequency in Hz; sets the discrete pulsation grid
+        :math:`\omega`. Default is 1.
+    alpha_dB : float, keyword-only
+        Attenuation :math:`\alpha_{dB}` in dB/km. Default is 0 (lossless).
+    direction : int, keyword-only
+        Propagation direction, 1 for forward and -1 for backward.
+        Default is 1.
+    lamb : float, keyword-only
+        Wavelength :math:`\lambda` in nm. Default is ``WAVELENGTH``.
+    D : float, keyword-only
+        Dispersion coefficient :math:`D` in ps/nm/km. Default is
+        ``CD_COEFFICIENT``.
+    c : float, keyword-only
+        Speed of light :math:`c` in m/s. Default is ``SPEED_OF_LIGHT``.
+    name : str, optional, keyword-only
+        Identifier for the dispersion instance. Default is ``"cd"``.
 
     References
     ----------
-    * [1] Shahkarami, Abtin. "Complexity reduction over bi-RNN-based Kerr nonlinearity equalization
-      in dual-polarization fiber-optic communications via a CRNN-based approach."
+    * G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,
+      2013, Section 3.2.
+    * S. J. Savory, "Digital filters for coherent optical receivers,"
+      Optics Express, vol. 16, no. 2, pp. 804-817, 2008.
+    * A. Shahkarami, "Complexity reduction over bi-RNN-based Kerr nonlinearity equalization
+      in dual-polarization fiber-optic communications via a CRNN-based approach,"
       Dissertation, Institut polytechnique de Paris, 2022.
       URL: https://www.theses.fr/2022IPPAT034.
 
-    Notes
-    -----
-    The implementation of chromatic dispersion is based on the standard fiber-optic
-    communication theory, where the dispersion effect is modeled in the frequency domain
-    based on the fiber parameters and the signal's wavelength. The `forward` method
-    then applies this dispersion effect to an input signal. Attenuation due to
-    fiber loss is also considered if `alpha_dB` is non-zero.
+    Examples
+    --------
+    >>> rng = np.random.default_rng(0)
+    >>> x = rng.normal(size=64) + 1j * rng.normal(size=64)
+    >>> cd = ChromaticDispersion(80.0, fs=10e9)
+    >>> cd_back = ChromaticDispersion(80.0, fs=10e9, direction=-1)
+    >>> bool(np.allclose(cd_back(cd(x)), x))
+    True
     """
     z: float
     fs: float = field(default=1, kw_only=True)
@@ -123,40 +170,61 @@ class ChromaticDispersion(Processor):
 
 @dataclass(slots=True)
 class KerrNonLinearity(Processor):
-    r"""
-    Models the Kerr nonlinearity effect in optical fibers.
+    r"""Kerr nonlinearity (self-phase modulation) of a fiber segment.
 
-    This class simulates the Kerr nonlinearity effect in fiber-optic communication systems.
-    Kerr nonlinearity is a phenomenon where the refractive index of the fiber changes
-    with the intensity of the light passing through it, leading to phase modulation
-    of the signal. The class considers the effective length of the fiber and
-    attenuation due to fiber loss [1].
+    Signal Model
+    ------------
+    The block solves the nonlinear part of the nonlinear Schroedinger
+    equation (NLSE) for the complex field envelope :math:`A(z, t)`:
 
-    Attributes
+    .. math::
+
+        \frac{\partial A(z, t)}{\partial z} = j \gamma |A(z, t)|^2 A(z, t)
+
+    whose exact solution over a segment of length :math:`z` is the
+    intensity-dependent phase rotation
+
+    .. math::
+
+        A(z, t) = g \, A(0, t) \, e^{j \gamma z |A(0, t)|^2}
+
+    where :math:`\gamma` is the Kerr coefficient (rad/W/km) and :math:`g`
+    an optional amplitude gain. With ``direction=-1`` the phase rotation
+    is conjugated (backward propagation, used in DBP).
+
+    Axes: *declared axis* -- requires a full-field 1D signal (N,). A
+    pointwise Kerr step applied to separate channels would model SPM only
+    (no XPM, no FWM).
+
+    Parameters
     ----------
     z : float
-        Step length in meters (km).
-    direction : int, optional
-        Propagation direction, 1 for forward and -1 for backward. Defaults to 1.
-    name : str, optional
-        Identifier for the nonlinearity instance. Defaults to "nl".
-    gamma : float
-        Kerr coefficient. Default is KERR_COEFFICIENT.
-    gain : float
-        Gain factor. Default is 1.
+        Segment length :math:`z` in km.
+    direction : int, keyword-only
+        Propagation direction, 1 for forward and -1 for backward.
+        Default is 1.
+    gamma : float, keyword-only
+        Kerr coefficient :math:`\gamma` in rad/W/km. Default is
+        ``KERR_COEFFICIENT``.
+    gain : float, keyword-only
+        Amplitude gain :math:`g` (linear). Default is 1.
+    name : str, optional, keyword-only
+        Identifier for the nonlinearity instance. Default is ``"nl"``.
 
     References
     ----------
-    * [1] Häger, Christian, and Henry D. Pfister. "Physics-based deep learning for fiber-optic
-      communication systems." IEEE Journal on Selected Areas in Communications 39.1 (2020): 280-294.
-      URL: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6860304
+    * G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,
+      2013, Section 4.1.
+    * C. Häger and H. D. Pfister, "Physics-based deep learning for fiber-optic
+      communication systems," IEEE Journal on Selected Areas in Communications,
+      vol. 39, no. 1, pp. 280-294, 2021.
 
-    Notes
-    -----
-    The Kerr nonlinearity effect is significant in high-power or long-distance fiber-optic
-    systems. This implementation considers the nonlinear phase shift induced by the intensity
-    of the optical signal. The `forward` method applies the nonlinear phase shift to the
-    signal based on the intensity of the input signal and the Kerr coefficient (`gamma`).
+    Examples
+    --------
+    >>> x = np.array([1.0 + 0j])
+    >>> y = KerrNonLinearity(10, gamma=1.3)(x)
+    >>> print(round(float(np.angle(y[0])), 4))
+    0.4336
     """
 
     z: float

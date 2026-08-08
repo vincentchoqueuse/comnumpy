@@ -10,58 +10,116 @@ from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_si
 
 @dataclass(slots=True)
 class FiberLink(Processor):
-    """
-    Represents a multi-span fiber link for optical communication systems. Each span
-    in the link includes both linear (Chromatic Dispersion) and nonlinear (Kerr
-    Nonlinearity) effects.
+    r"""Multi-span fiber link simulated with the split-step Fourier method (SSFM).
 
-    The model simulates the propagation of light through the fiber spans, taking into
-    account the dispersion, attenuation, and nonlinear effects based on the specified
-    parameters. It uses the split-step Fourier method as a numerical solution.
+    Signal Model
+    ------------
+    Each span integrates the nonlinear Schroedinger equation (NLSE) for
+    the complex field envelope :math:`A(z, t)`:
 
-    Attributes
+    .. math::
+
+        \frac{\partial A(z, t)}{\partial z} =
+        -\frac{\alpha}{2} A(z, t)
+        - j \frac{\beta_2}{2} \frac{\partial^2 A(z, t)}{\partial t^2}
+        + j \gamma |A(z, t)|^2 A(z, t)
+
+    where :math:`\alpha = \frac{\ln 10}{10} \alpha_{dB}` is the
+    attenuation (Np/km), :math:`\beta_2 = -10^3 D \lambda^2 / (2 \pi c)`
+    the group velocity dispersion (ps^2/km) and :math:`\gamma` the Kerr
+    coefficient (rad/W/km). The NLSE is integrated numerically with
+    ``StPS`` split steps per span (symmetric scheme:
+    :math:`D(\delta z/2)\,N(\delta z)\,D(\delta z/2)`; asymmetric scheme:
+    :math:`N(\delta z)\,D(\delta z)`). After each span, an EDFA
+    compensates the loss with power gain :math:`G` and adds circular ASE
+    noise of variance :math:`\sigma^2_{\mathrm{ase}}`:
+
+    .. math::
+
+        G = 10^{\alpha_{dB} L_{\mathrm{span}} / 10}, \qquad
+        \sigma^2_{\mathrm{ase}} = \kappa \, f_s \, (G - 1) \, h \nu \, n_{sp}, \qquad
+        n_{sp} = \frac{\mathrm{NF} / 2}{1 - 1/G}
+
+    with :math:`\mathrm{NF} = 10^{\mathrm{NF_{dB}} / 10}` the amplifier
+    noise figure and :math:`\kappa` a noise scaling factor.
+
+    Axes: *declared axis* -- requires a full-field 1D signal (N,).
+
+    Parameters
     ----------
     N_spans : int
         Number of spans in the fiber link.
-    L_span : float
-        Length of each span in kilometers.
-    StPS : int
-        Steps per span.
-    fs : float
-        Sampling frequency in Hz.
-    NF_dB : float
-        Noise figure in dB.
-    noise_scaling : float
-        Scaling factor for noise.
-    step_type : str
-        Type of step size ('linear' or 'logarithmic').
-    step_method : str
-        Method for splitting steps ('symmetric' or 'asymetric').
-    name : str
-        Name of the span.
-    use_only_linear : bool
-        Flag to consider only linear effects.
-    c : float
-        Speed of light in meters per second.
-    h : float
-        Planck constant in Joule seconds.
-    gamma : float
-        Kerr coefficient in rad/W/km.
-    lamb : float
-        Wavelength in nanometers.
-    alpha_dB : float
-        Fiber loss in dB/km.
-    cd_coefficient : float
-        Chromatic dispersion coefficient in ps/nm/km.
-    nu : float
-        Optical carrier frequency.
-    step_log_factor : float
-        Logarithmic step factor.
+    L_span : float, keyword-only
+        Span length :math:`L_{\mathrm{span}}` in km. Default is 80.
+    StPS : int, keyword-only
+        Number of split steps :math:`\delta z` per span. Default is 1.
+    fs : float, keyword-only
+        Sampling frequency :math:`f_s` in Hz. Default is 1.
+    NF_dB : float, keyword-only
+        EDFA noise figure :math:`\mathrm{NF_{dB}}` in dB. Default is 4.
+    noise_scaling : float, keyword-only
+        ASE noise scaling factor :math:`\kappa` (0 disables the ASE
+        noise). Default is 1.
+    step_type : {"linear", "logarithmic"}, keyword-only
+        Step-size distribution within a span. Default is ``"linear"``.
+    step_method : {"symmetric", "asymetric"}, keyword-only
+        Split-step scheme. Default is ``"symmetric"``.
+    use_only_linear : bool, keyword-only
+        If True, only the linear effects (CD and attenuation) are
+        simulated, in a single exact step per span. Default is False.
+    c : float, keyword-only
+        Speed of light :math:`c` in m/s. Default is ``SPEED_OF_LIGHT``.
+    h : float, keyword-only
+        Planck constant :math:`h` in J.s. Default is ``PLANCK_CONSTANT``.
+    gamma : float, keyword-only
+        Kerr coefficient :math:`\gamma` in rad/W/km. Default is
+        ``KERR_COEFFICIENT``.
+    lamb : float, keyword-only
+        Wavelength :math:`\lambda` in nm. Default is ``WAVELENGTH``.
+    alpha_dB : float, keyword-only
+        Fiber loss :math:`\alpha_{dB}` in dB/km. Default is ``FIBER_LOSS``.
+    cd_coefficient : float, keyword-only
+        Dispersion coefficient :math:`D` in ps/nm/km. Default is
+        ``CD_COEFFICIENT``.
+    nu : float, keyword-only
+        Optical carrier frequency :math:`\nu` in Hz. Default is
+        ``OPTICAL_CARRIER_FREQUENCY``.
+    step_log_factor : float, keyword-only
+        Adjustment factor of the logarithmic step-size distribution.
+        Default is 0.4.
+    name : str, optional, keyword-only
+        Name of the link instance. Default is ``"fiber link"``.
+    callbacks : dict of str to callable, optional, keyword-only
+        Hooks called during propagation; the key ``"post_span"`` is
+        called after each span as ``callback(y, num_span=...)``.
+
+    Raises
+    ------
+    ShapeError
+        If the input is not a full-field 1D signal (N,) (validated in
+        ``prepare()``): a pointwise Kerr step on a multi-channel array
+        would silently produce SPM only (no XPM, no FWM).
 
     References
     ----------
-    * [1] J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems,"
-      in IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
+    * G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,
+      2013, Sections 3.2 (CD) and 4.1 (SPM).
+    * J. Shao, X. Liang and S. Kumar, "Comparison of Split-Step Fourier Schemes for Simulating Fiber Optic Communication Systems,"
+      IEEE Photonics Journal, vol. 6, no. 4, pp. 1-15, Aug. 2014, Art no. 7200515, doi: 10.1109/JPHOT.2014.2340993.
+    * O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, "Optimization of the split-step Fourier method in modeling optical-fiber
+      communications systems," Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003.
+    * R.-J. Essiambre, G. Kramer, P. J. Winzer, G. J. Foschini and B. Goebel,
+      "Capacity limits of optical fiber networks," Journal of Lightwave
+      Technology, vol. 28, no. 4, pp. 662-701, 2010.
+
+    Examples
+    --------
+    >>> rng = np.random.default_rng(0)
+    >>> x = 1e-3 * (rng.normal(size=128) + 1j * rng.normal(size=128))
+    >>> link = FiberLink(2, L_span=80.0, StPS=4, fs=10e9, noise_scaling=0)
+    >>> y = link(x)
+    >>> print(y.shape, y.dtype)
+    (128,) complex128
     """
     N_spans: int = 1
     L_span: float = field(default=80, kw_only=True)
