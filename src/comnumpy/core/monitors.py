@@ -9,14 +9,14 @@ class Recorder(Processor):
     r"""
     Implements a basic Recorder for signal processing.
 
-    This class acts as a recorder in a signal processing chain. It stores the input signal and allows for later retrieval. 
+    This class acts as a recorder in a signal processing chain. It stores the input signal and allows for later retrieval.
 
     .. HINT::
         Putting a recorder on a chain allows to store the signal for later purpose (such as plotting, criterion computation, pilot extraction, ...).
 
     Signal Model
     ------------
-    
+
     The input data is not modified and is directly sent to the output.
 
     .. math::
@@ -25,7 +25,7 @@ class Recorder(Processor):
     Attributes
     ----------
     extractor: DataExtractor (optional)
-        : data extraction 
+        : data extraction
     name : str (optional)
         Name of the recorder instance. Default is 'recorder'.
 
@@ -154,6 +154,8 @@ class TimeSignalMonitor(Processor):
         self.stats["Energy"] = np.sum(abs_x**2)
         self.stats["Avg Power"] = np.mean(abs_x**2)
         if self.compute_PAPR:
+            # local import to avoid a circular dependency (ofdm imports core)
+            from comnumpy.ofdm.metrics import compute_PAPR
             self.stats[f"PAPR ({self.PAPR_unit})"] = compute_PAPR(x, unit=self.PAPR_unit)
 
     def _print_stats(self):

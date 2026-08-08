@@ -76,9 +76,6 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     else:
         N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index = ofdm_config_dict[config_name]
 
-    N_pilot = len(pilot_index)
-
-    N_data = N - N_nulled_DC - N_nulled_left - N_nulled_right - N_pilot
     oversampled_nulled_subcarriers = N * (os - 1)
     N_oversampled = N + oversampled_nulled_subcarriers
     carrier_type = np.zeros(N_oversampled)
@@ -91,9 +88,11 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     carrier_type[start_index:start_index + N_nulled_left] = 0
     carrier_type[end_index - N_nulled_right:end_index] = 0
 
-    middle = N // 2
-    width = N_nulled_DC // 2
-    carrier_type[start_index + middle - width: start_index + middle + width + 1] = 0
+    # null exactly N_nulled_DC subcarriers centered on DC
+    if N_nulled_DC > 0:
+        middle = N // 2
+        dc_start = start_index + middle - N_nulled_DC // 2
+        carrier_type[dc_start: dc_start + N_nulled_DC] = 0
 
     if not shift:
         carrier_type = fftshift(carrier_type)
@@ -101,11 +100,12 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     return carrier_type
 
 
-def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_list = ["null", "data", "pilots"], shift=False, num=None, title="Carrier allocation"):
+def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shift=False, num=None, title="Carrier allocation"):
     """
     Plot the allocation of subcarriers based on their types.
 
-    This function visualizes the allocation of subcarriers in a carrier type array. It uses different colors and markers to represent different subcarrier types, such as Hermitian, null, data, and pilots. The plot can be shifted and customized with various parameters.
+    This function visualizes the allocation of subcarriers in a carrier type array. It uses different colors and markers to represent
+    different subcarrier types, such as Hermitian, null, data, and pilots. The plot can be shifted and customized with various parameters.
 
     Parameters
     ----------
@@ -116,10 +116,12 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
         - 2: Pilot subcarrier
 
     color_list : list of str, optional
-        A list of colors used to plot each subcarrier type. Default is ["g", "b", "r", "k"], which corresponds to green, blue, red, and black.
+        A list of colors used to plot each subcarrier type, indexed by the subcarrier type value.
+        Default is ["b", "g", "r"], which corresponds to null (blue), data (green) and pilots (red).
 
     label_list : list of str, optional
-        A list of labels for each subcarrier type, used in the plot legend. Default is ["hermitian", "null", "data", "pilots"].
+        A list of labels for each subcarrier type, used in the plot legend, indexed by the
+        subcarrier type value. Default is ["null", "data", "pilots"].
 
     shift : bool, optional
         If True, shift the x-axis by half the length of the carrier_type array. Default is False.
@@ -144,6 +146,11 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
     plot_carrier_allocation(carrier_type)
     ```
     """
+    if color_list is None:
+        color_list = ["b", "g", "r"]
+    if label_list is None:
+        label_list = ["null", "data", "pilots"]
+
     if shift:
         offset = len(carrier_type)//2
     else:

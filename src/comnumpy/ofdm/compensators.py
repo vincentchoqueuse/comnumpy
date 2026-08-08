@@ -2,10 +2,7 @@ import numpy as np
 from typing import Literal
 from dataclasses import dataclass, field
 from scipy.fft import fft, fftshift
-from comnumpy.core import Processor, Sequential
-from comnumpy.core.processors import Serial2Parallel, Parallel2Serial, WeightAmplifier
-from .processors import CarrierAllocator, IFFTProcessor, CyclicPrefixer
-from .utils import get_standard_carrier_allocation
+from comnumpy.core.processors import WeightAmplifier
 
 
 @dataclass
@@ -13,7 +10,8 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     r"""
     A frequency domain equalizer that applies weights to compensate for channel effects in the frequency domain.
 
-    This class extends the `WeightAmplifier` to operate in the frequency domain, using the Fast Fourier Transform (FFT) to compute weights that equalize the input signal. The equalizer can optionally shift the zero-frequency component to the center of the spectrum.
+    This class extends the `WeightAmplifier` to operate in the frequency domain, using the Fast Fourier Transform (FFT) to compute weights
+    that equalize the input signal. The equalizer can optionally shift the zero-frequency component to the center of the spectrum.
 
     Signal Model
     ------------
@@ -60,7 +58,7 @@ class FrequencyDomainEqualizer(WeightAmplifier):
         """
         N_sc = X.shape[self.axis]
         Hw = fft(self.h, n=N_sc,  axis=self.axis)
-        weight = 1./Hw 
+        weight = 1./Hw
         if self.shift:
             weight = fftshift(weight)
         self.weight = weight

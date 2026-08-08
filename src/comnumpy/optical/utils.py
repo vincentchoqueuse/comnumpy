@@ -53,7 +53,8 @@ def compute_beta2(lamb, cd_coefficient, speed_of_light):
     References
     ----------
     * [1] Savory, Seb J. "Digital filters for coherent optical receivers." Optics express 16.2 (2008): 804-817.
-    * [2] Eghbali, Amir, et al. "Optimal least-squares FIR digital filters for compensation of chromatic dispersion in digital coherent optical receivers." Journal of lightwave technology 32.8 (2014): 1449-1456.
+    * [2] Eghbali, Amir, et al. "Optimal least-squares FIR digital filters for compensation of chromatic dispersion in digital coherent
+      optical receivers." Journal of lightwave technology 32.8 (2014): 1449-1456.
 
     """
     beta2 = -((10**3) * cd_coefficient * (lamb**2)) / (2*np.pi*speed_of_light)  # see [1] eq 4 and 5
@@ -100,7 +101,8 @@ def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
     References
     ----------
     * [1] Savory, Seb J. "Digital filters for coherent optical receivers." Optics express 16.2 (2008): 804-817.
-    * [2] Eghbali, Amir, et al. "Optimal least-squares FIR digital filters for compensation of chromatic dispersion in digital coherent optical receivers." Journal of lightwave technology 32.8 (2014): 1449-1456.
+    * [2] Eghbali, Amir, et al. "Optimal least-squares FIR digital filters for compensation of chromatic dispersion in digital coherent
+      optical receivers." Journal of lightwave technology 32.8 (2014): 1449-1456.
 
     """
     if alpha_dB:
@@ -186,7 +188,7 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
 
         N_{ASE} = (e^{\alpha L}-1) h \nu n_{sp}
 
-    where 
+    where
 
 
     .. math ::
@@ -195,8 +197,9 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
 
     References
     ----------
-    * [1] Essiambre, René-Jean, Gerhard Kramer, Peter J. Winzer, Gerard J. Foschini, and Bernhard Goebel. "Capacity limits of optical fiber networks." Journal of Lightwave technology 28, no. 4 (2010): 662-701.
-    
+    * [1] Essiambre, René-Jean, Gerhard Kramer, Peter J. Winzer, Gerard J. Foschini, and Bernhard Goebel.
+      "Capacity limits of optical fiber networks." Journal of Lightwave technology 28, no. 4 (2010): 662-701.
+
     """
     # see equation 54 of the paper use a term
     # G = e^{alpha L}

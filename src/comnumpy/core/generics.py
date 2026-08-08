@@ -3,7 +3,7 @@ import dataclasses
 import pprint
 import time
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Literal, List, Callable, Union, Dict, Any
+from typing import Optional, Callable, Union, Dict
 
 
 @dataclass
@@ -21,8 +21,8 @@ class Processor():
     The generic model for a processor is :
 
     .. math::
-        \mathbf{Y} = \mathbf{f}(\mathbf{X};\boldsymbol \theta) 
-    
+        \mathbf{Y} = \mathbf{f}(\mathbf{X};\boldsymbol \theta)
+
     * :math:`\mathbf{X}` corresponds to the input data,
     * :math:`\mathbf{Y}` corresponds to the output data,
     * :math:`\boldsymbol \theta` corresponds to the processor parameters.
@@ -60,14 +60,15 @@ class Processor():
     def __call__(self, X: np.ndarray) -> np.ndarray:
         """
         Process the input data by calling the forward method.
-        This method allows the processor to be called as a function. 
-        
+        This method allows the processor to be called as a function.
+
         If debug is True, this method also store the output_data
         """
         self.prepare(X)
         if self.debug:
             Y = self.forward(X)
-            print(f"processor={self.name}: output_shape={Y.shape}, type={Y.dtype}")
+            name = getattr(self, "name", type(self).__name__)
+            print(f"processor={name}: output_shape={Y.shape}, type={Y.dtype}")
             self.Y = Y  # save data for debugging
             return Y
         else:
@@ -77,9 +78,9 @@ class Processor():
 @dataclass
 class Sequential():
     r"""
-    A sequential container for processing modules. 
-    
-    
+    A sequential container for processing modules.
+
+
     This class allows to create complex chain by stacking :math:`L` different processor modules. These processors are executed in the order they are added.
 
     Signal Model
@@ -133,7 +134,7 @@ class Sequential():
             dict[f"id{index}"] = dataclasses.asdict(module)
 
         return dict
-    
+
     def __repr__(self):
         """
         Show content of a sequential object
@@ -155,12 +156,12 @@ class Sequential():
         Y = X
         time_elapsed = {}
 
-        for index_processor, processor in enumerate(self.module_list):
+        for processor in self.module_list:
             start_time = time.time()
             Y = processor(Y)
             stop_time = time.time()
             time_elapsed[processor.name] = stop_time - start_time
-           
+
         return time_elapsed
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -224,7 +225,7 @@ class Sequential():
         else:
             raise TypeError("Key must be a string (for name) or an integer (for index).")
 
-    def __call__(self, x, debug: bool = False):
+    def __call__(self, x):
         """
         Process the input data by calling the forward method.
         """

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
-from typing import Optional, Literal, Union, Tuple, List
+from typing import Optional, Literal, Union
 from scipy import signal
 from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
@@ -309,7 +309,8 @@ class Amplifier(Processor):
     """
     A class for amplifying or attenuating a signal along a specified axis.
 
-    This class multiplies an input signal by a specified gain factor, effectively amplifying or attenuating the signal based on the gain value. The gain can be applied to all elements or selectively along a specified axis.
+    This class multiplies an input signal by a specified gain factor, effectively amplifying or attenuating the signal based on the gain value.
+    The gain can be applied to all elements or selectively along a specified axis.
 
     Attributes
     ----------
@@ -326,11 +327,11 @@ class Amplifier(Processor):
     >>> X = np.array([[1, 2], [3, 4]])
     >>> print(X)
     [[1 2]
-    [3 4]]
+     [3 4]]
     >>> Y = amplifier(X)
     >>> print(Y)
     [[2 4]
-    [6 8]]
+     [6 8]]
 
     Example 2
     ---------
@@ -338,11 +339,11 @@ class Amplifier(Processor):
     >>> X = np.array([[1, 2], [3, 4]])
     >>> print(X)
     [[1 2]
-    [3 4]]
+     [3 4]]
     >>> Y = amplifier(X)
     >>> print(Y)
-    [[ 1.  6.]
-    [ 3. 12.]]
+    [[ 1  6]
+     [ 3 12]]
     """
     gain: float = 1.0
     axis: int | None = None
@@ -366,7 +367,8 @@ class WeightAmplifier(Processor):
     """
     Applies weights to a MIMO (Multiple Input Multiple Output) parallel signal along a specified axis.
 
-    This class multiplies each parallel stream of the input signal by a corresponding weight along a specified axis. The weights are applied selectively to the elements along the specified axis.
+    This class multiplies each parallel stream of the input signal by a corresponding weight along a specified axis.
+    The weights are applied selectively to the elements along the specified axis.
 
     Signal Model
     ------------
@@ -395,8 +397,8 @@ class WeightAmplifier(Processor):
      [3 4]]
     >>> Y = weight_amplifier.forward(X)
     >>> print(Y)
-    [[2 4]
-     [9 12]]
+    [[ 2  4]
+     [ 9 12]]
 
     Example 2
     ---------
@@ -407,8 +409,8 @@ class WeightAmplifier(Processor):
      [3 4]]
     >>> Y = weight_amplifier(X)
     >>> print(Y)
-    [[2 6]
-     [6 12]]
+    [[ 2  6]
+     [ 6 12]]
     """
     weight: Optional[np.ndarray] = None
     axis: int = -1
@@ -467,10 +469,12 @@ class Complex2Real(Processor):
 
     Example 3
     ---------
-    >>> processor_real2 = Complex2Real(part="imag", validate_input=True)
+    >>> processor_imag2 = Complex2Real(part="imag", validate_input=True)
     >>> X = np.array([1+2j, 3+4j, 5+0j])
-    >>> processor(X)  # Raises ValueError
-    ValueError: The input data is not real since the imaginary part is non-zero.
+    >>> processor_imag2(X)
+    Traceback (most recent call last):
+        ...
+    ValueError: the input data is not imaginary since the real part is non zero
     """
 
     part: Literal["real", "imag"] = "real"
@@ -523,9 +527,8 @@ class AutoConcatenator(Processor):
     >>> output_original_mask = np.array([True, True, True, False, False])
     >>> output_copy_mask = np.array([False, False, False, True, True])
     >>> X = np.array([1, 2, 3])
-    [1 2 3]
     >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
-    >>> Y = concatenator(X)
+    >>> print(concatenator(X))
     [1 2 3 1 3]
 
     Example 2
@@ -535,15 +538,13 @@ class AutoConcatenator(Processor):
     >>> output_original_mask = np.array([True, True, False, False, False])
     >>> output_copy_mask = np.array([False, False, False, True, False])
     >>> X = np.array([[1, 2, 3], [4, 5, 6]])
-    [[1 2 3]
-    [4 5 6]]
     >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask)
-    >>> Y = concatenator(X)
+    >>> print(concatenator(X))
     [[1 2 3]
-    [4 5 6]
-    [0 0 0]
-    [1 2 3]
-    [0 0 0]]
+     [4 5 6]
+     [0 0 0]
+     [1 2 3]
+     [0 0 0]]
 
     Example 3
     ---------
@@ -552,12 +553,10 @@ class AutoConcatenator(Processor):
     >>> output_original_mask = np.array([False, True, True, True, False])
     >>> output_copy_mask = np.array([True, False, False, False, True])
     >>> X = np.array([[1, 2, 3], [4, 5, 6]])
-    [[1 2 3]
-    [4 5 6]]
     >>> concatenator = AutoConcatenator(input_copy_mask, output_original_mask, output_copy_mask, axis=-1)
-    >>> result = concatenator(X)
+    >>> print(concatenator(X))
     [[2 1 2 3 3]
-    [5 4 5 6 6]]
+     [5 4 5 6 6]]
 
     """
     input_copy_mask: Optional[np.ndarray] = None
@@ -576,15 +575,14 @@ class AutoConcatenator(Processor):
         if self.input_copy_mask is not None:
             num_true_input_copy = np.sum(self.input_copy_mask)
             num_true_output_copy = np.sum(self.output_copy_mask)
-            num_true_output_original = np.sum(self.output_original_mask)
 
             if num_true_input_copy != num_true_output_copy:
                 raise ValueError("The number of True values in input_copy_mask must be equal to the number of True values in output_copy_mask.")
-                
+
         # check if there is no overlap between allocated value
         if np.any(np.logical_and(self.output_original_mask, self.output_copy_mask)):
             raise ValueError("The two output masks overlap.")
-                
+
 
     def extract_copy(self, X: np.ndarray):
         """
@@ -603,8 +601,8 @@ class AutoConcatenator(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
 
         if X.shape[self.axis] != len(self.input_copy_mask):
-            raise ValueError(f"input signal for the dimension {self.axis} and input_copy_mask must have the same shape.")    
-            
+            raise ValueError(f"input signal for the dimension {self.axis} and input_copy_mask must have the same shape.")
+
         X_copy = self.extract_copy(X)
         X_copy_processed = self.process_copy(X_copy)
 
@@ -734,8 +732,8 @@ class DataExtractor(Processor):
 
     # single index
     >>> extractor1 = DataExtractor(3)
-    >>> extractor1(x)
-    array([3])
+    >>> print(extractor1(x))
+    3
 
     # slice with tuple
     >>> extractor2 = DataExtractor((2, 8))
@@ -773,7 +771,8 @@ class Resampler(Processor):
     A class for resampling a signal.
 
     This class changes the sampling rate of a signal by a rational factor.
-    It performs upsampling by the specified 'up' factor, followed by downsampling by the specified 'down' factor, effectively changing the sampling rate by a factor of up/down.
+    It performs upsampling by the specified 'up' factor, followed by downsampling by the specified 'down' factor,
+    effectively changing the sampling rate by a factor of up/down.
 
     Attributes
     ----------
@@ -832,8 +831,8 @@ class BlindPhaseTracker(Processor):
     """
     A class implementing a blind phase tracking algorithm using a grid search approach.
 
-    This algorithm estimates and compensates for unknown phase rotations in a received signal 
-    by minimizing the local Error Vector Magnitude (EVM) around each sample. It assumes 
+    This algorithm estimates and compensates for unknown phase rotations in a received signal
+    by minimizing the local Error Vector Magnitude (EVM) around each sample. It assumes
     the signal belongs to a known modulation alphabet (e.g., QAM or PSK).
 
     Parameters
@@ -843,7 +842,7 @@ class BlindPhaseTracker(Processor):
     alphabet : np.ndarray
         The set of complex symbols representing the modulation constellation.
     phase_steps : int, optional
-        The number of discrete phase candidates evaluated within the range [-π/4, π/4). 
+        The number of discrete phase candidates evaluated within the range [-π/4, π/4).
         Default is 10.
 
     Methods
@@ -853,7 +852,7 @@ class BlindPhaseTracker(Processor):
     evm_cost(x, n, phi)
         Computes the local EVM cost at index `n` for a candidate phase shift `phi`.
     forward(x)
-        Applies blind phase correction to the input signal `x` and plots the estimated 
+        Applies blind phase correction to the input signal `x` and plots the estimated
         phase evolution over time.
     """
 
@@ -862,7 +861,7 @@ class BlindPhaseTracker(Processor):
     phase_steps: int = 10
     phases: np.ndarray = field(init=False)
 
-    
+
     def __post_init__(self):
         self.phases = np.linspace(-np.pi/4, np.pi/4, self.phase_steps, endpoint=False)
 
@@ -907,6 +906,5 @@ class BlindPhaseTracker(Processor):
             plt.grid(True)
             plt.legend()
             plt.tight_layout()
-            plt.show()
 
         return y_corrected

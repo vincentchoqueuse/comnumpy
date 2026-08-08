@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 import numpy.linalg as LA
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
@@ -52,7 +52,7 @@ class MaximumLikelihoodDetector(Processor):
     ----------
     * Larsson, Erik G., Petre Stoica, and Girish Ganesan. Space-time block coding for wireless communications. Cambridge university press, 2003.
     """
-    
+
     alphabet: np.ndarray
     H: Optional[np.ndarray] = None
     is_mimo: bool = True
@@ -61,7 +61,7 @@ class MaximumLikelihoodDetector(Processor):
     def get_nb_candidates(self):
         _, N_t = self.H.shape
         return len(self.alphabet) ** N_t
-    
+
     def get_candidates(self, alphabet, N_t):
         symbols = np.arange(len(alphabet))
         input_list = [p for p in itertools.product(symbols, repeat=N_t)]
@@ -141,7 +141,7 @@ class LinearDetector(Processor):
 
     def linear_estimator(self, Y):
         r"""
-        Perform Zero Forcing or MMSE linear equalization 
+        Perform Zero Forcing or MMSE linear equalization
         """
         match self.method:
             case "zf":
@@ -231,7 +231,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
         order = []
         remaining_idx = list(range(NT))
 
-        for stage in range(NT):
+        for _ in range(NT):
             H_temp = self.H[:, remaining_idx]
             idx_local = self.ordering(H_temp)
             best_current_idx = remaining_idx[idx_local]
@@ -243,7 +243,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
                     Z = zf_estimator(Y_temp, H_temp)
                 case "mmse":
                     Z = mmse_estimator(Y_temp, H_temp, self.sigma2 )
-            
+
             # perform detection
             S, _ = hard_projector(Z, self.alphabet)
             s_est = S[idx_local, :]
@@ -348,7 +348,7 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
     name : str
         Name of the detector.
     """
-    
+
     alphabet: np.ndarray
     H: Optional[np.ndarray] = None
     sigma2: float = None

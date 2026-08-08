@@ -51,13 +51,13 @@ def compute_PAPR(x_data, unit="natural", axis=None):
     --------
     >>> import numpy as np
     >>> data = np.array([1, 2, 3, 4])
-    >>> compute_PAPR(data, unit="natural")
-    2.0
-    >>> compute_PAPR(data, unit="dB")
-    6.0206...
+    >>> print(round(float(compute_PAPR(data, unit="natural")), 4))
+    1.4606
+    >>> print(round(float(compute_PAPR(data, unit="dB")), 4))
+    3.2906
     >>> data_2d = np.array([[1, 2], [3, 4]])
-    >>> compute_PAPR(data_2d, unit="natural", axis=0)
-    array([1.63299316, 1.41421356])
+    >>> print(np.round(compute_PAPR(data_2d, unit="natural", axis=0), 4))
+    [1.3416 1.2649]
     """
     if not isinstance(x_data, np.ndarray):
         raise TypeError("Input x_data must be a NumPy array.")

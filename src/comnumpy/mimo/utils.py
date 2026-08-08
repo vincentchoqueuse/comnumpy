@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Literal, Sequence
+from typing import Optional, Sequence
 
 
 def apply_correlation(H, Rx=None, Ry=None):
@@ -13,7 +13,7 @@ def apply_correlation(H, Rx=None, Ry=None):
     return H
 
 
-def rayleigh_channel(N_r: int, N_t: int, 
+def rayleigh_channel(N_r: int, N_t: int,
                 L: Optional[int] = 1,
                 scale_per_tap: Optional[Sequence[float]] = None,
                 seed: Optional[int] = None,
@@ -58,9 +58,14 @@ def rayleigh_channel(N_r: int, N_t: int,
 
     Examples
     --------
-    >>> H = rayleigh_iid(L=3, N_r=2, N_t=2, seed=0)
+    >>> H = rayleigh_channel(N_r=2, N_t=2, L=3, seed=0)
     >>> H.shape
     (3, 2, 2)
+    >>> H.dtype
+    dtype('complex128')
+    >>> H1 = rayleigh_channel(N_r=4, N_t=2, seed=0)
+    >>> H1.shape  # with the default L=1, the tap axis is squeezed
+    (4, 2)
     """
     if not rng:
         rng = np.random.default_rng(seed)
@@ -73,7 +78,7 @@ def rayleigh_channel(N_r: int, N_t: int,
     H = np.empty((L, N_r, N_t), dtype=complex)
     for l in range(L):
         std = np.sqrt(scales[l])
-        H[l] = rng.normal(0, std/np.sqrt(2), (N_r, N_t)) + 1j * rng.normal(0, std/np.sqrt(2), (N_r, N_t)) 
+        H[l] = rng.normal(0, std/np.sqrt(2), (N_r, N_t)) + 1j * rng.normal(0, std/np.sqrt(2), (N_r, N_t))
 
     if L == 1:
         H = H[0]
@@ -132,13 +137,15 @@ def rician_channel(N_r: int, N_t: int, K: float,
 
     Examples
     --------
-    >>> H = rician(L=1, N_r=2, N_t=2, K=6.0, seed=0)
-    >>> H.shape
-    (1, 2, 2)
+    >>> H = rician_channel(N_r=2, N_t=2, K=6.0, seed=0)
+    >>> H.shape  # with the default L=1, the tap axis is squeezed
+    (2, 2)
+    >>> H.dtype
+    dtype('complex128')
     """
     if not rng:
         rng = np.random.default_rng(seed)
-    
+
     if H_los is None:
         H_los = np.zeros((L, N_r, N_t), dtype=complex)
     H_los = np.asarray(H_los)
@@ -156,7 +163,7 @@ def rician_channel(N_r: int, N_t: int, K: float,
     H = np.empty_like(H_los)
     for l in range(L):
         std = np.sqrt(scales[l])
-        W = rng.normal(0, std/np.sqrt(2), shape) + 1j * rng.normal(0, std/np.sqrt(2), shape) 
+        W = rng.normal(0, std/np.sqrt(2), (N_r, N_t)) + 1j * rng.normal(0, std/np.sqrt(2), (N_r, N_t))
         H[l] = alpha * H_los[l] + beta * W
 
     if L == 1:
@@ -219,13 +226,15 @@ def kronecker_rayleigh_channel(N_r: int, N_t: int,
     --------
     >>> Rr = np.array([[1.0, 0.5], [0.5, 1.0]])
     >>> Rt = np.eye(2)
-    >>> H = kronecker_rayleigh(L=2, N_r=2, N_t=2, R_rx=Rr, R_tx=Rt, seed=0)
+    >>> H = kronecker_rayleigh_channel(N_r=2, N_t=2, L=2, R_rx=Rr, R_tx=Rt, seed=0)
     >>> H.shape
     (2, 2, 2)
+    >>> H.dtype
+    dtype('complex128')
     """
     if not rng:
         rng = np.random.default_rng(seed)
-    
+
     if scale_per_tap is None:
         scales = np.ones(L, dtype=float)
     else:
@@ -238,13 +247,13 @@ def kronecker_rayleigh_channel(N_r: int, N_t: int,
     H = np.empty((L, N_r, N_t), dtype=complex)
     for l in range(L):
         std=np.sqrt(scales[l])
-        W = rng.normal(0, std/np.sqrt(2), shape) + 1j * rng.normal(0, std/np.sqrt(2), shape) 
+        W = rng.normal(0, std/np.sqrt(2), (N_r, N_t)) + 1j * rng.normal(0, std/np.sqrt(2), (N_r, N_t))
         if Lr is not None:
             W = np.matmul(Lr, W)
         if Lt is not None:
             W = np.matmul(W, Lt.T)
         H[l] = W
-    
+
     if L == 1:
         H = H[0]
     return H
@@ -275,9 +284,10 @@ def pdp_to_scales(pdp_db: Sequence[float]) -> np.ndarray:
 
     Examples
     --------
-    >>> pdp_db = [0.0, -3.0, -6.0]
-    >>> scales = pdp_to_scales(pdp_db)
-    >>> scales.sum()
+    >>> scales = pdp_to_scales([0.0, -3.0, -6.0])
+    >>> print(np.round(scales, 4))
+    [0.5707 0.286  0.1433]
+    >>> print(float(round(scales.sum(), 6)))
     1.0
     """
     p_lin = 10.0 ** (np.asarray(pdp_db, dtype=float) / 10.0)

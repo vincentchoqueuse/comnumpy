@@ -8,7 +8,8 @@ def get_alphabet(modulation, order, type="gray", norm=True):
     """
     Retrieve the symbol alphabet for a given modulation scheme and order.
 
-    This function loads the modulation alphabet from a predefined CSV file based on the specified modulation type, order, and symbol mapping (e.g., Gray coding).
+    This function loads the modulation alphabet from a predefined CSV file based on the specified modulation type, order,
+    and symbol mapping (e.g., Gray coding).
     Optionally, it can normalize the alphabet to have unit average power.
 
     Parameters

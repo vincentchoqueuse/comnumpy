@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 from dataclasses import dataclass, field
-from scipy.fft import fft, ifft, fftshift, ifftshift
+from scipy.fft import fft, ifft, ifftshift
 from comnumpy.core import Processor
 from .metrics import compute_PAPR
 
@@ -23,7 +23,8 @@ class HardClipper(Processor):
 
     Reference
     ---------
-    * [1] Y. Rahmatallah et S. Mohan, « Peak-To-Average Power Ratio Reduction in OFDM Systems: A Survey And Taxonomy », IEEE Commun. Surv. Tutorials, vol. 15, no 4, p. 1567 1592, 2013, doi: 10.1109/SURV.2013.021313.00164.
+    * [1] Y. Rahmatallah et S. Mohan, « Peak-To-Average Power Ratio Reduction in OFDM Systems: A Survey And Taxonomy »,
+      IEEE Commun. Surv. Tutorials, vol. 15, no 4, p. 1567 1592, 2013, doi: 10.1109/SURV.2013.021313.00164.
     """
     cr_dB: float
     name: str = "hard_clipping"
@@ -66,7 +67,8 @@ class IctPaprReductor(Processor):
 
     Reference
     ---------
-    * [1] Wang, Y-C., and Z-Q. Luo. "Optimized iterative clipping and filtering for PAPR reduction of OFDM signals." IEEE Transactions on communications 59.1 (2010): 33-37.
+    * [1] Wang, Y-C., and Z-Q. Luo. "Optimized iterative clipping and filtering for PAPR reduction of OFDM signals."
+      IEEE Transactions on communications 59.1 (2010): 33-37.
     """
     PAPR_max_dB: float
     filter_weight: float
@@ -126,7 +128,9 @@ class PtsPaprReductor(Processor):
 
     Reference
     ---------
-    * [1] L. J. Cimini and N. R. Sollenberger, "Peak-to-average power ratio reduction of an OFDM signal using partial transmit sequences," 1999 IEEE International Conference on Communications (Cat. No. 99CH36311), Vancouver, BC, Canada, 1999, pp. 511-515 vol.1, doi: 10.1109/ICC.1999.767992.
+    * [1] L. J. Cimini and N. R. Sollenberger, "Peak-to-average power ratio reduction of an OFDM signal using partial transmit sequences,"
+      1999 IEEE International Conference on Communications (Cat. No. 99CH36311), Vancouver, BC, Canada, 1999, pp. 511-515 vol.1,
+      doi: 10.1109/ICC.1999.767992.
     """
     phase_alphabet: None
     N_sub: int = 16

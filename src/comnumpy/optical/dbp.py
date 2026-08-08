@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Literal
 from comnumpy.core import Processor
 from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
-from .utils import compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain, apply_chromatic_dispersion, apply_kerr_nonlinearity
+from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
+                    apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
 
 @dataclass
@@ -60,7 +61,8 @@ class DBP(Processor):
 
     References
     ----------
-    * [1] O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, "Optimization of the split-step Fourier method in modeling optical-fiber communications systems," in Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003, doi: 10.1109/JLT.2003.808628.
+    * [1] O. V. Sinkin, R. Holzlohner, J. Zweck and C. R. Menyuk, "Optimization of the split-step Fourier method in modeling optical-fiber
+      communications systems," in Journal of Lightwave Technology, vol. 21, no. 1, pp. 61-68, Jan. 2003, doi: 10.1109/JLT.2003.808628.
     """
 
     N_spans: int = 1
@@ -88,7 +90,7 @@ class DBP(Processor):
                 step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.alpha_dB, step_log_factor=self.step_log_factor)
             case _:
                 raise NotImplementedError(f"Step type {self.step_type} is not implemented")
- 
+
         edfa_gain = compute_erbium_doped_fiber_amplifier_gain(self.alpha_dB, self.L_span)
         self.beta2 = compute_beta2(self.lamb, self.cd_coefficient, self.c)
         self.gain = 1/edfa_gain
@@ -112,5 +114,5 @@ class DBP(Processor):
                     if self.step_method == "asymetric":
                         y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=-1)
                         y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=-1)
-                        
+
         return y

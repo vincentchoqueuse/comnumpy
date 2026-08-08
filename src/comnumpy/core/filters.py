@@ -134,7 +134,7 @@ class BWFilter(Processor):
        \end{cases}
 
     where:
-    
+
     -  :math:`w[k]` is the angular frequency of the k-th component.
     -  :math:`w_n` is the critical angular frequency.
 
