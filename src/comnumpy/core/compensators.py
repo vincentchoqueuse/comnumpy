@@ -6,6 +6,7 @@ from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
 from comnumpy.core import Processor, Recorder
+from comnumpy.exceptions import NotFittedError
 from .utils import hard_projector, zf_estimator, mmse_estimator
 from .processors import Amplifier, DataExtractor
 from .validators import validate_data
@@ -375,17 +376,26 @@ class BlindPhaseCompensation(Processor):
     ----------
     alphabet : np.ndarray
         The modulation alphabet used for phase compensation.
-    theta : float, optional
-        Initial phase angle in radians. Default is 0.
+    theta0 : float, optional
+        Initial phase angle in radians for the optimizer. Default is 0.
     should_fit : bool, optional
         Whether to estimate the phase from the input signal. Default is True.
     name : str, optional
         Name of the processor. Default is ``"phase correction"``.
+
+    Attributes
+    ----------
+    theta_ : float
+        Estimated phase (data-dependent, hence the trailing underscore,
+        decision D23). ``NotFittedError`` if ``forward`` is called with
+        ``should_fit=False`` before any ``fit``.
     """
     alphabet: np.ndarray
-    theta: float = field(default=0.0, kw_only=True)
+    theta0: float = field(default=0.0, kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="phase correction", kw_only=True)
+    # estimated quantity (D23), declared for slots (D40a)
+    theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
@@ -394,14 +404,19 @@ class BlindPhaseCompensation(Processor):
         error_real = np.hstack([np.real(error), np.imag(error)])
         return error_real
 
-    def fit(self, X: np.ndarray):
-        res = least_squares(self.cost, self.theta, args=(X,))
-        self.theta = res.x[0]
+    def fit(self, X: np.ndarray, y=None):
+        res = least_squares(self.cost, self.theta0, args=(X,))
+        self.theta_ = res.x[0]
+        return self
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.should_fit:
             self.fit(X)
-        Y = X * np.exp(1j * self.theta)
+        elif self.theta_ is None:
+            raise NotFittedError(
+                "BlindPhaseCompensation: forward called with should_fit=False "
+                "but fit() was never called -- call fit(x) first.")
+        Y = X * np.exp(1j * self.theta_)
         return Y
 
 
@@ -518,22 +533,24 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
     """
     target_data: Union[np.ndarray, Recorder]
     name: str = field(default="data_aided_phase", kw_only=True)
-    # internal state (declared for slots, D40a)
-    theta: float = field(init=False, repr=False, default_factory=lambda: 0)
+    # estimated quantity (D23), declared for slots (D40a)
+    theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         # explicit parent call: zero-arg super() breaks with slots=True
         # (the dataclass decorator recreates the class)
         TrainedBasedMixin.__post_init__(self)
-        self.theta = 0
+        self.theta_ = None
 
-    def fit(self, x, x_target):
-        self.theta = np.angle(np.sum(np.conj(x)*x_target))
+    def fit(self, x, y=None):
+        if y is None:
+            y = self.get_target_data()
+        self.theta_ = np.angle(np.sum(np.conj(x)*y))
+        return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x_target = self.get_target_data()
-        self.fit(x, x_target)
-        return x*np.exp(1j*self.theta)
+        self.fit(x)
+        return x*np.exp(1j*self.theta_)
 
 
 @dataclass(slots=True)
@@ -549,23 +566,30 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
     """
     target_data: Union[np.ndarray, Recorder]
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
-    gain: complex = field(default=1+0j, kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="complex_gain_compensator", kw_only=True)
+    # estimated quantity (D23), declared for slots (D40a)
+    gain_: Optional[complex] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def fit(self, x, x_target):
+    def fit(self, x, y=None):
+        if y is None:
+            y = self.get_target_data()
         x_resized = np.resize(x, (len(x), 1))
         x_pinv = np.linalg.pinv(x_resized)
-        gain = np.dot(x_pinv, x_target).item()
-        self.gain = gain
+        self.gain_ = np.dot(x_pinv, y).item()
+        return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.should_fit:
-            x_target_preamble = self.get_target_data()
             x_preamble = self.extractor(x)
-            self.fit(x_preamble, x_target_preamble)
+            self.fit(x_preamble)
+        elif self.gain_ is None:
+            raise NotFittedError(
+                "TrainedBasedComplexGainCompensator: forward called with "
+                "should_fit=False but fit() was never called -- call "
+                "fit(x_preamble) first.")
 
-        y = x * self.gain
+        y = x * self.gain_
         return y
 
 
@@ -606,7 +630,10 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         self.cross_corr = None
         self.n_vect = None
 
-    def fit(self, x, x_preamble):
+    def fit(self, x, y=None):
+        if y is None:
+            y = self.get_target_data()
+        x_preamble = y
         N = len(x)
         N_preamble = len(x_preamble)
 
@@ -642,9 +669,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         plt.grid(True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x_preamble = self.get_target_data()
-
-        self.fit(x, x_preamble)
+        self.fit(x)
         if self.signal_len:
             y = self.scale*x[self.delay:self.delay+self.signal_len]
         else:
@@ -695,7 +720,10 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
         self.cross_corr = None
         self.n_vect = None
 
-    def fit(self, x, x_preamble):
+    def fit(self, x, y=None):
+        if y is None:
+            y = self.get_target_data()
+        x_preamble = y
         N = len(x)
         N_preamble = len(x_preamble)
         x_preamble_padded = np.zeros(N, dtype=x.dtype)

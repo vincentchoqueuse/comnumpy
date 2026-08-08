@@ -35,7 +35,7 @@ class CustomBlindDualMIMOCompensator(BlindDualMIMOCompensator):
             _, data_est = hard_projector(rotation_factor * y_sub, self.alphabet)
             error = np.mean(np.abs(data_est - rotation_factor*y_sub)**2, axis=1)
             index_min = np.argmin(error)
-            self.H[index, :] *= np.conjugate(rotation_factor[index_min]) # be carefull, we apply the conjugate of H for compensation
+            self.H_[index, :] *= np.conjugate(rotation_factor[index_min]) # be carefull, we apply the conjugate of H for compensation
             
             if self.debug:
                 y_sub_corrected = rotation_factor[index_min] * y_sub
