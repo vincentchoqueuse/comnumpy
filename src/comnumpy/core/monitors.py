@@ -35,7 +35,6 @@ class Recorder(Processor):
         Retrieves the recorded data.
 
     """
-    is_mimo: bool = True
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None))
     name: str = "recorder"
 

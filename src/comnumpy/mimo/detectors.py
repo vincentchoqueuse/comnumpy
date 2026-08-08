@@ -55,7 +55,6 @@ class MaximumLikelihoodDetector(Processor):
 
     alphabet: np.ndarray
     H: Optional[np.ndarray] = None
-    is_mimo: bool = True
     name: str = "ML Detector"
 
     def get_nb_candidates(self):
@@ -136,7 +135,6 @@ class LinearDetector(Processor):
     H: Optional[np.ndarray] = None
     method: Literal["zf", "mmse"] = "zf"
     sigma2: float = None
-    is_mimo: bool = True
     name: str = "ZF Detector"
 
     def linear_estimator(self, Y):
@@ -283,7 +281,6 @@ class ApproximateMessagePassingDetector(Processor):
     sigma2: float = None
     alpha: float = 1
     N_it: int = 100
-    is_mimo: bool = True
     name: str = "AMP Detector"
 
     def fit(self, y):
@@ -355,7 +352,6 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
     alpha: float = 1
     N_it: int = 100
     type: Literal["H", "pinv", "MMSE"] = "MMSE"
-    is_mimo: bool = True
     name: str = "OAMP Detector"
 
     def get_W(self, vt_2=0):

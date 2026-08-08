@@ -42,7 +42,7 @@ chain = Sequential([
         CyclicPrefixer(N_cp),
         Parallel2Serial(),
         FIRChannel(h),
-        AWGN(sigma2),
+        AWGN(sigma2=sigma2),
         Serial2Parallel(N_carriers+N_cp),
         CyclicPrefixRemover(N_cp),
         FFTProcessor(),

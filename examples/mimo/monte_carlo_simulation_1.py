@@ -32,7 +32,7 @@ chain = Sequential([SymbolGenerator(M),
                     Recorder(name="data_tx"),
                     SymbolMapper(alphabet),
                     FlatMIMOChannel(H, name="channel"),
-                    AWGN(0, unit="sigma2", name="noise")
+                    AWGN(sigma2=0, name="noise")
                     ])
 
 # prepare MC trial
@@ -47,7 +47,7 @@ sig_power = N_t
 
 for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     sigma2 = sig_power*(10**(-snr_dB/10))
-    chain["noise"].value = sigma2
+    chain["noise"].sigma2 = sigma2
 
     for trial in range(N_test):
    

@@ -5,8 +5,7 @@ from src.comnumpy.core import Sequential, Recorder
 from src.comnumpy.core.generators import SymbolGenerator
 from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.channels import AWGN
-from src.comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
+from src.comnumpy.core.metrics import compute_ser
 
 
 class TestSimpleChain(unittest.TestCase):

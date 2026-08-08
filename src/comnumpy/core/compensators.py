@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.linalg as LA
-import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from typing import Union, Optional, Literal
 from scipy import signal
@@ -618,6 +617,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
             self.n_vect = n_vect
 
     def plot(self):
+        import matplotlib.pyplot as plt  # local import (D36)
         plt.figure()
         plt.plot(self.n_vect, np.abs(self.cross_corr))
         plt.title('Cross-correlation magnitude')
@@ -702,6 +702,7 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
             self.n_vect = n_vect
 
     def plot(self):
+        import matplotlib.pyplot as plt  # local import (D36)
         plt.figure()
         plt.plot(self.n_vect, np.abs(self.cross_corr))
         plt.title('Cross-correlation magnitude')

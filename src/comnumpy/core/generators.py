@@ -27,8 +27,6 @@ class SymbolGenerator(Processor):
     ----------
     M : int
         The size of the alphabet.
-    is_mimo : bool, optional
-        Indicates whether the generator is used in a MIMO context (default: True).
     seed : int, optional
         Seed for the random number generator, for reproducibility.
         Default is None, which initializes the generator without a fixed seed.

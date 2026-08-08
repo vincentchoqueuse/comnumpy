@@ -1,79 +1,88 @@
 import numpy as np
-from dataclasses import dataclass
-from typing import Literal
-from scipy import signal
+from dataclasses import dataclass, field
+from typing import Literal, Optional
 from comnumpy.core.generics import Processor
-from .utils import compute_sigma2
 
 
 @dataclass
 class AWGN(Processor):
-    r"""
-    Additive White Gaussian Noise (AWGN) channel.
-
-    This class models an AWGN channel, which adds complex Gaussian noise to a signal.
-    It is characterized by a noise power specified by sigma squared (sigma2).
+    r"""Additive white Gaussian noise channel.
 
     Signal Model
     ------------
+    .. math::
+
+        y[n] = x[n] + b[n], \qquad
+        b[n] \sim \mathcal{CN}\left(0, \sigma^2\right)
+
+    When parameterized by ``snr_dB``, the variance is derived from the
+    measured input power :math:`P_x = \mathbb{E}\left[|x[n]|^2\right]`:
 
     .. math::
 
-       y_u[n] = x_u[n] + b_u[n]
+        \sigma^2 = P_x \, 10^{-\mathrm{SNR_{dB}}/10}
 
-    where:
+    For real-valued inputs, a real Gaussian noise of variance
+    :math:`\sigma^2` is applied instead of a circular complex one.
 
-    * :math:`b[n]\sim \mathcal{N}(0, \sigma^2)` is a Gaussian additive noise.
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
 
-    For complex signals, a circular Gaussian noise is applied to the signal.
-    The value of :math:`\sigma^2` is computed with respect to the method specified as input.
+    Parameters
+    ----------
+    snr_dB : float, keyword-only
+        Signal-to-noise ratio :math:`\mathrm{SNR_{dB}}` in decibels,
+        relative to the measured input power. Mutually exclusive with
+        ``sigma2``.
+    sigma2 : float, keyword-only
+        Absolute noise variance :math:`\sigma^2`. Mutually exclusive
+        with ``snr_dB``.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the channel instance. Default is ``"awgn"``.
 
     Attributes
     ----------
-    value : float, optional
-        The value associated with the given method. Default is 1.
-    unit : Literal["sigma2", "snr", "snr_dB", "snr_dBm"], optional
-        The unit to compute the noise power. Default is ``"sigma2"``.
-    sigma2s : float, optional
-        Signal power. Default is 1.
-    sigma2s_method : Literal["fixed", "measured"], optional
-        Method used to obtain the signal power. If ``"measured"``, the signal
-        power is estimated from the input signal. Default is ``"fixed"``.
-    seed : int, optional
-        The seed for the noise generator. Default is None.
-    name : str, optional
-        Name of the channel instance. Default is ``"awgn"``.
+    sigma2_ : float
+        Variance actually applied. Estimated from the input power when
+        parameterized by ``snr_dB`` (data-dependent, hence the trailing
+        underscore); equal to ``sigma2`` otherwise.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Section 4.2.
+
+    Examples
+    --------
+    >>> x = np.zeros(10_000, dtype=complex)
+    >>> y = AWGN(sigma2=0.01, seed=42)(x)
+    >>> print(round(float(np.var(y)), 3))
+    0.01
     """
-    value: float = 1.
-    unit: Literal["sigma2", "snr", "snr_dB", "snr_dBm"] = "sigma2"
-    sigma2s: float = 1.
-    sigma2s_method: Literal["fixed", "measured"] = "fixed"
-    seed: int = None
-    name: str = 'awgn'
+    snr_dB: Optional[float] = field(default=None, kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="awgn", kw_only=True)
 
     def __post_init__(self):
+        if (self.snr_dB is None) == (self.sigma2 is None):
+            raise ValueError(
+                "AWGN: specify exactly one of snr_dB= (relative to "
+                "measured signal power) or sigma2= (absolute noise "
+                "variance); got both or neither."
+            )
         self.rng = np.random.default_rng(self.seed)
 
-    def get_sigma2s(self, x):
-        # extract signal power
-        match self.sigma2s_method:
-            case "measured":
-                sigma2s = np.sum(np.abs(x)**2) / np.prod(x.shape)
-            case "fixed":
-                sigma2s = self.sigma2s
-            case _:
-                raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
-
-        return sigma2s
-
     def noise_rvs(self, x):
-        is_complex = np.iscomplexobj(x)
+        if self.sigma2 is not None:
+            sigma2n = self.sigma2
+        else:
+            P_x = np.mean(np.abs(x) ** 2)
+            sigma2n = P_x * 10 ** (-self.snr_dB / 10)
 
-        # compute sigma2s
-        sigma2s = self.get_sigma2s(x)
-        sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
         shape = x.shape
-        if is_complex:
+        if np.iscomplexobj(x):
             scale = np.sqrt(sigma2n / 2)
             b_r = self.rng.normal(scale=scale, size=shape)
             b_i = self.rng.normal(scale=scale, size=shape)
@@ -83,7 +92,7 @@ class AWGN(Processor):
             b = self.rng.normal(scale=scale, size=shape)
 
         self._b = b
-        self.sigma2 = sigma2n
+        self.sigma2_ = sigma2n
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.noise_rvs(x)
@@ -116,16 +125,14 @@ class FIRChannel(Processor):
         The impulse response of the FIR channel. Should be a 1-dimensional numpy array.
     mode : Literal["full", "same", "valid"], optional
         Convolution mode passed to ``scipy.signal.convolve``. Default is ``"full"``.
-    is_mimo : bool, optional
-        Whether the channel supports MIMO input. Default is False.
     name : str, optional
         The name of the channel instance. Default is ``"fir"``.
     """
     h: np.array
     mode: Literal["full", "same", "valid"] = "full"
-    is_mimo: bool = False
     name: str = "fir"
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        from scipy import signal  # local import (D36)
         y = signal.convolve(x, self.h, mode=self.mode)
         return y

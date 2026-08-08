@@ -59,7 +59,7 @@ class IctPaprReductor(Processor):
     N_it : int
         Number of iterations for the clipping and filtering process. Default is 16.
     shift : bool
-        Whether to apply an inverse FFT shift to the processed signal. Default is True.
+        Whether to apply an inverse FFT shift to the processed signal. Default is False.
     norm : str
         Normalization mode for FFT and IFFT operations. Default is "ortho".
     name : str
@@ -74,7 +74,6 @@ class IctPaprReductor(Processor):
     filter_weight: float
     N_it: int = 16
     shift: bool = False
-    axis: int = 0
     norm: str = "ortho"
     name: str = "ICT"
 
@@ -83,27 +82,24 @@ class IctPaprReductor(Processor):
         self.cr = np.sqrt(PAPR_max)
 
     def clip(self, x: np.ndarray) -> np.ndarray:
-        Pmoy = np.sqrt(np.mean(np.abs(x) ** 2))
+        # per-block RMS amplitude, computed along the block content axis
+        Pmoy = np.sqrt(np.mean(np.abs(x) ** 2, axis=-1, keepdims=True))
         Tm = self.cr * Pmoy  # see equation 7
         y = np.where(np.abs(x) > Tm, Tm * np.exp(1j * np.angle(x)), x)
         return y
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        N_sc, L = X.shape
-        Y_preprocessed = np.zeros((N_sc, L), dtype=X.dtype)
-
-        for l in range(L):
-            X_l = X[:, l]
-            for _ in range(self.N_it):
-                x_l = ifft(X_l, norm="ortho")
-                x_l = self.clip(x_l)
-                X_l = fft(x_l, norm="ortho")
-                X_l = self.filter_weight * X_l  # out-of-band filtering
-            Y_preprocessed[:, l] = X_l
+        # Block layout (..., T, F): every block is processed along axis -1
+        Y_preprocessed = X
+        for _ in range(self.N_it):
+            y = ifft(Y_preprocessed, norm="ortho", axis=-1)
+            y = self.clip(y)
+            Y_preprocessed = fft(y, norm="ortho", axis=-1)
+            Y_preprocessed = self.filter_weight * Y_preprocessed  # out-of-band filtering
 
         if self.shift:
-            Y_preprocessed = ifftshift(Y_preprocessed, axes=self.axis)
-        Y = ifft(Y_preprocessed, norm=self.norm, axis=self.axis)
+            Y_preprocessed = ifftshift(Y_preprocessed, axes=-1)
+        Y = ifft(Y_preprocessed, norm=self.norm, axis=-1)
 
         return Y
 
@@ -169,15 +165,15 @@ class PtsPaprReductor(Processor):
         return x_m, combination
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        _, L = X.shape
+        # Block layout (T, F): one optimal phase combination per block
         Y = np.zeros(X.shape, dtype=X.dtype)
         combination_list = []
 
-        for l in range(L):
-            X_m_array = self.get_subblocks(X[:, l])
+        for t_index in range(X.shape[-2]):
+            X_m_array = self.get_subblocks(X[t_index, :])
             x_m_array_ifft = ifft(X_m_array, norm="ortho", axis=0)
             x_m_ifft, combination = self.find_optimal_combination(x_m_array_ifft)
-            Y[:, l] = x_m_ifft
+            Y[t_index, :] = x_m_ifft
             combination_list.append(combination)
 
         return Y

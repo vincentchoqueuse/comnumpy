@@ -22,7 +22,7 @@ chain = Sequential([
             SymbolGenerator(M),
             Recorder(name="recorder_tx"),
             SymbolMapper(alphabet),
-            AWGN(value=snr_dB, unit="snr_dB"),
+            AWGN(snr_dB=snr_dB),
             Recorder(name="recorder_rx"),
             SymbolDemapper(alphabet)
         ])

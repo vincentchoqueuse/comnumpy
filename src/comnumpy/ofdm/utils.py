@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.fft import fftshift
 
 
@@ -146,6 +145,8 @@ def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shif
     plot_carrier_allocation(carrier_type)
     ```
     """
+    import matplotlib.pyplot as plt  # local import (D36)
+
     if color_list is None:
         color_list = ["b", "g", "r"]
     if label_list is None:
