@@ -127,11 +127,32 @@ class Sequential():
         Dictionary of callback functions called after each processor. Keys
         are processor names (str) or indices (int), values are callables
         accepting the processor output.
+    taps : list of str, optional, keyword-only
+        Block ids (see :meth:`block_ids`) whose output should be recorded
+        during ``forward``. Unlike an in-chain ``Recorder``, a tap is
+        chain *metadata*: the module list keeps describing the
+        communication system only, and the cost is one dictionary store
+        per tapped block (a reference is kept, no copy -- blocks allocate
+        fresh outputs, so the reference stays valid). Retrieve with
+        :meth:`tap`.
+
+    Examples
+    --------
+    >>> from comnumpy.core.generators import SymbolGenerator
+    >>> from comnumpy.core.channels import AWGN
+    >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)],
+    ...                    taps=["generator"])
+    >>> y = chain.seed(1)(5)
+    >>> print(chain.tap("generator"))
+    [0 0 3 1 3]
     """
     module_list: list
     debug: bool = False
     name: str = 'sequential'
     callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
+    taps: Optional[list] = field(default=None, kw_only=True)
+    # signals recorded at the declared taps (references, not copies)
+    tapped_: dict = field(init=False, repr=False, default_factory=dict)
 
 
     def block_ids(self):
@@ -333,15 +354,38 @@ class Sequential():
         """
         Process the input data through all modules in the sequence.
         """
+        tap_ids = None
+        if self.taps:
+            ids = self.block_ids()
+            unknown = [t for t in self.taps if t not in ids]
+            if unknown:
+                raise KeyError(
+                    f"unknown tap ids {unknown}; known block ids: {ids}")
+            tap_ids = ids
+
         Y = X
-        for processor in self.module_list:
+        for index, processor in enumerate(self.module_list):
             Y = processor(Y)
+
+            # record the output at declared taps (reference, no copy)
+            if tap_ids is not None and tap_ids[index] in self.taps:
+                self.tapped_[tap_ids[index]] = Y
 
             # run callback if needed
             key = getattr(processor, 'name', None)
             if key in self.callbacks:
                 self.callbacks[key](Y)
         return Y
+
+    def tap(self, block_id: str):
+        """
+        Return the signal recorded at a declared tap during the last run.
+        """
+        if block_id not in self.tapped_:
+            raise KeyError(
+                f"no signal recorded for tap {block_id!r}; declared taps: "
+                f"{self.taps or []} (run the chain first)")
+        return self.tapped_[block_id]
 
     def get_module_by_index(self, index: int):
         """
