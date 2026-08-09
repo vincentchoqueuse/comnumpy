@@ -730,6 +730,8 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span><span class="p">,</span> <span class="n">fftfreq</span>  <span class="c1"># cupy-compatible (D3)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">PLANCK_CONSTANT</span><span class="p">,</span> <span class="n">OPTICAL_CARRIER_FREQUENCY</span>
 
 
@@ -850,7 +852,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">gain</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">beta2_s2_per_km</span> <span class="o">=</span> <span class="p">((</span><span class="mi">10</span><span class="o">**-</span><span class="mi">12</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">beta2</span>  <span class="c1"># convert into s^2/km</span>
-    <span class="n">NFFT</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">NFFT</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>      <span class="c1"># the field may carry a polarization axis</span>
     <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">fs</span><span class="p">)</span><span class="o">*</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">NFFT</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
     <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">beta2_s2_per_km</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">direction</span><span class="p">)</span>  <span class="c1"># see equation 4</span>
     <span class="n">fftx</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -863,9 +865,16 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="apply_kerr_nonlinearity">
 <a class="viewcode-back" href="../../../documentation/optical/utils.html#comnumpy.optical.utils.apply_kerr_nonlinearity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_kerr_nonlinearity</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-                            <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+                            <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                            <span class="n">intensity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply Kerr nonlinearity phase rotation to a signal.</span>
+
+<span class="sd">    The rotation is :math:`\exp(j \gamma z I)` where :math:`I` is the</span>
+<span class="sd">    intensity driving it. For a single field that is :math:`|x|^2`; for</span>
+<span class="sd">    the Manakov model of two polarizations it is the *total* intensity</span>
+<span class="sd">    :math:`|E_x|^2 + |E_y|^2` shared by both, which is what ``intensity``</span>
+<span class="sd">    is for.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -874,11 +883,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    z : float</span>
 <span class="sd">        Fiber length in km.</span>
 <span class="sd">    gamma : float</span>
-<span class="sd">        Kerr coefficient in rad/W/km.</span>
+<span class="sd">        Kerr coefficient in rad/W/km. The Manakov model passes</span>
+<span class="sd">        :math:`8\gamma/9` here: the factor belongs to the model, not to</span>
+<span class="sd">        the fibre.</span>
 <span class="sd">    gain : float, optional</span>
 <span class="sd">        Gain factor. Default is 1.</span>
 <span class="sd">    direction : int, optional</span>
 <span class="sd">        Propagation direction (1=forward, -1=backward). Default is 1.</span>
+<span class="sd">    intensity : np.ndarray, optional</span>
+<span class="sd">        Intensity driving the rotation, broadcastable against ``x``.</span>
+<span class="sd">        Default (None) uses ``|x|**2``, the scalar NLSE.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -886,7 +900,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Signal after Kerr nonlinear phase rotation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">nl_param</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">z</span>
-    <span class="k">return</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">nl_param</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span></div>
+    <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">if</span> <span class="n">intensity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">intensity</span>
+    <span class="k">return</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">nl_param</span><span class="o">*</span><span class="n">power</span><span class="p">)</span></div>
 
 
 
@@ -1084,6 +1099,84 @@ window.runMermaid = runMermaid;</script>
     <span class="n">center_Hz</span> <span class="o">=</span> <span class="p">(</span><span class="mf">193.1e12</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="mf">6.25e9</span>
     <span class="n">width_Hz</span> <span class="o">=</span> <span class="mf">12.5e9</span> <span class="o">*</span> <span class="n">m</span>
     <span class="k">return</span> <span class="n">center_Hz</span><span class="p">,</span> <span class="n">width_Hz</span></div>
+
+
+
+<div class="viewcode-block" id="is_polarization_pair">
+<a class="viewcode-back" href="../../../documentation/optical/utils.html#comnumpy.optical.utils.is_polarization_pair">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_polarization_pair</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Read the propagation model off the shape of the field.</span>
+
+<span class="sd">    A ``(N,)`` or ``(..., 1, N)`` field is one polarization and obeys</span>
+<span class="sd">    the scalar NLSE; a ``(..., 2, N)`` field is a polarization pair and</span>
+<span class="sd">    obeys the Manakov equation. Anything else on the antenna axis is</span>
+<span class="sd">    refused, because a pointwise Kerr step applied row by row would</span>
+<span class="sd">    describe parallel fibres, not one fibre carrying several signals.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : np.ndarray</span>
+<span class="sd">        Field the block is about to propagate.</span>
+<span class="sd">    block : str</span>
+<span class="sd">        Name of the calling block, for the message.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True when the Manakov model applies.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the polarization axis has any size other than 1 or 2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">polarizations</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">polarizations</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">polarizations</span> <span class="o">==</span> <span class="mi">2</span>
+    <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> propagates one field (N,) or a polarization pair &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(..., P, N) with P in </span><span class="se">{{</span><span class="s2">1, 2</span><span class="se">}}</span><span class="s2">; got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, i.e. &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">polarizations</span><span class="si">}</span><span class="s2"> on the polarization axis. A pointwise Kerr step &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;row by row would describe </span><span class="si">{</span><span class="n">polarizations</span><span class="si">}</span><span class="s2"> separate fibres, with &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;no XPM and no FWM between them. Multiplex WDM channels into one &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;field first with comnumpy.optical.WDMMultiplexer (decision D44).&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="manakov_kerr">
+<a class="viewcode-back" href="../../../documentation/optical/utils.html#comnumpy.optical.utils.manakov_kerr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">manakov_kerr</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">manakov</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Kerr coefficient and driving intensity of one split step.</span>
+
+<span class="sd">    The Manakov equation shares the *total* intensity</span>
+<span class="sd">    :math:`|E_x|^2 + |E_y|^2` between the two polarizations and scales</span>
+<span class="sd">    the coefficient by :math:`8/9`, the average of the nonlinearity over</span>
+<span class="sd">    the fast random birefringence of a real fibre. That factor is a</span>
+<span class="sd">    property of the model, not of the glass, which is why it lives here</span>
+<span class="sd">    and not in :class:`~comnumpy.optical.fiber.FiberSpec`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : np.ndarray</span>
+<span class="sd">        Field at the current step.</span>
+<span class="sd">    gamma : float</span>
+<span class="sd">        Kerr coefficient of the fibre, in rad/W/km.</span>
+<span class="sd">    manakov : bool</span>
+<span class="sd">        Whether the field is a polarization pair.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gamma : float</span>
+<span class="sd">        Coefficient to use in the rotation.</span>
+<span class="sd">    intensity : np.ndarray or None</span>
+<span class="sd">        Intensity driving it, or None for the scalar NLSE.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manakov</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gamma</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="mi">8</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 </pre></div>
 

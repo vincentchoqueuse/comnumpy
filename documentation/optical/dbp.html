@@ -349,6 +349,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../core/frames.html">Frames</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/sequences.html">Synchronization sequences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/capacity.html">Capacity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/information.html">Achievable information rates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/metrics.html">Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/utils.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/validators.html">Validators</a></li>
@@ -488,7 +489,14 @@ is first divided by the EDFA amplitude gain
 propagated backwards with <code class="docutils literal notranslate"><span class="pre">StPS</span></code> split steps taken in reverse
 order. With matching parameters and ASE noise disabled, DBP is the
 exact numerical inverse of <a class="reference internal" href="links.html#comnumpy.optical.links.FiberLink" title="comnumpy.optical.links.FiberLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code></a>.</p>
-<p>Axes: <em>declared axis</em> – requires a full-field 1D signal (N,).</p>
+<p><strong>Two polarizations.</strong> Like <a class="reference internal" href="links.html#comnumpy.optical.links.FiberLink" title="comnumpy.optical.links.FiberLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code></a>,
+a field shaped <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code> is back-propagated with the Manakov
+equation – the two polarizations share the total intensity and the
+coefficient carries the <span class="math notranslate nohighlight">\(8/9\)</span> factor. The two blocks read the
+model off the shape the same way, so a link and its compensator
+cannot end up integrating different equations.</p>
+<p>Axes: <em>declared axis</em> – a full-field signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>
+with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_spans<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of spans to back-propagate.</p>
@@ -593,9 +601,11 @@ Default is 0.4.</p>
 <dd class="field-even"><p>str, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">raises ShapeError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the input is not a full-field 1D signal (N,) (validated in
-    <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>): a pointwise Kerr step on a multi-channel array
-    would silently produce SPM only (no XPM, no FWM).</p>
+<dd class="field-odd"><p>If the input is neither a full-field 1D signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> nor a
+    polarization pair <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code>
+    (validated in <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>): a pointwise Kerr step on a
+    multi-channel array would silently produce SPM only (no XPM, no
+    FWM).</p>
 </dd>
 </dl>
 <p class="rubric">References</p>

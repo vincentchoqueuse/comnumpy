@@ -349,6 +349,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../core/frames.html">Frames</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/sequences.html">Synchronization sequences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/capacity.html">Capacity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/information.html">Achievable information rates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/metrics.html">Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/utils.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/validators.html">Validators</a></li>
@@ -493,7 +494,25 @@ noise of variance <span class="math notranslate nohighlight">\(\sigma^2_{\mathrm
 n_{sp} = \frac{\mathrm{NF} / 2}{1 - 1/G}\]</div>
 <p>with <span class="math notranslate nohighlight">\(\mathrm{NF} = 10^{\mathrm{NF_{dB}} / 10}\)</span> the amplifier
 noise figure and <span class="math notranslate nohighlight">\(\kappa\)</span> a noise scaling factor.</p>
-<p>Axes: <em>declared axis</em> – requires a full-field 1D signal (N,).</p>
+<p><strong>Two polarizations (Manakov).</strong> A field shaped <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code> –
+the antenna/channel axis of D2 – is propagated with the Manakov
+equation instead:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial E_{x,y}}{\partial z} =
+-\frac{\alpha}{2} E_{x,y}
+- j \frac{\beta_2}{2} \frac{\partial^2 E_{x,y}}{\partial t^2}
++ j \frac{8\gamma}{9}
+  \left(|E_x|^2 + |E_y|^2\right) E_{x,y}\]</div>
+<p>The two polarizations share the <em>total</em> intensity, and the
+<span class="math notranslate nohighlight">\(8/9\)</span> comes from averaging the nonlinearity over the fast
+random birefringence of a real fibre. It belongs to the <strong>model</strong>,
+not to the fibre: <code class="docutils literal notranslate"><span class="pre">fiber.gamma</span></code> stays the fibre’s Kerr
+coefficient in both modes, and which equation is integrated is read
+off the shape of the field, exactly as which pumps are on is read
+off their powers (D41). A <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">1,</span> <span class="pre">N)</span></code> field is a single
+polarization and keeps the scalar NLSE with <span class="math notranslate nohighlight">\(\gamma\)</span>.</p>
+<p>Axes: <em>declared axis</em> – a full-field signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>
+with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_spans<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of spans in the fiber link.</p>
@@ -667,9 +686,11 @@ simulated bandwidth <span class="math notranslate nohighlight">\(f_s\)</span>.</
 
 <dl class="field-list simple">
 <dt class="field-odd">raises ShapeError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the input is not a full-field 1D signal (N,) (validated in
-    <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>): a pointwise Kerr step on a multi-channel array
-    would silently produce SPM only (no XPM, no FWM).</p>
+<dd class="field-odd"><p>If the input is neither a full-field 1D signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> nor a
+    polarization pair <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code>
+    (validated in <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>): a pointwise Kerr step on a
+    multi-channel array would silently produce SPM only (no XPM, no
+    FWM).</p>
 </dd>
 </dl>
 <p class="rubric">References</p>

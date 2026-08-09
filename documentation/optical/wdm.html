@@ -349,6 +349,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../core/frames.html">Frames</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/sequences.html">Synchronization sequences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/capacity.html">Capacity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/information.html">Achievable information rates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/metrics.html">Metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/utils.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/validators.html">Validators</a></li>
@@ -762,6 +763,22 @@ the same mask as <a class="reference internal" href="../core/filters.html#comnum
 <span class="math notranslate nohighlight">\(|f| &gt; B/2\)</span> are zeroed. Being a DFT mask it is a <em>circular</em>
 operation, exact when each offset lands on an integer bin and
 leaky otherwise – the block warns when it does not.</p>
+<p><strong>This is channel selection, not matched filtering.</strong> <span class="math notranslate nohighlight">\(B\)</span> is
+the grid’s <em>occupied</em> bandwidth, so for a pulse shaped at roll-off
+<span class="math notranslate nohighlight">\(\rho\)</span> it must be <span class="math notranslate nohighlight">\(R_s(1 + \rho)\)</span> and not <span class="math notranslate nohighlight">\(R_s\)</span>;
+setting it to the symbol rate clips the skirts of the pulse, which
+costs far more than it looks – measured on an 11-channel
+32 GBd comb at <span class="math notranslate nohighlight">\(\rho = 0.01\)</span>, an implementation floor of
+33.5 dB instead of 54.1 dB. The block therefore measures how much
+energy its own mask throws away and warns when that is more than a
+thousandth.</p>
+<p>Conversely, once the mask is wide enough to pass the channel it
+changes nothing: the matched filter downstream does the selecting.
+Measured on the same comb, a mask at <span class="math notranslate nohighlight">\(R_s(1+\rho)\)</span>, one at the
+full 37.5 GHz slot, and no mask at all give 54.13, 54.14 and
+54.13 dB. That is why there is no filter-shape option here – a
+root-raised-cosine in this block would be the <em>receiver’s</em> matched
+filter wearing the demultiplexer’s name.</p>
 <p>This is the analysis bank of a software radio (GNU Radio’s
 <code class="docutils literal notranslate"><span class="pre">pfb_channelizer_ccf</span></code>), minus the decimation: the output stays at
 <span class="math notranslate nohighlight">\(f_s\)</span>, so follow it with
@@ -814,6 +831,18 @@ keeps the rest of the chain shape-agnostic.</p>
 <dt class="sig sig-object py" id="comnumpy.optical.wdm.WDMDemultiplexer.mask_">
 <span class="sig-name descname"><span class="pre">mask_</span></span><a class="headerlink" href="#comnumpy.optical.wdm.WDMDemultiplexer.mask_" title="Link to this definition">#</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">(N,)</span></code> boolean DFT mask of the channel filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.optical.wdm.WDMDemultiplexer.guard_">
+<span class="sig-name descname"><span class="pre">guard_</span></span><a class="headerlink" href="#comnumpy.optical.wdm.WDMDemultiplexer.guard_" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">(N,)</span></code> boolean DFT mask of the guard band the clipping check
+watches: outside the channel, inside the half spacing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -912,6 +941,7 @@ keeps the rest of the chain shape-agnostic.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.phasors_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.phasors_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.mask_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.mask_</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.guard_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.guard_</span></code></a></li>
 </ul>
 </li>
 </ul>
