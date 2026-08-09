@@ -3,6 +3,7 @@ import unittest
 
 import numpy as np
 
+from comnumpy.core import fading
 from comnumpy.core.channels import TappedDelayLineChannel
 from comnumpy.core.fading import (DopplerSpectrum, PowerDelayProfile,
                                   available_delay_profiles, get_delay_profile,
@@ -13,6 +14,20 @@ FS = 15.36e6          # LTE 15.36 MHz, the rate the 3GPP profiles are used at
 
 
 class TestPowerDelayProfile(unittest.TestCase):
+    """The catalog is process-global state, so restore it around each test.
+
+    Without this, a test that registers a deliberately broken entry
+    leaves it visible to every later test that iterates the catalog --
+    and the suite only passes because unittest happens to run the names
+    in a favourable alphabetical order.
+    """
+
+    def setUp(self):
+        self._registry = dict(fading._PROFILE_REGISTRY)
+
+    def tearDown(self):
+        fading._PROFILE_REGISTRY.clear()
+        fading._PROFILE_REGISTRY.update(self._registry)
 
     def test_published_delay_spreads_are_reproduced(self):
         """The self-check of D20, applied to the delay axis.

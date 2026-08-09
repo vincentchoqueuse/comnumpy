@@ -4,6 +4,9 @@ from .generics import Processor, Sequential
 from .generators import SymbolGenerator, GaussianGenerator
 from .mappers import SymbolMapper, SymbolDemapper
 from .channels import AWGN, FIRChannel, TappedDelayLineChannel
+from .capacity import (awgn_capacity, constellation_capacity, bicm_capacity,
+                       rayleigh_ergodic_capacity, mimo_ergodic_capacity,
+                       outage_capacity, waterfilling)
 from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
                      get_delay_profile, register_delay_profile,
                      available_delay_profiles)
@@ -19,6 +22,9 @@ __all__ = [
     "SymbolGenerator", "GaussianGenerator",
     "SymbolMapper", "SymbolDemapper",
     "AWGN", "FIRChannel", "TappedDelayLineChannel",
+    "awgn_capacity", "constellation_capacity", "bicm_capacity",
+    "rayleigh_ergodic_capacity", "mimo_ergodic_capacity",
+    "outage_capacity", "waterfilling",
     "DopplerSpectrum", "PowerDelayProfile", "rayleigh_process",
     "get_delay_profile", "register_delay_profile", "available_delay_profiles",
     "SRRCFilter", "BWFilter",
