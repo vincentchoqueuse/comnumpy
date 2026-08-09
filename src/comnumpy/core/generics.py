@@ -135,6 +135,15 @@ class Sequential():
         dictionary store per tapped block (a reference is kept, no copy
         -- blocks allocate fresh outputs, so the reference stays valid).
         Retrieve with :meth:`tap`.
+    wiring : dict, optional, keyword-only
+        Extra data edges, as ``{"block_id.param": "source_block_id"}``.
+        Before a target block runs, the chain assigns it the signal
+        produced by the source block *in the same pass* -- this is how a
+        data-aided estimator receives a reference generated upstream
+        (``{"phase_comp.target_data": "tx"}``). The source is tapped
+        automatically and must come earlier in the chain, so the value is
+        never stale. Like taps, the edge is chain metadata: blocks stay
+        declarative and never hold a reference to another block.
 
     Examples
     --------
@@ -151,6 +160,7 @@ class Sequential():
     name: str = 'sequential'
     callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
     taps: Optional[list] = field(default=None, kw_only=True)
+    wiring: Optional[Dict[str, str]] = field(default=None, kw_only=True)
     # signals recorded at the declared taps (references, not copies)
     tapped_: dict = field(init=False, repr=False, default_factory=dict)
 
@@ -350,26 +360,62 @@ class Sequential():
 
         return time_elapsed
 
+    def _resolve_edges(self):
+        """Validate taps/wiring against the block ids; return the plan.
+
+        Returns ``(ids, recorded, feeds)`` where ``recorded`` is the set of
+        ids to store during the pass and ``feeds`` maps a block index to
+        the ``(param, source_id)`` pairs to assign before it runs.
+        """
+        if not self.taps and not self.wiring:
+            return None, set(), {}
+
+        ids = self.block_ids()
+        index_of = {block_id: i for i, block_id in enumerate(ids)}
+        recorded = set(self.taps or ())
+        unknown = sorted(recorded - index_of.keys())
+        if unknown:
+            raise KeyError(f"unknown tap ids {unknown}; known block ids: {ids}")
+
+        feeds: Dict[int, list] = {}
+        for target, source in (self.wiring or {}).items():
+            block_id, _, param = target.partition(".")
+            if not param:
+                raise KeyError(
+                    f"wiring key {target!r} must be 'block_id.param', "
+                    f"e.g. 'phase_comp.target_data'")
+            for candidate, role in ((block_id, "target"), (source, "source")):
+                if candidate not in index_of:
+                    raise KeyError(
+                        f"wiring {target!r}: unknown {role} block id "
+                        f"{candidate!r}; known block ids: {ids}")
+            if index_of[source] >= index_of[block_id]:
+                raise ValueError(
+                    f"wiring {target!r} reads {source!r}, which runs at or "
+                    f"after the target block -- a data edge must point "
+                    f"forward, otherwise the value would come from the "
+                    f"previous run.")
+            recorded.add(source)
+            feeds.setdefault(index_of[block_id], []).append((param, source))
+        return ids, recorded, feeds
+
     def forward(self, X: np.ndarray) -> np.ndarray:
         """
         Process the input data through all modules in the sequence.
         """
-        tap_ids = None
-        if self.taps:
-            ids = self.block_ids()
-            unknown = [t for t in self.taps if t not in ids]
-            if unknown:
-                raise KeyError(
-                    f"unknown tap ids {unknown}; known block ids: {ids}")
-            tap_ids = ids
+        ids, recorded, feeds = self._resolve_edges()
 
         Y = X
         for index, processor in enumerate(self.module_list):
+            # feed declared data edges before the block runs (wiring)
+            for param, source in feeds.get(index, ()):
+                setattr(processor, param, self.tapped_[source])
+
             Y = processor(Y)
 
             # record the output at declared taps (reference, no copy)
-            if tap_ids is not None and tap_ids[index] in self.taps:
-                self.tapped_[tap_ids[index]] = Y
+            if ids is not None and ids[index] in recorded:
+                self.tapped_[ids[index]] = Y
 
             # run callback if needed
             key = getattr(processor, 'name', None)
@@ -383,8 +429,9 @@ class Sequential():
         """
         if block_id not in self.tapped_:
             raise KeyError(
-                f"no signal recorded for tap {block_id!r}; declared taps: "
-                f"{self.taps or []} (run the chain first)")
+                f"no signal recorded for tap {block_id!r}; recorded: "
+                f"{sorted(self.tapped_)}, declared taps: {self.taps or []} "
+                f"(declare the tap, then run the chain)")
         return self.tapped_[block_id]
 
     def get_module_by_index(self, index: int):

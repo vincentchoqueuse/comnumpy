@@ -39,29 +39,42 @@ FORMAT_VERSION = "1.0"
 _SCAN_MODULES = [
     "comnumpy.core.generators", "comnumpy.core.mappers",
     "comnumpy.core.channels", "comnumpy.core.filters",
-    "comnumpy.core.processors",
+    "comnumpy.core.processors", "comnumpy.core.frames",
     "comnumpy.core.compensators", "comnumpy.core.impairments",
     "comnumpy.core.devices",
     "comnumpy.ofdm.processors", "comnumpy.ofdm.chains",
     "comnumpy.ofdm.compensators", "comnumpy.ofdm.predistorders",
     "comnumpy.mimo.channels", "comnumpy.mimo.detectors",
     "comnumpy.mimo.compensators",
-    "comnumpy.fec.convolutional",
+    "comnumpy.fec.convolutional", "comnumpy.fec.ldpc",
     "comnumpy.optical.channels", "comnumpy.optical.links",
     "comnumpy.optical.dbp", "comnumpy.optical.devices",
     "comnumpy.optical.compensators",
+]
+
+# Value dataclasses that are not blocks but appear as block *parameters*
+# (a shared allocation, a frame structure). The encoder already writes
+# them by value; the decoder needs to know how to build them back.
+_VALUE_MODULES = [
+    ("comnumpy.ofdm.allocation", ["CarrierAllocation"]),
+    ("comnumpy.core.frames", ["FrameStructure", "FrameField"]),
 ]
 
 _EXTRA_BLOCKS: dict[str, type] = {}
 
 
 def register_block(cls: type) -> type:
-    """Class decorator adding a user block to the deserialization registry."""
+    """Class decorator adding a user block to the deserialization registry.
+
+    Works for ``Processor`` subclasses and for the plain dataclasses a
+    block may take as a parameter.
+    """
     _EXTRA_BLOCKS[cls.__name__] = cls
     return cls
 
 
 def _registry() -> dict[str, type]:
+    """Types instantiable as chain blocks: Processor subclasses."""
     registry: dict[str, type] = {}
     for module_name in _SCAN_MODULES:
         module = importlib.import_module(module_name)
@@ -73,11 +86,24 @@ def _registry() -> dict[str, type]:
     return registry
 
 
+def _value_registry() -> dict[str, type]:
+    """Types instantiable as block parameters: blocks plus value dataclasses."""
+    registry = _registry()
+    for module_name, names in _VALUE_MODULES:
+        module = importlib.import_module(module_name)
+        for name in names:
+            registry.setdefault(name, getattr(module, name))
+    return registry
+
+
 def _encode_value(value: object, arrays: dict[str, np.ndarray], key: str) -> object:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, (np.bool_, np.integer, np.floating)):
         return value.item()
+    if isinstance(value, (complex, np.complexfloating)):
+        # JSON has no complex type; a complex gain or tap is common here
+        return {"__complex__": [float(value.real), float(value.imag)]}
     if isinstance(value, np.ndarray):
         arrays[key] = value
         return {"__ndarray__": key}
@@ -148,7 +174,13 @@ def to_json(chain: Sequential, path: str | pathlib.Path | None = None,
         entry["inputs"] = [ids[index - 1]] if index > 0 else []
         blocks.append(entry)
 
-    document = {"comnumpy": FORMAT_VERSION, "blocks": blocks}
+    document: dict[str, Any] = {"comnumpy": FORMAT_VERSION, "blocks": blocks}
+    # chain-level metadata is intent too: dropping it would rebuild a chain
+    # that no longer records or feeds what its author declared
+    if chain.taps:
+        document["taps"] = list(chain.taps)
+    if chain.wiring:
+        document["wiring"] = dict(chain.wiring)
     if arrays:
         if npz_path is None:
             raise ValueError(
@@ -171,24 +203,32 @@ def _decode_value(value: object, arrays: Any) -> object:
                     f"the document references array {value['__ndarray__']!r}; "
                     f"pass npz_path= to from_json")
             return arrays[value["__ndarray__"]]
+        if "__complex__" in value:
+            real, imag = value["__complex__"]
+            return complex(real, imag)
         if "__block__" in value:
-            return _instantiate(value["__block__"], arrays)
+            return _build(value["__block__"], arrays, _value_registry())
         raise ValueError(f"unknown JSON object {sorted(value)}")
     if isinstance(value, list):
         return [_decode_value(v, arrays) for v in value]
     return value
 
 
-def _instantiate(entry: dict[str, Any], arrays: Any) -> Processor:
-    registry = _registry()
+def _build(entry: dict[str, Any], arrays: Any,
+           registry: dict[str, type]) -> Any:
     type_name = entry["type"]
     if type_name not in registry:
         raise KeyError(
-            f"unknown block type {type_name!r}; register user blocks with "
-            f"@register_block")
+            f"unknown type {type_name!r}; register user blocks and parameter "
+            f"dataclasses with @register_block")
     params = {name: _decode_value(value, arrays)
               for name, value in entry.get("params", {}).items()}
     return registry[type_name](**params)
+
+
+def _instantiate(entry: dict[str, Any], arrays: Any) -> Processor:
+    """Build a chain block; only Processor subclasses are valid here."""
+    return _build(entry, arrays, _registry())
 
 
 def from_json(source: str | pathlib.Path,
@@ -229,4 +269,6 @@ def from_json(source: str | pathlib.Path,
                 f"block {entry['id']!r} has non-linear inputs "
                 f"{entry['inputs']}; only linear chains are supported")
 
-    return Sequential([_instantiate(entry, arrays) for entry in blocks])
+    return Sequential([_instantiate(entry, arrays) for entry in blocks],
+                      taps=document.get("taps"),
+                      wiring=document.get("wiring"))

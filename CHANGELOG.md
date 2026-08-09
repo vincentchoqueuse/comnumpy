@@ -140,6 +140,33 @@ one release; there is no compatibility layer.
 - `sweep(..., reference="tx")` now names a tapped block and declares the
   tap itself if needed; blocks no longer hold references to other blocks
   (`target_data=` takes a plain array).
+- `Sequential(..., wiring={"comp.target_data": "ref"})`: declares the
+  extra data edge a data-aided estimator needs when its reference is
+  produced *inside* the chain. Before the target block runs, it receives
+  the signal the source block produced in the same pass. The source is
+  tapped automatically and must run earlier; a backward edge raises
+  rather than silently serving the previous run's value. This closes the
+  one real gap of the Recorder removal: `target_data=` alone is a frozen
+  array, so a Monte-Carlo loop would have kept comparing against the
+  first run's symbols. It is the bounded form of the `inputs` field of
+  D31 -- a second input declared by the chain, not a general DAG.
+- Serialization fixes found while checking that path:
+  - a chain sharing a `CarrierAllocation` object (the form D18 asks
+    for) exported but failed to re-import: value dataclasses passed as
+    block parameters had no decode path. The same bug hit
+    `FrameStructure`/`FrameField`. Both round trip now, and the
+    normative D32 test covers the object form, not just the raw mask.
+  - `comnumpy.core.frames` and `comnumpy.fec.ldpc` were missing from the
+    block registry, so `Framer`, `Deframer`, `LDPCEncoder` and
+    `LDPCDecoder` could not be deserialized at all.
+  - complex scalar parameters (a complex gain -- ordinary here) raised
+    on export; they now round trip through a `__complex__` pair.
+  - `taps` and `wiring` are exported with the chain: rebuilding a chain
+    that no longer records or feeds what its author declared was a
+    silent fidelity loss.
+  - `FrameField(role=...)` normalizes to the `FieldRole` enum, so a role
+    read back from JSON is an enum again (and an invalid role fails at
+    construction).
 - `OFDMTransmitter` and `OFDMReceiver` gained the `name=` field every
   other block already had. Without it they could be neither addressed
   (`chain["..."]`, `set_params`) nor tapped -- a gap the taps migration
