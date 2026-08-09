@@ -173,10 +173,10 @@ def to_json(chain: Sequential, path: str | pathlib.Path | None = None,
         The JSON document.
     """
     arrays: dict[str, np.ndarray] = {}
-    blocks = []
+    blocks: list[dict[str, Any]] = []
     ids = chain.block_ids()
     for index, (block_id, module) in enumerate(zip(ids, chain.module_list, strict=True)):
-        entry = {"id": block_id}
+        entry: dict[str, Any] = {"id": block_id}
         entry.update(_encode_block(module, arrays, block_id))
         # explicit inputs field from day one (decision D31): implicit chain
         entry["inputs"] = [ids[index - 1]] if index > 0 else []

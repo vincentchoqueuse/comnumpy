@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional, Literal, Callable, Dict
+from comnumpy._backend import fft, fftfreq, ifft  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from comnumpy.exceptions import ShapeError
 from .devices import ErbiumDopedFiberAmplifier
@@ -176,6 +177,7 @@ class FiberLink(Processor):
     edfa_gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     edfa_N_ase: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     raman_step_gain_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    raman_tilt_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     raman_sigma2_: float = field(init=False, repr=False, default=0.0)
     rng_: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
@@ -207,6 +209,11 @@ class FiberLink(Processor):
         residual_dB = self.fiber.alpha_dB * self.L_span
         if self.raman is not None:
             self.raman_step_gain_ = self._raman_step_gain()
+            # A multi-signal solve carries one gain per channel, so the
+            # step gain is no longer a number: it becomes a transfer
+            # function, interpolated from the channels onto the FFT grid.
+            self.raman_tilt_ = (self._raman_tilt(x.shape[-1])
+                                if self.raman.n_signals > 1 else None)
             if self.step_type == "logarithmic":
                 logger.warning(
                     "logarithmic steps are sized for the exponential decay "
@@ -216,18 +223,27 @@ class FiberLink(Processor):
                     "logarithmic grid is 3x *worse* than the linear one "
                     "once Raman is on (8.2e-4 rad against 2.8e-4 at "
                     "StPS=20). Use step_type='linear' with Raman.")
-            residual_dB -= self.raman.on_off_gain_dB
+            # One EDFA cannot undo a tilt: it is flat, so it makes up the
+            # *mean* on-off gain and the channels come out spread around
+            # transparency by the tilt. That is the physical situation a
+            # gain-flattening filter exists to fix, not a modelling
+            # shortcut, and `raman.tilt_dB` says how wide the spread is.
+            mean_gain_dB = float(np.mean(np.atleast_1d(self.raman.on_off_gain_dB)))
+            residual_dB -= mean_gain_dB
             # the ASE the solver integrated over its own reference
-            # bandwidth, spread over the simulated one
+            # bandwidth, spread over the simulated one. Averaged over the
+            # channels and added flat across the band: the gain is shaped
+            # in frequency, this noise is not.
             if self.raman.bandwidth_Hz > 0:
-                self.raman_sigma2_ = (self.noise_scaling * float(self.raman.ase_W[-1])
+                ase_W = float(np.mean(np.atleast_2d(self.raman.ase_W)[:, -1]))
+                self.raman_sigma2_ = (self.noise_scaling * ase_W
                                       * self.fs / self.raman.bandwidth_Hz)
             if residual_dB < 0:
                 logger.warning(
                     "Raman over-compensates the span: %.2f dB of on-off gain "
                     "against %.2f dB of loss, so the EDFA is set to "
                     "attenuate by %.2f dB to keep the span transparent.",
-                    self.raman.on_off_gain_dB, self.fiber.alpha_dB * self.L_span,
+                    mean_gain_dB, self.fiber.alpha_dB * self.L_span,
                     -residual_dB)
 
         # the EDFA makes up whatever the Raman gain did not, so a span
@@ -263,9 +279,50 @@ class FiberLink(Processor):
         boundaries[0] = 0.0
         boundaries[1::2] = (starts + ends) / 2
         boundaries[2::2] = ends
-        gain_dB = np.interp(boundaries, self.raman.z_km,
-                            self.raman.gain_profile_dB)
-        return 10 ** (np.diff(gain_dB) / 20)      # 2*StPS half-step gains
+        profile = np.atleast_2d(self.raman.gain_profile_dB)
+        gain_dB = np.stack([np.interp(boundaries, self.raman.z_km, row)
+                            for row in profile])
+        steps = 10 ** (np.diff(gain_dB, axis=1) / 20)   # (n_signals, 2*StPS)
+        return steps[0] if steps.shape[0] == 1 else steps
+
+    def _raman_tilt(self, n_samples: int) -> np.ndarray:
+        """Half-step gains as transfer functions over the simulated band.
+
+        A multi-signal solve gives one gain per channel; the field the
+        link propagates is the multiplex of those channels (D44), so the
+        gain becomes frequency-dependent. Each channel's gain is placed
+        at its own optical frequency and interpolated onto the FFT grid,
+        the band edges holding the outermost channels' value. Outside
+        the solved comb there is nothing to interpolate from, so the
+        edge is held rather than extrapolated -- extrapolating a Raman
+        tilt off the end of the comb invents gain.
+        """
+        assert self.raman is not None and self.raman_step_gain_ is not None
+        frequency = np.atleast_1d(
+            np.asarray(self.raman.frequency_signal_Hz, dtype=float))
+        centre = self.fiber.carrier_frequency_Hz
+        bins = centre + fftfreq(n_samples, d=1 / self.fs)
+        if bins.max() < frequency.min() or bins.min() > frequency.max():
+            raise ValueError(
+                f"the simulated band [{bins.min() / 1e12:.3f}, "
+                f"{bins.max() / 1e12:.3f}] THz does not overlap the Raman "
+                f"channels [{frequency.min() / 1e12:.3f}, "
+                f"{frequency.max() / 1e12:.3f}] THz -- the fibre's "
+                f"wavelength_nm sets the carrier the band is centred on, so "
+                f"give FiberSpec the comb centre the solve used")
+        order = np.argsort(frequency)
+        gains_dB = 20 * np.log10(self.raman_step_gain_)     # (n_signals, 2*StPS)
+        tilt = np.stack([np.interp(bins, frequency[order], gains_dB[order, k])
+                         for k in range(gains_dB.shape[1])])
+        return 10 ** (tilt / 20)
+
+    def _apply_raman(self, y: np.ndarray, index: int) -> np.ndarray:
+        """Half-step Raman gain: a number, or a filter when it is tilted."""
+        if self.raman_step_gain_ is None:
+            return y
+        if self.raman_tilt_ is None:
+            return self.raman_step_gain_[index] * y
+        return ifft(self.raman_tilt_[index] * fft(y))
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # perform SSFM
@@ -281,23 +338,25 @@ class FiberLink(Processor):
                     # no step loop here, so the whole profile applies at
                     # once -- the span must stay transparent in this mode
                     # too, and the EDFA has already been reduced for it
-                    y = float(np.prod(self.raman_step_gain_)) * y
+                    if self.raman_tilt_ is None:
+                        y = float(np.prod(self.raman_step_gain_)) * y
+                    else:
+                        y = ifft(np.prod(self.raman_tilt_, axis=0) * fft(y))
             else:
                 for num_step in range(self.StPS):
                     dz = self.step_size[num_step]
                     # the two half-step Raman gains bracket the Kerr term,
                     # like the two half-step dispersion operators
-                    first, second = (self.raman_step_gain_[2*num_step:2*num_step+2]
-                                     if self.raman_step_gain_ is not None
-                                     else (1.0, 1.0))
-
                     if self.step_method == "symmetric":
-                        y = apply_chromatic_dispersion(first*y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = self._apply_raman(y, 2*num_step)
+                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
                         y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=1)
-                        y = apply_chromatic_dispersion(second*y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = self._apply_raman(y, 2*num_step+1)
+                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
                     if self.step_method == "asymetric":
-                        y = apply_kerr_nonlinearity(first*second*y, dz, self.fiber.gamma, direction=1)
+                        y = self._apply_raman(self._apply_raman(y, 2*num_step), 2*num_step+1)
+                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=1)
                         y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
             # the ASE the distributed amplifier generated over this span,
