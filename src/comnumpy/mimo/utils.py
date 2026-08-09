@@ -2,90 +2,6 @@ import numpy as np
 from typing import Optional, Sequence
 
 
-def apply_correlation(H, Rx=None, Ry=None):
-    r"""
-    Colour an i.i.d. channel matrix by right-multiplying it with Cholesky factors.
-
-    Signal Model
-    ------------
-    Spatial correlation is introduced by mixing the entries of an
-    i.i.d. matrix :math:`\mathbf{H}` with the square root of a
-    correlation matrix. This helper applies the lower-triangular Cholesky
-    factor :math:`\mathbf{L}_x` of :math:`\mathbf{R}_x` on the right,
-
-    .. math::
-
-        \mathbf{H} \leftarrow \mathbf{H}\,\mathbf{L}_x,
-        \qquad \mathbf{R}_x = \mathbf{L}_x\mathbf{L}_x^H
-
-    then, if given, the factor :math:`\mathbf{L}_y` of
-    :math:`\mathbf{R}_y` -- **also on the right**:
-    :math:`\mathbf{H} \leftarrow \mathbf{H}\,\mathbf{L}_x\mathbf{L}_y`.
-
-    Layout: ``H`` keeps its shape ``(N_r, N_t)``; the correlation
-    matrices must be :math:`N_t \times N_t`.
-
-    Parameters
-    ----------
-    H : np.ndarray
-        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.
-    Rx : array-like or None, optional
-        Correlation matrix :math:`\mathbf{R}_x` of shape
-        ``(N_t, N_t)``. If None, no mixing is applied.
-    Ry : array-like or None, optional
-        Correlation matrix :math:`\mathbf{R}_y` of shape
-        ``(N_t, N_t)``, applied on the right as well. If None, no mixing
-        is applied.
-
-    Returns
-    -------
-    np.ndarray
-        The mixed channel matrix, of shape ``(N_r, N_t)``.
-
-    Notes
-    -----
-    Two limitations of this legacy helper, kept as-is for backward
-    compatibility -- prefer :func:`kronecker_rayleigh_channel`, which
-    implements the two-sided model correctly:
-
-    * both matrices are applied on the **right**, so ``Ry`` cannot
-      represent receive-side correlation and the pair does not form the
-      Kronecker model :math:`\mathbf{R}_r^{1/2}\mathbf{H}
-      \mathbf{R}_t^{1/2}`;
-    * the rows of the result have covariance
-      :math:`\mathbf{L}_x^H\mathbf{L}_x`, not :math:`\mathbf{R}_x`; the
-      Cholesky factor would have to be transposed
-      (:math:`\mathbf{H}\mathbf{L}_x^T`, as done in
-      :func:`kronecker_rayleigh_channel`) for the target correlation to
-      be reached.
-
-    Raises
-    ------
-    ValueError
-        If ``Rx`` or ``Ry`` is passed as a NumPy array with more than one
-        element: the arguments are tested for truthiness, which is
-        ambiguous for arrays. Pass nested lists instead.
-
-    Examples
-    --------
-    >>> H = np.ones((2, 2))
-    >>> print(np.round(apply_correlation(H, [[1.0, 0.5], [0.5, 1.0]]), 4))
-    [[1.5   0.866]
-     [1.5   0.866]]
-    >>> print(apply_correlation(H))
-    [[1. 1.]
-     [1. 1.]]
-    """
-    if Rx:
-        Rx_sqrt = np.linalg.cholesky(Rx)
-        H = np.matmul(H, Rx_sqrt)
-
-    if Ry:
-        Ry_sqrt = np.linalg.cholesky(Ry)
-        H = np.matmul(H, Ry_sqrt)
-    return H
-
-
 def rayleigh_channel(N_r: int, N_t: int,
                 L: Optional[int] = 1,
                 scale_per_tap: Optional[Sequence[float]] = None,
@@ -316,7 +232,7 @@ def rician_channel(N_r: int, N_t: int, K: float,
 
     alpha = np.sqrt(K/(K+1))
     beta  = np.sqrt(1/(K+1))
-    H = np.empty_like(H_los)
+    H = np.empty(np.shape(H_los), dtype=complex)  # never inherit a real dtype (annex A.5)
     for l in range(L):
         std = np.sqrt(scales[l])
         W = rng.normal(0, std/np.sqrt(2), (N_r, N_t)) + 1j * rng.normal(0, std/np.sqrt(2), (N_r, N_t))

@@ -68,7 +68,6 @@ NO_REFERENCE_FUNCTIONS = {
     "comnumpy.core.metrics.sym_2_bin",
     "comnumpy.core.utils.sym_2_bin",
     "comnumpy.core.utils.plot_alphabet",
-    "comnumpy.mimo.utils.apply_correlation",
 }
 
 # plotting helpers carry no signal model

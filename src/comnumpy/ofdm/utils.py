@@ -130,12 +130,14 @@ def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=N
         Axis to draw on. If None, a new figure and axis are created.
 
     color_list : list of str, optional
-        A list of colors used to plot each subcarrier type, indexed by the subcarrier type value.
-        Default is ["b", "g", "r"], which corresponds to null (blue), data (green) and pilots (red).
+        Colors indexed by subcarrier type value. Defaults to the frozen
+        ``CARRIER_STYLE`` palette of decision D27 (Okabe-Ito, safe for
+        colour-vision deficiency), the same one the ASCII spectral map
+        and :meth:`CarrierAllocation.plot` use.
 
     label_list : list of str, optional
-        A list of labels for each subcarrier type, used in the plot legend, indexed by the
-        subcarrier type value. Default is ["null", "data", "pilots"].
+        Legend labels indexed by subcarrier type value. Defaults to the
+        ``CARRIER_STYLE`` labels.
 
     shift : bool, optional
         If True, shift the x-axis by half the length of the carrier_type array. Default is False.
@@ -165,10 +167,15 @@ def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=N
     """
     import matplotlib.pyplot as plt  # local import (D36)
 
+    from comnumpy.ofdm.allocation import CARRIER_STYLE, CarrierType  # local (D36)
+
+    # D27: one palette for every carrier rendering, and the marker carries
+    # the information too -- colour is never the only channel
     if color_list is None:
-        color_list = ["b", "g", "r"]
+        color_list = [CARRIER_STYLE[t]["color"] for t in CarrierType]
     if label_list is None:
-        label_list = ["null", "data", "pilots"]
+        label_list = [CARRIER_STYLE[t]["label"] for t in CarrierType]
+    marker_list = ["o", "s", "D"]
 
     if shift:
         offset = len(carrier_type)//2
@@ -181,10 +188,13 @@ def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=N
         color = color_list[value]
         index = np.where(carrier_type == value)[0]
         if len(index)>0:
-            markerfmt = '{}o'.format(color)
-            linefmt = '{}-'.format(color)
             label = label_list[value]
-            ax.stem(index-offset, value*np.ones(len(index)), basefmt=" ", linefmt=linefmt, markerfmt=markerfmt, label=label)
+            marker = marker_list[value % len(marker_list)]
+            markerline, stemlines, _ = ax.stem(
+                index - offset, value * np.ones(len(index)),
+                basefmt=" ", markerfmt=marker, label=label)
+            markerline.set_color(color)
+            stemlines.set_color(color)
 
     ax.set_xlabel("subcarrier index")
     ax.set_ylabel("subcarrier type")

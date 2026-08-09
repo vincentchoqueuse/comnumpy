@@ -1,53 +1,6 @@
 import numpy as np
 
-
-def sym_2_bin(sym, width):
-    r"""
-    Convert an array of integer symbols to the corresponding bit stream.
-
-    Signal Model
-    ------------
-    Each integer symbol :math:`x[n] \in \{0, \dots, M-1\}` is expanded
-    into its :math:`w`-bit binary representation, most significant bit
-    first, and the :math:`N` words are concatenated into a single stream
-    of :math:`N w` bits:
-
-    .. math::
-
-        x[n] = \sum_{i=0}^{w-1} b\left[n w + i\right] \, 2^{\,w-1-i},
-        \qquad b[m] \in \{0, 1\}
-
-    The mapping is the plain natural binary code of :func:`numpy.binary_repr`;
-    negative symbols are written in two's complement over ``width`` bits.
-    The input is consumed as a 1-D sequence and the output is always a flat
-    bit stream, whatever the shape of ``sym``.
-
-    Parameters
-    ----------
-    sym : array-like
-        Array of integer symbols :math:`x[n]`, of length :math:`N`.
-    width : int
-        Number of bits per symbol :math:`w = \log_2 M`.
-
-    Returns
-    -------
-    np.ndarray
-        1-D array of :math:`N w` binary digits (0s and 1s).
-
-    Examples
-    --------
-    >>> sym_2_bin(np.array([0, 1, 2, 3]), 2)
-    array([0, 0, 0, 1, 1, 0, 1, 1])
-    >>> sym_2_bin(np.array([5]), 4)
-    array([0, 1, 0, 1])
-    """
-    data = []
-    for indice in range(len(sym)):
-        data.append(np.binary_repr(sym[indice], width))
-
-    string = ''.join(data)
-
-    return np.array(list(string), dtype=int)
+from comnumpy.core.utils import sym_2_bin  # single definition (annex A.5)
 
 
 def compute_ser_awgn_psk(order, snr_per_bit):
@@ -123,6 +76,11 @@ def compute_ser_awgn_psk(order, snr_per_bit):
     from scipy.stats import norm  # local import (D36)
 
     gamma_b = snr_per_bit
+    if order < 2 or (order & (order - 1)) != 0:
+        raise ValueError(
+            f"compute_ser_awgn_psk: expected a power-of-two PSK order "
+            f"(2, 4, 8, ...), got order={order} -- the closed forms below "
+            f"are derived for M-PSK with M a power of two.")
     k = int(np.log2(order))
 
     if order == 2:
@@ -140,9 +98,6 @@ def compute_ser_awgn_psk(order, snr_per_bit):
         M = order
         argument = np.sqrt(2*k*gamma_b)*np.sin(np.pi/M)
         value = 2*norm.sf(argument)
-
-    if type == "bin":  # noqa: E721 -- `type` is a string parameter
-        value = value/k
 
     return value
 
@@ -277,8 +232,13 @@ def compute_metric_awgn_theo(modulation, order, snr_per_bit, type="ser"):
     if modulation == "PSK":
         value = compute_ser_awgn_psk(order, snr_per_bit)
 
-    if modulation == "QAM":
+    elif modulation == "QAM":
         value = compute_ser_awgn_qam(order, snr_per_bit)
+    else:
+        raise ValueError(
+            f"compute_metric_awgn_theo: unknown modulation "
+            f"{modulation!r}; expected 'PSK' or 'QAM' -- these are the two "
+            f"families with a closed-form SER implemented here.")
 
     if type == "bin":
         k = int(np.log2(order))
@@ -728,8 +688,11 @@ def compute_ccdf(data, axis=-1):
     indices = np.arange(1, n + 1)
     ccdf = 1.0 - indices / n
 
-    # Expand ccdf to match the shape of sorted_data
-    ccdf = np.expand_dims(ccdf, list(range(data.ndim))[::-1][:axis])
+    # broadcast against sorted_data: n on `axis`, 1 elsewhere (annex A.5:
+    # the previous expand_dims produced a shape that did not broadcast)
+    shape = [1] * np.ndim(data)
+    shape[axis] = n
+    ccdf = ccdf.reshape(shape)
 
     return sorted_data, ccdf
 
