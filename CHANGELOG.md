@@ -73,6 +73,18 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- `BlindDualMIMOCompensator`: `norm` is gone -- it was declared,
+  documented as "normalize the filter weights", and never read.
+  `sub_block_length` now does what its name says: it bounds the block of
+  recent outputs handed to `process_after_iteration`, which used to be
+  `Y[:, k-1::-100]`, a stride over the *whole* history -- so the hook
+  cost grew with the sample index and a pass was quadratic. The
+  docstring gained the two things that cost an afternoon to rediscover:
+  the equalizer has a group delay of `L` input samples, and only CMA
+  converges from a cold start (RDE stalls at 3.5 dB where the noise
+  floor is 24). Staged CMA -> RDE -> DD reaches 23.96 dB against a
+  23.98 dB floor, and `tests/mimo/test_blind_equalizer.py` pins all of
+  it.
 - `comnumpy.core.information` (D48): achievable information rates
   measured on data -- `compute_mi` (symbol-wise decoder), `compute_gmi`
   (bit-wise, the structure of every soft-decision system),
