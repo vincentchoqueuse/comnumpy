@@ -13,7 +13,9 @@ from comnumpy.ofdm.metrics import compute_PAPR
 
 
 # This script reproduces the second figure of the following article :
-# - "Optimized iterative clipping and filtering for PAPR reduction of OFDM signals." Wang, Y-C., and Z-Q. Luo., IEEE Transactions on communications 59.1 (2010): 33-37.
+# - "Optimized iterative clipping and filtering for PAPR reduction of OFDM
+#   signals." Wang, Y-C., and Z-Q. Luo., IEEE Transactions on
+#   communications 59.1 (2010): 33-37.
 
 # parameters
 N_cp = 0

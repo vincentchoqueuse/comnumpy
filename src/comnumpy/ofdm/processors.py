@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Optional, Literal, Callable
+from typing import Optional, Literal
 from comnumpy._backend import fft, ifft, fftshift, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from comnumpy.core.processors import AutoConcatenator
@@ -548,7 +548,8 @@ class CarrierExtractor(Processor):
     * :math:`y[m]` is the output data vector.
 
     The indices :math:`k_m` are determined by the positions in the `carrier_type` array where the value is 1.
-    The content of the pilot subcarriers (type 2) can be recorded with ``pilot_recorder``.
+    The content of the pilot subcarriers (type 2) is exposed after each
+    run as the estimated attribute ``pilots_`` (decision D23).
 
     Axes: *declared axis* -- expects the Block layout ``(..., T, N_fft)``
     (or ``(..., N_fft)`` for a period-1 allocation) and validates it in
@@ -564,10 +565,16 @@ class CarrierExtractor(Processor):
         described in physical order and converted once with
         ``to_fft_order()`` (decision D16); a raw 1D array is taken as an
         FFT-order mask.
-    pilot_recorder : callable, optional, keyword-only
-        Function to record the content associated to pilot values if required. Default is None.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"carrier extractor"``.
+
+    Attributes
+    ----------
+    pilots_ : np.ndarray or list of np.ndarray
+        Content of the pilot subcarriers seen during the last run
+        (data-dependent, hence the trailing underscore). An array for a
+        period-1 allocation; a list of per-symbol arrays otherwise
+        (pilot counts may differ between symbols).
 
     Raises
     ------
@@ -583,15 +590,13 @@ class CarrierExtractor(Processor):
 
     Examples
     --------
-    >>> from comnumpy.core import Recorder
     >>> carrier_type = np.array([1, 2, 0, 1, 2, 1])
-    >>> pilot_recorder = Recorder()
     >>> allocator = CarrierAllocator(carrier_type=carrier_type, pilots=np.array([-1, -2]))
-    >>> extractor = CarrierExtractor(carrier_type=carrier_type, pilot_recorder=pilot_recorder)
+    >>> extractor = CarrierExtractor(carrier_type=carrier_type)
     >>> Z = allocator(np.array([1, 2, 3]))
     >>> print(extractor(Z))
     [1 2 3]
-    >>> print(pilot_recorder.get_data())
+    >>> print(extractor.pilots_)
     [-1 -2]
 
     >>> carrier_type = np.array([1, 0, 0, 1, 1])
@@ -607,11 +612,12 @@ class CarrierExtractor(Processor):
      [2 5 8]]
     """
     carrier_type: object
-    pilot_recorder: Optional[Callable] = field(default=None, kw_only=True)
     name: str = field(default="carrier extractor", kw_only=True)
     # internal state (declared for slots, D40a)
     mask: np.ndarray = field(init=False, repr=False)
     period: int = field(init=False, repr=False)
+    # estimated quantity (D23): pilot content of the last run
+    pilots_: object = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         if isinstance(self.carrier_type, CarrierAllocation):
@@ -648,10 +654,7 @@ class CarrierExtractor(Processor):
             # pilot counts may differ per symbol: keep the raw list then
             X_pilots = pilot_parts
 
-        # Save pilots if needed
-        if self.pilot_recorder:
-            self.pilot_recorder(X_pilots)
-
+        self.pilots_ = X_pilots
         return X_data
 
     def plot(self, ax=None, shift=False):

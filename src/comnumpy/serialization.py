@@ -39,7 +39,7 @@ FORMAT_VERSION = "1.0"
 _SCAN_MODULES = [
     "comnumpy.core.generators", "comnumpy.core.mappers",
     "comnumpy.core.channels", "comnumpy.core.filters",
-    "comnumpy.core.processors", "comnumpy.core.monitors",
+    "comnumpy.core.processors",
     "comnumpy.core.compensators", "comnumpy.core.impairments",
     "comnumpy.core.devices",
     "comnumpy.ofdm.processors", "comnumpy.ofdm.chains",

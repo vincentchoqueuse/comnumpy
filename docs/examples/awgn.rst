@@ -61,15 +61,14 @@ and symbol demapping.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 19-26
+   :lines: 19-25
 
 The processors are:
 
 - ``SymbolGenerator``  
-  Generates a stream of integer-valued symbols to transmit.
-
-- ``Recorder``  
-  Captures the transmitted symbols for later analysis.
+  Generates a stream of integer-valued symbols to transmit. It is named
+  ``"tx"`` so the sweep can compare the chain output against the
+  transmitted symbols (see ``reference="tx"`` below).
 
 - ``SymbolMapper``  
   Maps integers to QAM constellation points.
@@ -83,13 +82,14 @@ The processors are:
 Monte Carlo Simulation
 """"""""""""""""""""""
 
-We perform a Monte Carlo simulation over the entire SNR range.
-At each SNR value, we update the AWGN processor, run the chain,
-and compute the experimental SER.
+We perform a Monte Carlo simulation over the entire SNR range with
+``sweep()``: at each SNR value it reconfigures the AWGN processor,
+reseeds the chain, runs it, and compares the output with the transmitted
+symbols recorded at the ``"tx"`` tap.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 28-45
+   :lines: 27-31
 
 
 Theoretical SER
@@ -99,7 +99,7 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 47-49
+   :lines: 33-35
 
 
 Results and Visualization
@@ -111,7 +111,7 @@ which is the standard representation for error rate curves in digital communicat
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 50-58
+   :lines: 37-44
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%

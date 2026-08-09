@@ -1,11 +1,11 @@
 import numpy as np
 import numpy.linalg as LA
 from dataclasses import dataclass, field
-from typing import Union, Optional, Literal
+from typing import Optional, Literal
 from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
-from comnumpy.core import Processor, Recorder
+from comnumpy.core import Processor
 from comnumpy.exceptions import NotFittedError
 from .utils import hard_projector, zf_estimator, mmse_estimator
 from .processors import Amplifier, DataExtractor
@@ -19,24 +19,18 @@ class TrainedBasedMixin():
 
     def get_target_data(self):
         """
-        Retrieve the target data associated with the model.
+        Retrieve the reference signal associated with the model.
+
+        The reference is a plain array: extract it beforehand with
+        ``Sequential(taps=...)`` and compose chains instead of wiring a
+        live block reference through the chain.
 
         Returns
         -------
         np.ndarray
             The target data array.
-
-        Raises
-        ------
-        TypeError
-            If ``target_data`` is neither a numpy array nor an instance of Recorder.
         """
-        if isinstance(self.target_data, np.ndarray):
-            return self.target_data
-        elif isinstance(self.target_data, Recorder):
-            return self.target_data.get_data()
-        else:
-            raise TypeError("target_data must be a numpy array or Recorder.")
+        return np.asarray(self.target_data)
 
 
 @dataclass(slots=True)
@@ -483,7 +477,7 @@ class DataAidedFIRCompensator(Processor):
     ----------
     h : np.ndarray
         Initial or estimated impulse response.
-    target_data : np.ndarray or Recorder
+    target_data : np.ndarray
         Known reference data for channel estimation.
     should_fit : bool, optional
         Whether to estimate the channel on each call. Default is True.
@@ -492,7 +486,7 @@ class DataAidedFIRCompensator(Processor):
     """
 
     h: np.array
-    target_data: Union[np.ndarray, Recorder]
+    target_data: np.ndarray
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="data_aided_fir", kw_only=True)
 
@@ -526,12 +520,12 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
 
     Attributes
     ----------
-    target_data : np.ndarray or Recorder
+    target_data : np.ndarray
         Reference signal for phase estimation.
     name : str, optional
         Name of the processor. Default is ``"data_aided_phase"``.
     """
-    target_data: Union[np.ndarray, Recorder]
+    target_data: np.ndarray
     name: str = field(default="data_aided_phase", kw_only=True)
     # estimated quantity (D23), declared for slots (D40a)
     theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
@@ -559,12 +553,12 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
 
     Attributes
     ----------
-    target_data : np.ndarray or Recorder
+    target_data : np.ndarray
         The known preamble used to compute the complex gain of the channel.
     extractor : DataExtractor
         How to extract the preamble in the received samples.
     """
-    target_data: Union[np.ndarray, Recorder]
+    target_data: np.ndarray
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="complex_gain_compensator", kw_only=True)
@@ -613,7 +607,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data: Union[np.ndarray, Recorder]
+    target_data: np.ndarray
     scale_correction: bool = True
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
@@ -704,7 +698,7 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data: Union[np.ndarray, Recorder]
+    target_data: np.ndarray
     scale_correction: bool = True
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)

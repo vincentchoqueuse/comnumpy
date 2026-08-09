@@ -11,7 +11,7 @@ import pathlib
 
 import numpy as np
 
-from comnumpy import AWGN, Recorder, Sequential, SymbolGenerator
+from comnumpy import AWGN, Sequential, SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_metric_awgn_theo, compute_ser
 from comnumpy.core.processors import Parallel2Serial, Serial2Parallel
@@ -34,8 +34,7 @@ def ofdm_chain():
     alloc = get_allocation("802.11a")
     alphabet = get_alphabet("QAM", M)
     return Sequential([
-        SymbolGenerator(M, name="gen"),
-        Recorder(name="tx"),
+        SymbolGenerator(M, name="tx"),
         SymbolMapper(alphabet),
         Serial2Parallel(alloc.N_data),
         CarrierAllocator(alloc, pilots=1.0),

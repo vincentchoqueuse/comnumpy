@@ -47,14 +47,15 @@ def sweep(chain: Sequential,
         Parameter values, one sweep point each.
     metrics : mapping of str to callable
         Metrics collected at every point. Called as ``metric(target, y)``
-        when ``reference`` names a Recorder block, else ``metric(y)``.
+        when ``reference`` names a tapped block, else ``metric(y)``.
         Smaller-is-better quantities (BER, SER, EVM); there is no
         ``score()`` (decision D24).
     stimulus
         Input passed to the chain at every point (e.g. a symbol count).
     reference : str, optional, keyword-only
-        Block id of a Recorder inside the chain whose recorded data is
-        the metric target.
+        Block id whose tapped output is the metric target. The tap is
+        declared on the chain if it is not already
+        (:attr:`Sequential.taps`).
     seed : int, optional, keyword-only
         Master seed; every sweep point gets an independent child seed
         through the chain (decisions D6/D35), so the whole curve is
@@ -67,15 +68,17 @@ def sweep(chain: Sequential,
 
     Examples
     --------
-    >>> from comnumpy import AWGN, Recorder, Sequential, SymbolGenerator
+    >>> from comnumpy import AWGN, Sequential, SymbolGenerator
     >>> from comnumpy.core.metrics import compute_ser
-    >>> chain = Sequential([SymbolGenerator(4), Recorder(name="tx"), AWGN(snr_dB=0, name="noise")])
+    >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=0, name="noise")])
     >>> out = sweep(chain, "noise.snr_dB", [0, 10], {"power": lambda y: float(np.mean(np.abs(y)**2))},
     ...             stimulus=1000, seed=1)
     >>> print(out["power"].shape)
     (2,)
     """
     params = [param] if isinstance(param, str) else list(param)
+    if reference is not None and reference not in (chain.taps or []):
+        chain.taps = (chain.taps or []) + [reference]
     seeds = (np.random.SeedSequence(seed).spawn(len(values))
              if seed is not None else [None] * len(values))
 
@@ -88,7 +91,7 @@ def sweep(chain: Sequential,
 
         y = chain(stimulus)
 
-        target = chain[reference].get_data() if reference is not None else None
+        target = chain.tap(reference) if reference is not None else None
         for name, metric in metrics.items():
             value = metric(target, y) if target is not None else metric(y)
             results[name].append(value)

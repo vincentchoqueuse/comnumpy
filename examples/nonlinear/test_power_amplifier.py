@@ -3,7 +3,9 @@ import numpy as np
 from comnumpy.core.devices import RappAmplifier, SalehAmplifier
 from comnumpy.core.processors import Clipper
 
-# reproduce the figure Figure 4.9 of the book Ghannouchi, Fadhel M., Oualid Hammi, and Mohamed Helaoui. Behavioral modeling and predistortion of wideband wireless transmitters. John Wiley & Sons, 2015.
+# reproduce Figure 4.9 of: Ghannouchi, Fadhel M., Oualid Hammi, and
+# Mohamed Helaoui. "Behavioral modeling and predistortion of wideband
+# wireless transmitters." John Wiley & Sons, 2015.
 
 ampli_list = [
     Clipper(1),

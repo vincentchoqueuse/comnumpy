@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 
-from comnumpy import (AWGN, Recorder, Sequential, SymbolDemapper,
+from comnumpy import (AWGN, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, get_alphabet)
 from comnumpy.core.processors import Parallel2Serial, Serial2Parallel
 from comnumpy.ofdm.processors import (CarrierAllocator, CarrierExtractor,
@@ -53,7 +53,6 @@ class TestRoundTrip(unittest.TestCase):
         alphabet = get_alphabet("QAM", 16)
         chain = Sequential([
             SymbolGenerator(16, seed=3),
-            Recorder(),
             SymbolMapper(alphabet),
             AWGN(sigma2=0.01, seed=4),
             SymbolDemapper(alphabet),
@@ -86,8 +85,6 @@ class TestRoundTrip(unittest.TestCase):
         self.run_twice_and_compare(chain, stimulus, npz=True)
 
     def test_callable_params_are_a_documented_frontier(self):
-        chain = Sequential([Recorder(name="rec")])
-        chain.callbacks = {}  # fine
         bad = Sequential([SymbolGenerator(4, seed=1)])
         bad.module_list.append(
             CarrierAllocator(np.array([1, 1]), name="alloc"))

@@ -20,7 +20,6 @@ CONVERTED_MODULES = [
     "comnumpy.core.generators",
     "comnumpy.core.mappers",
     "comnumpy.core.impairments",
-    "comnumpy.core.monitors",
     "comnumpy.fec.convolutional",
     "comnumpy.fec.ldpc",
     "comnumpy.ofdm.processors",
@@ -37,11 +36,6 @@ CONVERTED_MODULES = [
 
 # identity pass-through blocks: no algorithm, hence no citation required (R3)
 NO_REFERENCE_NEEDED = {
-    "comnumpy.core.monitors.Recorder",
-    "comnumpy.core.monitors.Logger",
-    "comnumpy.core.monitors.Debugger",
-    "comnumpy.core.monitors.PowerReporter",
-    "comnumpy.core.monitors.TimeSignalMonitor",
     "comnumpy.optical.devices.PowerControl",
 }
 

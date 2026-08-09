@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy.core import Sequential, Recorder, Scope
+from comnumpy.core import Sequential, plot_iq, plot_spectrum
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.processors import Upsampler, Downsampler, DataExtractor
@@ -21,28 +21,29 @@ rolloff = 0.25
 N_h = 1000
 sigma2 = 3e-2
 
-# create chain
+# create chain; taps extract the signals to observe after the run
 chain = Sequential([
-    SymbolGenerator(M),
-    Recorder(name="recorder_tx"),
+    SymbolGenerator(M, name="tx"),
     SymbolMapper(alphabet),
     Upsampler(oversampling),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     AWGN(sigma2=sigma2, name="awgn_channel"),
-    Scope(scope_type="spectrum", title="received signal"),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     Downsampler(oversampling, phase=2*oversampling*N_h),
-    DataExtractor(selector=(0, N)),
-    Scope(scope_type="iq", title="after SRRC+downsampling+extractor"),
+    DataExtractor(selector=(0, N), name="extractor"),
     SymbolDemapper(alphabet),
-    ])
+    ], taps=["tx", "awgn_channel", "extractor"])
 
 # run chain
 y = chain(N)
 
 # evaluate metrics
-data_tx = chain["recorder_tx"].get_data()
+data_tx = chain.tap("tx")
 ser_exp = compute_ser(data_tx, y)
+
+# plot the extracted signals
+plot_spectrum(chain.tap("awgn_channel"), title="received signal")
+plot_iq(chain.tap("extractor"), title="after SRRC+downsampling+extractor")
 
 # plot error distribution
 N_min = np.min([len(data_tx), len(y)])

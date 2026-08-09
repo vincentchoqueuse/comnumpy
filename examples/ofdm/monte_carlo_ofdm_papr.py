@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 from comnumpy.core import Sequential
-from comnumpy.core.generators import SymbolGenerator 
+from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
+from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
@@ -54,8 +53,8 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig1.png")
 plt.figure()
 N_sc_list = [256, 1024]
 
-for N_sc in tqdm(N_sc_list):
- 
+for N_sc in N_sc_list:
+
     # set S2P and carrier allocation
     carrier_type = np.zeros(os*N_sc)
     carrier_type[:N_sc] = 1

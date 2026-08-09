@@ -129,12 +129,12 @@ class Sequential():
         accepting the processor output.
     taps : list of str, optional, keyword-only
         Block ids (see :meth:`block_ids`) whose output should be recorded
-        during ``forward``. Unlike an in-chain ``Recorder``, a tap is
-        chain *metadata*: the module list keeps describing the
-        communication system only, and the cost is one dictionary store
-        per tapped block (a reference is kept, no copy -- blocks allocate
-        fresh outputs, so the reference stays valid). Retrieve with
-        :meth:`tap`.
+        during ``forward``. Taps are the *only* observation mechanism:
+        they are chain metadata, so the module list describes the
+        communication system and nothing else, and the cost is one
+        dictionary store per tapped block (a reference is kept, no copy
+        -- blocks allocate fresh outputs, so the reference stays valid).
+        Retrieve with :meth:`tap`.
 
     Examples
     --------

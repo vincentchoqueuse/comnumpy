@@ -11,24 +11,15 @@ from .exceptions import ComnumpyError, ShapeError, NotFittedError
 from .serialization import to_json, from_json
 from .sweep import sweep
 from .core import (
-    Processor, Sequential, Recorder,
+    Processor, Sequential,
     SymbolGenerator, SymbolMapper, SymbolDemapper,
     AWGN, compute_ser, get_alphabet, ebn0_to_snr_dB, esn0_to_snr_dB,
 )
 
 __all__ = [
     "ComnumpyError", "ShapeError", "NotFittedError",
-    "Processor", "Sequential", "Recorder",
+    "Processor", "Sequential",
     "SymbolGenerator", "SymbolMapper", "SymbolDemapper",
     "AWGN", "compute_ser", "get_alphabet", "ebn0_to_snr_dB", "esn0_to_snr_dB",
     "to_json", "from_json", "sweep",
-    "Scope",
 ]
-
-
-def __getattr__(name):
-    # Scope pulls matplotlib; keep `import comnumpy` matplotlib-free (D36)
-    if name == "Scope":
-        from .core import Scope
-        return Scope
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

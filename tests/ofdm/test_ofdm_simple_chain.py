@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from src.comnumpy.core import Sequential, Recorder
+from src.comnumpy.core import Sequential
 from src.comnumpy.core.generators import SymbolGenerator
 from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from src.comnumpy.core.channels import AWGN, FIRChannel
@@ -40,8 +40,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
 
     def build_manual_chain(self):
         return Sequential([
-            SymbolGenerator(self.M),
-            Recorder(name="data_tx"),
+            SymbolGenerator(self.M, name="data_tx"),
             SymbolMapper(self.alphabet),
             Serial2Parallel(self.N_carrier_data),
             CarrierAllocator(carrier_type=self.carrier_type, pilots=self.pilots),
@@ -57,12 +56,11 @@ class TestOFDMSimpleChain(unittest.TestCase):
             CarrierExtractor(self.carrier_type),
             Parallel2Serial(),
             SymbolDemapper(self.alphabet)
-        ])
+        ], taps=["data_tx"])
 
     def build_modular_chain(self):
         return Sequential([
-            SymbolGenerator(self.M),
-            Recorder(name="data_tx"),
+            SymbolGenerator(self.M, name="data_tx"),
             SymbolMapper(self.alphabet),
             OFDMTransmitter(
                 N_carrier_data=self.N_carrier_data,
@@ -79,13 +77,13 @@ class TestOFDMSimpleChain(unittest.TestCase):
                 h=self.h
             ),
             SymbolDemapper(self.alphabet)
-        ])
+        ], taps=["data_tx"])
 
     def test_manual_chain_ser_zero(self):
         """Test manual OFDM chain with SER=0 under perfect channel knowledge."""
         chain = self.build_manual_chain()
         y = chain(self.N)
-        data_tx = chain["data_tx"].get_data()
+        data_tx = chain.tap("data_tx")
         ser = compute_ser(data_tx, y)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
@@ -93,7 +91,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
         """Test modular OFDM chain using OFDMTransmitter and OFDMReceiver."""
         chain = self.build_modular_chain()
         y = chain(self.N)
-        data_tx = chain["data_tx"].get_data()
+        data_tx = chain.tap("data_tx")
         ser = compute_ser(data_tx, y)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 

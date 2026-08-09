@@ -1,7 +1,4 @@
 import numpy as np
-from dataclasses import dataclass, field
-from typing import Callable, Dict, Any
-from comnumpy.core.generics import Processor
 
 
 def sym_2_bin(sym, width):
@@ -494,53 +491,64 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
     return acpr_right, acpr_left
 
 
-@dataclass
-class MetricRecorder(Processor):
-    """
-    A class to compute and record the result of a metric function applied to input data.
+def signal_report(x, compute_papr: bool = False,
+                  papr_unit: str = "dB") -> "dict[str, float]":
+    r"""
+    Summary statistics of a signal, as plain data.
 
-    This class encapsulates a callable metric function with optional parameters.
-    When the object is called with data, it evaluates the metric and stores the result
-    in the `data` attribute, while returning the original input unchanged (for pipeline use).
+    Replaces the former in-chain monitor blocks: extract the signal with
+    ``Sequential(taps=...)``, compute the report, and let the caller
+    decide how to present it (``logging``, table, assertion, ...).
 
-    Attributes
+    Signal Model
+    ------------
+    All statistics are computed on the modulus :math:`|x[n]|` over every
+    element; the average power is
+
+    .. math::
+
+        \widehat{P} = \frac{1}{N} \sum_{n=0}^{N-1} \left|x[n]\right|^2
+
+    Axes: *element-wise* -- statistics are reduced over all elements.
+
+    Parameters
     ----------
-    metric_fn : Callable
-        The metric function to be applied. Must take the input `X` as first argument.
+    x : np.ndarray
+        Input signal.
+    compute_papr : bool, optional
+        Also include the PAPR. Default is False.
+    papr_unit : {"dB", "natural"}, optional
+        Unit of the PAPR entry. Default is "dB".
 
-    params : dict
-        Optional keyword arguments to be passed to the metric function.
-
-    data : Any
-        The result of the metric function, stored after calling the object.
-
-    Example
+    Returns
     -------
-    >>> import numpy as np
-    >>> def mean_std(X, axis=0):
-    ...     return {"mean": X.mean(axis=axis), "std": X.std(axis=axis)}
-    >>> X = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> recorder = MetricRecorder(metric_fn=mean_std, params={"axis": 1})
-    >>> recorder(X)
-    array([[1, 2, 3],
-           [4, 5, 6]])
-    >>> recorder.data
-    {'mean': array([2., 5.]), 'std': array([0.81649658, 0.81649658])}
+    dict of str to float
+        Keys: ``min``, ``max``, ``mean``, ``std``, ``rms``, ``energy``,
+        ``avg_power`` and optionally ``papr``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Section 2.2 (signal energy and power).
+
+    Examples
+    --------
+    >>> report = signal_report(np.array([1.0+0.0j, 0.0+1.0j]))
+    >>> print(report["avg_power"], report["rms"])
+    1.0 1.0
     """
-
-    metric_fn: Callable
-    params: Dict[str, Any] = field(default_factory=dict)
-    data: Any = None
-    name: str = "metric recorder"
-
-    def forward(self, X):
-        self.data = self.metric_fn(X, **self.params)
-        return X
-
-    def get_data(self):
-        return self.data
-
-    def __repr__(self):
-        nom = self.metric_fn.__name__
-        args = ", ".join(f"{k}={v}" for k, v in self.params.items())
-        return f"MetricRecorder({nom}, {args})"
+    abs_x = np.abs(np.asarray(x))
+    report = {
+        "min": float(np.min(abs_x)),
+        "max": float(np.max(abs_x)),
+        "mean": float(np.mean(abs_x)),
+        "std": float(np.std(abs_x)),
+        "rms": float(np.sqrt(np.mean(abs_x ** 2))),
+        "energy": float(np.sum(abs_x ** 2)),
+        "avg_power": float(np.mean(abs_x ** 2)),
+    }
+    if compute_papr:
+        # local import to avoid a circular dependency (ofdm imports core)
+        from comnumpy.ofdm.metrics import compute_PAPR
+        report["papr"] = float(compute_PAPR(abs_x, unit=papr_unit))
+    return report

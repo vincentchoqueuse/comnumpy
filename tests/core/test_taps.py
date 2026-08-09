@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from comnumpy import AWGN, Recorder, Sequential, SymbolDemapper, \
+from comnumpy import AWGN, Sequential, SymbolDemapper, \
     SymbolGenerator, SymbolMapper, get_alphabet
 
 
@@ -18,22 +18,19 @@ class TestTaps(unittest.TestCase):
             SymbolDemapper(alphabet),
         ], **kwargs)
 
-    def test_tap_equals_recorder(self):
-        """A tap records exactly what an in-chain Recorder would."""
+    def test_tap_records_the_block_output(self):
+        """A tap records exactly the tapped block's output, untouched."""
         alphabet = get_alphabet("QAM", 16)
-        tapped = self.build(taps=["generator"]).seed(3)
-        recorded = Sequential([
-            SymbolGenerator(16),
-            Recorder(name="tx"),
-            SymbolMapper(alphabet),
-            AWGN(snr_dB=15, name="noise"),
-            SymbolDemapper(alphabet),
-        ]).seed(3)
-        y_tap = tapped(1000)
-        y_rec = recorded(1000)
-        np.testing.assert_array_equal(y_tap, y_rec)
-        np.testing.assert_array_equal(tapped.tap("generator"),
-                                      recorded["tx"].get_data())
+        chain = self.build(taps=["generator", "symbol_mapper"]).seed(3)
+        chain(1000)
+        symbols = chain.tap("generator")
+        # the mapper tap must be the exact image of the generator tap
+        np.testing.assert_array_equal(chain.tap("symbol_mapper"),
+                                      alphabet[symbols])
+        # taps do not change the chain output: same seed, no taps
+        y_ref = self.build().seed(3)(1000)
+        np.testing.assert_array_equal(
+            self.build(taps=["generator"]).seed(3)(1000), y_ref)
 
     def test_module_list_stays_pure(self):
         """The chain description contains communication blocks only."""

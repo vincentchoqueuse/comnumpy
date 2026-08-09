@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN, FIRChannel
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.core.utils import get_alphabet
-from comnumpy.core.metrics import compute_ser
 from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
@@ -56,5 +55,5 @@ chain = Sequential([
 
 # profiling chain
 plot_chain_profiling(chain, input=N)
-plt.savefig(f"../../docs/getting_started/img/profiling_chain_fig1.png")
+plt.savefig("../../docs/getting_started/img/profiling_chain_fig1.png")
 plt.show()
