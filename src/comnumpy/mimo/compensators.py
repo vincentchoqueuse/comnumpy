@@ -116,8 +116,11 @@ class BlindDualMIMOCompensator(Processor):
     # estimated equalizer matrix (D23: underscore distinguishes it from the
     # *configured* channel H of FlatMIMOChannel), declared for slots (D40a)
     H_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
-    radius_cma: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
-    radius_list: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # both are derived from the (required) alphabet in __post_init__, so
+    # they are never None and the callers need no defensive check
+    radius_cma: float = field(init=False, repr=False, default=0.0)
+    radius_list: np.ndarray = field(init=False, repr=False,
+                                    default_factory=lambda: np.empty(0))
 
     def __post_init__(self) -> None:
         """
@@ -141,7 +144,6 @@ class BlindDualMIMOCompensator(Processor):
 
         if self.mode == "cma":
             # see equation 19/20
-            assert self.radius_cma is not None      # set in __post_init__
             error = self.radius_cma - np.abs(output)**2
             term1 = error * np.conjugate(output)
         elif self.mode == "rde":

@@ -1,10 +1,16 @@
+import pathlib
+from typing import TYPE_CHECKING, Any, Optional, Tuple
+
 import numpy as np
-import os.path as path
 import numpy.linalg as LA
-from typing import Optional
+import numpy.typing as npt
+
+if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
+    from matplotlib.axes import Axes
 
 
-def get_alphabet(modulation, order, type="gray", norm=True):
+def get_alphabet(modulation: str, order: int, type: str = "gray",
+                 norm: bool = True) -> np.ndarray:
     r"""
     Return the symbol alphabet of a memoryless modulation of order :math:`M`.
 
@@ -112,9 +118,9 @@ def _cross_qam(order: int, mapping: str) -> np.ndarray:
     two PAM axes and there is no one-line construction to check. They
     are the only alphabets still tabulated.
     """
-    pathname = path.dirname(path.abspath(__file__))
-    filename = "{}/data/QAM_{}_{}.csv".format(pathname, order, mapping)
-    if not path.exists(filename):
+    directory = pathlib.Path(__file__).resolve().parent / "data"
+    filename = directory / f"QAM_{order}_{mapping}.csv"
+    if not filename.exists():
         raise ValueError(
             f"no QAM-{order} alphabet: square orders (4, 16, 64, 256, 1024, "
             f"...) are constructed, and the cross constellations 32 and 128 "
@@ -165,7 +171,9 @@ def _construct_alphabet(modulation: str, order: int, mapping: str) -> np.ndarray
         f"unknown modulation {modulation!r}; expected 'PSK', 'PAM' or 'QAM'")
 
 
-def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **kwargs):
+def plot_alphabet(alphabet: np.ndarray, ax: Optional["Axes"] = None,
+                  label: str = "alphabet", title: str = "Constellation",
+                  **kwargs: Any) -> "Axes":
     r"""
     Plot the constellation diagram of a symbol alphabet.
 
@@ -212,7 +220,7 @@ def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **
     return ax
 
 
-def sym_2_bin(sym, width=4):
+def sym_2_bin(sym: np.ndarray, width: int = 4) -> np.ndarray:
     r"""
     Expand symbol indices into their binary representation, MSB first.
 
@@ -271,7 +279,8 @@ def sym_2_bin(sym, width=4):
         if sym.ndim else bits.reshape(width)
 
 
-def hard_projector(z, alphabet):
+def hard_projector(z: np.ndarray,
+                   alphabet: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     r"""
     Project symbols onto the nearest constellation point (hard decision).
 
@@ -338,7 +347,7 @@ def hard_projector(z, alphabet):
 
 
 def soft_projector(z: np.ndarray, alphabet: np.ndarray, sigma2: float,
-                   kernel: Optional[bool] = None) -> np.ndarray:
+                   kernel: Optional[np.ndarray] = None) -> np.ndarray:
     r"""
     Compute the soft (MMSE) symbol estimate under a Gaussian noise model.
 
@@ -431,7 +440,8 @@ def soft_projector(z: np.ndarray, alphabet: np.ndarray, sigma2: float,
     return num / den
 
 
-def esn0_to_snr_dB(esn0_dB, oversampling=1):
+def esn0_to_snr_dB(esn0_dB: npt.ArrayLike,
+                   oversampling: int = 1) -> npt.NDArray[np.float64]:
     r"""
     Convert a symbol-energy-to-noise ratio :math:`E_s/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
 
@@ -493,7 +503,9 @@ def esn0_to_snr_dB(esn0_dB, oversampling=1):
     return esn0_dB - 10 * np.log10(oversampling)
 
 
-def ebn0_to_snr_dB(ebn0_dB, bits_per_symbol, code_rate=1.0, oversampling=1):
+def ebn0_to_snr_dB(ebn0_dB: npt.ArrayLike, bits_per_symbol: int,
+                   code_rate: float = 1.0,
+                   oversampling: int = 1) -> npt.NDArray[np.float64]:
     r"""
     Convert a bit-energy-to-noise ratio :math:`E_b/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
 
@@ -567,7 +579,7 @@ def ebn0_to_snr_dB(ebn0_dB, bits_per_symbol, code_rate=1.0, oversampling=1):
     return ebn0_dB + 10 * np.log10(bits_per_symbol * code_rate) - 10 * np.log10(oversampling)
 
 
-def zf_estimator(Y, H):
+def zf_estimator(Y: np.ndarray, H: np.ndarray) -> np.ndarray:
     r"""
     Perform Zero Forcing (ZF) linear equalization using the channel matrix pseudoinverse.
 
@@ -640,7 +652,7 @@ def zf_estimator(Y, H):
     return Z_est
 
 
-def mmse_estimator(Y, H, sigma2):
+def mmse_estimator(Y: np.ndarray, H: np.ndarray, sigma2: float) -> np.ndarray:
     r"""
     Perform Minimum Mean Square Error (MMSE) linear equalization.
 
