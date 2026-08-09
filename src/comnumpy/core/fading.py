@@ -403,7 +403,25 @@ _PROFILE_REGISTRY: dict[str, Callable[..., PowerDelayProfile]] = {}
 
 
 def register_delay_profile(name: str):
-    """Register a catalog entry; users can add their own models."""
+    """Register a catalog entry; users can add their own models.
+
+    Parameters
+    ----------
+    name : str
+        Name the factory answers to in :func:`get_delay_profile`. An
+        existing name is replaced, which is what lets a user override a
+        catalog model with their own measurement.
+
+    Examples
+    --------
+    >>> @register_delay_profile("LAB")
+    ... def _lab():
+    ...     return PowerDelayProfile(delays_ns=(0.0, 100.0),
+    ...                              powers_dB=(0.0, -3.0),
+    ...                              standard="LAB", reference="bench")
+    >>> get_delay_profile("LAB").n_taps
+    2
+    """
     def decorator(func: Callable[..., PowerDelayProfile]):
         _PROFILE_REGISTRY[name] = func
         return func
@@ -411,7 +429,19 @@ def register_delay_profile(name: str):
 
 
 def available_delay_profiles() -> list[str]:
-    """Names accepted by :func:`get_delay_profile`."""
+    """Names accepted by :func:`get_delay_profile`.
+
+    Returns
+    -------
+    list of str
+        Registered names, sorted. Includes any model the user added
+        through :func:`register_delay_profile`.
+
+    Examples
+    --------
+    >>> [name for name in available_delay_profiles() if name.startswith("E")]
+    ['EPA', 'ETU', 'EVA']
+    """
     return sorted(_PROFILE_REGISTRY)
 
 
@@ -527,7 +557,31 @@ def _etu(**kwargs: Any) -> PowerDelayProfile:
 
 def validate_taps_fit(profile: PowerDelayProfile, fs: float,
                       n_samples: int) -> None:
-    """Raise if the signal is too short to carry the profile's delays."""
+    """Raise if the signal is too short to carry the profile's delays.
+
+    Parameters
+    ----------
+    profile : PowerDelayProfile
+        Model whose longest path must land inside the signal.
+    fs : float
+        Sampling rate in Hz, which fixes where the delays land.
+    n_samples : int
+        Length of the signal along the time axis.
+
+    Raises
+    ------
+    ShapeError
+        If the longest path lands at or beyond the last sample.
+
+    Examples
+    --------
+    >>> profile = get_delay_profile("ETU")   # longest path at 5000 ns
+    >>> validate_taps_fit(profile, fs=15.36e6, n_samples=1024)
+    >>> validate_taps_fit(profile, fs=15.36e6, n_samples=32)
+    Traceback (most recent call last):
+        ...
+    comnumpy.exceptions.ShapeError: expected at least 78 samples ...
+    """
     max_delay = int(np.rint(profile.delays_ns[-1] * 1e-9 * fs))
     if n_samples <= max_delay:
         raise ShapeError(

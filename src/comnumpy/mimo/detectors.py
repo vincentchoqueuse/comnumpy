@@ -7,14 +7,14 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
 
-def validate_H(H):
+def _validate_H(H):
     if H is None:
         raise ValueError("Channel H is not set.")
     elif not isinstance(H, np.ndarray):
         raise TypeError("Channel H must be a NumPy array.")
 
 
-def validate_sigma2(sigma2):
+def _validate_sigma2(sigma2):
     if sigma2 is None:
         raise ValueError("Noise variance sigma2 is not set.")
     elif sigma2 < 0:
@@ -118,7 +118,7 @@ class MaximumLikelihoodDetector(Processor):
 
     def forward(self, Y):
 
-        validate_H(self.H)
+        _validate_H(self.H)
 
         H = self.H
         _, N_t = H.shape
@@ -225,7 +225,7 @@ class LinearDetector(Processor):
         return output
 
     def forward(self, Y):
-        validate_H(self.H)
+        _validate_H(self.H)
         Z = self.linear_estimator(Y)
         S, _ = hard_projector(Z, self.alphabet)
         return S
@@ -499,8 +499,8 @@ class ApproximateMessagePassingDetector(Processor):
         return x_t
 
     def forward(self, Y):
-        validate_H(self.H)
-        validate_sigma2(self.sigma2)
+        _validate_H(self.H)
+        _validate_sigma2(self.sigma2)
 
         H = self.H
         _, N = Y.shape
@@ -663,8 +663,8 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
         return x_t
 
     def forward(self, Y):
-        validate_H(self.H)
-        validate_sigma2(self.sigma2)
+        _validate_H(self.H)
+        _validate_sigma2(self.sigma2)
 
 
         _, N = Y.shape
