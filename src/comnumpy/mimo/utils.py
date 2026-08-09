@@ -3,7 +3,7 @@ from typing import Optional, Sequence
 
 
 def rayleigh_channel(N_r: int, N_t: int,
-                L: Optional[int] = 1,
+                L: int = 1,
                 scale_per_tap: Optional[Sequence[float]] = None,
                 seed: Optional[int] = None,
                 rng: Optional[np.random.Generator] = None) -> np.ndarray:
@@ -117,7 +117,7 @@ def rayleigh_channel(N_r: int, N_t: int,
 
 
 def rician_channel(N_r: int, N_t: int, K: float,
-        L: Optional[int] = 1,
+        L: int = 1,
         H_los: Optional[np.ndarray] = None,
         scale_per_tap: Optional[Sequence[float]] = None,
         seed: Optional[int] = None,
@@ -244,7 +244,7 @@ def rician_channel(N_r: int, N_t: int, K: float,
 
 
 def kronecker_rayleigh_channel(N_r: int, N_t: int,
-                    L: Optional[int] = 1,
+                    L: int = 1,
                     R_rx: Optional[np.ndarray] = None,
                     R_tx: Optional[np.ndarray] = None,
                     scale_per_tap: Optional[Sequence[float]] = None,

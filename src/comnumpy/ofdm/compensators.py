@@ -73,14 +73,15 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     # internal state (declared for slots, D40a)
     weight: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.h is None:
             raise ValueError("The impulse response 'h' must be provided.")
 
-    def prepare(self, X):
+    def prepare(self, X: np.ndarray) -> None:
         """
         Compute the amplifier weight from the channel impulse response
         """
+        assert self.h is not None      # guaranteed by __post_init__
         N_sc = X.shape[self.axis]
         Hw = fft(self.h, n=N_sc,  axis=self.axis)
         weight = 1./Hw

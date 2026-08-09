@@ -53,23 +53,21 @@ class PhaseNoise(Processor):
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="phase noise", kw_only=True)
     # internal state (declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
-    _b: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    rng: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
+    _b: Optional[np.ndarray] = field(init=False, repr=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.rng = np.random.default_rng(self.seed)
 
-    def noise_rvs(self, X):
-        N = len(X)
-        sigma2 = self.sigma2
-        scale = np.sqrt(sigma2)
-        noise = self.rng.normal(loc=0, scale=scale, size=N)
+    def noise_rvs(self, X: np.ndarray) -> np.ndarray:
+        """Draw the Wiener phase increment for a signal of the length of X."""
+        assert self.rng is not None      # set in __post_init__
+        noise = self.rng.normal(loc=0, scale=np.sqrt(self.sigma2), size=len(X))
         self._b = np.cumsum(noise)
+        return self._b
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.noise_rvs(x)
-        y = x * np.exp(1j*self._b)
-        return y
+        return x * np.exp(1j * self.noise_rvs(x))
 
 
 @dataclass(slots=True)
