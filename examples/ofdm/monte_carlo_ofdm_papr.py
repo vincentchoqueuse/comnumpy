@@ -74,7 +74,17 @@ for N_sc in N_sc_list:
     plt.semilogy(papr_dB, ccdf, label=f"exp: N_sc={N_sc}")
 
     # display theoretical curves
-    ccdf_theo = 1 - (1 - np.exp(-gamma))**(N_sc*os)
+    #
+    # The exponent is NOT N_sc*os. The Nyquist-rate model treats the N_sc
+    # samples of a symbol as independent, which gives exponent N_sc; an
+    # oversampled signal has more peaks but they are correlated, so the
+    # effective number of independent samples grows much more slowly than
+    # the sample count. van Nee & Prasad (ch. 2) give 2.8*N_sc for 4x
+    # oversampling, and the fitted exponent measured here
+    # (validation/ofdm_papr_ccdf.py) is 2.28 / 2.49 / 2.74 for
+    # N_sc = 64 / 256 / 1024, converging to it. Using N_sc*os overstates
+    # the PAPR by +0.19 dB at N_sc=256 at CCDF 1e-2.
+    ccdf_theo = 1 - (1 - np.exp(-gamma))**(2.8*N_sc)
     plt.semilogy(papr_dB_threshold, ccdf_theo, label=f"theo: N_sc={N_sc}")
 
 

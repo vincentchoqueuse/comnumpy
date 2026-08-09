@@ -83,16 +83,86 @@ def get_alphabet(modulation, order, type="gray", norm=True):
     >>> print(np.round(get_alphabet("QAM", 16, norm=False)[:4], 1))
     [-3.+3.j -3.+1.j -3.-3.j -3.-1.j]
     """
-    # extract alphabet
-    pathname = path.dirname(path.abspath(__file__))
-    filename = "{}/data/{}_{}_{}.csv".format(pathname, modulation, order, type)
-    data = np.loadtxt(filename, delimiter=',', skiprows=1)
-    alphabet = data[:, 1] + 1j*data[:, 2]
+    alphabet = _construct_alphabet(modulation, order, type)
 
     if norm:
         alphabet = alphabet/np.sqrt(np.mean(np.abs(alphabet)**2))
 
     return alphabet
+
+
+def _gray_labels(n_bits: int) -> np.ndarray:
+    """Reflected binary code on ``n_bits`` bits, in index order."""
+    index = np.arange(2 ** n_bits)
+    return index ^ (index >> 1)
+
+
+def _pam_levels(order: int, mapping: str) -> np.ndarray:
+    """Odd-integer levels of a PAM axis, indexed by label."""
+    n_bits = int(np.log2(order))
+    labels = _gray_labels(n_bits) if mapping == "gray" else np.arange(order)
+    # position m carries label labels[m]; index the levels by label
+    return (2 * np.arange(order) - (order - 1))[np.argsort(labels)]
+
+
+def _cross_qam(order: int, mapping: str) -> np.ndarray:
+    """Read a cross constellation from its table.
+
+    32-QAM and 128-QAM are not square, so they are not the product of
+    two PAM axes and there is no one-line construction to check. They
+    are the only alphabets still tabulated.
+    """
+    pathname = path.dirname(path.abspath(__file__))
+    filename = "{}/data/QAM_{}_{}.csv".format(pathname, order, mapping)
+    if not path.exists(filename):
+        raise ValueError(
+            f"no QAM-{order} alphabet: square orders (4, 16, 64, 256, 1024, "
+            f"...) are constructed, and the cross constellations 32 and 128 "
+            f"are tabulated -- {order} is neither")
+    data = np.loadtxt(filename, delimiter=',', skiprows=1)
+    return data[:, 1] + 1j*data[:, 2]
+
+
+def _construct_alphabet(modulation: str, order: int, mapping: str) -> np.ndarray:
+    r"""Build the raw (unnormalized) alphabet of a memoryless modulation.
+
+    PSK is the unit circle, PAM the odd integers, and square QAM the
+    product of two PAM axes with the quadrature axis **negated** -- the
+    convention that puts the first symbol at the top left of the
+    constellation. In every case the labelling is applied by indexing
+    the geometric positions by their label, so ``mapping="gray"`` gives
+    a genuine Gray code and ``"bin"`` natural binary.
+
+    These formulas replace the CSV tables the library used to ship:
+    they reproduce all thirty-two of them entry by entry, to the six
+    decimals the files stored, and are exact where the files were
+    rounded (``tests/core/test_alphabet.py`` pins that against the
+    tables, which are kept in git history). Only the two cross
+    constellations, 32-QAM and 128-QAM, remain tabulated.
+    """
+    if order < 2 or order & (order - 1):
+        raise ValueError(
+            f"expected a power-of-two modulation order of at least 2, got "
+            f"{order}")
+    if mapping not in ("gray", "bin"):
+        raise ValueError(f"expected mapping 'gray' or 'bin', got {mapping!r}")
+
+    if modulation == "PSK":
+        n_bits = int(np.log2(order))
+        labels = _gray_labels(n_bits) if mapping == "gray" else np.arange(order)
+        return np.exp(2j * np.pi * np.arange(order) / order)[np.argsort(labels)]
+    if modulation == "PAM":
+        return _pam_levels(order, mapping).astype(complex)
+    if modulation == "QAM":
+        root = int(round(np.sqrt(order)))
+        if root * root != order:
+            return _cross_qam(order, mapping)
+        levels = _pam_levels(root, mapping)
+        # high bits select the in-phase level, low bits the quadrature
+        # one, on a *negated* axis
+        return (np.repeat(levels, root) - 1j * np.tile(levels, root)).astype(complex)
+    raise ValueError(
+        f"unknown modulation {modulation!r}; expected 'PSK', 'PAM' or 'QAM'")
 
 
 def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **kwargs):
