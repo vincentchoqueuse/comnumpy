@@ -80,9 +80,9 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/one_shot_srrc_awgn.py` | 113 s (316 s CPU) | skipped — slow |
 | `mimo/monte_carlo_simulation_2.py` | 143 s | skipped — slow |
 | `mimo/one_shot_mimo.py` | 171 s | skipped — slow |
-| `optical/CD_compensation_part1.py` | ~180 s | skipped — slow |
-| `optical/NLI_simulation.py` | 700 s | skipped — slow |
+| `optical/CD_compensation_part1.py` | 227 s | skipped — slow |
 | `mimo/run_all_scripts.py` | ~350 s | skipped — it is a runner, not an example |
+| `optical/NLI_simulation.py` | 700 s | skipped — slow |
 
 The smoke test therefore runs about 65 s of examples.
 

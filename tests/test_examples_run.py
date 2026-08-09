@@ -62,7 +62,7 @@ SLOW = {
         "measured 2026-08-09",
     "optical/CD_compensation_part1.py":
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
-        "compensator -- ~180 s measured 2026-08-09",
+        "compensator -- 227 s measured 2026-08-09",
     "optical/NLI_simulation.py":
         "split-step fibre + DBP over many launch powers -- 700 s measured "
         "2026-08-09, the slowest example by an order of magnitude",
