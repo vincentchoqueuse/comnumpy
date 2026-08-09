@@ -79,7 +79,7 @@ chain = Sequential([
             CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),
             Recorder(name="post_cma"),
             DelayRemover(delay=int(0.9*N)),
-            Scope(num="scope2", scope_type="iq", fig_indices=fig_indices)
+            Scope(scope_type="iq", fig_indices=fig_indices)
             ])
 
 # simulate communication

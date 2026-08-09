@@ -29,11 +29,11 @@ chain = Sequential([
     Upsampler(oversampling),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     AWGN(sigma2=sigma2, name="awgn_channel"),
-    Scope(num=1, scope_type="spectrum", title="received signal"),
+    Scope(scope_type="spectrum", title="received signal"),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     Downsampler(oversampling, phase=2*oversampling*N_h),
     DataExtractor(selector=(0, N)),
-    Scope(num=2, scope_type="iq", title="after SRRC+downsampling+extractor"),
+    Scope(scope_type="iq", title="after SRRC+downsampling+extractor"),
     SymbolDemapper(alphabet),
     ])
 

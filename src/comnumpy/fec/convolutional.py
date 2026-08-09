@@ -7,6 +7,7 @@ memory stays bounded (architecture document, section 8).
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -17,7 +18,7 @@ from comnumpy.exceptions import ShapeError
 __all__ = ["ConvolutionalEncoder", "ViterbiDecoder"]
 
 
-def _parse_generators(g):
+def _parse_generators(g: Sequence[int]) -> tuple[tuple[int, ...], int]:
     """Constraint length K and generator taps from octal generators."""
     g = tuple(int(gi) for gi in g)
     if len(g) < 2:
@@ -28,7 +29,7 @@ def _parse_generators(g):
     return g, K
 
 
-def _output_table(g, K):
+def _output_table(g: Sequence[int], K: int) -> np.ndarray:
     """(2**K, n) table: coded bits for every register content."""
     regs = np.arange(2**K)[:, None]
     taps = np.array(g)[None, :]
@@ -85,7 +86,7 @@ class ConvolutionalEncoder(Processor):
     >>> print(encoder(bits))
     [1 1 0 1 0 0 1 0 1 0 1 1]
     """
-    g: tuple = (0o133, 0o171)
+    g: tuple[int, ...] = (0o133, 0o171)
     terminated: bool = field(default=True, kw_only=True)
     name: str = field(default="conv_encoder", kw_only=True)
     # precomputed trellis tables (parametric, allowed in __post_init__)
@@ -177,7 +178,7 @@ class ViterbiDecoder(Processor):
     >>> print(decoder(coded))
     [1 0 1 1]
     """
-    g: tuple = (0o133, 0o171)
+    g: tuple[int, ...] = (0o133, 0o171)
     soft: bool = field(default=False, kw_only=True)
     terminated: bool = field(default=True, kw_only=True)
     name: str = field(default="viterbi", kw_only=True)
@@ -202,7 +203,7 @@ class ViterbiDecoder(Processor):
         self.pred_input = regs >> (self.K - 1)              # (S, 2)
         self.expected = out_table[regs]                     # (S, 2, n) coded bits
 
-    def _branch_cost(self, r_t):
+    def _branch_cost(self, r_t: np.ndarray) -> np.ndarray:
         """(batch..., S, 2) cost of every branch for one received n-tuple."""
         r = r_t[..., None, None, :]          # (batch..., 1, 1, n)
         c = self.expected                    # (S, 2, n)

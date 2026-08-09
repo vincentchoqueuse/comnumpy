@@ -7,14 +7,14 @@ from scipy.signal import welch
 from scipy.stats import gaussian_kde
 
 
-def create_subplots(num, fig_indices):
+def create_subplots(fig_indices):
     num_plots = len(fig_indices)
     if num_plots == 1:
         width = 6
     else:
         width = 3 * num_plots
 
-    fig, axes = plt.subplots(num_plots, 1, num=num, figsize=(8, width))
+    fig, axes = plt.subplots(num_plots, 1, figsize=(8, width))
 
     if num_plots == 1:
         axes = [axes]
@@ -33,7 +33,7 @@ def get_sliced_data(X, idx, axis=-1):
     return x_sliced
 
 
-def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, orientation="horizontal"):
+def plot_chain_profiling(chain, input, ax=None, title='Processor Timings', N_test=100, orientation="horizontal"):
     r"""
     Plot the profiling results of a chain of processors using a box plot to visualize the distribution of execution times.
 
@@ -50,6 +50,9 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
         The input data to be passed to the `profile_execution_time` method of the chain. The type and structure of
         this input depend on the specific implementation of the chain.
 
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If None, a new figure and axis are created.
+
     title : str, optional
         The title of the box plot. Default is 'Box Plot of Method Timings'.
 
@@ -62,8 +65,8 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
 
     Returns
     -------
-    None
-        This function does not return any value. It displays a box plot of the profiling results.
+    matplotlib.axes.Axes
+        The axis containing the box plot of the profiling results (decision D25).
 
     """
 
@@ -81,11 +84,13 @@ def plot_chain_profiling(chain, input, title='Processor Timings', N_test=100, or
     data_array = np.array([[result[key] for key in keys] for result in results])
 
     # Create a box plot
-    plt.figure(figsize=(12, 6))
-    plt.boxplot(data_array, tick_labels=list(keys), orientation=orientation)
-    plt.title(title)
-    plt.xlabel('Time (s)')
-    plt.grid(True)
+    if ax is None:
+        _, ax = plt.subplots(figsize=(12, 6))
+    ax.boxplot(data_array, tick_labels=list(keys), orientation=orientation)
+    ax.set_title(title)
+    ax.set_xlabel('Time (s)')
+    ax.grid(True)
+    return ax
 
 
 @dataclass(slots=True)
@@ -99,8 +104,6 @@ class TimeScope(Processor):
     ----------
     fs : float
         Sampling frequency used to calculate the time axis. Default is 1.0.
-    num : Optional[int]
-        The figure number to be used for the plot. If None, a new figure is created.
     complex_type : str
         Determines which part of the complex signal to plot. Options are "real", "abs", and "pow".
         Default is "abs".
@@ -116,7 +119,6 @@ class TimeScope(Processor):
         Indices of the figures to plot for MIMO signals.
 
     """
-    num: Optional[int]
     fs: float = field(default=1.0, kw_only=True)
     plot_type: Literal["full", "real", "abs", "pow"] = field(default="real", kw_only=True)
     fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
@@ -127,7 +129,7 @@ class TimeScope(Processor):
     name: str = field(default="time_scope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        fig, axes = create_subplots(self.num, self.fig_indices)
+        fig, axes = create_subplots(self.fig_indices)
 
         for ax, idx in zip(axes, self.fig_indices, strict=True):
             x_sliced = get_sliced_data(X, idx, axis=self.axis)
@@ -172,8 +174,6 @@ class SpectrumScope(Processor):
         Limits for the x-axis (frequency). None for no limits.
     ylim : tuple or None
         Limits for the y-axis (amplitude). None for no limits.
-    num : int or None
-        The figure number for plotting. If None, a new figure is created.
     shift : bool
         If True, shifts the zero frequency to the center of the spectrum.
     title : str
@@ -193,7 +193,6 @@ class SpectrumScope(Processor):
     dB: bool = field(default=True, kw_only=True)
     xlim: Optional[Tuple[float, float]] = field(default=None, kw_only=True)
     ylim: Optional[Tuple[float, float]] = field(default=None, kw_only=True)
-    num: Optional[int] = field(default=None, kw_only=True)
     shift: bool = field(default=False, kw_only=True)
     fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
     slices: Tuple[slice, ...] = field(default=(slice(None),), kw_only=True)
@@ -202,7 +201,7 @@ class SpectrumScope(Processor):
     name: str = field(default="SpectrumScope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        fig, axes = create_subplots(self.num, self.fig_indices)
+        fig, axes = create_subplots(self.fig_indices)
 
         for ax, idx in zip(axes, self.fig_indices, strict=True):
 
@@ -250,8 +249,6 @@ class IQScope(Processor):
 
     Attributes
     ----------
-    num : Optional[int]
-        The figure number for plotting. If None, a new figure is created.
     title : str
         Title of the plot. Default is "IQ Scope".
     name : str
@@ -264,7 +261,6 @@ class IQScope(Processor):
         Slices to apply to the input signal for selecting which parts to plot.
 
     """
-    num: Optional[int] = None
     title: str = field(default="IQ Scope", kw_only=True)
     fig_indices: Tuple[int, ...] = field(default=(0,), kw_only=True)
     slices: Tuple[slice, ...] = field(default=(slice(None),), kw_only=True)
@@ -272,7 +268,7 @@ class IQScope(Processor):
     name: str = field(default="IQScope", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        fig, axes = create_subplots(self.num, self.fig_indices)
+        fig, axes = create_subplots(self.fig_indices)
 
         for ax, idx in zip(axes, self.fig_indices, strict=True):
             x_sliced = get_sliced_data(X, idx, axis=self.axis)
@@ -302,19 +298,16 @@ class KDEScope(Processor):
     thresh : float
         Threshold for the density estimate. Only regions with density above this
         threshold will be plotted. Default is 0.05.
-    num : Optional[int]
-        The figure number for plotting. If None, a new figure is created.
     name : str
         Title of the KDE plot. Default is "KDE Scope".
 
     """
     bw_adjust: float = 1.0
     thresh: float = field(default=0.05, kw_only=True)
-    num: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="KDE Scope", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        fig, axes = create_subplots(self.num, (0,))
+        fig, axes = create_subplots((0,))
         ax = axes[0]
 
         data = np.vstack([np.real(x).ravel(), np.imag(x).ravel()])
@@ -385,8 +378,6 @@ class WelchScope(Processor):
         Limits for the x-axis (frequency). None for no limits.
     ylim : tuple or None
         Limits for the y-axis (amplitude). None for no limits.
-    num : int or None
-        The figure number for plotting. If None, a new figure is created.
     shift : bool
         If True, shifts the zero frequency to the center of the spectrum.
     label : str
@@ -396,9 +387,8 @@ class WelchScope(Processor):
 
     """
 
-    def __init__(self, fs=1, nperseg=None, norm=True, dB=True, xlim=None, ylim=None, num=None, title="PSD_scope", name="spectrum_scope"):
+    def __init__(self, fs=1, nperseg=None, norm=True, dB=True, xlim=None, ylim=None, title="PSD_scope", name="spectrum_scope"):
         super().__init__()  # initialize the Processor base fields (debug, Y)
-        self.num = num
         self.fs = fs
         self.norm = norm
         self.nperseg = nperseg
@@ -409,7 +399,7 @@ class WelchScope(Processor):
         self.name = name
 
     def forward(self, x):
-        plt.figure(self.num)
+        _, ax = plt.subplots()
         freq, modulus = welch(x, self.fs, nperseg=self.nperseg, noverlap=0, return_onesided=False, scaling='spectrum')
         freq = np.fft.fftshift(freq)
         modulus = np.fft.fftshift(modulus)
@@ -419,17 +409,17 @@ class WelchScope(Processor):
             modulus = (1/max_modulus)*modulus
 
         if self.dB:
-            plt.plot(freq, 10*np.log10(modulus))
-            plt.ylabel("PSD [dB]")
+            ax.plot(freq, 10*np.log10(modulus))
+            ax.set_ylabel("PSD [dB]")
         else:
-            plt.plot(freq, modulus)
-            plt.ylabel("PSD")
+            ax.plot(freq, modulus)
+            ax.set_ylabel("PSD")
 
         if self.xlim:
-            plt.xlim(self.xlim)
+            ax.set_xlim(self.xlim)
         if self.ylim:
-            plt.ylim(self.ylim)
+            ax.set_ylim(self.ylim)
 
-        plt.xlabel("freq [Hz]")
-        plt.title(self.title)
+        ax.set_xlabel("freq [Hz]")
+        ax.set_title(self.title)
         return x

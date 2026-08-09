@@ -30,13 +30,13 @@ chain = Sequential([
             CFO(0.001),
             IQImbalance(iq_params[0], iq_params[1]),
             AWGN(sigma2=0.005),
-            Scope(num=1, scope_type="iq", title="received signal"),
+            Scope(scope_type="iq", title="received signal"),
             BlindIQCompensator(),
-            Scope(num=2, scope_type="iq", title="after GSOP"),
+            Scope(scope_type="iq", title="after GSOP"),
             BlindCFOCompensator(save_history=True, name="cfo_comp"),
-            Scope(num=3, scope_type="iq", title="after GSOP+CFO comp"),
+            Scope(scope_type="iq", title="after GSOP+CFO comp"),
             TrainedBasedPhaseCompensator(target_data=signal_recorder_tx),
-            Scope(num=4, scope_type="iq", title="after GSOP + CFO comp + phase correction"),
+            Scope(scope_type="iq", title="after GSOP + CFO comp + phase correction"),
             SymbolDemapper(alphabet)
             ])
 

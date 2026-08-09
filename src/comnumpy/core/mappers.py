@@ -47,8 +47,8 @@ class SymbolMapper(Processor):
     def get_alphabet(self):
         return self.alphabet
 
-    def plot(self, num=None, title="Symbol Constellation"):
-        plot_alphabet(self.alphabet, num=num, title=title)
+    def plot(self, ax=None, title="Symbol Constellation"):
+        return plot_alphabet(self.alphabet, ax=ax, title=title)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         Y = self.alphabet[X]

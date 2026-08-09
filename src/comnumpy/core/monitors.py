@@ -1,8 +1,14 @@
+import logging
+
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional
 from comnumpy.core.generics import Processor
 from .processors import DataExtractor
+
+# monitors report through the standard logging machinery (decision D11);
+# configure logging.getLogger("comnumpy") to see their output
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -76,15 +82,18 @@ class Logger(Processor):
 
     Examples
     --------
-    >>> logger = Logger(num=1)
-    >>> y = logger(np.array([1, 2]))
-    Data logger (1, logger): [1 2]
+    Output goes through ``logging.getLogger("comnumpy.core.monitors")``
+    (decision D11); the signal passes through unchanged:
+
+    >>> log_block = Logger(num=1)
+    >>> print(log_block(np.array([1, 2])))
+    [1 2]
     """
     num: Optional[int] = None
     name: str = field(default="logger", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        print(f"Data logger ({self.num}, {self.name}): {X}")
+        logger.info("Data logger (%s, %s): %s", self.num, self.name, X)
         return X
 
 
@@ -115,12 +124,11 @@ class Debugger(Processor):
     name: str = field(default="debugger", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        print(f"Data logger : {self.name}")
-        print(f"shape: {X.shape}")
-        print(f"max (real part): {np.max(np.real(X))}")
-        print(f"max (imag part): {np.max(np.imag(X))}")
-        print(f"mean: {np.mean(X)}")
-        print(f"var: {np.var(X)}")
+        logger.info(
+            "Data logger : %s\nshape: %s\nmax (real part): %s\n"
+            "max (imag part): %s\nmean: %s\nvar: %s",
+            self.name, X.shape, np.max(np.real(X)), np.max(np.imag(X)),
+            np.mean(X), np.var(X))
         return X
 
 
@@ -154,9 +162,12 @@ class PowerReporter(Processor):
 
     Examples
     --------
+    The measured power goes through the ``comnumpy.core.monitors``
+    logger (decision D11); the signal passes through unchanged:
+
     >>> reporter = PowerReporter()
-    >>> y = reporter(np.array([1.0+0.0j, 0.0+1.0j]))
-    Power reporter (power): 1.0
+    >>> print(reporter(np.array([1.0+0.0j, 0.0+1.0j])))
+    [1.+0.j 0.+1.j]
     """
     num: Optional[int] = None
     verbose: bool = field(default=True, kw_only=True)
@@ -165,7 +176,7 @@ class PowerReporter(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.verbose:
             P = np.mean(np.abs(X)**2)
-            print(f"Power reporter ({self.name}): {P}")
+            logger.info("Power reporter (%s): %s", self.name, P)
         return X
 
 
@@ -200,18 +211,9 @@ class TimeSignalMonitor(Processor):
     Examples
     --------
     >>> monitor = TimeSignalMonitor(title="Stats")
-    >>> y = monitor.forward(np.array([1.0, 1.0]))
-    <BLANKLINE>
-    Stats
-    -----
-    Min            : 1.0000
-    Max            : 1.0000
-    Mean           : 1.0000
-    Std Dev        : 0.0000
-    RMS            : 1.0000
-    Energy         : 2.0000
-    Avg Power      : 1.0000
-    -----
+    >>> y = monitor(np.array([1.0, 1.0]))
+    >>> print(round(monitor.stats["Avg Power"], 4))
+    1.0
     """
     def __init__(self, compute_PAPR=False, PAPR_unit="dB", title="Signal Information", name="signal_info_printer"):
         super().__init__()  # initialize the Processor base fields (debug, Y)
@@ -236,11 +238,10 @@ class TimeSignalMonitor(Processor):
             self.stats[f"PAPR ({self.PAPR_unit})"] = compute_PAPR(x, unit=self.PAPR_unit)
 
     def _print_stats(self):
-        print(f"\n{self.title}")
-        print("-" * len(self.title))
-        for key, value in self.stats.items():
-            print(f"{key:<15}: {value:.4f}")
-        print("-" * len(self.title))
+        lines = [self.title, "-" * len(self.title)]
+        lines += [f"{key:<15}: {value:.4f}" for key, value in self.stats.items()]
+        lines.append("-" * len(self.title))
+        logger.info("%s", "\n".join(lines))
 
     def forward(self, x):
         self._compute_stats(x)

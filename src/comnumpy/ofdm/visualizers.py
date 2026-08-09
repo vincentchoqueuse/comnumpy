@@ -28,6 +28,8 @@ class FFTMonitor(Processor):
     reduction: Optional[Literal["mean"]] = "mean"
     title: str = field(default="IFFT_Monitor", kw_only=True)
     name: str = field(default="Ifft_monitor", kw_only=True)
+    # internal state (declared for slots, D40a)
+    ax_: object = field(init=False, repr=False, default_factory=lambda: None)
 
     def get_reduction(self, X: np.ndarray) -> Union[np.ndarray, float]:
         # Block layout (..., T, F): average over the block axis T
@@ -44,13 +46,14 @@ class FFTMonitor(Processor):
         N_sc = x.shape[-1]
         subcarrier_indices = np.arange(-N_sc // 2, N_sc // 2)
 
-        plt.figure(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(8, 6))
 
         if self.reduction is None:
             for row in range(values_to_plot.shape[-2]):
-                plt.stem(subcarrier_indices, values_to_plot[row, :])
+                ax.stem(subcarrier_indices, values_to_plot[row, :])
         else:
-            plt.stem(subcarrier_indices, values_to_plot)
+            ax.stem(subcarrier_indices, values_to_plot)
 
-        plt.title(self.title)
+        ax.set_title(self.title)
+        self.ax_ = ax
         return x

@@ -25,7 +25,7 @@ import dataclasses
 import importlib
 import json
 import pathlib
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -73,7 +73,7 @@ def _registry() -> dict[str, type]:
     return registry
 
 
-def _encode_value(value, arrays: dict, key: str):
+def _encode_value(value: object, arrays: dict[str, np.ndarray], key: str) -> object:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, (np.bool_, np.integer, np.floating)):
@@ -91,7 +91,7 @@ def _encode_value(value, arrays: dict, key: str):
         f"supported (callables are a documented frontier of decision D31)")
 
 
-def _encode_block(module, arrays: dict, key: str) -> dict:
+def _encode_block(module: object, arrays: dict[str, np.ndarray], key: str) -> dict[str, Any]:
     if not dataclasses.is_dataclass(module):
         raise TypeError(
             f"block {key!r} ({type(module).__name__}) is not a dataclass and "
@@ -110,14 +110,15 @@ def _encode_block(module, arrays: dict, key: str) -> dict:
     return {"type": type(module).__name__, "params": params}
 
 
-def _is_trivially_equal(value, default):
+def _is_trivially_equal(value: object, default: object) -> bool:
     try:
         return bool(value == default) and type(value) is type(default)
     except Exception:
         return False
 
 
-def to_json(chain: Sequential, path=None, npz_path=None, indent: int = 2) -> str:
+def to_json(chain: Sequential, path: str | pathlib.Path | None = None,
+            npz_path: str | pathlib.Path | None = None, indent: int = 2) -> str:
     """Serialize a Sequential chain to JSON (+ optional array sidecar).
 
     Parameters
@@ -153,7 +154,7 @@ def to_json(chain: Sequential, path=None, npz_path=None, indent: int = 2) -> str
             raise ValueError(
                 f"the chain contains array parameters ({sorted(arrays)}); "
                 f"pass npz_path= to store them in a companion .npz file")
-        np.savez(npz_path, **arrays)
+        np.savez(npz_path, **arrays)  # pyright: ignore[reportArgumentType, reportCallIssue]
         document["arrays"] = pathlib.Path(npz_path).name
 
     text = json.dumps(document, indent=indent)
@@ -162,7 +163,7 @@ def to_json(chain: Sequential, path=None, npz_path=None, indent: int = 2) -> str
     return text
 
 
-def _decode_value(value, arrays):
+def _decode_value(value: object, arrays: Any) -> object:
     if isinstance(value, dict):
         if "__ndarray__" in value:
             if arrays is None:
@@ -178,7 +179,7 @@ def _decode_value(value, arrays):
     return value
 
 
-def _instantiate(entry: dict, arrays):
+def _instantiate(entry: dict[str, Any], arrays: Any) -> Processor:
     registry = _registry()
     type_name = entry["type"]
     if type_name not in registry:
@@ -190,7 +191,8 @@ def _instantiate(entry: dict, arrays):
     return registry[type_name](**params)
 
 
-def from_json(source, npz_path: Optional[str] = None) -> Sequential:
+def from_json(source: str | pathlib.Path,
+              npz_path: Optional[str | pathlib.Path] = None) -> Sequential:
     """Rebuild a Sequential chain from :func:`to_json` output.
 
     Parameters
@@ -200,10 +202,11 @@ def from_json(source, npz_path: Optional[str] = None) -> Sequential:
     npz_path : str or Path, optional
         Companion array file, required when the document references one.
     """
-    text = source
-    candidate = pathlib.Path(source) if isinstance(source, (str, pathlib.Path)) else None
-    if candidate is not None and str(source).lstrip()[:1] != "{" and candidate.is_file():
-        text = candidate.read_text(encoding="utf-8")
+    text = str(source)
+    if text.lstrip()[:1] != "{":
+        candidate = pathlib.Path(source)
+        if candidate.is_file():
+            text = candidate.read_text(encoding="utf-8")
     document = json.loads(text)
 
     if document.get("comnumpy") != FORMAT_VERSION:

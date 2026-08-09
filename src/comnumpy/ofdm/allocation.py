@@ -14,14 +14,15 @@ Standard allocations come from a registry-backed catalog::
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 
 __all__ = [
-    "CarrierType", "CarrierAllocation",
+    "CarrierType", "CarrierAllocation", "CARRIER_STYLE",
     "band_allocation", "scattered_allocation",
     "get_allocation", "register_allocation", "available_allocations",
 ]
@@ -34,11 +35,14 @@ class CarrierType(IntEnum):
     PILOT = 2
 
 
-# single source for the spectral map glyphs (decision D27a, ASCII part)
-CARRIER_GLYPH = {
-    CarrierType.NULL: ".",
-    CarrierType.DATA: "#",
-    CarrierType.PILOT: "P",
+# Single frozen source for color, glyph, hatch and label (decision D27a):
+# the matplotlib figure and the ASCII spectral map read the same row, so
+# the two views cannot diverge. Colors from the Okabe-Ito palette; the
+# hatch carries the redundancy required by D27c (readable without color).
+CARRIER_STYLE: dict[CarrierType, dict[str, str]] = {
+    CarrierType.NULL:  {"color": "#BBBBBB", "glyph": ".", "hatch": "",   "label": "null"},
+    CarrierType.DATA:  {"color": "#0072B2", "glyph": "#", "hatch": "",   "label": "data"},
+    CarrierType.PILOT: {"color": "#D55E00", "glyph": "P", "hatch": "//", "label": "pilot"},
 }
 
 
@@ -143,7 +147,7 @@ class CarrierAllocation:
 
     # -- rendering (decision D21b) --------------------------------------
     def _row_to_glyphs(self, row: np.ndarray) -> str:
-        return "".join(CARRIER_GLYPH[CarrierType(v)] for v in row)
+        return "".join(CARRIER_STYLE[CarrierType(v)]["glyph"] for v in row)
 
     def _aggregate_row(self, row: np.ndarray, width: int) -> str:
         """Full-band view for large N_fft: PILOT > DATA > NULL per bucket."""
@@ -152,11 +156,11 @@ class CarrierAllocation:
         for a, b in zip(edges[:-1], edges[1:], strict=True):
             bucket = row[a:b]
             if np.any(bucket == CarrierType.PILOT):
-                glyphs.append(CARRIER_GLYPH[CarrierType.PILOT])
+                glyphs.append(CARRIER_STYLE[CarrierType.PILOT]["glyph"])
             elif np.any(bucket == CarrierType.DATA):
-                glyphs.append(CARRIER_GLYPH[CarrierType.DATA])
+                glyphs.append(CARRIER_STYLE[CarrierType.DATA]["glyph"])
             else:
-                glyphs.append(CARRIER_GLYPH[CarrierType.NULL])
+                glyphs.append(CARRIER_STYLE[CarrierType.NULL]["glyph"])
         return "".join(glyphs)
 
     def __repr__(self) -> str:
@@ -198,17 +202,34 @@ class CarrierAllocation:
         lines.append(stats)
         return "\n".join(lines)
 
-    def plot(self, ax=None):
-        """Plot the allocation map; returns the axis (decision D25)."""
+    def plot(self, ax: Any = None) -> Any:
+        """Plot the allocation map; returns the axis (decision D25).
+
+        Colors, hatches and legend labels come from the frozen semantic
+        table :data:`CARRIER_STYLE` (decision D27a) -- the same source
+        as the ASCII spectral map of ``__repr__``, so the two views
+        cannot diverge.
+        """
         import matplotlib.pyplot as plt  # local import (D36)
+        from matplotlib.patches import Patch, Rectangle
         if ax is None:
             _, ax = plt.subplots()
-        ax.imshow(self.carrier_type, aspect="auto", interpolation="nearest",
-                  extent=(float(self.k[0]) - 0.5, float(self.k[-1]) + 0.5,
-                          self.period - 0.5, -0.5))
+        for row in range(self.period):
+            for j, k in enumerate(self.k):
+                ctype = CarrierType(self.carrier_type[row, j])
+                style = CARRIER_STYLE[ctype]
+                ax.add_patch(Rectangle(
+                    (float(k) - 0.5, row - 0.5), 1.0, 1.0,
+                    facecolor=style["color"], hatch=style["hatch"],
+                    edgecolor="white", linewidth=0.2))
+        ax.set_xlim(float(self.k[0]) - 0.5, float(self.k[-1]) + 0.5)
+        ax.set_ylim(self.period - 0.5, -0.5)
         ax.set_xlabel("subcarrier index k (physical order)")
         ax.set_ylabel("OFDM symbol in period")
         ax.set_title(f"{self.standard} carrier allocation")
+        ax.legend(handles=[
+            Patch(facecolor=s["color"], hatch=s["hatch"], label=s["label"])
+            for s in CARRIER_STYLE.values()], loc="upper right")
         return ax
 
 
@@ -216,7 +237,7 @@ class CarrierAllocation:
 # constructors (decisions D15/D20)
 # ---------------------------------------------------------------------------
 
-def _check_expect(alloc: CarrierAllocation, expect: Optional[dict]):
+def _check_expect(alloc: CarrierAllocation, expect: Optional[dict[str, int]]) -> CarrierAllocation:
     """Verify the entry against the numbers copied from the standard (D20)."""
     if expect is None:
         return alloc
@@ -232,7 +253,10 @@ def _check_expect(alloc: CarrierAllocation, expect: Optional[dict]):
     return alloc
 
 
-def band_allocation(N_fft, k_used, k_pilots=(), n_dc=0, expect=None, **meta) -> CarrierAllocation:
+def band_allocation(N_fft: int, k_used: tuple[int, int],
+                    k_pilots: Sequence[int] = (), n_dc: int = 0,
+                    expect: Optional[dict[str, int]] = None,
+                    **meta: Any) -> CarrierAllocation:
     r"""Build a band allocation from signed subcarrier indices.
 
     Parameters
@@ -276,8 +300,10 @@ def band_allocation(N_fft, k_used, k_pilots=(), n_dc=0, expect=None, **meta) -> 
     return _check_expect(CarrierAllocation(mask, **meta), expect)
 
 
-def scattered_allocation(N_fft, k_used, period, rule: Callable[[int, int], bool],
-                         expect=None, **meta) -> CarrierAllocation:
+def scattered_allocation(N_fft: int, k_used: tuple[int, int], period: int,
+                         rule: Callable[[int, int], bool],
+                         expect: Optional[dict[str, int]] = None,
+                         **meta: Any) -> CarrierAllocation:
     r"""Build a scattered-pilot allocation from a positional rule.
 
     Parameters
@@ -333,7 +359,7 @@ def register_allocation(name: str):
     return decorator
 
 
-def get_allocation(standard: str, **kwargs) -> CarrierAllocation:
+def get_allocation(standard: str, **kwargs: Any) -> CarrierAllocation:
     """Return a catalog allocation by standard name.
 
     Examples
