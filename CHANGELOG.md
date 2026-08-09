@@ -302,6 +302,23 @@ code actually does.
 
 ### Fixed
 
+- Coverage was measuring the wrong thing. `[tool.coverage.run] source`
+  named the *package*, so coverage imported `comnumpy` to locate it and
+  everything `__init__` pulls in was already loaded when the tracer
+  started -- reported as 0%. Per-file numbers therefore depended on test
+  collection order (`optical/wdm.py`: 98% alone, 0% in the suite) and
+  the total was 16 points low: 74.76% against a true **90.59%**.
+  `source` now names the `src/comnumpy` path, and the D39 ratchet moves
+  from 70 to 90.
+- `ofdm.processors.CyclicPrefixer` crashed at `N_cp = 0`, a length
+  `__post_init__` explicitly accepts: the mask was built with
+  `[-N_cp:]`, and `[-0:]` is the whole block. Both prefix blocks also
+  accept a numpy integer now, and their rejection message no longer
+  says "positive" while allowing zero.
+- `docs/examples/optical_fiber_nonlinearity.rst` included
+  `one_shot_nli.py`; the file is `one_shot_NLI.py`. Sphinx warns rather
+  than fails on a missing `literalinclude`, so the page rendered empty
+  code blocks on every case-sensitive filesystem.
 - `README.md` quick example now runs as written (the previous example called a
   non-existent `SymbolMapper(M=16)` signature and unpacked two return values
   from `Sequential`, which returns one).
