@@ -4,33 +4,83 @@ import numpy.linalg as LA
 
 
 def get_alphabet(modulation, order, type="gray", norm=True):
-    """
-    Retrieve the symbol alphabet for a given modulation scheme and order.
+    r"""
+    Return the symbol alphabet of a memoryless modulation of order :math:`M`.
 
-    This function loads the modulation alphabet from a predefined CSV file based on the specified modulation type, order,
-    and symbol mapping (e.g., Gray coding).
-    Optionally, it can normalize the alphabet to have unit average power.
+    Signal Model
+    ------------
+    A memoryless modulation is described by its alphabet
+    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`: the mapper turns the
+    symbol index :math:`s[n] \in \{0, \ldots, M-1\}` into the transmitted
+    sample
+
+    .. math::
+
+        x[n] = a_{s[n]}
+
+    The raw constellations are tabulated on the usual grids -- odd
+    integers :math:`\pm 1, \pm 3, \ldots` for PAM and QAM, the unit
+    circle for PSK -- and the row order of the file *is* the bit-to-symbol
+    mapping (Gray or natural binary).
+
+    With ``norm=True`` (the default) the alphabet is rescaled to **unit
+    average symbol energy**, symbols being assumed equiprobable:
+
+    .. math::
+
+        a_m \leftarrow \frac{a_m}{\sqrt{E_s}}, \qquad
+        E_s = \frac{1}{M}\sum_{m=0}^{M-1} \left|a_m\right|^2
+
+    so that :math:`\mathbb{E}\left[|x[n]|^2\right] = 1`. This is the
+    convention the rest of the library assumes: with :math:`E_s = 1` an
+    absolute noise variance :math:`\sigma^2` *is* :math:`N_0`, and the
+    MMSE regularizer :math:`\sigma^2 \mathbf{I}` of
+    :func:`mmse_estimator` needs no rescaling. With ``norm=False`` the
+    raw grid is returned instead (:math:`E_s = 10` for 16-QAM, for
+    instance) and those expressions must be rescaled by :math:`E_s`.
 
     Parameters
     ----------
     modulation : str
-        The type of modulation (e.g., ``"QAM"``, ``"PSK"``).
+        Modulation family: ``"PAM"``, ``"PSK"`` or ``"QAM"``.
     order : int
-        The order of modulation (e.g., 4, 16, 64 for QAM).
+        Modulation order :math:`M`, i.e. :math:`M = 2^k` symbols carrying
+        :math:`k = \log_2(M)` bits each. Tabulated values are 4, 16, 32,
+        64, 128 and 256.
     type : str, optional
-        The type of symbol mapping to be used (e.g., ``"gray"``). Default is ``"gray"``.
+        Bit-to-symbol mapping: ``"gray"`` or ``"bin"`` (natural binary).
+        Default is ``"gray"``.
     norm : bool, optional
-        If True, normalizes the alphabet to unit average power. Default is True.
+        If True, normalize the alphabet to unit average symbol energy
+        :math:`E_s = 1`. Default is True.
 
     Returns
     -------
     np.ndarray
-        The complex symbol alphabet for the specified modulation scheme.
+        Complex alphabet :math:`\mathcal{A}` of length :math:`M`, indexed
+        by the symbol index :math:`s`.
 
     Notes
     -----
-    The function reads from CSV files located in a ``data`` subdirectory relative to the module's directory.
-    These files should be named following the pattern ``<modulation>_<order>_<type>.csv`` and contain symbol mappings as complex numbers.
+    The tables are CSV files of the ``data`` subdirectory of this module,
+    named ``<modulation>_<order>_<type>.csv``, with one row per symbol
+    (index, real part, imaginary part) sorted by increasing index.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 3 (memoryless modulation methods and Gray
+    mapping).
+
+    Examples
+    --------
+    >>> alphabet = get_alphabet("QAM", 4)
+    >>> print(np.round(alphabet, 4))
+    [-0.7071+0.7071j -0.7071-0.7071j  0.7071+0.7071j  0.7071-0.7071j]
+    >>> print(round(float(np.mean(np.abs(alphabet)**2)), 6))
+    1.0
+    >>> print(np.round(get_alphabet("QAM", 16, norm=False)[:4], 1))
+    [-3.+3.j -3.+1.j -3.-3.j -3.-1.j]
     """
     # extract alphabet
     pathname = path.dirname(path.abspath(__file__))
@@ -45,13 +95,20 @@ def get_alphabet(modulation, order, type="gray", norm=True):
 
 
 def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **kwargs):
-    """
-    Plot a constellation diagram of the given symbol alphabet.
+    r"""
+    Plot the constellation diagram of a symbol alphabet.
+
+    Each symbol :math:`a_m` of the alphabet
+    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}` is drawn as a point of
+    the complex plane, its real part on the horizontal axis and its
+    imaginary part on the vertical one. This is a plotting helper, not a
+    processing block: it transforms no signal.
 
     Parameters
     ----------
     alphabet : np.ndarray
-        Complex-valued symbol alphabet to plot.
+        Complex-valued symbol alphabet :math:`\mathcal{A}` to plot,
+        typically returned by :func:`get_alphabet`.
     ax : matplotlib.axes.Axes or None, optional
         Axis to draw on. If None, a new figure and axis are created.
     label : str, optional
@@ -65,6 +122,14 @@ def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **
     -------
     matplotlib.axes.Axes
         The axis containing the plot (decision D25).
+
+    Examples
+    --------
+    >>> import matplotlib
+    >>> matplotlib.use("Agg")
+    >>> ax = plot_alphabet(get_alphabet("PSK", 4))
+    >>> ax.get_xlabel()
+    'real part'
     """
     import matplotlib.pyplot as plt  # local import (D36)
     if ax is None:
@@ -77,28 +142,55 @@ def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **
 
 
 def sym_2_bin(sym, width=4):
-    """
-    Convert an array of symbols to a binary representation.
+    r"""
+    Expand symbol indices into their binary representation, MSB first.
 
-    This function takes an array of symbols (as integers) and converts each symbol into its binary representation.
-    The binary digits are then concatenated into a single string which is converted into an array of integers (0s and 1s).
+    Signal Model
+    ------------
+    Each symbol index :math:`s[n] \in \{0, \ldots, M-1\}` is written in
+    base 2 on :math:`k` bits (:math:`k =` ``width``, with
+    :math:`M \leq 2^k`):
+
+    .. math::
+
+        s[n] = \sum_{i=0}^{k-1} b[nk + i] \, 2^{\,k-1-i},
+        \qquad b[\cdot] \in \{0, 1\}
+
+    The bits of a symbol are emitted most-significant first and the
+    symbols are concatenated, so a sequence of :math:`N` indices produces
+    :math:`kN` bits. This is the same ordering as the bit table of
+    :class:`~comnumpy.core.mappers.SymbolDemapper`, which is what makes
+    the BER of :mod:`comnumpy.core.metrics` comparable across blocks.
+
+    Axes: *element-wise* -- each index is expanded independently; the
+    input is read as a flat sequence and the output is 1-D of length
+    :math:`kN`.
 
     Parameters
     ----------
     sym : array-like
-        Array of symbols to be converted. Each symbol should be an integer.
+        Sequence of :math:`N` integer symbol indices :math:`s[n]`.
     width : int, optional
-        The fixed width in bits for each symbol's binary representation. Default is 4.
+        Number of bits per symbol :math:`k`. Default is 4.
 
     Returns
     -------
     np.ndarray
-        An array of binary digits (0s and 1s) representing the input symbol array.
+        1-D integer array of :math:`kN` bits (0s and 1s).
 
     Notes
     -----
-    The function ensures that each symbol is represented by exactly ``width`` bits.
-    If a symbol's binary representation is shorter than ``width``, it is left-padded with zeros.
+    Each symbol is represented by exactly ``width`` bits: a shorter
+    binary representation is left-padded with zeros. An index larger than
+    :math:`2^k - 1` is *not* rejected -- ``numpy.binary_repr`` then emits
+    more than ``width`` bits and the output loses its block structure.
+
+    Examples
+    --------
+    >>> print(sym_2_bin([0, 5, 9], width=4))
+    [0 0 0 0 0 1 0 1 1 0 0 1]
+    >>> print(sym_2_bin([0, 3], width=2))
+    [0 0 1 1]
     """
 
     data = []
@@ -111,22 +203,63 @@ def sym_2_bin(sym, width=4):
 
 
 def hard_projector(z, alphabet):
-    """
-    Project input symbols onto the nearest constellation point (hard decision).
+    r"""
+    Project symbols onto the nearest constellation point (hard decision).
+
+    Signal Model
+    ------------
+    Given an equalized observation :math:`z[n]` and the alphabet
+    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`, the decision is the
+    minimum-distance (nearest-neighbour) rule
+
+    .. math::
+
+        \hat{s}[n] = \arg\min_{m \in \{0, \ldots, M-1\}}
+        \left| z[n] - a_m \right|^2,
+        \qquad \hat{x}[n] = a_{\hat{s}[n]}
+
+    For the AWGN model :math:`z[n] = x[n] + b[n]` with
+    :math:`b[n] \sim \mathcal{CN}(0, \sigma^2)` and equiprobable symbols,
+    this rule is the maximum-likelihood (hence MAP) detector: the
+    likelihood decreases monotonically with the Euclidean distance, so
+    :math:`\sigma^2` does not enter the decision.
+
+    Axes: *element-wise* -- the search is carried out over the alphabet
+    on an axis appended internally, so both outputs keep the shape of
+    ``z``. Ties are broken by ``numpy.argmin`` (smallest index wins).
 
     Parameters
     ----------
     z : np.ndarray
-        Input symbols to be projected.
+        Observation :math:`z[n]`, of any shape.
     alphabet : np.ndarray
-        1-D array of constellation symbols.
+        1-D constellation alphabet :math:`\mathcal{A}` of length
+        :math:`M`.
 
     Returns
     -------
     s : np.ndarray
-        Integer indices of the nearest constellation points.
+        Integer indices :math:`\hat{s}[n]` of the nearest constellation
+        points, with the shape of ``z``.
     x : np.ndarray
-        Nearest constellation symbols.
+        Nearest constellation symbols :math:`\hat{x}[n] = a_{\hat{s}[n]}`,
+        with the shape of ``z``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 4 (optimum receivers for the AWGN
+    channel).
+
+    Examples
+    --------
+    >>> alphabet = get_alphabet("QAM", 4)
+    >>> z = np.array([0.9+1.1j, -0.2-0.8j])
+    >>> s, x = hard_projector(z, alphabet)
+    >>> print(s)
+    [2 1]
+    >>> print(np.round(x, 4))
+    [ 0.7071+0.7071j -0.7071-0.7071j]
     """
     error = np.abs(z[..., np.newaxis] - alphabet)**2
     index = np.argmin(error, axis=-1)
@@ -137,27 +270,83 @@ def hard_projector(z, alphabet):
 
 def soft_projector(z: np.array, alphabet: np.array, sigma2: float, kernel: bool = None):
     r"""
-    Compute the soft (MMSE) estimate of a symbol given a Gaussian noise model.
+    Compute the soft (MMSE) symbol estimate under a Gaussian noise model.
 
-    The estimator computes a weighted mean of the constellation symbols,
-    where the weights are proportional to the Gaussian likelihood.
+    Signal Model
+    ------------
+    For the scalar observation :math:`z[n] = x[n] + b[n]` with
+    :math:`b[n] \sim \mathcal{CN}(0, \sigma^2)` and equiprobable symbols
+    drawn from :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`, the MMSE
+    estimate is the posterior mean
+
+    .. math::
+
+        \hat{x}[n] = \mathbb{E}\left[x[n] \mid z[n]\right] =
+        \frac{\displaystyle\sum_{m=0}^{M-1} a_m \,
+        e^{-|z[n]-a_m|^2/\sigma^2}}
+        {\displaystyle\sum_{m=0}^{M-1} e^{-|z[n]-a_m|^2/\sigma^2}}
+
+    The exponent carries :math:`\sigma^2` and not :math:`2\sigma^2`
+    because the noise is circularly symmetric complex: its density is
+    :math:`(\pi\sigma^2)^{-1} e^{-|b|^2/\sigma^2}`, :math:`\sigma^2`
+    being the *total* variance of the two quadratures.
+
+    Passing a ``kernel`` :math:`g_{m}[n]` replaces :math:`a_m` in the
+    numerator, which turns the same weights into any posterior average
+
+    .. math::
+
+        \frac{\sum_m g_{m}[n] \, e^{-|z[n]-a_m|^2/\sigma^2}}
+             {\sum_m e^{-|z[n]-a_m|^2/\sigma^2}}
+        = \mathbb{E}\left[g \mid z[n]\right]
+
+    The AMP detectors of :mod:`comnumpy.mimo.detectors` use
+    :math:`g_{m}[n] = |a_m - \hat{x}[n]|^2` to obtain the posterior
+    variance that drives their state evolution.
+
+    Axes: *element-wise* -- each observation is processed independently;
+    the input is flattened, so the output is 1-D of size ``z.size``.
 
     Parameters
     ----------
     z : np.ndarray
-        Received symbols (1-D array).
+        Observation :math:`z[n]`, flattened internally.
     alphabet : np.ndarray
-        1-D array of constellation symbols.
+        1-D constellation alphabet :math:`\mathcal{A}` of length
+        :math:`M`.
     sigma2 : float
-        Noise variance.
+        Noise variance :math:`\sigma^2` (total, both quadratures). Only
+        its real part is used. Large values flatten the weights towards
+        the alphabet mean, small values recover the hard decision of
+        :func:`hard_projector`.
     kernel : np.ndarray or None, optional
-        Kernel values used in the numerator instead of ``alphabet``.
-        If None, uses ``alphabet``.
+        Values :math:`g_{m}[n]` averaged in place of :math:`a_m`, of
+        shape ``(z.size, M)`` (or broadcastable to it). If None, the
+        alphabet itself is used and the posterior mean is returned.
 
     Returns
     -------
     np.ndarray
-        Soft estimates for each input symbol.
+        Soft estimates :math:`\hat{x}[n]`, 1-D of size ``z.size``.
+
+    References
+    ----------
+    * S. M. Kay, *Fundamentals of Statistical Signal Processing:
+      Estimation Theory*, Prentice Hall, 1993 (the MMSE estimator is the
+      posterior mean).
+    * C. Jeon, R. Ghods, A. Maleki and C. Studer, "Optimality of large
+      MIMO detection via approximate message passing," Proc. IEEE Int.
+      Symp. Information Theory (ISIT), 2015, pp. 1227-1231 (the ``F``
+      function and its variance kernel).
+
+    Examples
+    --------
+    >>> alphabet = get_alphabet("QAM", 4)
+    >>> z = np.array([0.9+1.1j, -0.2-0.8j])
+    >>> print(np.round(soft_projector(z, alphabet, 0.1), 4))
+    [ 0.7071+0.7071j -0.7022-0.7071j]
+    >>> print(np.round(soft_projector(z, alphabet, 100.0), 4))
+    [ 0.009+0.011j -0.002-0.008j]
     """
     alphabet = alphabet.reshape(1, -1)
     z = z.reshape(-1, 1)
@@ -176,18 +365,36 @@ def esn0_to_snr_dB(esn0_dB, oversampling=1):
     r"""
     Convert a symbol-energy-to-noise ratio :math:`E_s/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
 
-    At one sample per symbol the two quantities coincide; with an
-    oversampling factor :math:`L` the noise bandwidth is :math:`L` times
-    larger, hence
+    Signal Model
+    ------------
+    Three quantities must not be confused. :math:`E_s` is the energy of
+    one constellation symbol, :math:`E_b` the energy of one information
+    bit and :math:`N_0` the noise power spectral density; the SNR of
+    :class:`~comnumpy.core.channels.AWGN` is a *per-sample* power ratio
+
+    .. math::
+
+        \mathrm{SNR} = \frac{P_x}{\sigma^2}, \qquad
+        P_x = \mathbb{E}\left[|x[n]|^2\right]
+
+    At one sample per symbol :math:`P_x = E_s` and :math:`\sigma^2 = N_0`,
+    so the two quantities coincide. Oversampling by :math:`L` samples per
+    symbol multiplies the noise bandwidth -- hence the per-sample noise
+    variance :math:`\sigma^2 = L N_0` -- while an energy-preserving pulse
+    shaping leaves the measured signal power at :math:`E_s`, so
 
     .. math::
 
         \mathrm{SNR_{dB}} = E_s/N_0\big|_{dB} - 10\log_{10}(L)
 
+    Axes: *element-wise* -- a pure scalar conversion, applied pointwise
+    to an array of operating points when sweeping.
+
     Parameters
     ----------
-    esn0_dB : float
-        Symbol energy to noise spectral density ratio, in dB.
+    esn0_dB : float or np.ndarray
+        Symbol-energy-to-noise-spectral-density ratio
+        :math:`E_s/N_0\big|_{dB}`, in dB.
     oversampling : int, optional
         Number of samples per symbol :math:`L`. Default is 1.
 
@@ -195,6 +402,16 @@ def esn0_to_snr_dB(esn0_dB, oversampling=1):
     -------
     float
         The SNR in dB, relative to the measured signal power.
+
+    See Also
+    --------
+    ebn0_to_snr_dB : same conversion from the energy per information bit.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 4 (energy-per-symbol and
+    energy-per-bit normalizations).
 
     Examples
     --------
@@ -210,23 +427,48 @@ def ebn0_to_snr_dB(ebn0_dB, bits_per_symbol, code_rate=1.0, oversampling=1):
     r"""
     Convert a bit-energy-to-noise ratio :math:`E_b/N_0` (dB) into the SNR (dB) expected by ``AWGN``.
 
-    The conversion requires chain-level knowledge (bits per symbol
-    :math:`k`, code rate :math:`R`, oversampling :math:`L`), which is why
-    it lives here and not inside the ``AWGN`` block (decision D41):
+    Signal Model
+    ------------
+    One constellation symbol carries :math:`k = \log_2(M)` channel bits,
+    of which :math:`kR` are information bits when a code of rate
+    :math:`R` is used. The energy budget of a symbol is therefore shared
+    by :math:`kR` information bits:
 
     .. math::
 
-        \mathrm{SNR_{dB}} = E_b/N_0\big|_{dB} + 10\log_{10}(k R) - 10\log_{10}(L)
+        E_s = k R \, E_b
+
+    Combined with the per-sample SNR of
+    :class:`~comnumpy.core.channels.AWGN` (see
+    :func:`esn0_to_snr_dB`, where :math:`\sigma^2 = L N_0` for
+    :math:`L` samples per symbol), this gives
+
+    .. math::
+
+        \mathrm{SNR_{dB}} = E_b/N_0\big|_{dB} + 10\log_{10}(k R)
+        - 10\log_{10}(L)
+
+    The conversion requires chain-level knowledge (:math:`k`, :math:`R`,
+    :math:`L`), which is why it lives here and not inside the ``AWGN``
+    block (decision D41). Comparing modulations at equal
+    :math:`E_b/N_0` is the fair comparison -- at equal :math:`E_s/N_0`,
+    a dense constellation is unduly favoured because it spends the same
+    energy on more bits.
+
+    Axes: *element-wise* -- a pure scalar conversion, applied pointwise
+    to an array of operating points when sweeping.
 
     Parameters
     ----------
-    ebn0_dB : float
-        Bit energy to noise spectral density ratio, in dB.
+    ebn0_dB : float or np.ndarray
+        Information-bit-energy-to-noise-spectral-density ratio
+        :math:`E_b/N_0\big|_{dB}`, in dB.
     bits_per_symbol : int
-        Number of bits carried by one constellation symbol :math:`k`
-        (e.g. 4 for 16-QAM).
+        Number of bits carried by one constellation symbol
+        :math:`k = \log_2(M)` (e.g. 4 for 16-QAM).
     code_rate : float, optional
-        FEC code rate :math:`R \in (0, 1]`. Default is 1.0 (uncoded).
+        FEC code rate :math:`R \in (0, 1]`. Default is 1.0 (uncoded,
+        :math:`E_s = k E_b`).
     oversampling : int, optional
         Number of samples per symbol :math:`L`. Default is 1.
 
@@ -234,6 +476,16 @@ def ebn0_to_snr_dB(ebn0_dB, bits_per_symbol, code_rate=1.0, oversampling=1):
     -------
     float
         The SNR in dB, relative to the measured signal power.
+
+    See Also
+    --------
+    esn0_to_snr_dB : same conversion from the energy per symbol.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 4 (energy-per-symbol and
+    energy-per-bit normalizations).
 
     Examples
     --------
@@ -249,21 +501,69 @@ def zf_estimator(Y, H):
     r"""
     Perform Zero Forcing (ZF) linear equalization using the channel matrix pseudoinverse.
 
-    .. math ::
+    Signal Model
+    ------------
+    For the flat MIMO observation model
+
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],
+        \qquad \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
+
+    with :math:`\mathbf{H}` of size :math:`N_r \times N_t`, the ZF
+    equalizer applies the Moore-Penrose pseudoinverse:
+
+    .. math::
 
         \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
+        = \left(\mathbf{H}^H\mathbf{H}\right)^{-1}\mathbf{H}^H
+        \mathbf{y}[n]
+        = \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]
+
+    the closed form on the right holding when :math:`\mathbf{H}` has full
+    column rank (:math:`N_r \geq N_t`). Interference between streams is
+    cancelled exactly, at the price of noise enhancement: the residual
+    noise has covariance
+    :math:`\sigma^2\left(\mathbf{H}^H\mathbf{H}\right)^{-1}`, which blows
+    up when :math:`\mathbf{H}` is ill-conditioned. :func:`mmse_estimator`
+    trades a residual bias for a bounded noise gain.
+
+    Axes: *declared axis* -- expects the MIMO layout ``(..., ant, N)``:
+    :math:`N_r` receive antennas on axis -2 of ``Y``, time on axis -1,
+    with ``H`` a 2-D ``(N_r, N_t)`` matrix. The output carries
+    :math:`N_t` streams on axis -2.
 
     Parameters
     ----------
     Y : np.ndarray
-        Received signal matrix.
+        Received samples :math:`\mathbf{y}[n]` stacked column-wise, of
+        shape ``(..., N_r, N)``.
     H : np.ndarray
-        Channel matrix.
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.
 
     Returns
     -------
     np.ndarray
-        Estimated transmitted signal.
+        Equalized signal :math:`\mathbf{z}[n]` of shape
+        ``(..., N_t, N)``, still to be mapped onto the alphabet by
+        :func:`hard_projector`.
+
+    References
+    ----------
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+      McGraw-Hill, 2008, Chapter 9 (linear equalization).
+
+    Examples
+    --------
+    >>> H = np.array([[1.0, 0.5], [0.0, 2.0]])
+    >>> X = np.array([[1.0, -1.0], [1.0, 1.0]])
+    >>> Y = np.matmul(H, X)
+    >>> print(np.round(zf_estimator(Y, H), 4))
+    [[ 1. -1.]
+     [ 1.  1.]]
     """
     A = LA.pinv(H)
     Z_est = np.matmul(A, Y)
@@ -274,23 +574,77 @@ def mmse_estimator(Y, H, sigma2):
     r"""
     Perform Minimum Mean Square Error (MMSE) linear equalization.
 
-    .. math ::
+    Signal Model
+    ------------
+    For the flat MIMO observation model
 
-        \mathbf{z}[n] = \left(\mathbf{H}^H\mathbf{H}+\sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],
+        \qquad \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
+
+    the linear estimator minimizing
+    :math:`\mathbb{E}\left[\|\mathbf{z}[n]-\mathbf{x}[n]\|^2\right]` is
+
+    .. math::
+
+        \mathbf{z}[n] = \left(\mathbf{H}^H\mathbf{H}
+        + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}
+        \mathbf{H}^H\mathbf{y}[n]
+
+    The regularization term is the noise-to-signal ratio
+    :math:`(\sigma^2/E_s)\,\mathbf{I}_{N_t}`; it reduces to
+    :math:`\sigma^2 \mathbf{I}_{N_t}`, as implemented, because the
+    library normalizes the constellation to unit symbol energy
+    :math:`E_s = 1` (see :func:`get_alphabet`) and the streams are
+    assumed uncorrelated,
+    :math:`\mathbb{E}[\mathbf{x}[n]\mathbf{x}^H[n]] = \mathbf{I}_{N_t}`.
+    Two limits are worth remembering: :math:`\sigma^2 \to 0` gives back
+    the zero-forcing solution of :func:`zf_estimator`, while a large
+    :math:`\sigma^2` shrinks the estimate towards zero rather than
+    amplifying the noise. The MMSE output is biased, which is why it is
+    followed by a decision on the alphabet, not used as an unbiased
+    estimate.
+
+    Axes: *declared axis* -- expects the MIMO layout ``(..., ant, N)``:
+    :math:`N_r` receive antennas on axis -2 of ``Y``, time on axis -1,
+    with ``H`` a 2-D ``(N_r, N_t)`` matrix. The output carries
+    :math:`N_t` streams on axis -2.
 
     Parameters
     ----------
     Y : np.ndarray
-        Received signal matrix.
+        Received samples :math:`\mathbf{y}[n]` stacked column-wise, of
+        shape ``(..., N_r, N)``.
     H : np.ndarray
-        Channel matrix.
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.
     sigma2 : float
-        Noise variance.
+        Noise variance :math:`\sigma^2` per receive antenna, in the same
+        power units as the unit-energy constellation.
 
     Returns
     -------
     np.ndarray
-        Estimated transmitted signal.
+        Equalized signal :math:`\mathbf{z}[n]` of shape
+        ``(..., N_t, N)``, still to be mapped onto the alphabet by
+        :func:`hard_projector`.
+
+    References
+    ----------
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+      McGraw-Hill, 2008, Chapter 9 (MMSE linear equalization).
+
+    Examples
+    --------
+    >>> H = np.array([[1.0, 0.5], [0.0, 2.0]])
+    >>> X = np.array([[1.0, -1.0], [1.0, 1.0]])
+    >>> Y = np.matmul(H, X)
+    >>> print(np.round(mmse_estimator(Y, H, 0.1), 4))
+    [[ 0.9151 -0.8931]
+     [ 0.9868  0.9647]]
     """
     _, N_t = H.shape
     H_H = np.conjugate(np.transpose(H))
