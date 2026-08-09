@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential, Recorder
+from src.comnumpy.core import Sequential
 from src.comnumpy.core.generators import SymbolGenerator
 from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from src.comnumpy.core.utils import get_alphabet
@@ -19,18 +19,17 @@ class TestAWGNChainPerformance(unittest.TestCase):
 
         # create chain
         chain = Sequential([
-            SymbolGenerator(M),
-            Recorder(name="recorder_tx"),
+            SymbolGenerator(M, name="tx"),
             SymbolMapper(alphabet),
             AWGN(snr_dB=SNR_dB),
             SymbolDemapper(alphabet),
-            ])
+            ], taps=["tx"])
 
         # run chain
         y = chain(N)
 
         # evaluate metrics
-        data_tx = chain["recorder_tx"].get_data()
+        data_tx = chain.tap("tx")
         ser = compute_ser(data_tx, y)
 
         snr_per_bit = (10**(SNR_dB/10))/np.log2(M)

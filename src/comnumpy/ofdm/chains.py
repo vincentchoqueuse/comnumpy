@@ -46,6 +46,8 @@ class OFDMTransmitter(Processor):
         an all-data mask of length ``N_carrier_data``.
     pilots : np.ndarray or list, optional, keyword-only
         Pilot values, one per pilot subcarrier of the allocation mask.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"ofdm_transmitter"``.
 
     References
     ----------
@@ -64,6 +66,7 @@ class OFDMTransmitter(Processor):
     N_cp: int
     carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
     pilots: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    name: str = field(default="ofdm_transmitter", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
     chain: Processor = field(init=False, repr=False)
 
@@ -122,6 +125,8 @@ class OFDMReceiver(Processor):
         Subcarrier allocation mask (e.g. data, pilot, null), passed to
         :class:`~comnumpy.ofdm.processors.CarrierExtractor`. Default is
         an all-data mask of length ``N_carrier_data``.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"ofdm_receiver"``.
 
     References
     ----------
@@ -140,6 +145,7 @@ class OFDMReceiver(Processor):
     N_cp: int
     h: Union[np.ndarray, list] = field(default_factory=lambda: np.array([1.0]), kw_only=True)
     carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    name: str = field(default="ofdm_receiver", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
     chain: Processor = field(init=False, repr=False)
 

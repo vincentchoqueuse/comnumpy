@@ -1,7 +1,7 @@
 
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential, Recorder
+from src.comnumpy.core import Sequential
 from src.comnumpy.core.generators import SymbolGenerator
 from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from src.comnumpy.core.utils import get_alphabet
@@ -23,17 +23,16 @@ class TestFIRChannelChain(unittest.TestCase):
 
     def _compute_equalizer_ser(self, equalizer):
         chain = Sequential([
-            SymbolGenerator(self.M),
-            Recorder(name="recorder_tx"),
+            SymbolGenerator(self.M, name="tx"),
             SymbolMapper(self.alphabet),
             FIRChannel(self.h),
             AWGN(sigma2=self.sigma2),
             equalizer,
             SymbolDemapper(self.alphabet),
-            ])
+            ], taps=["tx"])
 
         y = chain(self.N)
-        data_tx = chain["recorder_tx"].get_data()
+        data_tx = chain.tap("tx")
         return compute_ser(data_tx, y)
 
     def test_zf_one_shot(self):

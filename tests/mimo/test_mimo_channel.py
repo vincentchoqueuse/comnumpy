@@ -1,7 +1,7 @@
 
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential, Recorder
+from src.comnumpy.core import Sequential
 from src.comnumpy.core.generators import SymbolGenerator
 from src.comnumpy.core.mappers import SymbolMapper
 from src.comnumpy.core.utils import get_alphabet
@@ -26,16 +26,15 @@ class TestMIMOChannelChain(unittest.TestCase):
     def _compute_detector_ser(self, detector):
 
         chain = Sequential([
-            SymbolGenerator(self.M),
-            Recorder(name="recorder_tx"),
+            SymbolGenerator(self.M, name="tx"),
             SymbolMapper(self.alphabet),
             FlatMIMOChannel(self.H),
             AWGN(sigma2=self.sigma2),
             detector
-            ])
+            ], taps=["tx"])
 
         Y = chain((self.N_t, self.N))
-        data_tx = chain["recorder_tx"].get_data()
+        data_tx = chain.tap("tx")
         return compute_ser(data_tx, Y)
 
     def test_zf_one_shot(self):

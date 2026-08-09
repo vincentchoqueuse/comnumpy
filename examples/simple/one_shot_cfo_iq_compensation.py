@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy.core import Sequential, Recorder, Scope
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.impairments import IQImbalance, CFO
@@ -19,39 +19,42 @@ alphabet = get_alphabet(type, M)
 # generate random IQ imbalance
 iq_params = np.array([1, 0]) + 0.2*(np.random.randn(2) + 1j*np.random.randn(2))
 
-# add a recorder to use transmitted data during phase correction
-signal_recorder_tx = Recorder(name="recorder tx")
-
-chain = Sequential([
-            SymbolGenerator(M),
-            Recorder(name="data_tx"),
+# the transmitter is its own chain: the mapped symbols become a plain
+# array that the trained-based compensator receives as reference data
+tx_chain = Sequential([
+            SymbolGenerator(M, name="data_tx"),
             SymbolMapper(alphabet),
-            signal_recorder_tx,
+            ], taps=["data_tx"])
+x_tx = tx_chain(N)
+data_tx = tx_chain.tap("data_tx")
+
+rx_chain = Sequential([
             CFO(0.001),
             IQImbalance(iq_params[0], iq_params[1]),
-            AWGN(sigma2=0.005),
-            Scope(scope_type="iq", title="received signal"),
-            BlindIQCompensator(),
-            Scope(scope_type="iq", title="after GSOP"),
+            AWGN(sigma2=0.005, name="awgn"),
+            BlindIQCompensator(name="gsop"),
             BlindCFOCompensator(save_history=True, name="cfo_comp"),
-            Scope(scope_type="iq", title="after GSOP+CFO comp"),
-            TrainedBasedPhaseCompensator(target_data=signal_recorder_tx),
-            Scope(scope_type="iq", title="after GSOP + CFO comp + phase correction"),
+            TrainedBasedPhaseCompensator(target_data=x_tx, name="phase_comp"),
             SymbolDemapper(alphabet)
-            ])
+            ], taps=["awgn", "gsop", "cfo_comp", "phase_comp"])
 
 # simulate communication
-y = chain(N)
+y = rx_chain(x_tx)
 
 # compute metric
-data_tx = chain["data_tx"].get_data()
 ser_after = compute_ser(data_tx, y)
 
 # print metric and plot
 print(f"after: SER={ser_after}")
 
+plot_iq(rx_chain.tap("awgn"), title="received signal")
+plot_iq(rx_chain.tap("gsop"), title="after GSOP")
+plot_iq(rx_chain.tap("cfo_comp"), title="after GSOP+CFO comp")
+plot_iq(rx_chain.tap("phase_comp"),
+        title="after GSOP + CFO comp + phase correction")
+
 # show evolution of the angular frequency estimate
-w0_history = chain["cfo_comp"].history
+w0_history = rx_chain["cfo_comp"].history
 plt.figure()
 plt.plot(w0_history)
 plt.xlabel("number of iteration")

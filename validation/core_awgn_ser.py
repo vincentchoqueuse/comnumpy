@@ -8,7 +8,7 @@ import pathlib
 
 import numpy as np
 
-from comnumpy import (AWGN, Recorder, Sequential, SymbolDemapper,
+from comnumpy import (AWGN, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, compute_ser,
                       get_alphabet)
 from comnumpy.core.metrics import compute_metric_awgn_theo
@@ -23,8 +23,7 @@ SNR_DB_RANGE = np.arange(0, 16, 1)
 def simulate(order, seed):
     alphabet = get_alphabet("QAM", order)
     chain = Sequential([
-        SymbolGenerator(order),
-        Recorder(name="tx"),
+        SymbolGenerator(order, name="tx"),
         SymbolMapper(alphabet),
         AWGN(snr_dB=0, name="noise"),
         SymbolDemapper(alphabet),

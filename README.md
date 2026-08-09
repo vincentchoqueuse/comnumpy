@@ -20,22 +20,21 @@
 
 ```python
 from comnumpy import (Sequential, SymbolGenerator, SymbolMapper,
-                      SymbolDemapper, AWGN, Recorder, compute_ser, get_alphabet)
+                      SymbolDemapper, AWGN, compute_ser, get_alphabet)
 
-# Build a 16-QAM communication chain
+# Build a 16-QAM communication chain: the module list describes the
+# communication system, and `taps` names the signals to observe
 alphabet = get_alphabet("QAM", 16)
-recorder = Recorder()
 chain = Sequential([
-    SymbolGenerator(M=16, seed=42),
-    recorder,
+    SymbolGenerator(M=16, seed=42, name="tx"),
     SymbolMapper(alphabet),
     AWGN(snr_dB=15, seed=123),
     SymbolDemapper(alphabet),
-])
+], taps=["tx"])
 
 # Transmit 10,000 symbols and evaluate performance
 detected = chain(10_000)
-print(f"SER = {compute_ser(recorder.get_data(), detected)}")  # SER = 0.016
+print(f"SER = {compute_ser(chain.tap('tx'), detected)}")  # SER = 0.016
 ```
 
 ## Installation

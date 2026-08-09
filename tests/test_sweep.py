@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from comnumpy import AWGN, Recorder, Sequential, SymbolDemapper, \
+from comnumpy import AWGN, Sequential, SymbolDemapper, \
     SymbolGenerator, SymbolMapper, compute_ser, get_alphabet, sweep
 
 
@@ -12,8 +12,7 @@ class TestSweep(unittest.TestCase):
     def build(self):
         alphabet = get_alphabet("QAM", 4)
         return Sequential([
-            SymbolGenerator(4),
-            Recorder(name="tx"),
+            SymbolGenerator(4, name="tx"),
             SymbolMapper(alphabet),
             AWGN(snr_dB=0, name="noise"),
             SymbolDemapper(alphabet),

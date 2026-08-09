@@ -89,6 +89,17 @@ class TestAllocatorRoundTrip(unittest.TestCase):
         np.testing.assert_allclose(Y[0, row0 == 2], -1.0)
         np.testing.assert_allclose(Y[1, row1 == 2], -1.0)
 
+    def test_extractor_exposes_pilots_as_estimated_attribute(self):
+        """Pilot content is an estimated attribute, not a recorder block."""
+        alloc = get_allocation("802.11a")
+        rng = np.random.default_rng(1)
+        X = rng.normal(size=(4, alloc.N_data)) + 1j * rng.normal(size=(4, alloc.N_data))
+        extractor = CarrierExtractor(alloc)
+        self.assertIsNone(extractor.pilots_)  # nothing before the first run
+        extractor(CarrierAllocator(alloc, pilots=3.0)(X))
+        np.testing.assert_allclose(extractor.pilots_, 3.0)
+        self.assertEqual(np.shape(extractor.pilots_), (4, alloc.N_pilots))
+
     def test_wrong_input_size_raises_shape_error(self):
         allocator = CarrierAllocator(get_allocation("802.11a"))
         with self.assertRaises(ShapeError) as ctx:

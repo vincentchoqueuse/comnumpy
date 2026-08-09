@@ -1,59 +1,58 @@
-from dataclasses import dataclass, field
-from typing import Optional, Literal, Union
+"""Plotting functions for frequency-domain OFDM signals.
+
+Like the core visualizers, these are plain functions operating on
+arrays extracted with ``Sequential(taps=...)`` -- never in-chain
+blocks. Every function takes ``ax=None`` and returns the axis
+(decision D25).
+"""
+from typing import Literal, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy.core import Processor  # À garder selon ton infra réelle
+from matplotlib.axes import Axes
 
 
-@dataclass(slots=True)
-class FFTMonitor(Processor):
-    """
-    A monitoring tool for visualizing the amplitude of frequency-domain signals
-    (e.g., before an IFFT or after a FFT block in an OFDM system).
+def plot_subcarrier_amplitude(X: np.ndarray, *,
+                              reduction: Optional[Literal["mean"]] = "mean",
+                              title: str = "Subcarrier amplitude",
+                              ax: Optional[Axes] = None) -> Axes:
+    """Stem plot of the per-subcarrier amplitude of a Block-layout signal.
 
-    Attributes
+    Useful before an IFFT or after an FFT block in an OFDM system.
+
+    Parameters
     ----------
-    reduction : Optional[str]
-        Method used to reduce the 2D input matrix before plotting.
-        - "mean" : Computes the average amplitude across all OFDM symbols.
-        - None   : Plots each symbol’s amplitude individually (superimposed).
+    X : np.ndarray
+        Frequency-domain signal in Block layout ``(..., T, F)``.
+    reduction : {"mean", None}, keyword-only
+        ``"mean"`` (default) averages the amplitude over the OFDM-symbol
+        axis ``T``; ``None`` superimposes one stem series per symbol.
+    title : str, keyword-only
+        Axis title.
+    ax : matplotlib.axes.Axes, optional
+        Axis to draw on; created when None (decision D25).
 
-    title : str
-        Title of the plot.
-
-    name : str
-        Identifier for the monitor instance.
+    Returns
+    -------
+    matplotlib.axes.Axes
     """
+    amplitudes = np.abs(np.asarray(X))
+    if amplitudes.ndim < 2:
+        raise ValueError(
+            f"expected a Block layout (..., T, F), got {amplitudes.shape}")
+    N_sc = amplitudes.shape[-1]
+    subcarrier_indices = np.arange(-N_sc // 2, N_sc // 2)
 
-    reduction: Optional[Literal["mean"]] = "mean"
-    title: str = field(default="IFFT_Monitor", kw_only=True)
-    name: str = field(default="Ifft_monitor", kw_only=True)
-    # internal state (declared for slots, D40a)
-    ax_: object = field(init=False, repr=False, default_factory=lambda: None)
-
-    def get_reduction(self, X: np.ndarray) -> Union[np.ndarray, float]:
-        # Block layout (..., T, F): average over the block axis T
-        amplitudes = np.abs(X)
-        if self.reduction is None:
-            return amplitudes  # superimpose all
-        elif self.reduction == "mean":
-            return np.mean(amplitudes, axis=-2)
-        else:
-            raise ValueError("Invalid reduction option. Choose None or 'mean'.")
-
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        values_to_plot = self.get_reduction(x)
-        N_sc = x.shape[-1]
-        subcarrier_indices = np.arange(-N_sc // 2, N_sc // 2)
-
-        fig, ax = plt.subplots(figsize=(8, 6))
-
-        if self.reduction is None:
-            for row in range(values_to_plot.shape[-2]):
-                ax.stem(subcarrier_indices, values_to_plot[row, :])
-        else:
-            ax.stem(subcarrier_indices, values_to_plot)
-
-        ax.set_title(self.title)
-        self.ax_ = ax
-        return x
+    if ax is None:
+        _, ax = plt.subplots(figsize=(8, 6))
+    if reduction == "mean":
+        ax.stem(subcarrier_indices, amplitudes.mean(axis=-2))
+    elif reduction is None:
+        for row in amplitudes.reshape(-1, N_sc):
+            ax.stem(subcarrier_indices, row)
+    else:
+        raise ValueError("Invalid reduction option. Choose None or 'mean'.")
+    ax.set_xlabel("subcarrier index")
+    ax.set_ylabel("amplitude")
+    ax.set_title(title)
+    return ax

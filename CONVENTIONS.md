@@ -51,6 +51,37 @@ Every block belongs to exactly one category, stated in its docstring
 The former `is_mimo` attribute — a shape-guessing mechanism — is removed;
 the declared category and `prepare()` validation replace it.
 
+## Observing signals: taps, not blocks
+
+A chain describes the communication system. Nothing else goes into
+`module_list` — no recorder, logger, scope or debugger block. To observe
+an intermediate signal, name the block and declare it as a tap:
+
+```python
+chain = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(alphabet),
+                    AWGN(snr_dB=15, name="awgn")], taps=["tx", "awgn"])
+y = chain(1000)
+x_tx = chain.tap("tx")          # signal recorded during the last run
+plot_iq(chain.tap("awgn"))      # plotting is a function, not a block
+```
+
+Consequences of this rule:
+
+* `repr`, `summary()`, `to_mermaid()`, the JSON export and the block
+  indices describe the communication system only.
+* A tap costs one dictionary store of a **reference** per tapped block
+  (no copy). This relies on the library-wide invariant that **a block
+  never mutates its input in place**: `forward()` returns a freshly
+  allocated array (or the input untouched). Custom blocks must honour it
+  — an in-place block would corrupt earlier taps *and* break chain
+  re-entrancy.
+* Reference signals for trained-based blocks are plain arrays: extract
+  them with a tap, then pass `target_data=x_tx`. Blocks never hold a live
+  reference to another block.
+* Statistics are functions too: `comnumpy.core.metrics.signal_report(x)`
+  returns a dict; the caller decides whether to log it, tabulate it or
+  assert on it.
+
 ## Error messages
 
 Validation failures raise `comnumpy.ShapeError` and follow the template

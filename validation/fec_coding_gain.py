@@ -10,7 +10,7 @@ import pathlib
 
 import numpy as np
 
-from comnumpy import AWGN, Recorder, Sequential, SymbolGenerator
+from comnumpy import AWGN, Sequential, SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.fec import ConvolutionalEncoder, ViterbiDecoder
 from comnumpy.sweep import sweep
@@ -30,8 +30,7 @@ def coded_chain(soft):
     demapper = (SymbolDemapper(bpsk, soft=True, name="demap") if soft
                 else SymbolDemapper(bpsk, name="demap"))
     return Sequential([
-        SymbolGenerator(2, name="bits"),
-        Recorder(name="tx"),
+        SymbolGenerator(2, name="tx"),
         ConvolutionalEncoder(),
         SymbolMapper(bpsk),
         AWGN(snr_dB=0, name="noise"),
@@ -43,8 +42,7 @@ def coded_chain(soft):
 def uncoded_chain():
     bpsk = BPSK
     return Sequential([
-        SymbolGenerator(2, name="bits"),
-        Recorder(name="tx"),
+        SymbolGenerator(2, name="tx"),
         SymbolMapper(bpsk),
         AWGN(snr_dB=0, name="noise"),
         SymbolDemapper(bpsk, name="demap"),

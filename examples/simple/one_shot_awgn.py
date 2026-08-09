@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.utils import get_alphabet
@@ -17,21 +17,19 @@ snr_dB = 10 # Signal-to-Noise Ratio in dB
 
 alphabet = get_alphabet(modulation, M)
 
-# define a communication chain
+# define a communication chain; taps extract the signals to observe
 chain = Sequential([
-            SymbolGenerator(M),
-            Recorder(name="recorder_tx"),
+            SymbolGenerator(M, name="tx"),
             SymbolMapper(alphabet),
-            AWGN(snr_dB=snr_dB),
-            Recorder(name="recorder_rx"),
+            AWGN(snr_dB=snr_dB, name="awgn"),
             SymbolDemapper(alphabet)
-        ])
+        ], taps=["tx", "awgn"])
 
 # test chain
 y = chain(N)
 
 # estimate simulation performance
-data_tx = chain["recorder_tx"].get_data()
+data_tx = chain.tap("tx")
 ser = compute_ser(data_tx, y)
 
 # extract theoretical performance
@@ -43,12 +41,8 @@ print(f"SER (simu)= {ser}")
 print(f"SER (theo)= {ser_theo}")
 
 # plot signals
-data_rx = chain["recorder_rx"].get_data()
-plt.scatter(np.real(data_rx), np.imag(data_rx))
-plt.title("Received Constellation Diagram")
-plt.xlabel("In-phase")
-plt.ylabel("Quadrature")
-plt.grid(True)
+ax = plot_iq(chain.tap("awgn"), title="Received Constellation Diagram")
+ax.grid(True)
 
 plt.savefig(f"{img_dir}/first_simulation_fig1.png")
 plt.show()

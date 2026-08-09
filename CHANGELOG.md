@@ -28,6 +28,13 @@ one release; there is no compatibility layer.
 | Optional block parameters accepted positionally | keyword-only (D40b): only the principal first argument is positional |
 | Bare `ValueError` on shape mismatch | `comnumpy.ShapeError` (still a `ValueError` subclass — existing `except ValueError` keeps working) |
 | `import comnumpy` loaded matplotlib (~1 s) | lazy imports: no matplotlib at import time, ~90 ms (enforced in CI) |
+| `Recorder(name="tx")` inserted in `module_list`, read with `chain["tx"].get_data()` | name the block itself and declare a tap: `Sequential([SymbolGenerator(16, name="tx"), ...], taps=["tx"])`, read with `chain.tap("tx")` |
+| `Logger`, `Debugger`, `PowerReporter`, `TimeSignalMonitor` blocks | removed — tap the block and call `signal_report(chain.tap("x"))`, then log the returned dict |
+| `MetricRecorder(metric_fn=f)` block | removed — `f(chain.tap("x"))` |
+| `Scope(scope_type="iq", ...)`, `TimeScope`, `SpectrumScope`, `IQScope`, `KDEScope`, `WelchScope` blocks | removed — functions `plot_iq`, `plot_time`, `plot_spectrum`, `plot_kde`, `plot_welch` applied to a tapped signal |
+| `ofdm.visualizers.FFTMonitor` block | `ofdm.visualizers.plot_subcarrier_amplitude(X, ax=...)` |
+| `CarrierExtractor(..., pilot_recorder=rec)` | pilot content exposed as the estimated attribute `extractor.pilots_` (D23) |
+| `TrainedBased*(target_data=recorder)` | `target_data=` takes a plain array: tap the reference signal first |
 
 ### Added (milestones 2-5)
 
@@ -109,13 +116,39 @@ one release; there is no compatibility layer.
   the parameter-sweep loop shared by the validation scripts, extracted
   after the third script needed it. Dotted `set_params` addressing,
   per-point child seeds, zip semantics for multi-parameter sweeps.
-- `Sequential(..., taps=["block_id"])`: records the output of the named
-  blocks into `chain.tapped_` during `forward` and exposes them through
-  `chain.tap("block_id")`. Observation becomes chain *metadata* instead
-  of a `Recorder` block inserted into `module_list`, so the module list
-  stays a pure description of the communication system; the cost is one
-  dict store of an array reference per tapped block (no copy). Unknown
-  ids raise `KeyError` at run time with the declared list.
+- **Observation is now taps only.** `Sequential(..., taps=["block_id"])`
+  records the output of the named blocks into `chain.tapped_` during
+  `forward` and exposes them through `chain.tap("block_id")`; unknown ids
+  raise `KeyError` at run time with the declared list. Observation is
+  chain *metadata*, so `module_list` — and with it `repr`, `summary()`,
+  `to_mermaid()`, the JSON export and the block indices — describes the
+  communication system and nothing else. The cost is one dict store of an
+  array reference per tapped block (no copy), which relies on the
+  library-wide invariant that a block never mutates its input in place
+  (now stated in CONVENTIONS.md).
+- Every in-chain instrumentation block is **removed** (see the migration
+  table): `Recorder`, `Logger`, `Debugger`, `PowerReporter`,
+  `TimeSignalMonitor`, `MetricRecorder`, the `Scope` family and
+  `FFTMonitor`. `comnumpy.core.monitors` is gone. Their replacements are
+  plain functions on extracted arrays: the `plot_*` family in
+  `comnumpy.core.visualizers` / `comnumpy.ofdm.visualizers` (each takes
+  `ax=None`, returns the axis, never calls `plt.show()`, overlays a 2D
+  input as one line per stream) and
+  `comnumpy.core.metrics.signal_report(x)`, which returns the statistics
+  as a dict for the caller to log, tabulate or assert on. A CI guard test
+  keeps these names out of the public surface.
+- `sweep(..., reference="tx")` now names a tapped block and declares the
+  tap itself if needed; blocks no longer hold references to other blocks
+  (`target_data=` takes a plain array).
+- `OFDMTransmitter` and `OFDMReceiver` gained the `name=` field every
+  other block already had. Without it they could be neither addressed
+  (`chain["..."]`, `set_params`) nor tapped -- a gap the taps migration
+  exposed.
+- Ratchets tightened by the cleanup: ruff now lints `tests/`,
+  `validation/` and `examples/` in addition to `src/`; the pyright strict
+  allowlist gains both visualizer modules; the coverage floor moves from
+  31 % to 55 % (measured 59 % — removing untested instrumentation code
+  and testing the new observation surface).
 - `validation/mimo_zf_ml_ber.py` + fast golden test: 2x2 i.i.d.
   Rayleigh BPSK; ZF pinned to the diversity-1 closed form
   `BER = (1 - sqrt(g/(1+g)))/2` (within 2%), ML checked for full

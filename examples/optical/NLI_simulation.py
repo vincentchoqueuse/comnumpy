@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from tqdm import tqdm
 
 from comnumpy.core import Sequential
 from comnumpy.core.generators import GaussianGenerator
@@ -35,7 +34,7 @@ if system == 0:
     dBm_list = np.arange(-10, 6)
     y_lim = [13, 25]
     x_lim = [-10, 5]
-    
+
 if system == 1:
     R_s = 32*(10**9)  # baud rate
     L_span = 100  # in km
@@ -80,9 +79,13 @@ receiver_config_list = [
             {"name": "DBP500", "StPS": 500, "use_only_linear": False, "step_type": "linear"}
             ]
 receiver_list = []
-for index, scenario_temp in enumerate(receiver_config_list):
+for scenario_temp in receiver_config_list:
     receiver = Sequential([
-                DBP(N_span, L_span=L_span, StPS=scenario_temp["StPS"], step_type=scenario_temp["step_type"], fs=fs/oversampling_ratio, use_only_linear=scenario_temp["use_only_linear"], name="dbp"),
+                DBP(N_span, L_span=L_span, StPS=scenario_temp["StPS"],
+                    step_type=scenario_temp["step_type"],
+                    fs=fs/oversampling_ratio,
+                    use_only_linear=scenario_temp["use_only_linear"],
+                    name="dbp"),
                 SRRCFilter(rolloff, oversampling_dsp, method="fft", scale=1/np.sqrt(oversampling_dsp)),
                 Downsampler(oversampling_dsp),
                 ])
@@ -99,13 +102,13 @@ receiver_list = receiver_list
 N_curves = len(receiver_list)
 snr_array = np.zeros((N_dBm, N_curves))
 
-for index in tqdm(range(N_dBm)):
+for index in range(N_dBm):
 
     dBm = dBm_list[index]
     Po = (1e-3) * (10**(0.1*dBm))
     amp = np.sqrt(Po)
 
-    for num_trial in range(N_trial):
+    for _ in range(N_trial):
 
         x = generator(N_s)
         x_scaled = amp * x

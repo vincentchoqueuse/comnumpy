@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.processors import Upsampler, Downsampler
@@ -45,13 +44,12 @@ plt.figure()
 # create your chain and compensator list
 chain = Sequential([
             SymbolGenerator(M=4, name="generator"),
-            Recorder(name="data_tx"),
             SymbolMapper([], name="mapper"),
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             ChromaticDispersion(z, fs=fs),
             AWGN(sigma2=0, name="noise")
-            ])
+            ], taps=["generator"])
 
 full_compensator1 = Sequential([
             ChromaticDispersionFIRCompensator(z, fs=fs),
@@ -92,7 +90,7 @@ for k in k_vect:
     ber_exp = []
     ber_list = np.zeros((len(SNR_vect), len(ber_list_names)))
 
-    for index_SNR, SNR_bitdB in enumerate(tqdm(SNR_vect)):
+    for index_SNR, SNR_bitdB in enumerate(SNR_vect):
         snr_per_bit = 10 ** (SNR_bitdB/10)
 
         # compute theoretical ber
@@ -104,7 +102,7 @@ for k in k_vect:
         y = chain(N)
 
         # evaluate metric
-        s = chain["data_tx"].get_data()
+        s = chain.tap("generator")
 
         for index_comp, full_compensator in enumerate(compensator_list):
             s_est = full_compensator(y)

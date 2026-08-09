@@ -2,11 +2,10 @@ import numpy as np
 import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 
-from tqdm import tqdm
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.metrics import compute_ser, compute_ber
+from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import get_alphabet
 from comnumpy.mimo.channels import FlatMIMOChannel, AWGN
 from comnumpy.mimo.utils import rayleigh_channel
@@ -24,16 +23,15 @@ sigma2 = 0.1
 H = rayleigh_channel(N_r, N_t)
 
 # construct chain
-chain = Sequential([SymbolGenerator(M),
-                    Recorder(name="data_tx"),
+chain = Sequential([SymbolGenerator(M, name="data_tx"),
                     SymbolMapper(alphabet),
                     FlatMIMOChannel(H, name="channel"),
                     AWGN(sigma2=sigma2, name="noise")
-                    ])
+                    ], taps=["data_tx"])
 Y = chain((N_t, N))
 
 # extract signals
-S_tx = chain["data_tx"].get_data()
+S_tx = chain.tap("data_tx")
 
 # Figure 1: received signal
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
@@ -82,7 +80,7 @@ snr_dB_list = np.arange(0, 20, 2)
 N_test = 1000
 ser_data = np.zeros((len(snr_dB_list), len(detector_list)))
 
-for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
+for index_snr, snr_dB in enumerate(snr_dB_list):
     sigma2 = N_t * (10**(-snr_dB/10))
     chain["noise"].sigma2 = sigma2
 
@@ -90,15 +88,15 @@ for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
     detector_list[1].sigma2 = sigma2
     detector_list[2].sigma2 = sigma2
 
-    for trial in range(N_test):
-   
+    for _ in range(N_test):
+
         # new channel realization
         H = rayleigh_channel(N_r, N_t)
         chain["channel"].H = H
 
         # generate data
         Y = chain((N_t, N))
-        S_tx = chain["data_tx"].get_data()
+        S_tx = chain.tap("data_tx")
 
         # test detector
         for index, detector in enumerate(detector_list):
