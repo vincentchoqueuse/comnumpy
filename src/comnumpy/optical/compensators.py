@@ -134,6 +134,96 @@ class ChromaticDispersionFIRCompensator(Processor):
         return y
 
 
+def _cd_gram_matrix(N, Omega_1, Omega_2):
+    r"""Hermitian Toeplitz Gram matrix of the delays over a design band.
+
+    Returns the :math:`N \times N` matrix :math:`Q_{m,l} = q(l - m)` with
+
+    .. math::
+
+        q(p) = \frac{1}{2\pi} \int_{\Omega_1}^{\Omega_2} e^{-j p \Omega} d\Omega
+             = \frac{e^{-j p \Omega_1} - e^{-j p \Omega_2}}{2 j \pi p},
+        \qquad q(0) = \frac{\Omega_2 - \Omega_1}{2\pi}
+
+    Only :math:`p \ge 0` is evaluated; the negative lags follow from
+    :math:`q(-p) = q(p)^*`, so the first column handed to
+    :func:`scipy.linalg.toeplitz` is the conjugate of the first row and
+    the result satisfies :math:`Q = Q^H`.
+
+    On the full band :math:`[-\pi, \pi]` one has :math:`q(p) =
+    \mathrm{sinc}(p) = 0` for :math:`p \neq 0`, hence :math:`Q = I`. On a
+    narrower band :math:`Q` is a prolate matrix: about :math:`N -
+    N(\Omega_2 - \Omega_1) / (2\pi)` of its eigenvalues are numerically
+    zero, because the taps have degrees of freedom that the cost function
+    does not see outside the band.
+
+    Parameters
+    ----------
+    N : int
+        Filter length in taps.
+    Omega_1, Omega_2 : float
+        Design band bounds in rad/sample, with ``Omega_1 < Omega_2``.
+
+    Returns
+    -------
+    np.ndarray
+        Hermitian Toeplitz matrix of shape ``(N, N)``.
+    """
+    q_row = np.zeros(N, dtype=complex)
+    q_row[0] = (Omega_2 - Omega_1) / (2 * np.pi)
+    p_vect = np.arange(1, N)
+    q_row[1:] = (np.exp(-1j * p_vect * Omega_1)
+                 - np.exp(-1j * p_vect * Omega_2)) / (2j * np.pi * p_vect)
+    return toeplitz(np.conj(q_row), q_row)
+
+
+def _cd_cross_correlation(K, N, Omega_1, Omega_2):
+    r"""Cross-correlation between the target all-pass and the delays.
+
+    Returns the vector, for :math:`|n| \le (N-1)/2`,
+
+    .. math::
+
+        d[n] = \frac{1}{2\pi} \int_{\Omega_1}^{\Omega_2}
+        e^{j K \Omega^2} e^{j n \Omega} d\Omega
+
+    evaluated in closed form. Completing the square,
+    :math:`K \Omega^2 + n \Omega = K (\Omega + n / 2K)^2 - n^2 / 4K`, and
+    substituting :math:`t = \sqrt{K} e^{-j\pi/4} (\Omega + n / 2K)` turns
+    the integrand into :math:`e^{-t^2}`, whose primitive is the complex
+    error function. The band enters only through the two bounds:
+
+    .. math::
+
+        d[n] = \frac{e^{j \pi / 4}}{4 \sqrt{\pi K}} e^{-j \frac{n^2}{4K}}
+        \left[ \mathrm{erf}\!\left(\gamma \left(\Omega_2 + \frac{n}{2K}\right)\right)
+             - \mathrm{erf}\!\left(\gamma \left(\Omega_1 + \frac{n}{2K}\right)\right) \right],
+        \qquad \gamma = \sqrt{K} \, e^{-j\pi/4}
+
+    Parameters
+    ----------
+    K : float
+        Dimensionless dispersion :math:`K = -\beta_2 z f_s^2 / 2`.
+    N : int
+        Filter length in taps (odd).
+    Omega_1, Omega_2 : float
+        Design band bounds in rad/sample, with ``Omega_1 < Omega_2``.
+
+    Returns
+    -------
+    np.ndarray
+        Complex vector of length ``N``.
+    """
+    bound = N // 2
+    n_vect = np.arange(-bound, bound + 1)
+    gamma = np.sqrt(K) * np.exp(-1j * np.pi / 4)
+    shift = n_vect / (2 * K)
+    erf_term = (special.erf(gamma * (Omega_2 + shift))
+                - special.erf(gamma * (Omega_1 + shift)))
+    coef = np.exp(1j * np.pi / 4) / (4 * np.sqrt(np.pi * K))
+    return coef * np.exp(-1j * (n_vect**2) / (4 * K)) * erf_term
+
+
 @dataclass(slots=True)
 class ChromaticDispersionLSFIRCompensator(Processor):
     r"""Least-squares FIR compensator of chromatic dispersion (optimal design over a frequency band).
@@ -167,26 +257,52 @@ class ChromaticDispersionLSFIRCompensator(Processor):
 
     .. math::
 
-        Q_{m,l} = \frac{1}{2\pi} \int_{\Omega_1}^{\Omega_2}
-        e^{-j (l - m) \Omega} d\Omega, \qquad
+        Q_{m,l} = q(l - m), \quad
+        q(p) = \frac{1}{2\pi} \int_{\Omega_1}^{\Omega_2}
+        e^{-j p \Omega} d\Omega, \qquad
         d[n] = \frac{1}{2\pi} \int_{\Omega_1}^{\Omega_2}
         e^{j K \Omega^2} e^{j n \Omega} d\Omega
 
-    The implemented closed form of :math:`d[n]` is the one obtained for
-    the full band :math:`[-\pi, \pi]`:
+    Only :math:`q(p)` for :math:`p \ge 0` is evaluated, the negative lags
+    following from the Hermitian symmetry :math:`q(-p) = q(p)^*` that
+    makes :math:`Q = Q^H`. Completing the square in the integrand of
+    :math:`d[n]` and mapping :math:`j K \Omega^2` onto :math:`-t^2` gives
+    the closed form on an *arbitrary* band, in terms of the complex error
+    function:
 
     .. math::
 
-        d[n] = \frac{e^{-j\left(\frac{n^2}{4K} + \frac{3\pi}{4}\right)}}{4\sqrt{\pi K}}
-        \left[ \mathrm{erf}\!\left(\kappa (2 \pi K - n)\right)
-             + \mathrm{erf}\!\left(\kappa (2 \pi K + n)\right) \right],
-        \qquad \kappa = \frac{e^{j 3 \pi / 4}}{2 \sqrt{K}}
+        d[n] = \frac{e^{j \pi / 4}}{4 \sqrt{\pi K}}
+        e^{-j \frac{n^2}{4 K}}
+        \left[ \mathrm{erf}\!\left(\gamma \left(\Omega_2 + \frac{n}{2K}\right)\right)
+             - \mathrm{erf}\!\left(\gamma \left(\Omega_1 + \frac{n}{2K}\right)\right) \right],
+        \qquad \gamma = \sqrt{K} \, e^{-j \pi / 4}
 
-    and the system is solved as :math:`h = (Q + \epsilon I)^{-1} d`, the
-    ridge term :math:`\epsilon` regularizing the near-singular Gram
-    matrix. As the band widens and :math:`K` grows, :math:`Q \to I` and
-    :math:`d[n] \to \sqrt{j / (4 \pi K)} e^{-j n^2 / (4K)}`, i.e. the
-    design falls back on the truncated (Savory) filter. The block then
+    (the band enters only through the two integration bounds; at
+    :math:`[\Omega_1, \Omega_2] = [-\pi, \pi]` this collapses, using the
+    oddness of :math:`\mathrm{erf}`, onto the usual full-band expression
+    :math:`\mathrm{erf}(\kappa (2\pi K - n)) + \mathrm{erf}(\kappa (2\pi K + n))`
+    with :math:`\kappa = e^{j 3 \pi / 4} / (2 \sqrt{K})`).
+
+    The ridge-regularized system :math:`(Q + \epsilon I) h = d` is then
+    *solved* rather than inverted. This matters away from the full band:
+    :math:`Q` is a prolate matrix whose eigenvalues collapse to zero
+    beyond the :math:`\approx N (\Omega_2 - \Omega_1) / (2\pi)` degrees of
+    freedom the band can constrain, so the explicit inverse carries
+    entries of order :math:`1/\epsilon` that cancel catastrophically
+    against :math:`d`. The taps in that numerical null space are not
+    individually determined -- they do not affect the response inside the
+    band, which is the quantity the design pins down.
+
+    On the full band :math:`[-\pi, \pi]` the degeneracy disappears:
+    :math:`q(p) = \mathrm{sinc}(p) = 0` for :math:`p \neq 0` makes
+    :math:`Q = I` exactly and :math:`h = d`. For taps well inside the
+    group-delay span, :math:`|n| \ll 2 \pi K`, both erf arguments
+    saturate and :math:`d[n] \to \sqrt{j / (4 \pi K)} e^{-j n^2 / (4K)}`:
+    there the design falls back on the truncated (Savory) filter. The two
+    keep differing near :math:`|n| \approx 2 \pi K`, where the Fresnel
+    integral is only half-completed and the least-squares design tapers
+    the taps that the truncation keeps at full amplitude. The block then
     applies the full linear convolution
 
     .. math::
@@ -213,8 +329,11 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     fs : float, optional, keyword-only
         Sampling frequency :math:`f_s` in Hz. Default is 1.
     w_vect : List[float], optional, keyword-only
-        Design band :math:`[\Omega_1, \Omega_2]` in rad/sample. Default
-        is ``[-np.pi, np.pi]`` (full band).
+        Design band :math:`[\Omega_1, \Omega_2]` in rad/sample, with
+        :math:`\Omega_1 < \Omega_2`. Default is ``[-np.pi, np.pi]``
+        (full band). A narrower band trades accuracy outside the band
+        for accuracy inside it, which is what one wants when the signal
+        is oversampled.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"optimal"``.
 
@@ -225,8 +344,8 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     K : float
         Dimensionless dispersion :math:`K = -\beta_2 z f_s^2 / 2`.
     epsilon : float
-        Class-level ridge term :math:`\epsilon` added to :math:`Q`
-        before inversion. Default is ``1e-14``.
+        Class-level ridge term :math:`\epsilon` added to the diagonal of
+        :math:`Q` before solving. Default is ``1e-14``.
     lamb : float
         Class-level wavelength :math:`\lambda` in nm (``WAVELENGTH``).
     D : float
@@ -238,7 +357,8 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     Raises
     ------
     ValueError
-        If the filter length ``N`` is even.
+        If the filter length ``N`` is even, or if the design band
+        ``w_vect`` is not a strictly increasing pair.
 
     References
     ----------
@@ -280,38 +400,31 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     def __post_init__(self):
         if self.N % 2 == 0:
             raise ValueError(f"The value of N must be odd (current={self.N})")
+        if len(self.w_vect) != 2:
+            raise ValueError(
+                f"design band w_vect holds {len(self.w_vect)} entries; "
+                f"expected exactly 2 (Omega_1, Omega_2) in rad/sample; "
+                f"pass a pair such as [-np.pi, np.pi]"
+            )
+        Omega_1, Omega_2 = self.w_vect
+        if not Omega_1 < Omega_2:
+            raise ValueError(
+                f"design band w_vect is [{Omega_1}, {Omega_2}]; "
+                f"expected Omega_1 < Omega_2 (a band of positive width in rad/sample); "
+                f"swap the two entries"
+            )
 
         beta2_ps2_per_km = compute_beta2(self.lamb, self.D, self.c)
         beta2 = ((10**-12)**2)*beta2_ps2_per_km  # convert into s^2/km
         K = -beta2 * self.z * (self.fs**2) / 2
-        Omega_1, Omega_2 = self.w_vect
 
-        # Construct Matrix Q
-        q_row = np.zeros(self.N, dtype=complex)
-        q_col = np.zeros(self.N, dtype=complex)
-        q_row[0] = q_col[0] = (Omega_2 - Omega_1) / (2 * np.pi)
-        for m in range(1, self.N):
-            coef = 1 / (2j * np.pi * m)
-            q_row[m] = coef * (np.exp(-1j * m * Omega_1) - np.exp(-1j * m * Omega_2))
-        Q = toeplitz(q_col, q_row)
+        Q = _cd_gram_matrix(self.N, Omega_1, Omega_2)
+        d_vect = _cd_cross_correlation(K, self.N, Omega_1, Omega_2)
 
-        # Construct vector d
-        bound = self.N // 2
-        n_vect = np.arange(-bound, bound + 1)
-        coef1 = 1 / (4 * np.sqrt(np.pi * K))
-        coef2 = np.exp(1j * 3 * np.pi / 4) / (2 * np.sqrt(K))
-        d_vect = np.zeros(len(n_vect), dtype=complex)
-
-        for idx, n in enumerate(n_vect):
-            term1 = coef2 * (2 * K * np.pi - n)
-            term2 = coef2 * (2 * K * np.pi + n)
-            erf_term = special.erf(term1) + special.erf(term2)
-            phase = np.exp(-1j * (n**2 / (4 * K) + 3 * np.pi / 4))
-            d_vect[idx] = coef1 * phase * erf_term
-
-        I_mat = np.eye(self.N)
-        Q_inv = LA.inv(Q + self.epsilon * I_mat)
-        self.h = Q_inv @ d_vect
+        # Solve (Q + eps I) h = d. Never form the inverse: on a narrow band
+        # Q is rank-deficient by construction and the explicit inverse holds
+        # entries of order 1/eps, which cancel catastrophically against d.
+        self.h = LA.solve(Q + self.epsilon * np.eye(self.N), d_vect)
         self.K = K
 
     def forward(self, x: np.ndarray) -> np.ndarray:
