@@ -89,6 +89,24 @@ one release; there is no compatibility layer.
 - `SymbolDemapper(soft=True)` bit LLRs (D12) and the fec package (D4)
   landed in the same window (see the dedicated commits).
 
+### Milestone 7 (D35, taps, MIMO validation)
+
+- `comnumpy.sweep(chain, param, values, metrics, stimulus, ...)` (D35):
+  the parameter-sweep loop shared by the validation scripts, extracted
+  after the third script needed it. Dotted `set_params` addressing,
+  per-point child seeds, zip semantics for multi-parameter sweeps.
+- `Sequential(..., taps=["block_id"])`: records the output of the named
+  blocks into `chain.tapped_` during `forward` and exposes them through
+  `chain.tap("block_id")`. Observation becomes chain *metadata* instead
+  of a `Recorder` block inserted into `module_list`, so the module list
+  stays a pure description of the communication system; the cost is one
+  dict store of an array reference per tapped block (no copy). Unknown
+  ids raise `KeyError` at run time with the declared list.
+- `validation/mimo_zf_ml_ber.py` + fast golden test: 2x2 i.i.d.
+  Rayleigh BPSK; ZF pinned to the diversity-1 closed form
+  `BER = (1 - sqrt(g/(1+g)))/2` (within 2%), ML checked for full
+  receive diversity through the BER slope ratio.
+
 ### Sanitation batch (Lot 0)
 
 No new feature; the published package becomes consistent with what the
