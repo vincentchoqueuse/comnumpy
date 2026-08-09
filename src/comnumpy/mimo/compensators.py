@@ -7,92 +7,97 @@ from comnumpy.core.utils import hard_projector
 
 @dataclass(slots=True)
 class BlindDualMIMOCompensator(Processor):
-    r"""
-    BlindDualMIMOCompensator for 2x2 MIMO channels.
-
-    This class implements a blind dual MIMO compensator designed for 2x2 MIMO channels. It uses various loss functions to estimate filter weights
-    without requiring a training sequence. The compensator supports different modes of operation, including Constant Modulus Algorithm (CMA),
-    Radius Directed Equalization (RDE), and Decision Directed (DD) algorithms.
+    r"""Blind adaptive 2x2 MIMO equalizer (CMA, RDE or DD stochastic gradient).
 
     Signal Model
     ------------
-    The signal model is defined as:
+    At each step :math:`n`, the two output polarizations are computed
+    from the estimated equalizer matrix :math:`\mathbf{H}` of size
+    :math:`2 \times 2(2L+1)`:
 
     .. math::
 
-        \mathbf{y}[n] = \mathbf{H}^H[n] \tilde{\mathbf{x}}[n]
-
-    where:
-
-    * :math:`\mathbf{H}[n]` is a matrix of size :math:`2 \times (2(2L+1))` containing the filter weights at step :math:`n`.
-    * :math:`\mathbf{y}[n]` is a vector of size 2 containing the two polarisation data
-    * :math:`\tilde{\mathbf{x}}[n]` is a :math:`2(2L+1)` vector containing the :math:`L^{th}` previous transmitted data on the two polarizations.
-      This vector is obtained by stacking vertically the two polarizations as follows:
-
-    .. math::
-
+        y_i[n] = \mathbf{h}_i^H \tilde{\mathbf{x}}[n], \qquad
         \tilde{\mathbf{x}}[n] = \begin{bmatrix}
-        x_0[n+L]\\
-        \vdots\\
-        x_0[n]\\
-        \vdots\\
-        x_0[n-L]\\
-        x_1[n+L]\\
-        \vdots\\
-        x_1[n]\\
-        \vdots\\
-        x_1[n-L]\\
-        \end{bmatrix}
+        x_0[n] & \cdots & x_0[n-2L] & x_1[n] & \cdots & x_1[n-2L]
+        \end{bmatrix}^T
 
-    The filter weights are estimated using one of the following loss functions:
+    where :math:`\mathbf{h}_i^T` is the :math:`i`-th row of
+    :math:`\mathbf{H}` and :math:`x_0`, :math:`x_1` are the two received
+    polarizations. The equalizer is updated by stochastic gradient
+    descent, :math:`\mathbf{H} \leftarrow \mathbf{H} + \mu \mathbf{g}[n]`,
+    minimizing one of the following blind losses:
 
-    - **Constant Modulus Algorithm (CMA)**: Minimizes the metric:
+    * Constant Modulus Algorithm (CMA):
+      :math:`\mathcal{L}_{CMA}(y[n]) = \left| R - |y[n]|^2 \right|^2`,
+      where :math:`R = \mathbb{E}[|s|^4] / \mathbb{E}[|s|^2]` is derived
+      from the alphabet;
+    * Radius Directed Equalization (RDE):
+      :math:`\mathcal{L}_{RDE}(y[n]) = \left| \mathcal{P}_{rad}^2(|y[n]|) - |y[n]|^2 \right|^2`,
+      where :math:`\mathcal{P}_{rad}` projects onto the list of alphabet radii;
+    * Decision Directed (DD):
+      :math:`\mathcal{L}_{DD}(y[n]) = \left| \mathcal{P}_{\mathcal{M}}(y[n]) - y[n] \right|^2`,
+      where :math:`\mathcal{P}_{\mathcal{M}}` projects onto the alphabet.
 
-      .. math::
+    The equalizer is adaptive (decision D22): every ``forward`` call
+    updates :math:`\mathbf{H}` sample by sample, and ``partial_fit(X)``
+    runs one adaptation pass over ``X`` from the current state.
 
-          \mathcal{L}_{CMA}(y[n]) = | R - |y[n]|^2 |^2
+    Axes: *declared axis* -- expects the dual-polarization layout
+    ``(2, N)``, produces ``(2, N // oversampling)`` (one output sample
+    per ``oversampling`` input samples: fractionally spaced equalizer).
 
-      where :math:`R = \frac{E[|s|^4]}{E[|s|^2]}` is derived from the alphabet.
-
-    - **Radius Directed Equalization (RDE)**: Minimizes the metric:
-
-      .. math::
-
-          \mathcal{L}_{RDE}(y[n]) = | \mathcal{P}_{rad}^2(|y[n]|) - |y[n]|^2 |^2
-
-      where :math:`\mathcal{P}_{rad}(|y[n]|)` is the orthogonal projector into the list of radius alphabet.
-
-    - **Decision Directed (DD)**: Minimizes the metric:
-
-      .. math::
-
-          \mathcal{L}_{DD}(y[n]) = | \mathcal{P}_{\mathcal{M}}(y[n]) - y[n] |^2
-
-      where :math:`\mathcal{P}_{\mathcal{M}}(y[n])` is the orthogonal projector into the alphabet.
+    Parameters
+    ----------
+    L : int, optional
+        Half-length of the filter (each row of :math:`\mathbf{H}` holds
+        :math:`2L+1` taps per polarization). Default is 10.
+    alphabet : np.ndarray, keyword-only
+        Modulation alphabet, used to derive the CMA radius :math:`R`,
+        the RDE radius list and the DD decisions.
+    mu : float, optional, keyword-only
+        Step size :math:`\mu` of the gradient update. Default is 1e-4.
+    oversampling : int, optional, keyword-only
+        Oversampling factor of the input. When greater than one, the
+        algorithm implements a fractionally spaced equalizer. Default is 1.
+    norm : bool, optional, keyword-only
+        Flag to normalize the filter weights. Default is True.
+    mode : {"cma", "rde", "dd"}, optional, keyword-only
+        Blind loss used for the update. Default is ``"cma"``.
+    name : str, optional, keyword-only
+        Name of the processor instance. Default is ``"mimo filter"``.
 
     Attributes
     ----------
-    L : int
-        Length of the filter.
-    alphabet : np.ndarray
-        Alphabet used for modulation.
-    mu : float, optional
-        Step size for the update (default is 1e-4).
-    oversampling : int, optional
-        Oversampling factor (default is 1). When the oversampling is greater than one, the algorithm implements a fractionaly spaced equalizer
-    norm : bool, optional
-        Flag to normalize the filter weights (default is True).
-    mode : Literal["cma", "rde", "dd"], optional
-        Mode of operation (default is "cma").
-    sub_block_length : int, optional
-        Length of sub-blocks for processing (default is 20).
-    name : str, optional
-        Name of the processor (default is "mimo filter").
+    H_ : np.ndarray
+        Estimated equalizer matrix of shape ``(2, 2*(2*L+1))`` (decision
+        D23: the trailing underscore distinguishes it from the
+        *configured* channel ``H`` of ``FlatMIMOChannel``). Initialized
+        to the identity equalizer (center tap) and updated at each call.
+
+    Raises
+    ------
+    ValueError
+        If the input is not a dual-polarization signal of shape ``(2, N)``.
 
     References
     ----------
-    * Faruk, Md Saifuddin, and Seb J. Savory. "Digital signal processing for coherent transceivers employing multilevel formats."
-      Journal of Lightwave Technology 35.5 (2017): 1125-1141.
+    * D. N. Godard, "Self-recovering equalization and carrier tracking in
+      two-dimensional data communication systems," IEEE Transactions on
+      Communications, vol. 28, no. 11, pp. 1867-1875, 1980.
+    * M. S. Faruk, S. J. Savory, "Digital signal processing for coherent
+      transceivers employing multilevel formats," Journal of Lightwave
+      Technology, vol. 35, no. 5, pp. 1125-1141, 2017.
+
+    Examples
+    --------
+    >>> alphabet = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)
+    >>> compensator = BlindDualMIMOCompensator(L=2, alphabet=alphabet)
+    >>> rng = np.random.default_rng(0)
+    >>> X = alphabet[rng.integers(0, 4, size=(2, 200))]
+    >>> Y = compensator(X)
+    >>> print(Y.shape, compensator.H_.shape)
+    (2, 200) (2, 10)
     """
     L: int = 10
     alphabet: np.ndarray = field(default=None, kw_only=True)
