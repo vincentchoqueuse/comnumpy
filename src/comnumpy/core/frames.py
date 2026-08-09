@@ -63,6 +63,9 @@ class FrameField:
     length: Optional[int] = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
+        # accept the raw int (JSON round trip, user code) but always store
+        # the enum, so `role.name` works and an invalid role fails here
+        object.__setattr__(self, "role", FieldRole(self.role))
         if self.values is not None:
             values = np.asarray(self.values)
             values.setflags(write=False)

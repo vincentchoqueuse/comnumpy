@@ -75,9 +75,41 @@ Consequences of this rule:
   allocated array (or the input untouched). Custom blocks must honour it
   — an in-place block would corrupt earlier taps *and* break chain
   re-entrancy.
-* Reference signals for trained-based blocks are plain arrays: extract
-  them with a tap, then pass `target_data=x_tx`. Blocks never hold a live
-  reference to another block.
+* Blocks never hold a live reference to another block. A data-aided
+  block takes its reference as a plain array (`target_data=x_tx`) when
+  the reference is known in advance — a preamble, a training sequence.
+
+## Feeding an estimator from inside the chain: wiring
+
+When the reference is *produced by the chain itself* (the transmitted
+symbols of this very run), a frozen array is wrong: on the second run it
+would still hold the first run's data, silently. Declare the edge
+instead:
+
+```python
+chain = Sequential([
+    SymbolGenerator(16, name="tx"),
+    SymbolMapper(alphabet, name="ref"),
+    ...,
+    TrainedBasedPhaseCompensator(target_data=np.zeros(1), name="comp"),
+    SymbolDemapper(alphabet),
+], wiring={"comp.target_data": "ref"})
+```
+
+Before `comp` runs, the chain assigns it the signal `ref` produced in the
+same pass. Rules:
+
+* the source is tapped automatically — no need to list it in `taps`;
+* the source must run **before** the target; a backward edge raises,
+  because it would serve the previous run's value;
+* the wiring feeds *data*, not structure: the target's `__post_init__` is
+  not re-run (use `set_params` for parameters that need a re-precompute);
+* like taps, the edge is chain metadata — `module_list` is unchanged, and
+  `taps`/`wiring` are carried through the JSON export.
+
+This is the honest, bounded version of the `inputs` field of decision
+D31: a second input to a block, declared by the chain. A general DAG is
+still out of scope.
 * Statistics are functions too: `comnumpy.core.metrics.signal_report(x)`
   returns a dict; the caller decides whether to log it, tabulate it or
   assert on it.
