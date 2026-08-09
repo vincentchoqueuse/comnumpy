@@ -140,31 +140,36 @@ class Normalizer(Amplifier):
     measured over the whole array in ``prepare()``, then applied
     pointwise.
 
+    Unlike ``Amplifier``, the gain is *not* a parameter here: it is
+    measured, so it is exposed as ``gain_`` (decision D23) and the
+    inherited ``gain`` argument is removed from the constructor. The
+    first positional argument is therefore ``method``, which makes
+    ``Normalizer('max')`` mean what it reads.
+
     Parameters
     ----------
     method : {'amp', 'abs', 'var', 'max'}, optional
         Statistic used to derive the gain :math:`\alpha`. Default is
-        ``'amp'`` (constant gain). Pass it by keyword: the first
-        positional argument is ``gain``, inherited from ``Amplifier``.
+        ``'amp'`` (constant gain). It is the first positional argument.
     value : float, optional, keyword-only
         Target value :math:`v` of the selected statistic. Must be
         strictly positive. Default is 1.0.
-    axis : int or None, optional, keyword-only
-        Inherited from ``Amplifier``. Default is None.
     name : str, optional, keyword-only
         Name of the instance. Default is ``"signal_amplifier"``.
 
     Attributes
     ----------
-    gain : float
-        Gain :math:`\alpha` actually applied. Measured from the input in
-        ``prepare()`` for every method except ``'amp'``, hence
-        data-dependent (it is overwritten at each call).
+    gain_ : float
+        Gain :math:`\alpha` actually applied (data-dependent, hence the
+        trailing underscore, decision D23). Measured from the input in
+        ``prepare()`` for every method except ``'amp'``, and overwritten
+        at each call.
 
     Raises
     ------
     ValueError
-        If ``value`` is not strictly positive.
+        If ``value`` is not strictly positive, or if ``method`` is not
+        one of ``'amp'``, ``'abs'``, ``'var'``, ``'max'``.
 
     References
     ----------
@@ -175,20 +180,36 @@ class Normalizer(Amplifier):
     Examples
     --------
     >>> x = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> print(Normalizer(method='max', value=2.0)(x))
+    >>> print(Normalizer('max', value=2.0)(x))
     [0.5 1.  1.5 2. ]
     >>> y = Normalizer(method='var')(x)          # unit-variance output
     >>> print(np.round(y, 4), round(float(np.var(y)), 6))
     [0.8944 1.7889 2.6833 3.5777] 1.0
     """
+    METHODS = ('amp', 'abs', 'var', 'max')
+
     method: Literal['amp', 'abs', 'var', 'max'] = "amp"
     value: float = field(default=1., kw_only=True)
-    gain: float = 1
+    # the gain of Amplifier is configured, the one of Normalizer is
+    # measured: drop the inherited parameter (D23) so that the first
+    # positional argument is `method`
+    gain: float = field(init=False, repr=False, default_factory=lambda: 1.0)
+    # estimated quantity (D23), declared for slots (D40a)
+    gain_: float = field(init=False, repr=False, default_factory=lambda: 1.0)
 
     def __post_init__(self):
+        if self.method not in self.METHODS:
+            raise ValueError(
+                f"Normalizer: method={self.method!r}, expected one of "
+                f"{self.METHODS} -- pass the statistic as the first "
+                "positional argument, e.g. Normalizer('max', value=2.0); "
+                "the gain is measured, not configured.")
         if self.value <= 0:
-            raise ValueError("The value for normalization must be positive.")
-        self.gain = 1
+            raise ValueError(
+                f"Normalizer: value={self.value!r}, expected a strictly "
+                "positive target -- set value to the wanted amplitude, "
+                "power or variance.")
+        self.gain_ = 1.0
 
     def prepare(self, X):
         match self.method:
@@ -202,9 +223,18 @@ class Normalizer(Amplifier):
                 max_value = np.max([np.max(np.abs(np.real(X))), np.max(np.abs(np.imag(X)))])
                 gain = self.value / max_value
             case _:
-                gain = 1
+                # unreachable through __init__ (validated in __post_init__),
+                # reachable if `method` is reassigned after construction
+                raise ValueError(
+                    f"Normalizer: method={self.method!r}, expected one of "
+                    f"{self.METHODS} -- restore a valid statistic name.")
 
-        self.gain = gain
+        self.gain_ = gain
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        # Amplifier.forward reads the configured `gain`; the Normalizer
+        # applies the gain it measured in prepare() instead (D23).
+        return self.gain_ * X
 
 
 @dataclass(slots=True)
@@ -253,9 +283,10 @@ class BlindIQCompensator(Processor):
 
     Whitening only constrains the second-order statistics: the residual
     :math:`2 \times 2` rotation/reflection (and hence a possible I/Q swap
-    or sign flip) is left to a downstream phase compensator. An
-    alternative implementation based on the Gram-Schmidt orthogonalization
-    procedure (GSOP) is kept as a comment in the source.
+    or sign flip) is left to a downstream phase compensator. The
+    estimator is therefore *not* the Gram-Schmidt orthogonalization
+    procedure (GSOP) of Fatadin *et al.*, which whitens by successive
+    projection and keeps the in-phase axis fixed.
 
     Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
     :math:`2 \times 2` covariance is estimated over the whole record.
@@ -275,12 +306,14 @@ class BlindIQCompensator(Processor):
 
     Attributes
     ----------
-    alpha : complex
+    alpha_ : complex
         Estimated coefficient :math:`\alpha` applied to the in-phase
-        component (data-dependent; initialized to 1).
-    beta : complex
+        component (data-dependent, hence the trailing underscore,
+        decision D23; initialized to 1).
+    beta_ : complex
         Estimated coefficient :math:`\beta` applied to the quadrature
-        component (data-dependent; initialized to 0).
+        component (data-dependent, hence the trailing underscore,
+        decision D23; initialized to 0).
 
     References
     ----------
@@ -306,13 +339,13 @@ class BlindIQCompensator(Processor):
     should_fit: bool = True
     coef: float = field(default=1, kw_only=True)
     name: str = field(default="iq_compensator", kw_only=True)
-    # internal state (declared for slots, D40a)
-    alpha: complex = field(init=False, repr=False, default_factory=lambda: 1)
-    beta: complex = field(init=False, repr=False, default_factory=lambda: 0)
+    # estimated quantities (D23), declared for slots (D40a)
+    alpha_: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    beta_: complex = field(init=False, repr=False, default_factory=lambda: 0)
 
     def __post_init__(self):
-        self.alpha = 1
-        self.beta = 0
+        self.alpha_ = 1
+        self.beta_ = 0
 
     def fit(self, x):
         N = len(x)
@@ -328,28 +361,8 @@ class BlindIQCompensator(Processor):
         D = np.diag(1/np.sqrt(V))
         M = np.matmul(D, np.transpose(U))
 
-        self.alpha = M[0, 0] + 1j * M[1, 0]
-        self.beta = M[0, 1] + 1j * M[1, 1]
-
-    """
-    def fit(self, x: np.ndarray) -> np.ndarray:
-        # implementation of the gram schmit orthogonalization
-        # Reference
-        # ---------
-        # * [1] I. Fatadin, S. J. Savory and D. Ives,  "Compensation of Quadrature Imbalance in an Optical QPSK Coherent Receiver,"
-        # in IEEE Photonics Technology Letters, vol. 20, no. 20, pp. 1733-1735, Oct.15, 2008, doi: 10.1109/LPT.2008.2004630.
-        x_r = np.real(x)
-        r_11 = np.mean(x_r**2)
-        y_r = x_r / np.sqrt(r_11)
-
-        x_i = np.imag(x)
-        r_12 = np.mean(x_r * x_i)
-        x_ii = x_i - r_12*x_r/r_11
-        r_22 = np.mean(x_ii**2)
-        y_i = x_ii / np.sqrt(r_22)
-        y = y_r + 1j*y_i
-        return y
-    """
+        self.alpha_ = M[0, 0] + 1j * M[1, 0]
+        self.beta_ = M[0, 1] + 1j * M[1, 1]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
@@ -357,7 +370,7 @@ class BlindIQCompensator(Processor):
             self.fit(x)
 
         coef = np.sqrt(self.coef/2)
-        y = coef*(self.alpha * x.real + self.beta * x.imag)
+        y = coef*(self.alpha_ * x.real + self.beta_ * x.imag)
         return y
 
 
@@ -426,12 +439,19 @@ class BlindCFOCompensator(Processor):
 
     Attributes
     ----------
-    w0 : float
+    w0_ : float
         Estimated frequency offset :math:`\widehat{\omega}_0` in
-        rad/sample (data-dependent; None before the first ``fit``).
+        rad/sample (data-dependent, hence the trailing underscore,
+        decision D23; None before the first ``fit``).
     history : list
         Successive iterates of :math:`\omega_0` when
         ``save_history=True``.
+
+    Raises
+    ------
+    NotFittedError
+        If ``forward`` is called with ``should_fit=False`` before any
+        ``fit`` (decision D23).
 
     References
     ----------
@@ -454,7 +474,7 @@ class BlindCFOCompensator(Processor):
     >>> x = s * np.exp(1j * 0.01 * np.arange(500))   # omega_0 = 0.01 rad/sample
     >>> compensator = BlindCFOCompensator()
     >>> y = compensator(x)
-    >>> print(round(float(compensator.w0), 5))
+    >>> print(round(float(compensator.w0_), 5))
     0.01
     """
     w0_init: float = 0.0
@@ -469,7 +489,8 @@ class BlindCFOCompensator(Processor):
     # internal state (declared for slots, D40a)
     grid_search_array: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     history: list = field(init=False, repr=False, default_factory=list)
-    w0: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated quantity (D23), declared for slots (D40a)
+    w0_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.grid_search_array = np.arange(self.grid_search_tuple[0], self.grid_search_tuple[1], self.grid_search_tuple[2])
@@ -528,7 +549,7 @@ class BlindCFOCompensator(Processor):
             w = w + h
             self.callback(4*w)
 
-        self.w0 = np.real(w)/4
+        self.w0_ = np.real(w)/4
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         N = len(x)
@@ -536,8 +557,12 @@ class BlindCFOCompensator(Processor):
 
         if self.should_fit:
             self.fit(x, self.w0_init)
+        elif self.w0_ is None:
+            raise NotFittedError(
+                "BlindCFOCompensator: forward called with should_fit=False "
+                "but fit() was never called -- call fit(x, w0_init) first.")
 
-        x = x*np.exp(-1j*self.w0*N_vect)
+        x = x*np.exp(-1j*self.w0_*N_vect)
         return x
 
 
@@ -784,10 +809,6 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    h : np.ndarray
-        Impulse response :math:`h[l]`. Used as the initial value and
-        overwritten by ``fit`` with the estimate
-        :math:`\widehat{\mathbf{h}}`.
     reference : np.ndarray
         Known reference :math:`d[n]`. When the reference is produced by
         the chain itself, declare the edge with
@@ -795,9 +816,24 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
         instead of freezing an array.
     should_fit : bool, optional, keyword-only
         If True (default), the channel is re-estimated at every call
-        (per-block regime, D22); otherwise the current ``h`` is reused.
+        (per-block regime, D22); otherwise the estimate of the last
+        ``fit`` is reused.
     name : str, optional, keyword-only
         Name of the processor. Default is ``"data_aided_fir"``.
+
+    Attributes
+    ----------
+    h_ : np.ndarray
+        Estimated impulse response :math:`\widehat{\mathbf{h}}`
+        (data-dependent, hence the trailing underscore, decision D23).
+        The response is never configured here: use
+        ``LinearEqualizer(h)`` when it is already known.
+
+    Raises
+    ------
+    NotFittedError
+        If ``forward`` is called with ``should_fit=False`` before any
+        ``fit`` (decision D23).
 
     References
     ----------
@@ -809,30 +845,38 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
     --------
     >>> x_ref = np.array([1.0, -1.0, 1.0, 1.0])
     >>> received = np.convolve(x_ref, [1.0, 0.5])[:4]
-    >>> compensator = DataAidedFIRCompensator(np.array([1.0]), reference=x_ref)
+    >>> compensator = DataAidedFIRCompensator(reference=x_ref)
     >>> print(np.round(compensator(received), 6))
     [ 1. -1.  1.  1.]
+    >>> print(np.round(compensator.h_, 6))
+    [1.  0.5 0.  0. ]
     """
 
-    h: np.array
     reference: np.ndarray
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="data_aided_fir", kw_only=True)
+    # estimated quantity (D23), declared for slots (D40a)
+    h_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def fit(self, x, y=None):
         if y is None:
             y = self.get_reference()
         L = len(x)
         H = toeplitz(y, np.zeros(L))
-        self.h = np.matmul(LA.pinv(H), x)
+        self.h_ = np.matmul(LA.pinv(H), x)
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.should_fit:
             self.fit(x)
+        elif self.h_ is None:
+            raise NotFittedError(
+                "DataAidedFIRCompensator: forward called with "
+                "should_fit=False but fit() was never called -- call "
+                "fit(x) first.")
 
-        L = len(self.h)
-        y, _ = signal.deconvolve(np.hstack([x, np.zeros(L-1)]), self.h)
+        L = len(self.h_)
+        y, _ = signal.deconvolve(np.hstack([x, np.zeros(L-1)]), self.h_)
         return y
 
 
@@ -1045,24 +1089,27 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         x[n] = a \, d[n - m_0] + b[n]
 
     The delay is obtained from the peak of the cross-correlation between
-    the input and the preamble, normalized by the preamble length:
+    the input and the preamble, normalized by the preamble energy:
 
     .. math::
 
-        c[m] = \frac{1}{N_d} \sum_{n} x[n+m] \, d^*[n], \qquad
+        c[m] = \frac{\sum_{n} x[n+m] \, d^*[n]}{\sum_{n} |d[n]|^2},
+        \qquad
         \widehat{m}_0 = \arg \max_{m} \left| c[m] \right|^2
 
+    That normalization makes the peak a least-squares estimate of the
+    channel gain itself, :math:`\widehat{a} = c[\widehat{m}_0] \simeq a`.
     The output realigns the record on the preamble and, when
-    ``scale_correction`` is enabled, rescales it by the complex peak
-    :math:`\widehat{a} = c[\widehat{m}_0]`:
+    ``scale_correction`` is enabled, *divides* it by that gain, so that
+    the block restores the transmitted signal instead of returning a
+    doubly-distorted copy of it:
 
     .. math::
 
-        y[n] = \widehat{a} \, x[n + \widehat{m}_0]
+        y[n] = \frac{x[n + \widehat{m}_0]}{\widehat{a}}
 
-    For a unit-power preamble (:math:`\frac{1}{N_d}\sum_n |d[n]|^2 = 1`)
-    and a unit channel gain, :math:`\widehat{a} = 1` and the block is a
-    pure realignment.
+    For a unit channel gain (:math:`a = 1`), :math:`\widehat{a} = 1` and
+    the block is a pure realignment, whatever the preamble power.
 
     Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
     output length depends on the estimated delay and on ``signal_len``.
@@ -1075,7 +1122,7 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         ``Sequential(wiring={"synchronizer.reference": "source"})``
         instead of freezing an array.
     scale_correction : bool, optional
-        If True (default), the output is multiplied by the complex peak
+        If True (default), the output is divided by the complex peak
         :math:`\widehat{a}`; otherwise only the delay is corrected.
     save_cross_correlation : bool, optional, keyword-only
         If True (default), stores :math:`c[m]` and its lag axis for
@@ -1088,16 +1135,23 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
 
     Attributes
     ----------
-    delay : int
-        Estimated delay :math:`\widehat{m}_0` in samples (data-dependent;
-        re-estimated at every call).
-    scale : complex
-        Correlation peak :math:`\widehat{a} = c[\widehat{m}_0]`, or 1
+    delay_ : int
+        Estimated delay :math:`\widehat{m}_0` in samples (data-dependent,
+        hence the trailing underscore, decision D23; re-estimated at
+        every call).
+    scale_ : complex
+        Compensation gain :math:`1/\widehat{a}` actually applied, or 1
         when ``scale_correction`` is False.
-    cross_corr : np.ndarray
-        Full cross-correlation :math:`c[m]` (when saved).
-    n_vect : np.ndarray
-        Lag axis :math:`m` associated with ``cross_corr``.
+    cross_corr_ : np.ndarray
+        Full normalized cross-correlation :math:`c[m]` (when saved).
+    n_vect_ : np.ndarray
+        Lag axis :math:`m` associated with ``cross_corr_``.
+
+    Raises
+    ------
+    ValueError
+        If the reference has zero energy, which makes the normalized
+        correlation undefined.
 
     References
     ----------
@@ -1107,13 +1161,15 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
 
     Examples
     --------
-    >>> d = np.array([1.0, -1.0, 1.0, 1.0])       # unit-power preamble
+    >>> d = np.array([1.0, -1.0, 1.0, 1.0])
     >>> x = np.hstack([np.zeros(2), d, [1.0, -1.0]])   # delayed by 2 samples
     >>> synchronizer = DataAidedSimpleSynchronizer(d)
     >>> y = synchronizer(x)
-    >>> print(synchronizer.delay, round(float(synchronizer.scale), 6))
+    >>> print(synchronizer.delay_, round(float(synchronizer.scale_), 6))
     2 1.0
     >>> print(y)
+    [ 1. -1.  1.  1.  1. -1.]
+    >>> print(np.round(DataAidedSimpleSynchronizer(d)(0.5 * x), 6))   # 6 dB attenuation
     [ 1. -1.  1.  1.  1. -1.]
     """
     reference: np.ndarray
@@ -1121,17 +1177,19 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="synchronizer", kw_only=True)
-    # internal state (declared for slots, D40a)
-    delay: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
-    scale: complex = field(init=False, repr=False, default_factory=lambda: 1)
-    cross_corr: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
-    n_vect: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated quantities (D23), declared for slots (D40a)
+    delay_: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
+    scale_: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    cross_corr_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    n_vect_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
-        self.delay = None
-        self.scale = 1
-        self.cross_corr = None
-        self.n_vect = None
+        # explicit parent call: zero-arg super() breaks with slots=True
+        DataAidedMixin.__post_init__(self)
+        self.delay_ = None
+        self.scale_ = 1
+        self.cross_corr_ = None
+        self.n_vect_ = None
 
     def fit(self, x, y=None):
         if y is None:
@@ -1143,9 +1201,16 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         x_preamble_padded = np.zeros(N, dtype=x.dtype)
         x_preamble_padded[:N_preamble] = x_preamble
 
-        # compute cross correlation
+        # compute the cross correlation, normalized by the preamble
+        # energy so that its peak estimates the channel gain a itself
+        energy = float(np.sum(np.abs(x_preamble)**2))
+        if energy == 0:
+            raise ValueError(
+                "DataAidedSimpleSynchronizer: reference energy is 0, "
+                "expected a non-zero preamble -- pass the transmitted "
+                "preamble as reference.")
         cross_corr = np.correlate(x, x_preamble_padded, mode='full')
-        cross_corr *= (1/N_preamble)
+        cross_corr = cross_corr / energy
         n_vect = np.arange(len(cross_corr)) - (N - 1)
 
         # Find the time delay: the index of the maximum cross-correlation
@@ -1153,20 +1218,21 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay = n_vect[index_max]
+        self.delay_ = n_vect[index_max]
         if self.scale_correction:
-            self.scale = value_max
+            # compensation gain: the inverse of the estimated channel gain
+            self.scale_ = 1/value_max
 
         # save correlation if needed
         if self.save_cross_correlation:
-            self.cross_corr = cross_corr
-            self.n_vect = n_vect
+            self.cross_corr_ = cross_corr
+            self.n_vect_ = n_vect
 
     def plot(self, ax=None):
         import matplotlib.pyplot as plt  # local import (D36)
         if ax is None:
             _, ax = plt.subplots()
-        ax.plot(self.n_vect, np.abs(self.cross_corr))
+        ax.plot(self.n_vect_, np.abs(self.cross_corr_))
         ax.set_title('Cross-correlation magnitude')
         ax.set_xlabel('Lag')
         ax.set_ylabel('Magnitude')
@@ -1176,9 +1242,9 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.fit(x)
         if self.signal_len:
-            y = self.scale*x[self.delay:self.delay+self.signal_len]
+            y = self.scale_*x[self.delay_:self.delay_+self.signal_len]
         else:
-            y = self.scale*x[self.delay:]
+            y = self.scale_*x[self.delay_:]
         return y
 
 
@@ -1203,19 +1269,22 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
     .. math::
 
-        c[m] = \frac{1}{U N_d} \sum_{n} x_{\uparrow}[n+m] \,
-        d_{\uparrow}^*[n], \qquad
+        c[m] = \frac{\sum_{n} x_{\uparrow}[n+m] \,
+        d_{\uparrow}^*[n]}{\sum_{n} |d_{\uparrow}[n]|^2}, \qquad
         \widehat{m}_0 = \max\left(0,\;
         \arg \max_{m} \left| c[m] \right|^2 \right)
 
-    The upsampled record is realigned on that grid, decimated back by
-    :math:`U`, and optionally rescaled by the complex peak
-    :math:`\widehat{a} = c[\widehat{m}_0]`:
+    As in ``DataAidedSimpleSynchronizer``, the normalization by the
+    preamble energy makes the peak an estimate of the channel gain,
+    :math:`\widehat{a} = c[\widehat{m}_0] \simeq a`. The upsampled record
+    is realigned on that grid, decimated back by :math:`U`, and
+    optionally *divided* by that gain:
 
     .. math::
 
         \widehat{\tau}_0 = \frac{\widehat{m}_0}{U} T, \qquad
-        y[n] = \widehat{a} \, x_{\uparrow}\!\left[U n + \widehat{m}_0\right]
+        y[n] = \frac{x_{\uparrow}\!\left[U n + \widehat{m}_0\right]}
+                    {\widehat{a}}
 
     Negative lags are clamped to zero, so the block only corrects
     non-negative delays.
@@ -1250,16 +1319,24 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
     Attributes
     ----------
-    delay : int
+    delay_ : int
         Estimated delay :math:`\widehat{m}_0`, expressed in *upsampled*
-        samples (divide by ``up_factor`` to get it in symbol periods).
-    scale : complex
-        Correlation peak :math:`\widehat{a} = c[\widehat{m}_0]`, or 1
+        samples (data-dependent, hence the trailing underscore, decision
+        D23; divide by ``up_factor`` to get it in symbol periods).
+    scale_ : complex
+        Compensation gain :math:`1/\widehat{a}` actually applied, or 1
         when ``scale_correction`` is False.
-    cross_corr : np.ndarray
-        Full cross-correlation :math:`c[m]` on the upsampled grid.
-    n_vect : np.ndarray
-        Lag axis :math:`m` associated with ``cross_corr``.
+    cross_corr_ : np.ndarray
+        Full normalized cross-correlation :math:`c[m]` on the upsampled
+        grid.
+    n_vect_ : np.ndarray
+        Lag axis :math:`m` associated with ``cross_corr_``.
+
+    Raises
+    ------
+    ValueError
+        If the reference has zero energy, which makes the normalized
+        correlation undefined.
 
     References
     ----------
@@ -1275,7 +1352,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
     >>> x = np.hstack([np.zeros(3), d, np.zeros(3)])   # delayed by 3 samples
     >>> synchronizer = DataAidedFineSynchronizer(d, up_factor=2, signal_len=4)
     >>> y = synchronizer(x)
-    >>> print(synchronizer.delay, synchronizer.delay / synchronizer.up_factor, y.shape)
+    >>> print(synchronizer.delay_, synchronizer.delay_ / synchronizer.up_factor, y.shape)
     6 3.0 (4,)
     """
     reference: np.ndarray
@@ -1285,17 +1362,19 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
     signal_len: Optional[int] = field(default=None, kw_only=True)
     d_max: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="synchronizer", kw_only=True)
-    # internal state (declared for slots, D40a)
-    delay: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
-    scale: complex = field(init=False, repr=False, default_factory=lambda: 1)
-    cross_corr: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
-    n_vect: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated quantities (D23), declared for slots (D40a)
+    delay_: Optional[int] = field(init=False, repr=False, default_factory=lambda: None)
+    scale_: complex = field(init=False, repr=False, default_factory=lambda: 1)
+    cross_corr_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    n_vect_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
-        self.delay = None
-        self.scale = 1
-        self.cross_corr = None
-        self.n_vect = None
+        # explicit parent call: zero-arg super() breaks with slots=True
+        DataAidedMixin.__post_init__(self)
+        self.delay_ = None
+        self.scale_ = 1
+        self.cross_corr_ = None
+        self.n_vect_ = None
 
     def fit(self, x, y=None):
         if y is None:
@@ -1306,9 +1385,16 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         x_preamble_padded = np.zeros(N, dtype=x.dtype)
         x_preamble_padded[:N_preamble] = x_preamble
 
-        # compute cross correlation
+        # compute the cross correlation, normalized by the preamble
+        # energy so that its peak estimates the channel gain a itself
+        energy = float(np.sum(np.abs(x_preamble)**2))
+        if energy == 0:
+            raise ValueError(
+                "DataAidedFineSynchronizer: reference energy is 0, "
+                "expected a non-zero preamble -- pass the transmitted "
+                "preamble as reference.")
         cross_corr = np.correlate(x,  x_preamble_padded, mode='full')
-        cross_corr *= (1/N_preamble)
+        cross_corr = cross_corr / energy
         n_vect = np.arange(len(cross_corr)) - (N - 1)
 
         # Find the time delay: the index of the maximum cross-correlation
@@ -1316,28 +1402,26 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay = n_vect[index_max]
-        # print(self.delay)
-        self.delay = np.max([self.delay, 0])
+        self.delay_ = np.max([n_vect[index_max], 0])
         if self.scale_correction:
-            self.scale = value_max
+            # compensation gain: the inverse of the estimated channel gain
+            self.scale_ = 1/value_max
 
         # save correlation if needed
         if self.save_cross_correlation:
-            self.cross_corr = cross_corr
-            self.n_vect = n_vect
+            self.cross_corr_ = cross_corr
+            self.n_vect_ = n_vect
 
     def plot(self, ax=None):
         import matplotlib.pyplot as plt  # local import (D36)
         if ax is None:
             _, ax = plt.subplots()
-        ax.plot(self.n_vect, np.abs(self.cross_corr))
+        ax.plot(self.n_vect_, np.abs(self.cross_corr_))
         ax.set_title('Cross-correlation magnitude')
         ax.set_xlabel('Lag')
         ax.set_ylabel('Magnitude')
         ax.grid(True)
         return ax
-
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         x_preamble = self.get_reference()
@@ -1353,11 +1437,11 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
         self.fit(x_up[:Nmax], x_preamble_up)
 
-        y_up = x_up[self.delay:]
+        y_up = x_up[self.delay_:]
         # downsampling
         y = signal.resample_poly(y_up, 1, self.up_factor)
 
-        y = self.scale*y
+        y = self.scale_*y
         if self.signal_len:
             y = y[:self.signal_len]
 
