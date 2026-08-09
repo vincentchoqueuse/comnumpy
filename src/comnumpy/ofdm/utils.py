@@ -1,10 +1,22 @@
+from __future__ import annotations
+
 import warnings
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Sequence,
+                    Tuple)
 
 import numpy as np
 from comnumpy._backend import fftshift  # cupy-compatible (D3)
 
+if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
+    from matplotlib.axes import Axes
 
-def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False):
+# [N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index]
+_ConfigEntry = Tuple[int, int, int, int, List[int]]
+
+
+def get_standard_carrier_allocation(config_name: str, os: int = 1,
+                                    custom: Optional[Sequence[Any]] = None,
+                                    shift: bool = False) -> np.ndarray:
     """
     Allocate subcarriers based on a specified OFDM configuration.
 
@@ -51,41 +63,63 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
         "comnumpy.ofdm.allocation.get_allocation instead",
         DeprecationWarning, stacklevel=2)
 
-    ofdm_config_dict = {
-        'IQtools_128': [128, 3, 6, 5, [16, 28, 40, 52, 76, 88, 100, 112]],
-        '802.11ah_32': [32, 1, 3, 2, [9, 23]],
-        '802.11ah_64': [64, 1, 4, 3, [11, 25, 39, 53]],
-        '802.11ah_128': [128, 3, 6, 5, [11, 39, 53, 75, 89, 117]],
-        '802.11ah_256': [256, 3, 6, 5, [25, 53, 89, 117, 139, 167, 203, 231]],
-        '802.11ah_512': [512, 11, 6, 5, [25, 53, 89, 117, 139, 167, 203, 231, 281, 309, 345, 373, 395, 423, 459, 487]],
-        'NoPilot_16': [16, 3, 6, 5, []],
-        'NoPilot_32': [32, 3, 6, 5, []],
-        'NoPilot_64': [64, 3, 6, 5, []],
-        'NoPilot_128': [128, 3, 6, 5, []],
-        'NoPilot_256': [256, 3, 6, 5, []],
-        'NoPilot_512': [512, 3, 6, 5, []],
-        'NoPilot_1024': [1024, 3, 6, 5, []],
-        'NoPilot_2048': [2048, 3, 6, 5, []],
-        'NoPilot_4096': [4096, 3, 6, 5, []],
-        'NoPilot_8192': [8192, 3, 6, 5, []],
-        'NoPilot_16384': [16384, 3, 6, 5, []],
-        'NoPilot_Full_16': [16, 0, 0, 0, []],
-        'NoPilot_Full_32': [32, 0, 0, 0, []],
-        'NoPilot_Full_64': [64, 0, 0, 0, []],
-        'NoPilot_Full_128': [128, 0, 0, 0, []],
-        'NoPilot_Full_256': [256, 0, 0, 0, []],
-        'NoPilot_Full_512': [512, 0, 0, 0, []],
-        'NoPilot_Full_1024': [1024, 0, 0, 0, []],
-        'NoPilot_Full_2048': [2048, 0, 0, 0, []],
-        'NoPilot_Full_4096': [4096, 0, 0, 0, []],
-        'NoPilot_Full_8192': [8192, 0, 0, 0, []],
-        'NoPilot_Full_16384': [16384, 0, 0, 0, []]
+    ofdm_config_dict: Dict[str, _ConfigEntry] = {
+        'IQtools_128': (128, 3, 6, 5, [16, 28, 40, 52, 76, 88, 100, 112]),
+        '802.11ah_32': (32, 1, 3, 2, [9, 23]),
+        '802.11ah_64': (64, 1, 4, 3, [11, 25, 39, 53]),
+        '802.11ah_128': (128, 3, 6, 5, [11, 39, 53, 75, 89, 117]),
+        '802.11ah_256': (256, 3, 6, 5, [25, 53, 89, 117, 139, 167, 203, 231]),
+        '802.11ah_512': (512, 11, 6, 5, [25, 53, 89, 117, 139, 167, 203, 231, 281, 309, 345, 373, 395, 423, 459, 487]),
+        'NoPilot_16': (16, 3, 6, 5, []),
+        'NoPilot_32': (32, 3, 6, 5, []),
+        'NoPilot_64': (64, 3, 6, 5, []),
+        'NoPilot_128': (128, 3, 6, 5, []),
+        'NoPilot_256': (256, 3, 6, 5, []),
+        'NoPilot_512': (512, 3, 6, 5, []),
+        'NoPilot_1024': (1024, 3, 6, 5, []),
+        'NoPilot_2048': (2048, 3, 6, 5, []),
+        'NoPilot_4096': (4096, 3, 6, 5, []),
+        'NoPilot_8192': (8192, 3, 6, 5, []),
+        'NoPilot_16384': (16384, 3, 6, 5, []),
+        'NoPilot_Full_16': (16, 0, 0, 0, []),
+        'NoPilot_Full_32': (32, 0, 0, 0, []),
+        'NoPilot_Full_64': (64, 0, 0, 0, []),
+        'NoPilot_Full_128': (128, 0, 0, 0, []),
+        'NoPilot_Full_256': (256, 0, 0, 0, []),
+        'NoPilot_Full_512': (512, 0, 0, 0, []),
+        'NoPilot_Full_1024': (1024, 0, 0, 0, []),
+        'NoPilot_Full_2048': (2048, 0, 0, 0, []),
+        'NoPilot_Full_4096': (4096, 0, 0, 0, []),
+        'NoPilot_Full_8192': (8192, 0, 0, 0, []),
+        'NoPilot_Full_16384': (16384, 0, 0, 0, [])
     }
 
+    entry: _ConfigEntry
     if config_name == "Custom":
-        N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index = custom
+        # custom= defaults to None, and unpacking it used to raise a bare
+        # "cannot unpack non-iterable NoneType" three frames deep (D38)
+        if custom is None:
+            raise ValueError(
+                "config_name='Custom' requires custom=, got None; expected a "
+                "sequence [N, N_nulled_DC, N_nulled_left, N_nulled_right, "
+                "pilot_index]; either pass it or name a standard "
+                f"configuration among {sorted(ofdm_config_dict)}")
+        if len(custom) != 5:
+            raise ValueError(
+                f"custom= has {len(custom)} entries, expected 5 "
+                f"[N, N_nulled_DC, N_nulled_left, N_nulled_right, "
+                f"pilot_index]; pass an empty list as the last entry for a "
+                f"configuration without pilots")
+        entry = (int(custom[0]), int(custom[1]), int(custom[2]),
+                 int(custom[3]), list(custom[4]))
     else:
-        N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index = ofdm_config_dict[config_name]
+        if config_name not in ofdm_config_dict:
+            raise KeyError(
+                f"unknown configuration {config_name!r}, expected one of "
+                f"{sorted(ofdm_config_dict)} or 'Custom' with custom=")
+        entry = ofdm_config_dict[config_name]
+
+    N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index = entry
 
     oversampled_nulled_subcarriers = N * (os - 1)
     N_oversampled = N + oversampled_nulled_subcarriers
@@ -95,7 +129,10 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     end_index = start_index + N
 
     carrier_type[start_index:end_index] = 1
-    carrier_type[start_index + np.array(pilot_index)] = 2
+    # dtype=int: an empty pilot list gives a float64 array, which numpy
+    # refuses as an index -- that made every NoPilot_* configuration raise
+    pilots = np.asarray(pilot_index, dtype=int)
+    carrier_type[start_index + pilots] = 2
     carrier_type[start_index:start_index + N_nulled_left] = 0
     carrier_type[end_index - N_nulled_right:end_index] = 0
 
@@ -111,7 +148,12 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     return carrier_type
 
 
-def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=None, shift=False, title="Carrier allocation"):
+def plot_carrier_allocation(carrier_type: np.ndarray,
+                            ax: Optional["Axes"] = None,
+                            color_list: Optional[List[str]] = None,
+                            label_list: Optional[List[str]] = None,
+                            shift: bool = False,
+                            title: str = "Carrier allocation") -> "Axes":
     """
     Plot the allocation of subcarriers based on their types.
 

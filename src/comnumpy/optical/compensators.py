@@ -5,7 +5,7 @@ from scipy import signal
 from scipy.linalg import toeplitz
 from scipy import special
 from dataclasses import dataclass, field
-from typing import ClassVar, List
+from typing import ClassVar, List, Optional
 from .utils import compute_beta2
 from .constants import WAVELENGTH, CD_COEFFICIENT, SPEED_OF_LIGHT
 
@@ -115,10 +115,10 @@ class ChromaticDispersionFIRCompensator(Processor):
     fs: float = field(default=1.0, kw_only=True)
     name: str = field(default="fir cd compensator", kw_only=True)
     # internal state (declared for slots, D40a)
-    h: np.ndarray = field(init=False, repr=False, default_factory=lambda: None)
-    K: float = field(init=False, repr=False, default_factory=lambda: None)
+    h: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    K: Optional[float] = field(init=False, repr=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         beta2_ps2_per_km = compute_beta2(self.lamb, self.D, self.c)
         beta2 = ((10**-12)**2)*beta2_ps2_per_km  # convert into s^2/km
         K = - beta2 * self.z * (self.fs**2) / 2
@@ -134,7 +134,7 @@ class ChromaticDispersionFIRCompensator(Processor):
         return y
 
 
-def _cd_gram_matrix(N, Omega_1, Omega_2):
+def _cd_gram_matrix(N: int, Omega_1: float, Omega_2: float) -> np.ndarray:
     r"""Hermitian Toeplitz Gram matrix of the delays over a design band.
 
     Returns the :math:`N \times N` matrix :math:`Q_{m,l} = q(l - m)` with
@@ -177,7 +177,8 @@ def _cd_gram_matrix(N, Omega_1, Omega_2):
     return toeplitz(np.conj(q_row), q_row)
 
 
-def _cd_cross_correlation(K, N, Omega_1, Omega_2):
+def _cd_cross_correlation(K: float, N: int, Omega_1: float,
+                          Omega_2: float) -> np.ndarray:
     r"""Cross-correlation between the target all-pass and the delays.
 
     Returns the vector, for :math:`|n| \le (N-1)/2`,
@@ -394,10 +395,10 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     w_vect: List[float] = field(default_factory=lambda: [-np.pi, np.pi], kw_only=True)
     name: str = field(default="optimal", kw_only=True)
     # internal state (declared for slots, D40a)
-    h: np.ndarray = field(init=False, repr=False, default_factory=lambda: None)
-    K: float = field(init=False, repr=False, default_factory=lambda: None)
+    h: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    K: Optional[float] = field(init=False, repr=False, default=None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.N % 2 == 0:
             raise ValueError(f"The value of N must be odd (current={self.N})")
         if len(self.w_vect) != 2:
