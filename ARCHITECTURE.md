@@ -760,6 +760,29 @@ normalisation casse l'un des trois.
 
 ---
 
+### 4.14 Amplification Raman distribuée (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D45 | **Le Raman se découpe en trois objets, selon ce dont chaque grandeur est une propriété.** (a) `RamanGainSpectrum` porte la **forme** normalisée du gain contre le décalage Stokes, gelée, avec `standard`/`reference`, registre et **auto-contrôle D20** — quatrième instance du motif D15/D43, appliqué à l'axe des décalages Raman. Deux paramétrages mutuellement exclusifs à la D41 (`lorentzian=(tau1, tau2)` ou `triangular=peak_THz`), aucun argument discriminant. (b) Le coefficient crête `g_R/A_eff` **n'y est pas** : c'est une propriété de la *fibre*, pas du verre — SMF, DCF et NZDSF diffèrent d'un grand facteur par l'aire effective et le dopage — donc c'est un argument du solveur, à côté des pertes. (c) `solve_raman()` intègre les équations couplées de puissance : **problème à valeur initiale** (`solve_ivp`) quand seule la pompe co-propagative est allumée, **problème aux limites** (`solve_bvp`) sinon, avec les profils non dépletés comme germe. (d) **Aucun `Processor`** : le Raman vit dans le domaine des puissances, le SSFM dans celui du champ ; ce qui sort est le profil `G(z)`, destiné au pas linéaire de `FiberLink`. (e) La direction n'est **pas** un paramètre : `pump_forward_W` / `pump_backward_W` — quelles pompes sont allumées *est* la configuration | Un bloc appliquant un gain forfaitaire en fin de span décrirait un amplificateur **discret**, c'est-à-dire la seule chose que l'amplification distribuée n'est pas : tout son intérêt est **où** le gain a lieu, ce qui change l'accumulation de bruit et la pénalité non linéaire, pas seulement la puissance de sortie. La mesure le montre — à 500 mW le co-pompage a délivré plus de 70 % de son gain à mi-span, le contra-pompage moins de 30 %. **Ce qui rend le module acceptable sous D7, c'est qu'il se vérifie sur cinq références dont trois couvrent le régime dépleté.** La plus forte est la **solution exacte du cas simple** : sans pertes, la conservation du nombre de photons élimine la pompe et il reste une **équation logistique**, dont la solution fermée vaut sous déplétion *arbitraire* — et avec des pertes **égales** la même solution tient en longueur effective, la substitution `Q = P e^{alpha z}` ramenant le couple au cas sans pertes. Elle épingle **tout le profil**, pas un chiffre de sortie : écart mesuré **4,0e−11** sans pertes et **3,4e−11** à pertes égales, avec la pompe consommée à 100 %. La forme fermée non dépletée `exp(g P_p L_eff)`, elle, est exacte mais muette dès que le signal mange la pompe : la forme fermée non dépletée `exp(g P_p L_eff)` est exacte mais muette dès que le signal mange la pompe, or c'est précisément là qu'un solveur numérique peut être faux et paraître juste. La **conservation du nombre de photons** `P_s/nu_s + P_p/nu_p` en limite sans pertes tient sous déplétion arbitraire : mesurée à **2,9e−15** avec la pompe dépletée de plus de 20 %, et c'est elle qui attrape un facteur `nu_p/nu_s` erroné, que le contrôle non déplété ne voit pas du tout. S'ajoutent la convergence des trois schémas vers la forme fermée à faible pompe (0,0007 à 0,0069 dB) et l'écart contra−co qui s'ouvre **monotonement** de 0,0061 dB à 50 mW jusqu'à 2,93 dB à 1 W — non trivial, et une erreur de signe sur le retournement de direction le casse. Sur les modèles de spectre : Blow–Wood place le pic à **13,08 THz** contre 13,2 publiés (1 %), ce que l'auto-contrôle épingle, mais donne une largeur à mi-hauteur de **9,55 THz** là où la silice mesurée fait 5 à 6 — 70 % trop large. C'est écrit, pas caché, et un test l'épingle pour que personne ne « corrige » la largeur en bougeant les constantes de temps, ce qui casserait le pic que la source, elle, spécifie. Le fit multi-lorentzien qui reproduirait la forme **n'est pas livré** : ses coefficients n'ont pas été transcrits depuis leur source, et les inventer serait exactement la faute que P3 interdit | Un `Processor` Raman appliquant un gain forfaitaire (décrit un ampli discret, faux pour du distribué, et masquerait que le profil `G(z)` est le vrai livrable) ; un paramètre `direction="co"/"counter"` (redondant avec les puissances de pompe, donc contradictoire dès qu'on se trompe — même faute que le couple `value`/`unit` de D41) ; `solve_bvp` uniformément, y compris en co-pompage (le cas co est un IVP exact qui ne peut pas ne pas converger ; le résoudre en BVP ajoute un risque pour rien — les deux chemins sont comparés dans le script de validation, à 1,4e−6 dB) ; germe plat pour le BVP (diverge dès que la déplétion est notable ; le profil non déplété converge jusqu'à 1 W) ; retourner un maillage non convergé (il ressemble exactement à un résultat plausible — `status != 0` lève, message D38) ; mettre `g_R` crête dans le spectre (fige une fibre dans un objet qui décrit le verre) | **Acté** |
+
+**Ce que la première passe ne fait pas.** Le crochet `G(z)` dans le pas
+linéaire de `FiberLink` est remis à une passe suivante, ainsi que le
+Raman multi-pompe et le tilt inter-canaux d'un peigne WDM — ce dernier
+demande le spectre de gain complet, donc le fit multi-lorentzien, donc
+une transcription sourcée. Le modèle triangulaire est livré parce qu'il
+est la base analytique de ce tilt, et sa validité est bornée dans sa
+docstring : c'est une pente, pas un spectre.
+
+**Un résultat que la mesure a tranché.** Le co-pompage donne le
+**meilleur** facteur de bruit — 6,78 dB contre 14,83 à 500 mW — parce
+que le gain est délivré tant que le signal est encore fort. Le
+contra-pompage reste préféré en pratique pour une raison que ce modèle
+de puissances ne porte pas : le transfert de RIN de la pompe. C'est dit
+dans la docstring plutôt que laissé à l'intuition du lecteur.
+
+---
+
 ## 5. API d'allocation (résumé normatif)
 
 ```python

@@ -54,6 +54,7 @@ CONVERTED_MODULES = [
     "comnumpy.core.frames",
     "comnumpy.optical.compensators",
     "comnumpy.optical.wdm",
+    "comnumpy.optical.raman",
     "comnumpy.core.compensators",
 ]
 
@@ -85,6 +86,9 @@ NOT_PROCESSING_FUNCTIONS = {
     "comnumpy.core.fading.available_delay_profiles",
     "comnumpy.core.fading.get_delay_profile",
     "comnumpy.core.fading.validate_taps_fit",
+    "comnumpy.optical.raman.register_gain_spectrum",
+    "comnumpy.optical.raman.available_gain_spectra",
+    "comnumpy.optical.raman.get_gain_spectrum",
 }
 
 

@@ -43,6 +43,17 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `comnumpy.optical.raman` (D45): `RamanGainSpectrum` (frozen, two
+  closed-form models -- Blow-Wood single oscillator and the triangular
+  tilt model -- with a registry and a construction-time self-check
+  against the published peak), and `solve_raman`, which integrates the
+  coupled power equations as an initial value problem for
+  co-propagating pumping and as a two-point boundary value problem
+  otherwise. It returns power profiles and the gain profile `G(z)`, not
+  a `Processor`: applying a lumped gain at the end of a span would
+  describe a discrete amplifier, which is what distributed
+  amplification is not. The `FiberLink` hook that consumes `G(z)` is a
+  later pass.
 - `comnumpy.optical.wdm` (D44): frozen `WDMGrid` frequency plan
   (absolute hertz, `uniform` and ITU flexible-grid constructors, ASCII
   spectral map, `validate_fs`), plus `WDMMultiplexer` /
