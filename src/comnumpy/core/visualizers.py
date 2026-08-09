@@ -32,7 +32,7 @@ def _as_streams(x: np.ndarray) -> np.ndarray:
 
 def plot_time(x: np.ndarray, *, fs: float = 1.0,
               plot_type: Literal["real", "abs", "pow"] = "real",
-              marker: str = "-", title: str = "Time Scope",
+              marker: str = "-", title: str = "Time domain",
               ax: Optional[Axes] = None) -> Axes:
     """Plot a signal against time.
 
@@ -75,7 +75,7 @@ def plot_spectrum(x: np.ndarray, *, fs: float = 1.0, norm: bool = True,
                   dB: bool = True, shift: bool = False,
                   xlim: Optional[Tuple[float, float]] = None,
                   ylim: Optional[Tuple[float, float]] = None,
-                  title: str = "Spectrum Scope",
+                  title: str = "Spectrum",
                   ax: Optional[Axes] = None) -> Axes:
     """Plot the periodogram (squared FFT modulus) of a signal.
 
@@ -171,7 +171,7 @@ def plot_welch(x: np.ndarray, *, fs: float = 1.0, nperseg: Optional[int] = None,
     return ax
 
 
-def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "IQ Scope",
+def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "Constellation",
             ax: Optional[Axes] = None) -> Axes:
     """Scatter the in-phase and quadrature components of a signal.
 
@@ -206,7 +206,7 @@ def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "IQ Scope",
 
 
 def plot_kde(x: np.ndarray, *, bw_adjust: float = 1.0, thresh: float = 0.05,
-             levels: int = 10, title: str = "KDE Scope",
+             levels: int = 10, title: str = "Density",
              ax: Optional[Axes] = None) -> Axes:
     """Contour plot of the I/Q kernel density estimate of a signal.
 
@@ -247,9 +247,9 @@ def plot_kde(x: np.ndarray, *, bw_adjust: float = 1.0, thresh: float = 0.05,
     return ax
 
 
-def plot_chain_profiling(chain: object, input: object,
+def plot_chain_profiling(chain: object, input: object, *,
                          ax: Optional[Axes] = None,
-                         title: str = 'Processor Timings',
+                         title: str = "Processor timings",
                          N_test: int = 100,
                          orientation: Literal["horizontal", "vertical"] = "horizontal") -> Axes:
     r"""

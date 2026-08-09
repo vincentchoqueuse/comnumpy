@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import numpy as np
-from typing import Union, Optional
+from typing import Optional
 from comnumpy.core import Processor, Sequential
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.ofdm.processors import (
@@ -64,16 +64,22 @@ class OFDMTransmitter(Processor):
     """
     N_carrier_data: int
     N_cp: int
-    carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
-    pilots: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    carrier_type: Optional[np.ndarray] = field(default=None, kw_only=True)
+    pilots: Optional[np.ndarray] = field(default=None, kw_only=True)
     name: str = field(default="ofdm_transmitter", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
-    chain: Processor = field(init=False, repr=False)
+    # Sequential, not Processor: Sequential does not subclass it, so the
+    # old declaration described something this attribute never holds
+    chain: Sequential = field(init=False, repr=False)
 
-    def __post_init__(self):
-
+    def __post_init__(self) -> None:
+        # asarray, not a Union: every downstream block indexes these as
+        # arrays, so a list was only ever tolerated by accident
         if self.carrier_type is None:
             self.carrier_type = np.ones(self.N_carrier_data, dtype=int)
+        self.carrier_type = np.asarray(self.carrier_type)
+        if self.pilots is not None:
+            self.pilots = np.asarray(self.pilots)
 
         self.chain = Sequential([
             Serial2Parallel(self.N_carrier_data),
@@ -83,7 +89,7 @@ class OFDMTransmitter(Processor):
             Parallel2Serial()
         ])
 
-    def forward(self, X):
+    def forward(self, X: np.ndarray) -> np.ndarray:
         return self.chain(X)
 
 
@@ -143,15 +149,19 @@ class OFDMReceiver(Processor):
     """
     N_carrier_data: int
     N_cp: int
-    h: Union[np.ndarray, list] = field(default_factory=lambda: np.array([1.0]), kw_only=True)
-    carrier_type: Optional[Union[np.ndarray, list]] = field(default=None, kw_only=True)
+    h: np.ndarray = field(default_factory=lambda: np.array([1.0]), kw_only=True)
+    carrier_type: Optional[np.ndarray] = field(default=None, kw_only=True)
     name: str = field(default="ofdm_receiver", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
-    chain: Processor = field(init=False, repr=False)
+    # Sequential, not Processor: Sequential does not subclass it, so the
+    # old declaration described something this attribute never holds
+    chain: Sequential = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.carrier_type is None:
             self.carrier_type = np.ones(self.N_carrier_data, dtype=int)
+        self.carrier_type = np.asarray(self.carrier_type)
+        self.h = np.asarray(self.h)
 
         N_carriers = len(self.carrier_type)
         self.chain = Sequential([
@@ -163,5 +173,5 @@ class OFDMReceiver(Processor):
             Parallel2Serial()
         ])
 
-    def forward(self, X):
+    def forward(self, X: np.ndarray) -> np.ndarray:
         return self.chain(X)

@@ -100,56 +100,69 @@ class BlindDualMIMOCompensator(Processor):
     (2, 200) (2, 10)
     """
     L: int = 10
-    alphabet: np.ndarray = field(default=None, kw_only=True)
+    # keyword-only but *required*: every mode needs it, and the None
+    # default it used to carry crashed in __post_init__ on
+    # abs(None) -- a default that cannot be used is not a default
+    alphabet: np.ndarray = field(kw_only=True)
     mu: float = field(default=1e-4, kw_only=True)
     oversampling: int = field(default=1, kw_only=True)
     norm: bool = field(default=True, kw_only=True)
     mode: Literal["cma", "rde", "dd"] = field(default="cma", kw_only=True)
-    sub_block_length = 20
+    # a field, not a bare class attribute: unannotated it was excluded
+    # from __slots__, so `compensator.sub_block_length = 30` raised
+    # "read-only" and set_params (D34) could not reach it either
+    sub_block_length: int = field(default=20, kw_only=True)
     name: str = field(default="mimo filter", kw_only=True)
     # estimated equalizer matrix (D23: underscore distinguishes it from the
     # *configured* channel H of FlatMIMOChannel), declared for slots (D40a)
     H_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
-    radius_cma: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
-    radius_list: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # both are derived from the (required) alphabet in __post_init__, so
+    # they are never None and the callers need no defensive check
+    radius_cma: float = field(init=False, repr=False, default=0.0)
+    radius_list: np.ndarray = field(init=False, repr=False,
+                                    default_factory=lambda: np.empty(0))
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Prepare the filter coefficients.
         """
         self.initialize_H()
-        self.radius_cma = np.mean(np.abs(self.alphabet)**4) / np.mean(np.abs(self.alphabet)**2)
+        # float(), not np.float64: the field is declared float, and the
+        # Godard radius is a scalar, not a zero-dimensional array
+        self.radius_cma = float(np.mean(np.abs(self.alphabet)**4)
+                                / np.mean(np.abs(self.alphabet)**2))
         self.radius_list = np.unique(np.abs(self.alphabet))
 
-    def initialize_H(self):
+    def initialize_H(self) -> None:
         H = np.zeros((2, 2*(2*self.L+1)), dtype=complex)
         H[0, self.L] = 1
         H[1, (2*self.L+1)+self.L] = 1
         self.H_ = H
 
-    def grad(self, input: np.ndarray, output: np.ndarray, target=None) -> np.ndarray:
+    def grad(self, input: np.ndarray, output: np.ndarray,
+             target: Optional[np.ndarray] = None) -> np.ndarray:
 
         if self.mode == "cma":
             # see equation 19/20
             error = self.radius_cma - np.abs(output)**2
-            term1 = (error * np.conjugate(output))
-            grad = (term1.reshape(-1, 1)) * input
-
-        if self.mode == "rde":
+            term1 = error * np.conjugate(output)
+        elif self.mode == "rde":
             _, radius_est = hard_projector(np.abs(output), self.radius_list)
             error = radius_est**2 - np.abs(output)**2
-            term1 = (error * np.conjugate(output))
-            grad = (term1.reshape(-1, 1)) * input
-
-        if self.mode == "dd":
+            term1 = error * np.conjugate(output)
+        elif self.mode == "dd":
             _, output_est = hard_projector(output, self.alphabet)
-            error = output_est - output
-            term1 = np.conjugate(error)
-            grad = (term1.reshape(-1, 1)) * input
+            term1 = np.conjugate(output_est - output)
+        else:
+            # three independent `if`s left `grad` unbound here, so an
+            # unexpected mode raised UnboundLocalError instead of saying
+            # what was wrong (D38)
+            raise ValueError(
+                f"expected mode 'cma', 'rde' or 'dd', got {self.mode!r}")
 
-        return grad
+        return term1.reshape(-1, 1) * input
 
-    def process_after_iteration(self, n, Y_sub):
+    def process_after_iteration(self, n: int, Y_sub: np.ndarray) -> None:
         pass
 
     def partial_fit(self, X: np.ndarray):
@@ -170,6 +183,7 @@ class BlindDualMIMOCompensator(Processor):
         M, N = X.shape
         Y = np.zeros((M, N//os), dtype=complex)
 
+        assert self.H_ is not None      # initialize_H ran in __post_init__
         for n in range(2*L + 1, N, os):
             x_sub = np.ravel(X[:, n:n-(2*L+1):-1])
             y_sub = np.matmul(np.conjugate(self.H_), x_sub)  # filter output
