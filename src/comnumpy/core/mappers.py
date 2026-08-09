@@ -1,8 +1,13 @@
-import numpy as np
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Optional
+
+import numpy as np
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
 from .utils import plot_alphabet
+
+if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
+    from matplotlib.axes import Axes
 
 
 @dataclass(slots=True)
@@ -47,7 +52,8 @@ class SymbolMapper(Processor):
     def get_alphabet(self):
         return self.alphabet
 
-    def plot(self, ax: object = None, title: str = "Symbol Constellation") -> object:
+    def plot(self, ax: Optional["Axes"] = None,
+             title: str = "Symbol Constellation") -> "Axes":
         return plot_alphabet(self.alphabet, ax=ax, title=title)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
