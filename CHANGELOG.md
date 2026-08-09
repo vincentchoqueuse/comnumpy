@@ -73,6 +73,41 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- `comnumpy.core.information` (D48): achievable information rates
+  measured on data -- `compute_mi` (symbol-wise decoder), `compute_gmi`
+  (bit-wise, the structure of every soft-decision system),
+  `compute_ngmi` (on the scale of a code rate) and `compute_llr`. Every
+  equation is cited by its number in Alvarado et al., JLT 33(20), 2015:
+  (6)/(29) exact L-values, (7)/(31) max-log, (16)/(17) MI, (21)-(26)
+  GMI, (30) its estimator and **(32)** the minimization over `s` that
+  the paper calls mandatory for approximated L-values -- using (30) on
+  max-log L-values returns a rate lower than the true one, so
+  `max_log=True` solves it. The LLR sign stays comnumpy's (positive
+  favours the bit 0), the opposite of the paper's, and the module says
+  so. Writing it surfaced an underflow: at high SNR the weaker
+  hypothesis summed to exactly zero and the exact LLR returned an
+  infinity; the log-sum-exp shift is now per hypothesis.
+- Dual-polarization propagation (D47): a field shaped `(..., 2, N)` --
+  the antenna axis of D2 -- is propagated by `FiberLink` and `DBP` with
+  the **Manakov equation**, the two polarizations sharing the total
+  intensity and the coefficient carrying the 8/9 factor. Which model is
+  integrated is read off the shape, the way which pumps are on is read
+  off their powers: there is no `polarizations=` argument to contradict
+  the array. `fiber.gamma` stays the fibre's own coefficient in both
+  modes -- the 8/9 belongs to the model, not to the glass. Any other
+  size on that axis raises, since a row-by-row Kerr step would describe
+  parallel fibres. Two defects surfaced writing it:
+  `apply_chromatic_dispersion` took `NFFT = len(x)`, which is **2** for
+  a `(2, N)` field, and the EDFA drew `len(x)` noise samples instead of
+  one per polarization.
+- `validation/optical_wdm_opticommpy.py`: the first confrontation with a
+  *second implementation* rather than a closed form -- the published
+  coherent WDM example of OptiCommPy (11 x 32 GBd PDM-16QAM, 700 km).
+  The comb power matches the printed 8.41 dBm to 0.004 dB, the
+  ASE-limited SNR matches its closed form to 0.02 dB, a fixed 0.5 km
+  split step is shown to be 0.83 dB short of converged, and the full
+  link lands 0.79 dB above the published 20.63 dB -- the sign every
+  impairment the notebook models and this script does not would give.
 - `comnumpy.optical.fiber` (D46): frozen `FiberSpec` carrying the
   physical coefficients and their provenance, with a registry
   (`get_fiber`, `available_fibers`, `@register_fiber`), a catalog of
