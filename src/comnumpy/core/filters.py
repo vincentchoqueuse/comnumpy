@@ -227,12 +227,14 @@ class BWFilter(Processor):
         0 & \text{if } |f[k]| > w_n
         \end{cases}
 
-    where :math:`f[k]` is the normalized frequency of bin :math:`k` in
-    cycles per sample, as returned by ``fftfreq(N, d=1)``, so
-    :math:`|f[k]| \leq 1/2` and the Nyquist frequency is
-    :math:`f = 1/2`. Because the mask is applied to a length-:math:`N`
-    DFT, the operation is a **circular** convolution with a periodic sinc
-    of length :math:`N`, not a linear one.
+    where :math:`f[k]` is the frequency of bin :math:`k` in cycles per
+    sample (``fftfreq(N, d=1)``, so :math:`|f[k]| \leq 1/2`) and the
+    cutoff :math:`w_n` is **normalized to the Nyquist frequency**, the
+    convention of ``scipy.signal``: :math:`w_n = 1` passes the whole
+    band, :math:`w_n = 1/L` keeps the band of a signal oversampled by
+    :math:`L`. Because the mask is applied to a length-:math:`N` DFT, the
+    operation is a **circular** convolution with a periodic sinc of
+    length :math:`N`, not a linear one.
 
     Axes: *axis -1* -- expects a 1D signal ``(N,)``; multi-dimensional
     inputs are rejected.
@@ -240,12 +242,15 @@ class BWFilter(Processor):
     Parameters
     ----------
     wn : float
-        Critical (cutoff) frequency :math:`w_n` in cycles per sample,
-        with :math:`0 \leq w_n \leq 1/2`; :math:`w_n = 1/2` is the
-        Nyquist frequency and passes the whole band.
+        Critical (cutoff) frequency :math:`w_n`, normalized so that
+        :math:`w_n = 1` is the Nyquist frequency (``scipy.signal``
+        convention), hence :math:`0 < w_n \leq 1`. The retained band in
+        cycles per sample is :math:`|f| \leq w_n / 2`.
 
     Raises
     ------
+    ValueError
+        If ``wn`` is outside :math:`(0, 1]`.
     NotImplementedError
         If the input has more than one dimension.
 
@@ -260,11 +265,19 @@ class BWFilter(Processor):
     --------
     >>> n = np.arange(64)
     >>> x = np.cos(2*np.pi*4*n/64) + np.cos(2*np.pi*20*n/64)  # f = 1/16 and 5/16
-    >>> y = BWFilter(0.1)(x)  # keeps 1/16 = 0.0625, removes 5/16 = 0.3125
+    >>> y = BWFilter(0.2)(x)  # cutoff 0.2 x Nyquist = 0.1 cycles/sample
     >>> print(np.round(y[:4].real, 6))
     [1.       0.92388  0.707107 0.382683]
     """
     wn: float
+
+    def __post_init__(self) -> None:
+        if not 0 < self.wn <= 1:
+            raise ValueError(
+                f"BWFilter: expected a cutoff in (0, 1] normalized to the "
+                f"Nyquist frequency (scipy.signal convention), got wn="
+                f"{self.wn} -- pass wn=1 to keep the whole band, or "
+                f"wn=1/L for a signal oversampled by L.")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
@@ -275,7 +288,8 @@ class BWFilter(Processor):
 
         NFFT = len(x)
         w = fftfreq(NFFT, d=1, like=x)
-        H = (abs(w) <= self.wn).astype(float)
+        # wn is normalized to Nyquist (= 1/2 cycle/sample), hence the /2
+        H = (abs(w) <= self.wn / 2).astype(float)
         fft_x = fft(x, NFFT)
         y = ifft(H*fft_x, NFFT)
         return y

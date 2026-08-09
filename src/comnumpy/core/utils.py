@@ -193,13 +193,11 @@ def sym_2_bin(sym, width=4):
     [0 0 1 1]
     """
 
-    data = []
-    for indice in range(len(sym)):
-        data.append(np.binary_repr(sym[indice], width))
-
-    string = ''.join(data)
-
-    return np.array(list(string), dtype=int)
+    sym = np.asarray(sym)
+    weights = np.arange(width - 1, -1, -1)          # MSB first
+    bits = (sym[..., None] >> weights) & 1
+    return bits.reshape(sym.shape[:-1] + (sym.shape[-1] * width,)) \
+        if sym.ndim else bits.reshape(width)
 
 
 def hard_projector(z, alphabet):
