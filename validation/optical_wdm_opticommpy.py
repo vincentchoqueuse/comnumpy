@@ -5,6 +5,14 @@ cannot fake. The other optical scripts use closed forms; this one uses a
 **second implementation**: the coherent WDM transmission example of
 OptiCommPy [1], whose notebook is published with its numerical output.
 
+Nothing of OptiCommPy is used, imported or copied here. What is taken
+from it is what a citation takes: the configuration of a published
+experiment and the numbers it reports. The chain below is built from
+comnumpy blocks and the physics is implemented from the published
+equations of [2] and [3], which both libraries cite. This matters
+beyond good manners -- OptiCommPy is GPL-3.0 and comnumpy is MIT, so
+the two codebases must stay apart, and they do.
+
 The configuration, copied from ``examples/test_WDM_transmission.ipynb``:
 
 ===========================  =========================================
@@ -95,10 +103,14 @@ What the script checks:
 
 References
 ----------
-[1] E. P. da Silva et al., OptiCommPy: Python-based optical
-    communication systems simulation package,
-    https://github.com/edsonportosilva/OptiCommPy -- example
-    ``test_WDM_transmission.ipynb``.
+[1] E. P. da Silva and A. F. Herbster, "OptiCommPy: Open-source
+    simulation of fiber optic communications with Python", Journal of
+    Open Source Software, vol. 9, no. 98, 6600, 2024,
+    doi:10.21105/joss.06600 (archived at doi:10.5281/zenodo.11450597).
+    The figures reproduced here are those printed in the repository's
+    example ``examples/test_WDM_transmission.ipynb``, read on
+    2026-08-09; they are quoted as published constants below, so this
+    script does not depend on that repository to run.
 
 [2] R.-J. Essiambre, G. Kramer, P. J. Winzer, G. J. Foschini and
     B. Goebel, "Capacity limits of optical fiber networks", J. Lightwave
