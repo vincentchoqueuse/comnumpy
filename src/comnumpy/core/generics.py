@@ -325,17 +325,78 @@ class Sequential():
                       f"{str(shape):<18} {dtype:<12} {ms:>8.2f}")
         return rows
 
+    def graph(self):
+        """
+        Structural view of the chain: nodes, signal edges, data edges.
+
+        The renderer-independent model behind :meth:`to_mermaid`. Signal
+        edges are the implicit linear path; data edges are the ones
+        declared in ``wiring`` (decision D42c), which a picture of the
+        chain must show or it is not telling the truth.
+
+        Returns
+        -------
+        dict
+            ``nodes`` (list of ``{"id", "type"}``), ``signal_edges``
+            (list of ``(source, target)``), ``data_edges`` (list of
+            ``(source, target, param)``) and ``taps`` (observed ids).
+
+        Examples
+        --------
+        >>> from comnumpy.core.generators import SymbolGenerator
+        >>> from comnumpy.core.channels import AWGN
+        >>> g = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)]).graph()
+        >>> print(g["signal_edges"])
+        [('generator', 'awgn')]
+        """
+        ids = self.block_ids()
+        data_edges = []
+        for target, source in (self.wiring or {}).items():
+            block_id, _, param = target.partition(".")
+            data_edges.append((source, block_id, param))
+        return {
+            "nodes": [{"id": block_id, "type": type(module).__name__}
+                      for block_id, module in zip(ids, self.module_list, strict=True)],
+            "signal_edges": list(zip(ids[:-1], ids[1:], strict=True)),
+            "data_edges": data_edges,
+            "taps": list(self.taps or ()),
+        }
+
     def to_mermaid(self):
         """
         Mermaid flowchart of the chain (decision D33c), renderable by
-        sphinxcontrib-mermaid or any mermaid viewer.
+        sphinxcontrib-mermaid, GitHub, or any mermaid viewer.
+
+        Signal flow is drawn with solid arrows, declared data edges
+        (``wiring``, D42c) with dashed arrows labelled by the parameter
+        they feed, and tapped blocks are outlined -- so the picture shows
+        every edge the chain actually has.
+
+        Examples
+        --------
+        >>> from comnumpy.core.generators import SymbolGenerator
+        >>> from comnumpy.core.channels import AWGN
+        >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)],
+        ...                    taps=["generator"])
+        >>> print(chain.to_mermaid())
+        flowchart LR
+            generator["SymbolGenerator"]
+            awgn["AWGN"]
+            generator --> awgn
+            classDef tapped stroke-dasharray: 4 2
+            class generator tapped
         """
+        model = self.graph()
         lines = ["flowchart LR"]
-        ids = self.block_ids()
-        for block_id, module in zip(ids, self.module_list, strict=True):
-            lines.append(f'    {block_id}["{type(module).__name__}"]')
-        for a, b in zip(ids[:-1], ids[1:], strict=True):
+        for node in model["nodes"]:
+            lines.append(f'    {node["id"]}["{node["type"]}"]')
+        for a, b in model["signal_edges"]:
             lines.append(f"    {a} --> {b}")
+        for source, target, param in model["data_edges"]:
+            lines.append(f"    {source} -.->|{param}| {target}")
+        if model["taps"]:
+            lines.append("    classDef tapped stroke-dasharray: 4 2")
+            lines.append(f"    class {','.join(model['taps'])} tapped")
         return "\n".join(lines)
 
     def set_debug(self, debug=None):
