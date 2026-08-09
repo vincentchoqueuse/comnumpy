@@ -2,6 +2,8 @@ import numpy as np
 from comnumpy._backend import fft, ifft, fftfreq  # cupy-compatible (D3)
 from typing import Optional
 
+from comnumpy.exceptions import ShapeError
+
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
 
@@ -117,7 +119,7 @@ def apply_chromatic_dispersion(x: np.ndarray, z: float, beta2: float,
         gain = 1
 
     beta2_s2_per_km = ((10**-12)**2) * beta2  # convert into s^2/km
-    NFFT = len(x)
+    NFFT = x.shape[-1]      # the field may carry a polarization axis
     w = (2*np.pi*fs)*fftfreq(NFFT, d=1, like=x)
     H = np.exp(1j * (beta2_s2_per_km/2) * z * (w**2) * direction)  # see equation 4
     fftx = fft(x)
@@ -127,9 +129,16 @@ def apply_chromatic_dispersion(x: np.ndarray, z: float, beta2: float,
 
 
 def apply_kerr_nonlinearity(x: np.ndarray, z: float, gamma: float,
-                            gain: float = 1, direction: int = 1) -> np.ndarray:
-    """
+                            gain: float = 1, direction: int = 1,
+                            intensity: Optional[np.ndarray] = None) -> np.ndarray:
+    r"""
     Apply Kerr nonlinearity phase rotation to a signal.
+
+    The rotation is :math:`\exp(j \gamma z I)` where :math:`I` is the
+    intensity driving it. For a single field that is :math:`|x|^2`; for
+    the Manakov model of two polarizations it is the *total* intensity
+    :math:`|E_x|^2 + |E_y|^2` shared by both, which is what ``intensity``
+    is for.
 
     Parameters
     ----------
@@ -138,11 +147,16 @@ def apply_kerr_nonlinearity(x: np.ndarray, z: float, gamma: float,
     z : float
         Fiber length in km.
     gamma : float
-        Kerr coefficient in rad/W/km.
+        Kerr coefficient in rad/W/km. The Manakov model passes
+        :math:`8\gamma/9` here: the factor belongs to the model, not to
+        the fibre.
     gain : float, optional
         Gain factor. Default is 1.
     direction : int, optional
         Propagation direction (1=forward, -1=backward). Default is 1.
+    intensity : np.ndarray, optional
+        Intensity driving the rotation, broadcastable against ``x``.
+        Default (None) uses ``|x|**2``, the scalar NLSE.
 
     Returns
     -------
@@ -150,7 +164,8 @@ def apply_kerr_nonlinearity(x: np.ndarray, z: float, gamma: float,
         Signal after Kerr nonlinear phase rotation.
     """
     nl_param = direction * gamma * z
-    return gain * x * np.exp(1j*nl_param*(np.abs(x)**2))
+    power = np.abs(x)**2 if intensity is None else intensity
+    return gain * x * np.exp(1j*nl_param*power)
 
 
 def compute_erbium_doped_fiber_amplifier_gain(alpha_dB: float,
@@ -333,3 +348,75 @@ def itu_grid_frequency(n: int, m: int = 1) -> tuple[float, float]:
     center_Hz = (193.1e12) + n * 6.25e9
     width_Hz = 12.5e9 * m
     return center_Hz, width_Hz
+
+
+def is_polarization_pair(x: np.ndarray, block: str) -> bool:
+    r"""Read the propagation model off the shape of the field.
+
+    A ``(N,)`` or ``(..., 1, N)`` field is one polarization and obeys
+    the scalar NLSE; a ``(..., 2, N)`` field is a polarization pair and
+    obeys the Manakov equation. Anything else on the antenna axis is
+    refused, because a pointwise Kerr step applied row by row would
+    describe parallel fibres, not one fibre carrying several signals.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Field the block is about to propagate.
+    block : str
+        Name of the calling block, for the message.
+
+    Returns
+    -------
+    bool
+        True when the Manakov model applies.
+
+    Raises
+    ------
+    ShapeError
+        If the polarization axis has any size other than 1 or 2.
+    """
+    if x.ndim == 1:
+        return False
+    polarizations = x.shape[-2]
+    if polarizations in (1, 2):
+        return polarizations == 2
+    raise ShapeError(
+        f"{block} propagates one field (N,) or a polarization pair "
+        f"(..., P, N) with P in {{1, 2}}; got {x.shape}, i.e. "
+        f"{polarizations} on the polarization axis. A pointwise Kerr step "
+        f"row by row would describe {polarizations} separate fibres, with "
+        f"no XPM and no FWM between them. Multiplex WDM channels into one "
+        f"field first with comnumpy.optical.WDMMultiplexer (decision D44).")
+
+
+def manakov_kerr(x: np.ndarray, gamma: float,
+                 manakov: bool) -> tuple[float, Optional[np.ndarray]]:
+    r"""Kerr coefficient and driving intensity of one split step.
+
+    The Manakov equation shares the *total* intensity
+    :math:`|E_x|^2 + |E_y|^2` between the two polarizations and scales
+    the coefficient by :math:`8/9`, the average of the nonlinearity over
+    the fast random birefringence of a real fibre. That factor is a
+    property of the model, not of the glass, which is why it lives here
+    and not in :class:`~comnumpy.optical.fiber.FiberSpec`.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Field at the current step.
+    gamma : float
+        Kerr coefficient of the fibre, in rad/W/km.
+    manakov : bool
+        Whether the field is a polarization pair.
+
+    Returns
+    -------
+    gamma : float
+        Coefficient to use in the rotation.
+    intensity : np.ndarray or None
+        Intensity driving it, or None for the scalar NLSE.
+    """
+    if not manakov:
+        return gamma, None
+    return 8 / 9 * gamma, np.sum(np.abs(x) ** 2, axis=-2, keepdims=True)

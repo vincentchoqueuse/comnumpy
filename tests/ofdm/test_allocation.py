@@ -123,17 +123,25 @@ class TestBandAllocationConstructor(unittest.TestCase):
 
 
 class TestFullFieldGuard(unittest.TestCase):
+    """WDM channels must be multiplexed into one field before the fibre.
 
-    def test_fiberlink_refuses_multichannel_arrays(self):
+    Since D47 an axis of size 2 is read as a *polarization* pair and
+    propagated with the Manakov equation, so the guard now fires on any
+    other count. What it protects against is unchanged: a pointwise
+    Kerr step applied row by row would describe parallel fibres, with
+    no XPM and no FWM between the channels.
+    """
+
+    def test_fiberlink_refuses_a_stack_of_channels(self):
         from comnumpy.optical.links import FiberLink
         with self.assertRaises(ShapeError) as ctx:
-            FiberLink(1, noise_scaling=0)(np.ones((2, 64), dtype=complex))
-        self.assertIn("full-field", str(ctx.exception))
+            FiberLink(1, noise_scaling=0)(np.ones((4, 64), dtype=complex))
+        self.assertIn("WDMMultiplexer", str(ctx.exception))
 
-    def test_dbp_refuses_multichannel_arrays(self):
+    def test_dbp_refuses_a_stack_of_channels(self):
         from comnumpy.optical.dbp import DBP
         with self.assertRaises(ShapeError):
-            DBP(1)(np.ones((2, 64), dtype=complex))
+            DBP(1)(np.ones((4, 64), dtype=complex))
 
 
 if __name__ == "__main__":

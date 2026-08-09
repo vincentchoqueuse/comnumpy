@@ -22,6 +22,7 @@ Core
    frames
    sequences
    capacity
+   information
    metrics
    utils
    validators

@@ -7,6 +7,7 @@ from .channels import AWGN, FIRChannel, TappedDelayLineChannel
 from .capacity import (awgn_capacity, constellation_capacity, bicm_capacity,
                        rayleigh_ergodic_capacity, mimo_ergodic_capacity,
                        outage_capacity, waterfilling)
+from .information import compute_gmi, compute_llr, compute_mi, compute_ngmi
 from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
                      get_delay_profile, register_delay_profile,
                      available_delay_profiles)
@@ -25,6 +26,7 @@ __all__ = [
     "awgn_capacity", "constellation_capacity", "bicm_capacity",
     "rayleigh_ergodic_capacity", "mimo_ergodic_capacity",
     "outage_capacity", "waterfilling",
+    "compute_llr", "compute_mi", "compute_gmi", "compute_ngmi",
     "DopplerSpectrum", "PowerDelayProfile", "rayleigh_process",
     "get_delay_profile", "register_delay_profile", "available_delay_profiles",
     "SRRCFilter", "BWFilter",
