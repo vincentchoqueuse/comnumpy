@@ -72,6 +72,13 @@ Full documentation with tutorials and API reference:
 
 **[https://vincentchoqueuse.github.io/comnumpy/](https://vincentchoqueuse.github.io/comnumpy/)**
 
+Two normative documents govern the code itself:
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — the decision record. Code comments
+  referring to "decision D25", "D40a"… point here.
+- **[CONVENTIONS.md](CONVENTIONS.md)** — tensor layouts, axis categories, how to
+  observe a signal inside a chain.
+
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up a development environment, coding standards, and how to add new submodules.

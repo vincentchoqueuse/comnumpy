@@ -96,7 +96,21 @@ one release; there is no compatibility layer.
 - `SymbolDemapper(soft=True)` bit LLRs (D12) and the fec package (D4)
   landed in the same window (see the dedicated commits).
 
-### Milestone 7 (D35, taps, MIMO validation, D5, D3)
+### Milestone 7 (D35, D42, MIMO validation, D5, D3)
+
+- `ARCHITECTURE.md` enters the repository. The decision record was the
+  normative document the code kept pointing at ("decision D25", "D40a")
+  while living outside it -- unreadable for a contributor or a JOSS
+  reviewer. It is now versioned next to the code it governs (v0.5), and
+  `README`/`CONTRIBUTING` point at it. A test executes its canonical
+  example and checks the D40c line budget: that example had been wrong
+  since v0.3 (it read the recorded signal and ran the chain in the same
+  call, so evaluation order read an empty record), which is exactly what
+  principle P3 exists to catch.
+- Decision **D42** records the observation model implemented below:
+  chains contain communication blocks only, `taps` observe, `wiring`
+  feeds. It amends D11 (monitors are removed, not converted to loggers)
+  and closes part of the "computation graph" open point of section 8.
 
 - LDPC coding (D5): `fec.LDPCEncoder` (systematic, GF(2) echelon
   form, rank-deficiency aware), `fec.LDPCDecoder` (min-sum with
