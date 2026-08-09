@@ -182,10 +182,62 @@ class Framer(Processor):
     where the :math:`\mathbf{s}_i` are the known field values of the
     shared :class:`FrameStructure` and :math:`\mathbf{x}` is the payload.
 
+    The model is *structural* rather than analytical: no arithmetic is
+    performed on the samples. Writing the frame as the ordered list of
+    its :math:`M` typed fields, of lengths :math:`L_1, \dots, L_M`, the
+    output row of index :math:`t` is the concatenation
+
+    .. math::
+
+        y_t[n] = \begin{cases}
+        s_i\left[n - \sum_{j<i} L_j\right] &
+        \text{if field } i \text{ is known at TX} \\
+        x_t\left[n - \sum_{j<i} L_j\right] &
+        \text{if field } i \text{ is the PAYLOAD}
+        \end{cases}
+
+    for :math:`0 \le n < N_{\mathrm{frame}} = \sum_i L_i`. Exactly one
+    field carries the role ``PAYLOAD`` and receives the input; every
+    other field (``SYNC``, ``TRAINING``, ``HEADER``, ``TAIL``, ``PAD``)
+    carries values fixed at construction time. The output is complex,
+    since the known fields generally are.
+
     Axes: *declared axis* -- Block layout ``(..., T, N_payload)`` with
     the frame index on ``T``; fields are added on the content axis -1.
     The S/P block size is not a free parameter: it equals
     ``frame.payload_length`` and ``prepare()`` enforces it.
+
+    Parameters
+    ----------
+    frame : FrameStructure
+        Frame description shared with the receiver's :class:`Deframer`.
+        Its ``payload_length`` fixes the accepted input size
+        :math:`N_{\mathrm{payload}}` and its ``frame_length`` the output
+        size :math:`N_{\mathrm{frame}}`.
+    name : str, optional, keyword-only
+        Name of the framer instance. Default is ``"framer"``.
+
+    Raises
+    ------
+    ShapeError
+        If the last axis of the input does not equal
+        ``frame.payload_length``.
+
+    References
+    ----------
+    IEEE Std 802.11-2020, Clause 17 (Orthogonal frequency division
+    multiplexing PHY) -- example of a real typed frame structure: short
+    training field, long training field, SIGNAL field, then DATA.
+
+    Examples
+    --------
+    >>> frame = FrameStructure((
+    ...     FrameField("SYNC", FieldRole.SYNC, np.array([1.0, -1.0])),
+    ...     FrameField("PAYLOAD", FieldRole.PAYLOAD, length=3),
+    ... ), standard="example")
+    >>> framer = Framer(frame)
+    >>> print(framer(np.array([[1.0, 2.0, 3.0]])))
+    [[ 1.+0.j -1.+0.j  1.+0.j  2.+0.j  3.+0.j]]
     """
     frame: FrameStructure
     name: str = field(default="framer", kw_only=True)
@@ -213,11 +265,68 @@ class Framer(Processor):
 
 @dataclass(slots=True)
 class Deframer(Processor):
-    """Extract the payload (and expose every field) from received frames.
+    r"""Extract the payload (and expose every field) from received frames.
+
+    Signal Model
+    ------------
+    The exact inverse of :class:`Framer`, and equally structural: the
+    received frame is cut back along the field boundaries of the shared
+    :class:`FrameStructure`. Field :math:`i` occupies the slice
+    :math:`[\sum_{j<i} L_j, \; \sum_{j \le i} L_j)` of the frame axis,
+
+    .. math::
+
+        \hat{\mathbf{s}}_i = \mathbf{y}\!\left[\, \sum_{j<i} L_j : \,
+        \sum_{j \le i} L_j \,\right], \qquad i = 1, \dots, M
+
+    and ``forward`` returns the single field whose role is ``PAYLOAD``:
+
+    .. math::
+
+        \hat{\mathbf{x}} = \hat{\mathbf{s}}_{i_\mathrm{payload}}
+
+    The other fields are not discarded: the received
+    :math:`\hat{\mathbf{s}}_i` are recorded and read back with
+    :meth:`get_field` -- that is how a receiver gets the ``SYNC`` field
+    for timing or the ``TRAINING`` field for channel estimation without
+    adding a block to the chain (D42).
 
     Axes: *declared axis* -- Block layout ``(..., T, frame_length)``.
     After ``forward``, the received samples of each field are available
     through :meth:`get_field`.
+
+    Parameters
+    ----------
+    frame : FrameStructure
+        Frame description, the very same object as the transmitter's
+        :class:`Framer`. Its ``frame_length`` fixes the accepted input
+        size :math:`N_{\mathrm{frame}}`.
+    name : str, optional, keyword-only
+        Name of the deframer instance. Default is ``"deframer"``.
+
+    Raises
+    ------
+    ShapeError
+        If the last axis of the input does not equal
+        ``frame.frame_length``.
+
+    References
+    ----------
+    IEEE Std 802.11-2020, Clause 17 (Orthogonal frequency division
+    multiplexing PHY) -- example of a real typed frame structure: short
+    training field, long training field, SIGNAL field, then DATA.
+
+    Examples
+    --------
+    >>> frame = FrameStructure((
+    ...     FrameField("SYNC", FieldRole.SYNC, np.array([1.0, -1.0])),
+    ...     FrameField("PAYLOAD", FieldRole.PAYLOAD, length=3),
+    ... ), standard="example")
+    >>> deframer = Deframer(frame)
+    >>> print(deframer(np.array([[1.0, -1.0, 1.0, 2.0, 3.0]])))
+    [[1. 2. 3.]]
+    >>> print(deframer.get_field("SYNC"))
+    [[ 1. -1.]]
     """
     frame: FrameStructure
     name: str = field(default="deframer", kw_only=True)
