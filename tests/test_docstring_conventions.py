@@ -53,6 +53,7 @@ CONVERTED_MODULES = [
     "comnumpy.core.devices",
     "comnumpy.core.frames",
     "comnumpy.optical.compensators",
+    "comnumpy.optical.wdm",
     "comnumpy.core.compensators",
 ]
 
