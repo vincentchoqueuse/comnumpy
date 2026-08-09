@@ -5,12 +5,15 @@ Optical
    :maxdepth: 1
    :caption: Contents:
 
-   channels 
+   channels
    compensators
    dbp
    devices
    links
+   wdm
+   raman
    utils
+   constants
    
 
    

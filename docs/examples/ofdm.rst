@@ -186,7 +186,7 @@ We compute the SER and runtime, then plot the received constellation:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 81-92
+   :lines: 80-92
 
 For the OFDM chain, we obtain:
 

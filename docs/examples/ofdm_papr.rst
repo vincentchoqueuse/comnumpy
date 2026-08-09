@@ -37,7 +37,7 @@ the number of subcarriers, modulation, oversampling factor, and thresholds for P
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 16-25
+   :lines: 16-26
 
 Here:
 

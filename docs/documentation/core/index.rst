@@ -16,9 +16,15 @@ Core
    devices
    filters
    channels
-   impairments 
-   compensators 
+   fading
+   impairments
+   compensators
+   frames
+   sequences
+   capacity
    metrics
+   utils
+   validators
    visualizers
 
 Observing signals inside a chain

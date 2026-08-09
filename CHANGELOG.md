@@ -43,6 +43,22 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- Documentation pages for the 21 modules that had none: capacity,
+  fading, frames, sequences, utils and validators in `core`, the whole
+  `fec` package, `mimo.utils`, `ofdm.allocation`/`utils`/`visualizers`,
+  `optical.wdm`/`raman`/`constants`, and a new *Chain services*
+  section for `exceptions`, `serialization`, `sweep` and `style`. The
+  documentation covered 25 of 46 modules; Sphinx reports nothing when a
+  module simply has no `automodule` directive, so
+  `tests/test_docs_coverage.py` now fails on a module with no page, a
+  page for a module that is gone, and a page in no toctree.
+- `tests/test_docs_references.py` also checks that `literalinclude`
+  line ranges still cover every executable line of the example they
+  quote. That found six tutorials silently showing incomplete code --
+  `processor_profiling` opened its chain block on the *second* line of
+  `Sequential([`, the PAPR page never showed its oversampling factor,
+  and the fibre-nonlinearity page never showed the line that runs the
+  chain.
 - `comnumpy.optical.raman` (D45): `RamanGainSpectrum` (frozen, two
   closed-form models -- Blow-Wood single oscillator and the triangular
   tilt model -- with a registry and a construction-time self-check

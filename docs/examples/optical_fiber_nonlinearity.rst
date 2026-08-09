@@ -69,7 +69,7 @@ Execute the chain and extract the transmitted and received signals. Then, plot t
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 53-65
+   :lines: 52-65
 
 Received Signal
 ^^^^^^^^^^^^^^^
