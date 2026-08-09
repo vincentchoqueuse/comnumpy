@@ -726,15 +726,21 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.core.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">path</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># matplotlib stays out of the import path (D36)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
 
 
 <div class="viewcode-block" id="get_alphabet">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.get_alphabet">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+                 <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the symbol alphabet of a memoryless modulation of order :math:`M`.</span>
 
@@ -843,9 +849,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    two PAM axes and there is no one-line construction to check. They</span>
 <span class="sd">    are the only alphabets still tabulated.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pathname</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
-    <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/data/QAM_</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">.csv&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;QAM_</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">mapping</span><span class="si">}</span><span class="s2">.csv&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;no QAM-</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> alphabet: square orders (4, 16, 64, 256, 1024, &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;...) are constructed, and the cross constellations 32 and 128 &quot;</span>
@@ -898,7 +904,9 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="plot_alphabet">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.plot_alphabet">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">plot_alphabet</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;alphabet&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Constellation&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_alphabet</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;alphabet&quot;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Constellation&quot;</span><span class="p">,</span>
+                  <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plot the constellation diagram of a symbol alphabet.</span>
 
@@ -948,7 +956,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="sym_2_bin">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.sym_2_bin">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">sym_2_bin</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sym_2_bin</span><span class="p">(</span><span class="n">sym</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Expand symbol indices into their binary representation, MSB first.</span>
 
@@ -1010,7 +1018,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="hard_projector">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.hard_projector">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">hard_projector</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hard_projector</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                   <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Project symbols onto the nearest constellation point (hard decision).</span>
 
@@ -1080,7 +1089,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="soft_projector">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.soft_projector">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">soft_projector</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-                   <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                   <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the soft (MMSE) symbol estimate under a Gaussian noise model.</span>
 
@@ -1176,7 +1185,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="esn0_to_snr_dB">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.esn0_to_snr_dB">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">esn0_to_snr_dB</span><span class="p">(</span><span class="n">esn0_dB</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">esn0_to_snr_dB</span><span class="p">(</span><span class="n">esn0_dB</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span>
+                   <span class="n">oversampling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a symbol-energy-to-noise ratio :math:`E_s/N_0` (dB) into the SNR (dB) expected by ``AWGN``.</span>
 
@@ -1241,7 +1251,9 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="ebn0_to_snr_dB">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.ebn0_to_snr_dB">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="p">,</span> <span class="n">code_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                   <span class="n">code_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                   <span class="n">oversampling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a bit-energy-to-noise ratio :math:`E_b/N_0` (dB) into the SNR (dB) expected by ``AWGN``.</span>
 
@@ -1318,7 +1330,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="zf_estimator">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.zf_estimator">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">zf_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">zf_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform Zero Forcing (ZF) linear equalization using the channel matrix pseudoinverse.</span>
 
@@ -1394,7 +1406,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="mmse_estimator">
 <a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.mmse_estimator">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">mmse_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mmse_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform Minimum Mean Square Error (MMSE) linear equalization.</span>
 

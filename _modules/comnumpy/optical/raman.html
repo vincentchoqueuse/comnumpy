@@ -756,9 +756,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -1111,6 +1112,88 @@ window.runMermaid = runMermaid;</script>
                                        <span class="s2">&quot;J. Lightwave Technol. 36(14), 2018&quot;</span><span class="p">)</span>
 
 
+<span class="c1"># -- the wave table -------------------------------------------------------</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_group</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One entry per member of a group, as a 1-D float array.&quot;&quot;&quot;</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> dimensions, expected a scalar or a &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;1-D sequence with one entry per wave&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">array</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_broadcast_group</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+                     <span class="n">group</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bring every member of a group to the same length.</span>
+
+<span class="sd">    A scalar is shared by every wave of the group (one launch power for</span>
+<span class="sd">    a flat comb, one loss for every pump); anything else must already</span>
+<span class="sd">    have one entry per wave. Two different lengths are always a</span>
+<span class="sd">    mistake, never a broadcast.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> entries while the </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> set has &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">; expected either a single value shared by every &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> or one value per </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">count</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="p">(</span><span class="n">count</span><span class="p">,))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+                   <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_photon_occupancy</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span>
+                      <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Phonon occupancy :math:`1 + \eta` of the Raman ASE.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \eta(\Delta \nu, T) =</span>
+<span class="sd">            \left[\exp\!\left(\frac{h \Delta \nu}{k_B T}\right) - 1\right]^{-1}</span>
+
+<span class="sd">    At room temperature and a 13 THz shift this is a few per cent, so</span>
+<span class="sd">    the spontaneous emission is close to -- but not equal to -- the</span>
+<span class="sd">    zero-temperature value. It grows without bound as the shift goes to</span>
+<span class="sd">    zero, which is why the closely spaced pairs of a WDM comb are noisy</span>
+<span class="sd">    per unit of gain even though they exchange very little power.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">temperature_K</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">over</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+        <span class="n">occupancy</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span>
+            <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">BOLTZMANN</span> <span class="o">*</span> <span class="n">temperature_K</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">occupancy</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_coupling_matrix</span><span class="p">(</span><span class="n">frequency_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gain_peak_W_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                     <span class="n">spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RamanGainSpectrum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pairwise Raman coupling :math:`C_{ij}` of a set of waves.</span>
+
+<span class="sd">    ``C[i, j]`` is the coefficient multiplying :math:`P_i P_j` in the</span>
+<span class="sd">    equation of wave :math:`i`: positive when :math:`j` is the bluer of</span>
+<span class="sd">    the pair and feeds :math:`i`, negative when :math:`i` feeds</span>
+<span class="sd">    :math:`j`, and the two are tied by photon-number conservation</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        C_{ji} = -\frac{\nu_j}{\nu_i} \, C_{ij}, \qquad \nu_j &lt; \nu_i</span>
+
+<span class="sd">    which is what makes the total photon flux conserved in the lossless</span>
+<span class="sd">    limit whatever the number of waves.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">frequency_Hz</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">frequency_Hz</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># every pair at the peak coefficient: only meaningful for one</span>
+        <span class="c1"># pump-signal pair, which solve_raman enforces</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>     <span class="c1"># zero where shift &lt; 0</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">frequency_Hz</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">frequency_Hz</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">gain</span> <span class="o">-</span> <span class="n">ratio</span> <span class="o">*</span> <span class="n">gain</span><span class="o">.</span><span class="n">T</span>
+
+
 <span class="c1"># -- the solver -----------------------------------------------------------</span>
 <div class="viewcode-block" id="RamanSolution">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanSolution">[docs]</a>
@@ -1120,19 +1203,19 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
-<span class="sd">    All four profiles are functions of the distance :math:`z` from the</span>
-<span class="sd">    span input. The figures of merit are</span>
+<span class="sd">    All profiles are functions of the distance :math:`z` from the span</span>
+<span class="sd">    input. Per signal :math:`i`, the figures of merit are</span>
 
 <span class="sd">    .. math::</span>
 
 <span class="sd">        G_\mathrm{on\text{-}off} =</span>
-<span class="sd">            \frac{P_s(L)}{P_s(L)\big|_{P_p = 0}}</span>
-<span class="sd">          = \frac{P_s(L)}{P_s(0) e^{-\alpha_s L}},</span>
+<span class="sd">            \frac{P_{s,i}(L)}{P_{s,i}(L)\big|_{P_p = 0}}</span>
+<span class="sd">          = \frac{P_{s,i}(L)}{P_{s,i}(0) e^{-\alpha_{s,i} L}},</span>
 <span class="sd">        \qquad</span>
-<span class="sd">        G_\mathrm{net} = \frac{P_s(L)}{P_s(0)}</span>
+<span class="sd">        G_\mathrm{net} = \frac{P_{s,i}(L)}{P_{s,i}(0)}</span>
 
-<span class="sd">    -- the on-off gain is what the pump buys, the net gain is what</span>
-<span class="sd">    comes out of the span -- and the effective noise figure</span>
+<span class="sd">    -- the on-off gain is what the pumps buy, the net gain is what comes</span>
+<span class="sd">    out of the span -- and the effective noise figure</span>
 
 <span class="sd">    .. math::</span>
 
@@ -1144,28 +1227,37 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    below 0 dB, and that is the reason distributed amplification is</span>
 <span class="sd">    used at all.</span>
 
+<span class="sd">    **Shapes.** Each profile carries one row per wave, ``(n, n_z)``,</span>
+<span class="sd">    *except* when its group holds a single wave: a solve with one signal</span>
+<span class="sd">    and one pump wavelength returns the plain ``(n_z,)`` curves, so the</span>
+<span class="sd">    single-channel case reads exactly as it did before the multi-wave</span>
+<span class="sd">    generalization. The figures of merit follow the same rule: a float</span>
+<span class="sd">    for one signal, an array of one value per signal otherwise.</span>
+
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    z_km : np.ndarray</span>
 <span class="sd">        Distance grid, in km, from 0 to the span length.</span>
 <span class="sd">    signal_W : np.ndarray</span>
-<span class="sd">        Signal power :math:`P_s(z)` in W.</span>
+<span class="sd">        Signal powers :math:`P_{s,i}(z)` in W, one row per signal.</span>
 <span class="sd">    pump_forward_W, pump_backward_W : np.ndarray</span>
-<span class="sd">        Pump powers :math:`P_p^{+}(z)` and :math:`P_p^{-}(z)` in W.</span>
-<span class="sd">        Both are given on the same :math:`z` grid; the backward pump is</span>
-<span class="sd">        launched at :math:`z = L`.</span>
+<span class="sd">        Pump powers :math:`P_p^{+}(z)` and :math:`P_p^{-}(z)` in W, one</span>
+<span class="sd">        row per pump wavelength. Both are given on the same :math:`z`</span>
+<span class="sd">        grid; the backward pumps are launched at :math:`z = L`. A pump</span>
+<span class="sd">        that is off in one direction is stored as a zero row, so the two</span>
+<span class="sd">        arrays always have the same shape.</span>
 <span class="sd">    ase_W : np.ndarray</span>
 <span class="sd">        Amplified spontaneous emission :math:`P_\mathrm{ASE}(z)` in W,</span>
-<span class="sd">        in the reference bandwidth of the solve.</span>
+<span class="sd">        one row per signal, in the reference bandwidth of the solve.</span>
 <span class="sd">    bandwidth_Hz : float</span>
 <span class="sd">        Reference bandwidth :math:`B` the ASE was integrated over.</span>
-<span class="sd">    frequency_signal_Hz : float</span>
-<span class="sd">        Signal frequency :math:`\nu_s`, needed to turn the ASE into a</span>
-<span class="sd">        noise figure.</span>
+<span class="sd">    frequency_signal_Hz : np.ndarray or float</span>
+<span class="sd">        Signal frequencies :math:`\nu_{s,i}`, needed to turn the ASE</span>
+<span class="sd">        into a noise figure.</span>
 <span class="sd">    loss_only_W : np.ndarray</span>
-<span class="sd">        The signal profile the same fibre would give with the pumps</span>
-<span class="sd">        off, :math:`P_s(0) e^{-\alpha_s z}`. Carrying it makes the</span>
-<span class="sd">        on-off gain a ratio of two stored curves rather than a</span>
+<span class="sd">        The signal profiles the same fibre would give with the pumps</span>
+<span class="sd">        off, :math:`P_{s,i}(0) e^{-\alpha_{s,i} z}`. Carrying them makes</span>
+<span class="sd">        the on-off gain a ratio of two stored curves rather than a</span>
 <span class="sd">        recomputation.</span>
 
 <span class="sd">    Examples</span>
@@ -1183,80 +1275,116 @@ window.runMermaid = runMermaid;</script>
     <span class="n">ase_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">loss_only_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">frequency_signal_Hz</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">frequency_signal_Hz</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_off_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gain the pump buys, in dB: output with pump over output without.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of signal waves the solve carried.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">net_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_pumps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of pump *wavelengths* (a bidirectional pump counts once).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_per_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;One value per signal, or the value itself when there is one.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">values</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_off_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gain the pumps buy, in dB: output with pumps over output without.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_signal</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">)[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">net_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Span output over span input, in dB. Negative for a lossy span.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_signal</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">signal</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">signal</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gain_profile_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;On-off gain accumulated up to each :math:`z`, in dB.</span>
 
 <span class="sd">        This is the curve the split-step loop of</span>
-<span class="sd">        :class:`~comnumpy.optical.links.FiberLink` would consume.</span>
+<span class="sd">        :class:`~comnumpy.optical.links.FiberLink` consumes -- one row</span>
+<span class="sd">        per signal, so a WDM link applies its own tilted gain to each</span>
+<span class="sd">        channel of the axis D44 gives it.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">noise_figure_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tilt_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spread of the on-off gain across the signals, in dB.</span>
+
+<span class="sd">        Zero for a single signal. This is the number a multi-pump design</span>
+<span class="sd">        exists to minimize: one pump amplifies the red end of the comb</span>
+<span class="sd">        and starves the blue end, two well-placed pumps flatten it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_off_gain_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gains</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">gains</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">noise_figure_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Effective noise figure of the span, in dB; may be negative.&quot;&quot;&quot;</span>
-        <span class="n">photon</span> <span class="o">=</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_signal_Hz</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span>
-        <span class="n">net_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ase_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">photon</span><span class="p">)</span> <span class="o">/</span> <span class="n">net_gain</span><span class="p">))</span>
+        <span class="n">frequency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency_signal_Hz</span><span class="p">,</span>
+                                             <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">photon</span> <span class="o">=</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">frequency</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span>
+        <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span>
+        <span class="n">net_gain</span> <span class="o">=</span> <span class="n">signal</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">signal</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">ase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ase_W</span><span class="p">)[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_signal</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ase</span> <span class="o">/</span> <span class="n">photon</span><span class="p">)</span> <span class="o">/</span> <span class="n">net_gain</span><span class="p">))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">pump_depletion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fraction of the launched pump power the signal took away.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fraction of the launched pump power the signals took away.</span>
 
 <span class="sd">        Zero in the undepleted regime the analytic gain formula</span>
 <span class="sd">        assumes; a large value is the warning that it no longer holds.</span>
+<span class="sd">        Summed over the pumps: a per-pump breakdown is in the profiles.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">launched</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">no_raman</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span>
-                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span><span class="p">)</span>
+        <span class="n">forward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">)</span>
+        <span class="n">backward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">)</span>
+        <span class="n">transmission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span><span class="p">,</span>
+                                                <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">launched</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">forward</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">backward</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">forward</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">backward</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+        <span class="n">no_raman</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">forward</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">backward</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                                <span class="o">*</span> <span class="n">transmission</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">launched</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">no_raman</span> <span class="o">-</span> <span class="n">remaining</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">launched</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">no_raman</span> <span class="o">-</span> <span class="n">remaining</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">launched</span>
 
-    <span class="n">_pump_transmission</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compact view: the arrays are long, the figures of merit are not.&quot;&quot;&quot;</span>
+        <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_off_gain_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">z_km</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> km&quot;</span>
+        <span class="k">if</span> <span class="n">gains</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;(tilt </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tilt_dB</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s), </span><span class="si">{</span><span class="n">span</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">gain</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;depletion </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">pump_depletion</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
 
+    <span class="n">_pump_transmission</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                                         <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_photon_occupancy</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Phonon occupancy :math:`1 + \eta` of the Raman ASE.</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">        \eta(\Delta \nu, T) =</span>
-<span class="sd">            \left[\exp\!\left(\frac{h \Delta \nu}{k_B T}\right) - 1\right]^{-1}</span>
-
-<span class="sd">    At room temperature and a 13 THz shift this is a few per cent, so</span>
-<span class="sd">    the spontaneous emission is close to -- but not equal to -- the</span>
-<span class="sd">    zero-temperature value.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">shift_Hz</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">temperature_K</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mf">1.0</span>
-    <span class="k">return</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">PLANCK</span> <span class="o">*</span> <span class="n">shift_Hz</span> <span class="o">/</span> <span class="p">(</span><span class="n">BOLTZMANN</span> <span class="o">*</span> <span class="n">temperature_K</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="solve_raman">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.solve_raman">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solve_raman</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">length_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_peak_W_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-                <span class="n">signal_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-                <span class="n">pump_forward_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">pump_backward_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">alpha_signal_dB_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-                <span class="n">alpha_pump_dB_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
-                <span class="n">wavelength_signal_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550.0</span><span class="p">,</span>
-                <span class="n">wavelength_pump_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1455.0</span><span class="p">,</span>
+                <span class="n">signal_W</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+                <span class="n">pump_forward_W</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">pump_backward_W</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">alpha_signal_dB_km</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="n">alpha_pump_dB_km</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+                <span class="n">wavelength_signal_nm</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">1550.0</span><span class="p">,</span>
+                <span class="n">wavelength_pump_nm</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">=</span> <span class="mf">1455.0</span><span class="p">,</span>
                 <span class="n">spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RamanGainSpectrum</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">12.5e9</span><span class="p">,</span>
                 <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span><span class="p">,</span>
@@ -1266,56 +1394,64 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
-<span class="sd">    The signal propagates towards :math:`+z`, the co-propagating pump</span>
-<span class="sd">    with it and the counter-propagating pump against it. Writing every</span>
-<span class="sd">    profile in the :math:`+z` coordinate, the powers obey</span>
+<span class="sd">    Every wave -- each signal channel, each pump, in each direction --</span>
+<span class="sd">    is one power :math:`P_i(z)` written in the :math:`+z` coordinate,</span>
+<span class="sd">    with a direction :math:`d_i = +1` for a co-propagating wave and</span>
+<span class="sd">    :math:`-1` for a counter-propagating one. They obey</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        \frac{\mathrm{d} P_s}{\mathrm{d}z} &amp;=</span>
-<span class="sd">            \left[g\left(P_p^{+} + P_p^{-}\right) - \alpha_s\right] P_s \\</span>
-<span class="sd">        \frac{\mathrm{d} P_p^{+}}{\mathrm{d}z} &amp;=</span>
-<span class="sd">            -\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{+} \\</span>
-<span class="sd">        \frac{\mathrm{d} P_p^{-}}{\mathrm{d}z} &amp;=</span>
-<span class="sd">            +\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{-}</span>
+<span class="sd">        \frac{\mathrm{d} P_i}{\mathrm{d} z} =</span>
+<span class="sd">            d_i \left[\sum_{j} C_{ij} P_j - \alpha_i \right] P_i</span>
 
-<span class="sd">    with :math:`g = (g_R / A_\mathrm{eff}) \,</span>
-<span class="sd">    \tilde{g}(\nu_p - \nu_s)` the gain coefficient at the working</span>
-<span class="sd">    shift. The factor :math:`\nu_p / \nu_s` is photon-number</span>
-<span class="sd">    bookkeeping: one pump photon makes one signal photon, and the</span>
-<span class="sd">    energy difference goes into a phonon. Spontaneous emission adds</span>
+<span class="sd">    where the pairwise coupling is set by the gain shape at the shift</span>
+<span class="sd">    separating the two waves,</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        \frac{\mathrm{d} P_\mathrm{ASE}}{\mathrm{d}z} =</span>
-<span class="sd">            \left[g P_p^{\mathrm{tot}} - \alpha_s\right] P_\mathrm{ASE}</span>
-<span class="sd">            + 2 h \nu_s B \, g P_p^{\mathrm{tot}}</span>
-<span class="sd">              \left[1 + \eta(\Delta \nu, T)\right]</span>
+<span class="sd">        C_{ij} = \frac{g_R}{A_\mathrm{eff}}\,</span>
+<span class="sd">                 \tilde{g}(\nu_j - \nu_i) \quad (\nu_j &gt; \nu_i),</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        C_{ji} = -\frac{\nu_j}{\nu_i} C_{ij}</span>
+
+<span class="sd">    A pair therefore always exchanges *photons* one for one, the energy</span>
+<span class="sd">    difference going into a phonon, and that holds for every pair: pump</span>
+<span class="sd">    to signal, pump to pump, and -- the reason a WDM comb tilts -- the</span>
+<span class="sd">    blue channels of the comb to its own red ones.</span>
+
+<span class="sd">    Spontaneous emission adds, for each signal,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{\mathrm{d} P_{\mathrm{ASE},i}}{\mathrm{d}z} =</span>
+<span class="sd">            d_i \left[\left(\sum_j C_{ij} P_j - \alpha_i\right)</span>
+<span class="sd">            P_{\mathrm{ASE},i}</span>
+<span class="sd">            + 2 h \nu_i B \sum_{j:\, C_{ij} &gt; 0} C_{ij} P_j</span>
+<span class="sd">              \left(1 + \eta(\nu_j - \nu_i, T)\right)\right]</span>
 
 <span class="sd">    the last bracket being the phonon occupancy, which is why a Raman</span>
-<span class="sd">    amplifier is quieter when it is cold.</span>
+<span class="sd">    amplifier is quieter when it is cold. The ASE is amplified but does</span>
+<span class="sd">    not itself deplete the pumps.</span>
 
-<span class="sd">    **Boundary conditions.** The signal and the co-propagating pump are</span>
-<span class="sd">    known at the span input, the counter-propagating pump at its</span>
-<span class="sd">    output:</span>
+<span class="sd">    **Boundary conditions.** Co-propagating waves are known at the span</span>
+<span class="sd">    input, counter-propagating ones at its output:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        P_s(0) = P_\mathrm{in}, \quad</span>
-<span class="sd">        P_p^{+}(0) = P_f, \quad</span>
-<span class="sd">        P_p^{-}(L) = P_b, \quad</span>
+<span class="sd">        P_i(0) = P_i^\mathrm{in} \ (d_i = +1), \quad</span>
+<span class="sd">        P_i(L) = P_i^\mathrm{in} \ (d_i = -1), \quad</span>
 <span class="sd">        P_\mathrm{ASE}(0) = 0</span>
 
-<span class="sd">    With :math:`P_b = 0` everything is known at :math:`z = 0` and the</span>
-<span class="sd">    system is an initial value problem, integrated with</span>
+<span class="sd">    With no counter-propagating pump everything is known at :math:`z=0`</span>
+<span class="sd">    and the system is an initial value problem, integrated with</span>
 <span class="sd">    ``scipy.integrate.solve_ivp``. Otherwise it is a genuine two-point</span>
 <span class="sd">    boundary value problem and ``scipy.integrate.solve_bvp`` is used,</span>
 <span class="sd">    started from the undepleted-pump profiles -- a poor initial guess</span>
 <span class="sd">    is the usual reason that solver fails to converge.</span>
 
-<span class="sd">    **Undepleted limit.** When the signal takes a negligible part of</span>
-<span class="sd">    the pump, the pump decays exponentially and the on-off gain has the</span>
-<span class="sd">    closed form</span>
+<span class="sd">    **Undepleted limit.** For one signal and one pump, when the signal</span>
+<span class="sd">    takes a negligible part of the pump, the pump decays exponentially</span>
+<span class="sd">    and the on-off gain has the closed form</span>
 
 <span class="sd">    .. math::</span>
 
@@ -1326,6 +1462,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    which is what ``validation/optical_raman.py`` checks the solver</span>
 <span class="sd">    against, along with photon-number conservation in the lossless</span>
 <span class="sd">    limit.</span>
+
+<span class="sd">    **Multi-wave solves.** Every argument describing a signal accepts</span>
+<span class="sd">    either a scalar -- shared by the whole comb -- or one value per</span>
+<span class="sd">    channel, and likewise for the pumps; a scalar in gives a scalar</span>
+<span class="sd">    out. Since a shift now separates every pair, ``spectrum=`` becomes</span>
+<span class="sd">    *required* as soon as there is more than one signal or more than one</span>
+<span class="sd">    pump wavelength: its default meaning, &quot;the pair sits at the gain</span>
+<span class="sd">    peak&quot;, is only defensible for a single pair.</span>
 
 <span class="sd">    Axes: *not a Processor* -- this is a power-domain solver, and it</span>
 <span class="sd">    returns profiles rather than transforming a signal. See the module</span>
@@ -1339,24 +1483,30 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Peak Raman gain coefficient :math:`g_R / A_\mathrm{eff}` of the</span>
 <span class="sd">        fibre, in :math:`\mathrm{W}^{-1}\mathrm{km}^{-1}`. A property</span>
 <span class="sd">        of the fibre, not of the glass spectrum.</span>
-<span class="sd">    signal_W : float, optional, keyword-only</span>
-<span class="sd">        Launched signal power :math:`P_\mathrm{in}`, in W.</span>
-<span class="sd">    pump_forward_W : float, optional, keyword-only</span>
-<span class="sd">        Co-propagating pump :math:`P_f` launched at :math:`z = 0`, in W.</span>
-<span class="sd">    pump_backward_W : float, optional, keyword-only</span>
-<span class="sd">        Counter-propagating pump :math:`P_b` launched at :math:`z = L`,</span>
-<span class="sd">        in W. There is no ``direction`` argument: which pumps are on</span>
-<span class="sd">        *is* the configuration (D41).</span>
-<span class="sd">    alpha_signal_dB_km, alpha_pump_dB_km : float, optional, keyword-only</span>
+<span class="sd">    signal_W : float or array_like, optional, keyword-only</span>
+<span class="sd">        Launched signal powers :math:`P_\mathrm{in}`, in W. A scalar is</span>
+<span class="sd">        the same launch power on every channel.</span>
+<span class="sd">    pump_forward_W : float or array_like, optional, keyword-only</span>
+<span class="sd">        Co-propagating pump powers :math:`P_f` launched at :math:`z=0`,</span>
+<span class="sd">        in W, one per pump wavelength.</span>
+<span class="sd">    pump_backward_W : float or array_like, optional, keyword-only</span>
+<span class="sd">        Counter-propagating pump powers :math:`P_b` launched at</span>
+<span class="sd">        :math:`z = L`, in W, one per pump wavelength. A pump may be on</span>
+<span class="sd">        in both directions. There is no ``direction`` argument: which</span>
+<span class="sd">        pumps are on *is* the configuration (D41).</span>
+<span class="sd">    alpha_signal_dB_km, alpha_pump_dB_km : float or array_like, optional, keyword-only</span>
 <span class="sd">        Fibre attenuation :math:`\alpha_s` and :math:`\alpha_p` at the</span>
 <span class="sd">        signal and pump wavelengths, in dB/km.</span>
-<span class="sd">    wavelength_signal_nm, wavelength_pump_nm : float, optional, keyword-only</span>
-<span class="sd">        Wavelengths setting :math:`\nu_s`, :math:`\nu_p` and hence the</span>
-<span class="sd">        Stokes shift :math:`\Delta \nu`.</span>
+<span class="sd">    wavelength_signal_nm, wavelength_pump_nm : float or array_like, optional, keyword-only</span>
+<span class="sd">        Wavelengths setting :math:`\nu_s`, :math:`\nu_p` and hence every</span>
+<span class="sd">        Stokes shift :math:`\Delta \nu`. The lengths of the signal</span>
+<span class="sd">        arguments fix the number of channels, those of the pump</span>
+<span class="sd">        arguments the number of pumps.</span>
 <span class="sd">    spectrum : RamanGainSpectrum, optional, keyword-only</span>
-<span class="sd">        Gain shape used to scale ``gain_peak_W_km`` at the working</span>
+<span class="sd">        Gain shape used to scale ``gain_peak_W_km`` at each pair&#39;s</span>
 <span class="sd">        shift. ``None`` (default) uses the peak coefficient as given,</span>
-<span class="sd">        i.e. assumes the pump sits at the gain peak.</span>
+<span class="sd">        i.e. assumes the pump sits at the gain peak, and is only</span>
+<span class="sd">        accepted for a single signal and a single pump wavelength.</span>
 <span class="sd">    bandwidth_Hz : float, optional, keyword-only</span>
 <span class="sd">        Reference bandwidth :math:`B` for the ASE. Default 12.5 GHz,</span>
 <span class="sd">        the 0.1 nm convention.</span>
@@ -1375,10 +1525,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If no pump is on, if a power or a length is negative, or if the</span>
-<span class="sd">        boundary value problem fails to converge -- an unconverged mesh</span>
-<span class="sd">        is never returned, because it looks exactly like a plausible</span>
-<span class="sd">        result.</span>
+<span class="sd">        If no pump is on, if a power or a length is negative, if a pump</span>
+<span class="sd">        does not sit above every signal in frequency, if a group&#39;s</span>
+<span class="sd">        arguments disagree on the number of waves, if several waves need</span>
+<span class="sd">        a ``spectrum=`` and none was given, or if the boundary value</span>
+<span class="sd">        problem fails to converge -- an unconverged mesh is never</span>
+<span class="sd">        returned, because it looks exactly like a plausible result.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1394,65 +1546,146 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                        pump_backward_W=0.2)</span>
 <span class="sd">    &gt;&gt;&gt; round(solution.on_off_gain_dB, 2), round(solution.net_gain_dB, 2)</span>
 <span class="sd">    (5.97, -10.03)</span>
+
+<span class="sd">    Three C-band channels under a single pump: the gain follows the</span>
+<span class="sd">    shape of the spectrum, so the comb comes out tilted.</span>
+
+<span class="sd">    &gt;&gt;&gt; comb = [1530.0, 1545.0, 1560.0]</span>
+<span class="sd">    &gt;&gt;&gt; blow_wood = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; one = solve_raman(length_km=80.0, gain_peak_W_km=0.4,</span>
+<span class="sd">    ...                   wavelength_signal_nm=comb, signal_W=1e-3,</span>
+<span class="sd">    ...                   pump_backward_W=0.4, wavelength_pump_nm=1450.0,</span>
+<span class="sd">    ...                   spectrum=blow_wood, bandwidth_Hz=0.0)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(one.on_off_gain_dB, 2))</span>
+<span class="sd">    [ 9.74 11.84 10.89]</span>
+
+<span class="sd">    The same total pump power split between two wavelengths halves the</span>
+<span class="sd">    tilt -- which is the whole reason multi-pump Raman exists:</span>
+
+<span class="sd">    &gt;&gt;&gt; two = solve_raman(length_km=80.0, gain_peak_W_km=0.4,</span>
+<span class="sd">    ...                   wavelength_signal_nm=comb, signal_W=1e-3,</span>
+<span class="sd">    ...                   pump_backward_W=[0.15, 0.25],</span>
+<span class="sd">    ...                   wavelength_pump_nm=[1425.0, 1455.0],</span>
+<span class="sd">    ...                   spectrum=blow_wood, bandwidth_Hz=0.0)</span>
+<span class="sd">    &gt;&gt;&gt; two.n_signals, two.n_pumps</span>
+<span class="sd">    (3, 2)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(one.tilt_dB, 2), round(two.tilt_dB, 2))</span>
+<span class="sd">    2.1 0.98</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bvp</span><span class="p">,</span> <span class="n">solve_ivp</span>      <span class="c1"># local import (D36)</span>
 
     <span class="k">if</span> <span class="n">length_km</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a positive span length, got </span><span class="si">{</span><span class="n">length_km</span><span class="si">}</span><span class="s2"> km&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">signal_W</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a positive signal power, got </span><span class="si">{</span><span class="n">signal_W</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pump_forward_W</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">pump_backward_W</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+
+    <span class="n">n_signals</span><span class="p">,</span> <span class="n">signals</span> <span class="o">=</span> <span class="n">_broadcast_group</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;signal_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">signal_W</span><span class="p">,</span> <span class="s2">&quot;signal_W&quot;</span><span class="p">),</span>
+         <span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_signal_nm</span><span class="p">,</span>
+                                           <span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">),</span>
+         <span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_signal_dB_km</span><span class="p">,</span>
+                                         <span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">)},</span>
+        <span class="s2">&quot;signal&quot;</span><span class="p">)</span>
+    <span class="n">n_pumps</span><span class="p">,</span> <span class="n">pumps</span> <span class="o">=</span> <span class="n">_broadcast_group</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_forward_W</span><span class="p">,</span> <span class="s2">&quot;pump_forward_W&quot;</span><span class="p">),</span>
+         <span class="s2">&quot;pump_backward_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_backward_W</span><span class="p">,</span> <span class="s2">&quot;pump_backward_W&quot;</span><span class="p">),</span>
+         <span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_pump_nm</span><span class="p">,</span>
+                                         <span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">),</span>
+         <span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_pump_dB_km</span><span class="p">,</span> <span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">)},</span>
+        <span class="s2">&quot;pump&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected positive signal powers, got </span><span class="si">{</span><span class="n">signals</span><span class="p">[</span><span class="s1">&#39;signal_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;expected non-negative pump powers, got forward &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pump_forward_W</span><span class="si">}</span><span class="s2"> W and backward </span><span class="si">{</span><span class="n">pump_backward_W</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pump_forward_W</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">pump_backward_W</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">&#39;pump_forward_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W and backward &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">&#39;pump_backward_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;expected at least one pump to be on, got both at 0 W -- pass &quot;</span>
-            <span class="s2">&quot;pump_forward_W= for co-propagating pumping, pump_backward_W= &quot;</span>
-            <span class="s2">&quot;for counter-propagating, or both for bidirectional&quot;</span><span class="p">)</span>
+            <span class="s2">&quot;expected at least one pump to be on, got every pump at 0 W -- &quot;</span>
+            <span class="s2">&quot;pass pump_forward_W= for co-propagating pumping, &quot;</span>
+            <span class="s2">&quot;pump_backward_W= for counter-propagating, or both for &quot;</span>
+            <span class="s2">&quot;bidirectional&quot;</span><span class="p">)</span>
 
-    <span class="n">nu_s</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_signal_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
-    <span class="n">nu_p</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_pump_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
-    <span class="n">shift</span> <span class="o">=</span> <span class="n">nu_p</span> <span class="o">-</span> <span class="n">nu_s</span>
-    <span class="k">if</span> <span class="n">shift</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">nu_signal</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">nu_pump</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">worst</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">nu_pump</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">nu_signal</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span>
+    <span class="k">if</span> <span class="n">worst</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;expected the pump above the signal in frequency, got a Stokes &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;shift of </span><span class="si">{</span><span class="n">shift</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz -- the pump wavelength must be &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;the shorter one&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">&quot;expected every pump above every signal in frequency, got a &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Stokes shift of </span><span class="si">{</span><span class="n">worst</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz for the closest pair -- &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;the pump wavelengths must be the shorter ones&quot;</span><span class="p">)</span>
 
-    <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span>
-    <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift</span><span class="p">)))</span>
-        <span class="k">if</span> <span class="n">gain</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> spectrum gives no gain at a &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz shift -- move the pump closer to &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;the </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz peak&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n_signals</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">n_pumps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;spectrum= is required for a multi-wave solve, got None with &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s) and </span><span class="si">{</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s); spectrum=None &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;means every pair sits at the gain peak, which is only &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;defensible for a single pump-signal pair -- pass &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;spectrum=get_gain_spectrum(&#39;blow-wood&#39;) so each pair is &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;coupled at its own frequency shift&quot;</span><span class="p">)</span>
 
-    <span class="n">alpha_s</span> <span class="o">=</span> <span class="n">alpha_signal_dB_km</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>       <span class="c1"># 1/km</span>
-    <span class="n">alpha_p</span> <span class="o">=</span> <span class="n">alpha_pump_dB_km</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
-    <span class="n">spontaneous</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">nu_s</span> <span class="o">*</span> <span class="n">bandwidth_Hz</span>
-                   <span class="o">*</span> <span class="n">_photon_occupancy</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">temperature_K</span><span class="p">))</span>
+    <span class="c1"># -- assemble the waves: signals first, then the pumps that are on</span>
+    <span class="n">frequency</span> <span class="o">=</span> <span class="p">[</span><span class="n">nu_signal</span><span class="p">]</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))]</span>     <span class="c1"># 1/km</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_signals</span><span class="p">)]</span>
+    <span class="n">launched</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">]]</span>
+    <span class="n">alpha_pump</span> <span class="o">=</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">index_forward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_pumps</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">index_backward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_pumps</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">n_signals</span>
+    <span class="k">for</span> <span class="n">sign</span><span class="p">,</span> <span class="n">powers</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">((</span><span class="o">+</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">],</span> <span class="n">index_forward</span><span class="p">),</span>
+                                <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">],</span> <span class="n">index_backward</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">pump</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">powers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">frequency</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nu_pump</span><span class="p">[</span><span class="n">pump</span><span class="p">:</span> <span class="n">pump</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">alpha</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alpha_pump</span><span class="p">[</span><span class="n">pump</span><span class="p">:</span> <span class="n">pump</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">direction</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">sign</span><span class="p">]))</span>
+            <span class="n">launched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">powers</span><span class="p">[</span><span class="n">pump</span><span class="p">:</span> <span class="n">pump</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">pump</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span>
+            <span class="n">position</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">nu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+    <span class="n">alpha_wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">direction_wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+    <span class="n">launched_wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">launched</span><span class="p">)</span>
+    <span class="n">n_waves</span> <span class="o">=</span> <span class="n">nu</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">coupling</span> <span class="o">=</span> <span class="n">_coupling_matrix</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">gain_peak_W_km</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">coupling</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="n">n_signals</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">shifts</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_signals</span><span class="p">:]</span> <span class="o">-</span> <span class="n">nu</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1e12</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;the pumps buy no gain at all: the shifts &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shifts</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> THz fall outside the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">spectrum</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;flat&#39;</span><span class="si">}</span><span class="s2"> gain spectrum -- &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;move the pumps closer to the signals in frequency&quot;</span><span class="p">)</span>
+
+    <span class="c1"># spontaneous source, one row per signal: 2 h nu B C_ij (1 + eta_ij)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">nu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">nu</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">spontaneous</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">coupling</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">nu</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">bandwidth_Hz</span>
+         <span class="o">*</span> <span class="n">coupling</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">]</span> <span class="o">*</span> <span class="n">_photon_occupancy</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">temperature_K</span><span class="p">)),</span>
+        <span class="mf">0.0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">rhs</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="n">signal</span><span class="p">,</span> <span class="n">forward</span><span class="p">,</span> <span class="n">backward</span><span class="p">,</span> <span class="n">ase</span> <span class="o">=</span> <span class="n">y</span>
-        <span class="n">pump</span> <span class="o">=</span> <span class="n">forward</span> <span class="o">+</span> <span class="n">backward</span>
-        <span class="n">transfer</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu_p</span> <span class="o">/</span> <span class="n">nu_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">signal</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="n">n_waves</span><span class="p">]</span>
+        <span class="n">ase</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">n_waves</span><span class="p">:]</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">coupling</span> <span class="o">@</span> <span class="n">power</span> <span class="o">-</span> <span class="n">alpha_wave</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span> <span class="o">-</span> <span class="n">alpha_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">signal</span><span class="p">,</span>
-            <span class="o">-</span><span class="p">(</span><span class="n">transfer</span> <span class="o">+</span> <span class="n">alpha_p</span><span class="p">)</span> <span class="o">*</span> <span class="n">forward</span><span class="p">,</span>
-            <span class="o">+</span><span class="p">(</span><span class="n">transfer</span> <span class="o">+</span> <span class="n">alpha_p</span><span class="p">)</span> <span class="o">*</span> <span class="n">backward</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span> <span class="o">-</span> <span class="n">alpha_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">ase</span> <span class="o">+</span> <span class="n">spontaneous</span> <span class="o">*</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span><span class="p">,</span>
+            <span class="n">direction_wave</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">net</span> <span class="o">*</span> <span class="n">power</span><span class="p">,</span>
+            <span class="n">direction_wave</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">net</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">]</span> <span class="o">*</span> <span class="n">ase</span>
+                                                <span class="o">+</span> <span class="n">spontaneous</span> <span class="o">@</span> <span class="n">power</span><span class="p">),</span>
         <span class="p">])</span>
 
     <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">length_km</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pump_backward_W</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+    <span class="n">forward_only</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">direction_wave</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">forward_only</span><span class="p">:</span>
         <span class="c1"># everything is known at z = 0: an initial value problem, which is</span>
         <span class="c1"># exact and cannot fail to converge</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">launched_wave</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_signals</span><span class="p">)])</span>
         <span class="n">solved</span> <span class="o">=</span> <span class="n">solve_ivp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">zz</span><span class="p">,</span> <span class="n">yy</span><span class="p">:</span> <span class="n">rhs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zz</span><span class="p">),</span>
                                               <span class="n">yy</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
-                           <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">length_km</span><span class="p">),</span>
-                           <span class="p">[</span><span class="n">signal_W</span><span class="p">,</span> <span class="n">pump_forward_W</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+                           <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">length_km</span><span class="p">),</span> <span class="n">start</span><span class="p">,</span>
                            <span class="n">t_eval</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">tol</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">,</span>
                            <span class="n">dense_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">solved</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
@@ -1463,17 +1696,17 @@ window.runMermaid = runMermaid;</script>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">y</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">boundary</span><span class="p">(</span><span class="n">left</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">left</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">signal_W</span><span class="p">,</span>          <span class="c1"># signal at z = 0</span>
-                             <span class="n">left</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pump_forward_W</span><span class="p">,</span>    <span class="c1"># co pump at z = 0</span>
-                             <span class="n">right</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">pump_backward_W</span><span class="p">,</span>  <span class="c1"># counter at z = L</span>
-                             <span class="n">left</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>                    <span class="c1"># no ASE at the input</span>
+            <span class="c1"># each wave is pinned at the end it is launched from</span>
+            <span class="n">edge</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">direction_wave</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">left</span><span class="p">[:</span><span class="n">n_waves</span><span class="p">],</span> <span class="n">right</span><span class="p">[:</span><span class="n">n_waves</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">edge</span> <span class="o">-</span> <span class="n">launched_wave</span><span class="p">,</span>
+                                   <span class="n">left</span><span class="p">[</span><span class="n">n_waves</span><span class="p">:]])</span>      <span class="c1"># no ASE at the input</span>
         <span class="c1"># undepleted profiles as the initial guess: solve_bvp converges from</span>
         <span class="c1"># here even under heavy depletion, and diverges from a flat guess</span>
+        <span class="n">travelled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">direction_wave</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span>
+                             <span class="n">length_km</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
         <span class="n">guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span>
-            <span class="n">signal_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_s</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
-            <span class="n">pump_forward_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
-            <span class="n">pump_backward_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="p">(</span><span class="n">length_km</span> <span class="o">-</span> <span class="n">z</span><span class="p">)),</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+            <span class="n">launched_wave</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_wave</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">travelled</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_signals</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">size</span><span class="p">)),</span>
         <span class="p">])</span>
         <span class="n">solved</span> <span class="o">=</span> <span class="n">solve_bvp</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">max_nodes</span><span class="o">=</span><span class="mi">200_000</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">solved</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
@@ -1485,16 +1718,34 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;n_nodes&quot;</span><span class="p">)</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">sol</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 
+    <span class="c1"># -- reassemble: one row per signal, one row per pump wavelength</span>
+    <span class="n">pump_profile</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">(</span><span class="n">index_forward</span><span class="p">,</span> <span class="n">index_backward</span><span class="p">):</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_pumps</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">pump</span><span class="p">,</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rows</span><span class="p">[</span><span class="n">pump</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="n">position</span><span class="p">]</span>
+        <span class="n">pump_profile</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fold</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A single wave keeps the plain 1-D profile it always had.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">rows</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">rows</span>
+
+    <span class="n">loss_only</span> <span class="o">=</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span>
+                 <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_wave</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span>
+    <span class="n">transmission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_pump</span> <span class="o">*</span> <span class="n">length_km</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">RamanSolution</span><span class="p">(</span>
         <span class="n">z_km</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
-        <span class="n">signal_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="n">pump_forward_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-        <span class="n">pump_backward_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-        <span class="n">ase_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
-        <span class="n">loss_only_W</span><span class="o">=</span><span class="n">signal_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_s</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">signal_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">profile</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">]),</span>
+        <span class="n">pump_forward_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">pump_profile</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="n">pump_backward_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">pump_profile</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">ase_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="n">n_waves</span><span class="p">:]),</span>
+        <span class="n">loss_only_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">loss_only</span><span class="p">),</span>
         <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">bandwidth_Hz</span><span class="p">,</span>
-        <span class="n">frequency_signal_Hz</span><span class="o">=</span><span class="n">nu_s</span><span class="p">,</span>
-        <span class="n">_pump_transmission</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="n">length_km</span><span class="p">)),</span>
+        <span class="n">frequency_signal_Hz</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nu_signal</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">n_signals</span> <span class="o">==</span> <span class="mi">1</span>
+                             <span class="k">else</span> <span class="n">nu_signal</span><span class="p">),</span>
+        <span class="n">_pump_transmission</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">transmission</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">n_pumps</span> <span class="o">==</span> <span class="mi">1</span>
+                            <span class="k">else</span> <span class="n">transmission</span><span class="p">),</span>
     <span class="p">)</span></div>
 
 </pre></div>
