@@ -1,12 +1,17 @@
+import logging
+
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional, Literal, Callable, Dict
 from comnumpy.core import Processor
 from comnumpy.exceptions import ShapeError
 from .devices import ErbiumDopedFiberAmplifier
+from .raman import RamanSolution
 from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
 from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity)
+
+logger = logging.getLogger(__name__)
 
 @dataclass(slots=True)
 class FiberLink(Processor):
@@ -92,6 +97,31 @@ class FiberLink(Processor):
     callbacks : dict of str to callable, optional, keyword-only
         Hooks called during propagation; the key ``"post_span"`` is
         called after each span as ``callback(y, num_span=...)``.
+    raman : RamanSolution, optional, keyword-only
+        Distributed Raman gain profile, from
+        :func:`~comnumpy.optical.raman.solve_raman` over **this span
+        length** (decision D45). Its on-off gain
+        :math:`G_\mathrm{on\text{-}off}(z)` is applied step by step
+        inside the split-step loop, so the Kerr term sees the power the
+        fibre actually carries -- which is the whole reason a profile is
+        used rather than a lumped gain. The EDFA is reduced by the same
+        amount, so a span stays transparent whether or not it is pumped,
+        and the ASE the solver integrated is added once per span, scaled
+        from its reference bandwidth to ``fs``.
+    seed : int, optional, keyword-only
+        Seed of the local generator, which feeds both the Raman ASE and
+        the per-span EDFA seed. Overridden by chain seeding
+        (``Sequential.seed``, D6).
+
+    Attributes
+    ----------
+    raman_step_gain_ : np.ndarray
+        Amplitude gain applied at each split-step, read off the Raman
+        profile at the step boundaries. Derived from the inputs, hence
+        the trailing underscore (D23).
+    raman_sigma2_ : float
+        Variance of the Raman ASE added at the end of each span, in the
+        simulated bandwidth :math:`f_s`.
 
     Raises
     ------
@@ -143,11 +173,16 @@ class FiberLink(Processor):
     # callback(y, num_span=...), which Callable[[np.ndarray], None]
     # declared away. Not Optional: default_factory=dict never yields None.
     callbacks: Dict[str, Callable[..., None]] = field(default_factory=dict, kw_only=True)
+    raman: Optional[RamanSolution] = field(default=None, kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
     # internal state (declared for slots, D40a)
     step_size: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     edfa_gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     edfa_N_ase: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    raman_step_gain_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    raman_sigma2_: float = field(init=False, repr=False, default=0.0)
+    rng_: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
         if x.ndim != 1:
@@ -168,8 +203,72 @@ class FiberLink(Processor):
                 raise NotImplementedError(f"Step type {self.step_type} is not implemented")
 
         self.beta2 = compute_beta2(self.lamb, self.cd_coefficient, self.c)
-        self.edfa_gain = compute_erbium_doped_fiber_amplifier_gain(self.alpha_dB, self.L_span)
-        self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(self.alpha_dB, self.L_span, self.NF_dB, h=self.h, nu=self.nu)
+        self.rng_ = np.random.default_rng(self.seed)
+
+        # Distributed Raman gain (D45): the profile is sampled at the step
+        # boundaries, so each step carries the on-off gain accumulated
+        # over exactly that step -- which is what makes *where* the gain
+        # happens visible to the Kerr term.
+        residual_dB = self.alpha_dB * self.L_span
+        if self.raman is not None:
+            self.raman_step_gain_ = self._raman_step_gain()
+            if self.step_type == "logarithmic":
+                logger.warning(
+                    "logarithmic steps are sized for the exponential decay "
+                    "of an unpumped span, and distributed Raman flattens "
+                    "that profile: the longest steps then land where the "
+                    "power is highest. Measured on an SPM phase, the "
+                    "logarithmic grid is 3x *worse* than the linear one "
+                    "once Raman is on (8.2e-4 rad against 2.8e-4 at "
+                    "StPS=20). Use step_type='linear' with Raman.")
+            residual_dB -= self.raman.on_off_gain_dB
+            # the ASE the solver integrated over its own reference
+            # bandwidth, spread over the simulated one
+            if self.raman.bandwidth_Hz > 0:
+                self.raman_sigma2_ = (self.noise_scaling * float(self.raman.ase_W[-1])
+                                      * self.fs / self.raman.bandwidth_Hz)
+            if residual_dB < 0:
+                logger.warning(
+                    "Raman over-compensates the span: %.2f dB of on-off gain "
+                    "against %.2f dB of loss, so the EDFA is set to "
+                    "attenuate by %.2f dB to keep the span transparent.",
+                    self.raman.on_off_gain_dB, self.alpha_dB * self.L_span,
+                    -residual_dB)
+
+        # the EDFA makes up whatever the Raman gain did not, so a span
+        # stays transparent whether or not it is Raman-pumped
+        equivalent_alpha_dB = residual_dB / self.L_span
+        self.edfa_gain = compute_erbium_doped_fiber_amplifier_gain(equivalent_alpha_dB, self.L_span)
+        self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(equivalent_alpha_dB, self.L_span, self.NF_dB, h=self.h, nu=self.nu)
+
+    def _raman_step_gain(self) -> np.ndarray:
+        """Amplitude gain of each SSFM step, from the Raman profile."""
+        assert self.raman is not None and self.step_size is not None
+        span_km = float(self.raman.z_km[-1])
+        if abs(span_km - self.L_span) > 1e-6 * max(self.L_span, 1.0):
+            raise ValueError(
+                f"expected a Raman solution over the span length "
+                f"{self.L_span} km, got one over {span_km} km -- solve it "
+                f"with length_km={self.L_span}, the gain profile has to "
+                f"describe this fibre")
+        # Sampled at the *half*-step boundaries, not the step boundaries.
+        # The gain belongs to the linear operator, exactly like the loss
+        # that apply_chromatic_dispersion already applies over dz/2 in
+        # each half; applying a whole step's gain at one point breaks the
+        # symmetry of the symmetric split-step and drops it from second
+        # order to first. Measured on the SPM phase of a CW field: the
+        # error fell as 1/StPS with a single application, and falls as
+        # 1/StPS^2 with this one, which is the order of the scheme
+        # without Raman.
+        ends = np.cumsum(self.step_size)
+        starts = np.concatenate(([0.0], ends[:-1]))
+        boundaries = np.empty(2 * len(ends) + 1)
+        boundaries[0] = 0.0
+        boundaries[1::2] = (starts + ends) / 2
+        boundaries[2::2] = ends
+        gain_dB = np.interp(boundaries, self.raman.z_km,
+                            self.raman.gain_profile_dB)
+        return 10 ** (np.diff(gain_dB) / 20)      # 2*StPS half-step gains
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # perform SSFM
@@ -181,21 +280,46 @@ class FiberLink(Processor):
             # perform for each span
             if self.use_only_linear:
                 y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                if self.raman_step_gain_ is not None:
+                    # no step loop here, so the whole profile applies at
+                    # once -- the span must stay transparent in this mode
+                    # too, and the EDFA has already been reduced for it
+                    y = float(np.prod(self.raman_step_gain_)) * y
             else:
                 for num_step in range(self.StPS):
                     dz = self.step_size[num_step]
+                    # the two half-step Raman gains bracket the Kerr term,
+                    # like the two half-step dispersion operators
+                    first, second = (self.raman_step_gain_[2*num_step:2*num_step+2]
+                                     if self.raman_step_gain_ is not None
+                                     else (1.0, 1.0))
 
                     if self.step_method == "symmetric":
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_chromatic_dispersion(first*y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
                         y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=1)
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_chromatic_dispersion(second*y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
 
                     if self.step_method == "asymetric":
-                        y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=1)
+                        y = apply_kerr_nonlinearity(first*second*y, dz, self.gamma, direction=1)
                         y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
 
-            # perform amplification for fiber loss compensation
-            edfa = ErbiumDopedFiberAmplifier(self.edfa_gain, self.edfa_N_ase)
+            # the ASE the distributed amplifier generated over this span,
+            # already amplified by the gain downstream of where it was born
+            # (the solver integrates it to z = L, so it is added once)
+            if self.raman_sigma2_ > 0:
+                assert self.rng_ is not None
+                scale = np.sqrt(self.raman_sigma2_ / 2)
+                y = y + (self.rng_.normal(scale=scale, size=y.shape)
+                         + 1j * self.rng_.normal(scale=scale, size=y.shape))
+
+            # perform amplification for fiber loss compensation. The EDFA
+            # draws its seed from the link's generator: built unseeded it
+            # made the whole link irreproducible, and seeding the Raman
+            # noise alone would only have made it *look* reproducible.
+            assert self.rng_ is not None
+            edfa = ErbiumDopedFiberAmplifier(
+                self.edfa_gain, self.edfa_N_ase,
+                seed=int(self.rng_.integers(2 ** 31)))
             y = edfa(y)
 
             # callback after span if needed

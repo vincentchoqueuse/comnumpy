@@ -81,8 +81,14 @@ one release; there is no compatibility layer.
   otherwise. It returns power profiles and the gain profile `G(z)`, not
   a `Processor`: applying a lumped gain at the end of a span would
   describe a discrete amplifier, which is what distributed
-  amplification is not. The `FiberLink` hook that consumes `G(z)` is a
-  later pass.
+  amplification is not.
+- `FiberLink(..., raman=solution)` consumes that profile inside the
+  split-step loop, so the Kerr term sees the power the fibre carries.
+  The span EDFA is reduced by the Raman on-off gain, so a span stays
+  transparent pumped or not; the Raman ASE is added once per span; and
+  the link now takes a `seed` that feeds both it and the per-span EDFA
+  -- the EDFA was built unseeded, so a noisy `FiberLink` was not
+  reproducible at all.
 - `comnumpy.optical.wdm` (D44): frozen `WDMGrid` frequency plan
   (absolute hertz, `uniform` and ITU flexible-grid constructors, ASCII
   spectral map, `validate_fs`), plus `WDMMultiplexer` /
