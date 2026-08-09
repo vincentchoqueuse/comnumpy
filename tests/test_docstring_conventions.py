@@ -33,12 +33,24 @@ CONVERTED_MODULES = [
     "comnumpy.mimo.detectors",
     "comnumpy.mimo.compensators",
     "comnumpy.ofdm.chains",
+    "comnumpy.core.processors",
+    "comnumpy.core.filters",
+    "comnumpy.core.devices",
+    "comnumpy.core.frames",
+    "comnumpy.optical.compensators",
 ]
 
 
 # identity pass-through blocks: no algorithm, hence no citation required (R3)
 NO_REFERENCE_NEEDED = {
     "comnumpy.optical.devices.PowerControl",
+    # pure array remapping: no algorithm, hence nothing to cite
+    "comnumpy.core.processors.Complex2Real",
+    "comnumpy.core.processors.AutoConcatenator",
+    "comnumpy.core.processors.SampleRemover",
+    "comnumpy.core.processors.DelayRemover",
+    "comnumpy.core.processors.DataAdder",
+    "comnumpy.core.processors.DataExtractor",
 }
 
 
