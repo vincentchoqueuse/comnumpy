@@ -65,8 +65,14 @@ class CyclicPrefixer(AutoConcatenator):
     name: str = field(default="cp adder", kw_only=True)
 
     def __post_init__(self):
+        if isinstance(self.N_cp, (bool, np.integer)):
+            # numpy integers come out of every shape computation; bool is
+            # an int subclass and would slip through as 0 or 1
+            self.N_cp = int(self.N_cp)
         if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
-            raise ValueError("N_cp must be a positive integer.")
+            raise ValueError(
+                f"expected a non-negative integer cyclic-prefix length, "
+                f"got N_cp={self.N_cp!r} -- pass 0 for no prefix")
 
     def prepare(self, X: np.ndarray):
         """Initialize the mask based on the signal shape"""
@@ -74,7 +80,8 @@ class CyclicPrefixer(AutoConcatenator):
         output_mask_length = input_length + self.N_cp
 
         input_copy_mask = np.zeros(input_length)
-        input_copy_mask[-self.N_cp:] = 1
+        # not [-N_cp:]: at N_cp = 0 that slice is [0:], the *whole* block
+        input_copy_mask[input_length - self.N_cp:] = 1
 
         output_original_mask = np.zeros(output_mask_length)
         output_original_mask[self.N_cp:] = 1
@@ -133,8 +140,14 @@ class CyclicPrefixRemover(Processor):
     name: str = field(default="cp remover", kw_only=True)
 
     def __post_init__(self):
+        if isinstance(self.N_cp, (bool, np.integer)):
+            # numpy integers come out of every shape computation; bool is
+            # an int subclass and would slip through as 0 or 1
+            self.N_cp = int(self.N_cp)
         if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
-            raise ValueError("N_cp must be a positive integer.")
+            raise ValueError(
+                f"expected a non-negative integer cyclic-prefix length, "
+                f"got N_cp={self.N_cp!r} -- pass 0 for no prefix")
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         # Remove the cyclic prefix along the block content axis
