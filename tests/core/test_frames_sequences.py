@@ -21,6 +21,13 @@ class TestSequences(unittest.TestCase):
             r = np.vdot(x, np.roll(x, lag))
             self.assertLess(abs(r), 1e-9, f"lag {lag}")
 
+    def test_zadoff_chu_cross_correlation_is_flat(self):
+        # two roots with gcd(|u - v|, N) = 1: |theta_uv[k]| = sqrt(N) at every lag
+        N = 139
+        x, y = zadoff_chu(25, N), zadoff_chu(34, N)
+        magnitudes = np.array([abs(np.vdot(x, np.roll(y, k))) for k in range(N)])
+        np.testing.assert_allclose(magnitudes, np.sqrt(N), atol=1e-9)
+
     def test_zadoff_chu_rejects_bad_args(self):
         with self.assertRaises(ValueError):
             zadoff_chu(2, 64)   # even length
@@ -31,6 +38,17 @@ class TestSequences(unittest.TestCase):
         x = schmidl_cox_preamble(64, seed=3)
         np.testing.assert_allclose(x[32:], x[:32], atol=1e-12)
         self.assertAlmostEqual(float(np.mean(np.abs(x) ** 2)), 1.0, places=6)
+
+    def test_schmidl_cox_metric_gives_timing_and_cfo(self):
+        # the half repetition is what the S&C metric P(d) exploits: M(d) = 1 when
+        # the window is aligned, and angle(P) = pi * eps gives the CFO
+        N, eps = 64, 0.25
+        x = schmidl_cox_preamble(N, seed=7)
+        y = x * np.exp(2j * np.pi * eps * np.arange(N) / N)
+        P = np.vdot(y[:N // 2], y[N // 2:])
+        R = float(np.sum(np.abs(y[N // 2:]) ** 2))
+        self.assertAlmostEqual(abs(P) ** 2 / R ** 2, 1.0, places=9)
+        self.assertAlmostEqual(float(np.angle(P) / np.pi), eps, places=9)
 
     def test_barker_sidelobes(self):
         for length in (2, 3, 4, 5, 7, 11, 13):

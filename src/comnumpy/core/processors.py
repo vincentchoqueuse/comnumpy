@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Literal, Union
 from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
+from comnumpy.exceptions import ShapeError
 
 
 @dataclass(slots=True)
@@ -132,7 +133,9 @@ class Downsampler(Processor):
     Decimation folds the input spectrum :math:`L` times; the input must
     therefore be bandlimited to :math:`1/L` beforehand, otherwise aliasing
     occurs. Setting ``use_filter`` applies that anti-aliasing lowpass
-    filter before the decimation.
+    filter of normalized cutoff :math:`1/L` **before** the decimation --
+    the mirror image of :class:`Upsampler`, where the anti-imaging filter
+    of the same cutoff comes **after** the zero stuffing.
 
     Axes: *declared axis* -- the decimation runs along ``axis`` (default
     -1, the sample axis of the Serial layout ``(..., N)``) and the
@@ -150,8 +153,10 @@ class Downsampler(Processor):
     axis : int, optional, keyword-only
         Axis along which the downsampling is performed. Default is -1.
     use_filter : bool, optional, keyword-only
-        If True, apply the anti-aliasing lowpass filter before the
-        decimation. Default is False.
+        If True, apply the anti-aliasing lowpass filter of normalized
+        cutoff :math:`1/L` before the decimation. Default is False.
+        The filter is a :class:`comnumpy.core.filters.BWFilter`, which
+        only accepts a 1D input.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"downsampler"``.
 
@@ -170,6 +175,20 @@ class Downsampler(Processor):
     >>> print(Downsampler(L=2)(np.arange(12).reshape(2, 6)))
     [[ 0.  2.  4.]
      [ 6.  8. 10.]]
+
+    Anti-aliasing: an in-band tone corrupted by an out-of-band one is
+    decimated exactly with ``use_filter=True``, and aliased without it.
+    The cutoff is :math:`1/L = 1/4` of the Nyquist frequency, i.e. 0.125
+    cycle per sample.
+
+    >>> n = np.arange(128)
+    >>> clean = np.cos(2 * np.pi * 2 * n / 128)             # f = 0.016, kept
+    >>> x = clean + 0.5 * np.cos(2 * np.pi * 30 * n / 128)  # f = 0.234, rejected
+    >>> y = Downsampler(L=4, use_filter=True)(x)
+    >>> print(round(float(np.max(np.abs(y - clean[::4]))), 6))
+    0.0
+    >>> print(round(float(np.max(np.abs(Downsampler(L=4)(x) - clean[::4]))), 3))
+    0.5
     """
     L: int
     phase: int = field(default=0, kw_only=True)
@@ -177,9 +196,15 @@ class Downsampler(Processor):
     axis: int = field(default=-1, kw_only=True)
     use_filter: bool = field(default=False, kw_only=True)
     name: str = field(default="downsampler", kw_only=True)
+    # internal state (declared for slots, D40a)
+    filter: Optional[BWFilter] = field(init=False, repr=False, default_factory=lambda: None)
+
+    def __post_init__(self):
+        self.filter = BWFilter(1/self.L)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
 
+        # anti-aliasing filtering comes BEFORE the decimation
         if self.use_filter:
             X = self.filter(X)
 
@@ -367,21 +392,16 @@ class Amplifier(Processor):
     where :math:`g > 1` amplifies, :math:`g < 1` attenuates, and the
     output power is :math:`g^2` times the input power.
 
-    Axes: *element-wise* -- applied pointwise, shape-agnostic (with the
-    default ``axis=None``).
+    The gain is a single scalar applied to the whole array. To weight the
+    parallel streams of a signal individually, i.e. one gain per entry of
+    a declared axis, use :class:`WeightAmplifier`.
+
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
 
     Parameters
     ----------
     gain : float
         Gain :math:`g` applied to every sample. Default is 1.0.
-    axis : int or None, optional, keyword-only
-        Legacy option, kept for backward compatibility. With the default
-        ``None`` the gain scales every element, which is the model above.
-        A non-``None`` value does **not** follow that model: it builds a
-        list of ones with ``gain`` at position ``axis`` and broadcasts it,
-        so only the entries located at index ``axis`` of the *last* axis
-        are scaled. Prefer :class:`WeightAmplifier` to weight a signal
-        along an axis.
     name : str, optional, keyword-only
         Name of the amplifier instance. Default is
         ``"signal_amplifier"``.
@@ -400,20 +420,10 @@ class Amplifier(Processor):
     [1. 2.]
     """
     gain: float = 1.0
-    axis: int | None = field(default=None, kw_only=True)
     name: str = field(default="signal_amplifier", kw_only=True)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        gain = self.gain
-        if self.axis is None:
-            # Apply gain to the entire array
-            Y = gain * X
-        else:
-            # Apply gain along the specified axis
-            gain_shape = [1] * X.ndim
-            gain_shape[self.axis] = gain
-            Y = gain_shape * X
-        return Y
+        return self.gain * X
 
 
 @dataclass(slots=True)
@@ -681,8 +691,6 @@ class AutoConcatenator(Processor):
         """
         Extract a copy  from the input signal on the specified axis
         """
-        shape = list(X.shape)
-        shape[self.axis] = np.sum(self.input_copy_mask)
         slices = [slice(None)] * len(X.shape)
         slices[self.axis] = self.input_copy_mask
         X_copy = X[tuple(slices)]
@@ -754,16 +762,33 @@ class SampleRemover(Processor):
         Name of the processor instance. Default is
         ``"symbol remover"``.
 
+    Raises
+    ------
+    comnumpy.ShapeError
+        If the input is not a 1D Serial signal ``(N,)``.
+
     Examples
     --------
     >>> print(SampleRemover(N_start=2, length=3)(np.arange(8)))
     [0 1 5 6 7]
     >>> print(SampleRemover(N_start=0, length=2)(np.arange(5)))
     [2 3 4]
+    >>> SampleRemover(N_start=1, length=1)(np.arange(6).reshape(2, 3))
+    Traceback (most recent call last):
+        ...
+    comnumpy.exceptions.ShapeError: SampleRemover expects a 1D Serial signal (N,), got 2D (2, 3) -- ...
     """
     N_start: int = 0
     length: int = field(default=0, kw_only=True)
     name: str = field(default="symbol remover", kw_only=True)
+
+    def prepare(self, x: np.ndarray) -> None:
+        if x.ndim != 1:
+            raise ShapeError(
+                f"SampleRemover expects a 1D Serial signal (N,), got "
+                f"{x.ndim}D {x.shape} -- flatten the stream with "
+                f"Parallel2Serial, or apply the block to each stream "
+                f"separately.")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = np.zeros(len(x) - self.length, dtype=x.dtype)
@@ -862,6 +887,8 @@ class DataAdder(Processor):
 
     Raises
     ------
+    comnumpy.ShapeError
+        If the input, or ``symbol``, is not a 1D Serial signal ``(N,)``.
     ValueError
         If ``N_start`` is outside ``[0, len(x)]``.
 
@@ -871,10 +898,28 @@ class DataAdder(Processor):
     [ 0  1 -1 -1  2  3  4]
     >>> print(DataAdder(np.array([-1, -1]))(np.arange(3)))
     [-1 -1  0  1  2]
+    >>> DataAdder(np.array([-1, -1]))(np.arange(6).reshape(2, 3))
+    Traceback (most recent call last):
+        ...
+    comnumpy.exceptions.ShapeError: DataAdder expects a 1D Serial signal (N,), got 2D (2, 3) -- ...
     """
     symbol: np.ndarray
     N_start: int = field(default=0, kw_only=True)
     name: str = field(default="Data Adder", kw_only=True)
+
+    def prepare(self, x: np.ndarray) -> None:
+        if x.ndim != 1:
+            raise ShapeError(
+                f"DataAdder expects a 1D Serial signal (N,), got "
+                f"{x.ndim}D {x.shape} -- flatten the stream with "
+                f"Parallel2Serial, or apply the block to each stream "
+                f"separately.")
+        symbol = np.asarray(self.symbol)
+        if symbol.ndim != 1:
+            raise ShapeError(
+                f"DataAdder expects a 1D symbol sequence (D,), got "
+                f"{symbol.ndim}D {symbol.shape} -- ravel the inserted "
+                f"sequence before passing it as symbol=.")
 
     def validate_input(self, x: np.ndarray):
         if self.N_start < 0 or self.N_start > len(x):
@@ -1142,9 +1187,6 @@ class BlindPhaseTracker(Processor):
     phase_steps : int, optional
         Number :math:`B` of test phases uniformly spanning
         :math:`[-\pi/4, \pi/4)`. Default is 10.
-    plot : bool, optional, keyword-only
-        If True, draw the estimated phase :math:`\hat{\theta}[n]` versus
-        the sample index. Default is False.
 
     Attributes
     ----------
@@ -1152,6 +1194,11 @@ class BlindPhaseTracker(Processor):
         The :math:`B` test phases :math:`\varphi_p`, precomputed from
         ``phase_steps`` alone (parameter-derived, hence no trailing
         underscore).
+    theta_ : np.ndarray
+        The estimated phase trajectory :math:`\hat{\theta}[n]` of the last
+        call, of length :math:`N` (data-derived, hence the trailing
+        underscore, D23). A block never draws (D25, D42): plot it from the
+        caller, for instance with ``matplotlib.pyplot.plot(tracker.theta_)``.
 
     References
     ----------
@@ -1170,13 +1217,16 @@ class BlindPhaseTracker(Processor):
     >>> y = tracker(x)
     >>> print(round(float(np.max(np.abs(y - s))), 3))
     0.005
+    >>> print(tracker.theta_.shape, round(float(np.mean(tracker.theta_)), 3))
+    (12,) 0.295
     """
 
     L: int
     alphabet: np.ndarray
     phase_steps: int = 10
-    plot: bool = field(default=False, kw_only=True)
     phases: np.ndarray = field(init=False)
+    # estimated quantity (D23): phase trajectory of the last run
+    theta_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
 
     def __post_init__(self):
@@ -1213,16 +1263,7 @@ class BlindPhaseTracker(Processor):
             optimal_phases.append(best_phi)
             y_corrected[n] = x[n] * np.exp(-1j * best_phi)
 
-        # Plot estimated phase evolution
-        if self.plot:
-            import matplotlib.pyplot as plt  # local import (D36)
-            plt.figure(figsize=(10, 4))
-            plt.plot(optimal_phases, label="Estimated Phase (rad)")
-            plt.title("Estimated Phase per Sample")
-            plt.xlabel("Sample Index")
-            plt.ylabel("Phase (radians)")
-            plt.grid(True)
-            plt.legend()
-            plt.tight_layout()
+        # estimated quantity (D23), exposed for the caller to plot (D25, D42)
+        self.theta_ = np.asarray(optimal_phases)
 
         return y_corrected
