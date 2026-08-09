@@ -127,7 +127,7 @@ class DBP(Processor):
     beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def prepare(self, x: np.ndarray) -> np.ndarray:
+    def prepare(self, x: np.ndarray) -> None:
         if x.ndim != 1:
             raise ShapeError(
                 f"nonlinear propagation requires a full-field signal (N,); "
@@ -153,6 +153,9 @@ class DBP(Processor):
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = x
 
+        # set by prepare(), which the Processor base always runs first
+        assert (self.gain is not None and self.beta2 is not None
+                and self.step_size is not None)
         for _ in range(self.N_spans):
             y = self.gain * y  # correct for edfa gain
             if self.use_only_linear:

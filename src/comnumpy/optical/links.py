@@ -139,14 +139,17 @@ class FiberLink(Processor):
     nu: float = field(default=OPTICAL_CARRIER_FREQUENCY, kw_only=True)  # optical carrier frequency
     step_log_factor: float = field(default=0.4, kw_only=True)
     name: str = field(default="fiber link", kw_only=True)
-    callbacks: Optional[Dict[str, Callable[[np.ndarray], None]]] = field(default_factory=dict, kw_only=True)
+    # Callable[..., None]: the 'post_span' hook is called as
+    # callback(y, num_span=...), which Callable[[np.ndarray], None]
+    # declared away. Not Optional: default_factory=dict never yields None.
+    callbacks: Dict[str, Callable[..., None]] = field(default_factory=dict, kw_only=True)
     # internal state (declared for slots, D40a)
     step_size: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     edfa_gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     edfa_N_ase: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def prepare(self, x: np.ndarray) -> np.ndarray:
+    def prepare(self, x: np.ndarray) -> None:
         if x.ndim != 1:
             raise ShapeError(
                 f"nonlinear propagation requires a full-field signal (N,); "
@@ -171,6 +174,9 @@ class FiberLink(Processor):
     def forward(self, x: np.ndarray) -> np.ndarray:
         # perform SSFM
         y = x
+        # set by prepare(), which the Processor base always runs first
+        assert (self.beta2 is not None and self.step_size is not None
+                and self.edfa_gain is not None and self.edfa_N_ase is not None)
         for num_span in range(self.N_spans):
             # perform for each span
             if self.use_only_linear:

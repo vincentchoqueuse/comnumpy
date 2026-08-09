@@ -1,12 +1,15 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Optional, Literal
+from typing import TYPE_CHECKING, Optional, Literal
 from comnumpy._backend import fft, ifft, fftshift, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from comnumpy.core.processors import AutoConcatenator
 from comnumpy.exceptions import ShapeError
 from .allocation import CarrierAllocation
 from .utils import plot_carrier_allocation
+
+if TYPE_CHECKING:      # matplotlib stays out of import time (D36)
+    from matplotlib.axes import Axes
 
 
 
@@ -69,7 +72,9 @@ class CyclicPrefixer(AutoConcatenator):
             # numpy integers come out of every shape computation; bool is
             # an int subclass and would slip through as 0 or 1
             self.N_cp = int(self.N_cp)
-        if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
+        # the annotation says int; this guards the untyped caller
+        if not (isinstance(self.N_cp, int)      # pyright: ignore[reportUnnecessaryIsInstance]
+                and self.N_cp >= 0):
             raise ValueError(
                 f"expected a non-negative integer cyclic-prefix length, "
                 f"got N_cp={self.N_cp!r} -- pass 0 for no prefix")
@@ -144,7 +149,9 @@ class CyclicPrefixRemover(Processor):
             # numpy integers come out of every shape computation; bool is
             # an int subclass and would slip through as 0 or 1
             self.N_cp = int(self.N_cp)
-        if not (isinstance(self.N_cp, int) and self.N_cp >= 0):
+        # the annotation says int; this guards the untyped caller
+        if not (isinstance(self.N_cp, int)      # pyright: ignore[reportUnnecessaryIsInstance]
+                and self.N_cp >= 0):
             raise ValueError(
                 f"expected a non-negative integer cyclic-prefix length, "
                 f"got N_cp={self.N_cp!r} -- pass 0 for no prefix")
@@ -483,7 +490,7 @@ class CarrierAllocator(Processor):
         if self.pilots is None:
             self.pilots = np.array([])
 
-    def _pilot_values(self, n_pilots):
+    def _pilot_values(self, n_pilots: int) -> np.ndarray:
         pilots = np.asarray(self.pilots)
         if pilots.ndim == 0:
             return np.broadcast_to(pilots, (n_pilots,))
@@ -493,7 +500,7 @@ class CarrierAllocator(Processor):
                 f"OFDM symbol, {len(pilots)} provided)")
         return pilots
 
-    def set_carrier_type(self, carrier_type):
+    def set_carrier_type(self, carrier_type: np.ndarray) -> None:
         self.carrier_type = carrier_type
         self.initialize_masks()
 
@@ -531,7 +538,7 @@ class CarrierAllocator(Processor):
                     Y[..., t, row == 2] = self._pilot_values(n_pilots)
         return Y
 
-    def plot(self, ax=None, shift=False):
+    def plot(self, ax: Optional["Axes"] = None, shift: bool = False) -> "Axes":
         """
         Plot the carrier allocation; returns the axis (decision D25).
         """
@@ -670,7 +677,7 @@ class CarrierExtractor(Processor):
         self.pilots_ = X_pilots
         return X_data
 
-    def plot(self, ax=None, shift=False):
+    def plot(self, ax: Optional["Axes"] = None, shift: bool = False) -> "Axes":
         """
         Plot the carrier allocation; returns the axis (decision D25).
         """
