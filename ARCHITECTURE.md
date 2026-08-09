@@ -730,6 +730,15 @@ Le générateur le **signale** par `logging` (D11) plutôt que de laisser
 prendre un résultat statique pour un résultat sélectif en temps. C'est le
 même réflexe que le garde-fou `wdm` de D19.
 
+**Le détail qui décide de la justesse.** Un bin de la grille FFT compte
+selon la fraction de bande qu'il **recouvre**, pas selon la position de
+son centre. La distinction n'est pas cosmétique : près de `±f_D` la
+densité est singulière, donc le bin de bord porte plusieurs pour cent de
+la bande. Une première version testait les centres et perdait jusqu'à
+**8,3 %** de la puissance selon la longueur de fenêtre — avec un effet de
+seuil quand `f_D` tombe pile sur un centre de bin. Le script de validation
+balaie quatre grilles précisément pour interdire le retour de ce défaut.
+
 **Limite assumée.** La méthode spectrale est périodique : la réalisation
 se répète avec la période `n_samples / fs`. Documenté, pas contourné.
 
