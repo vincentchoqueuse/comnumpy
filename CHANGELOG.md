@@ -43,6 +43,19 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `sphinx.ext.napoleon` is enabled. Without it the numpydoc sections of
+  every docstring -- the whole section-4.10 course-material template,
+  its parameter tables and its symbol-parameter bijection -- rendered as
+  raw reStructuredText, and each D23 trailing-underscore attribute
+  (`sigma2_`, `pilots_`, `h_`) was read as a broken hyperlink
+  reference. The build carried 32 warnings; enabling napoleon took it to
+  zero.
+- The docs workflow now runs on pull requests, as a `build` job separate
+  from `deploy`: a pull request gets the documentation checked without
+  publishing anything, and only a push to `main` deploys. The build runs
+  with `-W --keep-going`, so a Sphinx warning is an error. Intersphinx
+  is deliberately not enabled -- it would put the network inside a gate
+  that has to be reliable.
 - Documentation pages for the 21 modules that had none: capacity,
   fading, frames, sequences, utils and validators in `core`, the whole
   `fec` package, `mimo.utils`, `ofdm.allocation`/`utils`/`visualizers`,

@@ -28,9 +28,27 @@ author = 'V. Choqueuse'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 
+    'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    # Without napoleon the numpydoc sections of every docstring -- the
+    # whole section-4.10 course-material template -- render as raw
+    # reStructuredText: no parameter tables, and every D23 attribute
+    # name ("sigma2_") read as a broken hyperlink reference.
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
     'sphinxcontrib.mermaid']
+
+napoleon_numpy_docstring = True
+napoleon_google_docstring = False
+napoleon_use_rtype = False
+
+# No intersphinx, deliberately. It would make `np.ndarray` clickable, and
+# it would also put the network inside the build -- which runs with -W in
+# CI, so an unreachable inventory turns every pull request red for a
+# reason that has nothing to do with the change. The gate is worth more
+# than the links; add it back with `sphinx.ext.intersphinx` if the
+# trade-off ever flips.
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
