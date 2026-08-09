@@ -3,7 +3,10 @@ from importlib import import_module
 from .generics import Processor, Sequential
 from .generators import SymbolGenerator, GaussianGenerator
 from .mappers import SymbolMapper, SymbolDemapper
-from .channels import AWGN, FIRChannel
+from .channels import AWGN, FIRChannel, TappedDelayLineChannel
+from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
+                     get_delay_profile, register_delay_profile,
+                     available_delay_profiles)
 from .filters import SRRCFilter, BWFilter
 from .processors import Upsampler, Downsampler, Serial2Parallel, Parallel2Serial, Amplifier, DataExtractor
 from .metrics import compute_ser, compute_ber, compute_evm, compute_metric_awgn_theo, compute_ccdf, signal_report
@@ -15,7 +18,9 @@ __all__ = [
     "Processor", "Sequential",
     "SymbolGenerator", "GaussianGenerator",
     "SymbolMapper", "SymbolDemapper",
-    "AWGN", "FIRChannel",
+    "AWGN", "FIRChannel", "TappedDelayLineChannel",
+    "DopplerSpectrum", "PowerDelayProfile", "rayleigh_process",
+    "get_delay_profile", "register_delay_profile", "available_delay_profiles",
     "SRRCFilter", "BWFilter",
     "Upsampler", "Downsampler", "Serial2Parallel", "Parallel2Serial",
     "Amplifier", "DataExtractor",
