@@ -133,8 +133,9 @@ class DBP(Processor):
                 f"nonlinear propagation requires a full-field signal (N,); "
                 f"got {x.shape}. A pointwise Kerr step on a multi-channel "
                 f"array would silently produce SPM only (no XPM, no FWM). "
-                f"Multiplex the channels into a single full-field waveform "
-                f"first, or use a coupled-NLSE model (not implemented)."
+                f"Multiplex the channels first with "
+                f"comnumpy.optical.WDMMultiplexer (decision D44), or use a "
+                f"coupled-NLSE model (not implemented)."
             )
         match self.step_type:
             case "linear":

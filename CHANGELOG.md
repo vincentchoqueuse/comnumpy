@@ -43,6 +43,21 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `comnumpy.optical.wdm` (D44): frozen `WDMGrid` frequency plan
+  (absolute hertz, `uniform` and ITU flexible-grid constructors, ASCII
+  spectral map, `validate_fs`), plus `WDMMultiplexer` /
+  `WDMDemultiplexer` -- the synthesis and analysis pair, on the
+  `(..., C, N)` channel axis of D2. Neither block resamples: compose
+  them with `Upsampler`/`Downsampler`. `FiberLink` and `DBP` now name
+  the multiplexer in their multi-channel rejection instead of pointing
+  at something the library did not provide.
+- `comnumpy.core.capacity`: `awgn_capacity`, `constellation_capacity`
+  (Gauss-Hermite quadrature), `bicm_capacity`,
+  `rayleigh_ergodic_capacity`, `mimo_ergodic_capacity`,
+  `outage_capacity`, `waterfilling`.
+- `comnumpy.fec.analysis`: `DistanceSpectrum`, `distance_spectrum`
+  (breadth-first trellis search, catastrophic codes rejected rather
+  than looping forever) and `union_bound_ber`.
 - `validation/` scripts pinning the optical module to analytical
   references (chromatic dispersion, SPM, fundamental soliton, DBP round
   trip) plus a Monte-Carlo SER-vs-theory check; fast golden versions run

@@ -49,7 +49,7 @@ _SCAN_MODULES = [
     "comnumpy.fec.convolutional", "comnumpy.fec.ldpc",
     "comnumpy.optical.channels", "comnumpy.optical.links",
     "comnumpy.optical.dbp", "comnumpy.optical.devices",
-    "comnumpy.optical.compensators",
+    "comnumpy.optical.compensators", "comnumpy.optical.wdm",
 ]
 
 # Value dataclasses that are not blocks but appear as block *parameters*
@@ -58,6 +58,7 @@ _SCAN_MODULES = [
 _VALUE_MODULES = [
     ("comnumpy.ofdm.allocation", ["CarrierAllocation"]),
     ("comnumpy.core.frames", ["FrameStructure", "FrameField"]),
+    ("comnumpy.optical.wdm", ["WDMGrid"]),
 ]
 
 _EXTRA_BLOCKS: dict[str, type] = {}
