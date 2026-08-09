@@ -766,9 +766,62 @@ normalisation casse l'un des trois.
 |---|----------|-------|-----------------------|--------|
 | D45 | **Le Raman se découpe en trois objets, selon ce dont chaque grandeur est une propriété.** (a) `RamanGainSpectrum` porte la **forme** normalisée du gain contre le décalage Stokes, gelée, avec `standard`/`reference`, registre et **auto-contrôle D20** — quatrième instance du motif D15/D43, appliqué à l'axe des décalages Raman. Deux paramétrages mutuellement exclusifs à la D41 (`lorentzian=(tau1, tau2)` ou `triangular=peak_THz`), aucun argument discriminant. (b) Le coefficient crête `g_R/A_eff` **n'y est pas** : c'est une propriété de la *fibre*, pas du verre — SMF, DCF et NZDSF diffèrent d'un grand facteur par l'aire effective et le dopage — donc c'est un argument du solveur, à côté des pertes. (c) `solve_raman()` intègre les équations couplées de puissance : **problème à valeur initiale** (`solve_ivp`) quand seule la pompe co-propagative est allumée, **problème aux limites** (`solve_bvp`) sinon, avec les profils non dépletés comme germe. (d) **Aucun `Processor`** : le Raman vit dans le domaine des puissances, le SSFM dans celui du champ ; ce qui sort est le profil `G(z)`, destiné au pas linéaire de `FiberLink`. (e) La direction n'est **pas** un paramètre : `pump_forward_W` / `pump_backward_W` — quelles pompes sont allumées *est* la configuration | Un bloc appliquant un gain forfaitaire en fin de span décrirait un amplificateur **discret**, c'est-à-dire la seule chose que l'amplification distribuée n'est pas : tout son intérêt est **où** le gain a lieu, ce qui change l'accumulation de bruit et la pénalité non linéaire, pas seulement la puissance de sortie. La mesure le montre — à 500 mW le co-pompage a délivré plus de 70 % de son gain à mi-span, le contra-pompage moins de 30 %. **Ce qui rend le module acceptable sous D7, c'est qu'il se vérifie sur cinq références dont trois couvrent le régime dépleté.** La plus forte est la **solution exacte du cas simple** : sans pertes, la conservation du nombre de photons élimine la pompe et il reste une **équation logistique**, dont la solution fermée vaut sous déplétion *arbitraire* — et avec des pertes **égales** la même solution tient en longueur effective, la substitution `Q = P e^{alpha z}` ramenant le couple au cas sans pertes. Elle épingle **tout le profil**, pas un chiffre de sortie : écart mesuré **4,0e−11** sans pertes et **3,4e−11** à pertes égales, avec la pompe consommée à 100 %. La forme fermée non dépletée `exp(g P_p L_eff)`, elle, est exacte mais muette dès que le signal mange la pompe : la forme fermée non dépletée `exp(g P_p L_eff)` est exacte mais muette dès que le signal mange la pompe, or c'est précisément là qu'un solveur numérique peut être faux et paraître juste. La **conservation du nombre de photons** `P_s/nu_s + P_p/nu_p` en limite sans pertes tient sous déplétion arbitraire : mesurée à **2,9e−15** avec la pompe dépletée de plus de 20 %, et c'est elle qui attrape un facteur `nu_p/nu_s` erroné, que le contrôle non déplété ne voit pas du tout. S'ajoutent la convergence des trois schémas vers la forme fermée à faible pompe (0,0007 à 0,0069 dB) et l'écart contra−co qui s'ouvre **monotonement** de 0,0061 dB à 50 mW jusqu'à 2,93 dB à 1 W — non trivial, et une erreur de signe sur le retournement de direction le casse. Sur les modèles de spectre : Blow–Wood place le pic à **13,08 THz** contre 13,2 publiés (1 %), ce que l'auto-contrôle épingle, mais donne une largeur à mi-hauteur de **9,55 THz** là où la silice mesurée fait 5 à 6 — 70 % trop large. C'est écrit, pas caché, et un test l'épingle pour que personne ne « corrige » la largeur en bougeant les constantes de temps, ce qui casserait le pic que la source, elle, spécifie. Le fit multi-lorentzien qui reproduirait la forme **n'est pas livré** : ses coefficients n'ont pas été transcrits depuis leur source, et les inventer serait exactement la faute que P3 interdit | Un `Processor` Raman appliquant un gain forfaitaire (décrit un ampli discret, faux pour du distribué, et masquerait que le profil `G(z)` est le vrai livrable) ; un paramètre `direction="co"/"counter"` (redondant avec les puissances de pompe, donc contradictoire dès qu'on se trompe — même faute que le couple `value`/`unit` de D41) ; `solve_bvp` uniformément, y compris en co-pompage (le cas co est un IVP exact qui ne peut pas ne pas converger ; le résoudre en BVP ajoute un risque pour rien — les deux chemins sont comparés dans le script de validation, à 1,4e−6 dB) ; germe plat pour le BVP (diverge dès que la déplétion est notable ; le profil non déplété converge jusqu'à 1 W) ; retourner un maillage non convergé (il ressemble exactement à un résultat plausible — `status != 0` lève, message D38) ; mettre `g_R` crête dans le spectre (fige une fibre dans un objet qui décrit le verre) | **Acté** |
 
-**Ce que la première passe ne fait pas.** Le crochet `G(z)` dans le pas
-linéaire de `FiberLink` est remis à une passe suivante, ainsi que le
-Raman multi-pompe et le tilt inter-canaux d'un peigne WDM — ce dernier
+**Seconde passe : le crochet dans `FiberLink`.** `FiberLink(...,
+raman=solution)` échantillonne le profil aux bornes de chaque pas SSFM
+et applique le gain **dans la boucle**, de sorte que le terme de Kerr
+voie la puissance que la fibre porte réellement — c'est toute la raison
+d'utiliser un profil plutôt qu'un gain forfaitaire. Trois conséquences
+assumées : (i) l'EDFA de fin de span est **réduit du gain on-off**, donc
+un span reste transparent qu'il soit pompé ou non (sans quoi la
+puissance croîtrait de span en span) ; (ii) l'ASE que le solveur a
+intégrée jusqu'à `z = L` est ajoutée une fois par span, ramenée de sa
+bande de référence à `fs` ; (iii) le lien reçoit une graine, qui
+alimente l'ASE Raman **et** l'EDFA — celui-ci se construisait sans
+graine, donc `FiberLink` bruité n'était pas reproductible, et semer la
+moitié des sources aurait été pire que n'en semer aucune. Les deux
+propriétés qui rendent l'intégration vérifiable : un span pompé sort à
+la puissance où il est entré (à 1e−6 près, dans les deux modes de
+propagation), et un gain Raman évanescent reproduit le lien non pompé à
+**1e−12** — c'est le test de non-régression des chaînes existantes. Un
+défaut trouvé en écrivant ces tests : la branche `use_only_linear` n'a
+pas de boucle de pas, donc le gain n'y était pas appliqué alors que
+l'EDFA était réduit — **15 dB perdus en silence**.
+
+**Le raccord des deux grilles, qui est le vrai point technique.** Le
+solveur Raman et le SSFM ont des maillages **indépendants** : le
+solveur ne connaît pas `StPS`, le SSFM ne connaît pas `n_nodes`. Le
+raccord se fait en interpolant le gain **cumulé** `G(z)` aux bornes des
+pas et en le différenciant. Deux conséquences, mesurées :
+
+* le gain **total est exact quel que soit `StPS`** — la somme des
+  incréments télescope en `G(L) − G(0)` — donc un span reste
+  transparent à 1e−9 de `StPS = 1` à `StPS = 400` ;
+* seule la **répartition** du gain est interpolée, et l'erreur qu'elle
+  laisse porte sur la phase non linéaire, pas sur la puissance.
+
+**Le gain appartient à l'opérateur linéaire, donc il se scinde comme
+lui.** Appliqué une fois par pas, il casse la symétrie du split-step
+symétrique et fait **tomber le schéma du second au premier ordre** :
+mesuré sur la phase SPM d'une onde continue, l'erreur décroissait en
+1/StPS au lieu de 1/StPS². Le profil est donc échantillonné aux
+**demi-pas** et les deux incréments encadrent le terme de Kerr, comme
+les deux demi-pas de dispersion. Ordre rétabli (rapport ~4 par
+doublement) et erreur divisée par **24** à `StPS = 20`.
+
+**Deux réglages que la mesure fixe.** (i) `n_nodes = 401` par défaut sur
+le solveur : le *gain* est insensible au maillage dès 21 nœuds, mais la
+*forme* du profil ne l'est pas — l'écart de phase tombe de 2,3e−4 rad à
+21 nœuds à 6e−12 à 401. (ii) Les pas **logarithmiques** sont
+contre-indiqués avec du Raman, et le bloc le signale par `logging` : ils
+sont dimensionnés pour la décroissance exponentielle d'un span non
+pompé, que l'amplification distribuée aplatit — les pas les plus longs
+atterrissent alors là où la puissance est la plus forte. Mesuré, la
+grille logarithmique est **3× pire** que la linéaire dès que le Raman
+est allumé (8,2e−4 rad contre 2,8e−4 à `StPS = 20`), alors qu'elle est
+légèrement meilleure sans.
+
+**Ce que la première passe ne fait pas.** Le Raman multi-pompe et le
+tilt inter-canaux d'un peigne WDM restent à faire — ce dernier
 demande le spectre de gain complet, donc le fit multi-lorentzien, donc
 une transcription sourcée. Le modèle triangulaire est livré parce qu'il
 est la base analytique de ce tilt, et sa validité est bornée dans sa
