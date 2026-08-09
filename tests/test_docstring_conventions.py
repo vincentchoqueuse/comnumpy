@@ -59,6 +59,7 @@ NO_REFERENCE_NEEDED = {
 CONVERTED_FUNCTION_MODULES = [
     "comnumpy.core.metrics",
     "comnumpy.core.utils",
+    "comnumpy.core.sequences",
     "comnumpy.mimo.utils",
     "comnumpy.ofdm.metrics",
 ]
