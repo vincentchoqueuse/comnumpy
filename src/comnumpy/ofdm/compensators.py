@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Literal, Optional
 from dataclasses import dataclass, field
-from scipy.fft import fft, fftshift
+from comnumpy._backend import fft, fftshift  # cupy-compatible (D3)
 from comnumpy.core.processors import WeightAmplifier
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional, Literal, Callable
-from scipy.fft import fft, ifft, fftshift, ifftshift
+from comnumpy._backend import fft, ifft, fftshift, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from comnumpy.core.processors import AutoConcatenator
 from comnumpy.exceptions import ShapeError

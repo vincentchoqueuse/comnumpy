@@ -2,7 +2,7 @@ import numpy as np
 import itertools
 from typing import Optional
 from dataclasses import dataclass, field
-from scipy.fft import fft, ifft, ifftshift
+from comnumpy._backend import fft, ifft, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from .metrics import compute_PAPR
 

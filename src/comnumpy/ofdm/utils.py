@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from scipy.fft import fftshift
+from comnumpy._backend import fftshift  # cupy-compatible (D3)
 
 
 def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False):
