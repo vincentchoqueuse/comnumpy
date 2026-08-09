@@ -68,7 +68,10 @@ What the script checks:
    its tails are long: the transmitter and receiver alone leave a
    measurable error. It is measured back to back and removed from every
    other figure, the way an implementation penalty is removed from a
-   laboratory measurement.
+   laboratory measurement. The grid's ``bandwidth_Hz`` is the
+   *occupied* bandwidth here, roll-off included: the demultiplexer's
+   brick wall is channel selection, and set to the symbol rate it clips
+   the pulse and drops that floor from 54.1 dB to 33.5 dB.
 
 3. **Step-size convergence.** The nonlinear figure is not a property of
    the fibre alone but of the integrator: halving the step must move it
@@ -154,8 +157,13 @@ FS = SYMBOL_RATE * SAMPLES_PER_SYMBOL
 CENTRE_CHANNEL = N_CHANNELS // 2
 WAVELENGTH_NM = 2.99792458e8 / CENTRE_HZ * 1e9
 
+# the *occupied* bandwidth, roll-off included. Writing the symbol rate
+# here is the natural mistake and it clips the skirts of the pulse: it
+# cost 20.6 dB of implementation floor before the demultiplexer learned
+# to warn about it.
+OCCUPIED_HZ = SYMBOL_RATE * (1 + ROLL_OFF)
 GRID = WDMGrid.uniform(N_CHANNELS, spacing_Hz=SPACING_HZ,
-                       bandwidth_Hz=SYMBOL_RATE, center_Hz=CENTRE_HZ)
+                       bandwidth_Hz=OCCUPIED_HZ, center_Hz=CENTRE_HZ)
 
 
 def fiber(gamma: float) -> FiberSpec:

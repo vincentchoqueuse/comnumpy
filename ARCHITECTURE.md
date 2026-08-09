@@ -931,6 +931,31 @@ suivent une partie du bruit de phase non linéaire.
 |---|----------|-------|-----------------------|--------|
 | D48 | **Un module `core/information.py` porte les débits atteignables mesurés sur des données** : `compute_mi` (décodeur *par symboles*), `compute_gmi` (décodeur *par bits*, la structure de tout système SD réel), `compute_ngmi` (GMI/m, à l'échelle d'un rendement de code) et `compute_llr`. Chaque équation est **citée par son numéro** dans l'article d'Alvarado *et al.* : (6)/(29) pour les L-values exactes, (7)/(31) pour le max-log, (16)/(17) pour la MI, (21)–(26) pour la définition de la GMI, (30) pour son estimateur à L-values exactes et **(32)** pour le max-log. La convention de signe reste celle de comnumpy — LLR positive = bit 0, l'inverse de l'article — et le module le dit | Un TEB pré-FEC ne dit pas ce qu'un code récupérera : c'est la thèse de l'article, et deux canaux de même TEB portent des quantités d'information très différentes. Les trois grandeurs sont des **bornes inférieures** sur le nombre de bits par symbole qu'un décodeur de la structure correspondante peut atteindre, ce qu'un TEB n'est pas. **Le point que le code ne pouvait pas contourner** : l'article écrit que la minimisation sur `s` de (32) est *obligatoire* pour des L-values approchées, parce qu'appliquer (30) à du max-log rend un débit **plus bas que le vrai**. `max_log=True` résout donc la minimisation scalaire, et un test épingle l'écart avec `s = 1`. Deux propriétés séparent les deux débits et servent de tests : la **MI est invariante par ré-étiquetage** de la constellation, la **GMI ne l'est pas** — mesuré, 0,5 bit de chute sur une permutation aléatoire à 16-QAM alors que la MI ne bouge pas de 0,002. Un estimateur de GMI qui ignorerait les étiquettes serait une MI mal nommée, et ce test le verrait. **Défaut trouvé en écrivant le module** : à fort RSB la somme de l'hypothèse faible s'annulait par sous-dépassement et la LLR exacte rendait un infini ; le décalage log-sum-exp est fait **par hypothèse**, pas globalement, ce qui garantit un terme `exp(0) = 1` dans chaque somme et fait dégénérer l'expression continûment vers le max-log | Mettre MI/GMI dans `core/metrics.py` (métriques de *qualité* mesurée contre des symboles connus d'un côté, débits *atteignables* de l'autre : deux natures, et `metrics.py` fait déjà 850 lignes) ; réutiliser telle quelle la LLR de `SymbolDemapper` (elle est max-log, donc (30) y serait faux — c'est exactement le piège que l'article signale) ; suivre la convention de signe de l'article (deux conventions de LLR dans une même bibliothèque est un défaut en attente) ; implémenter le *shaping* probabiliste (les termes a priori de (26) ne sont pas écrits, donc la fonction refuse plutôt que d'approximer) | **Acté** |
 
+**Le filtre de canal du démultiplexeur, et ce qu'il a coûté.** Le
+démux applique un **mur de brique idéal** à ±B/2 sur la DFT du bloc, où
+B est la bande **occupée** portée par la grille. Le script de
+validation lui passait `bandwidth_Hz = Rs` au lieu de `Rs(1+rho)` :
+avec un roll-off de 0,01 il manquait 320 MHz, et les flancs du RRC
+étaient coupés. Coût mesuré : un plancher d'implémentation de
+**33,5 dB au lieu de 54,1 dB**, soit **20,6 dB** perdus en silence sur
+un geste — écrire le débit symbole — qui est le plus naturel du monde.
+
+La mesure tranche aussi la question de fond : faut-il un SRRC dans le
+démux ? **Non.** Dès que le masque laisse passer le canal, il ne fait
+plus rien : masque à `Rs(1+rho)`, masque au slot entier de 37,5 GHz, et
+**aucun masque du tout** donnent 54,13, 54,14 et 54,13 dB. C'est le
+filtre adapté en aval qui sélectionne le canal ; un SRRC dans ce bloc
+serait le filtre adapté du *récepteur* portant le nom du
+démultiplexeur, et les deux rôles se sépareraient mal ensuite. Le
+correctif est donc un **garde-fou**, pas une option : le bloc mesure
+l'énergie qui tombe dans sa propre bande de garde — au-delà du bord du
+canal mais en deçà de la moitié de l'espacement, là où seuls ses
+propres flancs peuvent atterrir — et prévient au-delà d'un millième.
+Compter toute l'énergie hors masque aurait compté les voisins, que le
+masque existe précisément pour enlever : première version du garde-fou,
+qui annonçait 66,67 % de rejet sur un peigne à trois canaux
+parfaitement sain.
+
 **Ce que la confrontation OptiCommPy en tire.** Le notebook publie MI et
 GMI à **4,00 bit/symbole** et une GMI normalisée à **1,00** ; le script
 de validation les retrouve toutes les trois, alors même que les RSB
