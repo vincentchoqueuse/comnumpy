@@ -12,7 +12,9 @@ blocs d'instrumentation disparaissent ; amendement de **D11** (les
 *monitors* sont supprimés, non convertis en loggers) ; amendement de
 **D22** (vocabulaire arrêté : `reference` et famille `DataAided*`) ;
 mise à jour de la cible d'usage de **D40c** et du point ouvert « graphe
-de calcul » de la §8, dont D42 traite le cas de la seconde entrée.
+de calcul » de la §8, dont D42 traite le cas de la seconde entrée ;
+**annexe A.5** — les défauts levés par la conversion des docstrings
+au gabarit §4.10, qui oblige à relire chaque bloc ligne à ligne.
 
 Nouveautés v0.4 : décisions **D34–D35** (reconfiguration des paramètres
 et exécution de balayages, §4.8) ; **D36–D41** (ergonomie d'API et
@@ -1032,3 +1034,32 @@ ou à corriger.
 | `requirements.txt` | Duplique et contredit `pyproject.toml` — à supprimer au profit des extras |
 | CI | Aucun doctest, aucun linter, aucune mesure de couverture |
 | `examples/*` | Chemins de sauvegarde relatifs (`../../docs/...`) : les scripts n'échouent que si on ne les lance pas depuis leur propre dossier. À rendre robustes ou à documenter |
+### A.5 Défauts constatés pendant la conversion §4.10 (2026-08-09)
+
+Écrire le modèle mathématique de chaque bloc oblige à relire son code
+ligne à ligne — c'est la vertu de D10 qu'on n'attendait pas. Cette passe a
+levé la série ci-dessous. Ceux marqués **corrigé** l'ont été dans la même
+fenêtre ; les autres attendent un arbitrage parce qu'ils changent des
+résultats numériques ou un choix d'API.
+
+| Emplacement | Défaut | État |
+|---|---|---|
+| `core/filters.py` — `SRRCFilter` | `method="time"` figurait dans le `Literal` sans branche dans `forward` → `UnboundLocalError` | **corrigé** (rejeté à la construction) |
+| `core/filters.py` — `SRRCFilter` | `scale` appliqué par la seule voie `"fft"`, silencieusement ignoré par `"lfilter"` (le défaut) : deux méthodes censées calculer la même chose ne la calculaient pas | **corrigé** |
+| `core/filters.py` — `SRRCFilter` | Paramètre `axis` mort : `-1` codé en dur dans `lfilter` | **corrigé** |
+| `core/processors.py` — `BlindPhaseTracker` | Décorateur `@dataclass` manquant : la classe ne pouvait pas être construite (`TypeError`), `__post_init__` ne tournait jamais, et `forward` lisait un champ inexistant | **corrigé** |
+| `core/compensators.py` — `DataAidedFIRCompensator` | Appelait `get_target_data()` sans hériter du mixin qui la définit → `AttributeError` à chaque appel | **corrigé** |
+| `core/filters.py` — `BWFilter` | Le nom annonce un Butterworth ; le code applique un masque rectangulaire (passe-bas idéal, coupure infiniment raide) | documenté |
+| `core/filters.py` — `BWFilter` | La docstring annonçait « 1 = Nyquist » (convention `Wn` de scipy) ; `fftfreq(N, d=1)` borne les fréquences à 1/2, donc **Nyquist vaut 0,5**. Tout appelant réglant `wn` d'après scipy filtre deux fois trop large — et `examples/optical/*` passent `1/oversampling`, ce qui suggère précisément cette lecture | **à arbitrer** : corriger le code (facteur 2, change des courbes publiées) ou le nom du paramètre (D41 : le nom porte l'unité) |
+| `core/metrics.py` — `compute_ccdf` | Faux pour `ndim > 1` : `expand_dims` produit une forme qui ne se diffuse pas contre les données triées (`(3,1)` au lieu de `(1,3)`). L'ancien doctest **gravait la sortie fausse** comme si elle était voulue | **à arbitrer** ; doctest ramené au cas 1D, qui est correct et le seul utilisé |
+| `core/metrics.py` — `compute_ber` | Le paramètre `axis` n'a jamais fonctionné : `sym_2_bin` appelle `np.binary_repr`, qui exige un scalaire → `TypeError` sur une entrée 2D | documenté |
+| `core/metrics.py` — `compute_ser_awgn_psk` | Branche morte `if type == "bin"` : compare le *builtin* `type` à une chaîne, la fonction n'ayant pas ce paramètre. Inoffensive aujourd'hui, dangereuse si quelqu'un la « répare » (le BER serait divisé deux fois par `k`) | à supprimer |
+| `core/metrics.py` | `compute_ser_awgn_psk` (ordre hors {2,4,>4}) et `compute_metric_awgn_theo` (modulation inconnue) tombent en `UnboundLocalError` au lieu d'un `ValueError` explicite (D38) | à corriger |
+| `core/processors.py` — `Downsampler` | `use_filter=True` → `AttributeError` : le champ `filter` n'est pas déclaré, contrairement à `Upsampler` (et `slots=True` rend l'absence immédiate) | documenté |
+| `core/processors.py` — `Amplifier` | Le paramètre `axis` n'implémente aucun modèle défendable : `[1]*ndim` avec le gain déposé à une position, diffusé contre `X` — il n'amplifie que les entrées d'indice `axis` du **dernier** axe. L'ancien exemple gravait ce comportement | documenté, `WeightAmplifier` recommandé |
+| `core/processors.py` — `Clipper` | Docstring et code en désaccord : le modèle décrivait un écrêtage polaire, le code fait `np.clip(x, -τ, τ)`, qui sur complexe compare lexicographiquement | docstring alignée sur le code |
+| `optical/compensators.py` — `ChromaticDispersionLSFIRCompensator` | `q_col` alloué à zéro et jamais rempli : `toeplitz` rend une matrice triangulaire supérieure au lieu de la matrice de Gram hermitienne. Masqué à la bande par défaut où `q_row[m] = sinc(m) = 0` | **à arbitrer** |
+| `optical/compensators.py` — `ChromaticDispersionLSFIRCompensator` | `d_vect` ignore `w_vect` : la forme fermée en `erf` est celle de la bande pleine `[-π, π]`. Conjugué au point précédent, `w_vect` est inutilisable ailleurs qu'à sa valeur par défaut | **à arbitrer** |
+| `core/processors.py` — `SampleRemover`, `DataAdder` | 1D seulement (`len(x)`, `concatenate` sur l'axe 0) sans garde : une entrée 2D échoue obscurément au lieu de lever `ShapeError` (D38) | à corriger |
+| `ofdm/utils.py` — `plot_carrier_allocation` | Couleurs `"b"/"g"/"r"` en dur, alors que D27 impose `CARRIER_STYLE` (Okabe-Ito, la couleur jamais seule porteuse d'information) | à corriger |
+| `ofdm/utils.py` — `plot_carrier_allocation` | L'exemple était un bloc markdown dans une docstring numpydoc : jamais rendu, jamais exécuté | **corrigé** (doctest réel) |
