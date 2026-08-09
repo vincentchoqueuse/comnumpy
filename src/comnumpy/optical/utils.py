@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.fft import fft, ifft, fftfreq
+from comnumpy._backend import fft, ifft, fftfreq  # cupy-compatible (D3)
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
 
@@ -113,7 +113,7 @@ def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
 
     beta2_s2_per_km = ((10**-12)**2) * beta2  # convert into s^2/km
     NFFT = len(x)
-    w = (2*np.pi*fs)*fftfreq(NFFT, d=1)
+    w = (2*np.pi*fs)*fftfreq(NFFT, d=1, like=x)
     H = np.exp(1j * (beta2_s2_per_km/2) * z * (w**2) * direction)  # see equation 4
     fftx = fft(x)
     ffty = H * fftx

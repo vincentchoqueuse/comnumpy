@@ -80,7 +80,7 @@ class SRRCFilter(Processor):
 
     def H(self, NFFT):
         """Frequency response for fft method"""
-        from scipy.fft import fft  # local import (D36)
+        from comnumpy._backend import fft  # local import (D36), cupy-compatible (D3)
         # see hager code on LDBP
         h = self.h()
         filter_delay = self.oversampling*self.N_h
@@ -100,7 +100,7 @@ class SRRCFilter(Processor):
             y = signal.lfilter(h, 1, x, axis=-1)
 
         if self.method == "fft":
-            from scipy.fft import fft, ifft  # local import (D36)
+            from comnumpy._backend import fft, ifft  # local import (D36), cupy-compatible (D3)
             NFFT = len(x)
             fft_x = fft(x, NFFT)
             fft_h = self.H(NFFT)
@@ -156,10 +156,10 @@ class BWFilter(Processor):
         if x.ndim > 1:
             raise NotImplementedError("BW Filter: only 1D signals are supported.")
 
-        from scipy.fft import fft, ifft, fftfreq  # local import (D36)
+        from comnumpy._backend import fft, ifft, fftfreq  # local import (D36), cupy-compatible (D3)
 
         NFFT = len(x)
-        w = fftfreq(NFFT, d=1)
+        w = fftfreq(NFFT, d=1, like=x)
         H = (abs(w) <= self.wn).astype(float)
         fft_x = fft(x, NFFT)
         y = ifft(H*fft_x, NFFT)

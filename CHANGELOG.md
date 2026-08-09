@@ -89,7 +89,21 @@ one release; there is no compatibility layer.
 - `SymbolDemapper(soft=True)` bit LLRs (D12) and the fec package (D4)
   landed in the same window (see the dedicated commits).
 
-### Milestone 7 (D35, taps, MIMO validation)
+### Milestone 7 (D35, taps, MIMO validation, D5, D3)
+
+- LDPC coding (D5): `fec.LDPCEncoder` (systematic, GF(2) echelon
+  form, rank-deficiency aware), `fec.LDPCDecoder` (min-sum with
+  optional normalization `alpha`, early stopping on the syndrome,
+  `(batch, n_edges)` segmented-reduction vectorization -- the only
+  Python loop is over iterations), `make_gallager_parity_check`.
+  Golden test: (3,6) regular n=240 at Eb/N0 = 3 dB decodes >10x below
+  uncoded BPSK.
+- Internal backend dispatch (D3): `comnumpy._backend` regroups the
+  FFT calls of the signal path (SSFM, OFDM (I)FFT, FIR/Butterworth
+  filters) and routes them to the library owning the input array --
+  numpy arrays keep going to `scipy.fft` bit-exactly, CuPy arrays go
+  to `cupyx.scipy.fft`. CuPy is imported only when a CuPy array is
+  seen and remains a non-dependency.
 
 - `comnumpy.sweep(chain, param, values, metrics, stimulus, ...)` (D35):
   the parameter-sweep loop shared by the validation scripts, extracted

@@ -22,6 +22,7 @@ CONVERTED_MODULES = [
     "comnumpy.core.impairments",
     "comnumpy.core.monitors",
     "comnumpy.fec.convolutional",
+    "comnumpy.fec.ldpc",
     "comnumpy.ofdm.processors",
     "comnumpy.ofdm.compensators",
     "comnumpy.ofdm.predistorders",
