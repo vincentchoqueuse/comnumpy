@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 from dataclasses import dataclass, field
-from typing import Optional, Literal
+from typing import Literal, Optional, Union
 from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
@@ -9,13 +9,28 @@ from comnumpy.core import Processor
 from comnumpy.exceptions import NotFittedError
 from .utils import hard_projector, zf_estimator, mmse_estimator
 from .processors import Amplifier, DataExtractor
-from .validators import validate_data
+from .validators import validate_data, validate_single_path
 
 
 @dataclass(slots=True)
 class DataAidedMixin():
     def __post_init__(self):
         validate_data(self.reference)
+
+    def validate_paths(self, X: np.ndarray) -> None:
+        """Refuse a multi-path signal (D49).
+
+        A data-aided estimator is fitted against one reference sequence,
+        so it measures one record. Which of the two families it belongs
+        to -- shared over the paths, or one per path -- depends on the
+        quantity and on where in the receiver it sits, and the caller is
+        the one who knows: this says so instead of broadcasting by
+        accident.
+        """
+        validate_single_path(np.asarray(X), type(self).__name__,
+                             self.estimand)
+
+    estimand = "a quantity"
 
     def get_reference(self):
         """
@@ -57,7 +72,9 @@ class DCCorrector(Processor):
 
     Axes: *declared axis* -- the mean :math:`\mu_x` is computed along
     ``axis`` (default 0) and broadcast over the remaining axes; use
-    ``axis=-1`` for the canonical serial layout ``(..., N)``.
+    ``axis=-1`` for the canonical serial layout ``(..., N)``. The
+    estimand is **per path** (D49): a DC offset belongs to a converter,
+    so ``axis=-1`` on a ``(..., P, N)`` signal gives each path its own.
 
     Parameters
     ----------
@@ -88,7 +105,10 @@ class DCCorrector(Processor):
     name: str = field(default="mean_corrector", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x_mean = np.mean(x, axis=self.axis)
+        # keepdims: without it the mean of a (P, N) signal along axis=-1
+        # came back as (P,) and the subtraction raised a broadcast error,
+        # so the block's own documented axis did not work above 1-D
+        x_mean = np.mean(x, axis=self.axis, keepdims=True)
         y = x - x_mean + self.value
         return y
 
@@ -288,8 +308,12 @@ class BlindIQCompensator(Processor):
     procedure (GSOP) of Fatadin *et al.*, which whitens by successive
     projection and keeps the in-phase axis fixed.
 
-    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
-    :math:`2 \times 2` covariance is estimated over the whole record.
+    Axes: *declared axis* -- accepts ``(N,)`` or ``(..., P, N)``. The
+    estimand is **per path** (D49): an IQ imbalance belongs to a
+    receiver, so each path gets its own :math:`2 \times 2` covariance
+    and its own whitening. Pooling them, which is what stacking the real
+    and imaginary parts of a multi-path array used to do, mixes the
+    paths and returns a signal worse than the one it was given.
 
     Parameters
     ----------
@@ -340,29 +364,47 @@ class BlindIQCompensator(Processor):
     coef: float = field(default=1, kw_only=True)
     name: str = field(default="iq_compensator", kw_only=True)
     # estimated quantities (D23), declared for slots (D40a)
-    alpha_: complex = field(init=False, repr=False, default_factory=lambda: 1)
-    beta_: complex = field(init=False, repr=False, default_factory=lambda: 0)
+    alpha_: Union[complex, np.ndarray] = field(init=False, repr=False,
+                                               default_factory=lambda: 1 + 0j)
+    beta_: Union[complex, np.ndarray] = field(init=False, repr=False,
+                                              default_factory=lambda: 0 + 0j)
 
     def __post_init__(self):
-        self.alpha_ = 1
-        self.beta_ = 0
+        self.alpha_ = 1 + 0j
+        self.beta_ = 0 + 0j
 
     def fit(self, x):
-        N = len(x)
-        X = np.vstack([x.real, x.imag])
+        signal = np.asarray(x)
+        N = signal.shape[-1]
+        paths = signal.reshape(-1, N)
+        alpha = np.empty(paths.shape[0], dtype=complex)
+        beta = np.empty(paths.shape[0], dtype=complex)
 
-        # compute covariance matrix
-        R = (1/N) * np.matmul(X, np.transpose(X))
+        for index, path in enumerate(paths):
+            X = np.vstack([path.real, path.imag])
 
-        # perform eigenvalue decomposition
-        V, U = LA.eig(R)
+            # compute covariance matrix
+            R = (1/N) * np.matmul(X, np.transpose(X))
 
-        # perform whitening
-        D = np.diag(1/np.sqrt(V))
-        M = np.matmul(D, np.transpose(U))
+            # perform eigenvalue decomposition
+            V, U = LA.eig(R)
 
-        self.alpha_ = M[0, 0] + 1j * M[1, 0]
-        self.beta_ = M[0, 1] + 1j * M[1, 1]
+            # perform whitening
+            D = np.diag(1/np.sqrt(V))
+            M = np.matmul(D, np.transpose(U))
+
+            alpha[index] = M[0, 0] + 1j * M[1, 0]
+            beta[index] = M[0, 1] + 1j * M[1, 1]
+
+        # one coefficient per path, shaped to broadcast against the
+        # signal -- and a plain scalar when there is a single path, the
+        # same "scalar in, scalar out" rule the rest of the library uses
+        if signal.ndim == 1:
+            self.alpha_, self.beta_ = complex(alpha[0]), complex(beta[0])
+        else:
+            shape = signal.shape[:-1] + (1,)
+            self.alpha_ = alpha.reshape(shape)
+            self.beta_ = beta.reshape(shape)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
@@ -405,9 +447,14 @@ class BlindCFOCompensator(Processor):
     Newton step uses the exact first and second derivatives of the
     periodogram with respect to :math:`\omega`.
 
-    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
+    Axes: *declared axis* -- accepts ``(N,)`` or ``(..., P, N)``; the
     correction :math:`e^{-j\widehat{\omega}_0 n}` uses the sample index
-    :math:`n` along that axis.
+    :math:`n` along the last axis. The estimand is **shared** (D49): a
+    frequency offset is one laser beating against one local oscillator,
+    so the periodogram is accumulated over every path and a single
+    :math:`\widehat{\omega}_0` is applied to all of them. That is not
+    only tidier than one estimate per path -- it is the better
+    estimator, since it sees all the data.
 
     Parameters
     ----------
@@ -497,13 +544,15 @@ class BlindCFOCompensator(Processor):
         self.history = []
 
     def loss(self, x, w):
-        N = len(x)
+        N = x.shape[-1]
         x4 = x**4
         dtft = self.compute_dtft(x4, w)
         return (np.abs(dtft)**2)/N
 
     def compute_dtft(self, x, w):
-        N = len(x)
+        # the sum runs over *every* axis, so several paths contribute to
+        # one periodogram: the joint estimate of the shared offset (D49)
+        N = x.shape[-1]
         N_vect = np.arange(N)
         dtft = np.sum(x*np.exp(-1j*w*N_vect))
         return dtft
@@ -514,7 +563,7 @@ class BlindCFOCompensator(Processor):
 
     def fit(self, x, w0):
         w = 4*w0
-        N = len(x)
+        N = x.shape[-1]
         x4 = x**4
         N_vect = np.arange(N)
         step_size = self.step_size
@@ -552,7 +601,7 @@ class BlindCFOCompensator(Processor):
         self.w0_ = np.real(w)/4
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        N = len(x)
+        N = x.shape[-1]
         N_vect = np.arange(N)
 
         if self.should_fit:
@@ -597,9 +646,12 @@ class BlindPhaseCompensation(Processor):
     :math:`2\pi/M` phase ambiguity of the constellation, so
     :math:`\theta_0` must lie in the correct basin.
 
-    Axes: *declared axis* -- the estimation stage expects a 1D serial
-    signal ``(N,)`` (the residuals are stacked into a single vector); the
-    correction itself is element-wise.
+    Axes: *declared axis* -- accepts ``(N,)`` or ``(..., P, N)``. The
+    estimand is **per path** (D49): after a butterfly equalizer each
+    output carries its own residual rotation, so one angle is fitted per
+    path and ``theta_`` holds one value each. A phase *common* to the
+    paths, laser noise before any equalizer, is the shared case -- fit
+    it on the flattened signal.
 
     Parameters
     ----------
@@ -649,18 +701,25 @@ class BlindPhaseCompensation(Processor):
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="phase correction", kw_only=True)
     # estimated quantity (D23), declared for slots (D40a)
-    theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    theta_: Optional[Union[float, np.ndarray]] = field(init=False, repr=False, default_factory=lambda: None)
 
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
         s, y_est = hard_projector(y, self.alphabet)
-        error = y - y_est
+        error = np.ravel(y - y_est)
         error_real = np.hstack([np.real(error), np.imag(error)])
         return error_real
 
     def fit(self, X: np.ndarray, y=None):
-        res = least_squares(self.cost, self.theta0, args=(X,))
-        self.theta_ = res.x[0]
+        signal = np.asarray(X)
+        paths = signal.reshape(-1, signal.shape[-1])
+        angles = np.array([least_squares(self.cost, self.theta0,
+                                         args=(path,)).x[0]
+                           for path in paths])
+        # one angle per path, shaped to broadcast against the signal --
+        # and a plain float when there is a single path
+        self.theta_ = (float(angles[0]) if signal.ndim == 1
+                       else angles.reshape(signal.shape[:-1] + (1,)))
         return self
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -858,6 +917,8 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
     # estimated quantity (D23), declared for slots (D40a)
     h_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
+    estimand = "one FIR response against a reference"
+
     def fit(self, x, y=None):
         if y is None:
             y = self.get_reference()
@@ -867,6 +928,7 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.validate_paths(x)
         if self.should_fit:
             self.fit(x)
         elif self.h_ is None:
@@ -950,6 +1012,8 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
     # estimated quantity (D23), declared for slots (D40a)
     theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
+    estimand = "one phase against a reference"
+
     def __post_init__(self):
         # explicit parent call: zero-arg super() breaks with slots=True
         # (the dataclass decorator recreates the class)
@@ -963,6 +1027,7 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.validate_paths(x)
         self.fit(x)
         return x*np.exp(1j*self.theta_)
 
@@ -1053,6 +1118,8 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
     # estimated quantity (D23), declared for slots (D40a)
     gain_: Optional[complex] = field(init=False, repr=False, default_factory=lambda: None)
 
+    estimand = "one complex gain against a reference"
+
     def fit(self, x, y=None):
         if y is None:
             y = self.get_reference()
@@ -1062,6 +1129,7 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.validate_paths(x)
         if self.should_fit:
             x_preamble = self.extractor(x)
             self.fit(x_preamble)
@@ -1183,6 +1251,8 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     cross_corr_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     n_vect_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
+    estimand = "one delay against a reference"
+
     def __post_init__(self):
         # explicit parent call: zero-arg super() breaks with slots=True
         DataAidedMixin.__post_init__(self)
@@ -1240,6 +1310,7 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         return ax
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.validate_paths(x)
         self.fit(x)
         if self.signal_len:
             y = self.scale_*x[self.delay_:self.delay_+self.signal_len]
@@ -1368,6 +1439,8 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
     cross_corr_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     n_vect_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
+    estimand = "one fractional delay against a reference"
+
     def __post_init__(self):
         # explicit parent call: zero-arg super() breaks with slots=True
         DataAidedMixin.__post_init__(self)
@@ -1424,6 +1497,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         return ax
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        self.validate_paths(x)
         x_preamble = self.get_reference()
 
         # upsampling
