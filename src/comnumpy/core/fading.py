@@ -84,10 +84,12 @@ def rayleigh_process(n_samples: int, fs: float, f_doppler: float, *,
     with :math:`J_0` the Bessel function of the first kind, order zero --
     the quantity ``validation/fading_doppler.py`` checks.
 
-    The process is synthesized **directly on the output FFT grid**: only
-    the bins with :math:`|f| \leq f_D` are filled, with a complex Gaussian
-    shaped by the square root of the exact per-bin power, and one inverse
-    transform gives the samples. Nothing is resampled or interpolated, so
+    The process is synthesized **directly on the output FFT grid**: every
+    bin overlapping the band is filled with a complex Gaussian shaped by
+    the square root of the exact power it covers, and one inverse
+    transform gives the samples. Weighting by the covered fraction rather
+    than testing bin centres matters near :math:`\pm f_D`, where the
+    density is singular and one bin carries several percent of the band. Nothing is resampled or interpolated, so
     the realization is band-limited by construction. The known cost of the
     spectral method is periodicity: the realization repeats with period
     ``n_samples / fs``.
@@ -159,8 +161,24 @@ def rayleigh_process(n_samples: int, fs: float, f_doppler: float, *,
         return np.full(n_samples, gain, dtype=complex)
 
     freq = np.fft.fftfreq(n_samples, d=1 / fs)
-    inside = np.abs(freq) <= f_doppler
-    if not np.any(inside[1:]):
+    df = fs / n_samples
+    lo, hi = freq - df / 2, freq + df / 2
+    # A bin counts when it *overlaps* the band, not when its centre falls
+    # inside it: near +/-f_D the classical density is singular, so an edge
+    # bin carries several percent of the band power, and a centre test
+    # keeps or drops it whole depending on where the grid happens to land
+    # (up to 8.3% of the band lost, and a knife edge when f_D sits on a bin
+    # centre). The primitives below already clip to the band, so the power
+    # of a partially covered bin comes out exact.
+    if spectrum is DopplerSpectrum.CLASSICAL:
+        power = np.maximum(_classical_bin_powers(lo, hi, f_doppler), 0.0)
+    elif spectrum is DopplerSpectrum.FLAT:
+        overlap = np.minimum(hi, f_doppler) - np.maximum(lo, -f_doppler)
+        power = np.maximum(overlap, 0.0)
+    else:                                       # pragma: no cover - enum guard
+        raise ValueError(f"unknown Doppler spectrum {spectrum!r}")
+
+    if not np.any(power[1:] > 0):
         # Window shorter than one Doppler period: the tap cannot vary. This
         # is easy to hit unnoticed -- EVA at 70 Hz and 15.36 MHz needs
         # 219 000 samples before the channel moves at all -- so say it (D11)
@@ -173,16 +191,6 @@ def rayleigh_process(n_samples: int, fs: float, f_doppler: float, *,
         gain = (rng.normal(scale=np.sqrt(0.5))
                 + 1j * rng.normal(scale=np.sqrt(0.5)))
         return np.full(n_samples, gain, dtype=complex)
-
-    df = fs / n_samples
-    if spectrum is DopplerSpectrum.CLASSICAL:
-        bin_power = _classical_bin_powers(freq - df / 2, freq + df / 2,
-                                          f_doppler)
-        power = np.maximum(np.where(inside, bin_power, 0.0), 0.0)
-    elif spectrum is DopplerSpectrum.FLAT:
-        power = inside.astype(float)
-    else:                                       # pragma: no cover - enum guard
-        raise ValueError(f"unknown Doppler spectrum {spectrum!r}")
 
     total = power.sum()
     if total <= 0:                              # pragma: no cover - guarded above

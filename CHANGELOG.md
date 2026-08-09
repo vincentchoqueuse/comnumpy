@@ -124,6 +124,17 @@ one release; there is no compatibility layer.
   under `f_D` are filled), so nothing is resampled or interpolated and
   the realization is band-limited by construction. The reference for
   verification is the Bessel autocorrelation `J0(2 pi f_D tau)`.
+- `validation/fading_doppler.py` pins all four properties against their
+  analytical references: the Bessel autocorrelation (0.0048), the
+  cumulative Doppler power against `arcsin(f/f_D)/pi + 1/2` (0.0043),
+  the realized path powers and delay spreads against the 3GPP tables
+  (EVA 354.2 ns against 357, ETU 995.2 against 991), and the frequency
+  correlation against the exact transform of the profile (0.006). The
+  script reports one honest deviation it does not tune away: ETU's
+  0.5-coherence bandwidth is 4.9x the `1/(5 sigma_tau)` rule of thumb,
+  because its delay spread is inflated by the -7 dB path at 5 us while
+  the correlation is set by the 0-500 ns cluster carrying 84% of the
+  power. The rule of thumb fails there, not the simulation.
 - A trap the implementation surfaces rather than hides: at 15.36 MHz with
   70 Hz Doppler, the channel needs 219 000 samples before it moves at
   all, so a 4096-sample simulation silently gets block fading. The
