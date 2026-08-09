@@ -76,8 +76,11 @@ Consequences of this rule:
   — an in-place block would corrupt earlier taps *and* break chain
   re-entrancy.
 * Blocks never hold a live reference to another block. A data-aided
-  block takes its reference as a plain array (`target_data=x_tx`) when
+  block takes its reference as a plain array (`reference=x_tx`) when
   the reference is known in advance — a preamble, a training sequence.
+* Statistics are functions too: `comnumpy.core.metrics.signal_report(x)`
+  returns a dict; the caller decides whether to log it, tabulate it or
+  assert on it.
 
 ## Feeding an estimator from inside the chain: wiring
 
@@ -91,9 +94,9 @@ chain = Sequential([
     SymbolGenerator(16, name="tx"),
     SymbolMapper(alphabet, name="ref"),
     ...,
-    TrainedBasedPhaseCompensator(target_data=np.zeros(1), name="comp"),
+    DataAidedPhaseCompensator(reference=np.zeros(1), name="comp"),
     SymbolDemapper(alphabet),
-], wiring={"comp.target_data": "ref"})
+], wiring={"comp.reference": "ref"})
 ```
 
 Before `comp` runs, the chain assigns it the signal `ref` produced in the
@@ -110,9 +113,12 @@ same pass. Rules:
 This is the honest, bounded version of the `inputs` field of decision
 D31: a second input to a block, declared by the chain. A general DAG is
 still out of scope.
-* Statistics are functions too: `comnumpy.core.metrics.signal_report(x)`
-  returns a dict; the caller decides whether to log it, tabulate it or
-  assert on it.
+
+**Naming.** The known signal an estimator compares against is the
+`reference` — the same word `sweep(reference=...)` uses for the same
+idea. Blocks that need one are `DataAided*`, by opposition to the
+`Blind*` family; that is the standard pair of the field (Proakis,
+§8: *data-aided* vs *blind* estimation).
 
 ## Error messages
 
