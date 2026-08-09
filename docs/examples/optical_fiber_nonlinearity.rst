@@ -34,7 +34,7 @@ Import Libraries
 
 First, import the necessary libraries and ``comnumpy`` components:
 
-.. literalinclude:: ../../examples/optical/one_shot_nli.py
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 1-13
 
@@ -43,7 +43,7 @@ Define System Parameters
 
 Set key parameters such as modulation order, oversampling factors, fiber link properties, and noise figure:
 
-.. literalinclude:: ../../examples/optical/one_shot_nli.py
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 16-37
 
@@ -52,7 +52,7 @@ Create Communication Chain
 
 Build a processing chain consisting of symbol generation, mapping, pulse shaping (SRRC filter), amplification, fiber propagation via ``FiberLink``, and matched filtering with downsampling:
 
-.. literalinclude:: ../../examples/optical/one_shot_nli.py
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 39-51
 
@@ -67,7 +67,7 @@ Run Simulation and Extract Signals
 
 Execute the chain and extract the transmitted and received signals. Then, plot the received constellation diagram to inspect signal quality at the receiver.
 
-.. literalinclude:: ../../examples/optical/one_shot_nli.py
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 53-65
 
@@ -88,7 +88,7 @@ We apply two compensation strategies:
 
 After compensation, the received signal may exhibit a residual phase rotation. Therefore, phase correction is applied before computing the Symbol Error Rate (SER).
 
-.. literalinclude:: ../../examples/optical/one_shot_nli.py
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 65-98
 
