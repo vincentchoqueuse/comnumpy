@@ -28,9 +28,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 
@@ -368,6 +369,88 @@ def _triangular(peak_shift_THz: float = 13.2) -> RamanGainSpectrum:
                                        "J. Lightwave Technol. 36(14), 2018")
 
 
+# -- the wave table -------------------------------------------------------
+def _as_group(value: npt.ArrayLike, name: str) -> np.ndarray:
+    """One entry per member of a group, as a 1-D float array."""
+    array = np.atleast_1d(np.asarray(value, dtype=float))
+    if array.ndim != 1:
+        raise ValueError(
+            f"{name} has {array.ndim} dimensions, expected a scalar or a "
+            f"1-D sequence with one entry per wave")
+    return array
+
+
+def _broadcast_group(arrays: Dict[str, np.ndarray],
+                     group: str) -> tuple[int, Dict[str, np.ndarray]]:
+    """Bring every member of a group to the same length.
+
+    A scalar is shared by every wave of the group (one launch power for
+    a flat comb, one loss for every pump); anything else must already
+    have one entry per wave. Two different lengths are always a
+    mistake, never a broadcast.
+    """
+    count = max(array.size for array in arrays.values())
+    for name, array in arrays.items():
+        if array.size not in (1, count):
+            raise ValueError(
+                f"{name} has {array.size} entries while the {group} set has "
+                f"{count}; expected either a single value shared by every "
+                f"{group} or one value per {group}")
+    return count, {name: np.broadcast_to(array, (count,)).astype(float)
+                   for name, array in arrays.items()}
+
+
+def _photon_occupancy(shift_Hz: npt.ArrayLike,
+                      temperature_K: float) -> np.ndarray:
+    r"""Phonon occupancy :math:`1 + \eta` of the Raman ASE.
+
+    .. math::
+
+        \eta(\Delta \nu, T) =
+            \left[\exp\!\left(\frac{h \Delta \nu}{k_B T}\right) - 1\right]^{-1}
+
+    At room temperature and a 13 THz shift this is a few per cent, so
+    the spontaneous emission is close to -- but not equal to -- the
+    zero-temperature value. It grows without bound as the shift goes to
+    zero, which is why the closely spaced pairs of a WDM comb are noisy
+    per unit of gain even though they exchange very little power.
+    """
+    shift = np.asarray(shift_Hz, dtype=float)
+    if temperature_K <= 0:
+        return np.ones_like(shift)
+    with np.errstate(divide="ignore", over="ignore"):
+        occupancy = 1.0 + 1.0 / np.expm1(
+            PLANCK * np.abs(shift) / (BOLTZMANN * temperature_K))
+    return np.where(shift > 0, occupancy, 1.0)
+
+
+def _coupling_matrix(frequency_Hz: np.ndarray, gain_peak_W_km: float,
+                     spectrum: Optional[RamanGainSpectrum]) -> np.ndarray:
+    r"""Pairwise Raman coupling :math:`C_{ij}` of a set of waves.
+
+    ``C[i, j]`` is the coefficient multiplying :math:`P_i P_j` in the
+    equation of wave :math:`i`: positive when :math:`j` is the bluer of
+    the pair and feeds :math:`i`, negative when :math:`i` feeds
+    :math:`j`, and the two are tied by photon-number conservation
+
+    .. math::
+
+        C_{ji} = -\frac{\nu_j}{\nu_i} \, C_{ij}, \qquad \nu_j < \nu_i
+
+    which is what makes the total photon flux conserved in the lossless
+    limit whatever the number of waves.
+    """
+    shift = frequency_Hz[None, :] - frequency_Hz[:, None]
+    if spectrum is None:
+        # every pair at the peak coefficient: only meaningful for one
+        # pump-signal pair, which solve_raman enforces
+        gain = gain_peak_W_km * (shift > 0).astype(float)
+    else:
+        gain = gain_peak_W_km * spectrum.shape(shift)     # zero where shift < 0
+    ratio = frequency_Hz[:, None] / frequency_Hz[None, :]
+    return gain - ratio * gain.T
+
+
 # -- the solver -----------------------------------------------------------
 @dataclass(frozen=True)
 class RamanSolution:
@@ -375,19 +458,19 @@ class RamanSolution:
 
     Signal Model
     ------------
-    All four profiles are functions of the distance :math:`z` from the
-    span input. The figures of merit are
+    All profiles are functions of the distance :math:`z` from the span
+    input. Per signal :math:`i`, the figures of merit are
 
     .. math::
 
         G_\mathrm{on\text{-}off} =
-            \frac{P_s(L)}{P_s(L)\big|_{P_p = 0}}
-          = \frac{P_s(L)}{P_s(0) e^{-\alpha_s L}},
+            \frac{P_{s,i}(L)}{P_{s,i}(L)\big|_{P_p = 0}}
+          = \frac{P_{s,i}(L)}{P_{s,i}(0) e^{-\alpha_{s,i} L}},
         \qquad
-        G_\mathrm{net} = \frac{P_s(L)}{P_s(0)}
+        G_\mathrm{net} = \frac{P_{s,i}(L)}{P_{s,i}(0)}
 
-    -- the on-off gain is what the pump buys, the net gain is what
-    comes out of the span -- and the effective noise figure
+    -- the on-off gain is what the pumps buy, the net gain is what comes
+    out of the span -- and the effective noise figure
 
     .. math::
 
@@ -399,28 +482,37 @@ class RamanSolution:
     below 0 dB, and that is the reason distributed amplification is
     used at all.
 
+    **Shapes.** Each profile carries one row per wave, ``(n, n_z)``,
+    *except* when its group holds a single wave: a solve with one signal
+    and one pump wavelength returns the plain ``(n_z,)`` curves, so the
+    single-channel case reads exactly as it did before the multi-wave
+    generalization. The figures of merit follow the same rule: a float
+    for one signal, an array of one value per signal otherwise.
+
     Attributes
     ----------
     z_km : np.ndarray
         Distance grid, in km, from 0 to the span length.
     signal_W : np.ndarray
-        Signal power :math:`P_s(z)` in W.
+        Signal powers :math:`P_{s,i}(z)` in W, one row per signal.
     pump_forward_W, pump_backward_W : np.ndarray
-        Pump powers :math:`P_p^{+}(z)` and :math:`P_p^{-}(z)` in W.
-        Both are given on the same :math:`z` grid; the backward pump is
-        launched at :math:`z = L`.
+        Pump powers :math:`P_p^{+}(z)` and :math:`P_p^{-}(z)` in W, one
+        row per pump wavelength. Both are given on the same :math:`z`
+        grid; the backward pumps are launched at :math:`z = L`. A pump
+        that is off in one direction is stored as a zero row, so the two
+        arrays always have the same shape.
     ase_W : np.ndarray
         Amplified spontaneous emission :math:`P_\mathrm{ASE}(z)` in W,
-        in the reference bandwidth of the solve.
+        one row per signal, in the reference bandwidth of the solve.
     bandwidth_Hz : float
         Reference bandwidth :math:`B` the ASE was integrated over.
-    frequency_signal_Hz : float
-        Signal frequency :math:`\nu_s`, needed to turn the ASE into a
-        noise figure.
+    frequency_signal_Hz : np.ndarray or float
+        Signal frequencies :math:`\nu_{s,i}`, needed to turn the ASE
+        into a noise figure.
     loss_only_W : np.ndarray
-        The signal profile the same fibre would give with the pumps
-        off, :math:`P_s(0) e^{-\alpha_s z}`. Carrying it makes the
-        on-off gain a ratio of two stored curves rather than a
+        The signal profiles the same fibre would give with the pumps
+        off, :math:`P_{s,i}(0) e^{-\alpha_{s,i} z}`. Carrying them makes
+        the on-off gain a ratio of two stored curves rather than a
         recomputation.
 
     Examples
@@ -438,77 +530,113 @@ class RamanSolution:
     ase_W: np.ndarray
     loss_only_W: np.ndarray
     bandwidth_Hz: float
-    frequency_signal_Hz: float
+    frequency_signal_Hz: Union[float, np.ndarray]
 
     @property
-    def on_off_gain_dB(self) -> float:
-        """Gain the pump buys, in dB: output with pump over output without."""
-        return float(10 * np.log10(self.signal_W[-1] / self.loss_only_W[-1]))
+    def n_signals(self) -> int:
+        """Number of signal waves the solve carried."""
+        return np.atleast_2d(self.signal_W).shape[0]
 
     @property
-    def net_gain_dB(self) -> float:
+    def n_pumps(self) -> int:
+        """Number of pump *wavelengths* (a bidirectional pump counts once)."""
+        return np.atleast_2d(self.pump_forward_W).shape[0]
+
+    def _per_signal(self, values: np.ndarray) -> Union[float, np.ndarray]:
+        """One value per signal, or the value itself when there is one."""
+        return float(values[0]) if values.size == 1 else values
+
+    @property
+    def on_off_gain_dB(self) -> Union[float, np.ndarray]:
+        """Gain the pumps buy, in dB: output with pumps over output without."""
+        return self._per_signal(10 * np.log10(
+            np.atleast_2d(self.signal_W)[:, -1]
+            / np.atleast_2d(self.loss_only_W)[:, -1]))
+
+    @property
+    def net_gain_dB(self) -> Union[float, np.ndarray]:
         """Span output over span input, in dB. Negative for a lossy span."""
-        return float(10 * np.log10(self.signal_W[-1] / self.signal_W[0]))
+        signal = np.atleast_2d(self.signal_W)
+        return self._per_signal(10 * np.log10(signal[:, -1] / signal[:, 0]))
 
     @property
     def gain_profile_dB(self) -> np.ndarray:
         r"""On-off gain accumulated up to each :math:`z`, in dB.
 
         This is the curve the split-step loop of
-        :class:`~comnumpy.optical.links.FiberLink` would consume.
+        :class:`~comnumpy.optical.links.FiberLink` consumes -- one row
+        per signal, so a WDM link applies its own tilted gain to each
+        channel of the axis D44 gives it.
         """
         return 10 * np.log10(self.signal_W / self.loss_only_W)
 
     @property
-    def noise_figure_dB(self) -> float:
+    def tilt_dB(self) -> float:
+        """Spread of the on-off gain across the signals, in dB.
+
+        Zero for a single signal. This is the number a multi-pump design
+        exists to minimize: one pump amplifies the red end of the comb
+        and starves the blue end, two well-placed pumps flatten it.
+        """
+        gains = np.atleast_1d(np.asarray(self.on_off_gain_dB, dtype=float))
+        return float(np.max(gains) - np.min(gains))
+
+    @property
+    def noise_figure_dB(self) -> Union[float, np.ndarray]:
         """Effective noise figure of the span, in dB; may be negative."""
-        photon = PLANCK * self.frequency_signal_Hz * self.bandwidth_Hz
-        net_gain = self.signal_W[-1] / self.signal_W[0]
-        return float(10 * np.log10((1 + self.ase_W[-1] / photon) / net_gain))
+        frequency = np.atleast_1d(np.asarray(self.frequency_signal_Hz,
+                                             dtype=float))
+        photon = PLANCK * frequency * self.bandwidth_Hz
+        signal = np.atleast_2d(self.signal_W)
+        net_gain = signal[:, -1] / signal[:, 0]
+        ase = np.atleast_2d(self.ase_W)[:, -1]
+        return self._per_signal(10 * np.log10((1 + ase / photon) / net_gain))
 
     @property
     def pump_depletion(self) -> float:
-        """Fraction of the launched pump power the signal took away.
+        """Fraction of the launched pump power the signals took away.
 
         Zero in the undepleted regime the analytic gain formula
         assumes; a large value is the warning that it no longer holds.
+        Summed over the pumps: a per-pump breakdown is in the profiles.
         """
-        launched = self.pump_forward_W[0] + self.pump_backward_W[-1]
-        remaining = self.pump_forward_W[-1] + self.pump_backward_W[0]
-        no_raman = (self.pump_forward_W[0] * self._pump_transmission
-                    + self.pump_backward_W[-1] * self._pump_transmission)
+        forward = np.atleast_2d(self.pump_forward_W)
+        backward = np.atleast_2d(self.pump_backward_W)
+        transmission = np.atleast_1d(np.asarray(self._pump_transmission,
+                                                dtype=float))
+        launched = float(np.sum(forward[:, 0]) + np.sum(backward[:, -1]))
+        remaining = float(np.sum(forward[:, -1]) + np.sum(backward[:, 0]))
+        no_raman = float(np.sum((forward[:, 0] + backward[:, -1])
+                                * transmission))
         if launched <= 0:
             return 0.0
-        return float(max(no_raman - remaining, 0.0) / launched)
+        return max(no_raman - remaining, 0.0) / launched
 
-    _pump_transmission: float = field(default=1.0, repr=False)
+    def __repr__(self) -> str:
+        """Compact view: the arrays are long, the figures of merit are not."""
+        gains = np.atleast_1d(np.asarray(self.on_off_gain_dB, dtype=float))
+        span = f"{self.z_km[-1]:.4g} km"
+        if gains.size == 1:
+            gain = f"on-off gain {gains[0]:.2f} dB"
+        else:
+            gain = (f"on-off gain {gains.min():.2f}..{gains.max():.2f} dB "
+                    f"(tilt {self.tilt_dB:.2f} dB)")
+        return (f"{type(self).__name__}({self.n_signals} signal(s), "
+                f"{self.n_pumps} pump(s), {span}, {gain}, "
+                f"depletion {100 * self.pump_depletion:.1f}%)")
 
-
-def _photon_occupancy(shift_Hz: float, temperature_K: float) -> float:
-    r"""Phonon occupancy :math:`1 + \eta` of the Raman ASE.
-
-    .. math::
-
-        \eta(\Delta \nu, T) =
-            \left[\exp\!\left(\frac{h \Delta \nu}{k_B T}\right) - 1\right]^{-1}
-
-    At room temperature and a 13 THz shift this is a few per cent, so
-    the spontaneous emission is close to -- but not equal to -- the
-    zero-temperature value.
-    """
-    if shift_Hz <= 0 or temperature_K <= 0:
-        return 1.0
-    return 1.0 + 1.0 / np.expm1(PLANCK * shift_Hz / (BOLTZMANN * temperature_K))
+    _pump_transmission: Union[float, np.ndarray] = field(default=1.0,
+                                                         repr=False)
 
 
 def solve_raman(*, length_km: float, gain_peak_W_km: float,
-                signal_W: float = 1e-3,
-                pump_forward_W: float = 0.0,
-                pump_backward_W: float = 0.0,
-                alpha_signal_dB_km: float = 0.2,
-                alpha_pump_dB_km: float = 0.25,
-                wavelength_signal_nm: float = 1550.0,
-                wavelength_pump_nm: float = 1455.0,
+                signal_W: npt.ArrayLike = 1e-3,
+                pump_forward_W: npt.ArrayLike = 0.0,
+                pump_backward_W: npt.ArrayLike = 0.0,
+                alpha_signal_dB_km: npt.ArrayLike = 0.2,
+                alpha_pump_dB_km: npt.ArrayLike = 0.25,
+                wavelength_signal_nm: npt.ArrayLike = 1550.0,
+                wavelength_pump_nm: npt.ArrayLike = 1455.0,
                 spectrum: Optional[RamanGainSpectrum] = None,
                 bandwidth_Hz: float = 12.5e9,
                 temperature_K: float = 300.0,
@@ -518,56 +646,64 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
 
     Signal Model
     ------------
-    The signal propagates towards :math:`+z`, the co-propagating pump
-    with it and the counter-propagating pump against it. Writing every
-    profile in the :math:`+z` coordinate, the powers obey
+    Every wave -- each signal channel, each pump, in each direction --
+    is one power :math:`P_i(z)` written in the :math:`+z` coordinate,
+    with a direction :math:`d_i = +1` for a co-propagating wave and
+    :math:`-1` for a counter-propagating one. They obey
 
     .. math::
 
-        \frac{\mathrm{d} P_s}{\mathrm{d}z} &=
-            \left[g\left(P_p^{+} + P_p^{-}\right) - \alpha_s\right] P_s \\
-        \frac{\mathrm{d} P_p^{+}}{\mathrm{d}z} &=
-            -\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{+} \\
-        \frac{\mathrm{d} P_p^{-}}{\mathrm{d}z} &=
-            +\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{-}
+        \frac{\mathrm{d} P_i}{\mathrm{d} z} =
+            d_i \left[\sum_{j} C_{ij} P_j - \alpha_i \right] P_i
 
-    with :math:`g = (g_R / A_\mathrm{eff}) \,
-    \tilde{g}(\nu_p - \nu_s)` the gain coefficient at the working
-    shift. The factor :math:`\nu_p / \nu_s` is photon-number
-    bookkeeping: one pump photon makes one signal photon, and the
-    energy difference goes into a phonon. Spontaneous emission adds
+    where the pairwise coupling is set by the gain shape at the shift
+    separating the two waves,
 
     .. math::
 
-        \frac{\mathrm{d} P_\mathrm{ASE}}{\mathrm{d}z} =
-            \left[g P_p^{\mathrm{tot}} - \alpha_s\right] P_\mathrm{ASE}
-            + 2 h \nu_s B \, g P_p^{\mathrm{tot}}
-              \left[1 + \eta(\Delta \nu, T)\right]
+        C_{ij} = \frac{g_R}{A_\mathrm{eff}}\,
+                 \tilde{g}(\nu_j - \nu_i) \quad (\nu_j > \nu_i),
+        \qquad
+        C_{ji} = -\frac{\nu_j}{\nu_i} C_{ij}
+
+    A pair therefore always exchanges *photons* one for one, the energy
+    difference going into a phonon, and that holds for every pair: pump
+    to signal, pump to pump, and -- the reason a WDM comb tilts -- the
+    blue channels of the comb to its own red ones.
+
+    Spontaneous emission adds, for each signal,
+
+    .. math::
+
+        \frac{\mathrm{d} P_{\mathrm{ASE},i}}{\mathrm{d}z} =
+            d_i \left[\left(\sum_j C_{ij} P_j - \alpha_i\right)
+            P_{\mathrm{ASE},i}
+            + 2 h \nu_i B \sum_{j:\, C_{ij} > 0} C_{ij} P_j
+              \left(1 + \eta(\nu_j - \nu_i, T)\right)\right]
 
     the last bracket being the phonon occupancy, which is why a Raman
-    amplifier is quieter when it is cold.
+    amplifier is quieter when it is cold. The ASE is amplified but does
+    not itself deplete the pumps.
 
-    **Boundary conditions.** The signal and the co-propagating pump are
-    known at the span input, the counter-propagating pump at its
-    output:
+    **Boundary conditions.** Co-propagating waves are known at the span
+    input, counter-propagating ones at its output:
 
     .. math::
 
-        P_s(0) = P_\mathrm{in}, \quad
-        P_p^{+}(0) = P_f, \quad
-        P_p^{-}(L) = P_b, \quad
+        P_i(0) = P_i^\mathrm{in} \ (d_i = +1), \quad
+        P_i(L) = P_i^\mathrm{in} \ (d_i = -1), \quad
         P_\mathrm{ASE}(0) = 0
 
-    With :math:`P_b = 0` everything is known at :math:`z = 0` and the
-    system is an initial value problem, integrated with
+    With no counter-propagating pump everything is known at :math:`z=0`
+    and the system is an initial value problem, integrated with
     ``scipy.integrate.solve_ivp``. Otherwise it is a genuine two-point
     boundary value problem and ``scipy.integrate.solve_bvp`` is used,
     started from the undepleted-pump profiles -- a poor initial guess
     is the usual reason that solver fails to converge.
 
-    **Undepleted limit.** When the signal takes a negligible part of
-    the pump, the pump decays exponentially and the on-off gain has the
-    closed form
+    **Undepleted limit.** For one signal and one pump, when the signal
+    takes a negligible part of the pump, the pump decays exponentially
+    and the on-off gain has the closed form
 
     .. math::
 
@@ -578,6 +714,14 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
     which is what ``validation/optical_raman.py`` checks the solver
     against, along with photon-number conservation in the lossless
     limit.
+
+    **Multi-wave solves.** Every argument describing a signal accepts
+    either a scalar -- shared by the whole comb -- or one value per
+    channel, and likewise for the pumps; a scalar in gives a scalar
+    out. Since a shift now separates every pair, ``spectrum=`` becomes
+    *required* as soon as there is more than one signal or more than one
+    pump wavelength: its default meaning, "the pair sits at the gain
+    peak", is only defensible for a single pair.
 
     Axes: *not a Processor* -- this is a power-domain solver, and it
     returns profiles rather than transforming a signal. See the module
@@ -591,24 +735,30 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
         Peak Raman gain coefficient :math:`g_R / A_\mathrm{eff}` of the
         fibre, in :math:`\mathrm{W}^{-1}\mathrm{km}^{-1}`. A property
         of the fibre, not of the glass spectrum.
-    signal_W : float, optional, keyword-only
-        Launched signal power :math:`P_\mathrm{in}`, in W.
-    pump_forward_W : float, optional, keyword-only
-        Co-propagating pump :math:`P_f` launched at :math:`z = 0`, in W.
-    pump_backward_W : float, optional, keyword-only
-        Counter-propagating pump :math:`P_b` launched at :math:`z = L`,
-        in W. There is no ``direction`` argument: which pumps are on
-        *is* the configuration (D41).
-    alpha_signal_dB_km, alpha_pump_dB_km : float, optional, keyword-only
+    signal_W : float or array_like, optional, keyword-only
+        Launched signal powers :math:`P_\mathrm{in}`, in W. A scalar is
+        the same launch power on every channel.
+    pump_forward_W : float or array_like, optional, keyword-only
+        Co-propagating pump powers :math:`P_f` launched at :math:`z=0`,
+        in W, one per pump wavelength.
+    pump_backward_W : float or array_like, optional, keyword-only
+        Counter-propagating pump powers :math:`P_b` launched at
+        :math:`z = L`, in W, one per pump wavelength. A pump may be on
+        in both directions. There is no ``direction`` argument: which
+        pumps are on *is* the configuration (D41).
+    alpha_signal_dB_km, alpha_pump_dB_km : float or array_like, optional, keyword-only
         Fibre attenuation :math:`\alpha_s` and :math:`\alpha_p` at the
         signal and pump wavelengths, in dB/km.
-    wavelength_signal_nm, wavelength_pump_nm : float, optional, keyword-only
-        Wavelengths setting :math:`\nu_s`, :math:`\nu_p` and hence the
-        Stokes shift :math:`\Delta \nu`.
+    wavelength_signal_nm, wavelength_pump_nm : float or array_like, optional, keyword-only
+        Wavelengths setting :math:`\nu_s`, :math:`\nu_p` and hence every
+        Stokes shift :math:`\Delta \nu`. The lengths of the signal
+        arguments fix the number of channels, those of the pump
+        arguments the number of pumps.
     spectrum : RamanGainSpectrum, optional, keyword-only
-        Gain shape used to scale ``gain_peak_W_km`` at the working
+        Gain shape used to scale ``gain_peak_W_km`` at each pair's
         shift. ``None`` (default) uses the peak coefficient as given,
-        i.e. assumes the pump sits at the gain peak.
+        i.e. assumes the pump sits at the gain peak, and is only
+        accepted for a single signal and a single pump wavelength.
     bandwidth_Hz : float, optional, keyword-only
         Reference bandwidth :math:`B` for the ASE. Default 12.5 GHz,
         the 0.1 nm convention.
@@ -627,10 +777,12 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
     Raises
     ------
     ValueError
-        If no pump is on, if a power or a length is negative, or if the
-        boundary value problem fails to converge -- an unconverged mesh
-        is never returned, because it looks exactly like a plausible
-        result.
+        If no pump is on, if a power or a length is negative, if a pump
+        does not sit above every signal in frequency, if a group's
+        arguments disagree on the number of waves, if several waves need
+        a ``spectrum=`` and none was given, or if the boundary value
+        problem fails to converge -- an unconverged mesh is never
+        returned, because it looks exactly like a plausible result.
 
     References
     ----------
@@ -646,65 +798,146 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
     ...                        pump_backward_W=0.2)
     >>> round(solution.on_off_gain_dB, 2), round(solution.net_gain_dB, 2)
     (5.97, -10.03)
+
+    Three C-band channels under a single pump: the gain follows the
+    shape of the spectrum, so the comb comes out tilted.
+
+    >>> comb = [1530.0, 1545.0, 1560.0]
+    >>> blow_wood = get_gain_spectrum("blow-wood")
+    >>> one = solve_raman(length_km=80.0, gain_peak_W_km=0.4,
+    ...                   wavelength_signal_nm=comb, signal_W=1e-3,
+    ...                   pump_backward_W=0.4, wavelength_pump_nm=1450.0,
+    ...                   spectrum=blow_wood, bandwidth_Hz=0.0)
+    >>> print(np.round(one.on_off_gain_dB, 2))
+    [ 9.74 11.84 10.89]
+
+    The same total pump power split between two wavelengths halves the
+    tilt -- which is the whole reason multi-pump Raman exists:
+
+    >>> two = solve_raman(length_km=80.0, gain_peak_W_km=0.4,
+    ...                   wavelength_signal_nm=comb, signal_W=1e-3,
+    ...                   pump_backward_W=[0.15, 0.25],
+    ...                   wavelength_pump_nm=[1425.0, 1455.0],
+    ...                   spectrum=blow_wood, bandwidth_Hz=0.0)
+    >>> two.n_signals, two.n_pumps
+    (3, 2)
+    >>> print(round(one.tilt_dB, 2), round(two.tilt_dB, 2))
+    2.1 0.98
     """
     from scipy.integrate import solve_bvp, solve_ivp      # local import (D36)
 
     if length_km <= 0:
         raise ValueError(f"expected a positive span length, got {length_km} km")
-    if signal_W <= 0:
-        raise ValueError(f"expected a positive signal power, got {signal_W} W")
-    if pump_forward_W < 0 or pump_backward_W < 0:
+
+    n_signals, signals = _broadcast_group(
+        {"signal_W": _as_group(signal_W, "signal_W"),
+         "wavelength_signal_nm": _as_group(wavelength_signal_nm,
+                                           "wavelength_signal_nm"),
+         "alpha_signal_dB_km": _as_group(alpha_signal_dB_km,
+                                         "alpha_signal_dB_km")},
+        "signal")
+    n_pumps, pumps = _broadcast_group(
+        {"pump_forward_W": _as_group(pump_forward_W, "pump_forward_W"),
+         "pump_backward_W": _as_group(pump_backward_W, "pump_backward_W"),
+         "wavelength_pump_nm": _as_group(wavelength_pump_nm,
+                                         "wavelength_pump_nm"),
+         "alpha_pump_dB_km": _as_group(alpha_pump_dB_km, "alpha_pump_dB_km")},
+        "pump")
+
+    if np.any(signals["signal_W"] <= 0):
+        raise ValueError(
+            f"expected positive signal powers, got {signals['signal_W']} W")
+    if np.any(pumps["pump_forward_W"] < 0) or np.any(pumps["pump_backward_W"] < 0):
         raise ValueError(
             f"expected non-negative pump powers, got forward "
-            f"{pump_forward_W} W and backward {pump_backward_W} W")
-    if pump_forward_W == 0 and pump_backward_W == 0:
+            f"{pumps['pump_forward_W']} W and backward "
+            f"{pumps['pump_backward_W']} W")
+    if not np.any(pumps["pump_forward_W"] > 0) and not np.any(pumps["pump_backward_W"] > 0):
         raise ValueError(
-            "expected at least one pump to be on, got both at 0 W -- pass "
-            "pump_forward_W= for co-propagating pumping, pump_backward_W= "
-            "for counter-propagating, or both for bidirectional")
+            "expected at least one pump to be on, got every pump at 0 W -- "
+            "pass pump_forward_W= for co-propagating pumping, "
+            "pump_backward_W= for counter-propagating, or both for "
+            "bidirectional")
 
-    nu_s = SPEED_OF_LIGHT / (wavelength_signal_nm * 1e-9)
-    nu_p = SPEED_OF_LIGHT / (wavelength_pump_nm * 1e-9)
-    shift = nu_p - nu_s
-    if shift <= 0:
+    nu_signal = SPEED_OF_LIGHT / (signals["wavelength_signal_nm"] * 1e-9)
+    nu_pump = SPEED_OF_LIGHT / (pumps["wavelength_pump_nm"] * 1e-9)
+    worst = float(np.min(nu_pump[:, None] - nu_signal[None, :]))
+    if worst <= 0:
         raise ValueError(
-            f"expected the pump above the signal in frequency, got a Stokes "
-            f"shift of {shift / 1e12:.3g} THz -- the pump wavelength must be "
-            f"the shorter one")
+            f"expected every pump above every signal in frequency, got a "
+            f"Stokes shift of {worst / 1e12:.3g} THz for the closest pair -- "
+            f"the pump wavelengths must be the shorter ones")
 
-    gain = gain_peak_W_km
-    if spectrum is not None:
-        gain = gain_peak_W_km * float(spectrum.shape(np.asarray(shift)))
-        if gain <= 0:
-            raise ValueError(
-                f"the {spectrum.standard} spectrum gives no gain at a "
-                f"{shift / 1e12:.3g} THz shift -- move the pump closer to "
-                f"the {spectrum.peak_shift_THz:.3g} THz peak")
+    if spectrum is None and (n_signals > 1 or n_pumps > 1):
+        raise ValueError(
+            f"spectrum= is required for a multi-wave solve, got None with "
+            f"{n_signals} signal(s) and {n_pumps} pump(s); spectrum=None "
+            f"means every pair sits at the gain peak, which is only "
+            f"defensible for a single pump-signal pair -- pass "
+            f"spectrum=get_gain_spectrum('blow-wood') so each pair is "
+            f"coupled at its own frequency shift")
 
-    alpha_s = alpha_signal_dB_km / (10 / np.log(10))       # 1/km
-    alpha_p = alpha_pump_dB_km / (10 / np.log(10))
-    spontaneous = (2 * PLANCK * nu_s * bandwidth_Hz
-                   * _photon_occupancy(shift, temperature_K))
+    # -- assemble the waves: signals first, then the pumps that are on
+    frequency = [nu_signal]
+    alpha = [signals["alpha_signal_dB_km"] / (10 / np.log(10))]     # 1/km
+    direction = [np.ones(n_signals)]
+    launched = [signals["signal_W"]]
+    alpha_pump = pumps["alpha_pump_dB_km"] / (10 / np.log(10))
+    index_forward = np.full(n_pumps, -1)
+    index_backward = np.full(n_pumps, -1)
+    position = n_signals
+    for sign, powers, index in ((+1.0, pumps["pump_forward_W"], index_forward),
+                                (-1.0, pumps["pump_backward_W"], index_backward)):
+        for pump in np.flatnonzero(powers > 0):
+            frequency.append(nu_pump[pump: pump + 1])
+            alpha.append(alpha_pump[pump: pump + 1])
+            direction.append(np.array([sign]))
+            launched.append(powers[pump: pump + 1])
+            index[pump] = position
+            position += 1
+
+    nu = np.concatenate(frequency)
+    alpha_wave = np.concatenate(alpha)
+    direction_wave = np.concatenate(direction)
+    launched_wave = np.concatenate(launched)
+    n_waves = nu.size
+
+    coupling = _coupling_matrix(nu, gain_peak_W_km, spectrum)
+    if not np.any(coupling[:n_signals, n_signals:] > 0):
+        shifts = (nu[None, n_signals:] - nu[:n_signals, None]) / 1e12
+        raise ValueError(
+            f"the pumps buy no gain at all: the shifts "
+            f"{np.round(shifts.ravel(), 2)} THz fall outside the "
+            f"{spectrum.standard if spectrum else 'flat'} gain spectrum -- "
+            f"move the pumps closer to the signals in frequency")
+
+    # spontaneous source, one row per signal: 2 h nu B C_ij (1 + eta_ij)
+    shift = nu[None, :] - nu[:n_signals, None]
+    spontaneous = np.where(
+        coupling[:n_signals] > 0,
+        (2 * PLANCK * nu[:n_signals, None] * bandwidth_Hz
+         * coupling[:n_signals] * _photon_occupancy(shift, temperature_K)),
+        0.0)
 
     def rhs(z: np.ndarray, y: np.ndarray) -> np.ndarray:
-        signal, forward, backward, ase = y
-        pump = forward + backward
-        transfer = (nu_p / nu_s) * gain * signal
+        power = y[:n_waves]
+        ase = y[n_waves:]
+        net = coupling @ power - alpha_wave[:, None]
         return np.vstack([
-            (gain * pump - alpha_s) * signal,
-            -(transfer + alpha_p) * forward,
-            +(transfer + alpha_p) * backward,
-            (gain * pump - alpha_s) * ase + spontaneous * gain * pump,
+            direction_wave[:, None] * net * power,
+            direction_wave[:n_signals, None] * (net[:n_signals] * ase
+                                                + spontaneous @ power),
         ])
 
     z = np.linspace(0.0, length_km, n_nodes)
-    if pump_backward_W == 0.0:
+    forward_only = bool(np.all(direction_wave > 0))
+    if forward_only:
         # everything is known at z = 0: an initial value problem, which is
         # exact and cannot fail to converge
+        start = np.concatenate([launched_wave, np.zeros(n_signals)])
         solved = solve_ivp(lambda zz, yy: rhs(np.atleast_1d(zz),
                                               yy[:, None]).ravel(),
-                           (0.0, length_km),
-                           [signal_W, pump_forward_W, 0.0, 0.0],
+                           (0.0, length_km), start,
                            t_eval=z, rtol=tol, atol=tol * 1e-9,
                            dense_output=False)
         if not solved.success:
@@ -715,17 +948,17 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
         profile = solved.y
     else:
         def boundary(left: np.ndarray, right: np.ndarray) -> np.ndarray:
-            return np.array([left[0] - signal_W,          # signal at z = 0
-                             left[1] - pump_forward_W,    # co pump at z = 0
-                             right[2] - pump_backward_W,  # counter at z = L
-                             left[3]])                    # no ASE at the input
+            # each wave is pinned at the end it is launched from
+            edge = np.where(direction_wave > 0, left[:n_waves], right[:n_waves])
+            return np.concatenate([edge - launched_wave,
+                                   left[n_waves:]])      # no ASE at the input
         # undepleted profiles as the initial guess: solve_bvp converges from
         # here even under heavy depletion, and diverges from a flat guess
+        travelled = np.where(direction_wave[:, None] > 0, z[None, :],
+                             length_km - z[None, :])
         guess = np.vstack([
-            signal_W * np.exp(-alpha_s * z),
-            pump_forward_W * np.exp(-alpha_p * z),
-            pump_backward_W * np.exp(-alpha_p * (length_km - z)),
-            np.zeros_like(z),
+            launched_wave[:, None] * np.exp(-alpha_wave[:, None] * travelled),
+            np.zeros((n_signals, z.size)),
         ])
         solved = solve_bvp(rhs, boundary, z, guess, tol=tol, max_nodes=200_000)
         if solved.status != 0:
@@ -737,14 +970,32 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
                 f"n_nodes")
         profile = solved.sol(z)
 
+    # -- reassemble: one row per signal, one row per pump wavelength
+    pump_profile = []
+    for index in (index_forward, index_backward):
+        rows = np.zeros((n_pumps, z.size))
+        for pump, position in enumerate(index):
+            if position >= 0:
+                rows[pump] = profile[position]
+        pump_profile.append(rows)
+
+    def fold(rows: np.ndarray) -> np.ndarray:
+        """A single wave keeps the plain 1-D profile it always had."""
+        return rows[0] if rows.shape[0] == 1 else rows
+
+    loss_only = (signals["signal_W"][:, None]
+                 * np.exp(-alpha_wave[:n_signals, None] * z[None, :]))
+    transmission = np.exp(-alpha_pump * length_km)
     return RamanSolution(
         z_km=z,
-        signal_W=profile[0],
-        pump_forward_W=profile[1],
-        pump_backward_W=profile[2],
-        ase_W=profile[3],
-        loss_only_W=signal_W * np.exp(-alpha_s * z),
+        signal_W=fold(profile[:n_signals]),
+        pump_forward_W=fold(pump_profile[0]),
+        pump_backward_W=fold(pump_profile[1]),
+        ase_W=fold(profile[n_waves:]),
+        loss_only_W=fold(loss_only),
         bandwidth_Hz=bandwidth_Hz,
-        frequency_signal_Hz=nu_s,
-        _pump_transmission=float(np.exp(-alpha_p * length_km)),
+        frequency_signal_Hz=(float(nu_signal[0]) if n_signals == 1
+                             else nu_signal),
+        _pump_transmission=(float(transmission[0]) if n_pumps == 1
+                            else transmission),
     )
