@@ -1,57 +1,91 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal, Optional
-import subprocess
-import os
+from typing import Callable, Literal, Optional
 from comnumpy.core import Processor
-from .constants import SPEED_OF_LIGHT, WAVELENGTH
 
 
-@dataclass
+@dataclass(slots=True)
 class Laser(Processor):
-    r"""
-    A class representing a laser.
+    r"""Continuous-wave laser envelope generator with Wiener phase noise.
 
-    This object modelizes the envelope of a laser signal
- 
+    Signal Model
+    ------------
+    The generated complex envelope is
+
+    .. math::
+
+        E[n] = \sqrt{P_s} \,
+        e^{j \left(2 \pi \Delta f \, n T_s + \theta_0 + \theta[n]\right)},
+        \qquad
+        \theta[n] = \sum_{k=0}^{n} \delta\theta_k, \qquad
+        \delta\theta_k \sim
+        \mathcal{N}\left(0, \tfrac{2 \pi \Delta\nu}{f_s}\right)
+
+    where :math:`P_s = 10^{(P_{dBm} - 30)/10}` is the emitted power in W,
+    :math:`T_s = 1/f_s` the sampling period, :math:`\Delta f` the carrier
+    frequency offset and :math:`\theta[n]` a Wiener phase noise of
+    linewidth :math:`\Delta\nu`.
+
+    Axes: *generator* -- consumes a sample count ``nb_samples`` and
+    produces a 1D complex envelope (N,).
+
     Parameters
     ----------
     P_dBm : float
-        The laser power [dBm] 
-    linewidth : float
-        The laser linewidth [Hz]
-    theta0: float 
-        The initial phase [rad]
-    seed : int
-        The seed for theta0 and the random phase noise
-    fs : float
-        The sample frequency
-    freq_offset : float
-        The optical-carrier frequency offset [Hz] which corresponds to the relative offset from the laser wavelength simulation (laser TX)
-    nb_samples : int 
-        The number of desired samples
+        Laser power :math:`P_{dBm}` in dBm. Default is -10.
+    linewidth : float, keyword-only
+        Laser linewidth :math:`\Delta\nu` in Hz. Default is 0 (no phase
+        noise).
+    theta0 : float, optional, keyword-only
+        Initial phase :math:`\theta_0` in rad. Drawn at random when None.
+    seed : int, optional, keyword-only
+        Local RNG seed (for :math:`\theta_0` and the phase noise).
+    fs : float, keyword-only
+        Sampling frequency :math:`f_s` in Hz. Default is 1e9.
+    freq_offset : float, keyword-only
+        Carrier frequency offset :math:`\Delta f` in Hz, relative to the
+        nominal laser wavelength. Default is 0.
+    name : str, optional, keyword-only
+        Name of the laser instance. Default is ``"Laser"``.
 
+    References
+    ----------
+    T. Pfau, S. Hoffmann, R. Noe, "Hardware-Efficient Coherent Digital
+    Receiver Concept With Feedforward Carrier Recovery for M-QAM
+    Constellations," Journal of Lightwave Technology, vol. 27, no. 8,
+    pp. 989-999, 2009.
+
+    Examples
+    --------
+    >>> laser = Laser(0, linewidth=0, theta0=0.0, fs=1e9)
+    >>> E = laser(3)
+    >>> print(np.round(np.abs(E) ** 2, 6))
+    [0.001 0.001 0.001]
     """
     P_dBm: float = -10
-    linewidth: float = 0
-    theta0: float = None
-    seed: int = None
-    fs: float = 1e9
-    freq_offset: float = 0
-    name: str = "Laser"
-    rng: np.random.Generator = field(init=False)
+    linewidth: float = field(default=0, kw_only=True)
+    theta0: Optional[float] = field(default=None, kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    fs: float = field(default=1e9, kw_only=True)
+    freq_offset: float = field(default=0, kw_only=True)
+    name: str = field(default="Laser", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
-        
-    def forward(self, nb_samples):
+
+    def forward(self, nb_samples: object) -> np.ndarray:
+        # a source: it takes a length, like SymbolGenerator (D2)
+        assert isinstance(nb_samples, int)
+        assert self.rng is not None      # set in __post_init__
         if not isinstance(self.theta0, (float, int)):
             theta_0 = 2*np.pi*self.rng.standard_normal() - np.pi
         else:
             theta_0 = self.theta0
 
         dtheta = np.sqrt(2*np.pi*self.linewidth/self.fs)*self.rng.standard_normal(nb_samples)
-        theta = np.cumsum(dtheta) 
+        theta = np.cumsum(dtheta)
         Ps = 10**((self.P_dBm-30)/10)
         T_s = 1/self.fs
         t = np.arange(nb_samples)*T_s
@@ -59,40 +93,62 @@ class Laser(Processor):
         return E_laser
 
 
-@dataclass
+@dataclass(slots=True)
 class Optical90HybridCircuit(Processor):
-    """
-    Models an optical 90-degree hybrid circuit for coherent detection in optical communication systems.
+    r"""Optical 90-degree hybrid front-end for coherent detection.
 
-    This class represents an optical 90° hybrid circuit used for coherent detection, simulating the 
-    Optic-Electro conversion process with an option for ideal or non-ideal operation. In an ideal 
-    scenario, the circuit directly converts optical signals to electrical signals without modification. 
-    In a non-ideal scenario, the conversion process accounts for non-linearities and sensitivity factors.
+    Signal Model
+    ------------
+    In the ideal mode, the optic-electro conversion is transparent:
 
-    Attributes
+    .. math::
+
+        y[n] = x[n]
+
+    In the non-ideal mode, the incoming field is mixed with the local
+    oscillator laser :math:`E_{lo}[n]` and scaled by the receiver
+    sensitivity :math:`\rho`:
+
+    .. math::
+
+        y[n] = \rho \, x[n] \, E_{lo}^*[n]
+
+    where :math:`E_{lo}[n]` is generated by ``laser_in`` (unit amplitude
+    when no laser is provided).
+
+    Axes: *element-wise* -- applied pointwise; the local-oscillator
+    realization is drawn per sample of a 1D signal (N,).
+
+    Parameters
     ----------
     is_ideal : bool
-        If True, represents an ideal Electro-Optic conversion. If False, includes non-idealities 
-        such as sensitivity variations and laser defaults.
-    sensitivity : float
-        Sensitivity factor of the circuit, affecting the Electro-Optic conversion in non-ideal mode. 
-        Represents the half-wave voltage in volts (V).
-    laser_in : Objet of Laser class         
-        The local laser used for coherent detection  
+        If True, ideal conversion (identity). If False, mixing with the
+        local oscillator and sensitivity scaling. Default is True.
+    sensitivity : float, keyword-only
+        Sensitivity factor :math:`\rho` of the circuit (non-ideal mode).
+        Default is 0.6.
+    laser_in : Laser, optional, keyword-only
+        Local oscillator laser generating :math:`E_{lo}[n]`. Default is
+        None (unit-amplitude local oscillator).
+    name : str, optional, keyword-only
+        Name of the device instance. Default is ``"Optical90HybridCircuit"``.
 
-    Notes
-    -----
-    
-    The optical 90-degree hybrid circuit is a key component in coherent optical communication systems, 
-    allowing for the mixing of the signal with a local oscillator in a coherent receiver. The 'forward' 
-    method of this class models the behavior of the circuit under different operating conditions, 
-    simulating the impact of circuit sensitivity and ideal versus non-ideal conversion scenarios on the 
-    signal processing.
+    References
+    ----------
+    K. Kikuchi, "Fundamentals of coherent optical fiber communications,"
+    Journal of Lightwave Technology, vol. 34, no. 1, pp. 157-179, 2016.
+
+    Examples
+    --------
+    >>> x = np.array([1 + 1j, -1 + 0.5j])
+    >>> y = Optical90HybridCircuit()(x)
+    >>> bool(np.array_equal(y, x))
+    True
     """
     is_ideal: bool = True
-    sensitivity: float = 0.6
-    laser_in: Optional[Laser] = None
-    name: str = "Optical90HybridCircuit"
+    sensitivity: float = field(default=0.6, kw_only=True)
+    laser_in: Optional[Callable[..., np.ndarray]] = field(default=None, kw_only=True)
+    name: str = field(default="Optical90HybridCircuit", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.is_ideal:
@@ -108,36 +164,50 @@ class Optical90HybridCircuit(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class PowerControl(Processor):
-    """
-    Implements a simple power control mechanism for signal processing.
+    r"""Rescales a signal to a target power level.
 
-    This class is designed to adjust the power level of a signal to a specified average power. 
-    It can operate in two modes: 'natural' and 'dBm'. In 'natural' mode, the average power is 
-    adjusted to a specified linear scale value. In 'dBm' mode, the power is adjusted to a specified 
-    value in decibel-milliwatts (dBm), commonly used in telecommunications to express power levels.
+    Signal Model
+    ------------
+    .. math::
 
-    Attributes
+        y[n] = g \, x[n], \qquad
+        g = \begin{cases}
+        P_{target} / \sqrt{P_x} & \text{(natural)} \\[4pt]
+        \sqrt{10^{(P_{target} - 30)/10}} / \sqrt{P_x} & \text{(dBm)}
+        \end{cases}
+
+    where :math:`P_x = \mathbb{E}\left[|x[n]|^2\right]` is the measured
+    input power and :math:`P_{target}` the target level. In ``"dBm"``
+    mode the output power is :math:`10^{(P_{target} - 30)/10}` W; in
+    ``"natural"`` mode the output RMS amplitude is :math:`P_{target}`.
+
+    Axes: *element-wise* -- pointwise scaling; the gain :math:`g` is
+    estimated from the whole array.
+
+    Parameters
     ----------
     P_moy : float
-        Target average power level. The interpretation of this value depends on the 'Unit' parameter.
-    unit : str, optional
-        The unit in which 'P_moy' is specified. Can be 'natural' for linear scale or 'dBm' for 
-        decibel-milliwatts. Defaults to 'natural'.
+        Target level :math:`P_{target}`; interpreted according to
+        ``unit``. Default is 1.
+    unit : {"natural", "dBm"}, keyword-only
+        Unit of ``P_moy``. Default is ``"natural"``.
+    name : str, optional, keyword-only
+        Name of the device instance. Default is ``"power_control"``.
 
-    Notes
-    -----
-    The power control is a fundamental aspect in various signal processing applications, especially 
-    in communication systems where maintaining a specific power level is crucial for effective signal 
-    transmission and reception. The 'forward' method is key in this process, allowing for dynamic 
-    adjustment of signal power according to the specified target level and unit.
+    Examples
+    --------
+    >>> x = np.array([2.0, -2.0, 2.0, -2.0])
+    >>> y = PowerControl(1)(x)
+    >>> print(y)
+    [ 1. -1.  1. -1.]
     """
     P_moy: float = 1
-    unit: Literal["natural", "dBm"] = "natural"
-    name: str = "power_control"
+    unit: Literal["natural", "dBm"] = field(default="natural", kw_only=True)
+    name: str = field(default="power_control", kw_only=True)
 
-    def get_gain(self, P_moy_x):
+    def get_gain(self, P_moy_x: float) -> float:
         if self.unit == 'dBm':
             gain = np.sqrt(10**((self.P_moy-30)/10))/P_moy_x
         else:
@@ -151,44 +221,63 @@ class PowerControl(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class ErbiumDopedFiberAmplifier(Processor):
-    """
-    Models an Erbium-Doped Fiber Amplifier (ErbiumDopedFiberAmplifier) in optical communication systems.
+    r"""Erbium-doped fiber amplifier (EDFA): flat gain plus additive ASE noise.
 
-    This class simulates the operation of an ErbiumDopedFiberAmplifier, which is used to amplify optical signals 
-    in fiber-optic communication systems. It applies a gain to the input signal to compensate 
-    for the loss incurred during transmission through optical fibers. The gain is calculated 
-    based on the fiber loss parameter and the span length of the fiber.
+    Signal Model
+    ------------
+    .. math::
 
-    Attributes
+        y[n] = \sqrt{G} \, x[n] + b[n], \qquad
+        b[n] \sim \mathcal{CN}\left(0, N_{\mathrm{ase}}\right)
+
+    where :math:`\sqrt{G}` is the amplitude gain of the amplifier and
+    :math:`N_{\mathrm{ase}}` the variance of the circular amplified
+    spontaneous emission (ASE) noise, per state of polarization.
+
+    Axes: *element-wise* -- pointwise gain plus additive noise; the ASE
+    realization is drawn per sample of a 1D signal (N,).
+
+    Parameters
     ----------
-    name : str, optional
-        Identifier for the ErbiumDopedFiberAmplifier instance. Defaults to "ErbiumDopedFiberAmplifier".
+    gain : float
+        Amplitude gain :math:`\sqrt{G}` (linear).
     N_ase : float
-        Noise spectral density per state of polarization
-    seed : int
-        Seed for the noise generator (default to None)
+        ASE noise variance :math:`N_{\mathrm{ase}}` (in W), per state of
+        polarization.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the amplifier instance. Default is
+        ``"ErbiumDopedFiberAmplifier"``.
 
     References
     ----------
-    * [1] https://www.sciencedirect.com/topics/engineering/spontaneous-emission-factor
+    * R.-J. Essiambre, G. Kramer, P. J. Winzer, G. J. Foschini and B. Goebel,
+      "Capacity limits of optical fiber networks," Journal of Lightwave
+      Technology, vol. 28, no. 4, pp. 662-701, 2010.
+    * https://www.sciencedirect.com/topics/engineering/spontaneous-emission-factor
 
-    Notes
-    -----
-    ErbiumDopedFiberAmplifiers are crucial in long-haul fiber-optic communication systems to boost the signal strength 
-    and maintain signal quality over long distances.
+    Examples
+    --------
+    >>> x = np.ones(3, dtype=complex)
+    >>> y = ErbiumDopedFiberAmplifier(2.0, 0.0)(x)
+    >>> print(y)
+    [2.+0.j 2.+0.j 2.+0.j]
     """
     gain: float
     N_ase: float
-    name: str = "ErbiumDopedFiberAmplifier"
-    seed: int = None
-    rng: np.random.Generator = field(init=False)
+    name: str = field(default="ErbiumDopedFiberAmplifier", kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.rng is not None      # set in __post_init__
         N = len(x)
         scale = np.sqrt(self.N_ase/2)
         b = self.rng.normal(scale=scale, size=N) + 1j * self.rng.normal(scale=scale, size=N)
@@ -196,52 +285,91 @@ class ErbiumDopedFiberAmplifier(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class MachZehnderModulator(Processor):
-    """
-    Mach-Zehnder Modulator (MZM) with IQ modulation.
+    r"""IQ Mach-Zehnder modulator (MZM).
+
+    Signal Model
+    ------------
+    In the ideal mode, the modulation is linear:
+
+    .. math::
+
+        y[n] = -\frac{\pi V_{pp}}{4 V_\pi} \, E_{laser}[n] \, x[n]
+
+    In the non-ideal mode, each branch applies its cosine transfer
+    function to the drive voltages:
+
+    .. math::
+
+        y[n] = \left[
+        \cos\left(\frac{\pi \, u_I[n]}{2 V_\pi}\right)
+        + e^{j \Phi} \cos\left(\frac{\pi \, u_Q[n]}{2 V_\pi}\right)
+        \right] E_{laser}[n]
+
+    .. math::
+
+        u_I[n] = V_\pi + \frac{g_I}{2} \frac{V_{pp}}{m} \, \Re(x[n]),
+        \qquad
+        u_Q[n] = V_\pi + \frac{g_Q}{2} \frac{V_{pp}}{m} \, \Im(x[n])
+
+    where :math:`V_\pi` is the half-wave voltage, :math:`V_{pp} = k V_\pi`
+    the peak-to-peak drive voltage, :math:`g_I` and :math:`g_Q = 2 - g_I`
+    the branch gains, :math:`\Phi` the I/Q phase offset,
+    :math:`m = \max(\max|\Re(x)|, \max|\Im(x)|)` a normalization
+    coefficient and :math:`E_{laser}[n]` the input laser field (unit
+    amplitude when no laser is provided).
+
+    Axes: *element-wise* -- applied pointwise; the normalization
+    :math:`m` is estimated from the whole array and the laser realization
+    is drawn per sample of a 1D signal (N,).
 
     Parameters
     ----------
     is_ideal : bool
-        If True, performs ideal linear modulation without imbalance.
-    Vpi : float
-        Half-wave voltage (Vπ).
-    k : float
-        Peak-to-peak voltage ratio relative to Vpi.
-    gI : float
-        Gain coefficient on the I branch.
-    Phi : float
-        Phase offset between I and Q branches (radians).
-    laser_in : Optional[callable]
-        Input laser field generator function or None.
-    name : str
-        Instance name.
-
+        If True, ideal linear modulation without imbalance. Default is
+        False.
+    Vpi : float, keyword-only
+        Half-wave voltage :math:`V_\pi` in V. Default is 6.
+    k : float, keyword-only
+        Peak-to-peak drive ratio :math:`k = V_{pp} / V_\pi`. Default is 1.
+    gI : float, keyword-only
+        Gain :math:`g_I` of the I branch (the Q branch gets
+        :math:`g_Q = 2 - g_I`). Default is 1.
+    Phi : float, keyword-only
+        Phase offset :math:`\Phi` between the I and Q branches in rad.
+        Default is ``np.pi / 2``.
+    laser_in : callable, optional, keyword-only
+        Input laser field generator producing :math:`E_{laser}[n]`.
+        Default is None (unit-amplitude field).
+    name : str, optional, keyword-only
+        Name of the modulator instance. Default is
+        ``"MachZehnderModulator"``.
 
     References
     ----------
-    * [1] C. Peucheret, "Generation and Detection of Optical Modulation Format," 2012.
+    C. Peucheret, "Generation and Detection of Optical Modulation
+    Formats," Technical University of Denmark, 2012.
 
-    Notes
-    -----
-    The modulator functions by varying the intensity of the optical field based on the input electrical 
-    signals. The 'forward' method normalizes the input signal and applies the modulation process, 
-    considering the modulator's configuration parameters. In the non-ideal mode, the modulation also 
-    accounts for the gain imbalance and voltage variations in the in-phase and quadrature branches.
+    Examples
+    --------
+    >>> mzm = MachZehnderModulator(is_ideal=True, Vpi=6.0, k=1.0)
+    >>> y = mzm(np.array([1.0 + 0j]))
+    >>> print(round(float(np.real(y[0])), 4))
+    -0.7854
     """
 
     is_ideal: bool = False
-    Vpi: float = 6
-    k: float = 1
-    gI: float = 1
-    Phi: float = np.pi / 2
-    laser_in: Optional[callable] = None
-    name: str = "MachZehnderModulator"
-
-    Vpp: float = field(init=False)
-    VdcI: float = field(init=False)
-    VdcQ: float = field(init=False)
+    Vpi: float = field(default=6, kw_only=True)
+    k: float = field(default=1, kw_only=True)
+    gI: float = field(default=1, kw_only=True)
+    Phi: float = field(default=np.pi / 2, kw_only=True)
+    laser_in: Optional[Callable[..., np.ndarray]] = field(default=None, kw_only=True)
+    name: str = field(default="MachZehnderModulator", kw_only=True)
+    # internal state (declared for slots, D40a)
+    Vpp: float = field(init=False, repr=False, default=0.0)
+    VdcI: float = field(init=False, repr=False, default=0.0)
+    VdcQ: float = field(init=False, repr=False, default=0.0)
 
     def __post_init__(self):
         self.Vpp = self.k * self.Vpi
@@ -250,7 +378,7 @@ class MachZehnderModulator(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         m = max(np.max(np.abs(np.real(x))), np.max(np.abs(np.imag(x))))  # normalization coeff
-        
+
         if self.laser_in is not None:
             E_laser = self.laser_in(len(x))
         else:

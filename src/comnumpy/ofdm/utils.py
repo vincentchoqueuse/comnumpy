@@ -1,11 +1,17 @@
+import warnings
+
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.fft import fftshift
+from comnumpy._backend import fftshift  # cupy-compatible (D3)
 
 
 def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False):
     """
     Allocate subcarriers based on a specified OFDM configuration.
+
+    .. deprecated:: 1.0
+        Use :func:`comnumpy.ofdm.allocation.get_allocation`, which returns a
+        :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object carrying
+        its metadata and self-checked against the standard's tables.
 
     This function generates a subcarrier allocation array based on the given configuration name or custom parameters.
     It supports various OFDM configurations and allows for oversampling, Hermitian symmetry, and optional shifting.
@@ -40,6 +46,11 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     - Hermitian symmetry, when applied, affects the allocation of data subcarriers.
     - Oversampling adds nulled subcarriers to the array.
     """
+    warnings.warn(
+        "get_standard_carrier_allocation is deprecated; use "
+        "comnumpy.ofdm.allocation.get_allocation instead",
+        DeprecationWarning, stacklevel=2)
+
     ofdm_config_dict = {
         'IQtools_128': [128, 3, 6, 5, [16, 28, 40, 52, 76, 88, 100, 112]],
         '802.11ah_32': [32, 1, 3, 2, [9, 23]],
@@ -76,9 +87,6 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     else:
         N, N_nulled_DC, N_nulled_left, N_nulled_right, pilot_index = ofdm_config_dict[config_name]
 
-    N_pilot = len(pilot_index)
-
-    N_data = N - N_nulled_DC - N_nulled_left - N_nulled_right - N_pilot
     oversampled_nulled_subcarriers = N * (os - 1)
     N_oversampled = N + oversampled_nulled_subcarriers
     carrier_type = np.zeros(N_oversampled)
@@ -91,9 +99,11 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     carrier_type[start_index:start_index + N_nulled_left] = 0
     carrier_type[end_index - N_nulled_right:end_index] = 0
 
-    middle = N // 2
-    width = N_nulled_DC // 2
-    carrier_type[start_index + middle - width: start_index + middle + width + 1] = 0
+    # null exactly N_nulled_DC subcarriers centered on DC
+    if N_nulled_DC > 0:
+        middle = N // 2
+        dc_start = start_index + middle - N_nulled_DC // 2
+        carrier_type[dc_start: dc_start + N_nulled_DC] = 0
 
     if not shift:
         carrier_type = fftshift(carrier_type)
@@ -101,11 +111,12 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     return carrier_type
 
 
-def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_list = ["null", "data", "pilots"], shift=False, num=None, title="Carrier allocation"):
+def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=None, shift=False, title="Carrier allocation"):
     """
     Plot the allocation of subcarriers based on their types.
 
-    This function visualizes the allocation of subcarriers in a carrier type array. It uses different colors and markers to represent different subcarrier types, such as Hermitian, null, data, and pilots. The plot can be shifted and customized with various parameters.
+    This function visualizes the allocation of subcarriers in a carrier type array. It uses different colors and markers to represent
+    different subcarrier types, such as Hermitian, null, data, and pilots. The plot can be shifted and customized with various parameters.
 
     Parameters
     ----------
@@ -115,20 +126,29 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
         - 1: Data subcarrier
         - 2: Pilot subcarrier
 
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If None, a new figure and axis are created.
+
     color_list : list of str, optional
-        A list of colors used to plot each subcarrier type. Default is ["g", "b", "r", "k"], which corresponds to green, blue, red, and black.
+        Colors indexed by subcarrier type value. Defaults to the frozen
+        ``CARRIER_STYLE`` palette of decision D27 (Okabe-Ito, safe for
+        colour-vision deficiency), the same one the ASCII spectral map
+        and :meth:`CarrierAllocation.plot` use.
 
     label_list : list of str, optional
-        A list of labels for each subcarrier type, used in the plot legend. Default is ["hermitian", "null", "data", "pilots"].
+        Legend labels indexed by subcarrier type value. Defaults to the
+        ``CARRIER_STYLE`` labels.
 
     shift : bool, optional
         If True, shift the x-axis by half the length of the carrier_type array. Default is False.
 
-    num : int, optional
-        The figure number to plot on. If None, a new figure is created. Default is None.
-
     title : str, optional
         The title of the plot. Default is "Carrier allocation".
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing the plot (decision D25).
 
     Notes
     -----
@@ -138,28 +158,46 @@ def plot_carrier_allocation(carrier_type, color_list = ["b", "g", "r"], label_li
 
     Examples
     --------
-    ```python
-    import numpy as np
-    carrier_type = np.array([1, 1, 0, 2, 1, 0, 0])
-    plot_carrier_allocation(carrier_type)
-    ```
+    >>> import matplotlib
+    >>> matplotlib.use("Agg")
+    >>> carrier_type = np.array([1, 1, 0, 2, 1, 0, 0])
+    >>> ax = plot_carrier_allocation(carrier_type)
+    >>> ax.get_xlabel()
+    'subcarrier index'
     """
+    import matplotlib.pyplot as plt  # local import (D36)
+
+    from comnumpy.ofdm.allocation import CARRIER_STYLE, CarrierType  # local (D36)
+
+    # D27: one palette for every carrier rendering, and the marker carries
+    # the information too -- colour is never the only channel
+    if color_list is None:
+        color_list = [CARRIER_STYLE[t]["color"] for t in CarrierType]
+    if label_list is None:
+        label_list = [CARRIER_STYLE[t]["label"] for t in CarrierType]
+    marker_list = ["o", "s", "D"]
+
     if shift:
         offset = len(carrier_type)//2
     else:
         offset = 0
 
-    plt.figure(num)
+    if ax is None:
+        _, ax = plt.subplots()
     for value in range(len(color_list)):
         color = color_list[value]
         index = np.where(carrier_type == value)[0]
         if len(index)>0:
-            markerfmt = '{}o'.format(color)
-            linefmt = '{}-'.format(color)
             label = label_list[value]
-            plt.stem(index-offset, value*np.ones(len(index)), basefmt=" ", linefmt=linefmt, markerfmt=markerfmt, label=label)
+            marker = marker_list[value % len(marker_list)]
+            markerline, stemlines, _ = ax.stem(
+                index - offset, value * np.ones(len(index)),
+                basefmt=" ", markerfmt=marker, label=label)
+            markerline.set_color(color)
+            stemlines.set_color(color)
 
-    plt.xlabel("subcarrier index")
-    plt.ylabel("subcarrier type")
-    plt.title(title)
-    plt.legend()
+    ax.set_xlabel("subcarrier index")
+    ax.set_ylabel("subcarrier type")
+    ax.set_title(title)
+    ax.legend()
+    return ax

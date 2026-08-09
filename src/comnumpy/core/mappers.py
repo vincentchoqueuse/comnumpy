@@ -1,112 +1,155 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
 from .utils import plot_alphabet
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolMapper(Processor):
-    r"""
-    Symbol Mapper for converting digital data to symbols based on a predefined alphabet.
-
-    This class maps an array of integers (representing digital data) to complex symbols according to a specified alphabet.
-    It's used in digital communication systems where digital bits need to be mapped to symbols for modulation.
+    r"""Symbol mapper converting integer indices to constellation symbols.
 
     Signal Model
     ------------
+    Each integer input :math:`x[n]` selects one symbol of the alphabet
+    :math:`\mathcal{M} = \{s_0, s_1, \ldots, s_{M-1}\}`:
 
     .. math::
 
-       y[n] = f_{\mathcal{M}}(x[n])
+       y[n] = s_{x[n]}, \qquad x[n] \in \{0, 1, \ldots, M-1\}
 
-    where :
-     
-    * :math:`f_{\mathcal{M}}(.)` is a mapper function that converts an integer :math:`\{0, \cdots, M-1\}` into a symbol belonging to an alphabet :math:`\mathcal{M}`,
-    * :math:`\mathcal{M}=\{s_0, \cdots, s_{M-1}\}` corresponds to the alphabet.
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
 
-    Attributes
+    Parameters
     ----------
     alphabet : np.ndarray
-        An array of complex symbols representing the modulation alphabet.
-    name : str
-        Name of the symbol mapper instance. Default is "SymbolMapper".
+        Constellation alphabet :math:`\mathcal{M} = \{s_0, \ldots, s_{M-1}\}`
+        as a 1-D array of :math:`M` complex symbols.
+    name : str, optional, keyword-only
+        Name of the symbol mapper instance. Default is ``"Symbol Mapper"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 3.
 
     Examples
     --------
-    >>> from comnumpy.core.generators import SymbolGenerator
-    >>> from comnumpy.core.mappers import SymbolMapper
     >>> from comnumpy.core.utils import get_alphabet
-    >>> M = 4
-    >>> alphabet = get_alphabet("QAM", M)
-    >>> generator = SymbolGenerator(M=M, seed=42)
-    >>> mapper = SymbolMapper(alphabet)
-    >>> input = generator(5)
-    >>> print(input)
-    [0 3 2 1 1]
-    >>> symbols = mapper(input)
-    >>> print(symbols)
-    [-0.70710678+0.70710678j  0.70710678-0.70710678j  0.70710678+0.70710678j -0.70710678-0.70710678j -0.70710678-0.70710678j]
+    >>> mapper = SymbolMapper(get_alphabet("QAM", 4))
+    >>> y = mapper(np.array([0, 3, 2, 1]))
+    >>> print(np.round(y, 2))
+    [-0.71+0.71j  0.71-0.71j  0.71+0.71j -0.71-0.71j]
     """
     alphabet: np.ndarray
-    is_mimo: bool = True
-    name: str = "Symbol Mapper"
+    name: str = field(default="Symbol Mapper", kw_only=True)
 
     def get_alphabet(self):
         return self.alphabet
 
-    def plot(self, num=None, title="Symbol Constellation"):
-        plot_alphabet(self.alphabet, num=num, title=title)
+    def plot(self, ax: object = None, title: str = "Symbol Constellation") -> object:
+        return plot_alphabet(self.alphabet, ax=ax, title=title)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         Y = self.alphabet[X]
         return Y
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolDemapper(Processor):
-    r"""
-    Symbol Demapper for converting symbols to digital data based on a predefined alphabet.
-
-    This class demaps complex symbols to the nearest symbols in a specified alphabet, effectively performing the inverse operation of a symbol mapper.
+    r"""Symbol demapper: minimum-distance (hard) decisions or bit LLRs (soft).
 
     Signal Model
     ------------
+    With ``soft=False`` (default), each input sample :math:`x[n]` is
+    mapped to the index of the nearest symbol of the alphabet
+    :math:`\mathcal{M} = \{s_0, s_1, \ldots, s_{M-1}\}`:
 
     .. math::
 
-       y[n] = \mathcal{P}_{\mathcal{M}}(x[n]) = \arg \min_{m \in \{0, \cdots, M-1\}} |x[n]-s_m|^2
+       y[n] = \arg \min_{m \in \{0, 1, \ldots, M-1\}} \left|x[n] - s_m\right|^2
 
-    * :math:`\mathcal{P}_{\mathcal{M}}(.)` corresponds to the orthogonal projector into the constellation :math:`\mathcal{M}`
-    * :math:`\mathcal{M}=\{s_0, \cdots, s_{M-1}\}` corresponds to the alphabet.
+    With ``soft=True``, the demapper outputs the max-log log-likelihood
+    ratio of every bit :math:`i` of the symbol index (MSB first,
+    :math:`k = \log_2 M` bits per symbol, decision D12):
 
+    .. math::
 
-    Attributes
+       L_i[n] = \frac{1}{\sigma^2} \left(
+       \min_{m \,:\, b_i(m) = 1} |x[n] - s_m|^2
+       - \min_{m \,:\, b_i(m) = 0} |x[n] - s_m|^2 \right)
+
+    so :math:`L_i > 0` favors bit 0 -- the convention expected by
+    ``ViterbiDecoder(soft=True)``. This is the inverse operation of
+    :class:`SymbolMapper`.
+
+    Axes: *element-wise* -- applied pointwise, shape-agnostic; with
+    ``soft=True`` the last axis grows from :math:`N` symbols to
+    :math:`k N` LLRs (bits of a symbol contiguous, MSB first).
+
+    Parameters
     ----------
     alphabet : np.ndarray
-        An array of complex symbols representing the modulation alphabet.
-    name : str
-        Name of the symbol demapper instance. Default is "SymbolDemapper".
+        Constellation alphabet :math:`\mathcal{M} = \{s_0, \ldots, s_{M-1}\}`
+        as a 1-D array of :math:`M` complex symbols; the bits of a symbol
+        are the binary representation of its index.
+    soft : bool, keyword-only
+        Output bit LLRs instead of hard symbol decisions. Default False.
+    sigma2 : float, keyword-only
+        Noise variance :math:`\sigma^2` scaling the LLRs. Default 1.0
+        (the scaling does not affect Viterbi decoding).
+    name : str, optional, keyword-only
+        Name of the symbol demapper instance. Default is ``"Symbol Demapper"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 4; P. Robertson, E. Villebrun,
+    P. Hoeher, "A comparison of optimal and sub-optimal MAP decoding
+    algorithms operating in the log domain," ICC 1995 (max-log
+    approximation).
 
     Examples
     --------
-
-    >>> import numpy as np
-    >>> from comnumpy.core.mappers import SymbolDemapper
     >>> from comnumpy.core.utils import get_alphabet
-    >>> M = 4
-    >>> alphabet = get_alphabet("QAM", M)
-    >>> demapper = SymbolDemapper(alphabet)
-    >>> symbols = np.array([-0.70710678+0.70710678j, 0.70710678-0.70710678j, 0.70710678+0.70710678j, -0.70710678-0.70710678j, -0.70710678-0.70710678j])
-    >>> output = demapper(symbols)
-    >>> print(output)
-    [0 3 2 1 1]
+    >>> demapper = SymbolDemapper(get_alphabet("QAM", 4))
+    >>> x = np.array([-0.7+0.7j, 0.7-0.7j, 0.7+0.7j, -0.7-0.7j])
+    >>> print(demapper(x))
+    [0 3 2 1]
+    >>> soft = SymbolDemapper(get_alphabet("QAM", 4), soft=True)
+    >>> print(np.round(soft(x[:2]), 2))  # LLR > 0 favors bit 0
+    [ 1.98  1.98 -1.98 -1.98]
     """
     alphabet: np.ndarray
-    name: str = "Symbol Demapper"
+    soft: bool = field(default=False, kw_only=True)
+    sigma2: float = field(default=1.0, kw_only=True)
+    name: str = field(default="Symbol Demapper", kw_only=True)
+    # precomputed bit patterns of the alphabet indices (parametric)
+    _bits: np.ndarray = field(init=False, repr=False)
+
+    def __post_init__(self):
+        M = len(self.alphabet)
+        k = int(np.log2(M))
+        if 2**k != M:
+            raise ValueError(
+                f"soft demapping needs an alphabet size that is a power of "
+                f"two, got M={M}")
+        indices = np.arange(M)
+        # (M, k) bit table, MSB first -- same convention as sym_2_bin
+        self._bits = ((indices[:, None] >> np.arange(k - 1, -1, -1)) & 1)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
-        s, x = hard_projector(X, self.alphabet)
-        return s
+        if not self.soft:
+            s, _ = hard_projector(X, self.alphabet)
+            return s
+
+        d2 = np.abs(X[..., None] - self.alphabet) ** 2   # (..., M)
+        k = self._bits.shape[1]
+        llr = np.empty(X.shape + (k,))
+        for i in range(k):
+            mask1 = self._bits[:, i] == 1
+            d2_bit0 = np.min(d2[..., ~mask1], axis=-1)
+            d2_bit1 = np.min(d2[..., mask1], axis=-1)
+            llr[..., i] = (d2_bit1 - d2_bit0) / self.sigma2
+        return llr.reshape(X.shape[:-1] + (X.shape[-1] * k,))
 

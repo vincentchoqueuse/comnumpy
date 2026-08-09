@@ -16,11 +16,35 @@ Core
    devices
    filters
    channels
-   impairments 
-   compensators 
-   monitors 
+   fading
+   impairments
+   compensators
+   frames
+   sequences
+   capacity
    metrics
+   utils
+   validators
    visualizers
+
+Observing signals inside a chain
+--------------------------------
+
+A chain describes the communication system and nothing else: there are no
+recorder, logger or scope blocks to insert between the processors. To
+observe a signal, name the block and declare it as a *tap*::
+
+   chain = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(alphabet),
+                       AWGN(snr_dB=15, name="awgn")], taps=["tx", "awgn"])
+   y = chain(1000)
+   plot_iq(chain.tap("awgn"))
+
+``taps`` is chain metadata: each tapped block costs one dictionary store of
+a reference (no copy), and :meth:`~comnumpy.core.generics.Sequential.tap`
+returns the recorded array afterwards. Plotting and reporting are plain
+functions applied to the extracted arrays -- see :doc:`visualizers` and
+``comnumpy.core.metrics.signal_report``.
+
 
 Processor Vs Compensator
 ------------------------

@@ -3,3 +3,21 @@ from .dbp import DBP
 from .channels import ChromaticDispersion, PhaseNoise
 from .compensators import ChromaticDispersionFIRCompensator
 from .devices import Laser, ErbiumDopedFiberAmplifier
+from .fiber import (FiberSpec, get_fiber, register_fiber,
+                    available_fibers)
+from .wdm import WDMGrid, WDMMultiplexer, WDMDemultiplexer
+from .raman import (RamanGainSpectrum, RamanSolution, solve_raman,
+                    get_gain_spectrum, register_gain_spectrum,
+                    available_gain_spectra)
+
+__all__ = [
+    "FiberLink", "DBP",
+    "ChromaticDispersion", "PhaseNoise",
+    "ChromaticDispersionFIRCompensator",
+    "Laser", "ErbiumDopedFiberAmplifier",
+    "FiberSpec", "get_fiber", "register_fiber", "available_fibers",
+    "WDMGrid", "WDMMultiplexer", "WDMDemultiplexer",
+    "RamanGainSpectrum", "RamanSolution", "solve_raman",
+    "get_gain_spectrum", "register_gain_spectrum",
+    "available_gain_spectra",
+]

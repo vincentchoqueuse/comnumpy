@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 from comnumpy.core import Sequential
-from comnumpy.core.generators import SymbolGenerator 
+from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
+from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
@@ -42,9 +41,9 @@ chain = Sequential([
 # evaluate PAPR for one signal
 N = N_sc*os*L
 y = chain(2**16)
-y = np.ravel(y, order="F") # perform parallel2serial conversion
+y = np.ravel(y) # perform parallel2serial conversion (C-order flatten of (..., T, F) blocks)
 
-papr_dB = compute_PAPR(y, unit="dB", axis=0)
+papr_dB = compute_PAPR(y, unit="dB", axis=-1)
 plt.plot(np.abs(y))
 plt.ylabel("$|x[n]|^2$")
 plt.xlabel("$n$ [sample]")
@@ -54,8 +53,8 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig1.png")
 plt.figure()
 N_sc_list = [256, 1024]
 
-for N_sc in tqdm(N_sc_list):
- 
+for N_sc in N_sc_list:
+
     # set S2P and carrier allocation
     carrier_type = np.zeros(os*N_sc)
     carrier_type[:N_sc] = 1
@@ -68,14 +67,24 @@ for N_sc in tqdm(N_sc_list):
     y = chain(N)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=0)
+    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
 
     # display experimental curves
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
     plt.semilogy(papr_dB, ccdf, label=f"exp: N_sc={N_sc}")
 
     # display theoretical curves
-    ccdf_theo = 1 - (1 - np.exp(-gamma))**(N_sc*os)
+    #
+    # The exponent is NOT N_sc*os. The Nyquist-rate model treats the N_sc
+    # samples of a symbol as independent, which gives exponent N_sc; an
+    # oversampled signal has more peaks but they are correlated, so the
+    # effective number of independent samples grows much more slowly than
+    # the sample count. van Nee & Prasad (ch. 2) give 2.8*N_sc for 4x
+    # oversampling, and the fitted exponent measured here
+    # (validation/ofdm_papr_ccdf.py) is 2.28 / 2.49 / 2.74 for
+    # N_sc = 64 / 256 / 1024, converging to it. Using N_sc*os overstates
+    # the PAPR by +0.19 dB at N_sc=256 at CCDF 1e-2.
+    ccdf_theo = 1 - (1 - np.exp(-gamma))**(2.8*N_sc)
     plt.semilogy(papr_dB_threshold, ccdf_theo, label=f"theo: N_sc={N_sc}")
 
 

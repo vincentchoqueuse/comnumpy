@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Tests
 
 on:
   push:
@@ -6,24 +6,114 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lint tools
+        run: pip install ruff pyright
+
+      - name: Ruff lint
+        run: ruff check src/ tests/ validation/ examples/
+
+      - name: Pyright strict (D37 ratchet)
+        run: |
+          pip install -e .
+          pyright
+
   test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: Bare import check
+        run: python -c "import comnumpy"
+
+      - name: Run tests and doctests with coverage
+        run: pytest --cov --cov-report=term-missing
+
+  # The D7 layer: each script asserts its comparison against an
+  # analytical or published reference, so a green run is a proof that the
+  # curves in the figures are the curves the library computes. Measured
+  # 98 s for all eleven on 2026-08-09 -- cheap enough to gate every push
+  # rather than being left to a nightly nobody reads. They are not part
+  # of `test` because a failure here means "the physics moved", which is
+  # a different conversation from a broken unit test.
+  validation:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Install package
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install -e .   # installe ton projet courant
+          pip install -e .[test]
 
-      - name: Run unittest
+      - name: Run every validation script
+        env:
+          MPLBACKEND: Agg
         run: |
-          python -m unittest discover -s tests -p "test_*.py"
+          status=0
+          for script in validation/*.py; do
+            echo "::group::$script"
+            python "$script" || { echo "::error::$script failed"; status=1; }
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Upload the figures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-figures
+          path: validation/figures/
+          if-no-files-found: error
+
+  # Separate job on purpose: the examples are the layer that teaches, and
+  # they break for reasons unrelated to the unit tests (a renamed block, a
+  # dropped keyword). Isolating them keeps the failure readable and does
+  # not hide the result of `test`.
+  examples:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: Run the example smoke test
+        env:
+          MPLBACKEND: Agg
+        run: pytest tests/test_examples_run.py -q -rs

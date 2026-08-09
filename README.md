@@ -12,26 +12,29 @@
 ## Why comnumpy?
 
 - **Modular design** — Build custom communication chains by combining reusable `Processor` blocks with `Sequential`, inspired by PyTorch’s `nn.Module` pattern.
-- **Lightweight** — Around 400 KB of clean code. Only requires `numpy` and `scipy`.
+- **Lightweight** — Around 400 KB of clean code. Only requires `numpy`, `scipy` and `matplotlib`.
 - **Comprehensive** — Covers AWGN, OFDM, MIMO, and optical fiber channels with nonlinear propagation.
 - **Well documented** — Tutorials with math, diagrams, and ready-to-run examples.
 
 ## Quick Example
 
 ```python
-from comnumpy import Sequential, SymbolGenerator, SymbolMapper, SymbolDemapper, AWGN, compute_ser
+from comnumpy import (Sequential, SymbolGenerator, SymbolMapper,
+                      SymbolDemapper, AWGN, compute_ser, get_alphabet)
 
-# Build a 16-QAM communication chain
+# Build a 16-QAM communication chain: the module list describes the
+# communication system, and `taps` names the signals to observe
+alphabet = get_alphabet("QAM", 16)
 chain = Sequential([
-    SymbolGenerator(M=16),
-    SymbolMapper(M=16),
-    AWGN(snr_dB=15),
-    SymbolDemapper(M=16),
-])
+    SymbolGenerator(M=16, seed=42, name="tx"),
+    SymbolMapper(alphabet),
+    AWGN(snr_dB=15, seed=123),
+    SymbolDemapper(alphabet),
+], taps=["tx"])
 
 # Transmit 10,000 symbols and evaluate performance
-tx_symbols, rx_symbols = chain(10000)
-print(f"SER = {compute_ser(tx_symbols, rx_symbols)}")
+detected = chain(10_000)
+print(f"SER = {compute_ser(chain.tap('tx'), detected)}")  # SER = 0.016
 ```
 
 ## Installation
@@ -68,6 +71,13 @@ Ready-to-run example scripts are available at:
 Full documentation with tutorials and API reference:
 
 **[https://vincentchoqueuse.github.io/comnumpy/](https://vincentchoqueuse.github.io/comnumpy/)**
+
+Two normative documents govern the code itself:
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — the decision record. Code comments
+  referring to "decision D25", "D40a"… point here.
+- **[CONVENTIONS.md](CONVENTIONS.md)** — tensor layouts, axis categories, how to
+  observe a signal inside a chain.
 
 ## Contributing
 

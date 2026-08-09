@@ -2,6 +2,19 @@
 
 We welcome contributions! Whether you're fixing a bug, improving the documentation, or developing a new submodule, your input is valuable.
 
+## Before you start: the two normative documents
+
+[`ARCHITECTURE.md`](ARCHITECTURE.md) is the decision record — it is normative:
+the code conforms to a decision `Dxx` or amends it explicitly, keeping its
+number and stating the reason. Source comments that mention "decision D25" or
+"D40a" refer to it. [`CONVENTIONS.md`](CONVENTIONS.md) holds what you need
+day to day: tensor layouts, axis categories, error-message shape, and how to
+observe a signal inside a chain (decision D42 — chains contain communication
+blocks only; use `taps` and `wiring`, never a recorder or scope block).
+
+A pull request that contradicts a decision is fine, provided it says which one
+and why — that is how the document evolves.
+
 ## Setting Up for Development
 
 Fork the repository and clone your fork:

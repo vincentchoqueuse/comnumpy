@@ -13,7 +13,9 @@ from comnumpy.ofdm.metrics import compute_PAPR
 
 
 # This script reproduces the second figure of the following article :
-# - "Optimized iterative clipping and filtering for PAPR reduction of OFDM signals." Wang, Y-C., and Z-Q. Luo., IEEE Transactions on communications 59.1 (2010): 33-37.
+# - "Optimized iterative clipping and filtering for PAPR reduction of OFDM
+#   signals." Wang, Y-C., and Z-Q. Luo., IEEE Transactions on
+#   communications 59.1 (2010): 33-37.
 
 # parameters
 N_cp = 0
@@ -51,7 +53,7 @@ for processor in processor_list:
     y = processor(x)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=0)
+    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
     plt.semilogy(papr_dB, ccdf, label=processor.name)
 

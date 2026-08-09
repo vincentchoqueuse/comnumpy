@@ -7,61 +7,99 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
 
-def validate_H(H):
+def _validate_H(H):
     if H is None:
         raise ValueError("Channel H is not set.")
     elif not isinstance(H, np.ndarray):
         raise TypeError("Channel H must be a NumPy array.")
 
 
-def validate_sigma2(sigma2):
+def _validate_sigma2(sigma2):
     if sigma2 is None:
         raise ValueError("Noise variance sigma2 is not set.")
     elif sigma2 < 0:
         raise TypeError("Noise variance sigma2 should be greater than 0.")
 
 
-@dataclass
+@dataclass(slots=True)
 class MaximumLikelihoodDetector(Processor):
-    r"""
-    Implements the ML (Maximum Likelihood) Detector for white Gaussian noise in a MIMO (Multiple-Input, Multiple-Output) communication system.
+    r"""Maximum-likelihood (ML) MIMO detector for white Gaussian noise.
 
-    Algorithm
-    ---------
+    Signal Model
+    ------------
+    The detector assumes the flat MIMO observation model
 
-    The ML Detector is designed to estimate the transmitted signal from the received signal in the presence of noise, based on the Maximum Likelihood criterion.
+    .. math::
 
-    .. math ::
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n]
 
-        \widehat{\mathbf{x}}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t`, :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`
+    the transmitted vector drawn from the constellation
+    :math:`\mathcal{M}` and :math:`\mathbf{b}[n]` a circular white
+    Gaussian noise. The ML decision under this model is the exhaustive
+    search
+
+    .. math::
+
+        \widehat{\mathbf{x}}[n] = \arg \min_{\mathbf{x} \in \mathcal{M}^{N_t}}
+        \|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2
+
+    and the detector returns the integer indices of
+    :math:`\widehat{\mathbf{x}}[n]` in the alphabet
+    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S[:, n]]``).
 
     .. WARNING::
 
-        The ML detector can be computationally expensive for large number of transmit antennas or high order constellation.
+        The exhaustive search evaluates :math:`|\mathcal{M}|^{N_t}`
+        candidates and becomes expensive for a large number of transmit
+        antennas or a high-order constellation.
 
-    Attributes
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    alphabet : numpy.ndarray
-        Internal storage for the symbol constellation.
-    H : numpy.ndarray
-        Internal storage for the channel matrix.
-    name : str
-        Name of the detector.
+    alphabet : np.ndarray
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.
+        Must be set before calling the detector.
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"ML Detector"``.
+
+    Raises
+    ------
+    ValueError
+        If ``H`` is not set when the detector is called.
 
     References
     ----------
-    * Larsson, Erik G., Petre Stoica, and Girish Ganesan. Space-time block coding for wireless communications. Cambridge university press, 2003.
+    * E. G. Larsson, P. Stoica and G. Ganesan, *Space-Time Block Coding
+      for Wireless Communications*, Cambridge University Press, 2003.
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> H = np.eye(2)
+    >>> Y = np.array([[0.9, -1.1], [-0.8, 1.2]])
+    >>> MaximumLikelihoodDetector(alphabet, H=H)(Y)
+    array([[1, 0],
+           [0, 1]])
     """
-    
+
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    is_mimo: bool = True
-    name: str = "ML Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    name: str = field(default="ML Detector", kw_only=True)
+    # internal state (declared for slots, D40a)
+    S: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def get_nb_candidates(self):
         _, N_t = self.H.shape
         return len(self.alphabet) ** N_t
-    
+
     def get_candidates(self, alphabet, N_t):
         symbols = np.arange(len(alphabet))
         input_list = [p for p in itertools.product(symbols, repeat=N_t)]
@@ -80,7 +118,7 @@ class MaximumLikelihoodDetector(Processor):
 
     def forward(self, Y):
 
-        validate_H(self.H)
+        _validate_H(self.H)
 
         H = self.H
         _, N_t = H.shape
@@ -102,46 +140,82 @@ class MaximumLikelihoodDetector(Processor):
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class LinearDetector(Processor):
-    r"""
-    Implements a Linear MIMO detector.
+    r"""Linear MIMO detector (equalization followed by hard decision).
 
-    Algorithm
-    ---------
+    Signal Model
+    ------------
+    The detector assumes the flat MIMO observation model
 
-    A linear detector is a two-step detector
+    .. math::
 
-    1. Channel Equalization (using zero forcing or MMSE equalization)
-    2. Symbol Detection
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
+        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
 
-    Attributes
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t`. Detection proceeds in two steps: linear
+    equalization
+
+    .. math::
+
+        \mathbf{z}[n] = \mathbf{W} \mathbf{y}[n], \qquad
+        \mathbf{W}_{zf} = \mathbf{H}^{\dagger}, \qquad
+        \mathbf{W}_{mmse} = \left(\mathbf{H}^H \mathbf{H}
+        + \sigma^2 \mathbf{I}_{N_t}\right)^{-1} \mathbf{H}^H
+
+    then per-antenna projection of :math:`\mathbf{z}[n]` onto the nearest
+    point of the constellation :math:`\mathcal{M}`. The detector returns
+    the integer indices of the decisions in the alphabet.
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    alphabet : numpy.ndarray
-        Symbol constellation.
-    H : numpy.ndarray
-        Internal storage for the channel matrix.
-    method: zf or mmse
-        linear estimation technique (default: zf)
-    sigma2: float
-        noise variance (used for the mmse equalizer only)
-    name : str
-        Name of the detector.
+    alphabet : np.ndarray
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.
+        Must be set before calling the detector.
+    method : {"zf", "mmse"}, keyword-only
+        Linear equalizer :math:`\mathbf{W}`. Default is ``"zf"``.
+    sigma2 : float, optional, keyword-only
+        Noise variance :math:`\sigma^2` (required by the MMSE equalizer
+        only).
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"ZF Detector"``.
+
+    Raises
+    ------
+    ValueError
+        If ``H`` is not set when the detector is called.
 
     References
     ----------
-    * Larsson, Erik G., Petre Stoica, and Girish Ganesan. Space-time block coding for wireless communications. Cambridge university press, 2003.
+    * E. G. Larsson, P. Stoica and G. Ganesan, *Space-Time Block Coding
+      for Wireless Communications*, Cambridge University Press, 2003.
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> Y = np.array([[0.9, -1.1], [-0.8, 1.2]])
+    >>> LinearDetector(alphabet, H=np.eye(2))(Y)
+    array([[1, 0],
+           [0, 1]])
     """
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    method: Literal["zf", "mmse"] = "zf"
-    sigma2: float = None
-    is_mimo: bool = True
-    name: str = "ZF Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    name: str = field(default="ZF Detector", kw_only=True)
 
     def linear_estimator(self, Y):
         r"""
-        Perform Zero Forcing or MMSE linear equalization 
+        Perform Zero Forcing or MMSE linear equalization
         """
         match self.method:
             case "zf":
@@ -151,40 +225,95 @@ class LinearDetector(Processor):
         return output
 
     def forward(self, Y):
-        validate_H(self.H)
+        _validate_H(self.H)
         Z = self.linear_estimator(Y)
         S, _ = hard_projector(Z, self.alphabet)
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class OrderedSuccessiveInterferenceCancellationDetector(Processor):
-    """
-    Ordered Successive Interference Cancellation (OSIC) detector.
+    r"""Ordered Successive Interference Cancellation (OSIC) MIMO detector.
+
+    Signal Model
+    ------------
+    The detector assumes the flat MIMO observation model
+
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
+        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
+
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.
+    At each of the :math:`N_t` stages, the stream selected by the
+    ordering rule is equalized (ZF or MMSE), hard-detected on the
+    constellation :math:`\mathcal{M}`, and its estimated contribution is
+    cancelled:
+
+    .. math::
+
+        \mathbf{y}[n] \leftarrow \mathbf{y}[n]
+        - \mathbf{h}_{k} \, \widehat{x}_{k}[n]
+
+    where :math:`\mathbf{h}_{k}` is the column of :math:`\mathbf{H}`
+    associated with the detected stream :math:`k`. The ordering rule is
+    ``"sinr"`` (max post-equalization SINR, MMSE), ``"colnorm"`` (max
+    column norm of :math:`\mathbf{H}`, ZF) or ``"snr"`` (max
+    post-equalization SNR, ZF). The detector returns the integer indices
+    of the decisions in the alphabet.
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2.
 
     Parameters
     ----------
     alphabet : np.ndarray
-        Modulation alphabet (e.g. 16-QAM points)
-    osic_type : str
-        Ordering strategy: 'sinr', 'colnorm', or 'snr'
-    H : Optional[np.ndarray]
-        Channel matrix (NR x NT)
-    sigma2 : Optional[float]
-        Noise variance
-    name : str
-        Component name
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    osic_type : {"sinr", "colnorm", "snr"}, keyword-only
+        Ordering strategy. Default is ``"sinr"``.
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.
+        Must be set before calling the detector.
+    method : {"zf", "mmse"}, keyword-only
+        Per-stage equalizer; overridden in ``__post_init__`` by the
+        ordering rule (``"sinr"`` forces MMSE, ``"colnorm"`` and
+        ``"snr"`` force ZF).
+    sigma2 : float, optional, keyword-only
+        Noise variance :math:`\sigma^2` (required for the ``"sinr"``
+        ordering).
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"OSIC Detector"``.
 
-    Reference
-    ---------
-    * Cho, Yong Soo, et al. MIMO-OFDM wireless communications with MATLAB. John Wiley & Sons, 2010.
+    Raises
+    ------
+    ValueError
+        If ``osic_type`` is unknown, or if ``H`` (or ``sigma2`` for the
+        ``"sinr"`` ordering) is not set when the detector is called.
+
+    References
+    ----------
+    * Y. S. Cho, J. Kim, W. Y. Yang and C. G. Kang, *MIMO-OFDM Wireless
+      Communications with MATLAB*, John Wiley & Sons, 2010.
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> H = np.array([[1.0, 0.5], [0.0, 1.0]])
+    >>> Y = H @ alphabet[[1, 0]][:, None]
+    >>> OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="snr", H=H)(Y)
+    array([[1],
+           [0]])
     """
     alphabet: np.ndarray
-    osic_type: str = "sinr"  # 'sinr', 'colnorm', or 'snr'
-    H: Optional[np.ndarray] = None
-    method: Literal["zf", "mmse"] = "zf"
-    sigma2: Optional[float] = None
-    name: str = "OSIC Detector"
+    osic_type: str = field(default="sinr", kw_only=True)  # 'sinr', 'colnorm', or 'snr'
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    name: str = field(default="OSIC Detector", kw_only=True)
 
     def __post_init__(self):
         if self.osic_type == "sinr":
@@ -231,7 +360,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
         order = []
         remaining_idx = list(range(NT))
 
-        for stage in range(NT):
+        for _ in range(NT):
             H_temp = self.H[:, remaining_idx]
             idx_local = self.ordering(H_temp)
             best_current_idx = remaining_idx[idx_local]
@@ -243,7 +372,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
                     Z = zf_estimator(Y_temp, H_temp)
                 case "mmse":
                     Z = mmse_estimator(Y_temp, H_temp, self.sigma2 )
-            
+
             # perform detection
             S, _ = hard_projector(Z, self.alphabet)
             s_est = S[idx_local, :]
@@ -257,34 +386,92 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
         return S_hat
 
 
-@dataclass
+@dataclass(slots=True)
 class ApproximateMessagePassingDetector(Processor):
-    """
-    Implements the AMP (Approximate Message Passing) MIMO detector.
+    r"""Approximate Message Passing (AMP) MIMO detector.
 
-    Attributes
+    Signal Model
+    ------------
+    The detector assumes the flat MIMO observation model
+
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
+        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
+
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.
+    For each received vector :math:`\mathbf{y}`, the AMP iteration
+    (:math:`t = 1, \dots, N_{it}`) is
+
+    .. math::
+
+        \mathbf{z}^{(t)} = \mathbf{x}^{(t)} + \mathbf{H}^H \mathbf{r}^{(t)},
+        \qquad
+        \mathbf{x}^{(t+1)} = F\left(\mathbf{z}^{(t)},
+        \sigma^2 (1 + \tau_t^2)\right)
+
+    .. math::
+
+        \mathbf{r}^{(t+1)} = \mathbf{y} - \mathbf{H}\mathbf{x}^{(t+1)}
+        + \frac{\tau_{t+1}^2}{1 + \tau_t^2} \, \mathbf{r}^{(t)}
+
+    where :math:`F` is the posterior-mean (soft) denoiser over the
+    constellation :math:`\mathcal{M}` and the state :math:`\tau_t^2` is
+    tracked from the denoiser output variance with the system ratio
+    :math:`\beta = N_t / N_r`. The final estimate is hard-projected on
+    :math:`\mathcal{M}` and the detector returns the integer indices of
+    the decisions in the alphabet.
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    alphabet : numpy.ndarray
-        Symbol constellation.
-    H : numpy.ndarray
-        Internal storage for the channel matrix.
-    sigma2 : float
-        Noise variance.
-    N_it : int
-        Number of iterations.
-    alpha : float
-        Damping factor.
+    alphabet : np.ndarray
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.
+        Must be set before calling the detector.
+    sigma2 : float, optional, keyword-only
+        Noise variance :math:`\sigma^2`. Must be set before calling the
+        detector.
+    alpha : float, keyword-only
+        Damping factor (reserved; unused by the current iteration).
+        Default is 1.
+    N_it : int, keyword-only
+        Number of iterations :math:`N_{it}`. Default is 100.
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"AMP Detector"``.
 
-    name : str
-        Name of the detector.
+    Raises
+    ------
+    ValueError
+        If ``H`` or ``sigma2`` is not set when the detector is called.
+
+    References
+    ----------
+    * C. Jeon, R. Ghods, A. Maleki and C. Studer, "Optimality of large
+      MIMO detection via approximate message passing," Proc. IEEE Int.
+      Symp. Information Theory (ISIT), 2015, pp. 1227-1231.
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> Y = np.array([[0.9], [-1.1]])
+    >>> ApproximateMessagePassingDetector(alphabet, H=np.eye(2), sigma2=0.1)(Y)
+    array([[1],
+           [0]])
     """
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    sigma2: float = None
-    alpha: float = 1
-    N_it: int = 100
-    is_mimo: bool = True
-    name: str = "AMP Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    alpha: float = field(default=1, kw_only=True)
+    N_it: int = field(default=100, kw_only=True)
+    name: str = field(default="AMP Detector", kw_only=True)
 
     def fit(self, y):
         # see Algorithm 2
@@ -312,8 +499,8 @@ class ApproximateMessagePassingDetector(Processor):
         return x_t
 
     def forward(self, Y):
-        validate_H(self.H)
-        validate_sigma2(self.sigma2)
+        _validate_H(self.H)
+        _validate_sigma2(self.sigma2)
 
         H = self.H
         _, N = Y.shape
@@ -326,37 +513,96 @@ class ApproximateMessagePassingDetector(Processor):
         return S
 
 
-@dataclass
+@dataclass(slots=True)
 class OrthogonalApproximateMessagePassingDetector(Processor):
-    """
-    Implements the OAMP (Orthogonal AMP) MIMO detector.
+    r"""Orthogonal Approximate Message Passing (OAMP) MIMO detector.
 
-    Attributes
+    Signal Model
+    ------------
+    The detector assumes the flat MIMO observation model
+
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
+        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},
+        \sigma^2 \mathbf{I}_{N_r}\right)
+
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.
+    For each received vector :math:`\mathbf{y}`, the OAMP iteration
+    (:math:`t = 1, \dots, N_{it}`) alternates a linear estimator and a
+    posterior-mean denoiser :math:`F` over the constellation
+    :math:`\mathcal{M}`:
+
+    .. math::
+
+        \mathbf{z}^{(t)} = \mathbf{x}^{(t)} + \mathbf{W}_t
+        \left(\mathbf{y} - \mathbf{H}\mathbf{x}^{(t)}\right), \qquad
+        \mathbf{x}^{(t+1)} = F\left(\mathbf{z}^{(t)}, \tau_t^2\right)
+
+    where :math:`\mathbf{W}_t` is the matched filter
+    :math:`\mathbf{H}^H` (``type="H"``), the pseudo-inverse
+    :math:`\mathbf{H}^{\dagger}` (``type="pinv"``) or the MMSE matrix
+    :math:`v_t^2 \mathbf{H}^H (v_t^2 \mathbf{H}\mathbf{H}^H +
+    \sigma^2 \mathbf{I}_{N_r})^{-1}` (``type="MMSE"``). The error
+    variances :math:`v_t^2` and :math:`\tau_t^2` are tracked from the
+    residual and from :math:`\mathbf{B}_t = \mathbf{I}_{N_t} -
+    \mathbf{W}_t \mathbf{H}`. The final estimate is hard-projected on
+    :math:`\mathcal{M}` and the detector returns the integer indices of
+    the decisions in the alphabet.
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    alphabet : numpy.ndarray
-        Symbol constellation.
-    H : numpy.ndarray
-        Internal storage for the channel matrix.
-    sigma2 : float
-        Noise variance.
-    type : str
-        Type of linear estimator.
-    N_it : int
-        Number of iterations.
-    alpha : float
-        Damping factor.
-    name : str
-        Name of the detector.
+    alphabet : np.ndarray
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.
+        Must be set before calling the detector.
+    sigma2 : float, optional, keyword-only
+        Noise variance :math:`\sigma^2`. Must be set before calling the
+        detector.
+    alpha : float, keyword-only
+        Damping factor (reserved; unused by the current iteration).
+        Default is 1.
+    N_it : int, keyword-only
+        Number of iterations :math:`N_{it}`. Default is 100.
+    type : {"H", "pinv", "MMSE"}, keyword-only
+        Linear estimator :math:`\mathbf{W}_t`. Default is ``"MMSE"``.
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"OAMP Detector"``.
+
+    Raises
+    ------
+    ValueError
+        If ``H`` or ``sigma2`` is not set when the detector is called,
+        or if ``type`` is unknown.
+
+    References
+    ----------
+    * J. Ma and L. Ping, "Orthogonal AMP," IEEE Access, vol. 5,
+      pp. 2020-2033, 2017.
+    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+      Cambridge University Press, 2005, Chapter 8.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> Y = np.array([[0.9], [-1.1]])
+    >>> OrthogonalApproximateMessagePassingDetector(alphabet, H=np.eye(2), sigma2=0.1)(Y)
+    array([[1],
+           [0]])
     """
-    
+
     alphabet: np.ndarray
-    H: Optional[np.ndarray] = None
-    sigma2: float = None
-    alpha: float = 1
-    N_it: int = 100
-    type: Literal["H", "pinv", "MMSE"] = "MMSE"
-    is_mimo: bool = True
-    name: str = "OAMP Detector"
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    sigma2: Optional[float] = field(default=None, kw_only=True)
+    alpha: float = field(default=1, kw_only=True)
+    N_it: int = field(default=100, kw_only=True)
+    type: Literal["H", "pinv", "MMSE"] = field(default="MMSE", kw_only=True)
+    name: str = field(default="OAMP Detector", kw_only=True)
 
     def get_W(self, vt_2=0):
         H = self.H
@@ -417,8 +663,8 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
         return x_t
 
     def forward(self, Y):
-        validate_H(self.H)
-        validate_sigma2(self.sigma2)
+        _validate_H(self.H)
+        _validate_sigma2(self.sigma2)
 
 
         _, N = Y.shape

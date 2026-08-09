@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN, FIRChannel
@@ -33,8 +33,7 @@ pilots = 10*np.ones(N_carrier_pilots)
 
 # create sequential
 chain = Sequential([
-        SymbolGenerator(M),
-        Recorder(name="data_tx"),
+        SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet, name="mapper_tx"),
         Serial2Parallel(N_carrier_data),
         CarrierAllocator(carrier_type=carrier_type, pilots=pilots, name="carrier_allocator_tx"),
@@ -42,13 +41,12 @@ chain = Sequential([
         CyclicPrefixer(N_cp),
         Parallel2Serial(),
         FIRChannel(h),
-        AWGN(sigma2),
+        AWGN(sigma2=sigma2),
         Serial2Parallel(N_carriers+N_cp),
         CyclicPrefixRemover(N_cp),
         FFTProcessor(),
         FrequencyDomainEqualizer(h=h),
-        CarrierExtractor(carrier_type),
-        Recorder(name="data_rx"),
+        CarrierExtractor(carrier_type, name="data_rx"),
         Parallel2Serial(),
         SymbolDemapper(alphabet)
     ])

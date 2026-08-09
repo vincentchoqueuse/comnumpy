@@ -1,63 +1,95 @@
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from comnumpy.core import Processor
 
 
-@dataclass
+@dataclass(slots=True)
 class IQImbalance(Processor):
-    r"""
-    Apply IQ imbalance impairments.
-    
+    r"""Apply an IQ imbalance impairment.
+
     Signal Model
     ------------
+    The output is a widely-linear combination of the input signal and its
+    complex conjugate:
 
     .. math::
+
         y[n] = \alpha x[n] + \beta x^*[n]
 
-    where :
-    
-    * :math:`(\alpha,\beta) \in \mathbb{C}^2` corresponds to the complex weights for the signal and its complex conjugate.
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
 
-    Attributes
+    Parameters
     ----------
-    alpha : complex number
-        A complex number specifying the :math:`\alpha` parameter
-    beta : complex number
-        A complex number specifying the :math:`\beta` parameter
-        
+    alpha : complex
+        Complex weight :math:`\alpha` applied to the direct signal
+        :math:`x[n]`.
+    beta : complex
+        Complex weight :math:`\beta` applied to the conjugate signal
+        :math:`x^*[n]`.
+    name : str, optional, keyword-only
+        Name of the impairment instance. Default is ``"iq_impairment"``.
+
+    References
+    ----------
+    I. Fatadin, S. J. Savory, D. Ives, "Compensation of Quadrature
+    Imbalance in an Optical QPSK Coherent Receiver," IEEE Photonics
+    Technology Letters 20(20), 2008.
+
+    Examples
+    --------
+    >>> iq = IQImbalance(alpha=1.0, beta=0.1)
+    >>> print(iq(np.array([1.0+1.0j, 1.0-1.0j])))
+    [1.1+0.9j 1.1-0.9j]
     """
     alpha: complex
     beta: complex
-    name: str = "iq_impairment"
+    name: str = field(default="iq_impairment", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = self.alpha*x + self.beta*np.conj(x)
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class CFO(Processor):
-    r"""
-    Apply Carrier Frequency Offset (CFO).
+    r"""Apply a Carrier Frequency Offset (CFO).
 
     Signal Model
     ------------
+    The input signal is multiplied by a complex exponential phase ramp:
 
     .. math::
-        y[n] = x[n] e^{j\omega_0 n}
 
-    where :
-    
-    * :math:`\omega_0` corresponds to the normalized carrier frequency offset (in rad/samples).
+        y[n] = x[n] \, e^{j \omega_0 n}
 
-    Attributes
+    where :math:`\omega_0` is the normalized carrier frequency offset in
+    rad/sample.
+
+    Axes: *axis -1* -- expects (N,); the time index :math:`n` runs along a
+    one-dimensional input.
+
+    Parameters
     ----------
     cfo : float
-        the normalized carrier frequency offset
+        Normalized carrier frequency offset :math:`\omega_0` in
+        rad/sample.
+    name : str, optional, keyword-only
+        Name of the impairment instance. Default is ``"cfo_impairment"``.
 
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 5.
+
+    Examples
+    --------
+    >>> cfo = CFO(cfo=np.pi/2)
+    >>> y = cfo(np.ones(4, dtype=complex))
+    >>> print(np.round(y, 2) + 0.0)
+    [ 1.+0.j  0.+1.j -1.+0.j  0.-1.j]
     """
     cfo: float
-    name: str = "cfo_impairment"
+    name: str = field(default="cfo_impairment", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         N = len(x)
@@ -66,31 +98,55 @@ class CFO(Processor):
         return y
 
 
-@dataclass
+@dataclass(slots=True)
 class Delay(Processor):
-    r"""
-    Introduces a delay to the input signal.
+    r"""Discard the first :math:`\tau` samples of the input signal (delay removal).
 
     Signal Model
     ------------
+    The block drops the first :math:`\tau` samples, i.e. it advances the
+    signal by :math:`\tau` samples:
 
     .. math::
-        y[n] = x[n - \tau]
 
-    where :
-    
-    * :math:`\tau \in \mathbb{N}^+` is the number of samples to delay the input signal (non-negative integer)
+        y[n] = x[n + \tau], \qquad 0 \le n < N - \tau
 
-    Attributes
+    When ``pad_zeros`` is True, the output is zero-padded at the end to
+    keep the input length :math:`N`; otherwise the output has length
+    :math:`N - \tau`.
+
+    Axes: *axis -1* -- expects (N,); samples are dropped along a
+    one-dimensional input.
+
+    Parameters
     ----------
     tau : int
-        The number of samples to delay the input signal.
-    pad_zeros : bool
-        If True, pads the delayed signal with zeros to match the input size.
+        Number of samples :math:`\tau` to discard (non-negative integer).
+    pad_zeros : bool, optional, keyword-only
+        If True (default), pads the output with trailing zeros to match
+        the input size :math:`N`.
+    name : str, optional, keyword-only
+        Name of the impairment instance. Default is ``"delay_impairment"``.
+
+    Raises
+    ------
+    ValueError
+        If ``tau`` is negative (validated at construction).
+
+    References
+    ----------
+    H. Meyr, M. Moeneclaey, S. Fechtel, *Digital Communication
+    Receivers*, Wiley, 1998, Chapter 4 (timing offsets).
+
+    Examples
+    --------
+    >>> delay = Delay(2)
+    >>> print(delay(np.array([1.0, 2.0, 3.0, 4.0])))
+    [3. 4. 0. 0.]
     """
     tau: int
-    pad_zeros: bool = True
-    name: str = "delay_impairment"
+    pad_zeros: bool = field(default=True, kw_only=True)
+    name: str = field(default="delay_impairment", kw_only=True)
 
     def __post_init__(self):
         if self.tau < 0:
