@@ -278,9 +278,12 @@ class ErbiumDopedFiberAmplifier(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         assert self.rng is not None      # set in __post_init__
-        N = len(x)
+        # x.shape, not len(x): a polarization pair (..., 2, N) gets its own
+        # independent ASE on each polarization, as an EDFA does
+        shape = x.shape
         scale = np.sqrt(self.N_ase/2)
-        b = self.rng.normal(scale=scale, size=N) + 1j * self.rng.normal(scale=scale, size=N)
+        b = (self.rng.normal(scale=scale, size=shape)
+             + 1j * self.rng.normal(scale=scale, size=shape))
         y = self.gain * x + b
         return y
 

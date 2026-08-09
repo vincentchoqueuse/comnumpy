@@ -2,10 +2,10 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core import Processor
-from comnumpy.exceptions import ShapeError
 from .fiber import FiberSpec
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
-                    apply_chromatic_dispersion, apply_kerr_nonlinearity)
+                    apply_chromatic_dispersion, apply_kerr_nonlinearity,
+                    is_polarization_pair, manakov_kerr)
 
 
 @dataclass(slots=True)
@@ -35,7 +35,15 @@ class DBP(Processor):
     order. With matching parameters and ASE noise disabled, DBP is the
     exact numerical inverse of :class:`~comnumpy.optical.links.FiberLink`.
 
-    Axes: *declared axis* -- requires a full-field 1D signal (N,).
+    **Two polarizations.** Like :class:`~comnumpy.optical.links.FiberLink`,
+    a field shaped ``(..., 2, N)`` is back-propagated with the Manakov
+    equation -- the two polarizations share the total intensity and the
+    coefficient carries the :math:`8/9` factor. The two blocks read the
+    model off the shape the same way, so a link and its compensator
+    cannot end up integrating different equations.
+
+    Axes: *declared axis* -- a full-field signal ``(N,)`` or ``(..., P, N)``
+    with ``P`` in ``{1, 2}`` polarizations.
 
     Parameters
     ----------
@@ -81,9 +89,11 @@ class DBP(Processor):
     Raises
     ------
     ShapeError
-        If the input is not a full-field 1D signal (N,) (validated in
-        ``prepare()``): a pointwise Kerr step on a multi-channel array
-        would silently produce SPM only (no XPM, no FWM).
+        If the input is neither a full-field 1D signal ``(N,)`` nor a
+        polarization pair ``(..., P, N)`` with ``P`` in ``{1, 2}``
+        (validated in ``prepare()``): a pointwise Kerr step on a
+        multi-channel array would silently produce SPM only (no XPM, no
+        FWM).
 
     References
     ----------
@@ -120,17 +130,10 @@ class DBP(Processor):
     step_size: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
     beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    manakov_: bool = field(init=False, repr=False, default=False)
 
     def prepare(self, x: np.ndarray) -> None:
-        if x.ndim != 1:
-            raise ShapeError(
-                f"nonlinear propagation requires a full-field signal (N,); "
-                f"got {x.shape}. A pointwise Kerr step on a multi-channel "
-                f"array would silently produce SPM only (no XPM, no FWM). "
-                f"Multiplex the channels first with "
-                f"comnumpy.optical.WDMMultiplexer (decision D44), or use a "
-                f"coupled-NLSE model (not implemented)."
-            )
+        self.manakov_ = is_polarization_pair(x, type(self).__name__)
         match self.step_type:
             case "linear":
                 step_size = get_linear_step_size(self.L_span, self.StPS)
@@ -143,6 +146,12 @@ class DBP(Processor):
         self.beta2 = self.fiber.beta2
         self.gain = 1/edfa_gain
         self.step_size = step_size[::-1]  # reverse order
+
+    def _apply_kerr(self, y: np.ndarray, dz: float) -> np.ndarray:
+        """Backward Kerr step: scalar NLSE, or Manakov for a pair."""
+        gamma, intensity = manakov_kerr(y, self.fiber.gamma, self.manakov_)
+        return apply_kerr_nonlinearity(y, dz, gamma, direction=-1,
+                                       intensity=intensity)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = x
@@ -159,11 +168,11 @@ class DBP(Processor):
                     dz = self.step_size[num_step]
                     if self.step_method == "symmetric":
                         y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
-                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=-1)
+                        y = self._apply_kerr(y, dz)
                         y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
 
                     if self.step_method == "asymetric":
                         y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
-                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=-1)
+                        y = self._apply_kerr(y, dz)
 
         return y
