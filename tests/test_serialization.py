@@ -13,7 +13,7 @@ import numpy as np
 
 from comnumpy import (AWGN, Sequential, SymbolDemapper, SymbolGenerator,
                       SymbolMapper, compute_ser, get_alphabet)
-from comnumpy.core.compensators import TrainedBasedPhaseCompensator
+from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.processors import Amplifier
 from comnumpy.core.frames import (Deframer, FieldRole, FrameField,
                                   Framer, FrameStructure)
@@ -150,16 +150,16 @@ class TestRoundTrip(unittest.TestCase):
             SymbolMapper(alphabet, name="ref"),
             Amplifier(np.exp(1j * 0.4)),
             AWGN(sigma2=0.01, seed=6),
-            TrainedBasedPhaseCompensator(target_data=np.zeros(1), name="comp"),
+            DataAidedPhaseCompensator(reference=np.zeros(1), name="comp"),
             SymbolDemapper(alphabet),
-        ], taps=["tx"], wiring={"comp.target_data": "ref"})
+        ], taps=["tx"], wiring={"comp.reference": "ref"})
         self.run_twice_and_compare(chain, 500, npz=True)
 
         with tempfile.TemporaryDirectory() as tmp:
             npz = Path(tmp) / "arrays.npz"
             rebuilt = from_json(to_json(chain, npz_path=npz), npz_path=npz)
         self.assertEqual(rebuilt.taps, ["tx"])
-        self.assertEqual(rebuilt.wiring, {"comp.target_data": "ref"})
+        self.assertEqual(rebuilt.wiring, {"comp.reference": "ref"})
         # the rebuilt chain is still usable end to end
         y = rebuilt(500)
         self.assertEqual(compute_ser(rebuilt.tap("tx"), y), 0.0)

@@ -26,7 +26,7 @@ def validate_data(data: object) -> None:
     Validate that data is array-like (convertible to a numeric numpy array).
 
     Reference signals are plain arrays: extract them with
-    ``Sequential(taps=...)`` before configuring a trained-based block.
+    ``Sequential(taps=...)`` before configuring a data-aided block.
 
     Parameters
     ----------
@@ -41,8 +41,8 @@ def validate_data(data: object) -> None:
     try:
         arr = np.asarray(data)
     except Exception as exc:
-        raise TypeError(f"target_data must be array-like, got {type(data)!r}") from exc
+        raise TypeError(f"reference must be array-like, got {type(data)!r}") from exc
     if arr.dtype == object:
         raise TypeError(
-            f"target_data must be a numeric array, got dtype=object from {type(data)!r} "
+            f"reference must be a numeric array, got dtype=object from {type(data)!r} "
             "-- extract the reference signal with Sequential(taps=...) first.")

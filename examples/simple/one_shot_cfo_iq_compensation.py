@@ -6,7 +6,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.impairments import IQImbalance, CFO
 from comnumpy.core.channels import AWGN
-from comnumpy.core.compensators import BlindIQCompensator, BlindCFOCompensator, TrainedBasedPhaseCompensator
+from comnumpy.core.compensators import BlindIQCompensator, BlindCFOCompensator, DataAidedPhaseCompensator
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ser
 
@@ -31,11 +31,11 @@ chain = Sequential([
             AWGN(sigma2=0.005, name="awgn"),
             BlindIQCompensator(name="gsop"),
             BlindCFOCompensator(save_history=True, name="cfo_comp"),
-            TrainedBasedPhaseCompensator(target_data=np.zeros(1), name="phase_comp"),
+            DataAidedPhaseCompensator(reference=np.zeros(1), name="phase_comp"),
             SymbolDemapper(alphabet)
             ],
             taps=["data_tx", "awgn", "gsop", "cfo_comp", "phase_comp"],
-            wiring={"phase_comp.target_data": "signal_tx"})
+            wiring={"phase_comp.reference": "signal_tx"})
 
 # simulate communication
 y = chain(N)

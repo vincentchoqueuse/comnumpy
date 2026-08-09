@@ -13,11 +13,11 @@ from .validators import validate_data
 
 
 @dataclass(slots=True)
-class TrainedBasedMixin():
+class DataAidedMixin():
     def __post_init__(self):
-        validate_data(self.target_data)
+        validate_data(self.reference)
 
-    def get_target_data(self):
+    def get_reference(self):
         """
         Retrieve the reference signal associated with the model.
 
@@ -28,9 +28,9 @@ class TrainedBasedMixin():
         Returns
         -------
         np.ndarray
-            The target data array.
+            The reference signal array.
         """
-        return np.asarray(self.target_data)
+        return np.asarray(self.reference)
 
 
 @dataclass(slots=True)
@@ -466,41 +466,49 @@ class LinearEqualizer(Processor):
 
 
 @dataclass(slots=True)
-class DataAidedFIRCompensator(Processor):
+class DataAidedFIRCompensator(DataAidedMixin, Processor):
     r"""
     Data-aided FIR compensator using Zero Forcing estimation.
 
-    Estimates the channel impulse response from a known reference (target data)
+    Estimates the channel impulse response from a known reference signal
     and applies deconvolution to equalize the received signal.
 
     Attributes
     ----------
     h : np.ndarray
         Initial or estimated impulse response.
-    target_data : np.ndarray
-        Known reference data for channel estimation.
+    reference : np.ndarray
+        Known reference signal for channel estimation.
     should_fit : bool, optional
         Whether to estimate the channel on each call. Default is True.
     name : str, optional
         Name of the processor. Default is ``"data_aided_fir"``.
+
+    Examples
+    --------
+    >>> x_ref = np.array([1.0, -1.0, 1.0, 1.0])
+    >>> received = np.convolve(x_ref, [1.0, 0.5])[:4]
+    >>> compensator = DataAidedFIRCompensator(np.array([1.0]), reference=x_ref)
+    >>> print(np.round(compensator(received), 6))
+    [ 1. -1.  1.  1.]
     """
 
     h: np.array
-    target_data: np.ndarray
+    reference: np.ndarray
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="data_aided_fir", kw_only=True)
 
-    def fit(self, x, x_target):
+    def fit(self, x, y=None):
+        if y is None:
+            y = self.get_reference()
         L = len(x)
-        first_col = x_target
-        H = toeplitz(first_col, np.zeros(L))
+        H = toeplitz(y, np.zeros(L))
         self.h = np.matmul(LA.pinv(H), x)
+        return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-
         if self.should_fit:
-            x_target = self.get_target_data()
-            self.fit(x, x_target)
+            self.fit(x)
 
         L = len(self.h)
         y, _ = signal.deconvolve(np.hstack([x, np.zeros(L-1)]), self.h)
@@ -508,9 +516,9 @@ class DataAidedFIRCompensator(Processor):
 
 
 @dataclass(slots=True)
-class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
+class DataAidedPhaseCompensator(DataAidedMixin, Processor):
     r"""
-    Trained-based phase compensator using cross-correlation.
+    Data-aided phase compensator using cross-correlation.
 
     Estimates a phase offset :math:`\theta` from the cross-correlation
     between the input and reference signals, then applies a correction.
@@ -520,12 +528,12 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
 
     Attributes
     ----------
-    target_data : np.ndarray
+    reference : np.ndarray
         Reference signal for phase estimation.
     name : str, optional
         Name of the processor. Default is ``"data_aided_phase"``.
     """
-    target_data: np.ndarray
+    reference: np.ndarray
     name: str = field(default="data_aided_phase", kw_only=True)
     # estimated quantity (D23), declared for slots (D40a)
     theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
@@ -533,12 +541,12 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
     def __post_init__(self):
         # explicit parent call: zero-arg super() breaks with slots=True
         # (the dataclass decorator recreates the class)
-        TrainedBasedMixin.__post_init__(self)
+        DataAidedMixin.__post_init__(self)
         self.theta_ = None
 
     def fit(self, x, y=None):
         if y is None:
-            y = self.get_target_data()
+            y = self.get_reference()
         self.theta_ = np.angle(np.sum(np.conj(x)*y))
         return self
 
@@ -548,17 +556,17 @@ class TrainedBasedPhaseCompensator(TrainedBasedMixin, Processor):
 
 
 @dataclass(slots=True)
-class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
+class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
     """This class performs the complex-gain channel estimation and compensation
 
     Attributes
     ----------
-    target_data : np.ndarray
+    reference : np.ndarray
         The known preamble used to compute the complex gain of the channel.
     extractor : DataExtractor
         How to extract the preamble in the received samples.
     """
-    target_data: np.ndarray
+    reference: np.ndarray
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="complex_gain_compensator", kw_only=True)
@@ -567,7 +575,7 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
 
     def fit(self, x, y=None):
         if y is None:
-            y = self.get_target_data()
+            y = self.get_reference()
         x_resized = np.resize(x, (len(x), 1))
         x_pinv = np.linalg.pinv(x_resized)
         self.gain_ = np.dot(x_pinv, y).item()
@@ -579,7 +587,7 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
             self.fit(x_preamble)
         elif self.gain_ is None:
             raise NotFittedError(
-                "TrainedBasedComplexGainCompensator: forward called with "
+                "DataAidedComplexGainCompensator: forward called with "
                 "should_fit=False but fit() was never called -- call "
                 "fit(x_preamble) first.")
 
@@ -588,12 +596,12 @@ class TrainedBasedComplexGainCompensator(TrainedBasedMixin, Processor):
 
 
 @dataclass(slots=True)
-class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
+class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
 
         Attributes
         ----------
-        target_data : ndarray
+        reference : ndarray
             The reference preamble signal to which the input signals will
             be synchronized.
         scale_correction : bool, optional
@@ -607,7 +615,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data: np.ndarray
+    reference: np.ndarray
     scale_correction: bool = True
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
@@ -626,7 +634,7 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
 
     def fit(self, x, y=None):
         if y is None:
-            y = self.get_target_data()
+            y = self.get_reference()
         x_preamble = y
         N = len(x)
         N_preamble = len(x_preamble)
@@ -674,13 +682,13 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
 
 
 @dataclass(slots=True)
-class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
+class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
     """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
 
         Attributes
         ----------
-        target_data : ndarray
+        reference : ndarray
             The reference preamble signal to which the input signals will
             be synchronized.
         up_factor : int
@@ -698,7 +706,7 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
         name : str, optional
             Name of the synchronizer instance. Default is "synchronizer".
     """
-    target_data: np.ndarray
+    reference: np.ndarray
     scale_correction: bool = True
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
@@ -718,7 +726,7 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
 
     def fit(self, x, y=None):
         if y is None:
-            y = self.get_target_data()
+            y = self.get_reference()
         x_preamble = y
         N = len(x)
         N_preamble = len(x_preamble)
@@ -759,7 +767,7 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
 
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        x_preamble = self.get_target_data()
+        x_preamble = self.get_reference()
 
         # upsampling
         x_up = signal.resample_poly(x, self.up_factor, 1)

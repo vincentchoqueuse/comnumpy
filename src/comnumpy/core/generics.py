@@ -140,7 +140,7 @@ class Sequential():
         Before a target block runs, the chain assigns it the signal
         produced by the source block *in the same pass* -- this is how a
         data-aided estimator receives a reference generated upstream
-        (``{"phase_comp.target_data": "tx"}``). The source is tapped
+        (``{"phase_comp.reference": "tx"}``). The source is tapped
         automatically and must come earlier in the chain, so the value is
         never stale. Like taps, the edge is chain metadata: blocks stay
         declarative and never hold a reference to another block.
@@ -383,7 +383,7 @@ class Sequential():
             if not param:
                 raise KeyError(
                     f"wiring key {target!r} must be 'block_id.param', "
-                    f"e.g. 'phase_comp.target_data'")
+                    f"e.g. 'phase_comp.reference'")
             for candidate, role in ((block_id, "target"), (source, "source")):
                 if candidate not in index_of:
                     raise KeyError(

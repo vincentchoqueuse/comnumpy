@@ -34,7 +34,8 @@ one release; there is no compatibility layer.
 | `Scope(scope_type="iq", ...)`, `TimeScope`, `SpectrumScope`, `IQScope`, `KDEScope`, `WelchScope` blocks | removed — functions `plot_iq`, `plot_time`, `plot_spectrum`, `plot_kde`, `plot_welch` applied to a tapped signal |
 | `ofdm.visualizers.FFTMonitor` block | `ofdm.visualizers.plot_subcarrier_amplitude(X, ax=...)` |
 | `CarrierExtractor(..., pilot_recorder=rec)` | pilot content exposed as the estimated attribute `extractor.pilots_` (D23) |
-| `TrainedBased*(target_data=recorder)` | `target_data=` takes a plain array: tap the reference signal first |
+| `TrainedBased*(target_data=recorder)` | `DataAided*(reference=…)` — the class family is renamed after the standard pair of the field (*data-aided* vs *blind*, which the `Blind*` classes already used), and the known signal an estimator compares against is a `reference`, the same word `sweep(reference=…)` uses. It takes a plain array; when the reference is produced by the chain itself, declare `wiring={"comp.reference": "source"}` |
+| `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
 
 ### Added (milestones 2-5)
 
@@ -153,14 +154,14 @@ one release; there is no compatibility layer.
   keeps these names out of the public surface.
 - `sweep(..., reference="tx")` now names a tapped block and declares the
   tap itself if needed; blocks no longer hold references to other blocks
-  (`target_data=` takes a plain array).
-- `Sequential(..., wiring={"comp.target_data": "ref"})`: declares the
+  (`reference=` takes a plain array).
+- `Sequential(..., wiring={"comp.reference": "ref"})`: declares the
   extra data edge a data-aided estimator needs when its reference is
   produced *inside* the chain. Before the target block runs, it receives
   the signal the source block produced in the same pass. The source is
   tapped automatically and must run earlier; a backward edge raises
   rather than silently serving the previous run's value. This closes the
-  one real gap of the Recorder removal: `target_data=` alone is a frozen
+  one real gap of the Recorder removal: `reference=` alone is a frozen
   array, so a Monte-Carlo loop would have kept comparing against the
   first run's symbols. It is the bounded form of the `inputs` field of
   D31 -- a second input declared by the chain, not a general DAG.
@@ -208,11 +209,17 @@ code actually does.
 - `optical.channels.PhaseNoise` was dead code: it raised `AttributeError` at
   construction (missing `seed` field) and called a non-existent `self.rvs()`.
   It now works and is seedable.
-- `core.compensators.TrainedBasedComplexGainCompensator` was not functional
+- `core.compensators.DataAidedComplexGainCompensator` (then `TrainedBased…`) was not functional
   (invalid dataclass field declarations, `fit()` referencing undefined
   variables). Rewritten; the estimated gain is verified numerically.
-- `core.compensators.TrainedBasedPhaseCompensator.__post__init__` typo: the
+- `core.compensators.DataAidedPhaseCompensator.__post__init__` typo: the
   initializer was never called. Renamed to `__post_init__`.
+- `core.compensators.DataAidedFIRCompensator` was dead code in the same
+  family: it called `get_target_data()` without inheriting the mixin that
+  defines it, so every call raised `AttributeError`. Found while renaming
+  that method. It now inherits `DataAidedMixin`, its `fit` follows the
+  `fit(x, y=None)` convention of D22 like its siblings, and a doctest
+  pins the deconvolution.
 - `ofdm.processors.CarrierAllocator` raised on 1D input when pilots were
   present; pilots now broadcast correctly along the allocation axis for 1D
   and N-D inputs.
