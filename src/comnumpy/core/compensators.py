@@ -21,9 +21,11 @@ class DataAidedMixin():
         """
         Retrieve the reference signal associated with the model.
 
-        The reference is a plain array: extract it beforehand with
-        ``Sequential(taps=...)`` and compose chains instead of wiring a
-        live block reference through the chain.
+        The reference is a plain array. When it is known in advance
+        (preamble, training sequence) it is passed directly as
+        ``reference=...``; when it is produced by the chain itself, the
+        edge is declared with ``Sequential(wiring={"block.reference":
+        "source"})`` so that each Monte-Carlo run uses its own reference.
 
         Returns
         -------
@@ -35,31 +37,51 @@ class DataAidedMixin():
 
 @dataclass(slots=True)
 class DCCorrector(Processor):
-    r"""
-    A class for correcting the mean of a dataset along a specified axis.
-
-    This class adjusts the input data so that its mean along the specified axis matches a target value.
-    This is useful for normalizing data or removing bias.
-
+    r"""Remove the DC component of a signal and set it to a target value.
 
     Signal Model
     ------------
+    The empirical mean :math:`\mu_x` of the input is subtracted and
+    replaced by the target value :math:`\alpha`:
 
     .. math::
 
-       y[n] = x[n] + \alpha
+       y[n] = x[n] - \mu_x + \alpha, \qquad
+       \mu_x = \frac{1}{N} \sum_{n=0}^{N-1} x[n]
 
-    where the coefficient :math:`\alpha` is adjusted to meet the DC constraint
+    so that the output satisfies the DC constraint
+    :math:`\frac{1}{N}\sum_n y[n] = \alpha`. This is the digital
+    counterpart of the DC-offset cancellation performed at the output of
+    a direct-conversion (zero-IF) receiver, where the self-mixing of the
+    local oscillator adds a constant term to the baseband signal.
 
-    Attributes
+    Axes: *declared axis* -- the mean :math:`\mu_x` is computed along
+    ``axis`` (default 0) and broadcast over the remaining axes; use
+    ``axis=-1`` for the canonical serial layout ``(..., N)``.
+
+    Parameters
     ----------
-    value : float
-        The target mean value to which the data should be adjusted (default: 0)
-    axis : int
-        The axis along which to compute the mean.
-    name : str
-        Name of the mean corrector instance.
+    value : float, optional
+        Target mean value :math:`\alpha` of the output. Default is 0.0,
+        i.e. a zero-mean output.
+    axis : int, optional, keyword-only
+        Axis along which :math:`\mu_x` is computed. Default is 0.
+    name : str, optional, keyword-only
+        Name of the corrector instance. Default is ``"mean_corrector"``.
 
+    References
+    ----------
+    B. Razavi, "Design considerations for direct-conversion receivers,"
+    IEEE Transactions on Circuits and Systems II, vol. 44, no. 6,
+    pp. 428-435, 1997 (DC offset in zero-IF receivers).
+
+    Examples
+    --------
+    >>> x = np.array([1.0, 2.0, 3.0, 6.0])   # mean 3.0
+    >>> print(DCCorrector()(x))
+    [-2. -1.  0.  3.]
+    >>> print(DCCorrector(2.0)(x))
+    [0. 1. 2. 5.]
     """
     value: float = 0.0
     axis: int = field(default=0, kw_only=True)
@@ -73,59 +95,91 @@ class DCCorrector(Processor):
 
 @dataclass(slots=True)
 class Normalizer(Amplifier):
-    r"""
-    A class for normalizing data based on the specified normalization type.
+    r"""Scale a signal by a gain derived from one of its own statistics.
 
     Signal Model
     ------------
+    The block is an ``Amplifier`` whose gain :math:`\alpha` is measured on
+    the input instead of being configured:
 
     .. math::
 
-       y[n] = \alpha x[n]
+       y[n] = \alpha \, x[n]
 
-    where the normalization coefficient :math:`\alpha` depends on the normalization technique.
+    The gain depends on the selected ``method`` and on the target value
+    :math:`v`:
 
-    - **'amp'**: Scales the signal by a constant factor :math:`\alpha = \text{value}`.
-
-      .. math::
-
-         \alpha = \text{value}
-
-    - **'abs'**: Normalizes the signal by the maximum absolute value.
+    - **'amp'** -- fixed gain, no measurement:
 
       .. math::
 
-         \alpha = \frac{\text{value}}{\max(|x[n]|)}
+         \alpha = v
 
-    - **'var'**: Normalizes the signal based on its variance.
-
-      .. math::
-
-         \alpha = \sqrt{\frac{\text{value}}{\sigma_x^2}}
-
-    - **'max'**: Normalizes the signal by the maximum absolute value of the real and imaginary parts.
+    - **'abs'** -- the largest modulus becomes :math:`v`:
 
       .. math::
 
-         \alpha = \frac{\text{value}}{\max(\max(|\text{Re}(x[n])|), \max(|\text{Im}(x[n])|))}
+         \alpha = \frac{v}{\max_n |x[n]|}
 
+    - **'var'** -- the output variance becomes :math:`v`, with
+      :math:`\sigma_x^2` the empirical variance of the input:
+
+      .. math::
+
+         \alpha = \sqrt{\frac{v}{\sigma_x^2}}
+
+    - **'max'** -- the largest rectangular excursion becomes :math:`v`
+      (the useful one before a DAC or a clipping stage):
+
+      .. math::
+
+         \alpha = \frac{v}{\max\left(\max_n |\Re e(x[n])|,\;
+                                     \max_n |\Im m(x[n])|\right)}
+
+    Axes: *element-wise* -- the gain :math:`\alpha` is a single scalar
+    measured over the whole array in ``prepare()``, then applied
+    pointwise.
+
+    Parameters
+    ----------
+    method : {'amp', 'abs', 'var', 'max'}, optional
+        Statistic used to derive the gain :math:`\alpha`. Default is
+        ``'amp'`` (constant gain). Pass it by keyword: the first
+        positional argument is ``gain``, inherited from ``Amplifier``.
+    value : float, optional, keyword-only
+        Target value :math:`v` of the selected statistic. Must be
+        strictly positive. Default is 1.0.
+    axis : int or None, optional, keyword-only
+        Inherited from ``Amplifier``. Default is None.
+    name : str, optional, keyword-only
+        Name of the instance. Default is ``"signal_amplifier"``.
 
     Attributes
     ----------
-    method : str
-        Type of normalization to be applied. Supported types are 'amp' for scaling coefficient, 'max' for maximum value normalization,
-        'var' for variance-based normalization, and 'abs' for absolute maximum value normalization.
-    value : float, optional
-        The target value for the normalization type. Default is 1.0.
+    gain : float
+        Gain :math:`\alpha` actually applied. Measured from the input in
+        ``prepare()`` for every method except ``'amp'``, hence
+        data-dependent (it is overwritten at each call).
 
+    Raises
+    ------
+    ValueError
+        If ``value`` is not strictly positive.
 
-    Example
-    -------
-    >>> normalizer = Normalizer(method='max', value=2.0)
-    >>> X = np.array([1, 2, 3, 4])
-    >>> Y = normalizer(X)
-    >>> print(Y)
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 3 (average energy and power of a
+    constellation, and their normalization).
+
+    Examples
+    --------
+    >>> x = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> print(Normalizer(method='max', value=2.0)(x))
     [0.5 1.  1.5 2. ]
+    >>> y = Normalizer(method='var')(x)          # unit-variance output
+    >>> print(np.round(y, 4), round(float(np.var(y)), 6))
+    [0.8944 1.7889 2.6833 3.5777] 1.0
     """
     method: Literal['amp', 'abs', 'var', 'max'] = "amp"
     value: float = field(default=1., kw_only=True)
@@ -156,29 +210,98 @@ class Normalizer(Amplifier):
 @dataclass(slots=True)
 class BlindIQCompensator(Processor):
 
-    r"""
-    Blind IQ compensator based on the diagonalisation of the augmented covariance matrix.
-    This compensation assumes the circularity of compensated signal
+    r"""Blind IQ-imbalance compensator by whitening of the real covariance matrix.
 
     Signal Model
     ------------
+    A receiver with gain and quadrature imbalance delivers an
+    *improper* (non-circular) signal: the in-phase and quadrature
+    components no longer have equal power, nor are they uncorrelated.
+    The compensator applies the widely-linear transformation
 
-    This class implements the following transformation
+    .. math::
 
-    .. math ::
+        y[n] = c \left(\alpha \, \Re e(x[n]) + \beta \, \Im m(x[n])\right),
+        \qquad c = \sqrt{\frac{P}{2}}
 
-        y[n] = \alpha \Re e(x[n]) + \beta \Im m(x[n])
+    where the complex coefficients :math:`\alpha` and :math:`\beta` are
+    read column-wise from the :math:`2 \times 2` whitening matrix
+    :math:`\mathbf{M}`, i.e.
+    :math:`\alpha = M_{00} + j M_{10}` and
+    :math:`\beta = M_{01} + j M_{11}`. Writing
+    :math:`\mathbf{x}[n] = [\Re e(x[n]),\, \Im m(x[n])]^T`, the estimator
+    eigen-decomposes the empirical covariance matrix
 
-    Algorithm
-    ---------
+    .. math::
 
-    such as :
+        \widehat{\mathbf{R}} = \frac{1}{N} \sum_{n=0}^{N-1}
+        \mathbf{x}[n] \mathbf{x}^T[n]
+        = \mathbf{U} \boldsymbol\Lambda \mathbf{U}^T,
+        \qquad
+        \mathbf{M} = \boldsymbol\Lambda^{-1/2} \mathbf{U}^T
 
-    .. math ::
+    so that :math:`\mathbf{M} \widehat{\mathbf{R}} \mathbf{M}^T =
+    \mathbf{I}_2`. The compensated signal is therefore second-order
+    circular with the requested mean power :math:`P`:
 
-        E[\Re e^2(y[n])] &= E[\Im m^2(y[n])] = 1\\
-        E[\Re e(y[n])\Im m(y[n])] & = 0
+    .. math::
 
+        \mathbb{E}\left[\Re e^2(y[n])\right] =
+        \mathbb{E}\left[\Im m^2(y[n])\right] = \frac{P}{2},
+        \qquad
+        \mathbb{E}\left[\Re e(y[n]) \Im m(y[n])\right] = 0
+
+    Whitening only constrains the second-order statistics: the residual
+    :math:`2 \times 2` rotation/reflection (and hence a possible I/Q swap
+    or sign flip) is left to a downstream phase compensator. An
+    alternative implementation based on the Gram-Schmidt orthogonalization
+    procedure (GSOP) is kept as a comment in the source.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
+    :math:`2 \times 2` covariance is estimated over the whole record.
+
+    Parameters
+    ----------
+    should_fit : bool, optional
+        If True (default), :math:`\alpha` and :math:`\beta` are
+        re-estimated from the input at every call (per-block regime,
+        D22). If False, the coefficients of the last ``fit`` are reused.
+    coef : float, optional, keyword-only
+        Target mean power :math:`P = \mathbb{E}[|y[n]|^2]` of the
+        compensated signal. Default is 1.
+    name : str, optional, keyword-only
+        Name of the compensator instance. Default is
+        ``"iq_compensator"``.
+
+    Attributes
+    ----------
+    alpha : complex
+        Estimated coefficient :math:`\alpha` applied to the in-phase
+        component (data-dependent; initialized to 1).
+    beta : complex
+        Estimated coefficient :math:`\beta` applied to the quadrature
+        component (data-dependent; initialized to 0).
+
+    References
+    ----------
+    * I. Fatadin, S. J. Savory, D. Ives, "Compensation of quadrature
+      imbalance in an optical QPSK coherent receiver," IEEE Photonics
+      Technology Letters, vol. 20, no. 20, pp. 1733-1735, 2008,
+      doi: 10.1109/LPT.2008.2004630.
+    * P. J. Schreier, L. L. Scharf, *Statistical Signal Processing of
+      Complex-Valued Data*, Cambridge University Press, 2010, Chapter 2
+      (properness, circularity and widely-linear transformations).
+
+    Examples
+    --------
+    >>> rng = np.random.default_rng(0)
+    >>> s = (rng.integers(0, 2, 2000) * 2 - 1) + 1j * (rng.integers(0, 2, 2000) * 2 - 1)
+    >>> x = 2 * s.real + 1j * (0.5 * s.real + s.imag)   # gain + quadrature imbalance
+    >>> y = BlindIQCompensator(coef=1.0)(x)
+    >>> print(round(float(np.var(y.real)), 3), round(float(np.var(y.imag)), 3))
+    0.499 0.5
+    >>> print(round(float(abs(np.mean(y.real * y.imag))), 3), round(float(np.mean(np.abs(y)**2)), 3))
+    0.0 1.0
     """
     should_fit: bool = True
     coef: float = field(default=1, kw_only=True)
@@ -240,33 +363,99 @@ class BlindIQCompensator(Processor):
 
 @dataclass(slots=True)
 class BlindCFOCompensator(Processor):
-    r"""
-    Blind CFO compensator based on the maximisation of the periodogram
-    of 4th order statistic.
+    r"""Blind carrier frequency offset compensator (fourth-power periodogram).
 
     Signal Model
     ------------
+    The input carries a residual carrier frequency offset
+    :math:`\omega_0` (in rad/sample), which the block removes:
 
     .. math::
-        y[n] = x[n]e^{-j\widehat{\omega}_0 n}
 
-    Algorithm
-    ---------
+        x[n] = s[n] \, e^{j \omega_0 n}, \qquad
+        y[n] = x[n] \, e^{-j \widehat{\omega}_0 n}
+
+    For a QPSK-like constellation, raising the signal to the fourth power
+    wipes out the modulation (:math:`s^4[n]` is constant up to a sign)
+    and leaves a pure tone at :math:`4\omega_0`. The offset is therefore
+    obtained by maximizing the periodogram of :math:`x^4[n]`:
 
     .. math::
-        \widehat{\omega}_0 = \frac{1}{4} \arg \max_{\omega} \left|\sum_{n=0}^{N-1} x^4[n]e^{-j\omega n}\right|^2
 
-    The maximisation is performed using the Newton Algorithm
+        \widehat{\omega}_0 = \frac{1}{4} \arg \max_{\omega}
+        \frac{1}{N} \left| \sum_{n=0}^{N-1} x^4[n] \, e^{-j\omega n}
+        \right|^2
+
+    The maximization is performed in two stages: an optional coarse grid
+    search over :math:`\omega_0`, followed by ``N_iter`` refinements of
+    the criterion by Newton's method (or by plain gradient ascent). The
+    Newton step uses the exact first and second derivatives of the
+    periodogram with respect to :math:`\omega`.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
+    correction :math:`e^{-j\widehat{\omega}_0 n}` uses the sample index
+    :math:`n` along that axis.
+
+    Parameters
+    ----------
+    w0_init : float, optional
+        Initial value of :math:`\omega_0` in rad/sample, used as the
+        starting point when ``grid_search`` is False. Default is 0.0.
+    N_iter : int, optional, keyword-only
+        Number :math:`N_{iter}` of local refinement steps. Default is 3.
+    should_fit : bool, optional, keyword-only
+        If True (default), :math:`\widehat{\omega}_0` is re-estimated at
+        every call (per-block regime, D22); otherwise the value of the
+        last ``fit`` is reused.
+    grid_search : bool, optional, keyword-only
+        If True (default), a coarse grid search initializes the local
+        refinement.
+    save_history : bool, optional, keyword-only
+        If True, every intermediate value of :math:`\omega_0` is appended
+        to ``history``. Default is False.
+    method : {"grad", "newton"}, optional, keyword-only
+        Local optimizer. Default is ``"newton"``.
+    step_size : float, optional, keyword-only
+        Gradient step used when ``method="grad"``. Default is 1e-8.
+    grid_search_tuple : tuple, optional, keyword-only
+        ``(start, stop, step)`` of the grid over :math:`\omega_0`, in
+        rad/sample. Default is ``(-0.1, 0.1, 0.0001)``.
+    name : str, optional, keyword-only
+        Name of the compensator instance. Default is
+        ``"cfo_compensator"``.
 
     Attributes
     ----------
-    w0_init : float
-        Initialisation in rad/samples
-    N_iter : int
-        Number of iterations
-    method : str
-        method used for maximisation
+    w0 : float
+        Estimated frequency offset :math:`\widehat{\omega}_0` in
+        rad/sample (data-dependent; None before the first ``fit``).
+    history : list
+        Successive iterates of :math:`\omega_0` when
+        ``save_history=True``.
 
+    References
+    ----------
+    * A. J. Viterbi, A. M. Viterbi, "Nonlinear estimation of
+      PSK-modulated carrier phase with application to burst digital
+      transmission," IEEE Transactions on Information Theory, vol. 29,
+      no. 4, pp. 543-551, 1983 (the fourth-power nonlinearity).
+    * D. C. Rife, R. R. Boorstyn, "Single-tone parameter estimation from
+      discrete-time observations," IEEE Transactions on Information
+      Theory, vol. 20, no. 5, pp. 591-598, 1974 (periodogram maximization
+      and its local refinement).
+    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+      McGraw-Hill, 2008, Chapter 5 (carrier and symbol synchronization).
+
+    Examples
+    --------
+    >>> alphabet = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)
+    >>> rng = np.random.default_rng(2)
+    >>> s = alphabet[rng.integers(0, 4, 500)]
+    >>> x = s * np.exp(1j * 0.01 * np.arange(500))   # omega_0 = 0.01 rad/sample
+    >>> compensator = BlindCFOCompensator()
+    >>> y = compensator(x)
+    >>> print(round(float(compensator.w0), 5))
+    0.01
     """
     w0_init: float = 0.0
     N_iter: int = field(default=3, kw_only=True)
@@ -354,35 +543,81 @@ class BlindCFOCompensator(Processor):
 
 @dataclass(slots=True)
 class BlindPhaseCompensation(Processor):
-    r"""
-    Blind phase compensator based on least-squares minimization of the EVM.
+    r"""Blind phase compensator minimizing the error vector magnitude (EVM).
 
     Signal Model
     ------------
+    The input carries an unknown constant phase offset, removed by
 
     .. math::
-        y[n] = x[n] e^{j\hat{\theta}}
 
-    where :math:`\hat{\theta}` is the estimated phase offset that minimizes
-    the distance to the nearest constellation point.
+        y[n] = x[n] \, e^{j \widehat{\theta}}
 
-    Attributes
+    No reference is available (blind regime): the estimator uses the
+    constellation itself as a soft reference and minimizes the squared
+    distance to the nearest alphabet point, i.e. the EVM,
+
+    .. math::
+
+        \widehat{\theta} = \arg \min_{\theta} \sum_{n=0}^{N-1}
+        \left| x[n] e^{j\theta}
+        - \mathcal{P}_{\mathcal{A}}\!\left(x[n] e^{j\theta}\right)
+        \right|^2
+
+    where :math:`\mathcal{P}_{\mathcal{A}}` is the hard projection onto
+    the alphabet :math:`\mathcal{A}`. This is the decision-directed
+    carrier phase estimator; the criterion is solved by a nonlinear
+    least-squares search (``scipy.optimize.least_squares``) started at
+    :math:`\theta_0`. Being decision-directed, it inherits the
+    :math:`2\pi/M` phase ambiguity of the constellation, so
+    :math:`\theta_0` must lie in the correct basin.
+
+    Axes: *declared axis* -- the estimation stage expects a 1D serial
+    signal ``(N,)`` (the residuals are stacked into a single vector); the
+    correction itself is element-wise.
+
+    Parameters
     ----------
     alphabet : np.ndarray
-        The modulation alphabet used for phase compensation.
-    theta0 : float, optional
-        Initial phase angle in radians for the optimizer. Default is 0.
-    should_fit : bool, optional
-        Whether to estimate the phase from the input signal. Default is True.
-    name : str, optional
+        Modulation alphabet :math:`\mathcal{A}`, a 1D array of
+        constellation symbols.
+    theta0 : float, optional, keyword-only
+        Starting point :math:`\theta_0` of the optimizer, in radians.
+        Default is 0.
+    should_fit : bool, optional, keyword-only
+        If True (default), :math:`\widehat{\theta}` is re-estimated at
+        every call (per-block regime, D22); otherwise the value of the
+        last ``fit`` is reused.
+    name : str, optional, keyword-only
         Name of the processor. Default is ``"phase correction"``.
 
     Attributes
     ----------
     theta_ : float
-        Estimated phase (data-dependent, hence the trailing underscore,
-        decision D23). ``NotFittedError`` if ``forward`` is called with
-        ``should_fit=False`` before any ``fit``.
+        Estimated phase :math:`\widehat{\theta}` in radians
+        (data-dependent, hence the trailing underscore, decision D23).
+
+    Raises
+    ------
+    NotFittedError
+        If ``forward`` is called with ``should_fit=False`` before any
+        ``fit`` (decision D23).
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 5 (decision-directed carrier phase
+    estimation).
+
+    Examples
+    --------
+    >>> alphabet = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)
+    >>> rng = np.random.default_rng(1)
+    >>> s = alphabet[rng.integers(0, 4, 200)]
+    >>> compensator = BlindPhaseCompensation(alphabet)
+    >>> y = compensator(s * np.exp(-1j * 0.3))    # a -0.3 rad rotation
+    >>> print(round(float(compensator.theta_), 4), bool(np.allclose(y, s)))
+    0.3 True
     """
     alphabet: np.ndarray
     theta0: float = field(default=0.0, kw_only=True)
@@ -416,29 +651,74 @@ class BlindPhaseCompensation(Processor):
 
 @dataclass(slots=True)
 class LinearEqualizer(Processor):
-    r"""
-    Linear equalizer for the signal model with inter-symbol interference (ISI).
+    r"""Block linear equalizer (ZF or MMSE) for a known FIR channel.
 
     Signal Model
     ------------
+    The block input is the received signal of a channel with inter-symbol
+    interference (ISI), of known impulse response :math:`h[l]` of length
+    :math:`L`:
 
     .. math::
 
-        z[n] = \sum_{l=0}^{L-1} h[l] x[n-l] + b[n]
+        x[n] = \sum_{l=0}^{L-1} h[l] \, s[n-l] + b[n], \qquad
+        b[n] \sim \mathcal{CN}\left(0, \sigma^2\right)
 
-    The equalizer constructs a Toeplitz channel matrix from the impulse response
-    and applies ZF or MMSE equalization.
+    Stacking the :math:`N` received samples gives
+    :math:`\mathbf{x} = \mathbf{H}\mathbf{s} + \mathbf{b}`, where
+    :math:`\mathbf{H}` is the :math:`N \times (N-L+1)` banded Toeplitz
+    convolution matrix built from :math:`h[l]`. The block returns the
+    estimate :math:`\mathbf{y} = \widehat{\mathbf{s}}` of the
+    :math:`N-L+1` transmitted symbols, by one of two closed forms:
 
-    Attributes
+    .. math::
+
+        \widehat{\mathbf{s}}_{\mathrm{ZF}} &=
+        \mathbf{H}^{\dagger} \mathbf{x}
+        = \left(\mathbf{H}^H \mathbf{H}\right)^{-1} \mathbf{H}^H \mathbf{x} \\
+        \widehat{\mathbf{s}}_{\mathrm{MMSE}} &=
+        \left(\mathbf{H}^H \mathbf{H}
+        + \sigma^2 \mathbf{I}\right)^{-1} \mathbf{H}^H \mathbf{x}
+
+    The zero-forcing solution cancels the ISI exactly but amplifies the
+    noise wherever :math:`\mathbf{H}` is ill-conditioned; the MMSE
+    solution trades residual ISI against noise enhancement through the
+    loading term :math:`\sigma^2` (written for unit-power symbols,
+    :math:`\mathbb{E}[|s[n]|^2] = 1`). The two coincide when
+    :math:`\sigma^2 = 0`.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` and
+    returns ``(N-L+1,)``.
+
+    Parameters
     ----------
     h : np.ndarray
-        Channel impulse response.
-    method : Literal["zf", "mmse"], optional
-        Equalization method. Default is ``"zf"``.
-    sigma2 : float, optional
-        Noise variance (used only for MMSE). Default is 0.
-    name : str, optional
+        Channel impulse response :math:`h[l]`, a 1D array of length
+        :math:`L`. It is *configured*, not estimated: use
+        ``DataAidedFIRCompensator`` when the channel is unknown.
+    method : {"zf", "mmse"}, optional, keyword-only
+        Closed form used. Default is ``"zf"``.
+    sigma2 : float, optional, keyword-only
+        Noise variance :math:`\sigma^2`, used by ``"mmse"`` only.
+        Default is 0.0.
+    name : str, optional, keyword-only
         Name of the equalizer instance. Default is ``"equalizer"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 9 (linear equalization of band-limited
+    channels: peak-distortion / zero-forcing and MMSE criteria).
+
+    Examples
+    --------
+    >>> h = np.array([1.0, 0.5])
+    >>> s = np.array([1.0, -1.0, 1.0, 1.0])
+    >>> x = np.convolve(s, h)                       # noiseless ISI channel
+    >>> print(np.round(LinearEqualizer(h)(x).real, 6))
+    [ 1. -1.  1.  1.]
+    >>> print(np.round(LinearEqualizer(h, method="mmse", sigma2=0.1)(x).real, 3))
+    [ 0.862 -0.827  0.872  0.973]
     """
     h: np.ndarray
     method: Literal["zf", "mmse"] = field(default="zf", kw_only=True)
@@ -467,22 +747,63 @@ class LinearEqualizer(Processor):
 
 @dataclass(slots=True)
 class DataAidedFIRCompensator(DataAidedMixin, Processor):
-    r"""
-    Data-aided FIR compensator using Zero Forcing estimation.
+    r"""Data-aided FIR compensator: least-squares channel estimation, then deconvolution.
 
-    Estimates the channel impulse response from a known reference signal
-    and applies deconvolution to equalize the received signal.
+    Signal Model
+    ------------
+    The block observes the output of an unknown FIR channel driven by a
+    known reference :math:`d[n]` of length :math:`N` (preamble, training
+    sequence):
 
-    Attributes
+    .. math::
+
+        x[n] = \sum_{l} h[l] \, d[n-l]
+
+    The impulse response is estimated by least squares (zero-forcing
+    criterion) from the :math:`N \times N` lower-triangular Toeplitz
+    convolution matrix :math:`\mathbf{D}` built from :math:`d[n]`:
+
+    .. math::
+
+        \widehat{\mathbf{h}} = \arg \min_{\mathbf{h}}
+        \left\| \mathbf{D} \mathbf{h} - \mathbf{x} \right\|^2
+        = \mathbf{D}^{\dagger} \mathbf{x}
+
+    The correction is the deconvolution of the input by that estimate,
+    so that :math:`y[n] \simeq d[n]`:
+
+    .. math::
+
+        y[n] = \left(x * \widehat{h}^{-1}\right)[n]
+
+    Because :math:`\mathbf{D}` is square here, the input and the
+    reference must have the same length :math:`N`.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` of the
+    same length as ``reference``.
+
+    Parameters
     ----------
     h : np.ndarray
-        Initial or estimated impulse response.
+        Impulse response :math:`h[l]`. Used as the initial value and
+        overwritten by ``fit`` with the estimate
+        :math:`\widehat{\mathbf{h}}`.
     reference : np.ndarray
-        Known reference signal for channel estimation.
-    should_fit : bool, optional
-        Whether to estimate the channel on each call. Default is True.
-    name : str, optional
+        Known reference :math:`d[n]`. When the reference is produced by
+        the chain itself, declare the edge with
+        ``Sequential(wiring={"data_aided_fir.reference": "source"})``
+        instead of freezing an array.
+    should_fit : bool, optional, keyword-only
+        If True (default), the channel is re-estimated at every call
+        (per-block regime, D22); otherwise the current ``h`` is reused.
+    name : str, optional, keyword-only
         Name of the processor. Default is ``"data_aided_fir"``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 9 (training-sequence channel estimation
+    and zero-forcing equalization).
 
     Examples
     --------
@@ -517,21 +838,68 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
 
 @dataclass(slots=True)
 class DataAidedPhaseCompensator(DataAidedMixin, Processor):
-    r"""
-    Data-aided phase compensator using cross-correlation.
+    r"""Data-aided phase compensator (maximum-likelihood phase from a known reference).
 
-    Estimates a phase offset :math:`\theta` from the cross-correlation
-    between the input and reference signals, then applies a correction.
+    Signal Model
+    ------------
+    The input carries an unknown constant phase offset with respect to a
+    known reference :math:`d[n]`:
 
     .. math::
-        y[n] = x[n] e^{j\hat{\theta}}
+
+        x[n] = d[n] \, e^{-j\theta} + b[n], \qquad
+        y[n] = x[n] \, e^{j\widehat{\theta}}
+
+    In additive white Gaussian noise, the maximum-likelihood estimate of
+    :math:`\theta` is the argument of the cross-correlation between the
+    input and the reference at lag zero:
+
+    .. math::
+
+        \widehat{\theta} = \arg \left(
+        \sum_{n=0}^{N-1} x^*[n] \, d[n] \right)
+
+    Unlike the blind estimator, this one is free of the :math:`2\pi/M`
+    constellation ambiguity, since the reference fixes the absolute
+    phase.
+
+    Axes: *declared axis* -- estimation expects a 1D serial signal
+    ``(N,)`` aligned with ``reference``; the correction is element-wise.
+
+    Parameters
+    ----------
+    reference : np.ndarray
+        Known reference :math:`d[n]`. When the reference is produced by
+        the chain itself, declare the edge with
+        ``Sequential(wiring={"data_aided_phase.reference": "source"})``
+        instead of freezing an array.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"data_aided_phase"``.
 
     Attributes
     ----------
-    reference : np.ndarray
-        Reference signal for phase estimation.
-    name : str, optional
-        Name of the processor. Default is ``"data_aided_phase"``.
+    theta_ : float
+        Estimated phase :math:`\widehat{\theta}` in radians
+        (data-dependent, hence the trailing underscore, decision D23).
+        Re-estimated at every call (per-block regime, D22).
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 5 (data-aided maximum-likelihood carrier
+    phase estimation).
+
+    Examples
+    --------
+    >>> d = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)
+    >>> x = d * np.exp(-1j * np.pi / 4)          # a -pi/4 rotation
+    >>> compensator = DataAidedPhaseCompensator(reference=d)
+    >>> y = compensator(x)
+    >>> print(round(float(compensator.theta_), 6), round(float(np.pi / 4), 6))
+    0.785398 0.785398
+    >>> print(np.round(y, 6))
+    [ 0.707107+0.707107j  0.707107-0.707107j -0.707107+0.707107j
+     -0.707107-0.707107j]
     """
     reference: np.ndarray
     name: str = field(default="data_aided_phase", kw_only=True)
@@ -557,14 +925,82 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
 
 @dataclass(slots=True)
 class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
-    """This class performs the complex-gain channel estimation and compensation
+    r"""Data-aided compensator of a flat complex gain (amplitude and phase).
+
+    Signal Model
+    ------------
+    The channel is assumed frequency-flat over the record, so it reduces
+    to a single complex coefficient. A preamble is extracted from the
+    input and compared to the known reference :math:`d[n]` of length
+    :math:`N_d`:
+
+    .. math::
+
+        \widehat{g} = \arg \min_{g} \sum_{n=0}^{N_d-1}
+        \left| g \, x[n] - d[n] \right|^2
+        = \frac{\sum_{n} x^*[n] \, d[n]}{\sum_{n} |x[n]|^2}
+
+    The estimate is the *compensation* gain (an estimate of the inverse
+    channel gain), applied to the whole record:
+
+    .. math::
+
+        y[n] = \widehat{g} \, x[n]
+
+    It corrects amplitude and phase at once, and generalizes
+    ``DataAidedPhaseCompensator``, which keeps only
+    :math:`\arg(\widehat{g})`.
+
+    Axes: *declared axis* -- estimation expects a 1D preamble ``(N_d,)``
+    (after ``extractor``) aligned with ``reference``; the correction is
+    element-wise on the full record.
+
+    Parameters
+    ----------
+    reference : np.ndarray
+        Known preamble :math:`d[n]`. When it is produced by the chain
+        itself, declare the edge with
+        ``Sequential(wiring={"complex_gain_compensator.reference":
+        "source"})`` instead of freezing an array.
+    extractor : DataExtractor, optional, keyword-only
+        Selects the preamble samples inside the received record. Default
+        is a pass-through (the whole record is the preamble).
+    should_fit : bool, optional, keyword-only
+        If True (default), :math:`\widehat{g}` is re-estimated at every
+        call (per-block regime, D22); if False, the gain of the last
+        ``fit`` is reused (reused-preamble regime).
+    name : str, optional, keyword-only
+        Name of the processor. Default is
+        ``"complex_gain_compensator"``.
 
     Attributes
     ----------
-    reference : np.ndarray
-        The known preamble used to compute the complex gain of the channel.
-    extractor : DataExtractor
-        How to extract the preamble in the received samples.
+    gain_ : complex
+        Estimated complex gain :math:`\widehat{g}` (data-dependent, hence
+        the trailing underscore, decision D23).
+
+    Raises
+    ------
+    NotFittedError
+        If ``forward`` is called with ``should_fit=False`` before any
+        ``fit`` (decision D23).
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 5 (data-aided estimation of the carrier
+    amplitude and phase).
+
+    Examples
+    --------
+    >>> d = np.array([1+1j, 1-1j, -1+1j, -1-1j])
+    >>> x = 2 * np.exp(1j * np.pi / 3) * d           # channel gain 2 exp(j pi/3)
+    >>> compensator = DataAidedComplexGainCompensator(reference=d)
+    >>> y = compensator(x)
+    >>> print(np.round(compensator.gain_, 6))        # 0.5 exp(-j pi/3)
+    (0.25-0.433013j)
+    >>> print(np.round(y, 6))
+    [ 1.+1.j  1.-1.j -1.+1.j -1.-1.j]
     """
     reference: np.ndarray
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
@@ -597,23 +1033,88 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
 
 @dataclass(slots=True)
 class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
-    """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
+    r"""Data-aided frame synchronizer at one-sample resolution (correlation peak).
 
-        Attributes
-        ----------
-        reference : ndarray
-            The reference preamble signal to which the input signals will
-            be synchronized.
-        scale_correction : bool, optional
-            If True, applies a scaling correction based on the peak of the
-            cross-correlation. Default is True.
-        save_cross_corr : bool, optional
-            If True, saves the computed cross-correlation and the associated
-            lag vector. Default is True.
-        signal_len : integer, optional
-            Truncates the signal to the given length after synchronization
-        name : str, optional
-            Name of the synchronizer instance. Default is "synchronizer".
+    Signal Model
+    ------------
+    The received record is a delayed and scaled copy of a known preamble
+    :math:`d[n]` of length :math:`N_d`, followed by the payload:
+
+    .. math::
+
+        x[n] = a \, d[n - m_0] + b[n]
+
+    The delay is obtained from the peak of the cross-correlation between
+    the input and the preamble, normalized by the preamble length:
+
+    .. math::
+
+        c[m] = \frac{1}{N_d} \sum_{n} x[n+m] \, d^*[n], \qquad
+        \widehat{m}_0 = \arg \max_{m} \left| c[m] \right|^2
+
+    The output realigns the record on the preamble and, when
+    ``scale_correction`` is enabled, rescales it by the complex peak
+    :math:`\widehat{a} = c[\widehat{m}_0]`:
+
+    .. math::
+
+        y[n] = \widehat{a} \, x[n + \widehat{m}_0]
+
+    For a unit-power preamble (:math:`\frac{1}{N_d}\sum_n |d[n]|^2 = 1`)
+    and a unit channel gain, :math:`\widehat{a} = 1` and the block is a
+    pure realignment.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
+    output length depends on the estimated delay and on ``signal_len``.
+
+    Parameters
+    ----------
+    reference : np.ndarray
+        Known preamble :math:`d[n]`. When it is produced by the chain
+        itself, declare the edge with
+        ``Sequential(wiring={"synchronizer.reference": "source"})``
+        instead of freezing an array.
+    scale_correction : bool, optional
+        If True (default), the output is multiplied by the complex peak
+        :math:`\widehat{a}`; otherwise only the delay is corrected.
+    save_cross_correlation : bool, optional, keyword-only
+        If True (default), stores :math:`c[m]` and its lag axis for
+        inspection or plotting (``plot``).
+    signal_len : int, optional, keyword-only
+        Truncates the realigned signal to that length. Default is None
+        (keep everything after the peak).
+    name : str, optional, keyword-only
+        Name of the synchronizer instance. Default is ``"synchronizer"``.
+
+    Attributes
+    ----------
+    delay : int
+        Estimated delay :math:`\widehat{m}_0` in samples (data-dependent;
+        re-estimated at every call).
+    scale : complex
+        Correlation peak :math:`\widehat{a} = c[\widehat{m}_0]`, or 1
+        when ``scale_correction`` is False.
+    cross_corr : np.ndarray
+        Full cross-correlation :math:`c[m]` (when saved).
+    n_vect : np.ndarray
+        Lag axis :math:`m` associated with ``cross_corr``.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 5 (frame and symbol synchronization by
+    correlation with a known preamble).
+
+    Examples
+    --------
+    >>> d = np.array([1.0, -1.0, 1.0, 1.0])       # unit-power preamble
+    >>> x = np.hstack([np.zeros(2), d, [1.0, -1.0]])   # delayed by 2 samples
+    >>> synchronizer = DataAidedSimpleSynchronizer(d)
+    >>> y = synchronizer(x)
+    >>> print(synchronizer.delay, round(float(synchronizer.scale), 6))
+    2 1.0
+    >>> print(y)
+    [ 1. -1.  1.  1.  1. -1.]
     """
     reference: np.ndarray
     scale_correction: bool = True
@@ -684,30 +1185,102 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
 @dataclass(slots=True)
 class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
-    """ Implements a simple synchronizer using cross-correlation to determine time delay and scaling between signals.
+    r"""Data-aided frame synchronizer at fractional-sample resolution.
 
-        Attributes
-        ----------
-        reference : ndarray
-            The reference preamble signal to which the input signals will
-            be synchronized.
-        up_factor : int
-            The upsampling factor made before cross-correlation
-        scale_correction : bool, optional
-            If True, applies a scaling correction based on the peak of the
-            cross-correlation. Default is True.
-        save_cross_corr : bool, optional
-            If True, saves the computed cross-correlation and the associated
-            lag vector. Default is True.
-        signal_len : integer, optional
-            Truncates the signal to the given length after synchronization
-        d_max :integer, optional
-            The maximum expected delay [number of samples of x]
-        name : str, optional
-            Name of the synchronizer instance. Default is "synchronizer".
+    Signal Model
+    ------------
+    Same correlation-based model as ``DataAidedSimpleSynchronizer``, but
+    the delay :math:`\tau_0` is no longer assumed to be an integer number
+    of samples:
+
+    .. math::
+
+        x[n] = a \, d\!\left(nT - \tau_0\right) + b[n]
+
+    The input and the preamble are first interpolated by a polyphase
+    resampler of factor :math:`U` (``scipy.signal.resample_poly``), which
+    brings the search grid down to :math:`T/U`:
+
+    .. math::
+
+        c[m] = \frac{1}{U N_d} \sum_{n} x_{\uparrow}[n+m] \,
+        d_{\uparrow}^*[n], \qquad
+        \widehat{m}_0 = \max\left(0,\;
+        \arg \max_{m} \left| c[m] \right|^2 \right)
+
+    The upsampled record is realigned on that grid, decimated back by
+    :math:`U`, and optionally rescaled by the complex peak
+    :math:`\widehat{a} = c[\widehat{m}_0]`:
+
+    .. math::
+
+        \widehat{\tau}_0 = \frac{\widehat{m}_0}{U} T, \qquad
+        y[n] = \widehat{a} \, x_{\uparrow}\!\left[U n + \widehat{m}_0\right]
+
+    Negative lags are clamped to zero, so the block only corrects
+    non-negative delays.
+
+    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the
+    output length depends on the estimated delay and on ``signal_len``.
+
+    Parameters
+    ----------
+    reference : np.ndarray
+        Known preamble :math:`d[n]`. When it is produced by the chain
+        itself, declare the edge with
+        ``Sequential(wiring={"synchronizer.reference": "source"})``
+        instead of freezing an array.
+    scale_correction : bool, optional
+        If True (default), the output is multiplied by the complex peak
+        :math:`\widehat{a}`; otherwise only the delay is corrected.
+    up_factor : int, optional, keyword-only
+        Interpolation factor :math:`U` applied before the correlation;
+        the timing resolution is :math:`T/U`. Default is 2.
+    save_cross_correlation : bool, optional, keyword-only
+        If True (default), stores :math:`c[m]` and its lag axis for
+        inspection or plotting (``plot``).
+    signal_len : int, optional, keyword-only
+        Truncates the realigned signal to that length. Default is None.
+    d_max : int, optional, keyword-only
+        Maximum expected delay, in samples of :math:`x`. Restricts the
+        correlation window and therefore the search range. Default is
+        None (search over the whole record).
+    name : str, optional, keyword-only
+        Name of the synchronizer instance. Default is ``"synchronizer"``.
+
+    Attributes
+    ----------
+    delay : int
+        Estimated delay :math:`\widehat{m}_0`, expressed in *upsampled*
+        samples (divide by ``up_factor`` to get it in symbol periods).
+    scale : complex
+        Correlation peak :math:`\widehat{a} = c[\widehat{m}_0]`, or 1
+        when ``scale_correction`` is False.
+    cross_corr : np.ndarray
+        Full cross-correlation :math:`c[m]` on the upsampled grid.
+    n_vect : np.ndarray
+        Lag axis :math:`m` associated with ``cross_corr``.
+
+    References
+    ----------
+    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+      McGraw-Hill, 2008, Chapter 5 (frame and symbol synchronization).
+    * F. M. Gardner, "Interpolation in digital modems -- Part I:
+      Fundamentals," IEEE Transactions on Communications, vol. 41, no. 3,
+      pp. 501-507, 1993 (interpolation-based fractional timing recovery).
+
+    Examples
+    --------
+    >>> d = np.array([1.0, -1.0, 1.0, 1.0])
+    >>> x = np.hstack([np.zeros(3), d, np.zeros(3)])   # delayed by 3 samples
+    >>> synchronizer = DataAidedFineSynchronizer(d, up_factor=2, signal_len=4)
+    >>> y = synchronizer(x)
+    >>> print(synchronizer.delay, synchronizer.delay / synchronizer.up_factor, y.shape)
+    6 3.0 (4,)
     """
     reference: np.ndarray
     scale_correction: bool = True
+    up_factor: int = field(default=2, kw_only=True)
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
     d_max: Optional[int] = field(default=None, kw_only=True)
