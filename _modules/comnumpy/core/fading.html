@@ -1,0 +1,1414 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.fading &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/fading';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.fading</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.fading</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Multipath fading: delay profiles and Doppler processes (decision D43).</span>
+
+<span class="sd">The delay axis gets the treatment decisions D15/D17/D20 gave the</span>
+<span class="sd">frequency axis: a frozen value object carrying the numbers *and* their</span>
+<span class="sd">provenance, a registry-backed catalog of standard models, and a</span>
+<span class="sd">self-check at construction against the figures published alongside the</span>
+<span class="sd">table. ``CarrierType`` types the frequency axis, ``FieldRole`` the frame</span>
+<span class="sd">axis, and :class:`PowerDelayProfile` now describes the delay axis.</span>
+
+<span class="sd">A standardized channel model is a power delay profile **plus** a Doppler</span>
+<span class="sd">spectrum; both live here. The taps are generated by</span>
+<span class="sd">:func:`rayleigh_process`, and applied to a signal by</span>
+<span class="sd">:class:`~comnumpy.core.channels.TappedDelayLineChannel`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;DopplerSpectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;PowerDelayProfile&quot;</span><span class="p">,</span> <span class="s2">&quot;rayleigh_process&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_delay_profile&quot;</span><span class="p">,</span> <span class="s2">&quot;register_delay_profile&quot;</span><span class="p">,</span> <span class="s2">&quot;available_delay_profiles&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="DopplerSpectrum">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.DopplerSpectrum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DopplerSpectrum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shape of the Doppler power spectrum of a tap.&quot;&quot;&quot;</span>
+
+    <span class="n">CLASSICAL</span> <span class="o">=</span> <span class="s2">&quot;classical&quot;</span>   <span class="c1"># Clarke/Jakes U shape, isotropic scattering</span>
+    <span class="n">FLAT</span> <span class="o">=</span> <span class="s2">&quot;flat&quot;</span>             <span class="c1"># uniform over [-f_D, f_D]</span>
+    <span class="n">STATIC</span> <span class="o">=</span> <span class="s2">&quot;static&quot;</span>         <span class="c1"># no time variation (block fading)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_classical_bin_powers</span><span class="p">(</span><span class="n">lo</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">hi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                          <span class="n">f_doppler</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact power of the classical spectrum inside each frequency bin.</span>
+
+<span class="sd">    The Clarke/Jakes density</span>
+<span class="sd">    :math:`S(f) = 1 / (\pi f_D \sqrt{1 - (f/f_D)^2})` has integrable</span>
+<span class="sd">    singularities at :math:`\pm f_D`, so sampling it on the FFT grid</span>
+<span class="sd">    returns infinities. Its primitive is known --</span>
+<span class="sd">    :math:`\arcsin(f/f_D)/\pi` -- so the power of the bin</span>
+<span class="sd">    :math:`[f_{lo}, f_{hi}]` is a difference of arcsines, finite</span>
+<span class="sd">    everywhere and exact.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cdf_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">hi</span> <span class="o">/</span> <span class="n">f_doppler</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">cdf_lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lo</span> <span class="o">/</span> <span class="n">f_doppler</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="k">return</span> <span class="n">cdf_hi</span> <span class="o">-</span> <span class="n">cdf_lo</span>
+
+
+<div class="viewcode-block" id="rayleigh_process">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.rayleigh_process">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rayleigh_process</span><span class="p">(</span><span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">f_doppler</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                     <span class="n">spectrum</span><span class="p">:</span> <span class="n">DopplerSpectrum</span> <span class="o">=</span> <span class="n">DopplerSpectrum</span><span class="o">.</span><span class="n">CLASSICAL</span><span class="p">,</span>
+                     <span class="n">rng</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Generate one complex Gaussian fading tap with a given Doppler spectrum.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The tap gain :math:`h[n]` is a zero-mean complex Gaussian process,</span>
+<span class="sd">    :math:`h[n] \sim \mathcal{CN}(0, 1)`, whose power spectral density is</span>
+<span class="sd">    the Doppler spectrum of the model. For isotropic scattering</span>
+<span class="sd">    (``CLASSICAL``, the Clarke/Jakes model) that density is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        S(f) = \frac{1}{\pi f_D \sqrt{1 - \left(f / f_D\right)^2}},</span>
+<span class="sd">        \qquad |f| &lt; f_D</span>
+
+<span class="sd">    whose inverse Fourier transform gives the reference autocorrelation</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R(\tau) = \mathbb{E}\left[h[n] h^*[n + \tau f_s]\right]</span>
+<span class="sd">                = J_0\!\left(2 \pi f_D \tau\right)</span>
+
+<span class="sd">    with :math:`J_0` the Bessel function of the first kind, order zero --</span>
+<span class="sd">    the quantity ``validation/fading_doppler.py`` checks.</span>
+
+<span class="sd">    The process is synthesized **directly on the output FFT grid**: every</span>
+<span class="sd">    bin overlapping the band is filled with a complex Gaussian shaped by</span>
+<span class="sd">    the square root of the exact power it covers, and one inverse</span>
+<span class="sd">    transform gives the samples. Weighting by the covered fraction rather</span>
+<span class="sd">    than testing bin centres matters near :math:`\pm f_D`, where the</span>
+<span class="sd">    density is singular and one bin carries several percent of the band. Nothing is resampled or interpolated, so</span>
+<span class="sd">    the realization is band-limited by construction. The known cost of the</span>
+<span class="sd">    spectral method is periodicity: the realization repeats with period</span>
+<span class="sd">    ``n_samples / fs``.</span>
+
+<span class="sd">    When the observation window is shorter than one Doppler period</span>
+<span class="sd">    (:math:`n\_samples / f_s &lt; 1 / f_D`), no bin fits under :math:`f_D`</span>
+<span class="sd">    and the tap is constant over the window -- which is the physically</span>
+<span class="sd">    correct answer, not a degenerate case: the channel simply has no time</span>
+<span class="sd">    to vary.</span>
+
+<span class="sd">    Axes: returns a 1D array of length ``n_samples``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_samples : int</span>
+<span class="sd">        Number :math:`N` of samples to generate.</span>
+<span class="sd">    fs : float</span>
+<span class="sd">        Sampling frequency :math:`f_s` of the signal, in Hz.</span>
+<span class="sd">    f_doppler : float</span>
+<span class="sd">        Maximum Doppler frequency :math:`f_D` in Hz, i.e. :math:`v / \lambda`.</span>
+<span class="sd">        Zero gives a constant tap.</span>
+<span class="sd">    spectrum : DopplerSpectrum, optional, keyword-only</span>
+<span class="sd">        Shape of :math:`S(f)`. Default ``CLASSICAL``.</span>
+<span class="sd">    rng : numpy.random.Generator, optional, keyword-only</span>
+<span class="sd">        Random generator; a fresh default one when omitted.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Complex tap gains of length ``n_samples`` and unit variance.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. H. Clarke, &quot;A statistical theory of mobile-radio reception&quot;, Bell</span>
+<span class="sd">    System Technical Journal 47(6), 1968; W. C. Jakes, *Microwave Mobile</span>
+<span class="sd">    Communications*, Wiley, 1974, Chapter 1.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The average power of a *single* realization is itself random: the</span>
+<span class="sd">    process has about :math:`2 N f_D / f_s` degrees of freedom over the</span>
+<span class="sd">    window, so a short look at a slowly fading channel does not average</span>
+<span class="sd">    its own power out (standard deviation 0.16 for 260 ms at</span>
+<span class="sd">    :math:`f_D = 100` Hz). The ensemble mean is exactly one; the</span>
+<span class="sd">    realization is deliberately **not** renormalized, which would break</span>
+<span class="sd">    the Gaussian statistics.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(0)</span>
+<span class="sd">    &gt;&gt;&gt; h = rayleigh_process(1024, fs=1e3, f_doppler=10.0, rng=rng)</span>
+<span class="sd">    &gt;&gt;&gt; h.shape, bool(np.std(np.abs(h)) &gt; 0)      # the tap does vary</span>
+<span class="sd">    ((1024,), True)</span>
+<span class="sd">    &gt;&gt;&gt; static = rayleigh_process(64, fs=1e3, f_doppler=0.0, rng=rng)</span>
+<span class="sd">    &gt;&gt;&gt; bool(np.allclose(static, static[0]))      # no Doppler, no variation</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_samples</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n_samples must be positive, got </span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fs must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">f_doppler</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;f_doppler must be non-negative, got </span><span class="si">{</span><span class="n">f_doppler</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span> <span class="k">if</span> <span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">rng</span>
+
+    <span class="k">if</span> <span class="n">f_doppler</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="n">DopplerSpectrum</span><span class="o">.</span><span class="n">STATIC</span><span class="p">:</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+                <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">fs</span> <span class="o">/</span> <span class="n">n_samples</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">freq</span> <span class="o">-</span> <span class="n">df</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">freq</span> <span class="o">+</span> <span class="n">df</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># A bin counts when it *overlaps* the band, not when its centre falls</span>
+    <span class="c1"># inside it: near +/-f_D the classical density is singular, so an edge</span>
+    <span class="c1"># bin carries several percent of the band power, and a centre test</span>
+    <span class="c1"># keeps or drops it whole depending on where the grid happens to land</span>
+    <span class="c1"># (up to 8.3% of the band lost, and a knife edge when f_D sits on a bin</span>
+    <span class="c1"># centre). The primitives below already clip to the band, so the power</span>
+    <span class="c1"># of a partially covered bin comes out exact.</span>
+    <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="n">DopplerSpectrum</span><span class="o">.</span><span class="n">CLASSICAL</span><span class="p">:</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">_classical_bin_powers</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">f_doppler</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="n">DopplerSpectrum</span><span class="o">.</span><span class="n">FLAT</span><span class="p">:</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">f_doppler</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="o">-</span><span class="n">f_doppler</span><span class="p">)</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">overlap</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>                                       <span class="c1"># pragma: no cover - enum guard</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown Doppler spectrum </span><span class="si">{</span><span class="n">spectrum</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">power</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="c1"># Window shorter than one Doppler period: the tap cannot vary. This</span>
+        <span class="c1"># is easy to hit unnoticed -- EVA at 70 Hz and 15.36 MHz needs</span>
+        <span class="c1"># 219 000 samples before the channel moves at all -- so say it (D11)</span>
+        <span class="c1"># rather than let a block-fading result pass for a time-selective one.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> samples at fs=</span><span class="si">%.4g</span><span class="s2"> Hz span </span><span class="si">%.3g</span><span class="s2"> s, less than one Doppler &quot;</span>
+            <span class="s2">&quot;period 1/f_D = </span><span class="si">%.3g</span><span class="s2"> s: the tap is constant over this call &quot;</span>
+            <span class="s2">&quot;(block fading). Simulate a longer window to see time selectivity.&quot;</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">/</span> <span class="n">fs</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">f_doppler</span><span class="p">)</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+                <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+
+    <span class="n">total</span> <span class="o">=</span> <span class="n">power</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>                              <span class="c1"># pragma: no cover - guarded above</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the Doppler spectrum carries no power in band&quot;</span><span class="p">)</span>
+    <span class="n">shaping</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">power</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span>
+
+    <span class="n">white</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_samples</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_samples</span><span class="p">))</span>
+    <span class="n">spectrum_samples</span> <span class="o">=</span> <span class="n">shaping</span> <span class="o">*</span> <span class="n">white</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">spectrum_samples</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_samples</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span></div>
+
+
+
+<div class="viewcode-block" id="PowerDelayProfile">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.PowerDelayProfile">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Tapped-delay-line model of a multipath channel (decision D43).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The channel is a sum of :math:`L` resolvable paths, path :math:`l`</span>
+<span class="sd">    arriving with delay :math:`\tau_l` and average power :math:`P_l`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        h(t, \tau) = \sum_{l=0}^{L-1} a_l(t) \, \delta(\tau - \tau_l),</span>
+<span class="sd">        \qquad \mathbb{E}\left[|a_l(t)|^2\right] = \gamma_l</span>
+
+<span class="sd">    The powers are normalized so that :math:`\sum_l \gamma_l = 1`: the</span>
+<span class="sd">    delay spread then changes the frequency selectivity without changing</span>
+<span class="sd">    the operating SNR, which is what makes two profiles comparable. Each</span>
+<span class="sd">    :math:`a_l(t)` is a Rayleigh process with the model&#39;s Doppler</span>
+<span class="sd">    spectrum (:func:`rayleigh_process`), or Rician when the tap carries a</span>
+<span class="sd">    specular component.</span>
+
+<span class="sd">    The summary figure of a profile is its RMS delay spread</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \sigma_\tau = \sqrt{\sum_l \gamma_l \tau_l^2</span>
+<span class="sd">                            - \left(\sum_l \gamma_l \tau_l\right)^2}</span>
+
+<span class="sd">    which sets the coherence bandwidth, roughly</span>
+<span class="sd">    :math:`B_c \approx 1 / (5 \sigma_\tau)`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    delays_ns : sequence of float</span>
+<span class="sd">        Path delays :math:`\tau_l` in nanoseconds, ascending.</span>
+<span class="sd">    powers_dB : sequence of float</span>
+<span class="sd">        Average path powers :math:`P_l` in dB, relative -- the profile is</span>
+<span class="sd">        normalized to unit total power.</span>
+<span class="sd">    doppler : DopplerSpectrum, optional, keyword-only</span>
+<span class="sd">        Doppler spectrum shared by the taps. Default ``CLASSICAL``.</span>
+<span class="sd">    rice_k_dB : float, optional, keyword-only</span>
+<span class="sd">        Rice factor :math:`K` in dB of the **first** tap when the model</span>
+<span class="sd">        has a line of sight (TDL-D/E of TR 38.901); ``None`` for a fully</span>
+<span class="sd">        Rayleigh profile.</span>
+<span class="sd">    standard : str, keyword-only</span>
+<span class="sd">        Standard this profile comes from. Default ``&quot;custom&quot;``.</span>
+<span class="sd">    reference : str, keyword-only</span>
+<span class="sd">        Clause the numbers were copied from -- same provenance</span>
+<span class="sd">        requirement as decision D20 for carrier allocations.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the two sequences differ in length, if the delays are not</span>
+<span class="sd">        strictly ascending, or if the profile carries no power.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 13.1 (multipath fading channels);</span>
+<span class="sd">    3GPP TS 36.101 Annex B.2 and 3GPP TR 38.901 Section 7.7 for the</span>
+<span class="sd">    catalog entries.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; profile = PowerDelayProfile([0, 100, 300], [0.0, -3.0, -6.0])</span>
+<span class="sd">    &gt;&gt;&gt; profile.n_taps, round(profile.rms_delay_spread_ns, 1)</span>
+<span class="sd">    (3, 103.1)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(profile.powers_lin, 4))</span>
+<span class="sd">    [0.5707 0.286  0.1433]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">delays_ns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">powers_dB</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">doppler</span><span class="p">:</span> <span class="n">DopplerSpectrum</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DopplerSpectrum</span><span class="o">.</span><span class="n">CLASSICAL</span><span class="p">,</span>
+                                     <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rice_k_dB</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">delays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">powers_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delays</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">powers</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;delays_ns and powers_dB must be 1D, got shapes &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">delays</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">powers</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delays</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">powers</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;delays_ns has </span><span class="si">{</span><span class="n">delays</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> entries but powers_dB has &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">powers</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">; one power per path is required&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delays</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a delay profile needs at least one path&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">delays</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">delays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;delays_ns must be non-negative and strictly ascending, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">delays</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">delays</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">powers</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;delays_ns&quot;</span><span class="p">,</span> <span class="n">delays</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;powers_dB&quot;</span><span class="p">,</span> <span class="n">powers</span><span class="p">)</span>
+
+    <span class="c1"># -- derived quantities ---------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_taps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number :math:`L` of resolvable paths.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">powers_lin</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Per-path powers :math:`\gamma_l`, normalized to unit sum.&quot;&quot;&quot;</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">powers_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">linear</span> <span class="o">/</span> <span class="n">linear</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean_delay_ns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Power-weighted mean delay :math:`\sum_l \gamma_l \tau_l`, in ns.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">powers_lin</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rms_delay_spread_ns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;RMS delay spread :math:`\sigma_\tau`, in nanoseconds.&quot;&quot;&quot;</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">powers_lin</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">))</span>
+        <span class="n">second</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">second</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coherence_bandwidth_hz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Coherence bandwidth :math:`B_c \approx 1 / (5 \sigma_\tau)`, in Hz.</span>
+
+<span class="sd">        The 0.5-correlation rule of thumb; a conservative estimate, and</span>
+<span class="sd">        the one Proakis quotes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">spread_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span> <span class="o">*</span> <span class="mf">1e-9</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">spread_s</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">spread_s</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PowerDelayProfile.to_taps">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.PowerDelayProfile.to_taps">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_taps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Resample the profile onto the sample grid of a signal.</span>
+
+<span class="sd">        Path delays are rounded to the nearest sample, and paths that</span>
+<span class="sd">        land on the same sample are **summed in power** -- the standard</span>
+<span class="sd">        practice, and the reason a model is only meaningful above a</span>
+<span class="sd">        minimum sampling rate.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fs : float</span>
+<span class="sd">            Sampling frequency in Hz.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of numpy.ndarray</span>
+<span class="sd">            ``(sample_delays, powers)``: integer delays in samples, and</span>
+<span class="sd">            the matching normalized powers summing to 1.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; profile = get_delay_profile(&quot;EVA&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; delays, powers = profile.to_taps(fs=15.36e6)</span>
+<span class="sd">        &gt;&gt;&gt; delays.tolist()</span>
+<span class="sd">        [0, 2, 5, 6, 11, 17, 27, 39]</span>
+<span class="sd">        &gt;&gt;&gt; round(float(powers.sum()), 12)</span>
+<span class="sd">        1.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fs must be positive, got </span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">sample_delays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span> <span class="o">*</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">unique</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sample_delays</span><span class="p">)</span>
+        <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">powers_lin</span><span class="p">[</span><span class="n">sample_delays</span> <span class="o">==</span> <span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                           <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">unique</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">unique</span><span class="p">,</span> <span class="n">powers</span> <span class="o">/</span> <span class="n">powers</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+
+    <span class="c1"># -- rendering (P7, same mechanism as the D21 spectral map) ---------</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_taps</span><span class="si">}</span><span class="s2"> paths | rms delay spread &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ns | coherence bandwidth &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">coherence_bandwidth_hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> kHz | &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;doppler </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">doppler</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="mf">1.0</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">48</span>
+        <span class="n">floor_db</span> <span class="o">=</span> <span class="o">-</span><span class="mf">30.0</span>
+        <span class="k">for</span> <span class="n">delay</span><span class="p">,</span> <span class="n">power</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">powers_dB</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">delay</span> <span class="o">/</span> <span class="n">span</span><span class="p">))</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span><span class="n">power</span> <span class="o">-</span> <span class="n">floor_db</span><span class="p">)</span> <span class="o">/</span> <span class="o">-</span><span class="n">floor_db</span><span class="p">)</span>
+            <span class="n">bar</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="n">column</span> <span class="o">+</span> <span class="s2">&quot;#&quot;</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mi">6</span> <span class="o">*</span> <span class="n">height</span><span class="p">)))</span>
+            <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">7.0f</span><span class="si">}</span><span class="s2"> ns </span><span class="si">{</span><span class="n">power</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2"> dB |</span><span class="si">{</span><span class="n">bar</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">body</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># -- catalog (decision D17 mechanism, applied to the delay axis) --------</span>
+
+<span class="n">_PROFILE_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">PowerDelayProfile</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="register_delay_profile">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.register_delay_profile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_delay_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a catalog entry; users can add their own models.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name the factory answers to in :func:`get_delay_profile`. An</span>
+<span class="sd">        existing name is replaced, which is what lets a user override a</span>
+<span class="sd">        catalog model with their own measurement.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; @register_delay_profile(&quot;LAB&quot;)</span>
+<span class="sd">    ... def _lab():</span>
+<span class="sd">    ...     return PowerDelayProfile(delays_ns=(0.0, 100.0),</span>
+<span class="sd">    ...                              powers_dB=(0.0, -3.0),</span>
+<span class="sd">    ...                              standard=&quot;LAB&quot;, reference=&quot;bench&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; get_delay_profile(&quot;LAB&quot;).n_taps</span>
+<span class="sd">    2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">PowerDelayProfile</span><span class="p">]):</span>
+        <span class="n">_PROFILE_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="available_delay_profiles">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.available_delay_profiles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">available_delay_profiles</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Names accepted by :func:`get_delay_profile`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of str</span>
+<span class="sd">        Registered names, sorted. Includes any model the user added</span>
+<span class="sd">        through :func:`register_delay_profile`.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; [name for name in available_delay_profiles() if name.startswith(&quot;E&quot;)]</span>
+<span class="sd">    [&#39;EPA&#39;, &#39;ETU&#39;, &#39;EVA&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_PROFILE_REGISTRY</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_delay_profile">
+<a class="viewcode-back" href="../../../documentation/core/fading.html#comnumpy.core.fading.get_delay_profile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_delay_profile</span><span class="p">(</span><span class="n">standard</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a catalog delay profile by name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    standard : str</span>
+<span class="sd">        Entry name, e.g. ``&quot;EVA&quot;``; see :func:`available_delay_profiles`.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Forwarded to the entry factory (e.g. ``doppler``).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If the name is not in the catalog.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; profile = get_delay_profile(&quot;ETU&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; profile.n_taps, round(profile.rms_delay_spread_ns)</span>
+<span class="sd">    (9, 991)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">standard</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PROFILE_REGISTRY</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;unknown delay profile </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">available_delay_profiles</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- register your own with &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;@register_delay_profile&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_PROFILE_REGISTRY</span><span class="p">[</span><span class="n">standard</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_expect</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">PowerDelayProfile</span><span class="p">,</span>
+                  <span class="n">expect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify a catalog entry against figures published with its table (D20).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">expect</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">profile</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">n_taps</span><span class="p">),</span>
+        <span class="s2">&quot;rms_delay_spread_ns&quot;</span><span class="p">:</span> <span class="n">profile</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span><span class="p">,</span>
+        <span class="s2">&quot;mean_delay_ns&quot;</span><span class="p">:</span> <span class="n">profile</span><span class="o">.</span><span class="n">mean_delay_ns</span><span class="p">,</span>
+        <span class="s2">&quot;max_excess_delay_ns&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">wanted</span> <span class="ow">in</span> <span class="n">expect</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">checks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">got</span> <span class="o">-</span> <span class="n">wanted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wanted</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">profile</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">profile</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;the standard table&#39;</span><span class="si">}</span><span class="s2">, the table &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;above gives </span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> -- one of the two was mistyped.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">profile</span>
+
+
+<span class="c1"># 3GPP TS 36.101 Annex B.2 -- the LTE reference profiles. The summary</span>
+<span class="c1"># table (B.2-1) publishes three figures per model: tap count, RMS delay</span>
+<span class="c1"># spread, and maximum excess delay. EVA and ETU match all three, so both</span>
+<span class="c1"># are pinned on all three.</span>
+<span class="c1">#</span>
+<span class="c1"># EPA matches two of three. Its tap count (7) and maximum excess delay</span>
+<span class="c1"># (410 ns) come out exactly, but the RMS spread of this table is 43.13 ns</span>
+<span class="c1"># against a published 45 ns. That gap was investigated rather than</span>
+<span class="c1"># tolerated:</span>
+<span class="c1">#</span>
+<span class="c1">#   * the definition is not in question -- power-weighted and central,</span>
+<span class="c1">#     the same one that reproduces EVA to 0.35 ns and ETU to 0.06 ns.</span>
+<span class="c1">#     Amplitude weighting gives 69.8 ns, the second moment about zero</span>
+<span class="c1">#     61.8 ns, the mean delay 44.2 ns: none of them lands on 45;</span>
+<span class="c1">#   * no plausible transcription error bridges it either. Reaching 45 ns</span>
+<span class="c1">#     would take +1.67 dB on the last tap, +3.83 dB on the 190 ns tap, or</span>
+<span class="c1">#     +76 ns on the 410 ns delay -- none of which is a typo shape in a</span>
+<span class="c1">#     table of round values.</span>
+<span class="c1">#</span>
+<span class="c1"># The tap count and the excess delay confirm the *delays*; the *powers*</span>
+<span class="c1"># are not independently confirmed by the summary table, so the two least</span>
+<span class="c1"># significant ones (-17.2 and -20.8 dB) are where a discrepancy would</span>
+<span class="c1"># hide. Until someone reads Table B.2.1-1 itself, the entry pins the two</span>
+<span class="c1"># figures it reproduces and leaves the third unasserted: pinning a number</span>
+<span class="c1"># we cannot source would be worse than pinning none.</span>
+
+<span class="nd">@register_delay_profile</span><span class="p">(</span><span class="s2">&quot;EPA&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_epa</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extended Pedestrian A (3GPP TS 36.101 Table B.2.1-1).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span><span class="n">PowerDelayProfile</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">190</span><span class="p">,</span> <span class="mi">410</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">17.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">20.8</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;EPA&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;3GPP TS 36.101 Table B.2.1-1&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;max_excess_delay_ns&quot;</span><span class="p">:</span> <span class="mi">410</span><span class="p">})</span>
+
+
+<span class="nd">@register_delay_profile</span><span class="p">(</span><span class="s2">&quot;EVA&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_eva</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extended Vehicular A (3GPP TS 36.101 Table B.2.1-2).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span><span class="n">PowerDelayProfile</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">310</span><span class="p">,</span> <span class="mi">370</span><span class="p">,</span> <span class="mi">710</span><span class="p">,</span> <span class="mi">1090</span><span class="p">,</span> <span class="mi">1730</span><span class="p">,</span> <span class="mi">2510</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.4</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.6</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">7.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">12.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">16.9</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;EVA&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;3GPP TS 36.101 Table B.2.1-2&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s2">&quot;rms_delay_spread_ns&quot;</span><span class="p">:</span> <span class="mi">357</span><span class="p">,</span>
+                    <span class="s2">&quot;max_excess_delay_ns&quot;</span><span class="p">:</span> <span class="mi">2510</span><span class="p">})</span>
+
+
+<span class="nd">@register_delay_profile</span><span class="p">(</span><span class="s2">&quot;ETU&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_etu</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerDelayProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extended Typical Urban (3GPP TS 36.101 Table B.2.1-3).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span><span class="n">PowerDelayProfile</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">230</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1600</span><span class="p">,</span> <span class="mi">2300</span><span class="p">,</span> <span class="mi">5000</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">7.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+        <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;ETU&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;3GPP TS 36.101 Table B.2.1-3&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s2">&quot;rms_delay_spread_ns&quot;</span><span class="p">:</span> <span class="mi">991</span><span class="p">,</span>
+                    <span class="s2">&quot;max_excess_delay_ns&quot;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_taps_fit</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">PowerDelayProfile</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                      <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise if the signal is too short to carry the profile&#39;s delays.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    profile : PowerDelayProfile</span>
+<span class="sd">        Model whose longest path must land inside the signal.</span>
+<span class="sd">    fs : float</span>
+<span class="sd">        Sampling rate in Hz, which fixes where the delays land.</span>
+<span class="sd">    n_samples : int</span>
+<span class="sd">        Length of the signal along the time axis.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the longest path lands at or beyond the last sample.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; profile = get_delay_profile(&quot;ETU&quot;)   # longest path at 5000 ns</span>
+<span class="sd">    &gt;&gt;&gt; validate_taps_fit(profile, fs=15.36e6, n_samples=1024)</span>
+<span class="sd">    &gt;&gt;&gt; validate_taps_fit(profile, fs=15.36e6, n_samples=32)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    comnumpy.exceptions.ShapeError: expected at least 78 samples ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_delay</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">delays_ns</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n_samples</span> <span class="o">&lt;=</span> <span class="n">max_delay</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected at least </span><span class="si">{</span><span class="n">max_delay</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> samples to carry the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">profile</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> profile at fs=</span><span class="si">{</span><span class="n">fs</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> Hz (its longest &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;path lands on sample </span><span class="si">{</span><span class="n">max_delay</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2"> -- &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;lengthen the signal or raise the sampling rate.&quot;</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

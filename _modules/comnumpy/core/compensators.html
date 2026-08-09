@@ -1,0 +1,2289 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.compensators &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/compensators';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.compensators</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.compensators</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">toeplitz</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">least_squares</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFittedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">hard_projector</span><span class="p">,</span> <span class="n">zf_estimator</span><span class="p">,</span> <span class="n">mmse_estimator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Amplifier</span><span class="p">,</span> <span class="n">DataExtractor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_data</span>
+
+
+<div class="viewcode-block" id="DataAidedMixin">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedMixin</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataAidedMixin.get_reference">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.get_reference">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the reference signal associated with the model.</span>
+
+<span class="sd">        The reference is a plain array. When it is known in advance</span>
+<span class="sd">        (preamble, training sequence) it is passed directly as</span>
+<span class="sd">        ``reference=...``; when it is produced by the chain itself, the</span>
+<span class="sd">        edge is declared with ``Sequential(wiring={&quot;block.reference&quot;:</span>
+<span class="sd">        &quot;source&quot;})`` so that each Monte-Carlo run uses its own reference.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The reference signal array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DCCorrector">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DCCorrector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DCCorrector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Remove the DC component of a signal and set it to a target value.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The empirical mean :math:`\mu_x` of the input is subtracted and</span>
+<span class="sd">    replaced by the target value :math:`\alpha`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       y[n] = x[n] - \mu_x + \alpha, \qquad</span>
+<span class="sd">       \mu_x = \frac{1}{N} \sum_{n=0}^{N-1} x[n]</span>
+
+<span class="sd">    so that the output satisfies the DC constraint</span>
+<span class="sd">    :math:`\frac{1}{N}\sum_n y[n] = \alpha`. This is the digital</span>
+<span class="sd">    counterpart of the DC-offset cancellation performed at the output of</span>
+<span class="sd">    a direct-conversion (zero-IF) receiver, where the self-mixing of the</span>
+<span class="sd">    local oscillator adds a constant term to the baseband signal.</span>
+
+<span class="sd">    Axes: *declared axis* -- the mean :math:`\mu_x` is computed along</span>
+<span class="sd">    ``axis`` (default 0) and broadcast over the remaining axes; use</span>
+<span class="sd">    ``axis=-1`` for the canonical serial layout ``(..., N)``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    value : float, optional</span>
+<span class="sd">        Target mean value :math:`\alpha` of the output. Default is 0.0,</span>
+<span class="sd">        i.e. a zero-mean output.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis along which :math:`\mu_x` is computed. Default is 0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the corrector instance. Default is ``&quot;mean_corrector&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    B. Razavi, &quot;Design considerations for direct-conversion receivers,&quot;</span>
+<span class="sd">    IEEE Transactions on Circuits and Systems II, vol. 44, no. 6,</span>
+<span class="sd">    pp. 428-435, 1997 (DC offset in zero-IF receivers).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = np.array([1.0, 2.0, 3.0, 6.0])   # mean 3.0</span>
+<span class="sd">    &gt;&gt;&gt; print(DCCorrector()(x))</span>
+<span class="sd">    [-2. -1.  0.  3.]</span>
+<span class="sd">    &gt;&gt;&gt; print(DCCorrector(2.0)(x))</span>
+<span class="sd">    [0. 1. 2. 5.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;mean_corrector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">x_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="Normalizer">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.Normalizer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Normalizer</span><span class="p">(</span><span class="n">Amplifier</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Scale a signal by a gain derived from one of its own statistics.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The block is an ``Amplifier`` whose gain :math:`\alpha` is measured on</span>
+<span class="sd">    the input instead of being configured:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       y[n] = \alpha \, x[n]</span>
+
+<span class="sd">    The gain depends on the selected ``method`` and on the target value</span>
+<span class="sd">    :math:`v`:</span>
+
+<span class="sd">    - **&#39;amp&#39;** -- fixed gain, no measurement:</span>
+
+<span class="sd">      .. math::</span>
+
+<span class="sd">         \alpha = v</span>
+
+<span class="sd">    - **&#39;abs&#39;** -- the largest modulus becomes :math:`v`:</span>
+
+<span class="sd">      .. math::</span>
+
+<span class="sd">         \alpha = \frac{v}{\max_n |x[n]|}</span>
+
+<span class="sd">    - **&#39;var&#39;** -- the output variance becomes :math:`v`, with</span>
+<span class="sd">      :math:`\sigma_x^2` the empirical variance of the input:</span>
+
+<span class="sd">      .. math::</span>
+
+<span class="sd">         \alpha = \sqrt{\frac{v}{\sigma_x^2}}</span>
+
+<span class="sd">    - **&#39;max&#39;** -- the largest rectangular excursion becomes :math:`v`</span>
+<span class="sd">      (the useful one before a DAC or a clipping stage):</span>
+
+<span class="sd">      .. math::</span>
+
+<span class="sd">         \alpha = \frac{v}{\max\left(\max_n |\Re e(x[n])|,\;</span>
+<span class="sd">                                     \max_n |\Im m(x[n])|\right)}</span>
+
+<span class="sd">    Axes: *element-wise* -- the gain :math:`\alpha` is a single scalar</span>
+<span class="sd">    measured over the whole array in ``prepare()``, then applied</span>
+<span class="sd">    pointwise.</span>
+
+<span class="sd">    Unlike ``Amplifier``, the gain is *not* a parameter here: it is</span>
+<span class="sd">    measured, so it is exposed as ``gain_`` (decision D23) and the</span>
+<span class="sd">    inherited ``gain`` argument is removed from the constructor. The</span>
+<span class="sd">    first positional argument is therefore ``method``, which makes</span>
+<span class="sd">    ``Normalizer(&#39;max&#39;)`` mean what it reads.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    method : {&#39;amp&#39;, &#39;abs&#39;, &#39;var&#39;, &#39;max&#39;}, optional</span>
+<span class="sd">        Statistic used to derive the gain :math:`\alpha`. Default is</span>
+<span class="sd">        ``&#39;amp&#39;`` (constant gain). It is the first positional argument.</span>
+<span class="sd">    value : float, optional, keyword-only</span>
+<span class="sd">        Target value :math:`v` of the selected statistic. Must be</span>
+<span class="sd">        strictly positive. Default is 1.0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the instance. Default is ``&quot;signal_amplifier&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gain_ : float</span>
+<span class="sd">        Gain :math:`\alpha` actually applied (data-dependent, hence the</span>
+<span class="sd">        trailing underscore, decision D23). Measured from the input in</span>
+<span class="sd">        ``prepare()`` for every method except ``&#39;amp&#39;``, and overwritten</span>
+<span class="sd">        at each call.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``value`` is not strictly positive, or if ``method`` is not</span>
+<span class="sd">        one of ``&#39;amp&#39;``, ``&#39;abs&#39;``, ``&#39;var&#39;``, ``&#39;max&#39;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 3 (average energy and power of a</span>
+<span class="sd">    constellation, and their normalization).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = np.array([1.0, 2.0, 3.0, 4.0])</span>
+<span class="sd">    &gt;&gt;&gt; print(Normalizer(&#39;max&#39;, value=2.0)(x))</span>
+<span class="sd">    [0.5 1.  1.5 2. ]</span>
+<span class="sd">    &gt;&gt;&gt; y = Normalizer(method=&#39;var&#39;)(x)          # unit-variance output</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(y, 4), round(float(np.var(y)), 6))</span>
+<span class="sd">    [0.8944 1.7889 2.6833 3.5777] 1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;amp&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">)</span>
+
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;amp&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;amp&quot;</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># the gain of Amplifier is configured, the one of Normalizer is</span>
+    <span class="c1"># measured: drop the inherited parameter (D23) so that the first</span>
+    <span class="c1"># positional argument is `method`</span>
+    <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">gain_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- pass the statistic as the first &quot;</span>
+                <span class="s2">&quot;positional argument, e.g. Normalizer(&#39;max&#39;, value=2.0); &quot;</span>
+                <span class="s2">&quot;the gain is measured, not configured.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Normalizer: value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">, expected a strictly &quot;</span>
+                <span class="s2">&quot;positive target -- set value to the wanted amplitude, &quot;</span>
+                <span class="s2">&quot;power or variance.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;amp&quot;</span><span class="p">:</span>
+                <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">case</span> <span class="s2">&quot;abs&quot;</span><span class="p">:</span>
+                <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">case</span> <span class="s2">&quot;var&quot;</span><span class="p">:</span>
+                <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">case</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+                <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">X</span><span class="p">))),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">X</span><span class="p">)))])</span>
+                <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">max_value</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="c1"># unreachable through __init__ (validated in __post_init__),</span>
+                <span class="c1"># reachable if `method` is reassigned after construction</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- restore a valid statistic name.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="n">gain</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Amplifier.forward reads the configured `gain`; the Normalizer</span>
+        <span class="c1"># applies the gain it measured in prepare() instead (D23).</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">*</span> <span class="n">X</span></div>
+
+
+
+<div class="viewcode-block" id="BlindIQCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindIQCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlindIQCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind IQ-imbalance compensator by whitening of the real covariance matrix.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A receiver with gain and quadrature imbalance delivers an</span>
+<span class="sd">    *improper* (non-circular) signal: the in-phase and quadrature</span>
+<span class="sd">    components no longer have equal power, nor are they uncorrelated.</span>
+<span class="sd">    The compensator applies the widely-linear transformation</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = c \left(\alpha \, \Re e(x[n]) + \beta \, \Im m(x[n])\right),</span>
+<span class="sd">        \qquad c = \sqrt{\frac{P}{2}}</span>
+
+<span class="sd">    where the complex coefficients :math:`\alpha` and :math:`\beta` are</span>
+<span class="sd">    read column-wise from the :math:`2 \times 2` whitening matrix</span>
+<span class="sd">    :math:`\mathbf{M}`, i.e.</span>
+<span class="sd">    :math:`\alpha = M_{00} + j M_{10}` and</span>
+<span class="sd">    :math:`\beta = M_{01} + j M_{11}`. Writing</span>
+<span class="sd">    :math:`\mathbf{x}[n] = [\Re e(x[n]),\, \Im m(x[n])]^T`, the estimator</span>
+<span class="sd">    eigen-decomposes the empirical covariance matrix</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\mathbf{R}} = \frac{1}{N} \sum_{n=0}^{N-1}</span>
+<span class="sd">        \mathbf{x}[n] \mathbf{x}^T[n]</span>
+<span class="sd">        = \mathbf{U} \boldsymbol\Lambda \mathbf{U}^T,</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \mathbf{M} = \boldsymbol\Lambda^{-1/2} \mathbf{U}^T</span>
+
+<span class="sd">    so that :math:`\mathbf{M} \widehat{\mathbf{R}} \mathbf{M}^T =</span>
+<span class="sd">    \mathbf{I}_2`. The compensated signal is therefore second-order</span>
+<span class="sd">    circular with the requested mean power :math:`P`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbb{E}\left[\Re e^2(y[n])\right] =</span>
+<span class="sd">        \mathbb{E}\left[\Im m^2(y[n])\right] = \frac{P}{2},</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \mathbb{E}\left[\Re e(y[n]) \Im m(y[n])\right] = 0</span>
+
+<span class="sd">    Whitening only constrains the second-order statistics: the residual</span>
+<span class="sd">    :math:`2 \times 2` rotation/reflection (and hence a possible I/Q swap</span>
+<span class="sd">    or sign flip) is left to a downstream phase compensator. The</span>
+<span class="sd">    estimator is therefore *not* the Gram-Schmidt orthogonalization</span>
+<span class="sd">    procedure (GSOP) of Fatadin *et al.*, which whitens by successive</span>
+<span class="sd">    projection and keeps the in-phase axis fixed.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    :math:`2 \times 2` covariance is estimated over the whole record.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    should_fit : bool, optional</span>
+<span class="sd">        If True (default), :math:`\alpha` and :math:`\beta` are</span>
+<span class="sd">        re-estimated from the input at every call (per-block regime,</span>
+<span class="sd">        D22). If False, the coefficients of the last ``fit`` are reused.</span>
+<span class="sd">    coef : float, optional, keyword-only</span>
+<span class="sd">        Target mean power :math:`P = \mathbb{E}[|y[n]|^2]` of the</span>
+<span class="sd">        compensated signal. Default is 1.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the compensator instance. Default is</span>
+<span class="sd">        ``&quot;iq_compensator&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alpha_ : complex</span>
+<span class="sd">        Estimated coefficient :math:`\alpha` applied to the in-phase</span>
+<span class="sd">        component (data-dependent, hence the trailing underscore,</span>
+<span class="sd">        decision D23; initialized to 1).</span>
+<span class="sd">    beta_ : complex</span>
+<span class="sd">        Estimated coefficient :math:`\beta` applied to the quadrature</span>
+<span class="sd">        component (data-dependent, hence the trailing underscore,</span>
+<span class="sd">        decision D23; initialized to 0).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * I. Fatadin, S. J. Savory, D. Ives, &quot;Compensation of quadrature</span>
+<span class="sd">      imbalance in an optical QPSK coherent receiver,&quot; IEEE Photonics</span>
+<span class="sd">      Technology Letters, vol. 20, no. 20, pp. 1733-1735, 2008,</span>
+<span class="sd">      doi: 10.1109/LPT.2008.2004630.</span>
+<span class="sd">    * P. J. Schreier, L. L. Scharf, *Statistical Signal Processing of</span>
+<span class="sd">      Complex-Valued Data*, Cambridge University Press, 2010, Chapter 2</span>
+<span class="sd">      (properness, circularity and widely-linear transformations).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(0)</span>
+<span class="sd">    &gt;&gt;&gt; s = (rng.integers(0, 2, 2000) * 2 - 1) + 1j * (rng.integers(0, 2, 2000) * 2 - 1)</span>
+<span class="sd">    &gt;&gt;&gt; x = 2 * s.real + 1j * (0.5 * s.real + s.imag)   # gain + quadrature imbalance</span>
+<span class="sd">    &gt;&gt;&gt; y = BlindIQCompensator(coef=1.0)(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.var(y.real)), 3), round(float(np.var(y.imag)), 3))</span>
+<span class="sd">    0.499 0.5</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(abs(np.mean(y.real * y.imag))), 3), round(float(np.mean(np.abs(y)**2)), 3))</span>
+<span class="sd">    0.0 1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;iq_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
+    <span class="n">alpha_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">beta_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">imag</span><span class="p">])</span>
+
+        <span class="c1"># compute covariance matrix</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+
+        <span class="c1"># perform eigenvalue decomposition</span>
+        <span class="n">V</span><span class="p">,</span> <span class="n">U</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+
+        <span class="c1"># perform whitening</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">V</span><span class="p">))</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">M</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">M</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coef</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">coef</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">real</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="BlindCFOCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindCFOCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlindCFOCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind carrier frequency offset compensator (fourth-power periodogram).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The input carries a residual carrier frequency offset</span>
+<span class="sd">    :math:`\omega_0` (in rad/sample), which the block removes:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = s[n] \, e^{j \omega_0 n}, \qquad</span>
+<span class="sd">        y[n] = x[n] \, e^{-j \widehat{\omega}_0 n}</span>
+
+<span class="sd">    For a QPSK-like constellation, raising the signal to the fourth power</span>
+<span class="sd">    wipes out the modulation (:math:`s^4[n]` is constant up to a sign)</span>
+<span class="sd">    and leaves a pure tone at :math:`4\omega_0`. The offset is therefore</span>
+<span class="sd">    obtained by maximizing the periodogram of :math:`x^4[n]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\omega}_0 = \frac{1}{4} \arg \max_{\omega}</span>
+<span class="sd">        \frac{1}{N} \left| \sum_{n=0}^{N-1} x^4[n] \, e^{-j\omega n}</span>
+<span class="sd">        \right|^2</span>
+
+<span class="sd">    The maximization is performed in two stages: an optional coarse grid</span>
+<span class="sd">    search over :math:`\omega_0`, followed by ``N_iter`` refinements of</span>
+<span class="sd">    the criterion by Newton&#39;s method (or by plain gradient ascent). The</span>
+<span class="sd">    Newton step uses the exact first and second derivatives of the</span>
+<span class="sd">    periodogram with respect to :math:`\omega`.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    correction :math:`e^{-j\widehat{\omega}_0 n}` uses the sample index</span>
+<span class="sd">    :math:`n` along that axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    w0_init : float, optional</span>
+<span class="sd">        Initial value of :math:`\omega_0` in rad/sample, used as the</span>
+<span class="sd">        starting point when ``grid_search`` is False. Default is 0.0.</span>
+<span class="sd">    N_iter : int, optional, keyword-only</span>
+<span class="sd">        Number :math:`N_{iter}` of local refinement steps. Default is 3.</span>
+<span class="sd">    should_fit : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), :math:`\widehat{\omega}_0` is re-estimated at</span>
+<span class="sd">        every call (per-block regime, D22); otherwise the value of the</span>
+<span class="sd">        last ``fit`` is reused.</span>
+<span class="sd">    grid_search : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), a coarse grid search initializes the local</span>
+<span class="sd">        refinement.</span>
+<span class="sd">    save_history : bool, optional, keyword-only</span>
+<span class="sd">        If True, every intermediate value of :math:`\omega_0` is appended</span>
+<span class="sd">        to ``history``. Default is False.</span>
+<span class="sd">    method : {&quot;grad&quot;, &quot;newton&quot;}, optional, keyword-only</span>
+<span class="sd">        Local optimizer. Default is ``&quot;newton&quot;``.</span>
+<span class="sd">    step_size : float, optional, keyword-only</span>
+<span class="sd">        Gradient step used when ``method=&quot;grad&quot;``. Default is 1e-8.</span>
+<span class="sd">    grid_search_tuple : tuple, optional, keyword-only</span>
+<span class="sd">        ``(start, stop, step)`` of the grid over :math:`\omega_0`, in</span>
+<span class="sd">        rad/sample. Default is ``(-0.1, 0.1, 0.0001)``.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the compensator instance. Default is</span>
+<span class="sd">        ``&quot;cfo_compensator&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    w0_ : float</span>
+<span class="sd">        Estimated frequency offset :math:`\widehat{\omega}_0` in</span>
+<span class="sd">        rad/sample (data-dependent, hence the trailing underscore,</span>
+<span class="sd">        decision D23; None before the first ``fit``).</span>
+<span class="sd">    history : list</span>
+<span class="sd">        Successive iterates of :math:`\omega_0` when</span>
+<span class="sd">        ``save_history=True``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    NotFittedError</span>
+<span class="sd">        If ``forward`` is called with ``should_fit=False`` before any</span>
+<span class="sd">        ``fit`` (decision D23).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * A. J. Viterbi, A. M. Viterbi, &quot;Nonlinear estimation of</span>
+<span class="sd">      PSK-modulated carrier phase with application to burst digital</span>
+<span class="sd">      transmission,&quot; IEEE Transactions on Information Theory, vol. 29,</span>
+<span class="sd">      no. 4, pp. 543-551, 1983 (the fourth-power nonlinearity).</span>
+<span class="sd">    * D. C. Rife, R. R. Boorstyn, &quot;Single-tone parameter estimation from</span>
+<span class="sd">      discrete-time observations,&quot; IEEE Transactions on Information</span>
+<span class="sd">      Theory, vol. 20, no. 5, pp. 591-598, 1974 (periodogram maximization</span>
+<span class="sd">      and its local refinement).</span>
+<span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">      McGraw-Hill, 2008, Chapter 5 (carrier and symbol synchronization).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(2)</span>
+<span class="sd">    &gt;&gt;&gt; s = alphabet[rng.integers(0, 4, 500)]</span>
+<span class="sd">    &gt;&gt;&gt; x = s * np.exp(1j * 0.01 * np.arange(500))   # omega_0 = 0.01 rad/sample</span>
+<span class="sd">    &gt;&gt;&gt; compensator = BlindCFOCompensator()</span>
+<span class="sd">    &gt;&gt;&gt; y = compensator(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(compensator.w0_), 5))</span>
+<span class="sd">    0.01</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">w0_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">N_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">grid_search</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">save_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;grad&quot;</span><span class="p">,</span> <span class="s2">&quot;newton&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;newton&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">grid_search_tuple</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0001</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cfo_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">grid_search_array</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">history</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">w0_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x4</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">4</span>
+        <span class="n">dtft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dtft</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">N</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_dtft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">N_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+        <span class="n">dtft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="o">*</span><span class="n">N_vect</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dtft</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intermediate_result</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_history</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intermediate_result</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w0</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="n">w0</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x4</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">4</span>
+        <span class="n">N_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+        <span class="n">step_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_size</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_search</span><span class="p">:</span>
+            <span class="n">w_vect</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_search_array</span>
+            <span class="n">cost_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w_vect</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">w_vect</span><span class="p">):</span>
+                <span class="n">cost_vect</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+
+            <span class="n">index_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">cost_vect</span><span class="p">)</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">w_vect</span><span class="p">[</span><span class="n">index_max</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_iter</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;grad&quot;</span><span class="p">:</span>
+                <span class="n">dtft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="n">dtft_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">N_vect</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dtft_diff</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft</span><span class="p">)</span> <span class="o">+</span> <span class="n">dtft</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft_diff</span><span class="p">))</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">grad</span><span class="o">.</span><span class="n">real</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
+                <span class="n">dtft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="n">dtft_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">N_vect</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="n">dtft_diff2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">N_vect</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dtft_diff</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft</span><span class="p">)</span> <span class="o">+</span> <span class="n">dtft</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft_diff</span><span class="p">))</span>
+                <span class="n">J</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">dtft_diff2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dtft_diff</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="o">-</span><span class="n">grad</span><span class="o">.</span><span class="n">real</span><span class="o">/</span><span class="n">J</span><span class="o">.</span><span class="n">real</span>
+
+            <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">+</span> <span class="n">h</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">w0_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">N_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w0_init</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">w0_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="s2">&quot;BlindCFOCompensator: forward called with should_fit=False &quot;</span>
+                <span class="s2">&quot;but fit() was never called -- call fit(x, w0_init) first.&quot;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">w0_</span><span class="o">*</span><span class="n">N_vect</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+
+
+<div class="viewcode-block" id="BlindPhaseCompensation">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindPhaseCompensation">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlindPhaseCompensation</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind phase compensator minimizing the error vector magnitude (EVM).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The input carries an unknown constant phase offset, removed by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = x[n] \, e^{j \widehat{\theta}}</span>
+
+<span class="sd">    No reference is available (blind regime): the estimator uses the</span>
+<span class="sd">    constellation itself as a soft reference and minimizes the squared</span>
+<span class="sd">    distance to the nearest alphabet point, i.e. the EVM,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\theta} = \arg \min_{\theta} \sum_{n=0}^{N-1}</span>
+<span class="sd">        \left| x[n] e^{j\theta}</span>
+<span class="sd">        - \mathcal{P}_{\mathcal{A}}\!\left(x[n] e^{j\theta}\right)</span>
+<span class="sd">        \right|^2</span>
+
+<span class="sd">    where :math:`\mathcal{P}_{\mathcal{A}}` is the hard projection onto</span>
+<span class="sd">    the alphabet :math:`\mathcal{A}`. This is the decision-directed</span>
+<span class="sd">    carrier phase estimator; the criterion is solved by a nonlinear</span>
+<span class="sd">    least-squares search (``scipy.optimize.least_squares``) started at</span>
+<span class="sd">    :math:`\theta_0`. Being decision-directed, it inherits the</span>
+<span class="sd">    :math:`2\pi/M` phase ambiguity of the constellation, so</span>
+<span class="sd">    :math:`\theta_0` must lie in the correct basin.</span>
+
+<span class="sd">    Axes: *declared axis* -- the estimation stage expects a 1D serial</span>
+<span class="sd">    signal ``(N,)`` (the residuals are stacked into a single vector); the</span>
+<span class="sd">    correction itself is element-wise.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Modulation alphabet :math:`\mathcal{A}`, a 1D array of</span>
+<span class="sd">        constellation symbols.</span>
+<span class="sd">    theta0 : float, optional, keyword-only</span>
+<span class="sd">        Starting point :math:`\theta_0` of the optimizer, in radians.</span>
+<span class="sd">        Default is 0.</span>
+<span class="sd">    should_fit : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), :math:`\widehat{\theta}` is re-estimated at</span>
+<span class="sd">        every call (per-block regime, D22); otherwise the value of the</span>
+<span class="sd">        last ``fit`` is reused.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor. Default is ``&quot;phase correction&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_ : float</span>
+<span class="sd">        Estimated phase :math:`\widehat{\theta}` in radians</span>
+<span class="sd">        (data-dependent, hence the trailing underscore, decision D23).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    NotFittedError</span>
+<span class="sd">        If ``forward`` is called with ``should_fit=False`` before any</span>
+<span class="sd">        ``fit`` (decision D23).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 5 (decision-directed carrier phase</span>
+<span class="sd">    estimation).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(1)</span>
+<span class="sd">    &gt;&gt;&gt; s = alphabet[rng.integers(0, 4, 200)]</span>
+<span class="sd">    &gt;&gt;&gt; compensator = BlindPhaseCompensation(alphabet)</span>
+<span class="sd">    &gt;&gt;&gt; y = compensator(s * np.exp(-1j * 0.3))    # a -0.3 rad rotation</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(compensator.theta_), 4), bool(np.allclose(y, s)))</span>
+<span class="sd">    0.3 True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">theta0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;phase correction&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">y_est</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">y_est</span>
+        <span class="n">error_real</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">error</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">error</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">error_real</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">least_squares</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">X</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="s2">&quot;BlindPhaseCompensation: forward called with should_fit=False &quot;</span>
+                <span class="s2">&quot;but fit() was never called -- call fit(x) first.&quot;</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="LinearEqualizer">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.LinearEqualizer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearEqualizer</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Block linear equalizer (ZF or MMSE) for a known FIR channel.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The block input is the received signal of a channel with inter-symbol</span>
+<span class="sd">    interference (ISI), of known impulse response :math:`h[l]` of length</span>
+<span class="sd">    :math:`L`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = \sum_{l=0}^{L-1} h[l] \, s[n-l] + b[n], \qquad</span>
+<span class="sd">        b[n] \sim \mathcal{CN}\left(0, \sigma^2\right)</span>
+
+<span class="sd">    Stacking the :math:`N` received samples gives</span>
+<span class="sd">    :math:`\mathbf{x} = \mathbf{H}\mathbf{s} + \mathbf{b}`, where</span>
+<span class="sd">    :math:`\mathbf{H}` is the :math:`N \times (N-L+1)` banded Toeplitz</span>
+<span class="sd">    convolution matrix built from :math:`h[l]`. The block returns the</span>
+<span class="sd">    estimate :math:`\mathbf{y} = \widehat{\mathbf{s}}` of the</span>
+<span class="sd">    :math:`N-L+1` transmitted symbols, by one of two closed forms:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\mathbf{s}}_{\mathrm{ZF}} &amp;=</span>
+<span class="sd">        \mathbf{H}^{\dagger} \mathbf{x}</span>
+<span class="sd">        = \left(\mathbf{H}^H \mathbf{H}\right)^{-1} \mathbf{H}^H \mathbf{x} \\</span>
+<span class="sd">        \widehat{\mathbf{s}}_{\mathrm{MMSE}} &amp;=</span>
+<span class="sd">        \left(\mathbf{H}^H \mathbf{H}</span>
+<span class="sd">        + \sigma^2 \mathbf{I}\right)^{-1} \mathbf{H}^H \mathbf{x}</span>
+
+<span class="sd">    The zero-forcing solution cancels the ISI exactly but amplifies the</span>
+<span class="sd">    noise wherever :math:`\mathbf{H}` is ill-conditioned; the MMSE</span>
+<span class="sd">    solution trades residual ISI against noise enhancement through the</span>
+<span class="sd">    loading term :math:`\sigma^2` (written for unit-power symbols,</span>
+<span class="sd">    :math:`\mathbb{E}[|s[n]|^2] = 1`). The two coincide when</span>
+<span class="sd">    :math:`\sigma^2 = 0`.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` and</span>
+<span class="sd">    returns ``(N-L+1,)``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h : np.ndarray</span>
+<span class="sd">        Channel impulse response :math:`h[l]`, a 1D array of length</span>
+<span class="sd">        :math:`L`. It is *configured*, not estimated: use</span>
+<span class="sd">        ``DataAidedFIRCompensator`` when the channel is unknown.</span>
+<span class="sd">    method : {&quot;zf&quot;, &quot;mmse&quot;}, optional, keyword-only</span>
+<span class="sd">        Closed form used. Default is ``&quot;zf&quot;``.</span>
+<span class="sd">    sigma2 : float, optional, keyword-only</span>
+<span class="sd">        Noise variance :math:`\sigma^2`, used by ``&quot;mmse&quot;`` only.</span>
+<span class="sd">        Default is 0.0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the equalizer instance. Default is ``&quot;equalizer&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 9 (linear equalization of band-limited</span>
+<span class="sd">    channels: peak-distortion / zero-forcing and MMSE criteria).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; h = np.array([1.0, 0.5])</span>
+<span class="sd">    &gt;&gt;&gt; s = np.array([1.0, -1.0, 1.0, 1.0])</span>
+<span class="sd">    &gt;&gt;&gt; x = np.convolve(s, h)                       # noiseless ISI channel</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(LinearEqualizer(h)(x).real, 6))</span>
+<span class="sd">    [ 1. -1.  1.  1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(LinearEqualizer(h, method=&quot;mmse&quot;, sigma2=0.1)(x).real, 3))</span>
+<span class="sd">    [ 0.862 -0.827  0.872  0.973]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="s2">&quot;mmse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;equalizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_H</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+        <span class="n">Nx</span> <span class="o">=</span> <span class="n">N</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nx</span><span class="p">)]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nx</span><span class="p">)]</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">toeplitz</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">H</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_H</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;zf&quot;</span><span class="p">:</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;mmse&quot;</span><span class="p">:</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="DataAidedFIRCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedFIRCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedFIRCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided FIR compensator: least-squares channel estimation, then deconvolution.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The block observes the output of an unknown FIR channel driven by a</span>
+<span class="sd">    known reference :math:`d[n]` of length :math:`N` (preamble, training</span>
+<span class="sd">    sequence):</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = \sum_{l} h[l] \, d[n-l]</span>
+
+<span class="sd">    The impulse response is estimated by least squares (zero-forcing</span>
+<span class="sd">    criterion) from the :math:`N \times N` lower-triangular Toeplitz</span>
+<span class="sd">    convolution matrix :math:`\mathbf{D}` built from :math:`d[n]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\mathbf{h}} = \arg \min_{\mathbf{h}}</span>
+<span class="sd">        \left\| \mathbf{D} \mathbf{h} - \mathbf{x} \right\|^2</span>
+<span class="sd">        = \mathbf{D}^{\dagger} \mathbf{x}</span>
+
+<span class="sd">    The correction is the deconvolution of the input by that estimate,</span>
+<span class="sd">    so that :math:`y[n] \simeq d[n]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \left(x * \widehat{h}^{-1}\right)[n]</span>
+
+<span class="sd">    Because :math:`\mathbf{D}` is square here, the input and the</span>
+<span class="sd">    reference must have the same length :math:`N`.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` of the</span>
+<span class="sd">    same length as ``reference``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reference : np.ndarray</span>
+<span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
+<span class="sd">        the chain itself, declare the edge with</span>
+<span class="sd">        ``Sequential(wiring={&quot;data_aided_fir.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        instead of freezing an array.</span>
+<span class="sd">    should_fit : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), the channel is re-estimated at every call</span>
+<span class="sd">        (per-block regime, D22); otherwise the estimate of the last</span>
+<span class="sd">        ``fit`` is reused.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor. Default is ``&quot;data_aided_fir&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h_ : np.ndarray</span>
+<span class="sd">        Estimated impulse response :math:`\widehat{\mathbf{h}}`</span>
+<span class="sd">        (data-dependent, hence the trailing underscore, decision D23).</span>
+<span class="sd">        The response is never configured here: use</span>
+<span class="sd">        ``LinearEqualizer(h)`` when it is already known.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    NotFittedError</span>
+<span class="sd">        If ``forward`` is called with ``should_fit=False`` before any</span>
+<span class="sd">        ``fit`` (decision D23).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 9 (training-sequence channel estimation</span>
+<span class="sd">    and zero-forcing equalization).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x_ref = np.array([1.0, -1.0, 1.0, 1.0])</span>
+<span class="sd">    &gt;&gt;&gt; received = np.convolve(x_ref, [1.0, 0.5])[:4]</span>
+<span class="sd">    &gt;&gt;&gt; compensator = DataAidedFIRCompensator(reference=x_ref)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(compensator(received), 6))</span>
+<span class="sd">    [ 1. -1.  1.  1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(compensator.h_, 6) + 0.0)</span>
+<span class="sd">    [1.  0.5 0.  0. ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_fir&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">h_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">toeplitz</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">L</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">LA</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">H</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="s2">&quot;DataAidedFIRCompensator: forward called with &quot;</span>
+                <span class="s2">&quot;should_fit=False but fit() was never called -- call &quot;</span>
+                <span class="s2">&quot;fit(x) first.&quot;</span><span class="p">)</span>
+
+        <span class="n">L</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h_</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">deconvolve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">L</span><span class="o">-</span><span class="mi">1</span><span class="p">)]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DataAidedPhaseCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedPhaseCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedPhaseCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided phase compensator (maximum-likelihood phase from a known reference).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The input carries an unknown constant phase offset with respect to a</span>
+<span class="sd">    known reference :math:`d[n]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = d[n] \, e^{-j\theta} + b[n], \qquad</span>
+<span class="sd">        y[n] = x[n] \, e^{j\widehat{\theta}}</span>
+
+<span class="sd">    In additive white Gaussian noise, the maximum-likelihood estimate of</span>
+<span class="sd">    :math:`\theta` is the argument of the cross-correlation between the</span>
+<span class="sd">    input and the reference at lag zero:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\theta} = \arg \left(</span>
+<span class="sd">        \sum_{n=0}^{N-1} x^*[n] \, d[n] \right)</span>
+
+<span class="sd">    Unlike the blind estimator, this one is free of the :math:`2\pi/M`</span>
+<span class="sd">    constellation ambiguity, since the reference fixes the absolute</span>
+<span class="sd">    phase.</span>
+
+<span class="sd">    Axes: *declared axis* -- estimation expects a 1D serial signal</span>
+<span class="sd">    ``(N,)`` aligned with ``reference``; the correction is element-wise.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reference : np.ndarray</span>
+<span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
+<span class="sd">        the chain itself, declare the edge with</span>
+<span class="sd">        ``Sequential(wiring={&quot;data_aided_phase.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        instead of freezing an array.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor. Default is ``&quot;data_aided_phase&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_ : float</span>
+<span class="sd">        Estimated phase :math:`\widehat{\theta}` in radians</span>
+<span class="sd">        (data-dependent, hence the trailing underscore, decision D23).</span>
+<span class="sd">        Re-estimated at every call (per-block regime, D22).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 5 (data-aided maximum-likelihood carrier</span>
+<span class="sd">    phase estimation).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; d = np.array([1+1j, 1-1j, -1+1j, -1-1j]) / np.sqrt(2)</span>
+<span class="sd">    &gt;&gt;&gt; x = d * np.exp(-1j * np.pi / 4)          # a -pi/4 rotation</span>
+<span class="sd">    &gt;&gt;&gt; compensator = DataAidedPhaseCompensator(reference=d)</span>
+<span class="sd">    &gt;&gt;&gt; y = compensator(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(compensator.theta_), 6), round(float(np.pi / 4), 6))</span>
+<span class="sd">    0.785398 0.785398</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(y, 6))</span>
+<span class="sd">    [ 0.707107+0.707107j  0.707107-0.707107j -0.707107+0.707107j</span>
+<span class="sd">     -0.707107-0.707107j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_phase&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
+        <span class="c1"># (the dataclass decorator recreates the class)</span>
+        <span class="n">DataAidedMixin</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DataAidedComplexGainCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedComplexGainCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided compensator of a flat complex gain (amplitude and phase).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The channel is assumed frequency-flat over the record, so it reduces</span>
+<span class="sd">    to a single complex coefficient. A preamble is extracted from the</span>
+<span class="sd">    input and compared to the known reference :math:`d[n]` of length</span>
+<span class="sd">    :math:`N_d`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{g} = \arg \min_{g} \sum_{n=0}^{N_d-1}</span>
+<span class="sd">        \left| g \, x[n] - d[n] \right|^2</span>
+<span class="sd">        = \frac{\sum_{n} x^*[n] \, d[n]}{\sum_{n} |x[n]|^2}</span>
+
+<span class="sd">    The estimate is the *compensation* gain (an estimate of the inverse</span>
+<span class="sd">    channel gain), applied to the whole record:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \widehat{g} \, x[n]</span>
+
+<span class="sd">    It corrects amplitude and phase at once, and generalizes</span>
+<span class="sd">    ``DataAidedPhaseCompensator``, which keeps only</span>
+<span class="sd">    :math:`\arg(\widehat{g})`.</span>
+
+<span class="sd">    Axes: *declared axis* -- estimation expects a 1D preamble ``(N_d,)``</span>
+<span class="sd">    (after ``extractor``) aligned with ``reference``; the correction is</span>
+<span class="sd">    element-wise on the full record.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reference : np.ndarray</span>
+<span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
+<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        ``Sequential(wiring={&quot;complex_gain_compensator.reference&quot;:</span>
+<span class="sd">        &quot;source&quot;})`` instead of freezing an array.</span>
+<span class="sd">    extractor : DataExtractor, optional, keyword-only</span>
+<span class="sd">        Selects the preamble samples inside the received record. Default</span>
+<span class="sd">        is a pass-through (the whole record is the preamble).</span>
+<span class="sd">    should_fit : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), :math:`\widehat{g}` is re-estimated at every</span>
+<span class="sd">        call (per-block regime, D22); if False, the gain of the last</span>
+<span class="sd">        ``fit`` is reused (reused-preamble regime).</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor. Default is</span>
+<span class="sd">        ``&quot;complex_gain_compensator&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gain_ : complex</span>
+<span class="sd">        Estimated complex gain :math:`\widehat{g}` (data-dependent, hence</span>
+<span class="sd">        the trailing underscore, decision D23).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    NotFittedError</span>
+<span class="sd">        If ``forward`` is called with ``should_fit=False`` before any</span>
+<span class="sd">        ``fit`` (decision D23).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 5 (data-aided estimation of the carrier</span>
+<span class="sd">    amplitude and phase).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; d = np.array([1+1j, 1-1j, -1+1j, -1-1j])</span>
+<span class="sd">    &gt;&gt;&gt; x = 2 * np.exp(1j * np.pi / 3) * d           # channel gain 2 exp(j pi/3)</span>
+<span class="sd">    &gt;&gt;&gt; compensator = DataAidedComplexGainCompensator(reference=d)</span>
+<span class="sd">    &gt;&gt;&gt; y = compensator(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(compensator.gain_, 6))        # 0.5 exp(-j pi/3)</span>
+<span class="sd">    (0.25-0.433013j)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(y, 6))</span>
+<span class="sd">    [ 1.+1.j  1.-1.j -1.+1.j -1.-1.j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">extractor</span><span class="p">:</span> <span class="n">DataExtractor</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DataExtractor</span><span class="p">(</span><span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;complex_gain_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
+    <span class="n">gain_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">complex</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+        <span class="n">x_resized</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">x_pinv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">x_resized</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x_pinv</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
+            <span class="n">x_preamble</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extractor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="s2">&quot;DataAidedComplexGainCompensator: forward called with &quot;</span>
+                <span class="s2">&quot;should_fit=False but fit() was never called -- call &quot;</span>
+                <span class="s2">&quot;fit(x_preamble) first.&quot;</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DataAidedSimpleSynchronizer">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedSimpleSynchronizer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedSimpleSynchronizer</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided frame synchronizer at one-sample resolution (correlation peak).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The received record is a delayed and scaled copy of a known preamble</span>
+<span class="sd">    :math:`d[n]` of length :math:`N_d`, followed by the payload:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = a \, d[n - m_0] + b[n]</span>
+
+<span class="sd">    The delay is obtained from the peak of the cross-correlation between</span>
+<span class="sd">    the input and the preamble, normalized by the preamble energy:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        c[m] = \frac{\sum_{n} x[n+m] \, d^*[n]}{\sum_{n} |d[n]|^2},</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \widehat{m}_0 = \arg \max_{m} \left| c[m] \right|^2</span>
+
+<span class="sd">    That normalization makes the peak a least-squares estimate of the</span>
+<span class="sd">    channel gain itself, :math:`\widehat{a} = c[\widehat{m}_0] \simeq a`.</span>
+<span class="sd">    The output realigns the record on the preamble and, when</span>
+<span class="sd">    ``scale_correction`` is enabled, *divides* it by that gain, so that</span>
+<span class="sd">    the block restores the transmitted signal instead of returning a</span>
+<span class="sd">    doubly-distorted copy of it:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \frac{x[n + \widehat{m}_0]}{\widehat{a}}</span>
+
+<span class="sd">    For a unit channel gain (:math:`a = 1`), :math:`\widehat{a} = 1` and</span>
+<span class="sd">    the block is a pure realignment, whatever the preamble power.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    output length depends on the estimated delay and on ``signal_len``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reference : np.ndarray</span>
+<span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
+<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        instead of freezing an array.</span>
+<span class="sd">    scale_correction : bool, optional</span>
+<span class="sd">        If True (default), the output is divided by the complex peak</span>
+<span class="sd">        :math:`\widehat{a}`; otherwise only the delay is corrected.</span>
+<span class="sd">    save_cross_correlation : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), stores :math:`c[m]` and its lag axis for</span>
+<span class="sd">        inspection or plotting (``plot``).</span>
+<span class="sd">    signal_len : int, optional, keyword-only</span>
+<span class="sd">        Truncates the realigned signal to that length. Default is None</span>
+<span class="sd">        (keep everything after the peak).</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the synchronizer instance. Default is ``&quot;synchronizer&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    delay_ : int</span>
+<span class="sd">        Estimated delay :math:`\widehat{m}_0` in samples (data-dependent,</span>
+<span class="sd">        hence the trailing underscore, decision D23; re-estimated at</span>
+<span class="sd">        every call).</span>
+<span class="sd">    scale_ : complex</span>
+<span class="sd">        Compensation gain :math:`1/\widehat{a}` actually applied, or 1</span>
+<span class="sd">        when ``scale_correction`` is False.</span>
+<span class="sd">    cross_corr_ : np.ndarray</span>
+<span class="sd">        Full normalized cross-correlation :math:`c[m]` (when saved).</span>
+<span class="sd">    n_vect_ : np.ndarray</span>
+<span class="sd">        Lag axis :math:`m` associated with ``cross_corr_``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the reference has zero energy, which makes the normalized</span>
+<span class="sd">        correlation undefined.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 5 (frame and symbol synchronization by</span>
+<span class="sd">    correlation with a known preamble).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; d = np.array([1.0, -1.0, 1.0, 1.0])</span>
+<span class="sd">    &gt;&gt;&gt; x = np.hstack([np.zeros(2), d, [1.0, -1.0]])   # delayed by 2 samples</span>
+<span class="sd">    &gt;&gt;&gt; synchronizer = DataAidedSimpleSynchronizer(d)</span>
+<span class="sd">    &gt;&gt;&gt; y = synchronizer(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(synchronizer.delay_, round(float(synchronizer.scale_), 6))</span>
+<span class="sd">    2 1.0</span>
+<span class="sd">    &gt;&gt;&gt; print(y)</span>
+<span class="sd">    [ 1. -1.  1.  1.  1. -1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(DataAidedSimpleSynchronizer(d)(0.5 * x), 6))   # 6 dB attenuation</span>
+<span class="sd">    [ 1. -1.  1.  1.  1. -1.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">signal_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;synchronizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
+    <span class="n">delay_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">scale_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">cross_corr_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">n_vect_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
+        <span class="n">DataAidedMixin</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+        <span class="n">x_preamble</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">N_preamble</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span>
+
+        <span class="n">x_preamble_padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">x_preamble_padded</span><span class="p">[:</span><span class="n">N_preamble</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_preamble</span>
+
+        <span class="c1"># compute the cross correlation, normalized by the preamble</span>
+        <span class="c1"># energy so that its peak estimates the channel gain a itself</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">energy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;DataAidedSimpleSynchronizer: reference energy is 0, &quot;</span>
+                <span class="s2">&quot;expected a non-zero preamble -- pass the transmitted &quot;</span>
+                <span class="s2">&quot;preamble as reference.&quot;</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">cross_corr</span> <span class="o">/</span> <span class="n">energy</span>
+        <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Find the time delay: the index of the maximum cross-correlation</span>
+        <span class="c1"># minus the length of x minus 1</span>
+        <span class="n">index_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">value_max</span> <span class="o">=</span> <span class="n">cross_corr</span><span class="p">[</span><span class="n">index_max</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_</span> <span class="o">=</span> <span class="n">n_vect</span><span class="p">[</span><span class="n">index_max</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_correction</span><span class="p">:</span>
+            <span class="c1"># compensation gain: the inverse of the estimated channel gain</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">value_max</span>
+
+        <span class="c1"># save correlation if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_cross_correlation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="n">cross_corr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="n">n_vect</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Cross-correlation magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Lag&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DataAidedFineSynchronizer">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedFineSynchronizer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAidedFineSynchronizer</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
+
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided frame synchronizer at fractional-sample resolution.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Same correlation-based model as ``DataAidedSimpleSynchronizer``, but</span>
+<span class="sd">    the delay :math:`\tau_0` is no longer assumed to be an integer number</span>
+<span class="sd">    of samples:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = a \, d\!\left(nT - \tau_0\right) + b[n]</span>
+
+<span class="sd">    The input and the preamble are first interpolated by a polyphase</span>
+<span class="sd">    resampler of factor :math:`U` (``scipy.signal.resample_poly``), which</span>
+<span class="sd">    brings the search grid down to :math:`T/U`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        c[m] = \frac{\sum_{n} x_{\uparrow}[n+m] \,</span>
+<span class="sd">        d_{\uparrow}^*[n]}{\sum_{n} |d_{\uparrow}[n]|^2}, \qquad</span>
+<span class="sd">        \widehat{m}_0 = \max\left(0,\;</span>
+<span class="sd">        \arg \max_{m} \left| c[m] \right|^2 \right)</span>
+
+<span class="sd">    As in ``DataAidedSimpleSynchronizer``, the normalization by the</span>
+<span class="sd">    preamble energy makes the peak an estimate of the channel gain,</span>
+<span class="sd">    :math:`\widehat{a} = c[\widehat{m}_0] \simeq a`. The upsampled record</span>
+<span class="sd">    is realigned on that grid, decimated back by :math:`U`, and</span>
+<span class="sd">    optionally *divided* by that gain:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\tau}_0 = \frac{\widehat{m}_0}{U} T, \qquad</span>
+<span class="sd">        y[n] = \frac{x_{\uparrow}\!\left[U n + \widehat{m}_0\right]}</span>
+<span class="sd">                    {\widehat{a}}</span>
+
+<span class="sd">    Negative lags are clamped to zero, so the block only corrects</span>
+<span class="sd">    non-negative delays.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    output length depends on the estimated delay and on ``signal_len``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reference : np.ndarray</span>
+<span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
+<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        instead of freezing an array.</span>
+<span class="sd">    scale_correction : bool, optional</span>
+<span class="sd">        If True (default), the output is multiplied by the complex peak</span>
+<span class="sd">        :math:`\widehat{a}`; otherwise only the delay is corrected.</span>
+<span class="sd">    up_factor : int, optional, keyword-only</span>
+<span class="sd">        Interpolation factor :math:`U` applied before the correlation;</span>
+<span class="sd">        the timing resolution is :math:`T/U`. Default is 2.</span>
+<span class="sd">    save_cross_correlation : bool, optional, keyword-only</span>
+<span class="sd">        If True (default), stores :math:`c[m]` and its lag axis for</span>
+<span class="sd">        inspection or plotting (``plot``).</span>
+<span class="sd">    signal_len : int, optional, keyword-only</span>
+<span class="sd">        Truncates the realigned signal to that length. Default is None.</span>
+<span class="sd">    d_max : int, optional, keyword-only</span>
+<span class="sd">        Maximum expected delay, in samples of :math:`x`. Restricts the</span>
+<span class="sd">        correlation window and therefore the search range. Default is</span>
+<span class="sd">        None (search over the whole record).</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the synchronizer instance. Default is ``&quot;synchronizer&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    delay_ : int</span>
+<span class="sd">        Estimated delay :math:`\widehat{m}_0`, expressed in *upsampled*</span>
+<span class="sd">        samples (data-dependent, hence the trailing underscore, decision</span>
+<span class="sd">        D23; divide by ``up_factor`` to get it in symbol periods).</span>
+<span class="sd">    scale_ : complex</span>
+<span class="sd">        Compensation gain :math:`1/\widehat{a}` actually applied, or 1</span>
+<span class="sd">        when ``scale_correction`` is False.</span>
+<span class="sd">    cross_corr_ : np.ndarray</span>
+<span class="sd">        Full normalized cross-correlation :math:`c[m]` on the upsampled</span>
+<span class="sd">        grid.</span>
+<span class="sd">    n_vect_ : np.ndarray</span>
+<span class="sd">        Lag axis :math:`m` associated with ``cross_corr_``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the reference has zero energy, which makes the normalized</span>
+<span class="sd">        correlation undefined.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">      McGraw-Hill, 2008, Chapter 5 (frame and symbol synchronization).</span>
+<span class="sd">    * F. M. Gardner, &quot;Interpolation in digital modems -- Part I:</span>
+<span class="sd">      Fundamentals,&quot; IEEE Transactions on Communications, vol. 41, no. 3,</span>
+<span class="sd">      pp. 501-507, 1993 (interpolation-based fractional timing recovery).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; d = np.array([1.0, -1.0, 1.0, 1.0])</span>
+<span class="sd">    &gt;&gt;&gt; x = np.hstack([np.zeros(3), d, np.zeros(3)])   # delayed by 3 samples</span>
+<span class="sd">    &gt;&gt;&gt; synchronizer = DataAidedFineSynchronizer(d, up_factor=2, signal_len=4)</span>
+<span class="sd">    &gt;&gt;&gt; y = synchronizer(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(synchronizer.delay_, synchronizer.delay_ / synchronizer.up_factor, y.shape)</span>
+<span class="sd">    6 3.0 (4,)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">up_factor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">signal_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">d_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;synchronizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
+    <span class="n">delay_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">scale_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">cross_corr_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">n_vect_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
+        <span class="n">DataAidedMixin</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+        <span class="n">x_preamble</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">N_preamble</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span>
+        <span class="n">x_preamble_padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">x_preamble_padded</span><span class="p">[:</span><span class="n">N_preamble</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_preamble</span>
+
+        <span class="c1"># compute the cross correlation, normalized by the preamble</span>
+        <span class="c1"># energy so that its peak estimates the channel gain a itself</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">energy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;DataAidedFineSynchronizer: reference energy is 0, &quot;</span>
+                <span class="s2">&quot;expected a non-zero preamble -- pass the transmitted &quot;</span>
+                <span class="s2">&quot;preamble as reference.&quot;</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>  <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">cross_corr</span> <span class="o">/</span> <span class="n">energy</span>
+        <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Find the time delay: the index of the maximum cross-correlation</span>
+        <span class="c1"># minus the length of x minus 1</span>
+        <span class="n">index_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">value_max</span> <span class="o">=</span> <span class="n">cross_corr</span><span class="p">[</span><span class="n">index_max</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">n_vect</span><span class="p">[</span><span class="n">index_max</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_correction</span><span class="p">:</span>
+            <span class="c1"># compensation gain: the inverse of the estimated channel gain</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">value_max</span>
+
+        <span class="c1"># save correlation if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_cross_correlation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="n">cross_corr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="n">n_vect</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Cross-correlation magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Lag&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">x_preamble</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
+
+        <span class="c1"># upsampling</span>
+        <span class="n">x_up</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">resample_poly</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">up_factor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">x_preamble_up</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">resample_poly</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">up_factor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_max</span><span class="p">:</span>
+            <span class="n">Nmax</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_up</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Nmax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x_up</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_preamble_up</span><span class="p">)</span><span class="o">+</span><span class="nb">int</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">d_max</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">up_factor</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_up</span><span class="p">[:</span><span class="n">Nmax</span><span class="p">],</span> <span class="n">x_preamble_up</span><span class="p">)</span>
+
+        <span class="n">y_up</span> <span class="o">=</span> <span class="n">x_up</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="p">:]</span>
+        <span class="c1"># downsampling</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">resample_poly</span><span class="p">(</span><span class="n">y_up</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">up_factor</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span><span class="o">*</span><span class="n">y</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">y</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

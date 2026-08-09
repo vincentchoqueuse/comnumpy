@@ -1,0 +1,1519 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.ofdm.processors &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/ofdm/processors';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.ofdm.processors</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.ofdm.processors</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span><span class="p">,</span> <span class="n">fftshift</span><span class="p">,</span> <span class="n">ifftshift</span>  <span class="c1"># cupy-compatible (D3)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoConcatenator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_carrier_allocation</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>      <span class="c1"># matplotlib stays out of import time (D36)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+
+
+
+<div class="viewcode-block" id="CyclicPrefixer">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CyclicPrefixer</span><span class="p">(</span><span class="n">AutoConcatenator</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for adding a cyclic prefix to combat multipath interference.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The cyclic prefix is a copy of the last :math:`N_{cp}` samples of each</span>
+<span class="sd">    block, prepended to the block to combat multipath interference and</span>
+<span class="sd">    inter-symbol interference:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[N - N_{cp} + n] &amp; \text{for } 0 \le n &lt; N_{cp},\\</span>
+<span class="sd">        x[n - N_{cp}] &amp; \text{for } N_{cp} \le n &lt; N + N_{cp},</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[n]` is the input block of length :math:`N`,</span>
+<span class="sd">    * :math:`y[n]` is the output block of length :math:`N + N_{cp}`,</span>
+<span class="sd">    * :math:`N_{cp}` is the length of the cyclic prefix.</span>
+
+<span class="sd">    Axes: *axis -1* -- the prefix is prepended along the block content</span>
+<span class="sd">    axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N_cp : int</span>
+<span class="sd">        Length :math:`N_{cp}` of the cyclic prefix to be added. Must be a</span>
+<span class="sd">        non-negative integer. Default is 10.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;cp adder&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; X = np.arange(10)</span>
+<span class="sd">    &gt;&gt;&gt; prefixer = CyclicPrefixer(N_cp=3)</span>
+<span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
+<span class="sd">    [7 8 9 0 1 2 3 4 5 6 7 8 9]</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1, 2, 3], [4, 5, 6]])</span>
+<span class="sd">    &gt;&gt;&gt; prefixer = CyclicPrefixer(N_cp=2)</span>
+<span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
+<span class="sd">    [[2 3 1 2 3]</span>
+<span class="sd">     [5 6 4 5 6]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cp adder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
+            <span class="c1"># numpy integers come out of every shape computation; bool is</span>
+            <span class="c1"># an int subclass and would slip through as 0 or 1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">)</span>
+        <span class="c1"># the annotation says int; this guards the untyped caller</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>      <span class="c1"># pyright: ignore[reportUnnecessaryIsInstance]</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;expected a non-negative integer cyclic-prefix length, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CyclicPrefixer.prepare">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixer.prepare">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the mask based on the signal shape&quot;&quot;&quot;</span>
+        <span class="n">input_length</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">output_mask_length</span> <span class="o">=</span> <span class="n">input_length</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span>
+
+        <span class="n">input_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">input_length</span><span class="p">)</span>
+        <span class="c1"># not [-N_cp:]: at N_cp = 0 that slice is [0:], the *whole* block</span>
+        <span class="n">input_copy_mask</span><span class="p">[</span><span class="n">input_length</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">output_original_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="n">output_original_mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">output_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="n">output_copy_mask</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span> <span class="o">=</span> <span class="n">input_copy_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span> <span class="o">=</span> <span class="n">output_original_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span> <span class="o">=</span> <span class="n">output_copy_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CyclicPrefixRemover">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixRemover">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CyclicPrefixRemover</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for removing a cyclic prefix from the input data.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The removal of the cyclic prefix discards the first :math:`N_{cp}`</span>
+<span class="sd">    samples of each block:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] = x[n + N_{cp}], \qquad 0 \le n &lt; N,</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[n]` is the input block of length :math:`N + N_{cp}` that contains the cyclic prefix,</span>
+<span class="sd">    * :math:`y[n]` is the output block of length :math:`N` after removing the cyclic prefix,</span>
+<span class="sd">    * :math:`N_{cp}` is the length of the cyclic prefix.</span>
+
+<span class="sd">    Axes: *axis -1* -- the prefix is removed along the block content</span>
+<span class="sd">    axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N_cp : int</span>
+<span class="sd">        Length :math:`N_{cp}` of the cyclic prefix to be removed. Must be a</span>
+<span class="sd">        non-negative integer.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;cp remover&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; X = np.arange(13)</span>
+<span class="sd">    &gt;&gt;&gt; remover = CyclicPrefixRemover(N_cp=3)</span>
+<span class="sd">    &gt;&gt;&gt; print(remover(X))</span>
+<span class="sd">    [ 3  4  5  6  7  8  9 10 11 12]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cp remover&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
+            <span class="c1"># numpy integers come out of every shape computation; bool is</span>
+            <span class="c1"># an int subclass and would slip through as 0 or 1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">)</span>
+        <span class="c1"># the annotation says int; this guards the untyped caller</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>      <span class="c1"># pyright: ignore[reportUnnecessaryIsInstance]</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;expected a non-negative integer cyclic-prefix length, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Remove the cyclic prefix along the block content axis</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">:]</span></div>
+
+
+
+<div class="viewcode-block" id="HermitianPrefixer">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.HermitianPrefixer">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HermitianPrefixer</span><span class="p">(</span><span class="n">AutoConcatenator</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for enforcing Hermitian symmetry on frequency-domain blocks, so that the IDFT output is real-valued.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Each input block of length :math:`N` is extended to a block of length</span>
+<span class="sd">    :math:`2(N+1)` whose spectrum is Hermitian symmetric: the DC and Nyquist</span>
+<span class="sd">    subcarriers are set to zero and the conjugate mirror of the data is</span>
+<span class="sd">    appended. When ``shift`` is False, the output is given by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[k] = \left\{\begin{array}{cl}</span>
+<span class="sd">        0 &amp;\text{for }k=0 \text{ and } k=N+1,\\</span>
+<span class="sd">        x[k-1] &amp;\text{for }k=1, \cdots, N,\\</span>
+<span class="sd">        x^*[2N+1-k] &amp;\text{for }k=N+2, \cdots, 2N+1,</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[k]` is the input block of length :math:`N`,</span>
+<span class="sd">    * :math:`y[k]` is the Hermitian-symmetric output block of length :math:`2(N+1)`.</span>
+
+<span class="sd">    When ``shift`` is True, the two halves are swapped (conjugate copy</span>
+<span class="sd">    first), matching an fftshift-ed subcarrier ordering.</span>
+
+<span class="sd">    Axes: *axis -1* -- the Hermitian extension is built along the block</span>
+<span class="sd">    content axis (Block layout ``(..., T, F)``, see CONVENTIONS.md).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shift : bool, optional, keyword-only</span>
+<span class="sd">        Whether to swap the original and conjugate halves. Default is False.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;hermitian prefixer&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. Armstrong, &quot;OFDM for Optical Communications&quot;, Journal of Lightwave</span>
+<span class="sd">    Technology, vol. 27, no. 3, pp. 189-204, 2009.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; X = np.arange(1, 4) + 1j*np.arange(1, 4)</span>
+<span class="sd">    &gt;&gt;&gt; prefixer = HermitianPrefixer()</span>
+<span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
+<span class="sd">    [0.+0.j 1.+1.j 2.+2.j 3.+3.j 0.+0.j 3.-3.j 2.-2.j 1.-1.j]</span>
+<span class="sd">    &gt;&gt;&gt; x = np.arange(1, 7) + 1j*np.arange(1, 7)</span>
+<span class="sd">    &gt;&gt;&gt; X = np.reshape(x, (2, 3))</span>
+<span class="sd">    &gt;&gt;&gt; prefixer = HermitianPrefixer(shift=True)</span>
+<span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
+<span class="sd">    [[0.+0.j 3.-3.j 2.-2.j 1.-1.j 0.+0.j 1.+1.j 2.+2.j 3.+3.j]</span>
+<span class="sd">     [0.+0.j 6.-6.j 5.-5.j 4.-4.j 0.+0.j 4.+4.j 5.+5.j 6.+6.j]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;hermitian prefixer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">input_length</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">output_mask_length</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">input_length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># add 0 for the DC and nyquist componetns.</span>
+
+        <span class="n">input_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">input_length</span><span class="p">)</span>
+
+        <span class="n">output_original_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="n">output_original_mask</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">input_length</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">output_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="n">output_copy_mask</span><span class="p">[</span><span class="o">-</span><span class="n">input_length</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># construct copy mask for original data</span>
+        <span class="n">output_original_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">output_original_mask</span><span class="p">[</span><span class="o">-</span><span class="n">input_length</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_original_mask</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">input_length</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># construct copy mask for duplicated data</span>
+        <span class="n">output_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_mask_length</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">output_copy_mask</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">input_length</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_copy_mask</span><span class="p">[</span><span class="o">-</span><span class="n">input_length</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span> <span class="o">=</span> <span class="n">input_copy_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span> <span class="o">=</span> <span class="n">output_original_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span> <span class="o">=</span> <span class="n">output_copy_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span></div>
+
+
+
+
+<div class="viewcode-block" id="FFTProcessor">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.FFTProcessor">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FFTProcessor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for performing Fast Fourier Transform (FFT) on the input data.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The FFT computes the Discrete Fourier Transform (DFT), which maps a</span>
+<span class="sd">    block of time-domain samples to its frequency-domain representation.</span>
+<span class="sd">    With the default orthonormal normalization (``norm=&quot;ortho&quot;``), the DFT</span>
+<span class="sd">    of a block of length :math:`N` is given by:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[k] = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x[n] \cdot e^{-i 2 \pi k n / N}</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[n]` is the input block of time-domain samples,</span>
+<span class="sd">    * :math:`y[k]` is the output value at subcarrier :math:`k`,</span>
+<span class="sd">    * :math:`N` is the block length.</span>
+
+<span class="sd">    Axes: *axis -1* -- the FFT changes the meaning of axis -1</span>
+<span class="sd">    (time -&gt; frequency), never its position (see CONVENTIONS.md).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shift : bool, optional</span>
+<span class="sd">        If True, applies the FFT shift which swaps the low and high frequency components.</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    norm : {&quot;ortho&quot;, &quot;backward&quot;, &quot;forward&quot;}, optional, keyword-only</span>
+<span class="sd">        Normalization mode for FFT. &quot;ortho&quot; means orthonormal FFT is computed.</span>
+<span class="sd">        Default is &quot;ortho&quot;.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;fft&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 11.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fft_processor = FFTProcessor()</span>
+<span class="sd">    &gt;&gt;&gt; x = np.ones(4)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(fft_processor(x)), 3) + 0.0)</span>
+<span class="sd">    [2. 0. 0. 0.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="s2">&quot;backward&quot;</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">fftshift</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">axes</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="IFFTProcessor">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.IFFTProcessor">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IFFTProcessor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for performing Inverse Fast Fourier Transform (IFFT) on the input data.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The IFFT computes the Inverse Discrete Fourier Transform (IDFT), which</span>
+<span class="sd">    maps a block of frequency-domain samples back to the time domain. With</span>
+<span class="sd">    the default orthonormal normalization (``norm=&quot;ortho&quot;``), the IDFT of a</span>
+<span class="sd">    block of length :math:`N` is given by:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[n] = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} x[k] \cdot e^{i 2 \pi k n / N}</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[k]` is the input value at subcarrier :math:`k`,</span>
+<span class="sd">    * :math:`y[n]` is the output block of time-domain samples,</span>
+<span class="sd">    * :math:`N` is the block length.</span>
+
+<span class="sd">    Axes: *axis -1* -- the IFFT changes the meaning of axis -1</span>
+<span class="sd">    (frequency -&gt; time), never its position (see CONVENTIONS.md).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shift : bool, optional</span>
+<span class="sd">        If True, applies the IFFT shift which swaps the low and high frequency components.</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    norm : {&quot;ortho&quot;, &quot;backward&quot;, &quot;forward&quot;}, optional, keyword-only</span>
+<span class="sd">        Normalization mode for IFFT. &quot;ortho&quot; means orthonormal IFFT is computed.</span>
+<span class="sd">        Default is &quot;ortho&quot;.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;ifft&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 11.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; ifft_processor = IFFTProcessor()</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([2.0, 0.0, 0.0, 0.0])</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(ifft_processor(X)), 3))</span>
+<span class="sd">    [1. 1. 1. 1.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="s2">&quot;backward&quot;</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ifft&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">ifftshift</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axes</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">ifft</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="CarrierAllocator">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierAllocator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CarrierAllocator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for allocating data to specific subcarriers.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The Carrier Allocator assigns data to specific subcarriers based on a</span>
+<span class="sd">    predefined subcarrier type array. It supports the insertion of pilot</span>
+<span class="sd">    values on the pilot subcarriers and zeros on the null subcarriers:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[k] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[m_k] &amp; \text{if } s[k] = 1 \text{ (data)}\\</span>
+<span class="sd">        p[j_k] &amp; \text{if } s[k] = 2 \text{ (pilot)}\\</span>
+<span class="sd">        0 &amp; \text{if } s[k] = 0 \text{ (null)}\\</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[m]` is the input data vector, with :math:`m_k` indexing the data subcarriers in increasing subcarrier index :math:`k`,</span>
+<span class="sd">    * :math:`p[j]` is the pilot value vector, with :math:`j_k` indexing the pilot subcarriers in increasing :math:`k`,</span>
+<span class="sd">    * :math:`s[k]` is the subcarrier type array, where each element specifies the type of the :math:`k`-th subcarrier,</span>
+<span class="sd">    * :math:`y[k]` is the output data vector over the full set of subcarriers.</span>
+
+<span class="sd">    The indices :math:`m_k` and :math:`j_k` are determined by the positions in the `carrier_type` array where the values are 1 and 2, respectively.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects the Block layout ``(..., T, F)``</span>
+<span class="sd">    (or ``(..., N_data)`` for a period-1 allocation) and validates it in</span>
+<span class="sd">    ``prepare()`` (decision D18). The mask says *where*, the ``pilots``</span>
+<span class="sd">    argument says *what*: transmitter and receiver share the same</span>
+<span class="sd">    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object, which</span>
+<span class="sd">    removes the &quot;diverging masks&quot; class of bugs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    carrier_type : CarrierAllocation or np.ndarray</span>
+<span class="sd">        The allocation, providing the subcarrier type array :math:`s[k]`.</span>
+<span class="sd">        A :class:`CarrierAllocation` is described in physical order and</span>
+<span class="sd">        converted once with ``to_fft_order()`` (decision D16); a raw 1D</span>
+<span class="sd">        array is taken as an FFT-order mask.</span>
+<span class="sd">    pilots : np.ndarray or scalar, optional, keyword-only</span>
+<span class="sd">        Pilot values :math:`p[j]`, one per PILOT subcarrier of an OFDM</span>
+<span class="sd">        symbol (or a scalar broadcast to all of them). Default is an</span>
+<span class="sd">        empty array.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;carrier allocator&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the last axis of the input does not hold ``N_data`` data</span>
+<span class="sd">        subcarriers, or if a periodic (scattered) allocation is fed a 1D</span>
+<span class="sd">        signal without the OFDM-symbol axis.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; carrier_type = np.array([1, 2, 0, 1, 2, 1])</span>
+<span class="sd">    &gt;&gt;&gt; pilots = np.array([-1, -1])</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(carrier_type=carrier_type, pilots=pilots)</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([1, 2, 3])</span>
+<span class="sd">    &gt;&gt;&gt; print(allocator(X))</span>
+<span class="sd">    [ 1 -1  0  2 -1  3]</span>
+
+<span class="sd">    &gt;&gt;&gt; carrier_type = np.array([1, 0, 0, 1, 1])</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(carrier_type=carrier_type)</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1, 4, 7], [2, 5, 8], [3, 6, 9]])</span>
+<span class="sd">    &gt;&gt;&gt; print(allocator(X))</span>
+<span class="sd">    [[1 0 0 4 7]</span>
+<span class="sd">     [2 0 0 5 8]</span>
+<span class="sd">     [3 0 0 6 9]]</span>
+
+<span class="sd">    &gt;&gt;&gt; from comnumpy.ofdm.allocation import get_allocation</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(get_allocation(&quot;802.11a&quot;), pilots=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; Y = allocator(np.ones((10, 48)))</span>
+<span class="sd">    &gt;&gt;&gt; print(Y.shape)</span>
+<span class="sd">    (10, 64)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">carrier_type</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="n">pilots</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;carrier allocator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">N</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">N_data</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_masks</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="c1"># physical order -&gt; FFT order, once and explicitly (D16)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">to_fft_order</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">n_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">n_data</span> <span class="o">==</span> <span class="n">n_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the number of data subcarriers must be constant over the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;period, got </span><span class="si">{</span><span class="n">n_data</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_data</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pilots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pilots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pilot_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_pilots</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">pilots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pilots</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pilots</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">pilots</span><span class="p">,</span> <span class="p">(</span><span class="n">n_pilots</span><span class="p">,))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pilots</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n_pilots</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;incompatible number of pilots (</span><span class="si">{</span><span class="n">n_pilots</span><span class="si">}</span><span class="s2"> needed for this &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;OFDM symbol, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pilots</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pilots</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_carrier_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">carrier_type</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">carrier_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_masks</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CarrierAllocator expects (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(N_data=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2"> data subcarriers per OFDM symbol), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- fix Serial2Parallel(N_sub=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or the allocation.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CarrierAllocator with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;expects a Block layout (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">), got 1D &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- add the OFDM-symbol axis with Serial2Parallel.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span>
+            <span class="n">n_pilots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">n_pilots</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pilot_values</span><span class="p">(</span><span class="n">n_pilots</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># scattered pattern: mask row l applies to OFDM symbol t = l mod period</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">t</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">]</span>
+                <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="n">n_pilots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">n_pilots</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pilot_values</span><span class="p">(</span><span class="n">n_pilots</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span>
+
+<div class="viewcode-block" id="CarrierAllocator.plot">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierAllocator.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot the carrier allocation; returns the axis (decision D25).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Carrier Allocation&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CarrierExtractor">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierExtractor">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CarrierExtractor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor for extracting data from specific subcarriers.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The Carrier Extractor extracts the data subcarriers based on a</span>
+<span class="sd">    predefined subcarrier type array, undoing the mapping of the</span>
+<span class="sd">    :class:`CarrierAllocator`:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        y[m] = x[k_m]</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[k]` is the input data over the full set of subcarriers,</span>
+<span class="sd">    * :math:`k_m` is the index of the :math:`m`-th subcarrier of type 1 (data subcarrier) in the input vector,</span>
+<span class="sd">    * :math:`y[m]` is the output data vector.</span>
+
+<span class="sd">    The indices :math:`k_m` are determined by the positions in the `carrier_type` array where the value is 1.</span>
+<span class="sd">    The content of the pilot subcarriers (type 2) is exposed after each</span>
+<span class="sd">    run as the estimated attribute ``pilots_`` (decision D23).</span>
+
+<span class="sd">    Axes: *declared axis* -- expects the Block layout ``(..., T, N_fft)``</span>
+<span class="sd">    (or ``(..., N_fft)`` for a period-1 allocation) and validates it in</span>
+<span class="sd">    ``prepare()`` (decision D18). Share the same</span>
+<span class="sd">    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object with the</span>
+<span class="sd">    transmitter&#39;s :class:`CarrierAllocator`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    carrier_type : CarrierAllocation or np.ndarray</span>
+<span class="sd">        The allocation, providing the subcarrier type array used to find</span>
+<span class="sd">        the data indices :math:`k_m`. A :class:`CarrierAllocation` is</span>
+<span class="sd">        described in physical order and converted once with</span>
+<span class="sd">        ``to_fft_order()`` (decision D16); a raw 1D array is taken as an</span>
+<span class="sd">        FFT-order mask.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;carrier extractor&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pilots_ : np.ndarray or list of np.ndarray</span>
+<span class="sd">        Content of the pilot subcarriers seen during the last run</span>
+<span class="sd">        (data-dependent, hence the trailing underscore). An array for a</span>
+<span class="sd">        period-1 allocation; a list of per-symbol arrays otherwise</span>
+<span class="sd">        (pilot counts may differ between symbols).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the last axis of the input does not hold ``N_fft`` subcarriers,</span>
+<span class="sd">        or if a periodic (scattered) allocation is fed a 1D signal without</span>
+<span class="sd">        the OFDM-symbol axis.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; carrier_type = np.array([1, 2, 0, 1, 2, 1])</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(carrier_type=carrier_type, pilots=np.array([-1, -2]))</span>
+<span class="sd">    &gt;&gt;&gt; extractor = CarrierExtractor(carrier_type=carrier_type)</span>
+<span class="sd">    &gt;&gt;&gt; Z = allocator(np.array([1, 2, 3]))</span>
+<span class="sd">    &gt;&gt;&gt; print(extractor(Z))</span>
+<span class="sd">    [1 2 3]</span>
+<span class="sd">    &gt;&gt;&gt; print(extractor.pilots_)</span>
+<span class="sd">    [-1 -2]</span>
+
+<span class="sd">    &gt;&gt;&gt; carrier_type = np.array([1, 0, 0, 1, 1])</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(carrier_type=carrier_type)</span>
+<span class="sd">    &gt;&gt;&gt; extractor = CarrierExtractor(carrier_type=carrier_type)</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1, 4, 7], [2, 5, 8]])</span>
+<span class="sd">    &gt;&gt;&gt; Z = allocator(X)</span>
+<span class="sd">    &gt;&gt;&gt; print(Z)</span>
+<span class="sd">    [[1 0 0 4 7]</span>
+<span class="sd">     [2 0 0 5 8]]</span>
+<span class="sd">    &gt;&gt;&gt; print(extractor(Z))</span>
+<span class="sd">    [[1 4 7]</span>
+<span class="sd">     [2 5 8]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">carrier_type</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;carrier extractor&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23): pilot content of the last run</span>
+    <span class="n">pilots_</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">to_fft_order</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">N_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">N_fft</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CarrierExtractor expects (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(N_fft=</span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2"> subcarriers), got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- use the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;same allocation as the transmitter&#39;s CarrierAllocator.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CarrierExtractor with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;expects a Block layout (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">), got 1D </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">X_data</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">X_pilots</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">data_parts</span><span class="p">,</span> <span class="n">pilot_parts</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">t_index</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">]</span>
+                <span class="n">data_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">t_index</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">pilot_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">t_index</span><span class="p">,</span> <span class="n">row</span> <span class="o">==</span> <span class="mi">2</span><span class="p">])</span>
+            <span class="n">X_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">data_parts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># pilot counts may differ per symbol: keep the raw list then</span>
+            <span class="n">X_pilots</span> <span class="o">=</span> <span class="n">pilot_parts</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pilots_</span> <span class="o">=</span> <span class="n">X_pilots</span>
+        <span class="k">return</span> <span class="n">X_data</span>
+
+<div class="viewcode-block" id="CarrierExtractor.plot">
+<a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierExtractor.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot the carrier allocation; returns the axis (decision D25).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Carrier Allocation&quot;</span><span class="p">)</span></div>
+</div>
+
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

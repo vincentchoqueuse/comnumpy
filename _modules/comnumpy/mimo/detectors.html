@@ -1,0 +1,1497 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.mimo.detectors &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/mimo/detectors';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.mimo.detectors</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.mimo.detectors</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">hard_projector</span><span class="p">,</span> <span class="n">soft_projector</span><span class="p">,</span> <span class="n">zf_estimator</span><span class="p">,</span> <span class="n">mmse_estimator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_H</span><span class="p">(</span><span class="n">H</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">H</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel H is not set.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Channel H must be a NumPy array.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_sigma2</span><span class="p">(</span><span class="n">sigma2</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">sigma2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Noise variance sigma2 is not set.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">sigma2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Noise variance sigma2 should be greater than 0.&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MaximumLikelihoodDetector">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.MaximumLikelihoodDetector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaximumLikelihoodDetector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Maximum-likelihood (ML) MIMO detector for white Gaussian noise.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The detector assumes the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n]</span>
+
+<span class="sd">    where :math:`\mathbf{H}` is the channel matrix of size</span>
+<span class="sd">    :math:`N_r \times N_t`, :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`</span>
+<span class="sd">    the transmitted vector drawn from the constellation</span>
+<span class="sd">    :math:`\mathcal{M}` and :math:`\mathbf{b}[n]` a circular white</span>
+<span class="sd">    Gaussian noise. The ML decision under this model is the exhaustive</span>
+<span class="sd">    search</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \widehat{\mathbf{x}}[n] = \arg \min_{\mathbf{x} \in \mathcal{M}^{N_t}}</span>
+<span class="sd">        \|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2</span>
+
+<span class="sd">    and the detector returns the integer indices of</span>
+<span class="sd">    :math:`\widehat{\mathbf{x}}[n]` in the alphabet</span>
+<span class="sd">    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S[:, n]]``).</span>
+
+<span class="sd">    .. WARNING::</span>
+
+<span class="sd">        The exhaustive search evaluates :math:`|\mathcal{M}|^{N_t}`</span>
+<span class="sd">        candidates and becomes expensive for a large number of transmit</span>
+<span class="sd">        antennas or a high-order constellation.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.</span>
+<span class="sd">        Must be set before calling the detector.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;ML Detector&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``H`` is not set when the detector is called.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * E. G. Larsson, P. Stoica and G. Ganesan, *Space-Time Block Coding</span>
+<span class="sd">      for Wireless Communications*, Cambridge University Press, 2003.</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; H = np.eye(2)</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.array([[0.9, -1.1], [-0.8, 1.2]])</span>
+<span class="sd">    &gt;&gt;&gt; MaximumLikelihoodDetector(alphabet, H=H)(Y)</span>
+<span class="sd">    array([[1, 0],</span>
+<span class="sd">           [0, 1]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ML Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">S</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_nb_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span> <span class="o">**</span> <span class="n">N_t</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">,</span> <span class="n">N_t</span><span class="p">):</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span>
+        <span class="n">input_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">N_t</span><span class="p">)]</span>
+
+        <span class="c1"># preallocation of memory</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">indice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">input_list</span><span class="p">[</span><span class="n">indice</span><span class="p">])</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">[</span><span class="nb">input</span><span class="p">]</span>
+            <span class="n">X</span><span class="p">[:,</span> <span class="n">indice</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">S</span><span class="p">[:,</span> <span class="n">indice</span><span class="p">]</span> <span class="o">=</span> <span class="nb">input</span>
+
+        <span class="k">return</span> <span class="n">S</span><span class="p">,</span> <span class="n">X</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+
+        <span class="n">_validate_H</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span>
+
+        <span class="n">S_candidates</span><span class="p">,</span> <span class="n">X_candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">N_t</span><span class="p">)</span>
+        <span class="n">Y_candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span>
+            <span class="n">H</span><span class="p">,</span> <span class="n">X_candidates</span>
+        <span class="p">)</span>  <span class="c1"># compute all combinaison of received data</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]))</span>
+            <span class="n">index_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">Y_candidates</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">S</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">S_candidates</span><span class="p">[:,</span> <span class="n">index_min</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">S</span></div>
+
+
+
+<div class="viewcode-block" id="LinearDetector">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.LinearDetector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearDetector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Linear MIMO detector (equalization followed by hard decision).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The detector assumes the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad</span>
+<span class="sd">        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    where :math:`\mathbf{H}` is the channel matrix of size</span>
+<span class="sd">    :math:`N_r \times N_t`. Detection proceeds in two steps: linear</span>
+<span class="sd">    equalization</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{z}[n] = \mathbf{W} \mathbf{y}[n], \qquad</span>
+<span class="sd">        \mathbf{W}_{zf} = \mathbf{H}^{\dagger}, \qquad</span>
+<span class="sd">        \mathbf{W}_{mmse} = \left(\mathbf{H}^H \mathbf{H}</span>
+<span class="sd">        + \sigma^2 \mathbf{I}_{N_t}\right)^{-1} \mathbf{H}^H</span>
+
+<span class="sd">    then per-antenna projection of :math:`\mathbf{z}[n]` onto the nearest</span>
+<span class="sd">    point of the constellation :math:`\mathcal{M}`. The detector returns</span>
+<span class="sd">    the integer indices of the decisions in the alphabet.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.</span>
+<span class="sd">        Must be set before calling the detector.</span>
+<span class="sd">    method : {&quot;zf&quot;, &quot;mmse&quot;}, keyword-only</span>
+<span class="sd">        Linear equalizer :math:`\mathbf{W}`. Default is ``&quot;zf&quot;``.</span>
+<span class="sd">    sigma2 : float, optional, keyword-only</span>
+<span class="sd">        Noise variance :math:`\sigma^2` (required by the MMSE equalizer</span>
+<span class="sd">        only).</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;ZF Detector&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``H`` is not set when the detector is called.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * E. G. Larsson, P. Stoica and G. Ganesan, *Space-Time Block Coding</span>
+<span class="sd">      for Wireless Communications*, Cambridge University Press, 2003.</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.array([[0.9, -1.1], [-0.8, 1.2]])</span>
+<span class="sd">    &gt;&gt;&gt; LinearDetector(alphabet, H=np.eye(2))(Y)</span>
+<span class="sd">    array([[1, 0],</span>
+<span class="sd">           [0, 1]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="s2">&quot;mmse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sigma2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ZF Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LinearDetector.linear_estimator">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.LinearDetector.linear_estimator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linear_estimator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform Zero Forcing or MMSE linear equalization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;zf&quot;</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+            <span class="k">case</span> <span class="s2">&quot;mmse&quot;</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+        <span class="n">_validate_H</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">S</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">S</span></div>
+
+
+
+<div class="viewcode-block" id="OrderedSuccessiveInterferenceCancellationDetector">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.OrderedSuccessiveInterferenceCancellationDetector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderedSuccessiveInterferenceCancellationDetector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Ordered Successive Interference Cancellation (OSIC) MIMO detector.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The detector assumes the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad</span>
+<span class="sd">        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    where :math:`\mathbf{H}` is the channel matrix of size</span>
+<span class="sd">    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.</span>
+<span class="sd">    At each of the :math:`N_t` stages, the stream selected by the</span>
+<span class="sd">    ordering rule is equalized (ZF or MMSE), hard-detected on the</span>
+<span class="sd">    constellation :math:`\mathcal{M}`, and its estimated contribution is</span>
+<span class="sd">    cancelled:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] \leftarrow \mathbf{y}[n]</span>
+<span class="sd">        - \mathbf{h}_{k} \, \widehat{x}_{k}[n]</span>
+
+<span class="sd">    where :math:`\mathbf{h}_{k}` is the column of :math:`\mathbf{H}`</span>
+<span class="sd">    associated with the detected stream :math:`k`. The ordering rule is</span>
+<span class="sd">    ``&quot;sinr&quot;`` (max post-equalization SINR, MMSE), ``&quot;colnorm&quot;`` (max</span>
+<span class="sd">    column norm of :math:`\mathbf{H}`, ZF) or ``&quot;snr&quot;`` (max</span>
+<span class="sd">    post-equalization SNR, ZF). The detector returns the integer indices</span>
+<span class="sd">    of the decisions in the alphabet.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    osic_type : {&quot;sinr&quot;, &quot;colnorm&quot;, &quot;snr&quot;}, keyword-only</span>
+<span class="sd">        Ordering strategy. Default is ``&quot;sinr&quot;``.</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.</span>
+<span class="sd">        Must be set before calling the detector.</span>
+<span class="sd">    method : {&quot;zf&quot;, &quot;mmse&quot;}, keyword-only</span>
+<span class="sd">        Per-stage equalizer; overridden in ``__post_init__`` by the</span>
+<span class="sd">        ordering rule (``&quot;sinr&quot;`` forces MMSE, ``&quot;colnorm&quot;`` and</span>
+<span class="sd">        ``&quot;snr&quot;`` force ZF).</span>
+<span class="sd">    sigma2 : float, optional, keyword-only</span>
+<span class="sd">        Noise variance :math:`\sigma^2` (required for the ``&quot;sinr&quot;``</span>
+<span class="sd">        ordering).</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;OSIC Detector&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``osic_type`` is unknown, or if ``H`` (or ``sigma2`` for the</span>
+<span class="sd">        ``&quot;sinr&quot;`` ordering) is not set when the detector is called.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * Y. S. Cho, J. Kim, W. Y. Yang and C. G. Kang, *MIMO-OFDM Wireless</span>
+<span class="sd">      Communications with MATLAB*, John Wiley &amp; Sons, 2010.</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; H = np.array([[1.0, 0.5], [0.0, 1.0]])</span>
+<span class="sd">    &gt;&gt;&gt; Y = H @ alphabet[[1, 0]][:, None]</span>
+<span class="sd">    &gt;&gt;&gt; OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type=&quot;snr&quot;, H=H)(Y)</span>
+<span class="sd">    array([[1],</span>
+<span class="sd">           [0]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">osic_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;sinr&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># &#39;sinr&#39;, &#39;colnorm&#39;, or &#39;snr&#39;</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="s2">&quot;mmse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sigma2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;OSIC Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">osic_type</span> <span class="o">==</span> <span class="s2">&quot;sinr&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;mmse&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">osic_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;colnorm&quot;</span><span class="p">,</span> <span class="s2">&quot;snr&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;zf&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;osic_type must be &#39;sinr&#39;, &#39;colnorm&#39;, or &#39;snr&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">ordering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">NT</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">osic_type</span><span class="p">:</span>
+
+            <span class="k">case</span> <span class="s2">&quot;sinr&quot;</span><span class="p">:</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">H</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">NT</span><span class="p">))</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+                <span class="n">WH</span> <span class="o">=</span> <span class="n">W</span> <span class="o">@</span> <span class="n">H</span>
+
+                <span class="n">diag_WH2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">WH</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>                         <span class="c1"># |WH[i,i]|^2</span>
+                <span class="n">WH2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">WH</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>                                       <span class="c1"># |WH[i,j]|^2</span>
+                <span class="n">interference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">WH2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">diag_WH2</span>             <span class="c1"># somme des interférences</span>
+                <span class="n">noise_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">W</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># bruit résiduel</span>
+                <span class="n">denominator</span> <span class="o">=</span> <span class="n">interference</span> <span class="o">+</span> <span class="n">noise_term</span>
+                <span class="n">sinr</span> <span class="o">=</span> <span class="n">diag_WH2</span> <span class="o">/</span> <span class="n">denominator</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sinr</span><span class="p">))</span>
+
+            <span class="k">case</span> <span class="s2">&quot;colnorm&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="k">case</span> <span class="s2">&quot;snr&quot;</span><span class="p">:</span>
+                <span class="n">G</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">H</span><span class="p">)</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">LA</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;osic_type must be &#39;sinr&#39;, &#39;colnorm&#39;, or &#39;snr&#39;.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">osic_type</span> <span class="o">==</span> <span class="s2">&quot;sinr&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;H and sigma2 must be set before calling forward().&quot;</span><span class="p">)</span>
+
+        <span class="n">Y_temp</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">NT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">S_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NT</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">remaining_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">NT</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NT</span><span class="p">):</span>
+            <span class="n">H_temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">[:,</span> <span class="n">remaining_idx</span><span class="p">]</span>
+            <span class="n">idx_local</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ordering</span><span class="p">(</span><span class="n">H_temp</span><span class="p">)</span>
+            <span class="n">best_current_idx</span> <span class="o">=</span> <span class="n">remaining_idx</span><span class="p">[</span><span class="n">idx_local</span><span class="p">]</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_current_idx</span><span class="p">)</span>
+
+            <span class="c1"># perform estimation</span>
+            <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+                <span class="k">case</span> <span class="s2">&quot;zf&quot;</span><span class="p">:</span>
+                    <span class="n">Z</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">Y_temp</span><span class="p">,</span> <span class="n">H_temp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="s2">&quot;mmse&quot;</span><span class="p">:</span>
+                    <span class="n">Z</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">Y_temp</span><span class="p">,</span> <span class="n">H_temp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="p">)</span>
+
+            <span class="c1"># perform detection</span>
+            <span class="n">S</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+            <span class="n">s_est</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">idx_local</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">x_est</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">[</span><span class="n">s_est</span><span class="p">]</span>
+
+            <span class="c1"># update Y, S and remaining_ix</span>
+            <span class="n">Y_temp</span> <span class="o">=</span> <span class="n">Y_temp</span> <span class="o">-</span> <span class="n">H_temp</span><span class="p">[:,</span> <span class="n">idx_local</span><span class="p">][:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">x_est</span>
+            <span class="n">S_hat</span><span class="p">[</span><span class="n">best_current_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">s_est</span>
+            <span class="k">del</span> <span class="n">remaining_idx</span><span class="p">[</span><span class="n">idx_local</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">S_hat</span></div>
+
+
+
+<div class="viewcode-block" id="ApproximateMessagePassingDetector">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.ApproximateMessagePassingDetector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ApproximateMessagePassingDetector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Approximate Message Passing (AMP) MIMO detector.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The detector assumes the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad</span>
+<span class="sd">        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    where :math:`\mathbf{H}` is the channel matrix of size</span>
+<span class="sd">    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.</span>
+<span class="sd">    For each received vector :math:`\mathbf{y}`, the AMP iteration</span>
+<span class="sd">    (:math:`t = 1, \dots, N_{it}`) is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{z}^{(t)} = \mathbf{x}^{(t)} + \mathbf{H}^H \mathbf{r}^{(t)},</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \mathbf{x}^{(t+1)} = F\left(\mathbf{z}^{(t)},</span>
+<span class="sd">        \sigma^2 (1 + \tau_t^2)\right)</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{r}^{(t+1)} = \mathbf{y} - \mathbf{H}\mathbf{x}^{(t+1)}</span>
+<span class="sd">        + \frac{\tau_{t+1}^2}{1 + \tau_t^2} \, \mathbf{r}^{(t)}</span>
+
+<span class="sd">    where :math:`F` is the posterior-mean (soft) denoiser over the</span>
+<span class="sd">    constellation :math:`\mathcal{M}` and the state :math:`\tau_t^2` is</span>
+<span class="sd">    tracked from the denoiser output variance with the system ratio</span>
+<span class="sd">    :math:`\beta = N_t / N_r`. The final estimate is hard-projected on</span>
+<span class="sd">    :math:`\mathcal{M}` and the detector returns the integer indices of</span>
+<span class="sd">    the decisions in the alphabet.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.</span>
+<span class="sd">        Must be set before calling the detector.</span>
+<span class="sd">    sigma2 : float, optional, keyword-only</span>
+<span class="sd">        Noise variance :math:`\sigma^2`. Must be set before calling the</span>
+<span class="sd">        detector.</span>
+<span class="sd">    alpha : float, keyword-only</span>
+<span class="sd">        Damping factor (reserved; unused by the current iteration).</span>
+<span class="sd">        Default is 1.</span>
+<span class="sd">    N_it : int, keyword-only</span>
+<span class="sd">        Number of iterations :math:`N_{it}`. Default is 100.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;AMP Detector&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``H`` or ``sigma2`` is not set when the detector is called.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * C. Jeon, R. Ghods, A. Maleki and C. Studer, &quot;Optimality of large</span>
+<span class="sd">      MIMO detection via approximate message passing,&quot; Proc. IEEE Int.</span>
+<span class="sd">      Symp. Information Theory (ISIT), 2015, pp. 1227-1231.</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.array([[0.9], [-1.1]])</span>
+<span class="sd">    &gt;&gt;&gt; ApproximateMessagePassingDetector(alphabet, H=np.eye(2), sigma2=0.1)(Y)</span>
+<span class="sd">    array([[1],</span>
+<span class="sd">           [0]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sigma2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">N_it</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;AMP Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="c1"># see Algorithm 2</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">x_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span>
+        <span class="n">r_t</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">x_t</span><span class="p">)</span>
+        <span class="n">H_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">N_t</span> <span class="o">/</span> <span class="n">N_r</span>  <span class="c1"># system ratio (below equation 1)</span>
+        <span class="n">tau_2</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_it</span><span class="p">):</span>
+            <span class="n">z_t</span> <span class="o">=</span> <span class="n">x_t</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_H</span><span class="p">,</span> <span class="n">r_t</span><span class="p">)</span>
+            <span class="n">sigma2_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tau_2</span><span class="p">)</span>
+            <span class="n">x_t</span> <span class="o">=</span> <span class="n">soft_projector</span><span class="p">(</span>
+                <span class="n">z_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sigma2_t</span>
+            <span class="p">)</span>  <span class="c1"># F function in the original publication</span>
+            <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">x_t</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">G</span> <span class="o">=</span> <span class="n">soft_projector</span><span class="p">(</span><span class="n">z_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">tau_2</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
+            <span class="n">tau_2_old</span> <span class="o">=</span> <span class="n">tau_2</span>
+            <span class="n">tau_2</span> <span class="o">=</span> <span class="p">(</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+            <span class="n">term1</span> <span class="o">=</span> <span class="n">tau_2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tau_2_old</span><span class="p">)</span>
+            <span class="n">r_t</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">x_t</span><span class="p">)</span> <span class="o">+</span> <span class="n">term1</span> <span class="o">*</span> <span class="n">r_t</span>
+
+        <span class="k">return</span> <span class="n">x_t</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+        <span class="n">_validate_H</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="n">_validate_sigma2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
+
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">X</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="p">])</span>
+
+        <span class="n">S</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">S</span></div>
+
+
+
+<div class="viewcode-block" id="OrthogonalApproximateMessagePassingDetector">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.OrthogonalApproximateMessagePassingDetector">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrthogonalApproximateMessagePassingDetector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Orthogonal Approximate Message Passing (OAMP) MIMO detector.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The detector assumes the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad</span>
+<span class="sd">        \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    where :math:`\mathbf{H}` is the channel matrix of size</span>
+<span class="sd">    :math:`N_r \times N_t` and :math:`\mathbf{x}[n] \in \mathcal{M}^{N_t}`.</span>
+<span class="sd">    For each received vector :math:`\mathbf{y}`, the OAMP iteration</span>
+<span class="sd">    (:math:`t = 1, \dots, N_{it}`) alternates a linear estimator and a</span>
+<span class="sd">    posterior-mean denoiser :math:`F` over the constellation</span>
+<span class="sd">    :math:`\mathcal{M}`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{z}^{(t)} = \mathbf{x}^{(t)} + \mathbf{W}_t</span>
+<span class="sd">        \left(\mathbf{y} - \mathbf{H}\mathbf{x}^{(t)}\right), \qquad</span>
+<span class="sd">        \mathbf{x}^{(t+1)} = F\left(\mathbf{z}^{(t)}, \tau_t^2\right)</span>
+
+<span class="sd">    where :math:`\mathbf{W}_t` is the matched filter</span>
+<span class="sd">    :math:`\mathbf{H}^H` (``type=&quot;H&quot;``), the pseudo-inverse</span>
+<span class="sd">    :math:`\mathbf{H}^{\dagger}` (``type=&quot;pinv&quot;``) or the MMSE matrix</span>
+<span class="sd">    :math:`v_t^2 \mathbf{H}^H (v_t^2 \mathbf{H}\mathbf{H}^H +</span>
+<span class="sd">    \sigma^2 \mathbf{I}_{N_r})^{-1}` (``type=&quot;MMSE&quot;``). The error</span>
+<span class="sd">    variances :math:`v_t^2` and :math:`\tau_t^2` are tracked from the</span>
+<span class="sd">    residual and from :math:`\mathbf{B}_t = \mathbf{I}_{N_t} -</span>
+<span class="sd">    \mathbf{W}_t \mathbf{H}`. The final estimate is hard-projected on</span>
+<span class="sd">    :math:`\mathcal{M}` and the detector returns the integer indices of</span>
+<span class="sd">    the decisions in the alphabet.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`.</span>
+<span class="sd">        Must be set before calling the detector.</span>
+<span class="sd">    sigma2 : float, optional, keyword-only</span>
+<span class="sd">        Noise variance :math:`\sigma^2`. Must be set before calling the</span>
+<span class="sd">        detector.</span>
+<span class="sd">    alpha : float, keyword-only</span>
+<span class="sd">        Damping factor (reserved; unused by the current iteration).</span>
+<span class="sd">        Default is 1.</span>
+<span class="sd">    N_it : int, keyword-only</span>
+<span class="sd">        Number of iterations :math:`N_{it}`. Default is 100.</span>
+<span class="sd">    type : {&quot;H&quot;, &quot;pinv&quot;, &quot;MMSE&quot;}, keyword-only</span>
+<span class="sd">        Linear estimator :math:`\mathbf{W}_t`. Default is ``&quot;MMSE&quot;``.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;OAMP Detector&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``H`` or ``sigma2`` is not set when the detector is called,</span>
+<span class="sd">        or if ``type`` is unknown.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * J. Ma and L. Ping, &quot;Orthogonal AMP,&quot; IEEE Access, vol. 5,</span>
+<span class="sd">      pp. 2020-2033, 2017.</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.array([[0.9], [-1.1]])</span>
+<span class="sd">    &gt;&gt;&gt; OrthogonalApproximateMessagePassingDetector(alphabet, H=np.eye(2), sigma2=0.1)(Y)</span>
+<span class="sd">    array([[1],</span>
+<span class="sd">           [0]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sigma2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">N_it</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;pinv&quot;</span><span class="p">,</span> <span class="s2">&quot;MMSE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;MMSE&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;OAMP Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_W</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vt_2</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+
+            <span class="k">case</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span>
+                <span class="n">H_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">H_H</span>
+
+            <span class="k">case</span> <span class="s2">&quot;pinv&quot;</span><span class="p">:</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+
+            <span class="k">case</span> <span class="s2">&quot;MMSE&quot;</span><span class="p">:</span>
+                <span class="n">N_r</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+                <span class="n">H_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+                <span class="n">term1</span> <span class="o">=</span> <span class="n">vt_2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">H_H</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N_r</span><span class="p">)</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">vt_2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_H</span><span class="p">,</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">term1</span><span class="p">))</span>
+
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">W</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_vt_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">N_r</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N_r</span><span class="p">)</span>
+        <span class="n">H_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_H</span><span class="p">,</span> <span class="n">H</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">num</span> <span class="o">/</span> <span class="n">den</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tau_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">vt_2</span><span class="p">):</span>
+        <span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N_r</span><span class="p">)</span>
+        <span class="n">W_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+        <span class="n">B_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>
+        <span class="n">term1</span> <span class="o">=</span> <span class="p">(</span><span class="n">vt_2</span> <span class="o">/</span> <span class="n">N_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">B_H</span><span class="p">))</span>
+        <span class="n">term2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">N_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">W_H</span><span class="p">)))</span>
+        <span class="n">tau_2</span> <span class="o">=</span> <span class="n">term1</span> <span class="o">+</span> <span class="n">term2</span>
+        <span class="k">return</span> <span class="n">tau_2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">tau_2</span><span class="p">,</span> <span class="n">vt_2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">x_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_it</span><span class="p">):</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_W</span><span class="p">(</span><span class="n">vt_2</span><span class="p">)</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">x_t</span><span class="p">)</span>
+            <span class="n">z_t</span> <span class="o">=</span> <span class="n">x_t</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+            <span class="n">x_t</span> <span class="o">=</span> <span class="n">soft_projector</span><span class="p">(</span><span class="n">z_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">tau_2</span><span class="p">)</span>
+            <span class="n">vt_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vt_2</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+            <span class="n">tau_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tau_2</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">vt_2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x_t</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+        <span class="n">_validate_H</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="n">_validate_sigma2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
+
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">X</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="p">])</span>
+
+        <span class="n">S</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">S</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

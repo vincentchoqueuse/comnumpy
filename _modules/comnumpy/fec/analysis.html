@@ -1,0 +1,1209 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.fec.analysis &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/fec/analysis';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.fec.analysis</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.fec.analysis</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Analytical reference for convolutional codes (decisions D4, D7).</span>
+
+<span class="sd">The distance spectrum is **enumerated from the trellis of the code</span>
+<span class="sd">itself**, never transcribed from a textbook table: the same</span>
+<span class="sd">``reg = (b &lt;&lt; (K - 1)) | state`` recursion that</span>
+<span class="sd">:class:`~comnumpy.fec.convolutional.ConvolutionalEncoder` runs forward is</span>
+<span class="sd">walked breadth-first here, one trellis step per iteration, to collect the</span>
+<span class="sd">error events. The published tables then serve as a cross-check, not as a</span>
+<span class="sd">source -- the enumerator returns :math:`d_{\\mathrm{free}} = 10` for the</span>
+<span class="sd">NASA ``(133, 171)`` code because the trellis says so.</span>
+
+<span class="sd">That spectrum feeds the union bound, which is the analytical curve a</span>
+<span class="sd">soft-decision Viterbi decoder is measured against</span>
+<span class="sd">(``validation/fec_union_bound.py``).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="c1"># the trellis is built once, in the encoder: this module walks that table,</span>
+<span class="c1"># it does not rebuild one (a second construction would be a second truth)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.fec.convolutional</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_output_table</span><span class="p">,</span> <span class="n">_parse_generators</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportPrivateUsage]</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DistanceSpectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;distance_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;union_bound_ber&quot;</span><span class="p">]</span>
+
+<span class="c1"># safety net for the automatic growth of ``d_max``: a rate-1/n code whose</span>
+<span class="c1"># free distance exceeds this has a trellis far outside the teaching range</span>
+<span class="n">_D_MAX_LIMIT</span> <span class="o">=</span> <span class="mi">256</span>
+
+
+<div class="viewcode-block" id="DistanceSpectrum">
+<a class="viewcode-back" href="../../../documentation/fec/analysis.html#comnumpy.fec.analysis.DistanceSpectrum">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DistanceSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Weight enumerator of the error events of a rate :math:`1/n` code.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    An *error event* is a trellis path that leaves the all-zero path at</span>
+<span class="sd">    time 0 (input bit 1), stays away from the all-zero state, and merges</span>
+<span class="sd">    back into it later. Collecting these paths by output weight</span>
+<span class="sd">    :math:`d` and input weight :math:`i` gives the transfer function of</span>
+<span class="sd">    the code,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        T(D, N) = \sum_{d \ge d_{\mathrm{free}}} \sum_{i \ge 1}</span>
+<span class="sd">                  a_{d,i} \, D^{d} N^{i},</span>
+
+<span class="sd">    of which this object stores the two marginals used by every</span>
+<span class="sd">    performance bound:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        a_d = \sum_i a_{d,i}, \qquad</span>
+<span class="sd">        \beta_d = \sum_i i \, a_{d,i}</span>
+<span class="sd">                = \left. \frac{\partial T}{\partial N} \right|_{N = 1}</span>
+<span class="sd">                  \text{, coefficient of } D^d</span>
+
+<span class="sd">    :math:`a_d` counts the error events of output weight :math:`d`;</span>
+<span class="sd">    :math:`\beta_d` counts the information bit errors they carry, which</span>
+<span class="sd">    is what :func:`union_bound_ber` weighs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    g : tuple of int</span>
+<span class="sd">        Generator polynomials :math:`g_i` in octal, as passed to</span>
+<span class="sd">        :class:`~comnumpy.fec.convolutional.ConvolutionalEncoder`.</span>
+<span class="sd">    K : int</span>
+<span class="sd">        Constraint length :math:`K` implied by ``g``.</span>
+<span class="sd">    k : int</span>
+<span class="sd">        Number of information bits per trellis step :math:`k`; always 1</span>
+<span class="sd">        for the rate :math:`1/n` codes this module enumerates.</span>
+<span class="sd">    rate : float</span>
+<span class="sd">        Code rate :math:`R = k/n`.</span>
+<span class="sd">    d_free : int</span>
+<span class="sd">        Free distance :math:`d_{\mathrm{free}}`, the smallest output</span>
+<span class="sd">        weight of an error event.</span>
+<span class="sd">    distances : np.ndarray of int</span>
+<span class="sd">        The weights :math:`d` covered, ``d_free`` through ``d_max``</span>
+<span class="sd">        inclusive (gaps are kept, with a zero coefficient: a code whose</span>
+<span class="sd">        events all have even weight must show it).</span>
+<span class="sd">    a_d : np.ndarray of int</span>
+<span class="sd">        Number of error events :math:`a_d`, aligned with ``distances``.</span>
+<span class="sd">    beta_d : np.ndarray of int</span>
+<span class="sd">        Cumulated information weight :math:`\beta_d`, aligned with</span>
+<span class="sd">        ``distances``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. J. Viterbi, &quot;Convolutional codes and their performance in</span>
+<span class="sd">    communication systems,&quot; IEEE Trans. Commun. Technol. 19(5), 1971</span>
+<span class="sd">    (transfer function :math:`T(D, N)` and its derivative);</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 8.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; spectrum = distance_spectrum((0o5, 0o7), n_terms=3)</span>
+<span class="sd">    &gt;&gt;&gt; print(spectrum.d_free, spectrum.rate)</span>
+<span class="sd">    5 0.5</span>
+<span class="sd">    &gt;&gt;&gt; print(spectrum.distances, spectrum.a_d, spectrum.beta_d)</span>
+<span class="sd">    [5 6 7] [1 2 4] [ 1  4 12]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">K</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">d_free</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">distances</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="n">a_d</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="n">beta_d</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_branch_weight</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Output Hamming weight of every trellis branch, indexed by register.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_output_table</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_zero_weight_cycle</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True if the nonzero states carry a cycle of zero-output-weight branches.</span>
+
+<span class="sd">    Such a cycle is the signature of a catastrophic encoder: it lets an</span>
+<span class="sd">    error event accumulate input weight without accumulating output</span>
+<span class="sd">    weight, so :math:`a_d` and :math:`\\beta_d` are infinite. Detected by</span>
+<span class="sd">    peeling away the states that have no zero-weight successor; whatever</span>
+<span class="sd">    survives lies on a cycle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">successors</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">reg</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">s</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">reg</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">next_state</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">weight</span><span class="p">[</span><span class="n">reg</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">successors</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">next_state</span><span class="p">)</span>
+
+    <span class="n">alive</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">successors</span><span class="p">)</span>
+    <span class="n">peeled</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">while</span> <span class="n">peeled</span><span class="p">:</span>
+        <span class="n">peeled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">alive</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">in</span> <span class="n">alive</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">successors</span><span class="p">[</span><span class="n">s</span><span class="p">]):</span>
+                <span class="n">alive</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="n">peeled</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">alive</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enumerate_error_events</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                            <span class="n">d_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Breadth-first count of the error events of output weight &lt;= ``d_max``.</span>
+
+<span class="sd">    One iteration = one trellis step. ``count[s][d]`` is the number of</span>
+<span class="sd">    paths of the current length that reached state ``s`` with output</span>
+<span class="sd">    weight ``d`` without touching state 0; ``info[s][d]`` is their</span>
+<span class="sd">    cumulated input weight. A path that steps into state 0 is a finished</span>
+<span class="sd">    error event and is banked into ``a`` / ``beta``. Paths heavier than</span>
+<span class="sd">    ``d_max`` are pruned, which is what makes the frontier die out.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="p">)]</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="p">)]</span>
+
+    <span class="c1"># divergence: input bit 1 from the all-zero state</span>
+    <span class="n">reg</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">weight</span><span class="p">[</span><span class="n">reg</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">d_max</span><span class="p">:</span>
+        <span class="n">count</span><span class="p">[</span><span class="n">reg</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">][</span><span class="n">weight</span><span class="p">[</span><span class="n">reg</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">info</span><span class="p">[</span><span class="n">reg</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">][</span><span class="n">weight</span><span class="p">[</span><span class="n">reg</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">while</span> <span class="nb">any</span><span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">count</span><span class="p">):</span>
+        <span class="n">next_count</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="p">)]</span>
+        <span class="n">next_info</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>          <span class="c1"># state 0 is the merge, never a start</span>
+            <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">paths</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">count</span><span class="p">[</span><span class="n">s</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">bits</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">d</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">reg</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">s</span>
+                    <span class="n">d_next</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">weight</span><span class="p">[</span><span class="n">reg</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">d_next</span> <span class="o">&gt;</span> <span class="n">d_max</span><span class="p">:</span>
+                        <span class="k">continue</span>       <span class="c1"># pruning: this branch can only grow</span>
+                    <span class="n">state</span> <span class="o">=</span> <span class="n">reg</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c1"># merged back: the event is complete</span>
+                        <span class="n">a</span><span class="p">[</span><span class="n">d_next</span><span class="p">]</span> <span class="o">+=</span> <span class="n">paths</span>
+                        <span class="n">beta</span><span class="p">[</span><span class="n">d_next</span><span class="p">]</span> <span class="o">+=</span> <span class="n">bits</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">paths</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_count</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="n">d_next</span><span class="p">]</span> <span class="o">+=</span> <span class="n">paths</span>
+                        <span class="n">next_info</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="n">d_next</span><span class="p">]</span> <span class="o">+=</span> <span class="n">bits</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">paths</span>
+        <span class="n">count</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">next_count</span><span class="p">,</span> <span class="n">next_info</span>
+    <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">beta</span>
+
+
+<div class="viewcode-block" id="distance_spectrum">
+<a class="viewcode-back" href="../../../documentation/fec/analysis.html#comnumpy.fec.analysis.distance_spectrum">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">distance_spectrum</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="o">*</span><span class="p">,</span>
+                      <span class="n">n_terms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                      <span class="n">d_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DistanceSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enumerate the distance spectrum of a rate :math:`1/n` convolutional code.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The encoder register content is :math:`\mathrm{reg} = (b \ll (K-1))</span>
+<span class="sd">    \,|\, s` for input bit :math:`b` in state :math:`s`, the very</span>
+<span class="sd">    recursion run by</span>
+<span class="sd">    :class:`~comnumpy.fec.convolutional.ConvolutionalEncoder`; the branch</span>
+<span class="sd">    output weight is :math:`w(\mathrm{reg}) = \sum_{i} g_i \cdot</span>
+<span class="sd">    \mathrm{reg} \bmod 2`. An *error event* is a path</span>
+<span class="sd">    :math:`0 \to s_1 \to \dots \to s_L \to 0` with :math:`b = 1` on the</span>
+<span class="sd">    first branch and :math:`s_\ell \ne 0` in between. Because the code is</span>
+<span class="sd">    linear, comparing every path pair reduces to comparing every path to</span>
+<span class="sd">    the all-zero one, so these events carry the whole error behaviour.</span>
+
+<span class="sd">    Counting them by output weight :math:`d` and input weight yields the</span>
+<span class="sd">    coefficients of the transfer function :math:`T(D, N)`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        a_d = \#\{\text{error events of output weight } d\}, \qquad</span>
+<span class="sd">        \beta_d = \sum_{\text{events of weight } d}</span>
+<span class="sd">                  w_{\mathrm{in}}(\text{event})</span>
+
+<span class="sd">    and :math:`d_{\mathrm{free}} = \min \{d : a_d &gt; 0\}`. The search is a</span>
+<span class="sd">    breadth-first walk of the trellis pruned at ``d_max`` (one iteration</span>
+<span class="sd">    per trellis step); the walk terminates because, absent a zero-weight</span>
+<span class="sd">    cycle, every long path eventually exceeds ``d_max``.</span>
+
+<span class="sd">    Axes: *not a signal transform* -- a pure function of the code</span>
+<span class="sd">    parameters, returning arrays indexed by output weight.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    g : tuple of int</span>
+<span class="sd">        Generator polynomials :math:`g_i` in octal (MSB = current input</span>
+<span class="sd">        tap), identical to the encoder&#39;s. Default ``(0o133, 0o171)``,</span>
+<span class="sd">        the NASA/Voyager :math:`K = 7` code.</span>
+<span class="sd">    n_terms : int, optional, keyword-only</span>
+<span class="sd">        Number of *non-zero* coefficients :math:`a_d` wanted; ``d_max``</span>
+<span class="sd">        is grown until that many are found. Ignored when ``d_max`` is</span>
+<span class="sd">        given. Default 6.</span>
+<span class="sd">    d_max : int, optional, keyword-only</span>
+<span class="sd">        Largest output weight :math:`d` enumerated. Larger means a</span>
+<span class="sd">        tighter :func:`union_bound_ber` at low SNR and a longer run.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DistanceSpectrum</span>
+<span class="sd">        The coefficients :math:`a_d` and :math:`\beta_d` for</span>
+<span class="sd">        :math:`d_{\mathrm{free}} \le d \le d_{\max}`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``g`` is catastrophic -- a zero-output-weight cycle makes</span>
+<span class="sd">        :math:`a_d` infinite -- or if no error event is found below</span>
+<span class="sd">        ``d_max``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. J. Viterbi, &quot;Convolutional codes and their performance in</span>
+<span class="sd">    communication systems,&quot; IEEE Trans. Commun. Technol. 19(5),</span>
+<span class="sd">    pp. 751-772, 1971 (transfer function of the state diagram);</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 8.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; spectrum = distance_spectrum((0o5, 0o7), n_terms=4)</span>
+<span class="sd">    &gt;&gt;&gt; print(spectrum.d_free, spectrum.a_d, spectrum.beta_d)</span>
+<span class="sd">    5 [1 2 4 8] [ 1  4 12 32]</span>
+<span class="sd">    &gt;&gt;&gt; nasa = distance_spectrum(n_terms=3)   # (133, 171), K = 7</span>
+<span class="sd">    &gt;&gt;&gt; print(nasa.d_free, nasa.distances, nasa.a_d)</span>
+<span class="sd">    10 [10 11 12 13 14] [ 11   0  38   0 193]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">g</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">_parse_generators</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">_branch_weight</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_zero_weight_cycle</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;distance_spectrum: generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> are &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;catastrophic (the trellis has a cycle of zero output weight, so &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;a finite number of channel errors can cause infinitely many &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;information errors, and a_d is infinite) -- pick generators &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;whose polynomials are coprime, e.g. (0o5, 0o7) for K=3.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">d_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">_enumerate_error_events</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_max</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">d_max</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">K</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">_enumerate_error_events</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">d_max</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">a</span> <span class="k">if</span> <span class="n">c</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n_terms</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">d_max</span> <span class="o">&gt;</span> <span class="n">_D_MAX_LIMIT</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;distance_spectrum: fewer than n_terms=</span><span class="si">{</span><span class="n">n_terms</span><span class="si">}</span><span class="s2"> non-zero &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;coefficients below d_max=</span><span class="si">{</span><span class="n">_D_MAX_LIMIT</span><span class="si">}</span><span class="s2"> for generators &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- pass d_max explicitly if &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;the code really has such a sparse spectrum.&quot;</span><span class="p">)</span>
+            <span class="n">d_max</span> <span class="o">*=</span> <span class="mi">2</span>
+        <span class="c1"># trim to the requested number of non-zero coefficients</span>
+        <span class="n">nonzero</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
+        <span class="n">d_max</span> <span class="o">=</span> <span class="n">nonzero</span><span class="p">[</span><span class="n">n_terms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">support</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">support</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;distance_spectrum: no error event of output weight &lt;= </span><span class="si">{</span><span class="n">d_max</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;for generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- increase d_max.&quot;</span><span class="p">)</span>
+    <span class="n">d_free</span> <span class="o">=</span> <span class="n">support</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">d_free</span><span class="p">,</span> <span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">DistanceSpectrum</span><span class="p">(</span>
+        <span class="n">g</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">d_free</span><span class="o">=</span><span class="n">d_free</span><span class="p">,</span>
+        <span class="n">distances</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">d_free</span><span class="p">,</span> <span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+        <span class="n">a_d</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">kept</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+        <span class="n">beta_d</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="n">kept</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="union_bound_ber">
+<a class="viewcode-back" href="../../../documentation/fec/analysis.html#comnumpy.fec.analysis.union_bound_ber">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">union_bound_ber</span><span class="p">(</span><span class="n">spectrum</span><span class="p">:</span> <span class="n">DistanceSpectrum</span><span class="p">,</span>
+                    <span class="n">ebn0_dB</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Union bound on the bit error rate of soft-decision Viterbi decoding over AWGN.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Antipodal signalling over AWGN, :math:`y[n] = x[n] + b[n]` with</span>
+<span class="sd">    :math:`x[n] = \pm\sqrt{E_s}` and :math:`b[n] \sim \mathcal{N}(0,</span>
+<span class="sd">    N_0/2)`, decoded by a maximum-likelihood (soft) Viterbi decoder. Two</span>
+<span class="sd">    codewords differing in :math:`d` coded bits are confused with</span>
+<span class="sd">    probability :math:`Q(\sqrt{2 d R E_b/N_0})`; summing that pairwise</span>
+<span class="sd">    probability over every error event, each weighted by the number</span>
+<span class="sd">    :math:`\beta_d` of information bits it flips, over-counts the</span>
+<span class="sd">    overlapping events and therefore bounds the bit error rate:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P_b \le \frac{1}{k} \sum_{d \ge d_{\mathrm{free}}} \beta_d \,</span>
+<span class="sd">                Q\!\left(\sqrt{2 d R \frac{E_b}{N_0}}\right),</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        Q(u) = \frac{1}{\sqrt{2\pi}} \int_u^{\infty} e^{-t^2/2}\, dt</span>
+
+<span class="sd">    Two honest caveats, both visible in ``validation/fec_union_bound.py``:</span>
+<span class="sd">    the sum is **truncated** at the ``d_max`` of ``spectrum``, so it is a</span>
+<span class="sd">    genuine upper bound only where its tail is negligible; and the full</span>
+<span class="sd">    series only converges above the code&#39;s cutoff rate. Below roughly</span>
+<span class="sd">    3 dB the truncated sum keeps growing with ``d_max`` and usually</span>
+<span class="sd">    exceeds 1 -- a value :math:`&gt; 1` is not a tight bound, it is no</span>
+<span class="sd">    information at all. Above 4 dB the terms fall geometrically, the</span>
+<span class="sd">    truncation error is negligible, and the bound is within a small</span>
+<span class="sd">    factor of the simulated curve.</span>
+
+<span class="sd">    Axes: *element-wise* -- a scalar conversion applied pointwise to an</span>
+<span class="sd">    array of operating points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spectrum : DistanceSpectrum</span>
+<span class="sd">        Weight enumerator of the code, from :func:`distance_spectrum`;</span>
+<span class="sd">        supplies :math:`\beta_d`, the weights :math:`d`, the rate</span>
+<span class="sd">        :math:`R` and the number of inputs per step :math:`k`.</span>
+<span class="sd">    ebn0_dB : float or np.ndarray</span>
+<span class="sd">        Information-bit-energy-to-noise ratio :math:`E_b/N_0` in dB</span>
+<span class="sd">        (energy per *information* bit, so the rate loss is already</span>
+<span class="sd">        accounted for).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Upper bound on :math:`P_b`, same shape as ``ebn0_dB``. Values</span>
+<span class="sd">        above 1 are returned as computed, not clipped: a bound that</span>
+<span class="sd">        exceeds 1 must look useless, because it is.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Section 8.2 (union bound for soft-decision</span>
+<span class="sd">    decoding, eq. 8.2-22); A. J. Viterbi, &quot;Convolutional codes and their</span>
+<span class="sd">    performance in communication systems,&quot; IEEE Trans. Commun. Technol.</span>
+<span class="sd">    19(5), 1971.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; spectrum = distance_spectrum((0o5, 0o7), d_max=26)   # K = 3</span>
+<span class="sd">    &gt;&gt;&gt; print(f&quot;{float(union_bound_ber(spectrum, 5.0)):.3e}&quot;)</span>
+<span class="sd">    9.171e-05</span>
+<span class="sd">    &gt;&gt;&gt; print(f&quot;{float(union_bound_ber(distance_spectrum(d_max=30), 5.0)):.3e}&quot;)</span>
+<span class="sd">    4.427e-07</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>    <span class="c1"># local import (D36)</span>
+
+    <span class="n">gamma_b</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">distances</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">beta_d</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">argument</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">rate</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">gamma_b</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+    <span class="n">bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">argument</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">k</span>
+    <span class="k">return</span> <span class="n">bound</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">gamma_b</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

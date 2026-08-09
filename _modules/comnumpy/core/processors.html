@@ -1,0 +1,2119 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.processors &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/processors';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.processors</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.processors</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">BWFilter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
+
+<div class="viewcode-block" id="Upsampler">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Upsampler">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Upsampler</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Increases the sampling rate of a signal by inserting zeros between samples.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Upsampling by an integer factor :math:`L` inserts :math:`L-1` zeros</span>
+<span class="sd">    between consecutive input samples, so that the output rate is</span>
+<span class="sd">    :math:`L` times the input rate:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \left\{\begin{array}{cl}</span>
+<span class="sd">        \alpha \, x\!\left[\dfrac{n-\tau}{L}\right] &amp; \text{if } (n-\tau) \bmod L = 0,\\[6pt]</span>
+<span class="sd">        0 &amp; \text{otherwise,}</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[n]` is the input sequence of length :math:`N`,</span>
+<span class="sd">    * :math:`y[n]` is the output sequence of length :math:`L N`,</span>
+<span class="sd">    * :math:`L` is the upsampling factor,</span>
+<span class="sd">    * :math:`\tau` is the phase offset of the retained samples,</span>
+<span class="sd">    * :math:`\alpha` is an output scaling factor.</span>
+
+<span class="sd">    Zero insertion creates :math:`L-1` spectral images of the input</span>
+<span class="sd">    spectrum. When ``use_filter`` is set, a lowpass filter of normalized</span>
+<span class="sd">    cutoff :math:`1/L` is applied to the zero-stuffed sequence, which</span>
+<span class="sd">    turns the operation into an interpolation.</span>
+
+<span class="sd">    Axes: *declared axis* -- the zero stuffing runs along ``axis``</span>
+<span class="sd">    (default -1, the sample axis of the Serial layout ``(..., N)``) and</span>
+<span class="sd">    the remaining axes are left untouched.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    L : int</span>
+<span class="sd">        Upsampling factor :math:`L`. Must be a positive integer.</span>
+<span class="sd">    phase : int, optional, keyword-only</span>
+<span class="sd">        Phase offset :math:`\tau \in \mathbb{N}` of the retained samples.</span>
+<span class="sd">        Default is 0.</span>
+<span class="sd">    scale : float, optional, keyword-only</span>
+<span class="sd">        Output scaling factor :math:`\alpha`. Default is 1.0.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis along which the upsampling is performed. Default is -1.</span>
+<span class="sd">    use_filter : bool, optional, keyword-only</span>
+<span class="sd">        If True, apply the anti-imaging lowpass filter of normalized</span>
+<span class="sd">        cutoff :math:`1/L` at the output. Default is False.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;upsampler&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. V. Oppenheim, R. W. Schafer, *Discrete-Time Signal Processing*,</span>
+<span class="sd">    3rd ed., Pearson, 2010, Chapter 4 (changing the sampling rate by</span>
+<span class="sd">    discrete-time processing).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(Upsampler(L=2)(np.array([1, 2, 3])))</span>
+<span class="sd">    [1. 0. 2. 0. 3. 0.]</span>
+<span class="sd">    &gt;&gt;&gt; print(Upsampler(L=3, phase=1)(np.array([1, 2])))</span>
+<span class="sd">    [0. 1. 0. 0. 2. 0.]</span>
+<span class="sd">    &gt;&gt;&gt; print(Upsampler(L=2)(np.array([[1, 2], [3, 4]])))</span>
+<span class="sd">    [[1. 0. 2. 0.]</span>
+<span class="sd">     [3. 0. 4. 0.]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">L</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">phase</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">use_filter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;upsampler&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BWFilter</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter</span> <span class="o">=</span> <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Determine the shape of the output array</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">output_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+        <span class="c1"># Initialize the output array with zeros</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c1"># Create a slice object for the specified axis</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+
+        <span class="c1"># Perform the operation along the specified axis</span>
+        <span class="n">Y</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_filter</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="Downsampler">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Downsampler">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Downsampler</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decreases the sampling rate of a signal by keeping one sample out of every L.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Downsampling (decimation) by an integer factor :math:`L` keeps one</span>
+<span class="sd">    sample out of every :math:`L`, starting at the phase :math:`\tau`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \alpha \, x[n L + \tau]</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x[n]` is the input sequence of length :math:`N`,</span>
+<span class="sd">    * :math:`y[n]` is the output sequence of length :math:`\lceil (N-\tau)/L \rceil`,</span>
+<span class="sd">    * :math:`L` is the downsampling factor,</span>
+<span class="sd">    * :math:`\tau` is the phase of the retained samples,</span>
+<span class="sd">    * :math:`\alpha` is an output scaling factor.</span>
+
+<span class="sd">    Decimation folds the input spectrum :math:`L` times; the input must</span>
+<span class="sd">    therefore be bandlimited to :math:`1/L` beforehand, otherwise aliasing</span>
+<span class="sd">    occurs. Setting ``use_filter`` applies that anti-aliasing lowpass</span>
+<span class="sd">    filter of normalized cutoff :math:`1/L` **before** the decimation --</span>
+<span class="sd">    the mirror image of :class:`Upsampler`, where the anti-imaging filter</span>
+<span class="sd">    of the same cutoff comes **after** the zero stuffing.</span>
+
+<span class="sd">    Axes: *declared axis* -- the decimation runs along ``axis`` (default</span>
+<span class="sd">    -1, the sample axis of the Serial layout ``(..., N)``) and the</span>
+<span class="sd">    remaining axes are left untouched.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    L : int</span>
+<span class="sd">        Downsampling factor :math:`L`. Must be a positive integer.</span>
+<span class="sd">    phase : int, optional, keyword-only</span>
+<span class="sd">        Phase :math:`\tau \in \mathbb{N}` of the retained samples.</span>
+<span class="sd">        Default is 0.</span>
+<span class="sd">    scale : float, optional, keyword-only</span>
+<span class="sd">        Output scaling factor :math:`\alpha`. Default is 1.0.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis along which the downsampling is performed. Default is -1.</span>
+<span class="sd">    use_filter : bool, optional, keyword-only</span>
+<span class="sd">        If True, apply the anti-aliasing lowpass filter of normalized</span>
+<span class="sd">        cutoff :math:`1/L` before the decimation. Default is False.</span>
+<span class="sd">        The filter is a :class:`comnumpy.core.filters.BWFilter`, which</span>
+<span class="sd">        only accepts a 1D input.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;downsampler&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. V. Oppenheim, R. W. Schafer, *Discrete-Time Signal Processing*,</span>
+<span class="sd">    3rd ed., Pearson, 2010, Chapter 4 (changing the sampling rate by</span>
+<span class="sd">    discrete-time processing).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(Downsampler(L=2)(np.arange(6)))</span>
+<span class="sd">    [0. 2. 4.]</span>
+<span class="sd">    &gt;&gt;&gt; print(Downsampler(L=2, phase=1)(np.arange(6)))</span>
+<span class="sd">    [1. 3. 5.]</span>
+<span class="sd">    &gt;&gt;&gt; print(Downsampler(L=2)(np.arange(12).reshape(2, 6)))</span>
+<span class="sd">    [[ 0.  2.  4.]</span>
+<span class="sd">     [ 6.  8. 10.]]</span>
+
+<span class="sd">    Anti-aliasing: an in-band tone corrupted by an out-of-band one is</span>
+<span class="sd">    decimated exactly with ``use_filter=True``, and aliased without it.</span>
+<span class="sd">    The cutoff is :math:`1/L = 1/4` of the Nyquist frequency, i.e. 0.125</span>
+<span class="sd">    cycle per sample.</span>
+
+<span class="sd">    &gt;&gt;&gt; n = np.arange(128)</span>
+<span class="sd">    &gt;&gt;&gt; clean = np.cos(2 * np.pi * 2 * n / 128)             # f = 0.016, kept</span>
+<span class="sd">    &gt;&gt;&gt; x = clean + 0.5 * np.cos(2 * np.pi * 30 * n / 128)  # f = 0.234, rejected</span>
+<span class="sd">    &gt;&gt;&gt; y = Downsampler(L=4, use_filter=True)(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(y - clean[::4]))), 6))</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(Downsampler(L=4)(x) - clean[::4]))), 3))</span>
+<span class="sd">    0.5</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">L</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">phase</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">use_filter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;downsampler&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BWFilter</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter</span> <span class="o">=</span> <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+
+        <span class="c1"># anti-aliasing filtering comes BEFORE the decimation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_filter</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Create a slice object for the specified axis</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+
+        <span class="c1"># Apply the slice to the input array</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="Serial2Parallel">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Serial2Parallel">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Serial2Parallel</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a serial data stream into parallel blocks (Serial to Block layout).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The serial axis of length :math:`N` is cut into :math:`T` consecutive</span>
+<span class="sd">    blocks of :math:`F` samples. The sample of index :math:`n` of the</span>
+<span class="sd">    serial stream becomes the sample of index :math:`f` of the block</span>
+<span class="sd">    :math:`t`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[t, f] = x\!\left[t F + f\right], \qquad</span>
+<span class="sd">        0 \le t &lt; T, \quad 0 \le f &lt; F, \quad T = \left\lceil \frac{N}{F} \right\rceil</span>
+
+<span class="sd">    Equivalently, :math:`t = \lfloor n / F \rfloor` and</span>
+<span class="sd">    :math:`f = n \bmod F`: the **serial index runs fastest on the last</span>
+<span class="sd">    axis**. This is exactly a C-order (row-major) ``reshape``, which is</span>
+<span class="sd">    the normative Serial :math:`(..., N)` to Block :math:`(..., T, F)`</span>
+<span class="sd">    conversion of CONVENTIONS.md (decision D2). Any implementation</span>
+<span class="sd">    requiring a transposition -- for instance a Fortran-order reshape</span>
+<span class="sd">    producing :math:`(F, T)` -- violates that convention.</span>
+
+<span class="sd">    When :math:`N` is not a multiple of :math:`F`, the serial axis is</span>
+<span class="sd">    either zero-padded up to :math:`T F` samples or truncated down to</span>
+<span class="sd">    :math:`\lfloor N/F \rfloor F` samples, depending on ``method``.</span>
+
+<span class="sd">    Axes: *declared axis* -- consumes the serial axis -1 of the Serial</span>
+<span class="sd">    layout ``(..., N)`` and produces the Block layout ``(..., T, F)``;</span>
+<span class="sd">    the leading axes are carried through unchanged.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N_sub : int</span>
+<span class="sd">        Block length :math:`F` (the number of subcarriers in an OFDM</span>
+<span class="sd">        chain), which becomes the size of the last axis of the output.</span>
+<span class="sd">        Must be a positive integer.</span>
+<span class="sd">    method : {&quot;zero-padding&quot;, &quot;truncate&quot;}, optional, keyword-only</span>
+<span class="sd">        How to handle a serial length :math:`N` that is not a multiple of</span>
+<span class="sd">        :math:`F`: ``&quot;zero-padding&quot;`` appends zeros up to :math:`T F`</span>
+<span class="sd">        samples, ``&quot;truncate&quot;`` drops the trailing incomplete block.</span>
+<span class="sd">        Default is ``&quot;zero-padding&quot;``.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;S2P&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2 (serial-to-parallel conversion).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; Y = Serial2Parallel(3)(np.arange(5))</span>
+<span class="sd">    &gt;&gt;&gt; print(Y.shape)</span>
+<span class="sd">    (2, 3)</span>
+<span class="sd">    &gt;&gt;&gt; print(Y)</span>
+<span class="sd">    [[0 1 2]</span>
+<span class="sd">     [3 4 0]]</span>
+<span class="sd">    &gt;&gt;&gt; print(Serial2Parallel(3, method=&quot;truncate&quot;)(np.arange(5)))</span>
+<span class="sd">    [[0 1 2]]</span>
+<span class="sd">    &gt;&gt;&gt; Y = Serial2Parallel(3)(np.arange(10).reshape(2, 5))</span>
+<span class="sd">    &gt;&gt;&gt; print(Y.shape)</span>
+<span class="sd">    (2, 2, 3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N_sub</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zero-padding&quot;</span><span class="p">,</span> <span class="s2">&quot;truncate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;zero-padding&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;S2P&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_sub</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;N_sub must be a positive number.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_N_sub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N_sub</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_sub</span> <span class="o">=</span> <span class="n">N_sub</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">N_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_sub</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Number of elements in the last dimension</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">N</span> <span class="o">//</span> <span class="n">N_sub</span>
+
+        <span class="k">if</span> <span class="n">N</span> <span class="o">%</span> <span class="n">N_sub</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;zero-padding&quot;</span><span class="p">:</span>
+                <span class="n">M</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">new_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">N_sub</span><span class="o">*</span><span class="n">M</span><span class="p">,)</span>
+                <span class="n">X_processed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="n">X_processed</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;truncate&quot;</span><span class="p">:</span>
+                <span class="n">X_processed</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">M</span> <span class="o">*</span> <span class="n">N_sub</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_processed</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="c1"># Pure C-order reshape into the Block layout (..., T, F)</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">X_processed</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">N_sub</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">X_processed</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="Parallel2Serial">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Parallel2Serial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Parallel2Serial</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts parallel blocks back into a serial data stream (Block to Serial layout).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Inverse of :class:`Serial2Parallel`: the :math:`T` blocks of</span>
+<span class="sd">    :math:`F` samples are concatenated back into a single serial axis of</span>
+<span class="sd">    length :math:`T F`,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[t F + f] = x[t, f], \qquad</span>
+<span class="sd">        0 \le t &lt; T, \quad 0 \le f &lt; F</span>
+
+<span class="sd">    that is, the block content index :math:`f` runs fastest. This is a</span>
+<span class="sd">    pure C-order (row-major) ``reshape`` of the last two axes, the</span>
+<span class="sd">    normative Block :math:`(..., T, F)` to Serial :math:`(..., T F)`</span>
+<span class="sd">    conversion of CONVENTIONS.md (decision D2). No transposition is</span>
+<span class="sd">    involved, so ``Parallel2Serial()(Serial2Parallel(F)(x))`` returns</span>
+<span class="sd">    ``x`` whenever :math:`F` divides its length.</span>
+
+<span class="sd">    Axes: *declared axis* -- consumes the Block layout ``(..., T, F)``</span>
+<span class="sd">    and produces the Serial layout ``(..., T*F)``; the leading axes are</span>
+<span class="sd">    carried through unchanged.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str, optional</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;P2S&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 2 (parallel-to-serial conversion).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(Parallel2Serial()(np.array([[0, 1, 2], [3, 4, 5]])))</span>
+<span class="sd">    [0 1 2 3 4 5]</span>
+<span class="sd">    &gt;&gt;&gt; Y = Parallel2Serial()(np.arange(12).reshape(2, 2, 3))</span>
+<span class="sd">    &gt;&gt;&gt; print(Y.shape)</span>
+<span class="sd">    (2, 6)</span>
+<span class="sd">    &gt;&gt;&gt; print(Y[0])</span>
+<span class="sd">    [0 1 2 3 4 5]</span>
+<span class="sd">    &gt;&gt;&gt; x = np.arange(6)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.array_equal(Parallel2Serial()(Serial2Parallel(3)(x)), x))</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;P2S&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Pure C-order reshape flattening the last two axes</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+
+
+<div class="viewcode-block" id="Amplifier">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Amplifier">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Amplifier</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scales a signal by a constant gain (amplification or attenuation).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The amplifier is a memoryless linear device applying a constant gain</span>
+<span class="sd">    :math:`g` to every sample:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = g \, x[n]</span>
+
+<span class="sd">    where :math:`g &gt; 1` amplifies, :math:`g &lt; 1` attenuates, and the</span>
+<span class="sd">    output power is :math:`g^2` times the input power.</span>
+
+<span class="sd">    The gain is a single scalar applied to the whole array. To weight the</span>
+<span class="sd">    parallel streams of a signal individually, i.e. one gain per entry of</span>
+<span class="sd">    a declared axis, use :class:`WeightAmplifier`.</span>
+
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gain : float</span>
+<span class="sd">        Gain :math:`g` applied to every sample. Default is 1.0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the amplifier instance. Default is</span>
+<span class="sd">        ``&quot;signal_amplifier&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S. C. Cripps, *RF Power Amplifiers for Wireless Communications*,</span>
+<span class="sd">    2nd ed., Artech House, 2006 (memoryless amplitude gain).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(Amplifier(gain=2)(np.array([[1, 2], [3, 4]])))</span>
+<span class="sd">    [[2 4]</span>
+<span class="sd">     [6 8]]</span>
+<span class="sd">    &gt;&gt;&gt; print(Amplifier(gain=0.5)(np.array([2.0, 4.0])))</span>
+<span class="sd">    [1. 2.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;signal_amplifier&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="n">X</span></div>
+
+
+
+<div class="viewcode-block" id="WeightAmplifier">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.WeightAmplifier">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WeightAmplifier</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies one complex weight per parallel stream along a declared axis.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Each stream :math:`l` of a parallel (for instance multi-antenna)</span>
+<span class="sd">    signal is scaled by its own weight :math:`w_l`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y_l[n] = w_l \, x_l[n], \qquad 0 \le l &lt; L</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    * :math:`x_l[n]` is the :math:`l`-th input stream,</span>
+<span class="sd">    * :math:`w_l` is the weight applied to that stream,</span>
+<span class="sd">    * :math:`L` is the number of streams, i.e. the size of the input</span>
+<span class="sd">      along ``axis``.</span>
+
+<span class="sd">    This is the diagonal (per-stream) case of a linear precoder or of a</span>
+<span class="sd">    one-tap equalizer; :class:`comnumpy.ofdm.compensators.FrequencyDomainEqualizer`</span>
+<span class="sd">    derives from it with :math:`w_k = 1/H[k]`.</span>
+
+<span class="sd">    Axes: *declared axis* -- the weights are applied along ``axis``</span>
+<span class="sd">    (default -1); ``len(weight)`` must equal ``X.shape[axis]``, which is</span>
+<span class="sd">    checked at every call.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weight : np.ndarray</span>
+<span class="sd">        1D array of weights :math:`w_l`, of length :math:`L`.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis carrying the parallel streams. Default is -1.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is</span>
+<span class="sd">        ``&quot;parallel_signal_weight&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``weight`` is not a 1D array, or if its length does not match</span>
+<span class="sd">        the size of the input along ``axis``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. Goldsmith, *Wireless Communications*, Cambridge University Press,</span>
+<span class="sd">    2005, Chapter 10 (multiple-antenna systems, transmit and receive</span>
+<span class="sd">    weighting).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1, 2], [3, 4]])</span>
+<span class="sd">    &gt;&gt;&gt; print(WeightAmplifier(weight=np.array([2, 3]), axis=-1)(X))</span>
+<span class="sd">    [[ 2  6]</span>
+<span class="sd">     [ 6 12]]</span>
+<span class="sd">    &gt;&gt;&gt; print(WeightAmplifier(weight=np.array([2, 3]), axis=0)(X))</span>
+<span class="sd">    [[ 2  4]</span>
+<span class="sd">     [ 9 12]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;parallel_signal_weight&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The weight vector should be a 1D array (current shape: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span> <span class="o">!=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dimension of the weight vector and input signal along axis </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="si">}</span><span class="s2"> does not match&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_input</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># Apply weights along the specified axis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_weight</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">weight_shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="n">weight_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">weight_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="Complex2Real">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Complex2Real">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Complex2Real</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts the real or the imaginary part of a complex signal.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Writing the input in Cartesian form</span>
+<span class="sd">    :math:`x[n] = x_I[n] + i \, x_Q[n]`, the processor returns one of the</span>
+<span class="sd">    two quadrature components:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x_I[n] = \Re\{x[n]\} &amp; \text{if } \texttt{part} = \text{&quot;real&quot;},\\</span>
+<span class="sd">        x_Q[n] = \Im\{x[n]\} &amp; \text{if } \texttt{part} = \text{&quot;imag&quot;}.</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    The output is real-valued. With ``validate_input=True`` the</span>
+<span class="sd">    discarded component is checked to be numerically zero (tolerance</span>
+<span class="sd">    :math:`10^{-7}`), which turns the block into a guard: it then only</span>
+<span class="sd">    changes the dtype of a signal that is already known to be real (or</span>
+<span class="sd">    purely imaginary), and refuses to silently drop energy.</span>
+
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    part : {&quot;real&quot;, &quot;imag&quot;}, optional</span>
+<span class="sd">        Quadrature component to extract, :math:`x_I[n]` or</span>
+<span class="sd">        :math:`x_Q[n]`. Default is ``&quot;real&quot;``.</span>
+<span class="sd">    validate_input : bool, optional, keyword-only</span>
+<span class="sd">        If True, raise instead of discarding a non-zero component.</span>
+<span class="sd">        Default is False.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``validate_input`` is True and the discarded component is not</span>
+<span class="sd">        numerically zero.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([1+2j, 3+4j, 5+0j])</span>
+<span class="sd">    &gt;&gt;&gt; Complex2Real(part=&quot;real&quot;)(X)</span>
+<span class="sd">    array([1., 3., 5.])</span>
+<span class="sd">    &gt;&gt;&gt; Complex2Real(part=&quot;imag&quot;)(X)</span>
+<span class="sd">    array([2., 4., 0.])</span>
+<span class="sd">    &gt;&gt;&gt; Complex2Real(part=&quot;imag&quot;, validate_input=True)(X)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    ValueError: the input data is not imaginary since the real part is non zero</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">part</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;real&quot;</span><span class="p">,</span> <span class="s2">&quot;imag&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;real&quot;</span>
+    <span class="n">validate_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">part</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">&quot;real&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_input</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">10</span><span class="o">**-</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the input data is not real since the imag part is non zero &quot;</span><span class="p">)</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">real</span>
+            <span class="k">case</span> <span class="s2">&quot;imag&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_input</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">10</span><span class="o">**-</span><span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the input data is not imaginary since the real part is non zero &quot;</span><span class="p">)</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">imag</span>
+
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+<div class="viewcode-block" id="AutoConcatenator">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.AutoConcatenator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AutoConcatenator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copies part of a signal and reassembles original and copy through boolean masks.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Let :math:`m^{\text{in}}`, :math:`m^{\text{orig}}` and</span>
+<span class="sd">    :math:`m^{\text{copy}}` be the three boolean masks, of lengths</span>
+<span class="sd">    :math:`N` (input) and :math:`M` (output). Writing</span>
+<span class="sd">    :math:`\mathcal{I} = \{ i : m^{\text{in}}_i \}`,</span>
+<span class="sd">    :math:`\mathcal{O} = \{ i : m^{\text{orig}}_i \}` and</span>
+<span class="sd">    :math:`\mathcal{C} = \{ i : m^{\text{copy}}_i \}` for the sorted</span>
+<span class="sd">    positions selected by each mask, the output is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y\!\left[\mathcal{O}_j\right] = x[j], \quad 0 \le j &lt; N,</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        y\!\left[\mathcal{C}_j\right] = g\!\left(x\!\left[\mathcal{I}_j\right]\right),</span>
+<span class="sd">        \quad 0 \le j &lt; |\mathcal{I}|,</span>
+
+<span class="sd">    and :math:`y[i] = 0` for every position covered by neither mask. The</span>
+<span class="sd">    map :math:`g(\cdot)` is the hook ``process_copy`` (identity by</span>
+<span class="sd">    default), which subclasses override to transform the copy.</span>
+
+<span class="sd">    Consistency requires :math:`|\mathcal{O}| = N`,</span>
+<span class="sd">    :math:`|\mathcal{I}| = |\mathcal{C}|`, and</span>
+<span class="sd">    :math:`\mathcal{O} \cap \mathcal{C} = \varnothing`; all three are</span>
+<span class="sd">    checked. Prepending a copy of the tail of each block is exactly the</span>
+<span class="sd">    cyclic prefix, which is why</span>
+<span class="sd">    :class:`comnumpy.ofdm.processors.CyclicPrefixer` derives from this</span>
+<span class="sd">    class and only builds the three masks.</span>
+
+<span class="sd">    Axes: *declared axis* -- the masks index ``axis`` (default -1);</span>
+<span class="sd">    ``len(input_copy_mask)`` must equal ``X.shape[axis]``, and the output</span>
+<span class="sd">    has size ``len(output_original_mask)`` along that axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_copy_mask : np.ndarray of bool, optional, keyword-only</span>
+<span class="sd">        Mask :math:`m^{\text{in}}` selecting, in the input, the entries</span>
+<span class="sd">        to be copied. Length ``X.shape[axis]``.</span>
+<span class="sd">    output_original_mask : np.ndarray of bool, optional, keyword-only</span>
+<span class="sd">        Mask :math:`m^{\text{orig}}` giving, in the output, the positions</span>
+<span class="sd">        of the original data. Must select exactly ``X.shape[axis]``</span>
+<span class="sd">        entries.</span>
+<span class="sd">    output_copy_mask : np.ndarray of bool, optional, keyword-only</span>
+<span class="sd">        Mask :math:`m^{\text{copy}}` giving, in the output, the positions</span>
+<span class="sd">        of the copied data. Same length as ``output_original_mask``, and</span>
+<span class="sd">        must select as many entries as ``input_copy_mask``.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis along which the concatenation is performed. Default is -1.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is</span>
+<span class="sd">        ``&quot;auto concatenator&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the two output masks have different shapes, select a different</span>
+<span class="sd">        number of entries than expected, or overlap; or if the input size</span>
+<span class="sd">        along ``axis`` does not match ``input_copy_mask``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; concatenator = AutoConcatenator(</span>
+<span class="sd">    ...     input_copy_mask=np.array([True, False, True]),</span>
+<span class="sd">    ...     output_original_mask=np.array([True, True, True, False, False]),</span>
+<span class="sd">    ...     output_copy_mask=np.array([False, False, False, True, True]))</span>
+<span class="sd">    &gt;&gt;&gt; print(concatenator(np.array([1, 2, 3])))</span>
+<span class="sd">    [1 2 3 1 3]</span>
+<span class="sd">    &gt;&gt;&gt; print(concatenator(np.array([[1, 2, 3], [4, 5, 6]])))</span>
+<span class="sd">    [[1 2 3 1 3]</span>
+<span class="sd">     [4 5 6 4 6]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">input_copy_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output_original_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output_copy_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;auto concatenator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Subclasses build their masks in prepare(); nothing to validate yet</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Check if the sizes of output_original_mask and output_copy_mask are the same</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;output_original_mask and output_copy_mask must have the same shape.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check the number of True values in the masks</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_true_input_copy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span><span class="p">)</span>
+            <span class="n">num_true_output_copy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">num_true_input_copy</span> <span class="o">!=</span> <span class="n">num_true_output_copy</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of True values in input_copy_mask must be equal to the number of True values in output_copy_mask.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># check if there is no overlap between allocated value</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The two output masks overlap.&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AutoConcatenator.extract_copy">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.AutoConcatenator.extract_copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a copy  from the input signal on the specified axis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span>
+        <span class="n">X_copy</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">X_copy</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">X</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;input signal for the dimension </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="si">}</span><span class="s2"> and input_copy_mask must have the same shape.&quot;</span><span class="p">)</span>
+
+        <span class="n">X_copy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_copy</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">X_copy_processed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_copy</span><span class="p">(</span><span class="n">X_copy</span><span class="p">)</span>
+
+        <span class="c1"># Prepare the output array</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c1"># Create slicing object</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># Assign original data</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_original_mask</span>
+        <span class="n">Y</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="c1"># Assign copied data</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_copy_mask</span>
+        <span class="n">Y</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span> <span class="o">=</span> <span class="n">X_copy_processed</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+
+
+<div class="viewcode-block" id="SampleRemover">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.SampleRemover">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SampleRemover</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes a contiguous run of samples from a serial signal.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A window of :math:`D` samples starting at index :math:`n_0` is cut</span>
+<span class="sd">    out of the input, and the two remaining segments are spliced</span>
+<span class="sd">    together:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[n] &amp; \text{for } 0 \le n &lt; n_0,\\</span>
+<span class="sd">        x[n + D] &amp; \text{for } n_0 \le n &lt; N - D,</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where :math:`x[n]` has length :math:`N`, :math:`n_0` is the index of</span>
+<span class="sd">    the first deleted sample, :math:`D` the number of deleted samples,</span>
+<span class="sd">    and :math:`y[n]` has length :math:`N - D`. It is the exact inverse of</span>
+<span class="sd">    :class:`DataAdder` when the same :math:`n_0` is used.</span>
+
+<span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    splice uses flat indexing and does not broadcast.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N_start : int</span>
+<span class="sd">        Index :math:`n_0` of the first sample to delete. Default is 0.</span>
+<span class="sd">    length : int, optional, keyword-only</span>
+<span class="sd">        Number :math:`D` of samples to delete. Default is 0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is</span>
+<span class="sd">        ``&quot;symbol remover&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    comnumpy.ShapeError</span>
+<span class="sd">        If the input is not a 1D Serial signal ``(N,)``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(SampleRemover(N_start=2, length=3)(np.arange(8)))</span>
+<span class="sd">    [0 1 5 6 7]</span>
+<span class="sd">    &gt;&gt;&gt; print(SampleRemover(N_start=0, length=2)(np.arange(5)))</span>
+<span class="sd">    [2 3 4]</span>
+<span class="sd">    &gt;&gt;&gt; SampleRemover(N_start=1, length=1)(np.arange(6).reshape(2, 3))</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    comnumpy.exceptions.ShapeError: SampleRemover expects a 1D Serial signal (N,), got 2D (2, 3) -- ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;symbol remover&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SampleRemover expects a 1D Serial signal (N,), got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- flatten the stream with &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Parallel2Serial, or apply the block to each stream &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;separately.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span><span class="p">:]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DelayRemover">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.DelayRemover">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DelayRemover</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes the first samples of a signal to compensate a known delay.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A pure advance by the known integer delay :math:`d`, i.e. a shift</span>
+<span class="sd">    that discards the transient introduced upstream (filter group delay,</span>
+<span class="sd">    channel delay):</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = x[n + d], \qquad 0 \le n &lt; N - d</span>
+
+<span class="sd">    where :math:`x[n]` has length :math:`N`, :math:`d` is the delay to</span>
+<span class="sd">    remove, and :math:`y[n]` has length :math:`N - d`.</span>
+
+<span class="sd">    Axes: *declared axis* -- the samples are dropped along ``axis``</span>
+<span class="sd">    (default -1, the sample axis of the Serial layout ``(..., N)``); the</span>
+<span class="sd">    remaining axes are untouched.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    delay : int</span>
+<span class="sd">        Number :math:`d` of leading samples to remove.</span>
+<span class="sd">    axis : int, optional, keyword-only</span>
+<span class="sd">        Axis along which the delay is removed. Default is -1.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;delay remover&quot;``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(DelayRemover(3)(np.arange(8)))</span>
+<span class="sd">    [3 4 5 6 7]</span>
+<span class="sd">    &gt;&gt;&gt; print(DelayRemover(1)(np.array([[1, 2, 3], [4, 5, 6]])))</span>
+<span class="sd">    [[2 3]</span>
+<span class="sd">     [5 6]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;delay remover&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Create a slice object for the specified axis</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Apply the slice to the input array</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DataAdder">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.DataAdder">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataAdder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inserts a known sequence into a serial signal at a given index.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A sequence :math:`s[m]` of length :math:`D` (a preamble, a pilot</span>
+<span class="sd">    block, a guard sequence) is spliced into the input at index</span>
+<span class="sd">    :math:`n_0`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[n] &amp; \text{for } 0 \le n &lt; n_0,\\</span>
+<span class="sd">        s[n - n_0] &amp; \text{for } n_0 \le n &lt; n_0 + D,\\</span>
+<span class="sd">        x[n - D] &amp; \text{for } n_0 + D \le n &lt; N + D,</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where :math:`x[n]` has length :math:`N` and :math:`y[n]` has length</span>
+<span class="sd">    :math:`N + D`. Applying :class:`SampleRemover` with the same</span>
+<span class="sd">    :math:`n_0` and :math:`D` restores :math:`x[n]`.</span>
+
+<span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    splice is a concatenation along the first axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    symbol : np.ndarray</span>
+<span class="sd">        Sequence :math:`s[m]` to insert, of length :math:`D`.</span>
+<span class="sd">    N_start : int, optional, keyword-only</span>
+<span class="sd">        Insertion index :math:`n_0`, in ``[0, N]``. Default is 0.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;Data Adder&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    comnumpy.ShapeError</span>
+<span class="sd">        If the input, or ``symbol``, is not a 1D Serial signal ``(N,)``.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``N_start`` is outside ``[0, len(x)]``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(DataAdder(np.array([-1, -1]), N_start=2)(np.arange(5)))</span>
+<span class="sd">    [ 0  1 -1 -1  2  3  4]</span>
+<span class="sd">    &gt;&gt;&gt; print(DataAdder(np.array([-1, -1]))(np.arange(3)))</span>
+<span class="sd">    [-1 -1  0  1  2]</span>
+<span class="sd">    &gt;&gt;&gt; DataAdder(np.array([-1, -1]))(np.arange(6).reshape(2, 3))</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">    comnumpy.exceptions.ShapeError: DataAdder expects a 1D Serial signal (N,), got 2D (2, 3) -- ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">N_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Data Adder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;DataAdder expects a 1D Serial signal (N,), got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- flatten the stream with &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Parallel2Serial, or apply the block to each stream &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;separately.&quot;</span><span class="p">)</span>
+        <span class="n">symbol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">symbol</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;DataAdder expects a 1D symbol sequence (D,), got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">symbol</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D </span><span class="si">{</span><span class="n">symbol</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- ravel the inserted &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;sequence before passing it as symbol=.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_start</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_start</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;N_start is out of bounds for the input signal.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_input</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">N_start</span><span class="p">:]))</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="DataExtractor">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.DataExtractor">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataExtractor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts a segment of a signal using NumPy-style indexing.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The block keeps the samples whose index belongs to the selection</span>
+<span class="sd">    :math:`\mathcal{S}` described by ``selector``:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[m] = x\!\left[\mathcal{S}_m\right], \qquad</span>
+<span class="sd">        0 \le m &lt; |\mathcal{S}|</span>
+
+<span class="sd">    With ``selector = (n_0, n_1, \Delta)`` the selection is the</span>
+<span class="sd">    arithmetic progression</span>
+<span class="sd">    :math:`\mathcal{S} = \{ n_0, n_0 + \Delta, \dots \} \cap [n_0, n_1)`,</span>
+<span class="sd">    so :math:`n_0` is the start index, :math:`n_1` the (excluded) stop</span>
+<span class="sd">    index and :math:`\Delta` the step. An explicit list or array gives</span>
+<span class="sd">    :math:`\mathcal{S}` directly, an integer selects a single sample, and</span>
+<span class="sd">    ``None`` makes the block the identity :math:`y[n] = x[n]`.</span>
+
+<span class="sd">    Axes: *declared axis* -- the selector indexes the first axis, which</span>
+<span class="sd">    is the sample axis of a 1D Serial signal ``(N,)``; on a</span>
+<span class="sd">    multidimensional input it selects entries of axis 0 and the trailing</span>
+<span class="sd">    axes are carried through.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    selector : int, slice, tuple, list, np.ndarray or None, optional</span>
+<span class="sd">        Description of the selection :math:`\mathcal{S}`: an ``int`` for</span>
+<span class="sd">        a single index, a ``tuple`` ``(start, stop[, step])`` converted to</span>
+<span class="sd">        a slice, a ``slice``, a list or array of explicit indices, or</span>
+<span class="sd">        ``None`` for a pass-through. Default is ``None``.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;Data Extractor&quot;``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = np.arange(10)</span>
+<span class="sd">    &gt;&gt;&gt; print(DataExtractor(3)(x))</span>
+<span class="sd">    3</span>
+<span class="sd">    &gt;&gt;&gt; DataExtractor((2, 8))(x)</span>
+<span class="sd">    array([2, 3, 4, 5, 6, 7])</span>
+<span class="sd">    &gt;&gt;&gt; DataExtractor((1, 9, 2))(x)</span>
+<span class="sd">    array([1, 3, 5, 7])</span>
+<span class="sd">    &gt;&gt;&gt; DataExtractor((1, 3))(np.arange(20).reshape(4, 5))</span>
+<span class="sd">    array([[ 5,  6,  7,  8,  9],</span>
+<span class="sd">           [10, 11, 12, 13, 14]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">selector</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Data Extractor&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+
+        <span class="c1"># transformer un tuple en slice si c&#39;est un tuple simple</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selector</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selector</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">selector</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selector</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Resampler">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Resampler">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Resampler</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Changes the sampling rate of a signal by a rational factor.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The rate is changed by the rational factor :math:`P/Q`: the signal is</span>
+<span class="sd">    upsampled by :math:`P`, lowpass filtered, then decimated by</span>
+<span class="sd">    :math:`Q`. Writing :math:`h[k]` for the anti-imaging / anti-aliasing</span>
+<span class="sd">    filter,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \sum_{k} h[k] \; v\!\left[n Q - k\right], \qquad</span>
+<span class="sd">        v[m] = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[m / P] &amp; \text{if } m \bmod P = 0,\\</span>
+<span class="sd">        0 &amp; \text{otherwise,}</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    so that an input of :math:`N` samples yields</span>
+<span class="sd">    :math:`\lceil N P / Q \rceil` output samples and, for a signal</span>
+<span class="sd">    bandlimited below :math:`\min(1/P, 1/Q)`, :math:`y[n] \approx</span>
+<span class="sd">    x_c\!\left(n Q / P\right)` where :math:`x_c` is the underlying</span>
+<span class="sd">    continuous-time waveform. The three stages are evaluated jointly by</span>
+<span class="sd">    a polyphase implementation (``scipy.signal.resample_poly``), which</span>
+<span class="sd">    never computes the discarded samples.</span>
+
+<span class="sd">    Axes: *declared axis* -- the resampling runs along the last axis, the</span>
+<span class="sd">    sample axis of the Serial layout ``(..., N)``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    up : int</span>
+<span class="sd">        Interpolation factor :math:`P`. Must be a positive integer.</span>
+<span class="sd">    down : int</span>
+<span class="sd">        Decimation factor :math:`Q`. Must be a positive integer.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;Resampler&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``up`` or ``down`` is not a positive integer.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A. V. Oppenheim, R. W. Schafer, *Discrete-Time Signal Processing*,</span>
+<span class="sd">    3rd ed., Pearson, 2010, Chapter 4 (changing the sampling rate by a</span>
+<span class="sd">    non-integer factor, polyphase implementation).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = np.cos(2 * np.pi * 0.02 * np.arange(48))</span>
+<span class="sd">    &gt;&gt;&gt; y = Resampler(up=3, down=2)(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(y.shape)</span>
+<span class="sd">    (72,)</span>
+<span class="sd">    &gt;&gt;&gt; m = np.arange(20, 52)</span>
+<span class="sd">    &gt;&gt;&gt; ideal = np.cos(2 * np.pi * 0.02 * (2 / 3) * m)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(y[20:52] - ideal))), 4))</span>
+<span class="sd">    0.0006</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">up</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">down</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Resampler&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Both &#39;up&#39; and &#39;down&#39; factors must be positive integers.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>  <span class="c1"># local import (D36)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">resample_poly</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="Clipper">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.Clipper">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Clipper</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Saturates a real signal to a symmetric amplitude interval.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The clipper is a memoryless nonlinearity: it is transparent below the</span>
+<span class="sd">    threshold :math:`\tau` and saturates above it,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \max\left(-\tau, \min\left(x[n], \tau\right)\right)</span>
+<span class="sd">        = \left\{\begin{array}{cl}</span>
+<span class="sd">        x[n] &amp; \text{if } |x[n]| \le \tau,\\</span>
+<span class="sd">        \tau \, \mathrm{sign}(x[n]) &amp; \text{if } |x[n]| &gt; \tau,</span>
+<span class="sd">        \end{array}\right.</span>
+
+<span class="sd">    where :math:`\tau &gt; 0` is the saturation threshold. Clipping reduces</span>
+<span class="sd">    the peak-to-average power ratio at the cost of in-band distortion and</span>
+<span class="sd">    spectral regrowth.</span>
+
+<span class="sd">    .. NOTE::</span>
+<span class="sd">        The interval :math:`[-\tau, \tau]` is a *real* interval: this</span>
+<span class="sd">        block is meant for real-valued signals. For the polar clipping</span>
+<span class="sd">        :math:`\tau e^{i \angle x[n]}` of a complex baseband envelope,</span>
+<span class="sd">        use :class:`comnumpy.ofdm.predistorders.HardClipper`.</span>
+
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    threshold : float</span>
+<span class="sd">        Saturation threshold :math:`\tau`.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the processor instance. Default is ``&quot;Clipper&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S. C. Cripps, *RF Power Amplifiers for Wireless Communications*,</span>
+<span class="sd">    2nd ed., Artech House, 2006 (memoryless saturating nonlinearity).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(Clipper(threshold=1.5)(np.array([-3.0, -1.0, 0.5, 2.0])))</span>
+<span class="sd">    [-1.5 -1.   0.5  1.5]</span>
+<span class="sd">    &gt;&gt;&gt; print(Clipper(threshold=1.0)(np.array([[0.2, 5.0], [-5.0, -0.2]])))</span>
+<span class="sd">    [[ 0.2  1. ]</span>
+<span class="sd">     [-1.  -0.2]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Clipper&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+
+<div class="viewcode-block" id="BlindPhaseTracker">
+<a class="viewcode-back" href="../../../documentation/core/processors.html#comnumpy.core.processors.BlindPhaseTracker">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlindPhaseTracker</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Blind carrier phase recovery by exhaustive phase search (BPS).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The input carries an unknown, slowly varying carrier phase</span>
+<span class="sd">    :math:`\theta[n]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = s[n] \, e^{i \theta[n]} + b[n]</span>
+
+<span class="sd">    where :math:`s[n]` belongs to the known alphabet :math:`\mathcal{A}`.</span>
+<span class="sd">    For each sample, the :math:`B` test phases</span>
+<span class="sd">    :math:`\varphi_p = \frac{\pi}{4}\left(\frac{2p}{B} - 1\right)`,</span>
+<span class="sd">    :math:`p = 0, \dots, B-1`, are applied, and the one minimizing the</span>
+<span class="sd">    local squared error over a sliding window of :math:`2L + 1` samples</span>
+<span class="sd">    is retained:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{\theta}[n] = \arg\min_{\varphi_p}</span>
+<span class="sd">        \frac{1}{2L+1} \sum_{m=-L}^{L}</span>
+<span class="sd">        \left| x[n+m] e^{-i \varphi_p}</span>
+<span class="sd">        - \mathcal{D}\!\left(x[n+m] e^{-i \varphi_p}\right) \right|^2</span>
+
+<span class="sd">    where :math:`\mathcal{D}(z) = \arg\min_{a \in \mathcal{A}} |z - a|^2`</span>
+<span class="sd">    is the hard decision on the alphabet. The compensated output is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = x[n] \, e^{-i \hat{\theta}[n]}</span>
+
+<span class="sd">    The search range is limited to :math:`[-\pi/4, \pi/4)`, the phase</span>
+<span class="sd">    ambiguity of a square QAM constellation; residual :math:`\pi/2`</span>
+<span class="sd">    cycle slips must be resolved elsewhere (differential encoding or</span>
+<span class="sd">    pilots). The window half-length :math:`L` sets the usual trade-off:</span>
+<span class="sd">    a long window averages the noise, a short one follows a fast phase.</span>
+
+<span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the</span>
+<span class="sd">    search loops over the sample axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    L : int</span>
+<span class="sd">        Half-length :math:`L` of the sliding window; the local cost is</span>
+<span class="sd">        averaged over :math:`2L + 1` samples.</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Constellation :math:`\mathcal{A}` used by the hard decision</span>
+<span class="sd">        :math:`\mathcal{D}(\cdot)`.</span>
+<span class="sd">    phase_steps : int, optional</span>
+<span class="sd">        Number :math:`B` of test phases uniformly spanning</span>
+<span class="sd">        :math:`[-\pi/4, \pi/4)`. Default is 10.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phases : np.ndarray</span>
+<span class="sd">        The :math:`B` test phases :math:`\varphi_p`, precomputed from</span>
+<span class="sd">        ``phase_steps`` alone (parameter-derived, hence no trailing</span>
+<span class="sd">        underscore).</span>
+<span class="sd">    theta_ : np.ndarray</span>
+<span class="sd">        The estimated phase trajectory :math:`\hat{\theta}[n]` of the last</span>
+<span class="sd">        call, of length :math:`N` (data-derived, hence the trailing</span>
+<span class="sd">        underscore, D23). A block never draws (D25, D42): plot it from the</span>
+<span class="sd">        caller, for instance with ``matplotlib.pyplot.plot(tracker.theta_)``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, &quot;Hardware-Efficient Coherent Digital</span>
+<span class="sd">    Receiver Concept With Feedforward Carrier Recovery for M-QAM</span>
+<span class="sd">    Constellations&quot;, Journal of Lightwave Technology, vol. 27, no. 8,</span>
+<span class="sd">    pp. 989-999, 2009, doi: 10.1109/JLT.2008.2010511.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([1+1j, -1+1j, -1-1j, 1-1j]) / np.sqrt(2)</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(42)</span>
+<span class="sd">    &gt;&gt;&gt; s = alphabet[rng.integers(0, 4, size=12)]</span>
+<span class="sd">    &gt;&gt;&gt; x = s * np.exp(1j * 0.3)</span>
+<span class="sd">    &gt;&gt;&gt; tracker = BlindPhaseTracker(L=3, alphabet=alphabet, phase_steps=16)</span>
+<span class="sd">    &gt;&gt;&gt; y = tracker(x)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(y - s))), 3))</span>
+<span class="sd">    0.005</span>
+<span class="sd">    &gt;&gt;&gt; print(tracker.theta_.shape, round(float(np.mean(tracker.theta_)), 3))</span>
+<span class="sd">    (12,) 0.295</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">L</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">phase_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">phases</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23): phase trajectory of the last run</span>
+    <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_steps</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">hard_projector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">symbols</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evm_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
+        <span class="c1"># Compute local EVM cost around index n</span>
+        <span class="n">total_error</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="n">m</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">rotated</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">closest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hard_projector</span><span class="p">(</span><span class="n">rotated</span><span class="p">)</span>
+                <span class="n">total_error</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rotated</span> <span class="o">-</span> <span class="n">closest</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">total_error</span> <span class="o">/</span> <span class="n">count</span> <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">y_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">optimal_phases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+            <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">evm_cost</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">]</span>
+            <span class="n">best_phi_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">costs</span><span class="p">)</span>
+            <span class="n">best_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">[</span><span class="n">best_phi_idx</span><span class="p">]</span>
+            <span class="n">optimal_phases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_phi</span><span class="p">)</span>
+            <span class="n">y_corrected</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">best_phi</span><span class="p">)</span>
+
+        <span class="c1"># estimated quantity (D23), exposed for the caller to plot (D25, D42)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">optimal_phases</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">y_corrected</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

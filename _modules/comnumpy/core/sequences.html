@@ -1,0 +1,1329 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.sequences &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/sequences';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.sequences</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.sequences</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Synchronization sequence catalog (decision D29).</span>
+
+<span class="sd">Free functions returning the classic synchronization sequences, each</span>
+<span class="sd">with its reference and its defining property (tested in</span>
+<span class="sd">``tests/core/test_frames_sequences.py``): Zadoff-Chu (LTE/NR PRACH),</span>
+<span class="sd">Schmidl &amp; Cox (OFDM timing + CFO), Barker (802.11b), Golay pairs</span>
+<span class="sd">(802.11ad) and maximum-length sequences.</span>
+
+<span class="sd">These sequences carry no information: they are chosen for a</span>
+<span class="sd">*correlation* property, which is what makes them detectable in noise</span>
+<span class="sd">after a single correlation with a locally stored replica. Each</span>
+<span class="sd">``Signal Model`` below therefore states that property -- not only the</span>
+<span class="sd">construction rule -- and the doctest that follows *computes* it.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zadoff_chu&quot;</span><span class="p">,</span> <span class="s2">&quot;schmidl_cox_preamble&quot;</span><span class="p">,</span> <span class="s2">&quot;barker&quot;</span><span class="p">,</span> <span class="s2">&quot;golay_pair&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;m_sequence&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="zadoff_chu">
+<a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.zadoff_chu">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">zadoff_chu</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Zadoff-Chu (CAZAC) sequence of root :math:`u` and length :math:`N`.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    For an **odd** length :math:`N`, the sequence of root :math:`u` is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x_u[n] = \exp\left(-j \pi u \frac{n(n+1)}{N}\right), \qquad</span>
+<span class="sd">        n = 0, \dots, N-1</span>
+
+<span class="sd">    This is the odd-length convention; the even-length variant replaces</span>
+<span class="sd">    :math:`n(n+1)` by :math:`n^2` and is *not* accepted here (odd</span>
+<span class="sd">    :math:`N` is enforced, see ``Raises``).</span>
+
+<span class="sd">    CAZAC stands for *constant amplitude, zero autocorrelation*, the two</span>
+<span class="sd">    properties that make the sequence a preamble. Writing the periodic</span>
+<span class="sd">    (cyclic) correlation of two roots as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \theta_{uv}[k] = \sum_{n=0}^{N-1} x_u[n] \, x_v^*[(n + k) \bmod N],</span>
+
+<span class="sd">    the sequence satisfies, whenever :math:`\gcd(u, N) = 1`,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \left|x_u[n]\right| = 1 \quad \forall n,</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \theta_{uu}[k] = N \, \delta[k]</span>
+
+<span class="sd">    -- unit modulus (so the peak-to-average power ratio is 1 and no</span>
+<span class="sd">    amplifier back-off is wasted on the preamble), and a periodic</span>
+<span class="sd">    autocorrelation that is *exactly* zero at every nonzero lag, not</span>
+<span class="sd">    merely small. Two distinct roots with :math:`\gcd(|u - v|, N) = 1`</span>
+<span class="sd">    are in addition maximally separated: their cross-correlation has</span>
+<span class="sd">    constant magnitude</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \left|\theta_{uv}[k]\right| = \sqrt{N} \quad \forall k,</span>
+<span class="sd">        \qquad \text{i.e.} \quad</span>
+<span class="sd">        \frac{\left|\theta_{uv}[k]\right|}{N} = \frac{1}{\sqrt{N}}</span>
+
+<span class="sd">    once normalized by the sequence energy :math:`N`. A single</span>
+<span class="sd">    correlation therefore both locates the sequence and identifies its</span>
+<span class="sd">    root, which is why cell search in LTE (PSS) and 5G-NR, and the</span>
+<span class="sd">    random-access preambles (PRACH) of both, are built from Zadoff-Chu</span>
+<span class="sd">    sequences.</span>
+
+<span class="sd">    Axes: *element-wise* -- generator: each sample is a closed-form</span>
+<span class="sd">    function of its index; the output is 1-D of length ``N``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    u : int</span>
+<span class="sd">        Root index :math:`u`, coprime with :math:`N`. Distinct roots give</span>
+<span class="sd">        the low, flat cross-correlation floor above.</span>
+<span class="sd">    N : int</span>
+<span class="sd">        Sequence length :math:`N`, odd.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Complex sequence :math:`x_u[n]` of length :math:`N`, unit modulus.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If :math:`N` is even, or if :math:`\gcd(u, N) \neq 1` (the</span>
+<span class="sd">        autocorrelation property does not hold otherwise).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    D. C. Chu, &quot;Polyphase codes with good periodic correlation properties,&quot;</span>
+<span class="sd">    IEEE Trans. Inf. Theory 18(4), pp. 531-532, 1972; usage in</span>
+<span class="sd">    3GPP TS 36.211 (LTE) and 3GPP TS 38.211 (5G-NR).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = zadoff_chu(25, 139)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(np.abs(x) - 1))), 12))  # constant amplitude</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &gt;&gt;&gt; theta = np.array([abs(np.vdot(x, np.roll(x, k))) for k in range(139)])</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(theta[0]), 9), round(float(np.max(theta[1:])), 9))</span>
+<span class="sd">    139.0 0.0</span>
+<span class="sd">    &gt;&gt;&gt; y = zadoff_chu(34, 139)  # a second root, |u - v| = 9 coprime with 139</span>
+<span class="sd">    &gt;&gt;&gt; c = np.array([abs(np.vdot(x, np.roll(y, k))) for k in range(139)])</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(c - np.sqrt(139)))), 9))  # flat, = sqrt(N)</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">N</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Zadoff-Chu length N must be odd, got </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">gcd</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;root u=</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> must be coprime with N=</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">u</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="schmidl_cox_preamble">
+<a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.schmidl_cox_preamble">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schmidl_cox_preamble</span><span class="p">(</span><span class="n">N_fft</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Schmidl &amp; Cox OFDM preamble (two identical time-domain halves).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Unit-power QPSK symbols :math:`c[k]` are placed on the **even**</span>
+<span class="sd">    subcarriers of an :math:`N`-point OFDM symbol, the odd ones being</span>
+<span class="sd">    left empty:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        X[k] = \begin{cases}</span>
+<span class="sd">            \sqrt{2}\, c\!\left[k/2\right], &amp; k \text{ even} \\</span>
+<span class="sd">            0, &amp; k \text{ odd}</span>
+<span class="sd">        \end{cases}</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        x[n] = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} X[k] \,</span>
+<span class="sd">               e^{\,j 2 \pi k n / N}</span>
+
+<span class="sd">    the :math:`\sqrt{2}` restoring unit average power</span>
+<span class="sd">    :math:`\mathbb{E}\left[|x[n]|^2\right] = 1` on the half-filled grid.</span>
+<span class="sd">    Because only even :math:`k` contribute, every exponential is</span>
+<span class="sd">    :math:`N/2`-periodic and the preamble consists of **two identical</span>
+<span class="sd">    halves**:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x\!\left[n + N/2\right] = x[n], \qquad n = 0, \dots, N/2 - 1</span>
+
+<span class="sd">    This is the structure the Schmidl &amp; Cox synchronizer exploits. On the</span>
+<span class="sd">    received signal :math:`y[n]` the metric</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P(d) = \sum_{m=0}^{N/2-1} y^*[d+m] \, y\!\left[d+m+N/2\right],</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        M(d) = \frac{\left|P(d)\right|^2}</span>
+<span class="sd">                    {\left(\sum_{m=0}^{N/2-1}</span>
+<span class="sd">                     \left|y\!\left[d+m+N/2\right]\right|^2\right)^2}</span>
+
+<span class="sd">    reaches its plateau :math:`M(d) = 1` when the window :math:`d` is</span>
+<span class="sd">    aligned with the preamble -- that gives the **timing**. A carrier</span>
+<span class="sd">    frequency offset of :math:`\varepsilon` subcarrier spacings turns the</span>
+<span class="sd">    repetition into :math:`y[n + N/2] = y[n] e^{\,j \pi \varepsilon}`, so</span>
+<span class="sd">    the same quantity also gives the **CFO**:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{\varepsilon} = \frac{\angle P(\hat{d})}{\pi},</span>
+<span class="sd">        \qquad \left|\varepsilon\right| &lt; 1</span>
+
+<span class="sd">    one correlation delivering both estimates.</span>
+
+<span class="sd">    Axes: *element-wise* -- generator: returns a 1-D preamble of length</span>
+<span class="sd">    ``N_fft``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N_fft : int</span>
+<span class="sd">        FFT size :math:`N` (even, so that the two halves have equal length).</span>
+<span class="sd">    seed : int, optional</span>
+<span class="sd">        Seed of the RNG drawing the QPSK symbols :math:`c[k]`. Fix it to</span>
+<span class="sd">        make the preamble reproducible between transmitter and receiver.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Time-domain preamble :math:`x[n]` of length :math:`N`, of unit</span>
+<span class="sd">        average power, with :math:`x[n + N/2] = x[n]`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``N_fft`` is odd.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    T. M. Schmidl, D. C. Cox, &quot;Robust frequency and timing synchronization</span>
+<span class="sd">    for OFDM,&quot; IEEE Trans. Commun. 45(12), pp. 1613-1621, 1997;</span>
+<span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
+<span class="sd">    Artech House, 2000, Chapter 4.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = schmidl_cox_preamble(64, seed=1)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(x[32:] - x[:32]))), 12))  # x[n + N/2] = x[n]</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &gt;&gt;&gt; eps = 0.25  # CFO of a quarter subcarrier spacing</span>
+<span class="sd">    &gt;&gt;&gt; y = x * np.exp(2j * np.pi * eps * np.arange(64) / 64)</span>
+<span class="sd">    &gt;&gt;&gt; P = np.vdot(y[:32], y[32:])  # Schmidl &amp; Cox metric, window aligned (d = 0)</span>
+<span class="sd">    &gt;&gt;&gt; M = abs(P) ** 2 / float(np.sum(np.abs(y[32:]) ** 2)) ** 2</span>
+<span class="sd">    &gt;&gt;&gt; print(round(M, 12), round(float(np.angle(P) / np.pi), 12))  # timing, then CFO</span>
+<span class="sd">    1.0 0.25</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">N_fft</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;N_fft must be even, got </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_fft</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">qpsk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">N_fft</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">qpsk</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">N_fft</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+
+<span class="n">_BARKER</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="mi">11</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="mi">13</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="barker">
+<a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.barker">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">barker</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Barker code of the given length.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A Barker code is a binary sequence :math:`x[n] \in \{-1, +1\}` of</span>
+<span class="sd">    length :math:`N` whose **aperiodic** autocorrelation</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R_x[k] = \sum_{n} x[n] \, x[n + k], \qquad</span>
+<span class="sd">        k = -(N-1), \dots, N-1</span>
+
+<span class="sd">    (the sum running over the overlapping samples, so no cyclic</span>
+<span class="sd">    extension) has all its sidelobes bounded by one:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R_x[0] = N, \qquad \left|R_x[k]\right| \leq 1 \quad \forall k \neq 0</span>
+
+<span class="sd">    This is the best possible sidelobe level for a binary sequence, and</span>
+<span class="sd">    the reason the aperiodic -- rather than periodic -- autocorrelation</span>
+<span class="sd">    is the relevant one: a packet preamble is transmitted **once**, so</span>
+<span class="sd">    the receiver correlates over a partial overlap at every trial lag.</span>
+<span class="sd">    A merit factor :math:`N^2 / (2 \sum_{k \neq 0} R_x[k]^2)` that grows</span>
+<span class="sd">    with :math:`N` is what makes the peak detectable in noise.</span>
+
+<span class="sd">    Only a finite set of lengths is known -- this implementation provides</span>
+<span class="sd">    :math:`N \in \{2, 3, 4, 5, 7, 11, 13\}`. No longer Barker code</span>
+<span class="sd">    exists for odd :math:`N &gt; 13`, and none is conjectured to exist for</span>
+<span class="sd">    any :math:`N &gt; 13`. The length-11 code is the DSSS spreading</span>
+<span class="sd">    sequence of 802.11b; the length-13 code is the classic radar pulse</span>
+<span class="sd">    compression code.</span>
+
+<span class="sd">    Axes: *element-wise* -- generator: returns a 1-D bipolar sequence of</span>
+<span class="sd">    length ``length``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    length : int</span>
+<span class="sd">        Code length :math:`N`, one of ``{2, 3, 4, 5, 7, 11, 13}``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Integer array :math:`x[n] \in \{-1, +1\}` of length :math:`N`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If no Barker code of the requested length is tabulated.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. H. Barker, &quot;Group synchronizing of binary digital systems,&quot; in</span>
+<span class="sd">    *Communication Theory*, W. Jackson (ed.), Academic Press, 1953,</span>
+<span class="sd">    pp. 273-287; J. G. Proakis, M. Salehi, *Digital Communications*,</span>
+<span class="sd">    5th ed., McGraw-Hill, 2008 (spread-spectrum signalling);</span>
+<span class="sd">    IEEE 802.11-2020, clause 15.4.4.4 (length 11).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; code = barker(7)</span>
+<span class="sd">    &gt;&gt;&gt; print(code)</span>
+<span class="sd">    [ 1  1  1 -1 -1  1 -1]</span>
+<span class="sd">    &gt;&gt;&gt; R = np.correlate(code, code, &quot;full&quot;)  # aperiodic autocorrelation</span>
+<span class="sd">    &gt;&gt;&gt; print(R)</span>
+<span class="sd">    [-1  0 -1  0 -1  0  7  0 -1  0 -1  0 -1]</span>
+<span class="sd">    &gt;&gt;&gt; print(int(np.max(np.abs(np.delete(R, 6)))))  # every sidelobe bounded by 1</span>
+<span class="sd">    1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_BARKER</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no Barker code of length </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">; &quot;</span>
+                         <span class="sa">f</span><span class="s2">&quot;known lengths: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_BARKER</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_BARKER</span><span class="p">[</span><span class="n">length</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="golay_pair">
+<a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.golay_pair">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">golay_pair</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Complementary Golay pair :math:`(a, b)` of the given length.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Two bipolar sequences :math:`a[n], b[n] \in \{-1, +1\}` of length</span>
+<span class="sd">    :math:`N` form a *complementary pair* when their **aperiodic**</span>
+<span class="sd">    autocorrelations</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R_a[k] = \sum_{n} a[n] \, a[n + k], \qquad</span>
+<span class="sd">        R_b[k] = \sum_{n} b[n] \, b[n + k]</span>
+
+<span class="sd">    cancel each other everywhere except at the origin:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R_a[k] + R_b[k] = 2 N \, \delta[k]</span>
+
+<span class="sd">    Neither sequence has small sidelobes on its own -- it is their</span>
+<span class="sd">    **sum** that is a perfect impulse. Correlating the received signal</span>
+<span class="sd">    with both replicas and adding the two outputs therefore removes the</span>
+<span class="sd">    sidelobes *exactly*, at any length, where a Barker code only bounds</span>
+<span class="sd">    them by one and stops at :math:`N = 13`. This is what makes Golay</span>
+<span class="sd">    pairs the channel-estimation fields of 802.11ad/ay and of many radar</span>
+<span class="sd">    waveforms.</span>
+
+<span class="sd">    The pair is built by the standard recursive doubling, starting from</span>
+<span class="sd">    :math:`a_0 = b_0 = [1]`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        a_{m+1} = \left[a_m, \; b_m\right], \qquad</span>
+<span class="sd">        b_{m+1} = \left[a_m, \; -b_m\right]</span>
+
+<span class="sd">    which preserves complementarity and doubles the length at each step,</span>
+<span class="sd">    hence the restriction to powers of two.</span>
+
+<span class="sd">    Axes: *element-wise* -- generator: returns two 1-D sequences of</span>
+<span class="sd">    length ``length``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    length : int</span>
+<span class="sd">        Sequence length :math:`N`, a power of two.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple of np.ndarray</span>
+<span class="sd">        The pair :math:`(a[n], b[n])`, each of length :math:`N` with</span>
+<span class="sd">        values in :math:`\{-1, +1\}`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``length`` is not a positive power of two.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M. J. E. Golay, &quot;Complementary series,&quot; IRE Trans. Inf. Theory 7(2),</span>
+<span class="sd">    pp. 82-87, 1961; IEEE 802.11ad-2012, clause 21.11.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; a, b = golay_pair(8)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, &quot;full&quot;))  # sidelobes are large on their own</span>
+<span class="sd">    [ 1.  0.  1.  0.  3.  0. -1.  8. -1.  0.  3.  0.  1.  0.  1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(b, b, &quot;full&quot;))  # and opposite in the partner</span>
+<span class="sd">    [-1.  0. -1.  0. -3.  0.  1.  8.  1.  0. -3.  0. -1.  0. -1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, &quot;full&quot;) + np.correlate(b, b, &quot;full&quot;))  # 2N delta[k]</span>
+<span class="sd">    [ 0.  0.  0.  0.  0.  0.  0. 16.  0.  0.  0.  0.  0.  0.  0.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">length</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;length must be a power of two, got </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">])</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span></div>
+
+
+
+<span class="c1"># primitive polynomials (taps fed back into stage 0), degree -&gt; taps</span>
+<span class="n">_PRIMITIVE_TAPS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">4</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">5</span><span class="p">:</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">6</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="mi">8</span><span class="p">:</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="mi">9</span><span class="p">:</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="mi">10</span><span class="p">:</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="m_sequence">
+<a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.m_sequence">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">m_sequence</span><span class="p">(</span><span class="n">degree</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed_state</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Maximum-length sequence from a degree-:math:`m` LFSR.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A linear-feedback shift register of degree :math:`m` produces the</span>
+<span class="sd">    binary recursion</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        b[n] = \bigoplus_{i \in \mathcal{T}} b[n - i]</span>
+<span class="sd">        \qquad (\text{modulo } 2)</span>
+
+<span class="sd">    where the tap set :math:`\mathcal{T}` is that of a **primitive**</span>
+<span class="sd">    polynomial :math:`g(D) = 1 + \sum_{i \in \mathcal{T}} D^{i}` of</span>
+<span class="sd">    degree :math:`m` (tabulated here for :math:`m = 2, \dots, 10`). The</span>
+<span class="sd">    output is mapped to a bipolar sequence</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = 1 - 2 \, b[n] \in \{-1, +1\}</span>
+
+<span class="sd">    Primitivity is what makes the register visit **every** nonzero state</span>
+<span class="sd">    exactly once before repeating, so the period is maximal:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        N = 2^m - 1</span>
+
+<span class="sd">    Two properties follow, and they are the reason m-sequences are used</span>
+<span class="sd">    as spreading and ranging codes. First the *balance* property: one</span>
+<span class="sd">    period contains :math:`2^{m-1}` ones and :math:`2^{m-1} - 1` zeros,</span>
+<span class="sd">    hence :math:`\sum_{n=0}^{N-1} x[n] = -1` -- a nearly zero-mean,</span>
+<span class="sd">    noise-like waveform. Second, the periodic autocorrelation takes only</span>
+<span class="sd">    **two values**:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \theta_x[k] = \sum_{n=0}^{N-1} x[n] \, x[(n + k) \bmod N]</span>
+<span class="sd">        = \begin{cases}</span>
+<span class="sd">            N, &amp; k \equiv 0 \pmod N \\</span>
+<span class="sd">            -1, &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    a single sharp peak over a floor at :math:`-1/N` of the peak, which</span>
+<span class="sd">    is why a receiver can acquire code phase by sliding correlation and</span>
+<span class="sd">    why the sequence behaves, spectrally, almost like white noise.</span>
+
+<span class="sd">    Axes: *element-wise* -- generator: returns one 1-D period of length</span>
+<span class="sd">    :math:`2^m - 1`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    degree : int</span>
+<span class="sd">        LFSR degree :math:`m`, from 2 to 10; the primitive polynomial</span>
+<span class="sd">        :math:`g(D)` (hence the tap set :math:`\mathcal{T}`) is built in.</span>
+<span class="sd">    seed_state : iterable of int, optional</span>
+<span class="sd">        Initial register state, a nonzero binary word of length</span>
+<span class="sd">        :math:`m`. Only the *phase* of the sequence depends on it, not</span>
+<span class="sd">        its properties. Default: all ones.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        One full period :math:`x[n] \in \{-1, +1\}` of length</span>
+<span class="sd">        :math:`N = 2^m - 1`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``degree`` has no tabulated primitive polynomial, or if</span>
+<span class="sd">        ``seed_state`` is not a nonzero word of length :math:`m`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S. W. Golomb, *Shift Register Sequences*, Holden-Day, 1967</span>
+<span class="sd">    (Chapters 3-4: randomness postulates and the two-valued</span>
+<span class="sd">    autocorrelation); J. G. Proakis, M. Salehi, *Digital Communications*,</span>
+<span class="sd">    5th ed., McGraw-Hill, 2008 (PN sequences in spread spectrum).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = m_sequence(4)</span>
+<span class="sd">    &gt;&gt;&gt; print(x)</span>
+<span class="sd">    [-1 -1 -1 -1  1  1  1 -1  1  1 -1 -1  1 -1  1]</span>
+<span class="sd">    &gt;&gt;&gt; theta = [int(np.dot(x, np.roll(x, k))) for k in range(15)]</span>
+<span class="sd">    &gt;&gt;&gt; print(theta)  # two-valued: N at lag 0, -1 at every other lag</span>
+<span class="sd">    [15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]</span>
+<span class="sd">    &gt;&gt;&gt; int(np.sum(x == 1)), int(np.sum(x == -1)), int(np.sum(x))  # balance</span>
+<span class="sd">    (7, 8, -1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">degree</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PRIMITIVE_TAPS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;degree must be in </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_PRIMITIVE_TAPS</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">taps</span> <span class="o">=</span> <span class="n">_PRIMITIVE_TAPS</span><span class="p">[</span><span class="n">degree</span><span class="p">]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="k">if</span> <span class="n">seed_state</span> <span class="ow">is</span> <span class="kc">None</span> \
+        <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">seed_state</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">degree</span><span class="p">,)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;seed_state must be a nonzero length-</span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2"> register&quot;</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">bits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">feedback</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">tap</span> <span class="ow">in</span> <span class="n">taps</span><span class="p">:</span>
+            <span class="n">feedback</span> <span class="o">^=</span> <span class="n">state</span><span class="p">[</span><span class="n">tap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">feedback</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bits</span>  <span class="c1"># bipolar</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

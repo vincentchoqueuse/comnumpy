@@ -54,7 +54,7 @@ We create a transmission chain consisting of a symbol generator, symbol mapper, 
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 26-33
+   :lines: 26-34
 
 This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal is described by:
 
@@ -87,7 +87,7 @@ We now apply Zero-Forcing (ZF) equalization using the pseudo-inverse of the chan
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 50-52
+   :lines: 49-52
 
 This separates the transmitted streams assuming perfect channel knowledge while ignoring noise enhancement. The ZF-equalized symbols are given by
 
@@ -157,7 +157,7 @@ To get a more reliable estimate of the SER, we run a Monte Carlo simulation.
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 80-113
+   :lines: 79-113
 
 This simulates multiple random channels and noise realizations for a range of SNR values.
 

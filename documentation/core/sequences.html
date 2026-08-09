@@ -1,0 +1,976 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Synchronization sequences &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'documentation/core/sequences';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Capacity" href="capacity.html" />
+    <link rel="prev" title="Frames" href="frames.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Core</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="generics.html">Generics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generators.html">Generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappers.html">Mappers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="processors.html">Processors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devices.html">Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="channels.html">Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fading.html">Fading channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impairments.html">Impairments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compensators.html">Compensators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frames.html">Frames</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Synchronization sequences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capacity.html">Capacity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validators.html">Validators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualizers.html">Visualizers</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../fec/index.html">FEC</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../fec/convolutional.html">Convolutional codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fec/ldpc.html">LDPC codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fec/analysis.html">Code analysis</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../mimo/index.html">MIMO</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mimo/channels.html">Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mimo/detectors.html">Detectors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mimo/compensators.html">Compensators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mimo/utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mimo/validators.html">Validators</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../ofdm/index.html">OFDM</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/allocation.html">Carrier allocation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/processors.html">Processors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/compensators.html">Compensators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/predistorders.html">Predistorders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/chains.html">Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ofdm/visualizers.html">Visualizers</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../optical/index.html">Optical</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../optical/fiber.html">Fiber</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/channels.html">Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/compensators.html">Compensators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/dbp.html">Digital Back Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/devices.html">Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/links.html">Fiber Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/wdm.html">Wavelength-division multiplexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/raman.html">Raman amplification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optical/constants.html">Physical constants</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../toplevel/index.html">Chain services</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/sweep.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Documentation</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Core</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Synchronization sequences</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-comnumpy.core.sequences">
+<span id="synchronization-sequences"></span><h1>Synchronization sequences<a class="headerlink" href="#module-comnumpy.core.sequences" title="Link to this heading">#</a></h1>
+<p>Synchronization sequence catalog (decision D29).</p>
+<p>Free functions returning the classic synchronization sequences, each
+with its reference and its defining property (tested in
+<code class="docutils literal notranslate"><span class="pre">tests/core/test_frames_sequences.py</span></code>): Zadoff-Chu (LTE/NR PRACH),
+Schmidl &amp; Cox (OFDM timing + CFO), Barker (802.11b), Golay pairs
+(802.11ad) and maximum-length sequences.</p>
+<p>These sequences carry no information: they are chosen for a
+<em>correlation</em> property, which is what makes them detectable in noise
+after a single correlation with a locally stored replica. Each
+<code class="docutils literal notranslate"><span class="pre">Signal</span> <span class="pre">Model</span></code> below therefore states that property – not only the
+construction rule – and the doctest that follows <em>computes</em> it.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.sequences.zadoff_chu">
+<span class="sig-name descname"><span class="pre">zadoff_chu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/sequences.html#zadoff_chu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.sequences.zadoff_chu" title="Link to this definition">#</a></dt>
+<dd><p>Zadoff-Chu (CAZAC) sequence of root <span class="math notranslate nohighlight">\(u\)</span> and length <span class="math notranslate nohighlight">\(N\)</span>.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<p>For an <strong>odd</strong> length <span class="math notranslate nohighlight">\(N\)</span>, the sequence of root <span class="math notranslate nohighlight">\(u\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[x_u[n] = \exp\left(-j \pi u \frac{n(n+1)}{N}\right), \qquad
+n = 0, \dots, N-1\]</div>
+<p>This is the odd-length convention; the even-length variant replaces
+<span class="math notranslate nohighlight">\(n(n+1)\)</span> by <span class="math notranslate nohighlight">\(n^2\)</span> and is <em>not</em> accepted here (odd
+<span class="math notranslate nohighlight">\(N\)</span> is enforced, see <code class="docutils literal notranslate"><span class="pre">Raises</span></code>).</p>
+<p>CAZAC stands for <em>constant amplitude, zero autocorrelation</em>, the two
+properties that make the sequence a preamble. Writing the periodic
+(cyclic) correlation of two roots as</p>
+<div class="math notranslate nohighlight">
+\[\theta_{uv}[k] = \sum_{n=0}^{N-1} x_u[n] \, x_v^*[(n + k) \bmod N],\]</div>
+<p>the sequence satisfies, whenever <span class="math notranslate nohighlight">\(\gcd(u, N) = 1\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\left|x_u[n]\right| = 1 \quad \forall n,
+\qquad
+\theta_{uu}[k] = N \, \delta[k]\]</div>
+<p>– unit modulus (so the peak-to-average power ratio is 1 and no
+amplifier back-off is wasted on the preamble), and a periodic
+autocorrelation that is <em>exactly</em> zero at every nonzero lag, not
+merely small. Two distinct roots with <span class="math notranslate nohighlight">\(\gcd(|u - v|, N) = 1\)</span>
+are in addition maximally separated: their cross-correlation has
+constant magnitude</p>
+<div class="math notranslate nohighlight">
+\[\left|\theta_{uv}[k]\right| = \sqrt{N} \quad \forall k,
+\qquad \text{i.e.} \quad
+\frac{\left|\theta_{uv}[k]\right|}{N} = \frac{1}{\sqrt{N}}\]</div>
+<p>once normalized by the sequence energy <span class="math notranslate nohighlight">\(N\)</span>. A single
+correlation therefore both locates the sequence and identifies its
+root, which is why cell search in LTE (PSS) and 5G-NR, and the
+random-access preambles (PRACH) of both, are built from Zadoff-Chu
+sequences.</p>
+<p>Axes: <em>element-wise</em> – generator: each sample is a closed-form
+function of its index; the output is 1-D of length <code class="docutils literal notranslate"><span class="pre">N</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param u<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Root index <span class="math notranslate nohighlight">\(u\)</span>, coprime with <span class="math notranslate nohighlight">\(N\)</span>. Distinct roots give
+the low, flat cross-correlation floor above.</p>
+</dd>
+<dt class="field-even">type u<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param N<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence length <span class="math notranslate nohighlight">\(N\)</span>, odd.</p>
+</dd>
+<dt class="field-even">type N<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Complex sequence <span class="math notranslate nohighlight">\(x_u[n]\)</span> of length <span class="math notranslate nohighlight">\(N\)</span>, unit modulus.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <span class="math notranslate nohighlight">\(N\)</span> is even, or if <span class="math notranslate nohighlight">\(\gcd(u, N) \neq 1\)</span> (the
+    autocorrelation property does not hold otherwise).</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>D. C. Chu, “Polyphase codes with good periodic correlation properties,”
+IEEE Trans. Inf. Theory 18(4), pp. 531-532, 1972; usage in
+3GPP TS 36.211 (LTE) and 3GPP TS 38.211 (5G-NR).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">zadoff_chu</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">139</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))),</span> <span class="mi">12</span><span class="p">))</span>  <span class="c1"># constant amplitude</span>
+<span class="go">0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">139</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">9</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:])),</span> <span class="mi">9</span><span class="p">))</span>
+<span class="go">139.0 0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">zadoff_chu</span><span class="p">(</span><span class="mi">34</span><span class="p">,</span> <span class="mi">139</span><span class="p">)</span>  <span class="c1"># a second root, |u - v| = 9 coprime with 139</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">k</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">139</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">139</span><span class="p">)))),</span> <span class="mi">9</span><span class="p">))</span>  <span class="c1"># flat, = sqrt(N)</span>
+<span class="go">0.0</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.sequences.schmidl_cox_preamble">
+<span class="sig-name descname"><span class="pre">schmidl_cox_preamble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N_fft</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/sequences.html#schmidl_cox_preamble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.sequences.schmidl_cox_preamble" title="Link to this definition">#</a></dt>
+<dd><p>Schmidl &amp; Cox OFDM preamble (two identical time-domain halves).</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>Unit-power QPSK symbols <span class="math notranslate nohighlight">\(c[k]\)</span> are placed on the <strong>even</strong>
+subcarriers of an <span class="math notranslate nohighlight">\(N\)</span>-point OFDM symbol, the odd ones being
+left empty:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}X[k] = \begin{cases}
+    \sqrt{2}\, c\!\left[k/2\right], &amp; k \text{ even} \\
+    0, &amp; k \text{ odd}
+\end{cases}
+\qquad
+x[n] = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} X[k] \,
+       e^{\,j 2 \pi k n / N}\end{split}\]</div>
+<p>the <span class="math notranslate nohighlight">\(\sqrt{2}\)</span> restoring unit average power
+<span class="math notranslate nohighlight">\(\mathbb{E}\left[|x[n]|^2\right] = 1\)</span> on the half-filled grid.
+Because only even <span class="math notranslate nohighlight">\(k\)</span> contribute, every exponential is
+<span class="math notranslate nohighlight">\(N/2\)</span>-periodic and the preamble consists of <strong>two identical
+halves</strong>:</p>
+<div class="math notranslate nohighlight">
+\[x\!\left[n + N/2\right] = x[n], \qquad n = 0, \dots, N/2 - 1\]</div>
+<p>This is the structure the Schmidl &amp; Cox synchronizer exploits. On the
+received signal <span class="math notranslate nohighlight">\(y[n]\)</span> the metric</p>
+<div class="math notranslate nohighlight">
+\[P(d) = \sum_{m=0}^{N/2-1} y^*[d+m] \, y\!\left[d+m+N/2\right],
+\qquad
+M(d) = \frac{\left|P(d)\right|^2}
+            {\left(\sum_{m=0}^{N/2-1}
+             \left|y\!\left[d+m+N/2\right]\right|^2\right)^2}\]</div>
+<p>reaches its plateau <span class="math notranslate nohighlight">\(M(d) = 1\)</span> when the window <span class="math notranslate nohighlight">\(d\)</span> is
+aligned with the preamble – that gives the <strong>timing</strong>. A carrier
+frequency offset of <span class="math notranslate nohighlight">\(\varepsilon\)</span> subcarrier spacings turns the
+repetition into <span class="math notranslate nohighlight">\(y[n + N/2] = y[n] e^{\,j \pi \varepsilon}\)</span>, so
+the same quantity also gives the <strong>CFO</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\varepsilon} = \frac{\angle P(\hat{d})}{\pi},
+\qquad \left|\varepsilon\right| &lt; 1\]</div>
+<p>one correlation delivering both estimates.</p>
+<p>Axes: <em>element-wise</em> – generator: returns a 1-D preamble of length
+<code class="docutils literal notranslate"><span class="pre">N_fft</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param N_fft<span class="colon">:</span></dt>
+<dd class="field-odd"><p>FFT size <span class="math notranslate nohighlight">\(N\)</span> (even, so that the two halves have equal length).</p>
+</dd>
+<dt class="field-even">type N_fft<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param seed<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Seed of the RNG drawing the QPSK symbols <span class="math notranslate nohighlight">\(c[k]\)</span>. Fix it to
+make the preamble reproducible between transmitter and receiver.</p>
+</dd>
+<dt class="field-even">type seed<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Time-domain preamble <span class="math notranslate nohighlight">\(x[n]\)</span> of length <span class="math notranslate nohighlight">\(N\)</span>, of unit
+average power, with <span class="math notranslate nohighlight">\(x[n + N/2] = x[n]\)</span>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">N_fft</span></code> is odd.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>T. M. Schmidl, D. C. Cox, “Robust frequency and timing synchronization
+for OFDM,” IEEE Trans. Commun. 45(12), pp. 1613-1621, 1997;
+R. van Nee, R. Prasad, <em>OFDM for Wireless Multimedia Communications</em>,
+Artech House, 2000, Chapter 4.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">schmidl_cox_preamble</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">32</span><span class="p">:]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:</span><span class="mi">32</span><span class="p">]))),</span> <span class="mi">12</span><span class="p">))</span>  <span class="c1"># x[n + N/2] = x[n]</span>
+<span class="go">0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eps</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># CFO of a quarter subcarrier spacing</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="o">/</span> <span class="mi">64</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">y</span><span class="p">[:</span><span class="mi">32</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">32</span><span class="p">:])</span>  <span class="c1"># Schmidl &amp; Cox metric, window aligned (d = 0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">M</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">32</span><span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="mi">12</span><span class="p">))</span>  <span class="c1"># timing, then CFO</span>
+<span class="go">1.0 0.25</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.sequences.barker">
+<span class="sig-name descname"><span class="pre">barker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/sequences.html#barker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.sequences.barker" title="Link to this definition">#</a></dt>
+<dd><p>Barker code of the given length.</p>
+<section id="id2">
+<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>A Barker code is a binary sequence <span class="math notranslate nohighlight">\(x[n] \in \{-1, +1\}\)</span> of
+length <span class="math notranslate nohighlight">\(N\)</span> whose <strong>aperiodic</strong> autocorrelation</p>
+<div class="math notranslate nohighlight">
+\[R_x[k] = \sum_{n} x[n] \, x[n + k], \qquad
+k = -(N-1), \dots, N-1\]</div>
+<p>(the sum running over the overlapping samples, so no cyclic
+extension) has all its sidelobes bounded by one:</p>
+<div class="math notranslate nohighlight">
+\[R_x[0] = N, \qquad \left|R_x[k]\right| \leq 1 \quad \forall k \neq 0\]</div>
+<p>This is the best possible sidelobe level for a binary sequence, and
+the reason the aperiodic – rather than periodic – autocorrelation
+is the relevant one: a packet preamble is transmitted <strong>once</strong>, so
+the receiver correlates over a partial overlap at every trial lag.
+A merit factor <span class="math notranslate nohighlight">\(N^2 / (2 \sum_{k \neq 0} R_x[k]^2)\)</span> that grows
+with <span class="math notranslate nohighlight">\(N\)</span> is what makes the peak detectable in noise.</p>
+<p>Only a finite set of lengths is known – this implementation provides
+<span class="math notranslate nohighlight">\(N \in \{2, 3, 4, 5, 7, 11, 13\}\)</span>. No longer Barker code
+exists for odd <span class="math notranslate nohighlight">\(N &gt; 13\)</span>, and none is conjectured to exist for
+any <span class="math notranslate nohighlight">\(N &gt; 13\)</span>. The length-11 code is the DSSS spreading
+sequence of 802.11b; the length-13 code is the classic radar pulse
+compression code.</p>
+<p>Axes: <em>element-wise</em> – generator: returns a 1-D bipolar sequence of
+length <code class="docutils literal notranslate"><span class="pre">length</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param length<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Code length <span class="math notranslate nohighlight">\(N\)</span>, one of <code class="docutils literal notranslate"><span class="pre">{2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">7,</span> <span class="pre">11,</span> <span class="pre">13}</span></code>.</p>
+</dd>
+<dt class="field-even">type length<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Integer array <span class="math notranslate nohighlight">\(x[n] \in \{-1, +1\}\)</span> of length <span class="math notranslate nohighlight">\(N\)</span>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If no Barker code of the requested length is tabulated.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>R. H. Barker, “Group synchronizing of binary digital systems,” in
+<em>Communication Theory</em>, W. Jackson (ed.), Academic Press, 1953,
+pp. 273-287; J. G. Proakis, M. Salehi, <em>Digital Communications</em>,
+5th ed., McGraw-Hill, 2008 (spread-spectrum signalling);
+IEEE 802.11-2020, clause 15.4.4.4 (length 11).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">code</span> <span class="o">=</span> <span class="n">barker</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+<span class="go">[ 1  1  1 -1 -1  1 -1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">)</span>  <span class="c1"># aperiodic autocorrelation</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+<span class="go">[-1  0 -1  0 -1  0  7  0 -1  0 -1  0 -1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="mi">6</span><span class="p">)))))</span>  <span class="c1"># every sidelobe bounded by 1</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.sequences.golay_pair">
+<span class="sig-name descname"><span class="pre">golay_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/sequences.html#golay_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.sequences.golay_pair" title="Link to this definition">#</a></dt>
+<dd><p>Complementary Golay pair <span class="math notranslate nohighlight">\((a, b)\)</span> of the given length.</p>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>Two bipolar sequences <span class="math notranslate nohighlight">\(a[n], b[n] \in \{-1, +1\}\)</span> of length
+<span class="math notranslate nohighlight">\(N\)</span> form a <em>complementary pair</em> when their <strong>aperiodic</strong>
+autocorrelations</p>
+<div class="math notranslate nohighlight">
+\[R_a[k] = \sum_{n} a[n] \, a[n + k], \qquad
+R_b[k] = \sum_{n} b[n] \, b[n + k]\]</div>
+<p>cancel each other everywhere except at the origin:</p>
+<div class="math notranslate nohighlight">
+\[R_a[k] + R_b[k] = 2 N \, \delta[k]\]</div>
+<p>Neither sequence has small sidelobes on its own – it is their
+<strong>sum</strong> that is a perfect impulse. Correlating the received signal
+with both replicas and adding the two outputs therefore removes the
+sidelobes <em>exactly</em>, at any length, where a Barker code only bounds
+them by one and stops at <span class="math notranslate nohighlight">\(N = 13\)</span>. This is what makes Golay
+pairs the channel-estimation fields of 802.11ad/ay and of many radar
+waveforms.</p>
+<p>The pair is built by the standard recursive doubling, starting from
+<span class="math notranslate nohighlight">\(a_0 = b_0 = [1]\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[a_{m+1} = \left[a_m, \; b_m\right], \qquad
+b_{m+1} = \left[a_m, \; -b_m\right]\]</div>
+<p>which preserves complementarity and doubles the length at each step,
+hence the restriction to powers of two.</p>
+<p>Axes: <em>element-wise</em> – generator: returns two 1-D sequences of
+length <code class="docutils literal notranslate"><span class="pre">length</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param length<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence length <span class="math notranslate nohighlight">\(N\)</span>, a power of two.</p>
+</dd>
+<dt class="field-even">type length<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>tuple of np.ndarray</em> – The pair <span class="math notranslate nohighlight">\((a[n], b[n])\)</span>, each of length <span class="math notranslate nohighlight">\(N\)</span> with
+values in <span class="math notranslate nohighlight">\(\{-1, +1\}\)</span>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">length</span></code> is not a positive power of two.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. J. E. Golay, “Complementary series,” IRE Trans. Inf. Theory 7(2),
+pp. 82-87, 1961; IEEE 802.11ad-2012, clause 21.11.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">golay_pair</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">))</span>  <span class="c1"># sidelobes are large on their own</span>
+<span class="go">[ 1.  0.  1.  0.  3.  0. -1.  8. -1.  0.  3.  0.  1.  0.  1.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">))</span>  <span class="c1"># and opposite in the partner</span>
+<span class="go">[-1.  0. -1.  0. -3.  0.  1.  8.  1.  0. -3.  0. -1.  0. -1.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">))</span>  <span class="c1"># 2N delta[k]</span>
+<span class="go">[ 0.  0.  0.  0.  0.  0.  0. 16.  0.  0.  0.  0.  0.  0.  0.]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.sequences.m_sequence">
+<span class="sig-name descname"><span class="pre">m_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/sequences.html#m_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.sequences.m_sequence" title="Link to this definition">#</a></dt>
+<dd><p>Maximum-length sequence from a degree-<span class="math notranslate nohighlight">\(m\)</span> LFSR.</p>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>A linear-feedback shift register of degree <span class="math notranslate nohighlight">\(m\)</span> produces the
+binary recursion</p>
+<div class="math notranslate nohighlight">
+\[b[n] = \bigoplus_{i \in \mathcal{T}} b[n - i]
+\qquad (\text{modulo } 2)\]</div>
+<p>where the tap set <span class="math notranslate nohighlight">\(\mathcal{T}\)</span> is that of a <strong>primitive</strong>
+polynomial <span class="math notranslate nohighlight">\(g(D) = 1 + \sum_{i \in \mathcal{T}} D^{i}\)</span> of
+degree <span class="math notranslate nohighlight">\(m\)</span> (tabulated here for <span class="math notranslate nohighlight">\(m = 2, \dots, 10\)</span>). The
+output is mapped to a bipolar sequence</p>
+<div class="math notranslate nohighlight">
+\[x[n] = 1 - 2 \, b[n] \in \{-1, +1\}\]</div>
+<p>Primitivity is what makes the register visit <strong>every</strong> nonzero state
+exactly once before repeating, so the period is maximal:</p>
+<div class="math notranslate nohighlight">
+\[N = 2^m - 1\]</div>
+<p>Two properties follow, and they are the reason m-sequences are used
+as spreading and ranging codes. First the <em>balance</em> property: one
+period contains <span class="math notranslate nohighlight">\(2^{m-1}\)</span> ones and <span class="math notranslate nohighlight">\(2^{m-1} - 1\)</span> zeros,
+hence <span class="math notranslate nohighlight">\(\sum_{n=0}^{N-1} x[n] = -1\)</span> – a nearly zero-mean,
+noise-like waveform. Second, the periodic autocorrelation takes only
+<strong>two values</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\theta_x[k] = \sum_{n=0}^{N-1} x[n] \, x[(n + k) \bmod N]
+= \begin{cases}
+    N, &amp; k \equiv 0 \pmod N \\
+    -1, &amp; \text{otherwise}
+\end{cases}\end{split}\]</div>
+<p>a single sharp peak over a floor at <span class="math notranslate nohighlight">\(-1/N\)</span> of the peak, which
+is why a receiver can acquire code phase by sliding correlation and
+why the sequence behaves, spectrally, almost like white noise.</p>
+<p>Axes: <em>element-wise</em> – generator: returns one 1-D period of length
+<span class="math notranslate nohighlight">\(2^m - 1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param degree<span class="colon">:</span></dt>
+<dd class="field-odd"><p>LFSR degree <span class="math notranslate nohighlight">\(m\)</span>, from 2 to 10; the primitive polynomial
+<span class="math notranslate nohighlight">\(g(D)\)</span> (hence the tap set <span class="math notranslate nohighlight">\(\mathcal{T}\)</span>) is built in.</p>
+</dd>
+<dt class="field-even">type degree<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param seed_state<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Initial register state, a nonzero binary word of length
+<span class="math notranslate nohighlight">\(m\)</span>. Only the <em>phase</em> of the sequence depends on it, not
+its properties. Default: all ones.</p>
+</dd>
+<dt class="field-even">type seed_state<span class="colon">:</span></dt>
+<dd class="field-even"><p>iterable of int, optional</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – One full period <span class="math notranslate nohighlight">\(x[n] \in \{-1, +1\}\)</span> of length
+<span class="math notranslate nohighlight">\(N = 2^m - 1\)</span>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">degree</span></code> has no tabulated primitive polynomial, or if
+    <code class="docutils literal notranslate"><span class="pre">seed_state</span></code> is not a nonzero word of length <span class="math notranslate nohighlight">\(m\)</span>.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>S. W. Golomb, <em>Shift Register Sequences</em>, Holden-Day, 1967
+(Chapters 3-4: randomness postulates and the two-valued
+autocorrelation); J. G. Proakis, M. Salehi, <em>Digital Communications</em>,
+5th ed., McGraw-Hill, 2008 (PN sequences in spread spectrum).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">m_sequence</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="go">[-1 -1 -1 -1  1  1  1 -1  1  1 -1 -1  1 -1  1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">theta</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>  <span class="c1"># two-valued: N at lag 0, -1 at every other lag</span>
+<span class="go">[15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>  <span class="c1"># balance</span>
+<span class="go">(7, 8, -1)</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="frames.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Frames</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="capacity.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Capacity</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.sequences.zadoff_chu"><code class="docutils literal notranslate"><span class="pre">zadoff_chu()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.sequences.schmidl_cox_preamble"><code class="docutils literal notranslate"><span class="pre">schmidl_cox_preamble()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.sequences.barker"><code class="docutils literal notranslate"><span class="pre">barker()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.sequences.golay_pair"><code class="docutils literal notranslate"><span class="pre">golay_pair()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.sequences.m_sequence"><code class="docutils literal notranslate"><span class="pre">m_sequence()</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/documentation/core/sequences.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

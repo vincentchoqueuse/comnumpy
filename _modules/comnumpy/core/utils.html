@@ -1,0 +1,1552 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.utils &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/utils';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.utils</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="get_alphabet">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.get_alphabet">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the symbol alphabet of a memoryless modulation of order :math:`M`.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A memoryless modulation is described by its alphabet</span>
+<span class="sd">    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`: the mapper turns the</span>
+<span class="sd">    symbol index :math:`s[n] \in \{0, \ldots, M-1\}` into the transmitted</span>
+<span class="sd">    sample</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = a_{s[n]}</span>
+
+<span class="sd">    The raw constellations are tabulated on the usual grids -- odd</span>
+<span class="sd">    integers :math:`\pm 1, \pm 3, \ldots` for PAM and QAM, the unit</span>
+<span class="sd">    circle for PSK -- and the row order of the file *is* the bit-to-symbol</span>
+<span class="sd">    mapping (Gray or natural binary).</span>
+
+<span class="sd">    With ``norm=True`` (the default) the alphabet is rescaled to **unit</span>
+<span class="sd">    average symbol energy**, symbols being assumed equiprobable:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        a_m \leftarrow \frac{a_m}{\sqrt{E_s}}, \qquad</span>
+<span class="sd">        E_s = \frac{1}{M}\sum_{m=0}^{M-1} \left|a_m\right|^2</span>
+
+<span class="sd">    so that :math:`\mathbb{E}\left[|x[n]|^2\right] = 1`. This is the</span>
+<span class="sd">    convention the rest of the library assumes: with :math:`E_s = 1` an</span>
+<span class="sd">    absolute noise variance :math:`\sigma^2` *is* :math:`N_0`, and the</span>
+<span class="sd">    MMSE regularizer :math:`\sigma^2 \mathbf{I}` of</span>
+<span class="sd">    :func:`mmse_estimator` needs no rescaling. With ``norm=False`` the</span>
+<span class="sd">    raw grid is returned instead (:math:`E_s = 10` for 16-QAM, for</span>
+<span class="sd">    instance) and those expressions must be rescaled by :math:`E_s`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modulation : str</span>
+<span class="sd">        Modulation family: ``&quot;PAM&quot;``, ``&quot;PSK&quot;`` or ``&quot;QAM&quot;``.</span>
+<span class="sd">    order : int</span>
+<span class="sd">        Modulation order :math:`M`, i.e. :math:`M = 2^k` symbols carrying</span>
+<span class="sd">        :math:`k = \log_2(M)` bits each. Tabulated values are 4, 16, 32,</span>
+<span class="sd">        64, 128 and 256.</span>
+<span class="sd">    type : str, optional</span>
+<span class="sd">        Bit-to-symbol mapping: ``&quot;gray&quot;`` or ``&quot;bin&quot;`` (natural binary).</span>
+<span class="sd">        Default is ``&quot;gray&quot;``.</span>
+<span class="sd">    norm : bool, optional</span>
+<span class="sd">        If True, normalize the alphabet to unit average symbol energy</span>
+<span class="sd">        :math:`E_s = 1`. Default is True.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Complex alphabet :math:`\mathcal{A}` of length :math:`M`, indexed</span>
+<span class="sd">        by the symbol index :math:`s`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The tables are CSV files of the ``data`` subdirectory of this module,</span>
+<span class="sd">    named ``&lt;modulation&gt;_&lt;order&gt;_&lt;type&gt;.csv``, with one row per symbol</span>
+<span class="sd">    (index, real part, imaginary part) sorted by increasing index.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 3 (memoryless modulation methods and Gray</span>
+<span class="sd">    mapping).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(alphabet, 4))</span>
+<span class="sd">    [-0.7071+0.7071j -0.7071-0.7071j  0.7071+0.7071j  0.7071-0.7071j]</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.mean(np.abs(alphabet)**2)), 6))</span>
+<span class="sd">    1.0</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(get_alphabet(&quot;QAM&quot;, 16, norm=False)[:4], 1))</span>
+<span class="sd">    [-3.+3.j -3.+1.j -3.-3.j -3.-1.j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span> <span class="o">=</span> <span class="n">_construct_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="n">alphabet</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">alphabet</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gray_labels</span><span class="p">(</span><span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reflected binary code on ``n_bits`` bits, in index order.&quot;&quot;&quot;</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">n_bits</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">index</span> <span class="o">^</span> <span class="p">(</span><span class="n">index</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pam_levels</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Odd-integer levels of a PAM axis, indexed by label.&quot;&quot;&quot;</span>
+    <span class="n">n_bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">_gray_labels</span><span class="p">(</span><span class="n">n_bits</span><span class="p">)</span> <span class="k">if</span> <span class="n">mapping</span> <span class="o">==</span> <span class="s2">&quot;gray&quot;</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="c1"># position m carries label labels[m]; index the levels by label</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">order</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">labels</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cross_qam</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a cross constellation from its table.</span>
+
+<span class="sd">    32-QAM and 128-QAM are not square, so they are not the product of</span>
+<span class="sd">    two PAM axes and there is no one-line construction to check. They</span>
+<span class="sd">    are the only alphabets still tabulated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pathname</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/data/QAM_</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">.csv&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pathname</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;no QAM-</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> alphabet: square orders (4, 16, 64, 256, 1024, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;...) are constructed, and the cross constellations 32 and 128 &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;are tabulated -- </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> is neither&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_construct_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Build the raw (unnormalized) alphabet of a memoryless modulation.</span>
+
+<span class="sd">    PSK is the unit circle, PAM the odd integers, and square QAM the</span>
+<span class="sd">    product of two PAM axes with the quadrature axis **negated** -- the</span>
+<span class="sd">    convention that puts the first symbol at the top left of the</span>
+<span class="sd">    constellation. In every case the labelling is applied by indexing</span>
+<span class="sd">    the geometric positions by their label, so ``mapping=&quot;gray&quot;`` gives</span>
+<span class="sd">    a genuine Gray code and ``&quot;bin&quot;`` natural binary.</span>
+
+<span class="sd">    These formulas replace the CSV tables the library used to ship:</span>
+<span class="sd">    they reproduce all thirty-two of them entry by entry, to the six</span>
+<span class="sd">    decimals the files stored, and are exact where the files were</span>
+<span class="sd">    rounded (``tests/core/test_alphabet.py`` pins that against the</span>
+<span class="sd">    tables, which are kept in git history). Only the two cross</span>
+<span class="sd">    constellations, 32-QAM and 128-QAM, remain tabulated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">order</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected a power-of-two modulation order of at least 2, got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mapping</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected mapping &#39;gray&#39; or &#39;bin&#39;, got </span><span class="si">{</span><span class="n">mapping</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">modulation</span> <span class="o">==</span> <span class="s2">&quot;PSK&quot;</span><span class="p">:</span>
+        <span class="n">n_bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">_gray_labels</span><span class="p">(</span><span class="n">n_bits</span><span class="p">)</span> <span class="k">if</span> <span class="n">mapping</span> <span class="o">==</span> <span class="s2">&quot;gray&quot;</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">/</span> <span class="n">order</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">labels</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">modulation</span> <span class="o">==</span> <span class="s2">&quot;PAM&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_pam_levels</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">modulation</span> <span class="o">==</span> <span class="s2">&quot;QAM&quot;</span><span class="p">:</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">order</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">root</span> <span class="o">*</span> <span class="n">root</span> <span class="o">!=</span> <span class="n">order</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_cross_qam</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">_pam_levels</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+        <span class="c1"># high bits select the in-phase level, low bits the quadrature</span>
+        <span class="c1"># one, on a *negated* axis</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">levels</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">levels</span><span class="p">,</span> <span class="n">root</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;unknown modulation </span><span class="si">{</span><span class="n">modulation</span><span class="si">!r}</span><span class="s2">; expected &#39;PSK&#39;, &#39;PAM&#39; or &#39;QAM&#39;&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="plot_alphabet">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.plot_alphabet">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_alphabet</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;alphabet&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Constellation&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot the constellation diagram of a symbol alphabet.</span>
+
+<span class="sd">    Each symbol :math:`a_m` of the alphabet</span>
+<span class="sd">    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}` is drawn as a point of</span>
+<span class="sd">    the complex plane, its real part on the horizontal axis and its</span>
+<span class="sd">    imaginary part on the vertical one. This is a plotting helper, not a</span>
+<span class="sd">    processing block: it transforms no signal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Complex-valued symbol alphabet :math:`\mathcal{A}` to plot,</span>
+<span class="sd">        typically returned by :func:`get_alphabet`.</span>
+<span class="sd">    ax : matplotlib.axes.Axes or None, optional</span>
+<span class="sd">        Axis to draw on. If None, a new figure and axis are created.</span>
+<span class="sd">    label : str, optional</span>
+<span class="sd">        Label for the scatter plot. Default is ``&quot;alphabet&quot;``.</span>
+<span class="sd">    title : str, optional</span>
+<span class="sd">        Title of the plot. Default is ``&quot;Constellation&quot;``.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Additional keyword arguments forwarded to ``ax.plot``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matplotlib.axes.Axes</span>
+<span class="sd">        The axis containing the plot (decision D25).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib</span>
+<span class="sd">    &gt;&gt;&gt; matplotlib.use(&quot;Agg&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; ax = plot_alphabet(get_alphabet(&quot;PSK&quot;, 4))</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_xlabel()</span>
+<span class="sd">    &#39;real part&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;real part&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;imag part&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+
+<div class="viewcode-block" id="sym_2_bin">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.sym_2_bin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sym_2_bin</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Expand symbol indices into their binary representation, MSB first.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Each symbol index :math:`s[n] \in \{0, \ldots, M-1\}` is written in</span>
+<span class="sd">    base 2 on :math:`k` bits (:math:`k =` ``width``, with</span>
+<span class="sd">    :math:`M \leq 2^k`):</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        s[n] = \sum_{i=0}^{k-1} b[nk + i] \, 2^{\,k-1-i},</span>
+<span class="sd">        \qquad b[\cdot] \in \{0, 1\}</span>
+
+<span class="sd">    The bits of a symbol are emitted most-significant first and the</span>
+<span class="sd">    symbols are concatenated, so a sequence of :math:`N` indices produces</span>
+<span class="sd">    :math:`kN` bits. This is the same ordering as the bit table of</span>
+<span class="sd">    :class:`~comnumpy.core.mappers.SymbolDemapper`, which is what makes</span>
+<span class="sd">    the BER of :mod:`comnumpy.core.metrics` comparable across blocks.</span>
+
+<span class="sd">    Axes: *element-wise* -- each index is expanded independently; the</span>
+<span class="sd">    input is read as a flat sequence and the output is 1-D of length</span>
+<span class="sd">    :math:`kN`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sym : array-like</span>
+<span class="sd">        Sequence of :math:`N` integer symbol indices :math:`s[n]`.</span>
+<span class="sd">    width : int, optional</span>
+<span class="sd">        Number of bits per symbol :math:`k`. Default is 4.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        1-D integer array of :math:`kN` bits (0s and 1s).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Each symbol is represented by exactly ``width`` bits: a shorter</span>
+<span class="sd">    binary representation is left-padded with zeros. An index larger than</span>
+<span class="sd">    :math:`2^k - 1` is *not* rejected -- ``numpy.binary_repr`` then emits</span>
+<span class="sd">    more than ``width`` bits and the output loses its block structure.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(sym_2_bin([0, 5, 9], width=4))</span>
+<span class="sd">    [0 0 0 0 0 1 0 1 1 0 0 1]</span>
+<span class="sd">    &gt;&gt;&gt; print(sym_2_bin([0, 3], width=2))</span>
+<span class="sd">    [0 0 1 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sym</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>          <span class="c1"># MSB first</span>
+    <span class="n">bits</span> <span class="o">=</span> <span class="p">(</span><span class="n">sym</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">weights</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">bits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">sym</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">sym</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">width</span><span class="p">,))</span> \
+        <span class="k">if</span> <span class="n">sym</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="n">bits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">width</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="hard_projector">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.hard_projector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hard_projector</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Project symbols onto the nearest constellation point (hard decision).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Given an equalized observation :math:`z[n]` and the alphabet</span>
+<span class="sd">    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`, the decision is the</span>
+<span class="sd">    minimum-distance (nearest-neighbour) rule</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{s}[n] = \arg\min_{m \in \{0, \ldots, M-1\}}</span>
+<span class="sd">        \left| z[n] - a_m \right|^2,</span>
+<span class="sd">        \qquad \hat{x}[n] = a_{\hat{s}[n]}</span>
+
+<span class="sd">    For the AWGN model :math:`z[n] = x[n] + b[n]` with</span>
+<span class="sd">    :math:`b[n] \sim \mathcal{CN}(0, \sigma^2)` and equiprobable symbols,</span>
+<span class="sd">    this rule is the maximum-likelihood (hence MAP) detector: the</span>
+<span class="sd">    likelihood decreases monotonically with the Euclidean distance, so</span>
+<span class="sd">    :math:`\sigma^2` does not enter the decision.</span>
+
+<span class="sd">    Axes: *element-wise* -- the search is carried out over the alphabet</span>
+<span class="sd">    on an axis appended internally, so both outputs keep the shape of</span>
+<span class="sd">    ``z``. Ties are broken by ``numpy.argmin`` (smallest index wins).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : np.ndarray</span>
+<span class="sd">        Observation :math:`z[n]`, of any shape.</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        1-D constellation alphabet :math:`\mathcal{A}` of length</span>
+<span class="sd">        :math:`M`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    s : np.ndarray</span>
+<span class="sd">        Integer indices :math:`\hat{s}[n]` of the nearest constellation</span>
+<span class="sd">        points, with the shape of ``z``.</span>
+<span class="sd">    x : np.ndarray</span>
+<span class="sd">        Nearest constellation symbols :math:`\hat{x}[n] = a_{\hat{s}[n]}`,</span>
+<span class="sd">        with the shape of ``z``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 4 (optimum receivers for the AWGN</span>
+<span class="sd">    channel).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; z = np.array([0.9+1.1j, -0.2-0.8j])</span>
+<span class="sd">    &gt;&gt;&gt; s, x = hard_projector(z, alphabet)</span>
+<span class="sd">    &gt;&gt;&gt; print(s)</span>
+<span class="sd">    [2 1]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(x, 4))</span>
+<span class="sd">    [ 0.7071+0.7071j -0.7071-0.7071j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span> <span class="n">alphabet</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">x</span></div>
+
+
+
+<div class="viewcode-block" id="soft_projector">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.soft_projector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">soft_projector</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                   <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the soft (MMSE) symbol estimate under a Gaussian noise model.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    For the scalar observation :math:`z[n] = x[n] + b[n]` with</span>
+<span class="sd">    :math:`b[n] \sim \mathcal{CN}(0, \sigma^2)` and equiprobable symbols</span>
+<span class="sd">    drawn from :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`, the MMSE</span>
+<span class="sd">    estimate is the posterior mean</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{x}[n] = \mathbb{E}\left[x[n] \mid z[n]\right] =</span>
+<span class="sd">        \frac{\displaystyle\sum_{m=0}^{M-1} a_m \,</span>
+<span class="sd">        e^{-|z[n]-a_m|^2/\sigma^2}}</span>
+<span class="sd">        {\displaystyle\sum_{m=0}^{M-1} e^{-|z[n]-a_m|^2/\sigma^2}}</span>
+
+<span class="sd">    The exponent carries :math:`\sigma^2` and not :math:`2\sigma^2`</span>
+<span class="sd">    because the noise is circularly symmetric complex: its density is</span>
+<span class="sd">    :math:`(\pi\sigma^2)^{-1} e^{-|b|^2/\sigma^2}`, :math:`\sigma^2`</span>
+<span class="sd">    being the *total* variance of the two quadratures.</span>
+
+<span class="sd">    Passing a ``kernel`` :math:`g_{m}[n]` replaces :math:`a_m` in the</span>
+<span class="sd">    numerator, which turns the same weights into any posterior average</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{\sum_m g_{m}[n] \, e^{-|z[n]-a_m|^2/\sigma^2}}</span>
+<span class="sd">             {\sum_m e^{-|z[n]-a_m|^2/\sigma^2}}</span>
+<span class="sd">        = \mathbb{E}\left[g \mid z[n]\right]</span>
+
+<span class="sd">    The AMP detectors of :mod:`comnumpy.mimo.detectors` use</span>
+<span class="sd">    :math:`g_{m}[n] = |a_m - \hat{x}[n]|^2` to obtain the posterior</span>
+<span class="sd">    variance that drives their state evolution.</span>
+
+<span class="sd">    Axes: *element-wise* -- each observation is processed independently;</span>
+<span class="sd">    the input is flattened, so the output is 1-D of size ``z.size``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : np.ndarray</span>
+<span class="sd">        Observation :math:`z[n]`, flattened internally.</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        1-D constellation alphabet :math:`\mathcal{A}` of length</span>
+<span class="sd">        :math:`M`.</span>
+<span class="sd">    sigma2 : float</span>
+<span class="sd">        Noise variance :math:`\sigma^2` (total, both quadratures). Only</span>
+<span class="sd">        its real part is used. Large values flatten the weights towards</span>
+<span class="sd">        the alphabet mean, small values recover the hard decision of</span>
+<span class="sd">        :func:`hard_projector`.</span>
+<span class="sd">    kernel : np.ndarray or None, optional</span>
+<span class="sd">        Values :math:`g_{m}[n]` averaged in place of :math:`a_m`, of</span>
+<span class="sd">        shape ``(z.size, M)`` (or broadcastable to it). If None, the</span>
+<span class="sd">        alphabet itself is used and the posterior mean is returned.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Soft estimates :math:`\hat{x}[n]`, 1-D of size ``z.size``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * S. M. Kay, *Fundamentals of Statistical Signal Processing:</span>
+<span class="sd">      Estimation Theory*, Prentice Hall, 1993 (the MMSE estimator is the</span>
+<span class="sd">      posterior mean).</span>
+<span class="sd">    * C. Jeon, R. Ghods, A. Maleki and C. Studer, &quot;Optimality of large</span>
+<span class="sd">      MIMO detection via approximate message passing,&quot; Proc. IEEE Int.</span>
+<span class="sd">      Symp. Information Theory (ISIT), 2015, pp. 1227-1231 (the ``F``</span>
+<span class="sd">      function and its variance kernel).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; z = np.array([0.9+1.1j, -0.2-0.8j])</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(soft_projector(z, alphabet, 0.1), 4))</span>
+<span class="sd">    [ 0.7071+0.7071j -0.7022-0.7071j]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(soft_projector(z, alphabet, 100.0), 4))</span>
+<span class="sd">    [ 0.009+0.011j -0.002-0.008j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span> <span class="o">=</span> <span class="n">alphabet</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">term1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">sigma2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">alphabet</span> <span class="o">-</span> <span class="n">z</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">kernel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">alphabet</span>
+
+    <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">kernel</span> <span class="o">*</span> <span class="n">term1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">term1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span></div>
+
+
+
+<div class="viewcode-block" id="esn0_to_snr_dB">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.esn0_to_snr_dB">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">esn0_to_snr_dB</span><span class="p">(</span><span class="n">esn0_dB</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a symbol-energy-to-noise ratio :math:`E_s/N_0` (dB) into the SNR (dB) expected by ``AWGN``.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Three quantities must not be confused. :math:`E_s` is the energy of</span>
+<span class="sd">    one constellation symbol, :math:`E_b` the energy of one information</span>
+<span class="sd">    bit and :math:`N_0` the noise power spectral density; the SNR of</span>
+<span class="sd">    :class:`~comnumpy.core.channels.AWGN` is a *per-sample* power ratio</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathrm{SNR} = \frac{P_x}{\sigma^2}, \qquad</span>
+<span class="sd">        P_x = \mathbb{E}\left[|x[n]|^2\right]</span>
+
+<span class="sd">    At one sample per symbol :math:`P_x = E_s` and :math:`\sigma^2 = N_0`,</span>
+<span class="sd">    so the two quantities coincide. Oversampling by :math:`L` samples per</span>
+<span class="sd">    symbol multiplies the noise bandwidth -- hence the per-sample noise</span>
+<span class="sd">    variance :math:`\sigma^2 = L N_0` -- while an energy-preserving pulse</span>
+<span class="sd">    shaping leaves the measured signal power at :math:`E_s`, so</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathrm{SNR_{dB}} = E_s/N_0\big|_{dB} - 10\log_{10}(L)</span>
+
+<span class="sd">    Axes: *element-wise* -- a pure scalar conversion, applied pointwise</span>
+<span class="sd">    to an array of operating points when sweeping.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    esn0_dB : float or np.ndarray</span>
+<span class="sd">        Symbol-energy-to-noise-spectral-density ratio</span>
+<span class="sd">        :math:`E_s/N_0\big|_{dB}`, in dB.</span>
+<span class="sd">    oversampling : int, optional</span>
+<span class="sd">        Number of samples per symbol :math:`L`. Default is 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        The SNR in dB, relative to the measured signal power.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    ebn0_to_snr_dB : same conversion from the energy per information bit.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 4 (energy-per-symbol and</span>
+<span class="sd">    energy-per-bit normalizations).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(float(esn0_to_snr_dB(10)))</span>
+<span class="sd">    10.0</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(esn0_to_snr_dB(10, oversampling=4)), 4))</span>
+<span class="sd">    3.9794</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">esn0_dB</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">oversampling</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ebn0_to_snr_dB">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.ebn0_to_snr_dB">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="p">,</span> <span class="n">code_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a bit-energy-to-noise ratio :math:`E_b/N_0` (dB) into the SNR (dB) expected by ``AWGN``.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    One constellation symbol carries :math:`k = \log_2(M)` channel bits,</span>
+<span class="sd">    of which :math:`kR` are information bits when a code of rate</span>
+<span class="sd">    :math:`R` is used. The energy budget of a symbol is therefore shared</span>
+<span class="sd">    by :math:`kR` information bits:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_s = k R \, E_b</span>
+
+<span class="sd">    Combined with the per-sample SNR of</span>
+<span class="sd">    :class:`~comnumpy.core.channels.AWGN` (see</span>
+<span class="sd">    :func:`esn0_to_snr_dB`, where :math:`\sigma^2 = L N_0` for</span>
+<span class="sd">    :math:`L` samples per symbol), this gives</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathrm{SNR_{dB}} = E_b/N_0\big|_{dB} + 10\log_{10}(k R)</span>
+<span class="sd">        - 10\log_{10}(L)</span>
+
+<span class="sd">    The conversion requires chain-level knowledge (:math:`k`, :math:`R`,</span>
+<span class="sd">    :math:`L`), which is why it lives here and not inside the ``AWGN``</span>
+<span class="sd">    block (decision D41). Comparing modulations at equal</span>
+<span class="sd">    :math:`E_b/N_0` is the fair comparison -- at equal :math:`E_s/N_0`,</span>
+<span class="sd">    a dense constellation is unduly favoured because it spends the same</span>
+<span class="sd">    energy on more bits.</span>
+
+<span class="sd">    Axes: *element-wise* -- a pure scalar conversion, applied pointwise</span>
+<span class="sd">    to an array of operating points when sweeping.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ebn0_dB : float or np.ndarray</span>
+<span class="sd">        Information-bit-energy-to-noise-spectral-density ratio</span>
+<span class="sd">        :math:`E_b/N_0\big|_{dB}`, in dB.</span>
+<span class="sd">    bits_per_symbol : int</span>
+<span class="sd">        Number of bits carried by one constellation symbol</span>
+<span class="sd">        :math:`k = \log_2(M)` (e.g. 4 for 16-QAM).</span>
+<span class="sd">    code_rate : float, optional</span>
+<span class="sd">        FEC code rate :math:`R \in (0, 1]`. Default is 1.0 (uncoded,</span>
+<span class="sd">        :math:`E_s = k E_b`).</span>
+<span class="sd">    oversampling : int, optional</span>
+<span class="sd">        Number of samples per symbol :math:`L`. Default is 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        The SNR in dB, relative to the measured signal power.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    esn0_to_snr_dB : same conversion from the energy per symbol.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 4 (energy-per-symbol and</span>
+<span class="sd">    energy-per-bit normalizations).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(ebn0_to_snr_dB(10, bits_per_symbol=4)), 4))</span>
+<span class="sd">    16.0206</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(ebn0_to_snr_dB(10, bits_per_symbol=2, code_rate=0.5)), 4))</span>
+<span class="sd">    10.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ebn0_dB</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">bits_per_symbol</span> <span class="o">*</span> <span class="n">code_rate</span><span class="p">)</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">oversampling</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="zf_estimator">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.zf_estimator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">zf_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform Zero Forcing (ZF) linear equalization using the channel matrix pseudoinverse.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    For the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],</span>
+<span class="sd">        \qquad \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    with :math:`\mathbf{H}` of size :math:`N_r \times N_t`, the ZF</span>
+<span class="sd">    equalizer applies the Moore-Penrose pseudoinverse:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]</span>
+<span class="sd">        = \left(\mathbf{H}^H\mathbf{H}\right)^{-1}\mathbf{H}^H</span>
+<span class="sd">        \mathbf{y}[n]</span>
+<span class="sd">        = \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]</span>
+
+<span class="sd">    the closed form on the right holding when :math:`\mathbf{H}` has full</span>
+<span class="sd">    column rank (:math:`N_r \geq N_t`). Interference between streams is</span>
+<span class="sd">    cancelled exactly, at the price of noise enhancement: the residual</span>
+<span class="sd">    noise has covariance</span>
+<span class="sd">    :math:`\sigma^2\left(\mathbf{H}^H\mathbf{H}\right)^{-1}`, which blows</span>
+<span class="sd">    up when :math:`\mathbf{H}` is ill-conditioned. :func:`mmse_estimator`</span>
+<span class="sd">    trades a residual bias for a bounded noise gain.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects the MIMO layout ``(..., ant, N)``:</span>
+<span class="sd">    :math:`N_r` receive antennas on axis -2 of ``Y``, time on axis -1,</span>
+<span class="sd">    with ``H`` a 2-D ``(N_r, N_t)`` matrix. The output carries</span>
+<span class="sd">    :math:`N_t` streams on axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Y : np.ndarray</span>
+<span class="sd">        Received samples :math:`\mathbf{y}[n]` stacked column-wise, of</span>
+<span class="sd">        shape ``(..., N_r, N)``.</span>
+<span class="sd">    H : np.ndarray</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Equalized signal :math:`\mathbf{z}[n]` of shape</span>
+<span class="sd">        ``(..., N_t, N)``, still to be mapped onto the alphabet by</span>
+<span class="sd">        :func:`hard_projector`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+<span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">      McGraw-Hill, 2008, Chapter 9 (linear equalization).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; H = np.array([[1.0, 0.5], [0.0, 2.0]])</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1.0, -1.0], [1.0, 1.0]])</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.matmul(H, X)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(zf_estimator(Y, H), 4))</span>
+<span class="sd">    [[ 1. -1.]</span>
+<span class="sd">     [ 1.  1.]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+    <span class="n">Z_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Z_est</span></div>
+
+
+
+<div class="viewcode-block" id="mmse_estimator">
+<a class="viewcode-back" href="../../../documentation/core/utils.html#comnumpy.core.utils.mmse_estimator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mmse_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform Minimum Mean Square Error (MMSE) linear equalization.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    For the flat MIMO observation model</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],</span>
+<span class="sd">        \qquad \mathbf{b}[n] \sim \mathcal{CN}\left(\mathbf{0},</span>
+<span class="sd">        \sigma^2 \mathbf{I}_{N_r}\right)</span>
+
+<span class="sd">    the linear estimator minimizing</span>
+<span class="sd">    :math:`\mathbb{E}\left[\|\mathbf{z}[n]-\mathbf{x}[n]\|^2\right]` is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{z}[n] = \left(\mathbf{H}^H\mathbf{H}</span>
+<span class="sd">        + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}</span>
+<span class="sd">        \mathbf{H}^H\mathbf{y}[n]</span>
+
+<span class="sd">    The regularization term is the noise-to-signal ratio</span>
+<span class="sd">    :math:`(\sigma^2/E_s)\,\mathbf{I}_{N_t}`; it reduces to</span>
+<span class="sd">    :math:`\sigma^2 \mathbf{I}_{N_t}`, as implemented, because the</span>
+<span class="sd">    library normalizes the constellation to unit symbol energy</span>
+<span class="sd">    :math:`E_s = 1` (see :func:`get_alphabet`) and the streams are</span>
+<span class="sd">    assumed uncorrelated,</span>
+<span class="sd">    :math:`\mathbb{E}[\mathbf{x}[n]\mathbf{x}^H[n]] = \mathbf{I}_{N_t}`.</span>
+<span class="sd">    Two limits are worth remembering: :math:`\sigma^2 \to 0` gives back</span>
+<span class="sd">    the zero-forcing solution of :func:`zf_estimator`, while a large</span>
+<span class="sd">    :math:`\sigma^2` shrinks the estimate towards zero rather than</span>
+<span class="sd">    amplifying the noise. The MMSE output is biased, which is why it is</span>
+<span class="sd">    followed by a decision on the alphabet, not used as an unbiased</span>
+<span class="sd">    estimate.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects the MIMO layout ``(..., ant, N)``:</span>
+<span class="sd">    :math:`N_r` receive antennas on axis -2 of ``Y``, time on axis -1,</span>
+<span class="sd">    with ``H`` a 2-D ``(N_r, N_t)`` matrix. The output carries</span>
+<span class="sd">    :math:`N_t` streams on axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Y : np.ndarray</span>
+<span class="sd">        Received samples :math:`\mathbf{y}[n]` stacked column-wise, of</span>
+<span class="sd">        shape ``(..., N_r, N)``.</span>
+<span class="sd">    H : np.ndarray</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.</span>
+<span class="sd">    sigma2 : float</span>
+<span class="sd">        Noise variance :math:`\sigma^2` per receive antenna, in the same</span>
+<span class="sd">        power units as the unit-energy constellation.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Equalized signal :math:`\mathbf{z}[n]` of shape</span>
+<span class="sd">        ``(..., N_t, N)``, still to be mapped onto the alphabet by</span>
+<span class="sd">        :func:`hard_projector`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
+<span class="sd">      Cambridge University Press, 2005, Chapter 8.</span>
+<span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
+<span class="sd">      McGraw-Hill, 2008, Chapter 9 (MMSE linear equalization).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; H = np.array([[1.0, 0.5], [0.0, 2.0]])</span>
+<span class="sd">    &gt;&gt;&gt; X = np.array([[1.0, -1.0], [1.0, 1.0]])</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.matmul(H, X)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(mmse_estimator(Y, H, 0.1), 4))</span>
+<span class="sd">    [[ 0.9151 -0.8931]</span>
+<span class="sd">     [ 0.9868  0.9647]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">H_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_H</span><span class="p">,</span> <span class="n">H</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span>
+    <span class="n">Z_est</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H_H</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Z_est</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

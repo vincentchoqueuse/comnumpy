@@ -1,0 +1,1573 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.optical.raman &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/optical/raman';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.optical.raman</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.optical.raman</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Distributed Raman amplification: gain spectra and the pump equations.</span>
+
+<span class="sd">Two objects and one solver, split the way the physics is:</span>
+
+<span class="sd">* :class:`RamanGainSpectrum` -- the *shape* of the Raman gain against</span>
+<span class="sd">  the pump-signal frequency shift, normalized to 1 at its peak, with</span>
+<span class="sd">  its provenance. It is a property of the glass, so it is catalogued</span>
+<span class="sd">  the way D15/D20/D43 catalogue the frequency and delay axes: frozen</span>
+<span class="sd">  value object, registry, and a self-check at construction against the</span>
+<span class="sd">  figures its source publishes.</span>
+<span class="sd">* the peak coefficient :math:`g_R / A_\mathrm{eff}` is **not** in that</span>
+<span class="sd">  object. It is a property of the *fibre* -- SMF, DCF and NZDSF differ</span>
+<span class="sd">  by a large factor through the effective area and the germanium</span>
+<span class="sd">  doping -- so it is an argument of the solver, next to the losses.</span>
+<span class="sd">* :func:`solve_raman` -- the coupled power equations, integrated</span>
+<span class="sd">  forwards when only the co-propagating pump is on and solved as a</span>
+<span class="sd">  two-point boundary value problem otherwise.</span>
+
+<span class="sd">There is no ``Processor`` here, on purpose. Raman lives in the *power*</span>
+<span class="sd">domain and the split-step propagation of</span>
+<span class="sd">:class:`~comnumpy.optical.links.FiberLink` lives in the *field* domain:</span>
+<span class="sd">a block that multiplied the field by a lumped gain at the end of a span</span>
+<span class="sd">would describe a discrete amplifier, which is the one thing distributed</span>
+<span class="sd">amplification is not. What this module produces is the gain profile</span>
+<span class="sd">:math:`G(z)`, meant to be applied inside the linear step.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RamanGainSpectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;RamanSolution&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_raman&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;get_gain_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;register_gain_spectrum&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;available_gain_spectra&quot;</span><span class="p">]</span>
+
+<span class="n">PLANCK</span> <span class="o">=</span> <span class="mf">6.62607015e-34</span>          <span class="c1"># J s</span>
+<span class="n">BOLTZMANN</span> <span class="o">=</span> <span class="mf">1.380649e-23</span>         <span class="c1"># J/K</span>
+<span class="n">SPEED_OF_LIGHT</span> <span class="o">=</span> <span class="mf">2.99792458e8</span>    <span class="c1"># m/s</span>
+
+
+<div class="viewcode-block" id="RamanGainSpectrum">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RamanGainSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalized Raman gain shape against the pump-signal frequency shift.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Stimulated Raman scattering transfers power from a pump at</span>
+<span class="sd">    :math:`\nu_p` to a signal at :math:`\nu_s &lt; \nu_p`, with an</span>
+<span class="sd">    efficiency that depends only on the Stokes shift</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \Delta \nu = \nu_p - \nu_s</span>
+
+<span class="sd">    This object carries the **shape** :math:`\tilde{g}(\Delta \nu)`,</span>
+<span class="sd">    normalized so that :math:`\max_{\Delta \nu} \tilde{g} = 1`; the</span>
+<span class="sd">    fibre&#39;s peak coefficient :math:`g_R / A_\mathrm{eff}` multiplies it</span>
+<span class="sd">    (see :func:`solve_raman`). Exactly one of the two closed forms below</span>
+<span class="sd">    is selected, the D41 way -- one keyword per parameterization, no</span>
+<span class="sd">    discriminator argument.</span>
+
+<span class="sd">    **Damped-oscillator model** (``lorentzian``). The Raman response of</span>
+<span class="sd">    silica is modelled by a single damped oscillator of period</span>
+<span class="sd">    :math:`\tau_1` and lifetime :math:`\tau_2`, whose Fourier transform</span>
+<span class="sd">    is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \tilde{H}_R(\omega) = \frac{\tau_1^{-2} + \tau_2^{-2}}</span>
+<span class="sd">             {\tau_1^{-2} - \left(\omega + i \tau_2^{-1}\right)^2},</span>
+<span class="sd">        \qquad \omega = 2 \pi \Delta \nu</span>
+
+<span class="sd">    and the gain is :math:`\operatorname{Im} \tilde{H}_R`, normalized</span>
+<span class="sd">    here to its peak. :math:`\tilde{H}_R(0) = 1` fixes the</span>
+<span class="sd">    normalization of the response itself.</span>
+
+<span class="sd">    **Triangular model** (``triangular``). Over the first few terahertz</span>
+<span class="sd">    the gain is linear in the shift, which is what the closed-form</span>
+<span class="sd">    inter-channel Raman tilt of a WDM comb relies on:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \tilde{g}(\Delta \nu) =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">        \Delta \nu / \Delta \nu_\mathrm{peak}</span>
+<span class="sd">            &amp; 0 \leq \Delta \nu \leq \Delta \nu_\mathrm{peak}\\</span>
+<span class="sd">        0 &amp; \text{otherwise}</span>
+<span class="sd">        \end{cases}</span>
+
+<span class="sd">    Normalizing to the peak leaves a single free number,</span>
+<span class="sd">    :math:`\Delta \nu_\mathrm{peak}`: the slope is then</span>
+<span class="sd">    :math:`1/\Delta \nu_\mathrm{peak}` in normalized units and the</span>
+<span class="sd">    absolute slope comes from the fibre&#39;s peak coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lorentzian : tuple of two floats, optional, keyword-only</span>
+<span class="sd">        :math:`(\tau_1, \tau_2)` in femtoseconds. Mutually exclusive</span>
+<span class="sd">        with ``triangular``.</span>
+<span class="sd">    triangular : float, optional, keyword-only</span>
+<span class="sd">        Peak Stokes shift :math:`\Delta \nu_\mathrm{peak}` in THz.</span>
+<span class="sd">        Mutually exclusive with ``lorentzian``.</span>
+<span class="sd">    standard : str, keyword-only</span>
+<span class="sd">        Name of the model, e.g. ``&quot;Blow-Wood&quot;``.</span>
+<span class="sd">    reference : str, keyword-only</span>
+<span class="sd">        Publication the parameters were copied from (same provenance</span>
+<span class="sd">        rule as D15/D20/D43).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If neither or both parameterizations are given, or if a time</span>
+<span class="sd">        constant or the peak shift is not positive.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    K. J. Blow, D. Wood, &quot;Theoretical description of transient</span>
+<span class="sd">    stimulated Raman scattering in optical fibers&quot;, IEEE J. Quantum</span>
+<span class="sd">    Electron., vol. 25, no. 12, pp. 2665-2673, 1989.</span>
+
+<span class="sd">    G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
+<span class="sd">    2013, Sections 2.3 and 8.1.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; round(spectrum.peak_shift_THz, 2)</span>
+<span class="sd">    13.08</span>
+<span class="sd">    &gt;&gt;&gt; round(float(spectrum.shape(13.08e12)), 6)</span>
+<span class="sd">    1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lorentzian</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">triangular</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">given</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">),</span>
+                                          <span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
+                 <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">given</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;expected exactly one parameterization, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">given</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="si">}</span><span class="s2"> -- pass lorentzian=(tau1_fs, tau2_fs) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or triangular=peak_shift_THz&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tau1</span><span class="p">,</span> <span class="n">tau2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
+            <span class="k">if</span> <span class="n">tau1</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">tau2</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;expected positive time constants in fs, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">tau1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">tau2</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tau1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau2</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;expected a positive peak shift in THz, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
+
+    <span class="c1"># -- the shape --------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unnormalized gain, for the shift in Hz (may be negative).&quot;&quot;&quot;</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tau1</span><span class="p">,</span> <span class="n">tau2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-15</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-15</span>
+            <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">shift</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="p">((</span><span class="n">tau1</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">tau2</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="o">/</span> <span class="p">(</span><span class="n">tau1</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">omega</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">/</span> <span class="n">tau2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">peak</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="o">*</span> <span class="mf">1e12</span>          <span class="c1"># type: ignore[operator]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">shift</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">shift</span> <span class="o">&lt;=</span> <span class="n">peak</span><span class="p">),</span> <span class="n">shift</span> <span class="o">/</span> <span class="n">peak</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RamanGainSpectrum.shape">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum.shape">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalized gain :math:`\tilde{g}(\Delta \nu)`, peak value 1.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        shift_Hz : array_like</span>
+<span class="sd">            Stokes shift :math:`\Delta \nu = \nu_p - \nu_s` in Hz. A</span>
+<span class="sd">            negative shift means the &quot;signal&quot; is above the pump, where</span>
+<span class="sd">            the model gives no gain.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Gain shape, between 0 and 1.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;triangular&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; [round(float(spectrum.shape(f)), 3) for f in (0.0, 6e12, -6e12)]</span>
+<span class="sd">        [0.0, 0.455, 0.0]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">peak</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">())))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">)</span> <span class="o">/</span> <span class="n">peak</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_probe_grid</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shift grid used to locate the peak and the width, in Hz.</span>
+
+<span class="sd">        0 to 40 THz at 0.1 GHz: the silica gain is negligible past</span>
+<span class="sd">        40 THz, and the step is what fixes the two decimals the</span>
+<span class="sd">        self-check compares.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">40e12</span><span class="p">,</span> <span class="mi">400_001</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">peak_shift_THz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Stokes shift :math:`\Delta \nu_\mathrm{peak}` of the maximum.&quot;&quot;&quot;</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">grid</span><span class="p">)))]</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fwhm_THz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full width at half maximum of the gain shape, in THz.&quot;&quot;&quot;</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">()</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+        <span class="n">above</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">gain</span> <span class="o">&gt;=</span> <span class="n">gain</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="n">above</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">above</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;lorentzian tau=(</span><span class="si">%.4g</span><span class="s2">, </span><span class="si">%.4g</span><span class="s2">) fs&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
+                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                 <span class="k">else</span> <span class="s2">&quot;triangular peak=</span><span class="si">%.4g</span><span class="s2"> THz&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RamanGainSpectrum(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  peak at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;FWHM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz&quot;</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">))</span></div>
+
+
+
+<span class="c1"># -- catalog --------------------------------------------------------------</span>
+<span class="n">_SPECTRUM_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">RamanGainSpectrum</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="register_gain_spectrum">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.register_gain_spectrum">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_gain_spectrum</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a catalog entry; users can add their own fits.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name the factory answers to in :func:`get_gain_spectrum`.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; @register_gain_spectrum(&quot;LAB&quot;)</span>
+<span class="sd">    ... def _lab():</span>
+<span class="sd">    ...     return RamanGainSpectrum(triangular=14.0, standard=&quot;LAB&quot;,</span>
+<span class="sd">    ...                              reference=&quot;bench&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; round(get_gain_spectrum(&quot;LAB&quot;).peak_shift_THz, 1)</span>
+<span class="sd">    14.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">RamanGainSpectrum</span><span class="p">]):</span>
+        <span class="n">_SPECTRUM_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="available_gain_spectra">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.available_gain_spectra">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">available_gain_spectra</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Names accepted by :func:`get_gain_spectrum`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of str</span>
+<span class="sd">        Registered names, sorted.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; [name for name in available_gain_spectra() if &quot;-&quot; in name]</span>
+<span class="sd">    [&#39;blow-wood&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_SPECTRUM_REGISTRY</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_gain_spectrum">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.get_gain_spectrum">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_gain_spectrum</span><span class="p">(</span><span class="n">standard</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a catalog gain spectrum by name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    standard : str</span>
+<span class="sd">        Entry name; see :func:`available_gain_spectra`.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Forwarded to the entry factory.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If the name is not in the catalog.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; get_gain_spectrum(&quot;blow-wood&quot;).standard</span>
+<span class="sd">    &#39;Blow-Wood single damped oscillator&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">standard</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_SPECTRUM_REGISTRY</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;unknown Raman gain spectrum </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">available_gain_spectra</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- register your own with &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;@register_gain_spectrum&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_SPECTRUM_REGISTRY</span><span class="p">[</span><span class="n">standard</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_expect</span><span class="p">(</span><span class="n">spectrum</span><span class="p">:</span> <span class="n">RamanGainSpectrum</span><span class="p">,</span>
+                  <span class="n">expect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify a catalog entry against figures published with it (D20).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">expect</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">spectrum</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;peak_shift_THz&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="p">,</span>
+              <span class="s2">&quot;fwhm_THz&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">wanted</span> <span class="ow">in</span> <span class="n">expect</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="n">checks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">got</span> <span class="o">-</span> <span class="n">wanted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">2e-2</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wanted</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;the source&#39;</span><span class="si">}</span><span class="s2">, this model gives &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> -- one of the two is wrong.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">spectrum</span>
+
+
+<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">&quot;blow-wood&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_blow_wood</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Single damped oscillator, :math:`\tau_1 = 12.2` fs, :math:`\tau_2 = 32` fs.</span>
+
+<span class="sd">    Reproduces the peak of the silica Raman gain to within 1 % --</span>
+<span class="sd">    13.08 THz against the 13.2 THz that is published -- which is what</span>
+<span class="sd">    the self-check pins.</span>
+
+<span class="sd">    It does **not** reproduce the width: this model gives a FWHM of</span>
+<span class="sd">    9.55 THz where the measured silica spectrum is 5 to 6 THz wide,</span>
+<span class="sd">    roughly 70 % too broad. That is the known limitation of a single</span>
+<span class="sd">    oscillator, and it is stated rather than hidden: the model is right</span>
+<span class="sd">    for the time-domain Raman term of the generalized NLSE and for the</span>
+<span class="sd">    soliton self-frequency shift, and wrong for designing a multi-pump</span>
+<span class="sd">    amplifier, where the spectral shape *is* the gain flatness. A</span>
+<span class="sd">    multi-Lorentzian fit is what that needs; none is shipped, because</span>
+<span class="sd">    none has been transcribed from its source.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span>
+        <span class="n">RamanGainSpectrum</span><span class="p">(</span><span class="n">lorentzian</span><span class="o">=</span><span class="p">(</span><span class="mf">12.2</span><span class="p">,</span> <span class="mf">32.0</span><span class="p">),</span>
+                          <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;Blow-Wood single damped oscillator&quot;</span><span class="p">,</span>
+                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Blow &amp; Wood, IEEE JQE 25(12), 1989; &quot;</span>
+                                    <span class="s2">&quot;Agrawal, Nonlinear Fiber Optics, 5th ed., &quot;</span>
+                                    <span class="s2">&quot;section 2.3&quot;</span><span class="p">),</span>
+        <span class="p">{</span><span class="s2">&quot;peak_shift_THz&quot;</span><span class="p">:</span> <span class="mf">13.2</span><span class="p">})</span>
+
+
+<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_triangular</span><span class="p">(</span><span class="n">peak_shift_THz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">13.2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Linear gain up to the peak, zero beyond.</span>
+
+<span class="sd">    The model behind the closed-form inter-channel Raman tilt of a WDM</span>
+<span class="sd">    comb: over a band a few THz wide the gain is proportional to the</span>
+<span class="sd">    frequency separation, so the tilt across the comb is affine in the</span>
+<span class="sd">    channel index. Only valid for :math:`\Delta \nu` well below the</span>
+<span class="sd">    peak -- it is a slope, not a spectrum, and it says nothing at all</span>
+<span class="sd">    above :math:`\Delta \nu_\mathrm{peak}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RamanGainSpectrum</span><span class="p">(</span><span class="n">triangular</span><span class="o">=</span><span class="n">peak_shift_THz</span><span class="p">,</span>
+                             <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;triangular tilt model&quot;</span><span class="p">,</span>
+                             <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Semrau, Killey &amp; Bayvel, &quot;</span>
+                                       <span class="s2">&quot;J. Lightwave Technol. 36(14), 2018&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># -- the solver -----------------------------------------------------------</span>
+<div class="viewcode-block" id="RamanSolution">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanSolution">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RamanSolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Power profiles along the span, and what is read off them.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    All four profiles are functions of the distance :math:`z` from the</span>
+<span class="sd">    span input. The figures of merit are</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        G_\mathrm{on\text{-}off} =</span>
+<span class="sd">            \frac{P_s(L)}{P_s(L)\big|_{P_p = 0}}</span>
+<span class="sd">          = \frac{P_s(L)}{P_s(0) e^{-\alpha_s L}},</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        G_\mathrm{net} = \frac{P_s(L)}{P_s(0)}</span>
+
+<span class="sd">    -- the on-off gain is what the pump buys, the net gain is what</span>
+<span class="sd">    comes out of the span -- and the effective noise figure</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        F_\mathrm{eff} = \frac{1}{G_\mathrm{net}}</span>
+<span class="sd">            \left(1 + \frac{P_\mathrm{ASE}(L)}{h \nu_s B}\right)</span>
+
+<span class="sd">    which is *effective* because it refers the noise of the whole</span>
+<span class="sd">    distributed span to a hypothetical discrete amplifier; it may be</span>
+<span class="sd">    below 0 dB, and that is the reason distributed amplification is</span>
+<span class="sd">    used at all.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z_km : np.ndarray</span>
+<span class="sd">        Distance grid, in km, from 0 to the span length.</span>
+<span class="sd">    signal_W : np.ndarray</span>
+<span class="sd">        Signal power :math:`P_s(z)` in W.</span>
+<span class="sd">    pump_forward_W, pump_backward_W : np.ndarray</span>
+<span class="sd">        Pump powers :math:`P_p^{+}(z)` and :math:`P_p^{-}(z)` in W.</span>
+<span class="sd">        Both are given on the same :math:`z` grid; the backward pump is</span>
+<span class="sd">        launched at :math:`z = L`.</span>
+<span class="sd">    ase_W : np.ndarray</span>
+<span class="sd">        Amplified spontaneous emission :math:`P_\mathrm{ASE}(z)` in W,</span>
+<span class="sd">        in the reference bandwidth of the solve.</span>
+<span class="sd">    bandwidth_Hz : float</span>
+<span class="sd">        Reference bandwidth :math:`B` the ASE was integrated over.</span>
+<span class="sd">    frequency_signal_Hz : float</span>
+<span class="sd">        Signal frequency :math:`\nu_s`, needed to turn the ASE into a</span>
+<span class="sd">        noise figure.</span>
+<span class="sd">    loss_only_W : np.ndarray</span>
+<span class="sd">        The signal profile the same fibre would give with the pumps</span>
+<span class="sd">        off, :math:`P_s(0) e^{-\alpha_s z}`. Carrying it makes the</span>
+<span class="sd">        on-off gain a ratio of two stored curves rather than a</span>
+<span class="sd">        recomputation.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; solution = solve_raman(length_km=80.0, gain_peak_W_km=0.4,</span>
+<span class="sd">    ...                        pump_backward_W=0.2, signal_W=1e-3)</span>
+<span class="sd">    &gt;&gt;&gt; round(solution.on_off_gain_dB, 2)</span>
+<span class="sd">    5.97</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">z_km</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">signal_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">pump_forward_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">pump_backward_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">ase_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">loss_only_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">frequency_signal_Hz</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_off_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gain the pump buys, in dB: output with pump over output without.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">net_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Span output over span input, in dB. Negative for a lossy span.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gain_profile_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;On-off gain accumulated up to each :math:`z`, in dB.</span>
+
+<span class="sd">        This is the curve the split-step loop of</span>
+<span class="sd">        :class:`~comnumpy.optical.links.FiberLink` would consume.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">noise_figure_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Effective noise figure of the span, in dB; may be negative.&quot;&quot;&quot;</span>
+        <span class="n">photon</span> <span class="o">=</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_signal_Hz</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span>
+        <span class="n">net_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ase_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">photon</span><span class="p">)</span> <span class="o">/</span> <span class="n">net_gain</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pump_depletion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fraction of the launched pump power the signal took away.</span>
+
+<span class="sd">        Zero in the undepleted regime the analytic gain formula</span>
+<span class="sd">        assumes; a large value is the warning that it no longer holds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">launched</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">no_raman</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span>
+                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">launched</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">no_raman</span> <span class="o">-</span> <span class="n">remaining</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">launched</span><span class="p">)</span>
+
+    <span class="n">_pump_transmission</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_photon_occupancy</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Phonon occupancy :math:`1 + \eta` of the Raman ASE.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \eta(\Delta \nu, T) =</span>
+<span class="sd">            \left[\exp\!\left(\frac{h \Delta \nu}{k_B T}\right) - 1\right]^{-1}</span>
+
+<span class="sd">    At room temperature and a 13 THz shift this is a few per cent, so</span>
+<span class="sd">    the spontaneous emission is close to -- but not equal to -- the</span>
+<span class="sd">    zero-temperature value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">shift_Hz</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">temperature_K</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+    <span class="k">return</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">PLANCK</span> <span class="o">*</span> <span class="n">shift_Hz</span> <span class="o">/</span> <span class="p">(</span><span class="n">BOLTZMANN</span> <span class="o">*</span> <span class="n">temperature_K</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="solve_raman">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.solve_raman">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_raman</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">length_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gain_peak_W_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                <span class="n">signal_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+                <span class="n">pump_forward_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">pump_backward_W</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">alpha_signal_dB_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="n">alpha_pump_dB_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+                <span class="n">wavelength_signal_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550.0</span><span class="p">,</span>
+                <span class="n">wavelength_pump_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1455.0</span><span class="p">,</span>
+                <span class="n">spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RamanGainSpectrum</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">12.5e9</span><span class="p">,</span>
+                <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span><span class="p">,</span>
+                <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">401</span><span class="p">,</span>
+                <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanSolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Solve the coupled Raman power equations along one span.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The signal propagates towards :math:`+z`, the co-propagating pump</span>
+<span class="sd">    with it and the counter-propagating pump against it. Writing every</span>
+<span class="sd">    profile in the :math:`+z` coordinate, the powers obey</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{\mathrm{d} P_s}{\mathrm{d}z} &amp;=</span>
+<span class="sd">            \left[g\left(P_p^{+} + P_p^{-}\right) - \alpha_s\right] P_s \\</span>
+<span class="sd">        \frac{\mathrm{d} P_p^{+}}{\mathrm{d}z} &amp;=</span>
+<span class="sd">            -\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{+} \\</span>
+<span class="sd">        \frac{\mathrm{d} P_p^{-}}{\mathrm{d}z} &amp;=</span>
+<span class="sd">            +\left[\frac{\nu_p}{\nu_s} g P_s + \alpha_p\right] P_p^{-}</span>
+
+<span class="sd">    with :math:`g = (g_R / A_\mathrm{eff}) \,</span>
+<span class="sd">    \tilde{g}(\nu_p - \nu_s)` the gain coefficient at the working</span>
+<span class="sd">    shift. The factor :math:`\nu_p / \nu_s` is photon-number</span>
+<span class="sd">    bookkeeping: one pump photon makes one signal photon, and the</span>
+<span class="sd">    energy difference goes into a phonon. Spontaneous emission adds</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{\mathrm{d} P_\mathrm{ASE}}{\mathrm{d}z} =</span>
+<span class="sd">            \left[g P_p^{\mathrm{tot}} - \alpha_s\right] P_\mathrm{ASE}</span>
+<span class="sd">            + 2 h \nu_s B \, g P_p^{\mathrm{tot}}</span>
+<span class="sd">              \left[1 + \eta(\Delta \nu, T)\right]</span>
+
+<span class="sd">    the last bracket being the phonon occupancy, which is why a Raman</span>
+<span class="sd">    amplifier is quieter when it is cold.</span>
+
+<span class="sd">    **Boundary conditions.** The signal and the co-propagating pump are</span>
+<span class="sd">    known at the span input, the counter-propagating pump at its</span>
+<span class="sd">    output:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P_s(0) = P_\mathrm{in}, \quad</span>
+<span class="sd">        P_p^{+}(0) = P_f, \quad</span>
+<span class="sd">        P_p^{-}(L) = P_b, \quad</span>
+<span class="sd">        P_\mathrm{ASE}(0) = 0</span>
+
+<span class="sd">    With :math:`P_b = 0` everything is known at :math:`z = 0` and the</span>
+<span class="sd">    system is an initial value problem, integrated with</span>
+<span class="sd">    ``scipy.integrate.solve_ivp``. Otherwise it is a genuine two-point</span>
+<span class="sd">    boundary value problem and ``scipy.integrate.solve_bvp`` is used,</span>
+<span class="sd">    started from the undepleted-pump profiles -- a poor initial guess</span>
+<span class="sd">    is the usual reason that solver fails to converge.</span>
+
+<span class="sd">    **Undepleted limit.** When the signal takes a negligible part of</span>
+<span class="sd">    the pump, the pump decays exponentially and the on-off gain has the</span>
+<span class="sd">    closed form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        G_\mathrm{on\text{-}off} = \exp\left(g P_p L_\mathrm{eff}\right),</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        L_\mathrm{eff} = \frac{1 - e^{-\alpha_p L}}{\alpha_p}</span>
+
+<span class="sd">    which is what ``validation/optical_raman.py`` checks the solver</span>
+<span class="sd">    against, along with photon-number conservation in the lossless</span>
+<span class="sd">    limit.</span>
+
+<span class="sd">    Axes: *not a Processor* -- this is a power-domain solver, and it</span>
+<span class="sd">    returns profiles rather than transforming a signal. See the module</span>
+<span class="sd">    docstring.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    length_km : float, keyword-only</span>
+<span class="sd">        Span length :math:`L`, in km.</span>
+<span class="sd">    gain_peak_W_km : float, keyword-only</span>
+<span class="sd">        Peak Raman gain coefficient :math:`g_R / A_\mathrm{eff}` of the</span>
+<span class="sd">        fibre, in :math:`\mathrm{W}^{-1}\mathrm{km}^{-1}`. A property</span>
+<span class="sd">        of the fibre, not of the glass spectrum.</span>
+<span class="sd">    signal_W : float, optional, keyword-only</span>
+<span class="sd">        Launched signal power :math:`P_\mathrm{in}`, in W.</span>
+<span class="sd">    pump_forward_W : float, optional, keyword-only</span>
+<span class="sd">        Co-propagating pump :math:`P_f` launched at :math:`z = 0`, in W.</span>
+<span class="sd">    pump_backward_W : float, optional, keyword-only</span>
+<span class="sd">        Counter-propagating pump :math:`P_b` launched at :math:`z = L`,</span>
+<span class="sd">        in W. There is no ``direction`` argument: which pumps are on</span>
+<span class="sd">        *is* the configuration (D41).</span>
+<span class="sd">    alpha_signal_dB_km, alpha_pump_dB_km : float, optional, keyword-only</span>
+<span class="sd">        Fibre attenuation :math:`\alpha_s` and :math:`\alpha_p` at the</span>
+<span class="sd">        signal and pump wavelengths, in dB/km.</span>
+<span class="sd">    wavelength_signal_nm, wavelength_pump_nm : float, optional, keyword-only</span>
+<span class="sd">        Wavelengths setting :math:`\nu_s`, :math:`\nu_p` and hence the</span>
+<span class="sd">        Stokes shift :math:`\Delta \nu`.</span>
+<span class="sd">    spectrum : RamanGainSpectrum, optional, keyword-only</span>
+<span class="sd">        Gain shape used to scale ``gain_peak_W_km`` at the working</span>
+<span class="sd">        shift. ``None`` (default) uses the peak coefficient as given,</span>
+<span class="sd">        i.e. assumes the pump sits at the gain peak.</span>
+<span class="sd">    bandwidth_Hz : float, optional, keyword-only</span>
+<span class="sd">        Reference bandwidth :math:`B` for the ASE. Default 12.5 GHz,</span>
+<span class="sd">        the 0.1 nm convention.</span>
+<span class="sd">    temperature_K : float, optional, keyword-only</span>
+<span class="sd">        Fibre temperature :math:`T`, which sets the phonon occupancy.</span>
+<span class="sd">    n_nodes : int, optional, keyword-only</span>
+<span class="sd">        Number of mesh points of the initial :math:`z` grid.</span>
+<span class="sd">    tol : float, optional, keyword-only</span>
+<span class="sd">        Tolerance passed to the solver.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    RamanSolution</span>
+<span class="sd">        Power profiles and the figures of merit read off them.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If no pump is on, if a power or a length is negative, or if the</span>
+<span class="sd">        boundary value problem fails to converge -- an unconverged mesh</span>
+<span class="sd">        is never returned, because it looks exactly like a plausible</span>
+<span class="sd">        result.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
+<span class="sd">    2013, Chapter 8.</span>
+
+<span class="sd">    M. N. Islam, &quot;Raman amplifiers for telecommunications&quot;, IEEE J.</span>
+<span class="sd">    Sel. Topics Quantum Electron., vol. 8, no. 3, pp. 548-559, 2002.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; solution = solve_raman(length_km=80.0, gain_peak_W_km=0.4,</span>
+<span class="sd">    ...                        pump_backward_W=0.2)</span>
+<span class="sd">    &gt;&gt;&gt; round(solution.on_off_gain_dB, 2), round(solution.net_gain_dB, 2)</span>
+<span class="sd">    (5.97, -10.03)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bvp</span><span class="p">,</span> <span class="n">solve_ivp</span>      <span class="c1"># local import (D36)</span>
+
+    <span class="k">if</span> <span class="n">length_km</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a positive span length, got </span><span class="si">{</span><span class="n">length_km</span><span class="si">}</span><span class="s2"> km&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">signal_W</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a positive signal power, got </span><span class="si">{</span><span class="n">signal_W</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pump_forward_W</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">pump_backward_W</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected non-negative pump powers, got forward &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pump_forward_W</span><span class="si">}</span><span class="s2"> W and backward </span><span class="si">{</span><span class="n">pump_backward_W</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pump_forward_W</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">pump_backward_W</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;expected at least one pump to be on, got both at 0 W -- pass &quot;</span>
+            <span class="s2">&quot;pump_forward_W= for co-propagating pumping, pump_backward_W= &quot;</span>
+            <span class="s2">&quot;for counter-propagating, or both for bidirectional&quot;</span><span class="p">)</span>
+
+    <span class="n">nu_s</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_signal_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">nu_p</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_pump_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">nu_p</span> <span class="o">-</span> <span class="n">nu_s</span>
+    <span class="k">if</span> <span class="n">shift</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;expected the pump above the signal in frequency, got a Stokes &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;shift of </span><span class="si">{</span><span class="n">shift</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz -- the pump wavelength must be &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;the shorter one&quot;</span><span class="p">)</span>
+
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span>
+    <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">gain</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> spectrum gives no gain at a &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz shift -- move the pump closer to &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;the </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz peak&quot;</span><span class="p">)</span>
+
+    <span class="n">alpha_s</span> <span class="o">=</span> <span class="n">alpha_signal_dB_km</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>       <span class="c1"># 1/km</span>
+    <span class="n">alpha_p</span> <span class="o">=</span> <span class="n">alpha_pump_dB_km</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">spontaneous</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">nu_s</span> <span class="o">*</span> <span class="n">bandwidth_Hz</span>
+                   <span class="o">*</span> <span class="n">_photon_occupancy</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">temperature_K</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rhs</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">signal</span><span class="p">,</span> <span class="n">forward</span><span class="p">,</span> <span class="n">backward</span><span class="p">,</span> <span class="n">ase</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">pump</span> <span class="o">=</span> <span class="n">forward</span> <span class="o">+</span> <span class="n">backward</span>
+        <span class="n">transfer</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu_p</span> <span class="o">/</span> <span class="n">nu_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">signal</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span>
+            <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span> <span class="o">-</span> <span class="n">alpha_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">signal</span><span class="p">,</span>
+            <span class="o">-</span><span class="p">(</span><span class="n">transfer</span> <span class="o">+</span> <span class="n">alpha_p</span><span class="p">)</span> <span class="o">*</span> <span class="n">forward</span><span class="p">,</span>
+            <span class="o">+</span><span class="p">(</span><span class="n">transfer</span> <span class="o">+</span> <span class="n">alpha_p</span><span class="p">)</span> <span class="o">*</span> <span class="n">backward</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span> <span class="o">-</span> <span class="n">alpha_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">ase</span> <span class="o">+</span> <span class="n">spontaneous</span> <span class="o">*</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">pump</span><span class="p">,</span>
+        <span class="p">])</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">length_km</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pump_backward_W</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="c1"># everything is known at z = 0: an initial value problem, which is</span>
+        <span class="c1"># exact and cannot fail to converge</span>
+        <span class="n">solved</span> <span class="o">=</span> <span class="n">solve_ivp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">zz</span><span class="p">,</span> <span class="n">yy</span><span class="p">:</span> <span class="n">rhs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zz</span><span class="p">),</span>
+                                              <span class="n">yy</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+                           <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">length_km</span><span class="p">),</span>
+                           <span class="p">[</span><span class="n">signal_W</span><span class="p">,</span> <span class="n">pump_forward_W</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+                           <span class="n">t_eval</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">tol</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">,</span>
+                           <span class="n">dense_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">solved</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the co-propagating Raman integration failed: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2"> -- reduce the pump power or the span &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;length, or loosen tol&quot;</span><span class="p">)</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">y</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">boundary</span><span class="p">(</span><span class="n">left</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">left</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">signal_W</span><span class="p">,</span>          <span class="c1"># signal at z = 0</span>
+                             <span class="n">left</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pump_forward_W</span><span class="p">,</span>    <span class="c1"># co pump at z = 0</span>
+                             <span class="n">right</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">pump_backward_W</span><span class="p">,</span>  <span class="c1"># counter at z = L</span>
+                             <span class="n">left</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>                    <span class="c1"># no ASE at the input</span>
+        <span class="c1"># undepleted profiles as the initial guess: solve_bvp converges from</span>
+        <span class="c1"># here even under heavy depletion, and diverges from a flat guess</span>
+        <span class="n">guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span>
+            <span class="n">signal_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_s</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
+            <span class="n">pump_forward_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
+            <span class="n">pump_backward_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="p">(</span><span class="n">length_km</span> <span class="o">-</span> <span class="n">z</span><span class="p">)),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+        <span class="p">])</span>
+        <span class="n">solved</span> <span class="o">=</span> <span class="n">solve_bvp</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">max_nodes</span><span class="o">=</span><span class="mi">200_000</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">solved</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the bidirectional Raman boundary value problem did not &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;converge (status </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">) -- an &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;unconverged mesh is not returned because it looks like a &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;result; reduce the pump power, shorten the span, or raise &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;n_nodes&quot;</span><span class="p">)</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">sol</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RamanSolution</span><span class="p">(</span>
+        <span class="n">z_km</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+        <span class="n">signal_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">pump_forward_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">pump_backward_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+        <span class="n">ase_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+        <span class="n">loss_only_W</span><span class="o">=</span><span class="n">signal_W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_s</span> <span class="o">*</span> <span class="n">z</span><span class="p">),</span>
+        <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">bandwidth_Hz</span><span class="p">,</span>
+        <span class="n">frequency_signal_Hz</span><span class="o">=</span><span class="n">nu_s</span><span class="p">,</span>
+        <span class="n">_pump_transmission</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_p</span> <span class="o">*</span> <span class="n">length_km</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
