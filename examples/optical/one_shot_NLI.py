@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.utils import get_alphabet, hard_projector
@@ -38,24 +38,22 @@ amp = np.sqrt(Po)
 
 # create a communication chain
 chain = Sequential([
-                SymbolGenerator(M),
-                Recorder(name="data_tx"),
-                SymbolMapper(alphabet),
-                Recorder(name="signal_tx"),
+                SymbolGenerator(M, name="data_tx"),
+                SymbolMapper(alphabet, name="signal_tx"),
                 Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
                 SRRCFilter(rolloff, oversampling_sim, method="fft"),
                 Amplifier(amp),
                 FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB, fs=fs, name="link"),
                 BWFilter(1/oversampling_sim),
                 Downsampler(oversampling_ratio)
-                ])
+                ], taps=["data_tx", "signal_tx"])
 
 # perform simulation
 y_rx = chain(N)
 
 # extract signal
-s_tx = chain["data_tx"].get_data()
-x_tx = chain["signal_tx"].get_data()
+s_tx = chain.tap("data_tx")
+x_tx = chain.tap("signal_tx")
 
 # plot signal
 plt.figure()
@@ -74,11 +72,10 @@ for num_compensator in range(2):
         technique_name = "nonlinear equalization"
 
     receiver = Sequential([
-                    DBP(N_span, L_span, StPS_DBP, step_type="linear", use_only_linear=use_only_linear, fs=fs/oversampling_ratio, name="dbp"),
+                    DBP(N_span, L_span=L_span, StPS=StPS_DBP, step_type="linear", use_only_linear=use_only_linear, fs=fs/oversampling_ratio, name="dbp"),
                     SRRCFilter(rolloff, oversampling_dsp, method="fft", scale=1/np.sqrt(oversampling_dsp)),
                     Downsampler(oversampling_dsp),
                     Amplifier(1/amp),
-                    Recorder(name="signal_rx_compensated")
             ])
 
     # apply conventional chain

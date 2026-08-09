@@ -1,14 +1,13 @@
 
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential, Recorder
+from src.comnumpy.core import Sequential
 from src.comnumpy.core.generators import SymbolGenerator
-from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
+from src.comnumpy.core.mappers import SymbolMapper
 from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.channels import AWGN, FIRChannel
-from src.comnumpy.core.compensators import LinearEqualizer
-from src.comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
-from src.comnumpy.mimo.channels import FlatMIMOChannel, AWGN
+from src.comnumpy.core.channels import AWGN
+from src.comnumpy.core.metrics import compute_ser
+from src.comnumpy.mimo.channels import FlatMIMOChannel
 from src.comnumpy.mimo.utils import rayleigh_channel
 from src.comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
 
@@ -21,36 +20,35 @@ class TestMIMOChannelChain(unittest.TestCase):
         self.M = 4
         self.sigma2 = 10**-3
         self.N = 10
-        self.alphabet = get_alphabet("PSK", self.M)    
-        self.H = rayleigh_channel(self.N_r, self.N_t)    
+        self.alphabet = get_alphabet("PSK", self.M)
+        self.H = rayleigh_channel(self.N_r, self.N_t)
 
     def _compute_detector_ser(self, detector):
-        
+
         chain = Sequential([
-            SymbolGenerator(self.M),
-            Recorder(name="recorder_tx"),
+            SymbolGenerator(self.M, name="tx"),
             SymbolMapper(self.alphabet),
             FlatMIMOChannel(self.H),
-            AWGN(self.sigma2),
+            AWGN(sigma2=self.sigma2),
             detector
-            ])
+            ], taps=["tx"])
 
         Y = chain((self.N_t, self.N))
-        data_tx = chain["recorder_tx"].get_data()
+        data_tx = chain.tap("tx")
         return compute_ser(data_tx, Y)
 
     def test_zf_one_shot(self):
-        detector = LinearDetector(self.alphabet, self.H, method="zf")
+        detector = LinearDetector(self.alphabet, H=self.H, method="zf")
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
     def test_mmse_one_shot(self):
-        detector = LinearDetector(self.alphabet, self.H, sigma2=self.sigma2, method="mmse")
+        detector = LinearDetector(self.alphabet, H=self.H, sigma2=self.sigma2, method="mmse")
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
     def test_ml_one_shot(self):
-        detector = MaximumLikelihoodDetector(self.alphabet, self.H)
+        detector = MaximumLikelihoodDetector(self.alphabet, H=self.H)
         ser = self._compute_detector_ser(detector)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comnumpy"
-version = "0.91"
+version = "1.0.0.dev0"
 description = "A Python Library for Communication System Prototyping and Simulation"
 authors = [
   { name = "Vincent Choqueuse" },
@@ -31,13 +31,12 @@ dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
   "matplotlib",
-  "seaborn",
-  "tqdm",
 ]
 
 [project.optional-dependencies]
-plot = ["matplotlib", "seaborn"]
-dev = ["matplotlib", "seaborn", "tqdm", "sphinx", "pydata-sphinx-theme", "sphinxcontrib-mermaid"]
+test = ["pytest", "pytest-cov", "ruff", "pyright"]
+doc = ["sphinx", "pydata-sphinx-theme", "sphinxcontrib-mermaid"]
+dev = ["comnumpy[test,doc]", "pre-commit"]
 
 [project.urls]
 Homepage = "https://github.com/vincentchoqueuse/comnumpy"
@@ -49,7 +48,43 @@ BugTracker = "https://github.com/vincentchoqueuse/comnumpy/issues"
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-comnumpy = ["core/data/*.csv"]
+comnumpy = ["core/data/*.csv", "comnumpy.mplstyle"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "src"]
+addopts = "--doctest-modules"
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+ignore = [
+  "E741",  # ambiguous variable names (l, I): common in signal processing notation
+]
+
+[tool.coverage.run]
+# The src/ path, not the package name. Naming the package (`source` or
+# `source_pkgs` = ["comnumpy"]) makes coverage *import* it to find where
+# it lives, so everything `comnumpy/__init__` pulls in is already loaded
+# when the tracer starts and gets reported as 0%. That made per-file
+# numbers depend on test collection order and the total 16 points too
+# low: 74.76% against a true 90.59% measured on 2026-08-09.
+source = ["src/comnumpy"]
+
+[tool.coverage.report]
+# Ratchet threshold (D39): the measured value is the floor, it can only go up.
+# Measured 90.59% on 2026-08-09 (unit tests + doctests), with the
+# source_pkgs fix above; the 70 that stood here was read off the broken
+# measurement.
+fail_under = 90
+
+[tool.ruff.lint.per-file-ignores]
+# __init__.py files re-export the public API; explicit __all__ comes with D36.
+"__init__.py" = ["F401"]

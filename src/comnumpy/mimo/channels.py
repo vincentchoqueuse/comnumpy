@@ -1,183 +1,197 @@
+import logging
+
 import numpy as np
-from dataclasses import dataclass
-from typing import Optional, Literal
+from dataclasses import dataclass, field
+from typing import Optional
 from comnumpy.core import Processor
-from comnumpy.core.utils import compute_sigma2
+from comnumpy.core.channels import AWGN  # AWGN is element-wise (shape-agnostic); re-exported here for convenience
 from .validators import validate_input
 
+__all__ = ["AWGN", "FlatMIMOChannel", "SelectiveMIMOChannel"]
 
-@dataclass
-class AWGN(Processor):
-    r"""
-    A class representing an Additive White Gaussian Noise (AWGN) for MIMO channel.
+logger = logging.getLogger(__name__)
 
-    This class models an AWGN channel, which adds complex Gaussian noise to a signal.
-    It is characterized by a noise power specified by sigma squared (sigma2).
+
+@dataclass(slots=True)
+class BaseMIMOChannel(Processor):
+
+    r"""Base class for Multiple-Input Multiple-Output (MIMO) channels.
 
     Signal Model
     ------------
+    Subclasses implement the deterministic part of the MIMO observation
+    model
 
     .. math::
 
-       y_u[n] = x_u[n] + b_u[n]
-
-    where:
-
-    * :math:`b[n]\sim \mathcal{N}(0, \sigma^2)` is a Gaussian additive noise.
-
-    For complex signals, a circular Gaussian noise is applied to the signal.
-    The value of :math:`\sigma^2` is computed with respect to the method specified as input.
-
-    Attributes
-    ----------
-    value : float, optional
-        The value associated with the given method. Default is 1
-    unit : str, optional
-        The unit to compute the noise power ("sigma2", "snr", "snr_dB", "snr_dBm"). Default is "sigma2"
-    sigma2s : float, optional
-        Signal power. default is 1
-    seed : int, optional
-        The seed for the noise generator.
-    sigma2s_method: Literal["fixed", "measured"]
-        The method used to obtain the signal power
-    name : str
-        Name of the channel instance.
-    """
-    value: float = 1.
-    unit: Literal["sigma2", "snr", "snr_dB", "snr_dBm"] = "sigma2"
-    sigma2s: float = 1.
-    sigma2s_method: Literal["fixed", "measured"] = "fixed"
-    seed: int = None
-    name: str = 'awgn'
-
-    def __post_init__(self):
-        self.rng = np.random.default_rng(self.seed)
-
-    def get_sigma2s(self, X):
-        # extract signal power
-        match self.sigma2s_method:
-            case "measured": 
-                sigma2s = np.sum(np.abs(X)**2) / np.prod(X.shape)
-            case "fixed":
-                sigma2s = self.sigma2s
-            case _:
-                raise ValueError(f"Unknown sigma2s_method='{self.sigma2s_method}'. Expected one of: 'fixed', 'measured'.")
-
-        return sigma2s
-
-    def noise_rvs(self, X):
-        is_complex = np.iscomplexobj(X)
-
-        # compute signal variance
-        sigma2s = self.get_sigma2s(X)
-        
-        # compute noise variance
-        sigma2n = compute_sigma2(self.value, self.unit, sigma2s)
-
-        # apply noise
-        shape = X.shape
-        if is_complex:
-            scale = np.sqrt(sigma2n/2)
-            B_r = self.rng.normal(scale=scale, size=shape)
-            B_i = self.rng.normal(scale=scale, size=shape)
-            B = B_r + 1j * B_i
-        else:
-            scale = np.sqrt(sigma2n)
-            B = self.rng.normal(scale=scale, size=shape)
-
-        # save values
-        self.sigma2n = sigma2n
-        self._B = B
-
-    def forward(self, X: np.ndarray) -> np.ndarray:
-        self.noise_rvs(X)
-        Y = X + self._B
-        return Y
-
-@dataclass
-class BaseMIMOChannel(Processor):
-
-    r"""
-    A base class for modeling Multiple-Input Multiple-Output (MIMO) channels.
-
-    This class provides a framework for simulating MIMO communication channels,
-    including methods for setting channel matrices, configuring signal-to-noise
-    ratios (SNR), generating noise, and processing input signals.
-
-    Signal Model
-    ------------
-
-    .. math ::
-    
-        \mathbf{y}[n] = \sum_{l=0}^{L}\mathbf{H}[l]x[n-l] + \mathbf{b}[n]
+        \mathbf{y}[n] = \sum_{l=0}^{L-1} \mathbf{H}[l] \, \mathbf{x}[n-l]
+        + \mathbf{b}[n]
 
     where
 
-    * :math:`\mathbf{H}[l]` is a channel matrix of size :math:`N_r \times N_t` corresponding the :math:`l^{th}` channel tap,
-    * :math:`\mathbf{x}[n]` is a :math:`N_t` vector containing the transmitted data,
-    * :math:`\mathbf{b}[n]\sim \mathcal{N}_c(\mathbf{0},\sigma^2\mathbf{I}_{N_r})` is a :math:`N_r` vector containing the additive white Gaussian noise.        
+    * :math:`\mathbf{H}[l]` is the channel matrix of size
+      :math:`N_r \times N_t` of the :math:`l`-th tap,
+    * :math:`\mathbf{x}[n]` is the :math:`N_t \times 1` transmitted vector,
+    * :math:`\mathbf{b}[n]` is the additive noise, contributed by chaining
+      a separate element-wise :class:`~comnumpy.core.channels.AWGN` block
+      (this class applies only the noiseless convolution).
 
-    Attributes
+    Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on
+    axis -2.
+
+    Parameters
     ----------
-    P : float
-        Transmit power.
-    H : Optional[np.array]
-        List of channel matrices for each tap. Each matrix should have equal dimensions.
-    extend : bool
-        Flag to extend the input signal.
-    name : str
-        Name of the processor.
-    """
-    H: Optional[np.array] = None
-    extend: bool = True
-    name: str = "mimo_channel"
+    H : np.ndarray, optional
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)`` (flat
+        channel) or stacked taps ``(L, N_r, N_t)`` (selective channel).
+    extend : bool, keyword-only
+        If True, a selective channel outputs the full convolution
+        (``N + L - 1`` samples); if False, the output is truncated to
+        ``N`` samples. Default is True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
 
-    def info(self):
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
+    """
+    H: Optional[np.ndarray] = None
+    extend: bool = field(default=True, kw_only=True)
+    name: str = field(default="mimo_channel", kw_only=True)
+
+    def info(self) -> str:
+        """Describe the channel (taps, conditioning); logged and returned."""
         H = self.H
-        if H.ndims == 2:
+        if H is None:
+            raise ValueError("the channel H is not set; pass H= at construction")
+        if H.ndim == 2:
             H = H[None, :, :]
 
-        L, N_r, N_t = H.shape
-
-        print(f"* MIMO Channel ({L} tap(s)):")
+        L, _, _ = H.shape
+        lines = [f"* MIMO Channel ({L} tap(s)):"]
         for index in range(L):
-            H = self.H[index]
-            print(f"tap {index}:\n{H}")
-            condition_number = np.linalg.cond(H)
-            _, S, _ = np.linalg.svd(H)
-            norm = np.linalg.norm(H)
-            print("Condition Number=", condition_number)
-            print(f"singular value={S}")
-            print(f"norm={norm}")
+            H_tap = H[index]
+            _, S, _ = np.linalg.svd(H_tap)
+            lines.append(f"tap {index}:\n{H_tap}")
+            lines.append(f"Condition Number={np.linalg.cond(H_tap)}")
+            lines.append(f"singular value={S}")
+            lines.append(f"norm={np.linalg.norm(H_tap)}")
+        description = "\n".join(lines)
+        logger.info("%s", description)
+        return description
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
 
-@dataclass
+@dataclass(slots=True)
 class FlatMIMOChannel(BaseMIMOChannel):
-    r"""
-    Flat (frequency-non-selective) MIMO channel.
+    r"""Flat (frequency-non-selective) MIMO channel.
 
-    Applies a single matrix multiplication :math:`\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n]`
-    without frequency selectivity.
+    Signal Model
+    ------------
+    .. math::
+
+        \mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n]
+
+    where :math:`\mathbf{H}` is the channel matrix of size
+    :math:`N_r \times N_t`, :math:`\mathbf{x}[n]` the
+    :math:`N_t \times 1` transmitted vector and :math:`\mathbf{b}[n]`
+    the additive noise, contributed by chaining a separate element-wise
+    :class:`~comnumpy.core.channels.AWGN` block (this class applies only
+    the noiseless product).
+
+    Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on
+    axis -2, validated against :math:`N_t`.
+
+    Parameters
+    ----------
+    H : np.ndarray, optional
+        Channel matrix :math:`\mathbf{H}` of shape ``(N_r, N_t)``.
+    extend : bool, keyword-only
+        Unused for a flat channel (inherited). Default is True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
+
+    Raises
+    ------
+    ShapeError
+        If the antenna axis of the input does not match :math:`N_t`.
+
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
+
+    Examples
+    --------
+    >>> H = np.array([[1.0, 0.0], [0.0, 2.0]])
+    >>> x = np.array([[1.0, 1.0], [1.0, -1.0]])
+    >>> FlatMIMOChannel(H)(x)
+    array([[ 1.,  1.],
+           [ 2., -2.]])
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        assert self.H is not None      # validate_input rejects a None channel
         validate_input(X, self.H.shape[1])
         return np.matmul(self.H, X)
 
-    
-@dataclass
-class SelectiveMIMOChannel(BaseMIMOChannel):
-    r"""
-    Frequency-selective MIMO channel.
 
-    Applies a multi-tap convolution using the channel matrices stored in ``H``.
-    The ``extend`` flag controls whether the output signal is extended or truncated.
+@dataclass(slots=True)
+class SelectiveMIMOChannel(BaseMIMOChannel):
+    r"""Frequency-selective (multi-tap) MIMO channel.
+
+    Signal Model
+    ------------
+    .. math::
+
+        \mathbf{y}[n] = \sum_{l=0}^{L-1} \mathbf{H}[l] \, \mathbf{x}[n-l]
+        + \mathbf{b}[n]
+
+    where :math:`\mathbf{H}[l]` is the channel matrix of size
+    :math:`N_r \times N_t` of the :math:`l`-th of :math:`L` taps,
+    :math:`\mathbf{x}[n]` the :math:`N_t \times 1` transmitted vector and
+    :math:`\mathbf{b}[n]` the additive noise, contributed by chaining a
+    separate element-wise :class:`~comnumpy.core.channels.AWGN` block
+    (this class applies only the noiseless convolution).
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2, validated against :math:`N_t`.
+
+    Parameters
+    ----------
+    H : np.ndarray, optional
+        Stacked channel matrices :math:`\mathbf{H}[l]` of shape
+        ``(L, N_r, N_t)``.
+    extend : bool, keyword-only
+        If True, the output holds the full convolution (``N + L - 1``
+        samples); if False, it is truncated to ``N`` samples. Default is
+        True.
+    name : str, optional, keyword-only
+        Name of the processor. Default is ``"mimo_channel"``.
+
+    Raises
+    ------
+    ShapeError
+        If the antenna axis of the input does not match :math:`N_t`.
+
+    References
+    ----------
+    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
+    Cambridge University Press, 2005, Chapter 7.
+
+    Examples
+    --------
+    >>> H = np.array([[[1.0]], [[0.5]]])
+    >>> x = np.array([[1.0, 0.0, 0.0]])
+    >>> SelectiveMIMOChannel(H)(x)
+    array([[1. +0.j, 0.5+0.j, 0. +0.j, 0. +0.j]])
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        assert self.H is not None      # validate_input rejects a None channel
         validate_input(X, self.H.shape[1])
         L, N_r, N_t = self.H.shape
         N = X.shape[1]

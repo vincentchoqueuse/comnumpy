@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tqdm import tqdm
-from comnumpy.core import Sequential, Recorder
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.metrics import compute_ser, compute_ber
+from comnumpy.core.metrics import compute_ber
 from comnumpy.core.utils import get_alphabet
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
@@ -13,8 +12,8 @@ from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, O
 
 # This script reproduces the figure 2 of the article [1]
 #
-# X. Li, H. C. Huang, A. Lozano and G. J. Foschini, "Reduced-complexity detection algorithms for systems using multi-element arrays," 
-# Globecom '00 - IEEE. Global Telecommunications Conference. Conference Record (Cat. No.00CH37137), San Francisco, CA, USA, 2000, pp. 1072-1076 vol.2, 
+# X. Li, H. C. Huang, A. Lozano and G. J. Foschini, "Reduced-complexity detection algorithms for systems using multi-element arrays,"
+# Globecom '00 - IEEE. Global Telecommunications Conference. Conference Record (Cat. No.00CH37137), San Francisco, CA, USA, 2000, pp. 1072-1076 vol.2,
 
 
 # Parameters
@@ -28,12 +27,11 @@ M = len(alphabet)
 H = rayleigh_channel(N_r=N_r, N_t=N_t)
 
 # construct chain
-chain = Sequential([SymbolGenerator(M),
-                    Recorder(name="data_tx"),
+chain = Sequential([SymbolGenerator(M, name="data_tx"),
                     SymbolMapper(alphabet),
                     FlatMIMOChannel(H, name="channel"),
-                    AWGN(0, unit="sigma2", name="noise")
-                    ])
+                    AWGN(sigma2=0, name="noise")
+                    ], taps=["data_tx"])
 
 # prepare MC trial
 detector_names = ["ML", "ZF", "OSIC"]
@@ -45,19 +43,19 @@ snr_dB_list = np.arange(0, 45, 5)
 bler_data = np.zeros((len(snr_dB_list), len(detector_names)))
 sig_power = N_t
 
-for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
+for index_snr, snr_dB in enumerate(snr_dB_list):
     sigma2 = sig_power*(10**(-snr_dB/10))
-    chain["noise"].value = sigma2
+    chain["noise"].sigma2 = sigma2
 
-    for trial in range(N_test):
-   
+    for _ in range(N_test):
+
         # new channel realization
         H = rayleigh_channel(N_r=N_r, N_t=N_t)
         chain["channel"].H = H
 
         # generate data
         Y = chain((N_t, N))
-        S_ref = chain["data_tx"].get_data()
+        S_ref = chain.tap("data_tx")
 
         # test detector
         for index, detector_name in enumerate(detector_names):
@@ -68,7 +66,7 @@ for index_snr, snr_dB in enumerate(tqdm(snr_dB_list)):
                 case "ZF":
                     detector = LinearDetector(alphabet=alphabet, H=H, method="zf")
                 case "OSIC":
-                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, "sinr", H, sigma2=sigma2, name="OSIC")
+                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC")
 
             # perform detection
             S_est = detector(Y)

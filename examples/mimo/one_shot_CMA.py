@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
-from comnumpy.core import Sequential, Scope, Recorder
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
@@ -35,8 +35,8 @@ class CustomBlindDualMIMOCompensator(BlindDualMIMOCompensator):
             _, data_est = hard_projector(rotation_factor * y_sub, self.alphabet)
             error = np.mean(np.abs(data_est - rotation_factor*y_sub)**2, axis=1)
             index_min = np.argmin(error)
-            self.H[index, :] *= np.conjugate(rotation_factor[index_min]) # be carefull, we apply the conjugate of H for compensation
-            
+            self.H_[index, :] *= np.conjugate(rotation_factor[index_min]) # be carefull, we apply the conjugate of H for compensation
+
             if self.debug:
                 y_sub_corrected = rotation_factor[index_min] * y_sub
                 plt.figure()
@@ -57,7 +57,6 @@ oversampling = 2
 rolloff = 0.2
 sigma2n = 1e-3
 alphabet = get_alphabet(type, M)
-fig_indices = (0, 1)
 commuting_steps = (20000, 90000)
 
 # generate channel
@@ -73,19 +72,18 @@ chain = Sequential([
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             SelectiveMIMOChannel(H=H_array, name="channel"),
-            AWGN(sigma2n, name="noise"),
+            AWGN(sigma2=sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             DelayRemover(delay=N_h*4),
             CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),
-            Recorder(name="post_cma"),
-            DelayRemover(delay=int(0.9*N)),
-            Scope(num="scope2", scope_type="iq", fig_indices=fig_indices)
-            ])
+            DelayRemover(delay=int(0.9*N), name="tail"),
+            ], taps=["filter", "tail"])
 
 # simulate communication
 Y = chain((N_t, N))
 
-data = chain["post_cma"].get_data()
+data = chain.tap("filter")  # full CMA output (before tail removal)
+plot_iq(chain.tap("tail"), title="after CMA convergence")
 
 # compute CMA loss
 kernel_size = 100
