@@ -46,7 +46,7 @@ a validation script. Move it.
 | `simple/` | the core chain: symbol generation, mapping, AWGN, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, chain profiling |
 | `ofdm/` | OFDM transmitter and receiver, carrier allocation, cyclic prefix, frequency-domain equalization, PAPR statistics and PAPR reduction |
 | `mimo/` | flat and frequency-selective MIMO channels, ML / linear / OSIC detectors, blind CMA equalization |
-| `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR) and fibre nonlinearity: split-step propagation with digital back-propagation |
+| `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR), WDM transmission, and fibre nonlinearity: split-step propagation with digital back-propagation |
 | `nonlinear/` | power-amplifier models — clipper, Rapp, Saleh |
 
 ## Runtime
