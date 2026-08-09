@@ -1,6 +1,7 @@
 import numpy as np
 import os.path as path
 import numpy.linalg as LA
+from typing import Optional
 
 
 def get_alphabet(modulation, order, type="gray", norm=True):
@@ -266,7 +267,8 @@ def hard_projector(z, alphabet):
     return s, x
 
 
-def soft_projector(z: np.array, alphabet: np.array, sigma2: float, kernel: bool = None):
+def soft_projector(z: np.ndarray, alphabet: np.ndarray, sigma2: float,
+                   kernel: Optional[bool] = None) -> np.ndarray:
     r"""
     Compute the soft (MMSE) symbol estimate under a Gaussian noise model.
 

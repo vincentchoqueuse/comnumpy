@@ -4,8 +4,10 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional
 from comnumpy.core import Processor
-from comnumpy.core.channels import AWGN  # noqa: F401 -- AWGN is element-wise (shape-agnostic); re-exported here for convenience
+from comnumpy.core.channels import AWGN  # AWGN is element-wise (shape-agnostic); re-exported here for convenience
 from .validators import validate_input
+
+__all__ = ["AWGN", "FlatMIMOChannel", "SelectiveMIMOChannel"]
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +56,15 @@ class BaseMIMOChannel(Processor):
     D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,
     Cambridge University Press, 2005, Chapter 7.
     """
-    H: Optional[np.array] = None
+    H: Optional[np.ndarray] = None
     extend: bool = field(default=True, kw_only=True)
     name: str = field(default="mimo_channel", kw_only=True)
 
-    def info(self):
+    def info(self) -> str:
         """Describe the channel (taps, conditioning); logged and returned."""
         H = self.H
+        if H is None:
+            raise ValueError("the channel H is not set; pass H= at construction")
         if H.ndim == 2:
             H = H[None, :, :]
 
@@ -130,6 +134,7 @@ class FlatMIMOChannel(BaseMIMOChannel):
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        assert self.H is not None      # validate_input rejects a None channel
         validate_input(X, self.H.shape[1])
         return np.matmul(self.H, X)
 
@@ -186,6 +191,7 @@ class SelectiveMIMOChannel(BaseMIMOChannel):
     """
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        assert self.H is not None      # validate_input rejects a None channel
         validate_input(X, self.H.shape[1])
         L, N_r, N_t = self.H.shape
         N = X.shape[1]
