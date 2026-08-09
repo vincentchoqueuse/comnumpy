@@ -22,6 +22,7 @@ N = 200000  # increase number for smoothing MC curves
 N_h = 1000  # number of delay samples for the SRRC filter
 oversampling = 2  # oversampling factor
 rolloff = 0.25  # rolloff factor
+k_vect = [4, 6, 8]  # bits per symbol; the chain is built with the first one
 
 # system selection (see Table 1)
 if system == 1:
@@ -44,7 +45,7 @@ plt.figure()
 # create your chain and compensator list
 chain = Sequential([
             SymbolGenerator(M=4, name="generator"),
-            SymbolMapper([], name="mapper"),
+            SymbolMapper(get_alphabet(type, 2**k_vect[0]), name="mapper"),
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             ChromaticDispersion(z, fs=fs),
@@ -55,14 +56,14 @@ full_compensator1 = Sequential([
             ChromaticDispersionFIRCompensator(z, fs=fs),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             Downsampler(oversampling, phase=total_delay),
-            SymbolDemapper([], name="demapper")
+            SymbolDemapper(get_alphabet(type, 2**k_vect[0]), name="demapper")
             ])
 
 full_compensator2 = Sequential([
             ChromaticDispersionLSFIRCompensator(z, N_filter, fs=fs, w_vect=[-np.pi, np.pi]),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             Downsampler(oversampling, phase=total_delay),
-            SymbolDemapper([], name="demapper")
+            SymbolDemapper(get_alphabet(type, 2**k_vect[0]), name="demapper")
             ])
 
 compensator_list = [full_compensator1, full_compensator2]
@@ -70,7 +71,6 @@ compensator_list = [full_compensator1, full_compensator2]
 # Monte carlo simulation
 ber_list_names = ["theoretical", "Savory", "LS"]
 SNR_vect = range(10, 31, 1)
-k_vect = [4, 6, 8]
 
 for k in k_vect:
     M = 2**k

@@ -51,3 +51,27 @@ jobs:
 
       - name: Run tests and doctests with coverage
         run: pytest --cov --cov-report=term-missing
+
+  # Separate job on purpose: the examples are the layer that teaches, and
+  # they break for reasons unrelated to the unit tests (a renamed block, a
+  # dropped keyword). Isolating them keeps the failure readable and does
+  # not hide the result of `test`.
+  examples:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: Run the example smoke test
+        env:
+          MPLBACKEND: Agg
+        run: pytest tests/test_examples_run.py -q -rs
