@@ -34,7 +34,9 @@ class TestWiring(unittest.TestCase):
 
     def test_reference_follows_the_current_run(self):
         """The regression this exists for: no stale reference across runs."""
-        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"})
+        # seeded (D6): at 20 dB a 16-QAM symbol error is rare but not
+        # impossible, and an unseeded chain made this assertion flaky
+        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"}).seed(7)
         for _ in range(3):
             y = chain(2000)
             # the compensator saw this pass's reference, not a previous one
