@@ -51,6 +51,16 @@ one release; there is no compatibility layer.
   them with `Upsampler`/`Downsampler`. `FiberLink` and `DBP` now name
   the multiplexer in their multi-channel rejection instead of pointing
   at something the library did not provide.
+- `get_alphabet` builds PSK, PAM and square QAM from their definitions
+  instead of reading a CSV, so **any** power-of-two order now exists --
+  BPSK, 8-PSK, 1024-QAM, all of which the tables simply did not have.
+  Thirty-two of the thirty-six files are deleted; the two cross
+  constellations (32-QAM, 128-QAM) are not square, hence not a product
+  of two PAM axes, and stay tabulated. The construction reproduces
+  every deleted table entry by entry to the six decimals the files
+  stored -- and is exact where they were rounded, which is the argument
+  for the change. The tables are kept as test fixtures under
+  `tests/core/data_reference/`.
 - `comnumpy.core.capacity`: `awgn_capacity`, `constellation_capacity`
   (Gauss-Hermite quadrature), `bicm_capacity`,
   `rayleigh_ergodic_capacity`, `mimo_ergodic_capacity`,
