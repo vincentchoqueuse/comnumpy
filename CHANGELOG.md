@@ -87,6 +87,20 @@ one release; there is no compatibility layer.
   so. Writing it surfaced an underflow: at high SNR the weaker
   hypothesis summed to exactly zero and the exact LLR returned an
   infinity; the log-sum-exp shift is now per hypothesis.
+- `WDMDemultiplexer` warns when its brick wall cuts into the signal
+  instead of only removing the neighbours. The grid's `bandwidth_Hz` is
+  the *occupied* bandwidth, so a pulse shaped at roll-off rho needs
+  `Rs*(1+rho)`; writing `Rs` is the natural mistake and it is expensive
+  -- measured on an 11-channel 32 GBd comb at rho = 0.01, an
+  implementation floor of 33.5 dB instead of 54.1 dB, and
+  `validation/optical_wdm_opticommpy.py` was making exactly that
+  mistake. The check looks only at the guard band between the channel
+  edge and the midpoint to its neighbour, since the energy further out
+  is what the mask exists to remove. Measured the other way round, once
+  the mask passes the channel it does nothing at all: a mask at
+  `Rs*(1+rho)`, one at the full 37.5 GHz slot and no mask give 54.13,
+  54.14 and 54.13 dB, which is why the block offers no filter-shape
+  option -- the matched filter downstream is what selects the channel.
 - Dual-polarization propagation (D47): a field shaped `(..., 2, N)` --
   the antenna axis of D2 -- is propagated by `FiberLink` and `DBP` with
   the **Manakov equation**, the two polarizations sharing the total

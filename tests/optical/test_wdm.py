@@ -281,5 +281,67 @@ class TestChainIntegration(unittest.TestCase):
         self.assertEqual(restored[0].channel, 1)
 
 
+class TestChannelFilterClipping(unittest.TestCase):
+    """The brick wall is channel selection, and it must not clip.
+
+    ``bandwidth_Hz`` is the *occupied* bandwidth, so a pulse shaped at
+    roll-off rho needs Rs*(1+rho). Writing Rs is the natural mistake and
+    it is expensive: measured on an 11-channel 32 GBd comb at
+    rho = 0.01, a back-to-back floor of 33.5 dB instead of 54.1 dB. The
+    grid cannot know the roll-off, so the block measures the energy its
+    own mask throws away.
+    """
+
+    def shaped(self, roll_off, n_symbols=512, sps=8):
+        from comnumpy.core.filters import SRRCFilter
+        from comnumpy.core.processors import Upsampler
+        rng = np.random.default_rng(0)
+        symbols = (rng.choice([-1, 1], size=n_symbols)
+                   + 1j * rng.choice([-1, 1], size=n_symbols))
+        return SRRCFilter(roll_off, sps, N_h=32, method="fft")(
+            Upsampler(sps)(symbols))
+
+    def test_a_mask_at_the_symbol_rate_warns(self):
+        symbol_rate, sps = 32e9, 8
+        grid = WDMGrid.uniform(3, spacing_Hz=50e9, bandwidth_Hz=symbol_rate)
+        signal = self.shaped(0.2, sps=sps)
+        multiplexed = WDMMultiplexer(grid, fs=symbol_rate * sps)(
+            np.stack([signal] * 3))
+        with self.assertLogs("comnumpy.optical.wdm", logging.WARNING) as logs:
+            WDMDemultiplexer(grid, fs=symbol_rate * sps,
+                             channel=1)(multiplexed)
+        self.assertIn("occupied", "".join(logs.output))
+
+    def test_a_mask_wide_enough_stays_quiet(self):
+        symbol_rate, sps, roll_off = 32e9, 8, 0.2
+        grid = WDMGrid.uniform(3, spacing_Hz=50e9,
+                               bandwidth_Hz=symbol_rate * (1 + roll_off))
+        signal = self.shaped(roll_off, sps=sps)
+        multiplexed = WDMMultiplexer(grid, fs=symbol_rate * sps)(
+            np.stack([signal] * 3))
+        with self.assertNoLogs("comnumpy.optical.wdm", logging.WARNING):
+            WDMDemultiplexer(grid, fs=symbol_rate * sps,
+                             channel=1)(multiplexed)
+
+    def test_widening_the_mask_past_the_signal_changes_nothing(self):
+        """Once it passes the channel, the mask is not doing the work."""
+        symbol_rate, sps, roll_off = 32e9, 8, 0.2
+        signal = self.shaped(roll_off, sps=sps)
+        outputs = []
+        for bandwidth in (symbol_rate * (1 + roll_off), 45e9, 50e9):
+            grid = WDMGrid.uniform(3, spacing_Hz=50e9, bandwidth_Hz=bandwidth)
+            multiplexed = WDMMultiplexer(grid, fs=symbol_rate * sps)(
+                np.stack([signal] * 3))
+            outputs.append(WDMDemultiplexer(grid, fs=symbol_rate * sps,
+                                            channel=1)(multiplexed))
+        for wider in outputs[1:]:
+            # what the extra passband lets through is the truncation
+            # sidelobes of the shaping filter, 60 dB down
+            error = (np.sum(np.abs(wider - outputs[0]) ** 2)
+                     / np.sum(np.abs(outputs[0]) ** 2))
+            self.assertLess(float(error), 1e-5)
+
+
+
 if __name__ == "__main__":
     unittest.main()
