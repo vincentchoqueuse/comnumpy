@@ -1,6 +1,7 @@
 
 import ast
 import inspect
+import pathlib
 import unittest
 import numpy as np
 from comnumpy.exceptions import NotFittedError
@@ -210,7 +211,8 @@ class TestBlindIQCompensator(unittest.TestCase):
     def test_no_dead_code_left_in_the_module(self):
         # the GSOP implementation of Fatadin et al. used to sit between two
         # methods as a bare string literal: valid Python, dead code
-        tree = ast.parse(inspect.getsource(compensators_module))
+        source = pathlib.Path(compensators_module.__file__).read_text()
+        tree = ast.parse(source)
         for node in ast.walk(tree):
             if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.Module)):
                 continue
