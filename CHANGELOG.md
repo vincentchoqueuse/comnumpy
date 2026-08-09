@@ -61,6 +61,34 @@ one release; there is no compatibility layer.
   the *configured* channel `H`), `NotFittedError` when `forward` runs
   with `should_fit=False` before any fit.
 
+### Milestone 6 (D6, D11, D25, D27, D37)
+
+- `Sequential.seed(s)`: deterministic per-block seeding via
+  `SeedSequence.spawn` (D6).
+- Logging replaces every `print` in `src/` (D11): monitors and the
+  debug path report through `logging.getLogger("comnumpy.*")`;
+  `BaseMIMOChannel.info()` logs and returns its description. The only
+  deliberate terminal output left is `Sequential.summary()`'s table
+  (a rendering path, like the ASCII maps).
+- Plotting API (D25): every plot function/method takes `ax=None`,
+  returns the axis, creates a figure only when needed; `plt.show()` and
+  the `num` figure-number parameter are gone from `src/` (breaking for
+  the Scope constructors, which no longer take `num`).
+- Figure semantics and style (D27): frozen `CARRIER_STYLE` table
+  (color, glyph, hatch, label -- Okabe-Ito, color never the only
+  carrier of information) shared by the ASCII spectral map and
+  `CarrierAllocation.plot()`; `comnumpy.mplstyle` ships with the
+  package and `comnumpy.style` exposes `PATH` and `context()` -- never
+  applied at import.
+- Typing (D37, ratchet): `pyrightconfig.json` runs strict on a
+  grow-only allowlist (exceptions, style, sequences, frames,
+  allocation, fec, serialization -- currently 0 errors), enforced in
+  CI. `py.typed` intentionally not shipped yet: it ships when all of
+  `src/` passes strict (the v1.0.0 tag gate), because a partial
+  `py.typed` is worse than none.
+- `SymbolDemapper(soft=True)` bit LLRs (D12) and the fec package (D4)
+  landed in the same window (see the dedicated commits).
+
 ### Sanitation batch (Lot 0)
 
 No new feature; the published package becomes consistent with what the

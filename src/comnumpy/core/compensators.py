@@ -659,14 +659,16 @@ class TrainedBasedSimpleSynchronizer(TrainedBasedMixin, Processor):
             self.cross_corr = cross_corr
             self.n_vect = n_vect
 
-    def plot(self):
+    def plot(self, ax=None):
         import matplotlib.pyplot as plt  # local import (D36)
-        plt.figure()
-        plt.plot(self.n_vect, np.abs(self.cross_corr))
-        plt.title('Cross-correlation magnitude')
-        plt.xlabel('Lag')
-        plt.ylabel('Magnitude')
-        plt.grid(True)
+        if ax is None:
+            _, ax = plt.subplots()
+        ax.plot(self.n_vect, np.abs(self.cross_corr))
+        ax.set_title('Cross-correlation magnitude')
+        ax.set_xlabel('Lag')
+        ax.set_ylabel('Magnitude')
+        ax.grid(True)
+        return ax
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.fit(x)
@@ -750,14 +752,16 @@ class TrainedBasedFineSynchronizer(TrainedBasedMixin, Processor):
             self.cross_corr = cross_corr
             self.n_vect = n_vect
 
-    def plot(self):
+    def plot(self, ax=None):
         import matplotlib.pyplot as plt  # local import (D36)
-        plt.figure()
-        plt.plot(self.n_vect, np.abs(self.cross_corr))
-        plt.title('Cross-correlation magnitude')
-        plt.xlabel('Lag')
-        plt.ylabel('Magnitude')
-        plt.grid(True)
+        if ax is None:
+            _, ax = plt.subplots()
+        ax.plot(self.n_vect, np.abs(self.cross_corr))
+        ax.set_title('Cross-correlation magnitude')
+        ax.set_xlabel('Lag')
+        ax.set_ylabel('Magnitude')
+        ax.grid(True)
+        return ax
 
 
     def forward(self, x: np.ndarray) -> np.ndarray:

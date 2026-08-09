@@ -62,7 +62,7 @@ class FrameField:
     values: Optional[np.ndarray] = None
     length: Optional[int] = field(default=None, kw_only=True)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.values is not None:
             values = np.asarray(self.values)
             values.setflags(write=False)
@@ -75,6 +75,12 @@ class FrameField:
         elif self.length is None:
             raise ValueError(
                 f"field {self.name!r} has neither values nor length")
+
+    @property
+    def size(self) -> int:
+        """Field length in samples (guaranteed set after construction)."""
+        assert self.length is not None  # internal invariant, see __post_init__
+        return self.length
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,7 +100,7 @@ class FrameStructure:
     >>> frame.frame_length, frame.payload_length
     (1063, 1000)
     """
-    fields: tuple
+    fields: tuple[FrameField, ...]
     standard: str = field(default="custom", kw_only=True)
     reference: str = field(default="", kw_only=True)
 
@@ -116,20 +122,20 @@ class FrameStructure:
     # -- properties -----------------------------------------------------
     @property
     def frame_length(self) -> int:
-        return int(sum(f.length for f in self.fields))
+        return int(sum(f.size for f in self.fields))
 
     @property
     def payload_length(self) -> int:
-        return int(next(f.length for f in self.fields
-                        if f.role == FieldRole.PAYLOAD))
+        return next(f.size for f in self.fields
+                    if f.role == FieldRole.PAYLOAD)
 
     def slice_of(self, name: str) -> slice:
         """Position of a field inside the frame."""
         start = 0
         for f in self.fields:
             if f.name == name:
-                return slice(start, start + f.length)
-            start += f.length
+                return slice(start, start + f.size)
+            start += f.size
         raise KeyError(f"unknown field {name!r}; "
                        f"known: {[f.name for f in self.fields]}")
 
@@ -140,7 +146,7 @@ class FrameStructure:
         raise KeyError(f"unknown field {name!r}; "
                        f"known: {[f.name for f in self.fields]}")
 
-    def fields_by_role(self, role: FieldRole) -> tuple:
+    def fields_by_role(self, role: FieldRole) -> tuple[FrameField, ...]:
         return tuple(f for f in self.fields if f.role == role)
 
     # -- rendering (P7, same mechanism as the D21 spectral map) ---------
@@ -213,7 +219,7 @@ class Deframer(Processor):
     frame: FrameStructure
     name: str = field(default="deframer", kw_only=True)
     # internal state (declared for slots, D40a)
-    received_fields: dict = field(init=False, repr=False, default_factory=dict)
+    received_fields: dict[str, np.ndarray] = field(init=False, repr=False, default_factory=dict)
 
     def prepare(self, X: np.ndarray):
         N = self.frame.frame_length

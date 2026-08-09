@@ -8,13 +8,15 @@ Schmidl & Cox (OFDM timing + CFO), Barker (802.11b), Golay pairs
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import numpy as np
 
 __all__ = ["zadoff_chu", "schmidl_cox_preamble", "barker", "golay_pair",
            "m_sequence"]
 
 
-def zadoff_chu(u, N):
+def zadoff_chu(u: int, N: int) -> np.ndarray:
     r"""Zadoff-Chu (CAZAC) sequence of root :math:`u` and length :math:`N`.
 
     .. math::
@@ -43,7 +45,7 @@ def zadoff_chu(u, N):
     return np.exp(-1j * np.pi * u * n * (n + 1) / N)
 
 
-def schmidl_cox_preamble(N_fft, seed=None):
+def schmidl_cox_preamble(N_fft: int, seed: int | None = None) -> np.ndarray:
     r"""Schmidl & Cox OFDM preamble (two identical time-domain halves).
 
     QPSK symbols are placed on the even subcarriers only; the resulting
@@ -94,7 +96,7 @@ _BARKER = {
 }
 
 
-def barker(length):
+def barker(length: int) -> np.ndarray:
     r"""Barker code of the given length.
 
     Aperiodic autocorrelation sidelobes bounded by 1 in magnitude. The
@@ -115,7 +117,7 @@ def barker(length):
     return np.array(_BARKER[length])
 
 
-def golay_pair(length):
+def golay_pair(length: int) -> tuple[np.ndarray, np.ndarray]:
     r"""Complementary Golay pair :math:`(a, b)` of the given length.
 
     The pair satisfies :math:`R_a[k] + R_b[k] = 2N \delta[k]` (the
@@ -149,7 +151,7 @@ _PRIMITIVE_TAPS = {
 }
 
 
-def m_sequence(degree, seed_state=None):
+def m_sequence(degree: int, seed_state: Iterable[int] | None = None) -> np.ndarray:
     r"""Maximum-length sequence from a degree-:math:`m` LFSR.
 
     Period :math:`2^m - 1`, two-valued periodic autocorrelation

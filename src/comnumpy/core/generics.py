@@ -1,8 +1,11 @@
 import numpy as np
 import dataclasses
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Optional, Callable, Union, Dict
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -38,7 +41,7 @@ class Processor():
     debug: bool = field(default_factory=bool, init=False)
     Y: Optional[np.ndarray] = field(default_factory=lambda: None, init=False, repr=False)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray, /) -> np.ndarray:
         """
         Process the input data
         """
@@ -53,7 +56,7 @@ class Processor():
 
         self.debug = debug
 
-    def prepare(self, X: np.ndarray ) -> np.ndarray:
+    def prepare(self, X: np.ndarray, /) -> None:
         """
         Prepare the object before calling the forward method
         """
@@ -70,7 +73,8 @@ class Processor():
         if self.debug:
             Y = self.forward(X)
             name = getattr(self, "name", type(self).__name__)
-            print(f"processor={name}: output_shape={Y.shape}, type={Y.dtype}")
+            logger.debug("processor=%s: output_shape=%s, type=%s",
+                         name, Y.shape, Y.dtype)
             self.Y = Y  # save data for debugging
             return Y
         else:

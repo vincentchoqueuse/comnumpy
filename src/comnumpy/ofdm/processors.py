@@ -518,13 +518,13 @@ class CarrierAllocator(Processor):
                     Y[..., t, row == 2] = self._pilot_values(n_pilots)
         return Y
 
-    def plot(self, shift=False):
+    def plot(self, ax=None, shift=False):
         """
-        Plot the carrier allocation
+        Plot the carrier allocation; returns the axis (decision D25).
         """
         if isinstance(self.carrier_type, CarrierAllocation):
-            return self.carrier_type.plot()
-        plot_carrier_allocation(np.ravel(self.mask), shift=shift, title="Carrier Allocation")
+            return self.carrier_type.plot(ax=ax)
+        return plot_carrier_allocation(np.ravel(self.mask), ax=ax, shift=shift, title="Carrier Allocation")
 
 
 @dataclass(slots=True)
@@ -654,11 +654,11 @@ class CarrierExtractor(Processor):
 
         return X_data
 
-    def plot(self, shift=False):
+    def plot(self, ax=None, shift=False):
         """
-        Plot the carrier allocation
+        Plot the carrier allocation; returns the axis (decision D25).
         """
         if isinstance(self.carrier_type, CarrierAllocation):
-            return self.carrier_type.plot()
-        plot_carrier_allocation(np.ravel(self.mask), shift=shift, title="Carrier Allocation")
+            return self.carrier_type.plot(ax=ax)
+        return plot_carrier_allocation(np.ravel(self.mask), ax=ax, shift=shift, title="Carrier Allocation")
 

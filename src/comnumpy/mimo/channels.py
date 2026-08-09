@@ -1,9 +1,13 @@
+import logging
+
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional
 from comnumpy.core import Processor
 from comnumpy.core.channels import AWGN  # noqa: F401 -- AWGN is element-wise (shape-agnostic); re-exported here for convenience
 from .validators import validate_input
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -55,22 +59,23 @@ class BaseMIMOChannel(Processor):
     name: str = field(default="mimo_channel", kw_only=True)
 
     def info(self):
+        """Describe the channel (taps, conditioning); logged and returned."""
         H = self.H
         if H.ndim == 2:
             H = H[None, :, :]
 
-        L, N_r, N_t = H.shape
-
-        print(f"* MIMO Channel ({L} tap(s)):")
+        L, _, _ = H.shape
+        lines = [f"* MIMO Channel ({L} tap(s)):"]
         for index in range(L):
-            H = self.H[index]
-            print(f"tap {index}:\n{H}")
-            condition_number = np.linalg.cond(H)
-            _, S, _ = np.linalg.svd(H)
-            norm = np.linalg.norm(H)
-            print("Condition Number=", condition_number)
-            print(f"singular value={S}")
-            print(f"norm={norm}")
+            H_tap = H[index]
+            _, S, _ = np.linalg.svd(H_tap)
+            lines.append(f"tap {index}:\n{H_tap}")
+            lines.append(f"Condition Number={np.linalg.cond(H_tap)}")
+            lines.append(f"singular value={S}")
+            lines.append(f"norm={np.linalg.norm(H_tap)}")
+        description = "\n".join(lines)
+        logger.info("%s", description)
+        return description
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         raise NotImplementedError

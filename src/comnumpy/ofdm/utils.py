@@ -111,7 +111,7 @@ def get_standard_carrier_allocation(config_name, os=1, custom=None, shift=False)
     return carrier_type
 
 
-def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shift=False, num=None, title="Carrier allocation"):
+def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=None, shift=False, title="Carrier allocation"):
     """
     Plot the allocation of subcarriers based on their types.
 
@@ -126,6 +126,9 @@ def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shif
         - 1: Data subcarrier
         - 2: Pilot subcarrier
 
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If None, a new figure and axis are created.
+
     color_list : list of str, optional
         A list of colors used to plot each subcarrier type, indexed by the subcarrier type value.
         Default is ["b", "g", "r"], which corresponds to null (blue), data (green) and pilots (red).
@@ -137,11 +140,13 @@ def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shif
     shift : bool, optional
         If True, shift the x-axis by half the length of the carrier_type array. Default is False.
 
-    num : int, optional
-        The figure number to plot on. If None, a new figure is created. Default is None.
-
     title : str, optional
         The title of the plot. Default is "Carrier allocation".
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing the plot (decision D25).
 
     Notes
     -----
@@ -169,7 +174,8 @@ def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shif
     else:
         offset = 0
 
-    plt.figure(num)
+    if ax is None:
+        _, ax = plt.subplots()
     for value in range(len(color_list)):
         color = color_list[value]
         index = np.where(carrier_type == value)[0]
@@ -177,9 +183,10 @@ def plot_carrier_allocation(carrier_type, color_list=None, label_list=None, shif
             markerfmt = '{}o'.format(color)
             linefmt = '{}-'.format(color)
             label = label_list[value]
-            plt.stem(index-offset, value*np.ones(len(index)), basefmt=" ", linefmt=linefmt, markerfmt=markerfmt, label=label)
+            ax.stem(index-offset, value*np.ones(len(index)), basefmt=" ", linefmt=linefmt, markerfmt=markerfmt, label=label)
 
-    plt.xlabel("subcarrier index")
-    plt.ylabel("subcarrier type")
-    plt.title(title)
-    plt.legend()
+    ax.set_xlabel("subcarrier index")
+    ax.set_ylabel("subcarrier type")
+    ax.set_title(title)
+    ax.legend()
+    return ax

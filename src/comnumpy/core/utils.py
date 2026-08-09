@@ -44,7 +44,7 @@ def get_alphabet(modulation, order, type="gray", norm=True):
     return alphabet
 
 
-def plot_alphabet(alphabet, num=None, label="alphabet", title="Constellation"):
+def plot_alphabet(alphabet, ax=None, label="alphabet", title="Constellation", **kwargs):
     """
     Plot a constellation diagram of the given symbol alphabet.
 
@@ -52,19 +52,28 @@ def plot_alphabet(alphabet, num=None, label="alphabet", title="Constellation"):
     ----------
     alphabet : np.ndarray
         Complex-valued symbol alphabet to plot.
-    num : int or None, optional
-        Figure number. If None, a new figure is created.
+    ax : matplotlib.axes.Axes or None, optional
+        Axis to draw on. If None, a new figure and axis are created.
     label : str, optional
         Label for the scatter plot. Default is ``"alphabet"``.
     title : str, optional
         Title of the plot. Default is ``"Constellation"``.
+    **kwargs
+        Additional keyword arguments forwarded to ``ax.plot``.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axis containing the plot (decision D25).
     """
     import matplotlib.pyplot as plt  # local import (D36)
-    plt.figure(num)
-    plt.plot(np.real(alphabet), np.imag(alphabet), "o", label=label)
-    plt.xlabel("real part")
-    plt.ylabel("imag part")
-    plt.title(title)
+    if ax is None:
+        _, ax = plt.subplots()
+    ax.plot(np.real(alphabet), np.imag(alphabet), "o", label=label, **kwargs)
+    ax.set_xlabel("real part")
+    ax.set_ylabel("imag part")
+    ax.set_title(title)
+    return ax
 
 
 def sym_2_bin(sym, width=4):
