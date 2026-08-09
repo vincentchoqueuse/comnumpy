@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 
 
@@ -129,7 +129,7 @@ class SRRCFilter(Processor):
                 f"'lfilter' (causal FIR) or 'fft' (circular, 1D) -- fix the "
                 f"method= argument.")
 
-    def h(self, t=None):
+    def h(self, t: Optional[np.ndarray] = None) -> np.ndarray:
 
         if t is None:
             N = self.N_h*self.oversampling
@@ -163,7 +163,7 @@ class SRRCFilter(Processor):
 
         return h
 
-    def H(self, NFFT):
+    def H(self, NFFT: int) -> np.ndarray:
         """Frequency response for fft method"""
         from comnumpy._backend import fft  # local import (D36), cupy-compatible (D3)
         # see hager code on LDBP
@@ -174,7 +174,7 @@ class SRRCFilter(Processor):
         H = fft(H_tmp, n=NFFT)
         return H
 
-    def get_delay(self):
+    def get_delay(self) -> int:
         return self.N_h
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -182,7 +182,9 @@ class SRRCFilter(Processor):
         if self.method == "lfilter":
             h = self.h()
             from scipy import signal  # local import (D36)
-            y = self.scale * signal.lfilter(h, 1, x, axis=self.axis)
+            # asarray: lfilter is typed as returning a tuple when `zi` is
+            # given, which it is not here
+            y = self.scale * np.asarray(signal.lfilter(h, 1, x, axis=self.axis))
         else:  # "fft" -- validated in __post_init__
             from comnumpy._backend import fft, ifft  # local import (D36), cupy-compatible (D3)
             NFFT = len(x)

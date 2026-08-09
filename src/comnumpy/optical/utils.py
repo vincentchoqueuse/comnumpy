@@ -1,9 +1,12 @@
 import numpy as np
 from comnumpy._backend import fft, ifft, fftfreq  # cupy-compatible (D3)
+from typing import Optional
+
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
 
-def compute_beta2(lamb, cd_coefficient, speed_of_light):
+def compute_beta2(lamb: float, cd_coefficient: float,
+                  speed_of_light: float) -> float:
     r"""
     Compute the Chromatic Dispersion coefficient β₂ in ps²/km
 
@@ -70,7 +73,9 @@ def compute_beta2(lamb, cd_coefficient, speed_of_light):
     return beta2
 
 
-def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
+def apply_chromatic_dispersion(x: np.ndarray, z: float, beta2: float,
+                               alpha_dB: Optional[float] = None,
+                               fs: float = 1, direction: int = 1) -> np.ndarray:
     """
     Apply chromatic dispersion effects in optical fiber communications.
 
@@ -121,7 +126,8 @@ def apply_chromatic_dispersion(x, z, beta2, alpha_dB=None, fs=1, direction=1):
     return y
 
 
-def apply_kerr_nonlinearity(x, z, gamma, gain=1, direction=1):
+def apply_kerr_nonlinearity(x: np.ndarray, z: float, gamma: float,
+                            gain: float = 1, direction: int = 1) -> np.ndarray:
     """
     Apply Kerr nonlinearity phase rotation to a signal.
 
@@ -147,7 +153,8 @@ def apply_kerr_nonlinearity(x, z, gamma, gain=1, direction=1):
     return gain * x * np.exp(1j*nl_param*(np.abs(x)**2))
 
 
-def compute_erbium_doped_fiber_amplifier_gain(alpha_dB, L_span):
+def compute_erbium_doped_fiber_amplifier_gain(alpha_dB: float,
+                                              L_span: float) -> float:
     """
     Compute the amplitude gain of an EDFA that compensates for fiber loss.
 
@@ -168,7 +175,10 @@ def compute_erbium_doped_fiber_amplifier_gain(alpha_dB, L_span):
     return gain
 
 
-def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT, nu=OPTICAL_CARRIER_FREQUENCY):
+def compute_erbium_doped_fiber_N_ase(alpha_dB: float, L_span: float,
+                                     NF_dB: float,
+                                     h: float = PLANCK_CONSTANT,
+                                     nu: float = OPTICAL_CARRIER_FREQUENCY) -> float:
     r"""
     Compute ASENoise params
 
@@ -221,7 +231,7 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB, L_span, NF_dB, h=PLANCK_CONSTANT,
     return N_ase
 
 
-def get_linear_step_size(L_span, StPS):
+def get_linear_step_size(L_span: float, StPS: int) -> np.ndarray:
     """
     Compute uniformly spaced step sizes for the split-step Fourier method.
 
@@ -240,7 +250,8 @@ def get_linear_step_size(L_span, StPS):
     return (L_span/StPS)*np.ones(StPS)
 
 
-def get_logarithmic_step_size(L_span, StPS, alpha_dB=0, step_log_factor=0.4):
+def get_logarithmic_step_size(L_span: float, StPS: int, alpha_dB: float = 0,
+                              step_log_factor: float = 0.4) -> np.ndarray:
     """
     Compute logarithmically spaced step sizes for the split-step Fourier method.
 
@@ -274,7 +285,7 @@ def get_logarithmic_step_size(L_span, StPS, alpha_dB=0, step_log_factor=0.4):
     return z
 
 
-def itu_grid_frequency(n, m=1):
+def itu_grid_frequency(n: int, m: int = 1) -> tuple[float, float]:
     r"""
     Center frequency and slot width of an ITU-T G.694.1 flexible-grid channel.
 
@@ -312,7 +323,10 @@ def itu_grid_frequency(n, m=1):
     >>> print(f"{center/1e12:.4f} THz")
     192.9000 THz
     """
-    if not (isinstance(n, (int, np.integer)) and isinstance(m, (int, np.integer))):
+    # the annotation says int, but this is a library called from untyped
+    # scripts, and a float n silently lands between two grid slots
+    if not (isinstance(n, (int, np.integer))              # pyright: ignore[reportUnnecessaryIsInstance]
+            and isinstance(m, (int, np.integer))):        # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError(f"ITU G.694.1 channels are described by integers (n, m), got ({n!r}, {m!r})")
     if m < 1:
         raise ValueError(f"slot width multiplier m must be >= 1, got {m}")

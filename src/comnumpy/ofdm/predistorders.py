@@ -239,16 +239,20 @@ class PtsPaprReductor(Processor):
     >>> print(round(float(compute_PAPR(Y[0], unit="dB")), 2))
     3.01
     """
-    phase_alphabet: Optional[list]
+    phase_alphabet: Optional[list[complex]] = None
     N_sub: int = field(default=16, kw_only=True)
     name: str = field(default="PTS", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
     combinations: np.ndarray = field(init=False, repr=False)
 
-    def __post_init__(self):
-        self.combinations = np.array(list(itertools.product(self.phase_alphabet, repeat=self.N_sub)))
+    def __post_init__(self) -> None:
+        # the default has to be applied *before* it is used: the previous
+        # order built the combinations from None and only then substituted
+        # [1, -1], so the documented default raised TypeError
         if self.phase_alphabet is None:
             self.phase_alphabet = [1, -1]
+        self.combinations = np.array(
+            list(itertools.product(self.phase_alphabet, repeat=self.N_sub)))
 
     def get_subblocks(self, X: np.ndarray) -> np.ndarray:
         # Adjacent partition: blocks consist of a contiguous set of subcarriers and are of equal size
@@ -264,7 +268,7 @@ class PtsPaprReductor(Processor):
 
         return X_m_array
 
-    def find_optimal_combination(self, x_m_array: np.ndarray) -> tuple:
+    def find_optimal_combination(self, x_m_array: np.ndarray) -> tuple[np.ndarray, float]:
         papr_list = np.zeros(len(self.combinations))
 
         for index, combination in enumerate(self.combinations):
