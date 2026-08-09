@@ -74,6 +74,25 @@ class TestWiring(unittest.TestCase):
             chain(10)
         self.assertIn("previous run", str(ctx.exception))
 
+    def test_graph_shows_the_data_edge(self):
+        """A picture of the chain must show every edge it actually has."""
+        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"})
+        model = chain.graph()
+        self.assertEqual(model["data_edges"], [("ref", "comp", "reference")])
+        self.assertEqual(len(model["signal_edges"]), 5)
+        self.assertEqual(model["taps"], ["tx"])
+
+        mermaid = chain.to_mermaid()
+        self.assertIn("ref -.->|reference| comp", mermaid)   # dashed, labelled
+        self.assertIn("class tx tapped", mermaid)
+        # the signal path is still drawn with solid arrows
+        self.assertIn("tx --> ref", mermaid)
+
+    def test_graph_without_wiring_has_no_data_edge(self):
+        model = self.build().graph()
+        self.assertEqual(model["data_edges"], [])
+        self.assertEqual(model["taps"], [])
+
     def test_unknown_ids_and_malformed_keys_rejected(self):
         for wiring in ({"comp.reference": "nope"},
                        {"nope.reference": "ref"},
