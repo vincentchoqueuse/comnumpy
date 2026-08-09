@@ -121,7 +121,20 @@ one release; there is no compatibility layer.
   `ebn0_to_snr_dB` settle the Es/Eb/SNR confusion in one place. The
   ratchet now checks functions as well as classes.
 - Writing those models meant reading every block line by line, which
-  surfaced **23 defects**, recorded in annex A.5 of the decision record.
+  surfaced **24 defects**, recorded in annex A.5 of the decision record.
+  All of them are now fixed, each with a test that fails against the old
+  code. The four that changed numbers, measured:
+  `BWFilter`'s cutoff was compared against cycles/sample while every
+  caller -- including `Upsampler`, which builds its own anti-imaging
+  filter as `BWFilter(1/L)` -- assumed scipy's Nyquist-normalised `Wn`,
+  so the library's own interpolation filter was twice too wide;
+  `compute_ccdf` did not broadcast on 2D input; the data-aided
+  synchronisers applied their amplitude correction by multiplication, so
+  a channel gain of 0.5 came out as 0.25 (the output now restores the
+  reference exactly); and the LS dispersion compensator's `w_vect` was
+  unusable, its in-band error on a half band going from 1.31 -- worse
+  than doing nothing -- to 2.0e-07, with the default band bit-stable to
+  3e-16.
   Four blocks turned out to be entirely non-functional dead code
   (`BlindPhaseTracker` had no `@dataclass`, `DataAidedFineSynchronizer`
   and `Downsampler(use_filter=True)` read undeclared fields,
