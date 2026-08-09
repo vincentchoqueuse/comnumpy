@@ -47,7 +47,7 @@ class SymbolMapper(Processor):
     def get_alphabet(self):
         return self.alphabet
 
-    def plot(self, ax=None, title="Symbol Constellation"):
+    def plot(self, ax: object = None, title: str = "Symbol Constellation") -> object:
         return plot_alphabet(self.alphabet, ax=ax, title=title)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -140,7 +140,7 @@ class SymbolDemapper(Processor):
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         if not self.soft:
-            s, x = hard_projector(X, self.alphabet)
+            s, _ = hard_projector(X, self.alphabet)
             return s
 
         d2 = np.abs(X[..., None] - self.alphabet) ** 2   # (..., M)

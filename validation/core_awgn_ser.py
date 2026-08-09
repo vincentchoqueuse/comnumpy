@@ -12,6 +12,7 @@ from comnumpy import (AWGN, Recorder, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, compute_ser,
                       get_alphabet)
 from comnumpy.core.metrics import compute_metric_awgn_theo
+from comnumpy.sweep import sweep
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -21,20 +22,17 @@ SNR_DB_RANGE = np.arange(0, 16, 1)
 
 def simulate(order, seed):
     alphabet = get_alphabet("QAM", order)
-    recorder = Recorder()
     chain = Sequential([
-        SymbolGenerator(order, seed=seed),
-        recorder,
+        SymbolGenerator(order),
+        Recorder(name="tx"),
         SymbolMapper(alphabet),
-        AWGN(snr_dB=0, seed=seed + 1, name="noise"),
+        AWGN(snr_dB=0, name="noise"),
         SymbolDemapper(alphabet),
     ])
-    ser = np.zeros(len(SNR_DB_RANGE))
-    for i, snr_dB in enumerate(SNR_DB_RANGE):
-        chain["noise"].snr_dB = snr_dB
-        detected = chain(N_SYMBOLS)
-        ser[i] = compute_ser(recorder.get_data(), detected)
-    return ser
+    results = sweep(chain, "noise.snr_dB", SNR_DB_RANGE,
+                    {"ser": compute_ser}, N_SYMBOLS,
+                    reference="tx", seed=seed)
+    return results["ser"]
 
 
 def main():

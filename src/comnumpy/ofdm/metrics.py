@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def compute_PAPR(x_data, unit="natural", axis=None):
+def compute_PAPR(x_data: object, unit: str = "natural", axis: "int | None" = None) -> "np.ndarray | float":
     r"""
     Compute the Peak-to-Average Power Ratio (PAPR) of the input signal.
 

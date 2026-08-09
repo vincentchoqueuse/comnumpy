@@ -65,11 +65,11 @@ class AWGN(Processor):
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="awgn", kw_only=True)
     # internal state (created in __post_init__ / forward; declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    rng: np.random.Generator = field(init=False, repr=False)
     sigma2_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     _b: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if (self.snr_dB is None) == (self.sigma2 is None):
             raise ValueError(
                 "AWGN: specify exactly one of snr_dB= (relative to "
@@ -78,11 +78,14 @@ class AWGN(Processor):
             )
         self.rng = np.random.default_rng(self.seed)
 
-    def noise_rvs(self, x):
+    def noise_rvs(self, x: np.ndarray) -> None:
         if self.sigma2 is not None:
             sigma2n = self.sigma2
         else:
-            P_x = np.mean(np.abs(x) ** 2)
+            # internal invariant: __post_init__ enforced exactly one of
+            # snr_dB / sigma2, so snr_dB is set on this branch
+            assert self.snr_dB is not None
+            P_x = float(np.mean(np.abs(x) ** 2))
             sigma2n = P_x * 10 ** (-self.snr_dB / 10)
 
         shape = x.shape
@@ -143,7 +146,7 @@ class FIRChannel(Processor):
     >>> print(channel(np.array([1.0, 0.0, 2.0])))
     [1.  0.5 2.  1. ]
     """
-    h: np.array
+    h: np.ndarray
     mode: Literal["full", "same", "valid"] = "full"
     name: str = "fir"
 

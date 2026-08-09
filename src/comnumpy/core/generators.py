@@ -54,12 +54,12 @@ class SymbolGenerator(Processor):
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="generator", kw_only=True)
     # internal state (declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    rng: np.random.Generator = field(init=False, repr=False)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
-    def forward(self, X):
+    def forward(self, X: object) -> np.ndarray:
         if isinstance(X, int):
             size = (X,)
         elif isinstance(X, (tuple, list)):
@@ -120,12 +120,12 @@ class GaussianGenerator(Processor):
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="gaussian_generator", kw_only=True)
     # internal state (declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    rng: np.random.Generator = field(init=False, repr=False)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
-    def forward(self, X):
+    def forward(self, X: object) -> np.ndarray:
         if isinstance(X, int):
             size = (X,)
         elif isinstance(X, (tuple, list)):

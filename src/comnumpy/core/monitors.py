@@ -215,7 +215,8 @@ class TimeSignalMonitor(Processor):
     >>> print(round(monitor.stats["Avg Power"], 4))
     1.0
     """
-    def __init__(self, compute_PAPR=False, PAPR_unit="dB", title="Signal Information", name="signal_info_printer"):
+    def __init__(self, compute_PAPR: bool = False, PAPR_unit: str = "dB",
+                 title: str = "Signal Information", name: str = "signal_info_printer") -> None:
         super().__init__()  # initialize the Processor base fields (debug, Y)
         self.compute_PAPR = compute_PAPR
         self.PAPR_unit = PAPR_unit
@@ -223,7 +224,7 @@ class TimeSignalMonitor(Processor):
         self.name = name
         self.stats = {}
 
-    def _compute_stats(self, x):
+    def _compute_stats(self, x: np.ndarray) -> None:
         abs_x = np.abs(x)
         self.stats["Min"] = np.min(abs_x)
         self.stats["Max"] = np.max(abs_x)
@@ -243,7 +244,7 @@ class TimeSignalMonitor(Processor):
         lines.append("-" * len(self.title))
         logger.info("%s", "\n".join(lines))
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         self._compute_stats(x)
         self._print_stats()
         return x

@@ -1,8 +1,10 @@
+import numpy as np
+
 
 from comnumpy.exceptions import ShapeError
 
 
-def validate_input(X, N_t):
+def validate_input(X: np.ndarray, N_t: int) -> None:
     """
     Validate that the antenna axis of the input matches the expected number of transmit antennas.
 
