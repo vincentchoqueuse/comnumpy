@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 from comnumpy.core import Processor
 
 
@@ -70,12 +70,15 @@ class Laser(Processor):
     freq_offset: float = field(default=0, kw_only=True)
     name: str = field(default="Laser", kw_only=True)
     # internal state (declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    rng: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
-    def forward(self, nb_samples):
+    def forward(self, nb_samples: object) -> np.ndarray:
+        # a source: it takes a length, like SymbolGenerator (D2)
+        assert isinstance(nb_samples, int)
+        assert self.rng is not None      # set in __post_init__
         if not isinstance(self.theta0, (float, int)):
             theta_0 = 2*np.pi*self.rng.standard_normal() - np.pi
         else:
@@ -144,7 +147,7 @@ class Optical90HybridCircuit(Processor):
     """
     is_ideal: bool = True
     sensitivity: float = field(default=0.6, kw_only=True)
-    laser_in: Optional[Laser] = field(default=None, kw_only=True)
+    laser_in: Optional[Callable[..., np.ndarray]] = field(default=None, kw_only=True)
     name: str = field(default="Optical90HybridCircuit", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -204,7 +207,7 @@ class PowerControl(Processor):
     unit: Literal["natural", "dBm"] = field(default="natural", kw_only=True)
     name: str = field(default="power_control", kw_only=True)
 
-    def get_gain(self, P_moy_x):
+    def get_gain(self, P_moy_x: float) -> float:
         if self.unit == 'dBm':
             gain = np.sqrt(10**((self.P_moy-30)/10))/P_moy_x
         else:
@@ -268,12 +271,13 @@ class ErbiumDopedFiberAmplifier(Processor):
     name: str = field(default="ErbiumDopedFiberAmplifier", kw_only=True)
     seed: Optional[int] = field(default=None, kw_only=True)
     # internal state (declared for slots, D40a)
-    rng: np.random.Generator = field(init=False, repr=False, default_factory=lambda: None)
+    rng: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def __post_init__(self):
         self.rng = np.random.default_rng(self.seed)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.rng is not None      # set in __post_init__
         N = len(x)
         scale = np.sqrt(self.N_ase/2)
         b = self.rng.normal(scale=scale, size=N) + 1j * self.rng.normal(scale=scale, size=N)
@@ -360,12 +364,12 @@ class MachZehnderModulator(Processor):
     k: float = field(default=1, kw_only=True)
     gI: float = field(default=1, kw_only=True)
     Phi: float = field(default=np.pi / 2, kw_only=True)
-    laser_in: Optional[callable] = field(default=None, kw_only=True)
+    laser_in: Optional[Callable[..., np.ndarray]] = field(default=None, kw_only=True)
     name: str = field(default="MachZehnderModulator", kw_only=True)
     # internal state (declared for slots, D40a)
-    Vpp: float = field(init=False, repr=False, default_factory=lambda: None)
-    VdcI: float = field(init=False, repr=False, default_factory=lambda: None)
-    VdcQ: float = field(init=False, repr=False, default_factory=lambda: None)
+    Vpp: float = field(init=False, repr=False, default=0.0)
+    VdcI: float = field(init=False, repr=False, default=0.0)
+    VdcQ: float = field(init=False, repr=False, default=0.0)
 
     def __post_init__(self):
         self.Vpp = self.k * self.Vpi
