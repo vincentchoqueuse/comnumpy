@@ -55,6 +55,36 @@ NO_REFERENCE_NEEDED = {
 }
 
 
+# modules whose processing *functions* are converted too (R1 covers them)
+CONVERTED_FUNCTION_MODULES = [
+    "comnumpy.core.metrics",
+    "comnumpy.core.utils",
+    "comnumpy.mimo.utils",
+    "comnumpy.ofdm.metrics",
+]
+
+# functions with no algorithm to cite: format conversion, plotting helpers
+NO_REFERENCE_FUNCTIONS = {
+    "comnumpy.core.metrics.sym_2_bin",
+    "comnumpy.core.utils.sym_2_bin",
+    "comnumpy.core.utils.plot_alphabet",
+    "comnumpy.mimo.utils.apply_correlation",
+}
+
+# plotting helpers carry no signal model
+NO_SIGNAL_MODEL = {
+    "comnumpy.core.utils.plot_alphabet",
+}
+
+
+def public_functions(module):
+    for name, obj in vars(module).items():
+        if (callable(obj) and not isinstance(obj, type)
+                and getattr(obj, "__module__", None) == module.__name__
+                and not name.startswith("_")):
+            yield name, obj
+
+
 def public_processor_classes(module):
     for name, obj in vars(module).items():
         if (isinstance(obj, type) and issubclass(obj, Processor)
@@ -81,6 +111,23 @@ class TestDocstringTemplate(unittest.TestCase):
                     problems.append(f"{where}: missing 'References' section")
         self.assertEqual(problems, [],
                          "\n".join(["template violations (D10):"] + problems))
+
+    def test_converted_functions_follow_the_template(self):
+        """R1 covers processing functions, not only Processor classes."""
+        problems = []
+        for module_name in CONVERTED_FUNCTION_MODULES:
+            module = importlib.import_module(module_name)
+            for name, func in public_functions(module):
+                doc = inspect.getdoc(func) or ""
+                where = f"{module_name}.{name}"
+                if "Signal Model" not in doc and where not in NO_SIGNAL_MODEL:
+                    problems.append(f"{where}: missing 'Signal Model' section")
+                if "References" not in doc and where not in NO_REFERENCE_FUNCTIONS:
+                    problems.append(f"{where}: missing 'References' section")
+                if "Examples" not in doc:
+                    problems.append(f"{where}: missing 'Examples' section")
+        self.assertEqual(problems, [],
+                         "\n".join(["template violations (D10, functions):"] + problems))
 
 
 if __name__ == "__main__":

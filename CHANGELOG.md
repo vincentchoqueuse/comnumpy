@@ -108,6 +108,28 @@ one release; there is no compatibility layer.
   since v0.3 (it read the recorded signal and ran the chain in the same
   call, so evaluation order read an empty record), which is exactly what
   principle P3 exists to catch.
+- **Docstrings converted to the course-material template (D10, section
+  4.10)**: 37 `Processor` classes and 25 processing functions now carry a
+  LaTeX signal model, the axis category, the symbol-to-parameter
+  bijection, a textbook or standard citation, and an executed doctest.
+  What that buys, concretely: `Serial2Parallel` states the index map
+  `y[t,f] = x[tF+f]` and names it as the C-order reshape of D2;
+  `SRRCFilter` explains why the square root is split across transmitter
+  and receiver, and its doctest proves the Nyquist zeros of the cascade;
+  `get_alphabet` states the unit-average-energy normalisation, which
+  every SER formula in the library depends on; `esn0_to_snr_dB` /
+  `ebn0_to_snr_dB` settle the Es/Eb/SNR confusion in one place. The
+  ratchet now checks functions as well as classes.
+- Writing those models meant reading every block line by line, which
+  surfaced **23 defects**, recorded in annex A.5 of the decision record.
+  Four blocks turned out to be entirely non-functional dead code
+  (`BlindPhaseTracker` had no `@dataclass`, `DataAidedFineSynchronizer`
+  and `Downsampler(use_filter=True)` read undeclared fields,
+  `DataAidedFIRCompensator` called a method it did not inherit); those
+  and three silent `SRRCFilter` defects are fixed. The rest are
+  documented, including four that need a call because they change
+  numbers: the `BWFilter` cutoff normalisation, `compute_ccdf` on 2D
+  input, and the two that make the LS compensator's `w_vect` unusable.
 - Decision **D42** records the observation model implemented below:
   chains contain communication blocks only, `taps` observe, `wiring`
   feeds. It amends D11 (monitors are removed, not converted to loggers)
