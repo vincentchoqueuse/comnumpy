@@ -101,6 +101,34 @@ one release; there is no compatibility layer.
 - `SymbolDemapper(soft=True)` bit LLRs (D12) and the fec package (D4)
   landed in the same window (see the dedicated commits).
 
+### Milestone 8 (D43, standard channel models)
+
+- `comnumpy.core.fading`: `PowerDelayProfile` (frozen, carrying the table
+  **and** its clause), a registry-backed catalog of the 3GPP LTE
+  reference profiles (EPA, EVA, ETU, TS 36.101 Annex B.2),
+  `rayleigh_process` for a Clarke/Jakes Doppler tap, and
+  `core.channels.TappedDelayLineChannel` applying the model. Third
+  application of the D15/D17/D20 pattern: `CarrierType` types the
+  frequency axis, `FieldRole` the frame axis, `PowerDelayProfile` the
+  delay axis.
+- The D20 self-check earned its place immediately. EVA and ETU reproduce
+  their published RMS delay spread (356.7 ns against 357, 990.9 against
+  991), so both are pinned. **EPA does not**: this transcription gives
+  43.1 ns where the literature commonly quotes 45 ns -- a figure much
+  closer to its *mean* delay (44.2 ns) than to its RMS spread. The entry
+  therefore pins its tap count only, and the discrepancy is documented
+  rather than papered over. It needs a check against the document, like
+  the carrier catalog does.
+- The channel is time-selective, not block fading: each tap is a Doppler
+  process synthesized directly on the output FFT grid (only the bins
+  under `f_D` are filled), so nothing is resampled or interpolated and
+  the realization is band-limited by construction. The reference for
+  verification is the Bessel autocorrelation `J0(2 pi f_D tau)`.
+- A trap the implementation surfaces rather than hides: at 15.36 MHz with
+  70 Hz Doppler, the channel needs 219 000 samples before it moves at
+  all, so a 4096-sample simulation silently gets block fading. The
+  generator now says so through `logging` (D11).
+
 ### Milestone 7 (D35, D42, MIMO validation, D5, D3)
 
 - `ARCHITECTURE.md` enters the repository. The decision record was the

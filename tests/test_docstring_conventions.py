@@ -17,6 +17,7 @@ from comnumpy.core.generics import Processor
 # ratchet list: converted to the section-4.10 template (D10)
 CONVERTED_MODULES = [
     "comnumpy.core.channels",
+    "comnumpy.core.fading",
     "comnumpy.core.generators",
     "comnumpy.core.mappers",
     "comnumpy.core.impairments",

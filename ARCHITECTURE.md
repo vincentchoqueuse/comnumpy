@@ -1,10 +1,14 @@
-# comnumpy — Architecture & Decisions, v0.5
+# comnumpy — Architecture & Decisions, v0.6
 
-Statut : draft — 2026-08-09. **Remplace ADD v0.4.**
+Statut : draft — 2026-08-09. **Remplace ADD v0.5.**
 Périmètre : de l'état constaté sur `main` (18 commits) à la soumission JOSS.
 Ce document est normatif : le code se conforme aux décisions D-x ou les
 amende explicitement. Les décisions amendées conservent leur numéro et
 portent la mention *Amendé v0.x* avec le motif.
+
+Nouveautés v0.6 : décision **D43** (modèles de canaux normalisés,
+§4.12) — profils de retard catalogués et processus Doppler, troisième
+application du motif D15/D17/D20.
 
 Nouveautés v0.5 : décision **D42** (observation et câblage de chaîne,
 §4.11) — la chaîne ne décrit plus que le système de communication, les
@@ -711,6 +715,23 @@ débogage passe par `logging` — mais la mesure elle-même est rendue par
 `signal_report()`, qui retourne un dictionnaire et laisse l'appelant
 décider s'il le journalise, le tabule ou l'assertionne. Séparer la mesure
 de sa présentation était le fond du problème.
+
+
+### 4.12 Modèles de canaux normalisés (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D43 | **Le catalogue de canaux applique à l'axe des retards le motif déjà validé sur l'axe des fréquences.** (a) Un objet valeur gelé `PowerDelayProfile` porte la table (retards en ns, puissances en dB), le spectre Doppler, le facteur de Rice éventuel, **et sa provenance** (`standard`, `reference` = la clause). (b) Registre `get_delay_profile()` / `@register_delay_profile`, jumeau de D17. (c) **Auto-contrôle D20** : l'entrée vérifie à la construction les grandeurs publiées à côté de la table — nombre de trajets, étalement de retard quadratique moyen. (d) La variation temporelle est dans le lot : `rayleigh_process()` synthétise un trajet au spectre de Clarke/Jakes, et `TappedDelayLineChannel` applique le canal, sélectif **en temps comme en fréquence** ; `f_doppler=0` redonne le block-fading. (e) Les grandeurs réalisées sont des attributs soulignés (`h_`, `delays_`, D23) | Toute la machinerie existait déjà — `pdp_to_scales`, `rayleigh_channel`, `SelectiveMIMOChannel` — mais pas le catalogue : il fallait retaper la table du standard à la main, sans filet. C'est exactement la défaillance que D20 a été inventée pour empêcher côté porteuses. Le contrôle n'est pas décoratif : il a immédiatement produit un résultat. EVA et ETU reproduisent leur étalement publié (356,7 ns contre 357 ; 990,9 contre 991) ; **EPA non** — cette transcription donne 43,1 ns là où la littérature cite couramment « 45 ns », valeur bien plus proche de son retard *moyen* (44,2 ns) que de son étalement. L'entrée EPA n'épingle donc que son nombre de trajets : épingler un chiffre qu'on ne sait pas sourcer serait pire que de n'en épingler aucun. Sur le Doppler, la synthèse se fait **directement sur la grille FFT de sortie** — seuls les bins sous `f_D` sont remplis, une transformée inverse suffit — donc aucun rééchantillonnage ni interpolation, et la réalisation est à bande limitée par construction. La référence de vérification est l'autocorrélation de Bessel `J0(2 pi f_D tau)` | Générateur par somme de sinusoïdes de Jakes (statistiques exactes seulement asymptotiquement, et le choix des phases est un piège classique) ; génération à cadence réduite puis interpolation (introduit une erreur d'interpolation là où la méthode spectrale est exacte) ; renormalisation de chaque réalisation à puissance unité (casse les statistiques gaussiennes : la puissance d'une réalisation *est* aléatoire, c'est physique) | **Acté** |
+
+**Le piège que la décision rend visible.** À 15,36 MHz avec un Doppler de
+70 Hz, il faut 219 000 échantillons avant que le canal ne bouge : une
+simulation de 4096 échantillons donne du block-fading, silencieusement.
+Le générateur le **signale** par `logging` (D11) plutôt que de laisser
+prendre un résultat statique pour un résultat sélectif en temps. C'est le
+même réflexe que le garde-fou `wdm` de D19.
+
+**Limite assumée.** La méthode spectrale est périodique : la réalisation
+se répète avec la période `n_samples / fs`. Documenté, pas contourné.
 
 ---
 
