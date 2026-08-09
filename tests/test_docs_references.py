@@ -47,6 +47,30 @@ class TestDocsReferences(unittest.TestCase):
                                    + missing))
 
 
+    def test_line_ranges_fit_inside_the_file(self):
+        """A range past the end of the file quotes nothing, silently.
+
+        The coverage check below cannot see this: asking for lines 80-92
+        of an 89-line example *over*-covers, so every line is accounted
+        for and the test passes while the page shows a truncated block.
+        Sphinx reports it; this test exists so the sandbox does too.
+        """
+        problems = []
+        for page in sorted(DOCS.rglob("*.rst")):
+            for target, first, last in RANGED.findall(page.read_text()):
+                source = (page.parent / target).resolve()
+                if not source.exists():
+                    continue        # reported by test_included_files_exist
+                length = len(source.read_text().splitlines())
+                if int(last) > length or int(first) < 1:
+                    problems.append(
+                        f"{page.relative_to(DOCS)} asks for lines "
+                        f"{first}-{last} of {source.name}, which has "
+                        f"{length}")
+        self.assertEqual(problems, [],
+                         "\n".join(["literalinclude ranges out of bounds:"]
+                                   + problems))
+
     def test_line_ranges_still_cover_the_whole_example(self):
         """A ``:lines:`` range is a silent coupling to line numbers.
 
