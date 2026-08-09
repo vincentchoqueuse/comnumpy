@@ -1,6 +1,6 @@
 r"""Distributed Raman amplification vs closed forms and conservation laws.
 
-Four confrontations of ``comnumpy.optical.raman`` (decision D7), chosen
+Six confrontations of ``comnumpy.optical.raman`` (decision D7), chosen
 so that the hard regime is covered too -- the undepleted formula is
 exact but says nothing once the signal starts eating the pump, which is
 precisely where a numerical solver could be wrong and look right.
@@ -64,10 +64,53 @@ precisely where a numerical solver could be wrong and look right.
    must give the same answer, which tests the boundary conditions
    themselves rather than the physics.
 
+5. **Inter-channel Raman tilt against Zirngibl's closed form.** With a
+   triangular gain the coupled equations of a WDM comb have an
+   analytical solution. Neglecting the photon factor
+   :math:`\nu_i/\nu_j \simeq 1`, every pair couples as
+   :math:`C_R (\nu_j - \nu_i)` and the common terms factor out, leaving
+
+   .. math::
+
+       P_i(L) = P_\mathrm{tot} e^{-\alpha L}\,
+           \frac{P_i(0)\, e^{-C_R \nu_i P_\mathrm{tot} L_\mathrm{eff}}}
+                {\sum_k P_k(0)\, e^{-C_R \nu_k P_\mathrm{tot} L_\mathrm{eff}}}
+
+   with :math:`C_R = g_R / (A_\mathrm{eff} \Delta\nu_\mathrm{peak})` the
+   slope of the triangle. This is the reference for the multi-signal
+   solver: it pins the whole comb, and the residual must be the size of
+   the approximation it makes -- a fraction of a percent of the tilt --
+   not of the tilt itself.
+
+6. **Photon conservation over an arbitrary set of waves.** The same
+   invariant as check 2, but summed over several signals and several
+   pumps at once. A pairwise coupling matrix that lost the
+   :math:`\nu_j/\nu_i` factor on *one* pair would still pass check 2.
+
+7. **Multi-pump undepleted gain, and the size of what it ignores.**
+   Generalizing check 1 to several pumps, each pump contributes
+   independently and the on-off gains add:
+
+   .. math::
+
+       G_{\mathrm{on\text{-}off},i} =
+           \exp\left(L_\mathrm{eff} \sum_p C_{ip} P_p\right)
+
+   What the formula ignores is the transfer between the pumps
+   themselves, which *redistributes* the gain -- the blue pump feeds
+   the red one -- so the residual is signed, and it must fall as
+   :math:`P_p^2`, which is what identifies it as that second-order term
+   rather than an error. Measured: 0.77 % of the gain at 50/30 mW,
+   0.0077 % at ten times less pump.
+
 References
 ----------
 G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press, 2013,
 Chapter 8.
+
+M. Zirngibl, "Analytical model of Raman gain effects in massive
+wavelength division multiplexed transmission systems", Electron. Lett.,
+vol. 34, no. 8, pp. 789-790, 1998.
 
 M. N. Islam, "Raman amplifiers for telecommunications", IEEE J. Sel.
 Topics Quantum Electron., vol. 8, no. 3, pp. 548-559, 2002.
@@ -232,6 +275,140 @@ def check_bvp_against_ivp():
     return worst
 
 
+# -- multi-wave references ------------------------------------------------
+PEAK_SHIFT_THZ = 13.2
+COMB_CENTRE_HZ = 193.4e12
+COMB_SPACING_HZ = 500e9
+COMB_SIZE = 8
+
+
+def comb_frequencies_Hz():
+    return COMB_CENTRE_HZ + COMB_SPACING_HZ * (np.arange(COMB_SIZE)
+                                               - (COMB_SIZE - 1) / 2)
+
+
+def comb_wavelengths_nm():
+    return 1e9 * 2.99792458e8 / comb_frequencies_Hz()
+
+
+def solve_comb(channel_W, **pumping):
+    """The comb under a negligible pump: the tilt is the comb's own."""
+    return solve_raman(
+        length_km=LENGTH_KM, gain_peak_W_km=GAIN_W_KM,
+        wavelength_signal_nm=comb_wavelengths_nm(), signal_W=channel_W,
+        alpha_signal_dB_km=ALPHA_S_DB, alpha_pump_dB_km=ALPHA_P_DB,
+        spectrum=get_gain_spectrum("triangular",
+                                   peak_shift_THz=PEAK_SHIFT_THZ),
+        bandwidth_Hz=0.0, tol=1e-10, **pumping)
+
+
+def zirngibl_comb_W(channel_W):
+    """Closed-form output powers of the comb, triangular gain."""
+    slope = GAIN_W_KM / (PEAK_SHIFT_THZ * 1e12)          # 1/(W km Hz)
+    alpha = ALPHA_S_DB / (10 / np.log(10))
+    total = COMB_SIZE * channel_W
+    weight = np.exp(-slope * comb_frequencies_Hz() * total
+                    * effective_length_km(ALPHA_S_DB, LENGTH_KM))
+    return (total * np.exp(-alpha * LENGTH_KM) * channel_W * weight
+            / np.sum(channel_W * weight))
+
+
+def check_wdm_tilt():
+    """5. The comb tilt against Zirngibl's analytical model."""
+    worst = 0.0
+    for channel_W in (1e-3, 5e-3, 2e-2):
+        solution = solve_comb(channel_W, pump_backward_W=1e-14,
+                              wavelength_pump_nm=1455.0)
+        closed = zirngibl_comb_W(channel_W)
+        error_dB = float(np.max(np.abs(
+            10 * np.log10(solution.signal_W[:, -1] / closed))))
+        tilt_dB = float(np.ptp(10 * np.log10(closed)))
+        worst = max(worst, error_dB)
+        # the model drops nu_i/nu_j ~ 1, an error of order (comb width)/nu
+        # on the exponent, so the residual must stay a small fraction of
+        # the tilt rather than a fixed number
+        assert error_dB < 0.01 * tilt_dB + 1e-4, (
+            f"at {channel_W * 1e3:.0f} mW/channel the solver departs from "
+            f"Zirngibl by {error_dB:.2e} dB for a {tilt_dB:.3f} dB tilt")
+        print(f"     {channel_W * 1e3:5.1f} mW/channel: tilt {tilt_dB:.3f} dB, "
+              f"solver within {error_dB:.2e} dB of the closed form")
+    print(f"PASS inter-channel tilt: Zirngibl reproduced to {worst:.2e} dB")
+    return worst
+
+
+def check_multiwave_photon_conservation():
+    """6. Photon flux over a whole comb and two pumps at once."""
+    pump_nm = np.array([1425.0, 1455.0])
+    solution = solve_raman(
+        length_km=LENGTH_KM, gain_peak_W_km=GAIN_W_KM,
+        wavelength_signal_nm=comb_wavelengths_nm(), signal_W=0.05,
+        pump_forward_W=[0.5, 0.5], wavelength_pump_nm=list(pump_nm),
+        alpha_signal_dB_km=0.0, alpha_pump_dB_km=0.0,
+        spectrum=get_gain_spectrum("blow-wood"), bandwidth_Hz=0.0, tol=1e-12)
+    nu_pump = 2.99792458e8 / (pump_nm * 1e-9)
+    photons = (np.sum(solution.signal_W / comb_frequencies_Hz()[:, None], axis=0)
+               + np.sum(solution.pump_forward_W / nu_pump[:, None], axis=0))
+    drift = float(np.ptp(photons) / photons[0])
+    depletion = solution.pump_depletion
+    assert drift < 1e-7, f"photon flux drifts by {drift:.2e} over 10 waves"
+    assert depletion > 0.3, "the pumps barely deplete, the check is weak"
+    print(f"PASS photon conservation over 10 waves: flux drifts by "
+          f"{drift:.2e} with the pumps depleted by {100 * depletion:.0f}%")
+    return drift
+
+
+PUMP_SET_NM = np.array([1425.0, 1455.0])
+PUMP_SET_W = np.array([0.05, 0.03])
+
+
+def multipump_undepleted_gain_dB(pump_W):
+    """Sum of the per-pump undepleted gains, one value per channel."""
+    spectrum = get_gain_spectrum("blow-wood")
+    nu_pump = 2.99792458e8 / (PUMP_SET_NM * 1e-9)
+    shift = nu_pump[None, :] - comb_frequencies_Hz()[:, None]
+    coupling = GAIN_W_KM * spectrum.shape(shift)
+    return (10 / np.log(10)) * np.sum(
+        coupling * pump_W[None, :] * effective_length_km(ALPHA_P_DB, LENGTH_KM),
+        axis=1)
+
+
+def check_multipump_undepleted():
+    """7. Several pumps add their gains -- and what that misses is O(P^2)."""
+    residuals = {}
+    for scale in (1.0, 0.1):
+        pump_W = PUMP_SET_W * scale
+        solution = solve_raman(
+            length_km=LENGTH_KM, gain_peak_W_km=GAIN_W_KM,
+            wavelength_signal_nm=comb_wavelengths_nm(), signal_W=1e-9,
+            pump_backward_W=list(pump_W), wavelength_pump_nm=list(PUMP_SET_NM),
+            alpha_signal_dB_km=ALPHA_S_DB, alpha_pump_dB_km=ALPHA_P_DB,
+            spectrum=get_gain_spectrum("blow-wood"), bandwidth_Hz=0.0,
+            tol=1e-12)
+        expected = multipump_undepleted_gain_dB(pump_W)
+        gains = np.asarray(solution.on_off_gain_dB)
+        # The closed form ignores the transfer between the pumps, which
+        # *redistributes* rather than adds: the blue pump feeds the red
+        # one, so the channels the red pump serves gain and those living
+        # off the blue one lose. Measured here, seven channels above the
+        # sum and the reddest 7e-4 dB below it.
+        residuals[scale] = (float(np.max(np.abs(gains - expected))),
+                            float(np.mean(expected)))
+    absolute = residuals[1.0][0] / residuals[0.1][0]
+    relative = residuals[1.0][0] / residuals[1.0][1]
+    assert relative < 1e-2, \
+        f"the multi-pump gain departs from the sum by {relative:.2e}"
+    # dividing the pump power by ten must divide the residual by a
+    # hundred: that exponent is what says it is the pump-to-pump term
+    assert 50 < absolute < 200, (
+        f"the residual scales as P^{np.log10(absolute):.2f}, not P^2 -- it "
+        f"is not the pump-to-pump transfer it is supposed to be")
+    print(f"PASS multi-pump gain: the per-pump sum is reproduced to "
+          f"{residuals[1.0][0]:.2e} dB ({100 * relative:.2f} % of the gain), "
+          f"and dividing the pump power by ten divides that residual by "
+          f"{absolute:.0f} -- the quadratic pump-to-pump transfer")
+    return relative
+
+
 def main():
     import matplotlib.pyplot as plt
 
@@ -240,9 +417,12 @@ def main():
     check_photon_conservation()
     check_pumping_schemes()
     check_bvp_against_ivp()
+    check_wdm_tilt()
+    check_multiwave_photon_conservation()
+    check_multipump_undepleted()
 
-    fig, (ax_gain, ax_profile, ax_spectrum) = plt.subplots(
-        1, 3, figsize=(14, 4.2))
+    fig, (ax_gain, ax_profile, ax_spectrum, ax_tilt) = plt.subplots(
+        1, 4, figsize=(18, 4.2))
 
     ax_gain.plot(PUMPS_W, [undepleted_gain_dB(p) for p in PUMPS_W], "k--",
                  label="undepleted closed form")
@@ -274,6 +454,21 @@ def main():
                     title="gain shapes")
     ax_spectrum.grid(True)
     ax_spectrum.legend(fontsize="small")
+
+    channel_W = 2e-2
+    offsets_THz = (comb_frequencies_Hz() - COMB_CENTRE_HZ) / 1e12
+    solved = solve_comb(channel_W, pump_backward_W=1e-14,
+                        wavelength_pump_nm=1455.0).signal_W[:, -1]
+    reference = zirngibl_comb_W(channel_W)
+    ax_tilt.plot(offsets_THz, 10 * np.log10(reference / reference.mean()),
+                 "k--", label="Zirngibl closed form")
+    ax_tilt.plot(offsets_THz, 10 * np.log10(solved / solved.mean()), "o",
+                 fillstyle="none", label="solver")
+    ax_tilt.set(xlabel="offset from the comb centre [THz]",
+                ylabel="output power, mean removed [dB]",
+                title=f"inter-channel tilt, {1e3 * channel_W:.0f} mW/channel")
+    ax_tilt.grid(True)
+    ax_tilt.legend(fontsize="small")
 
     fig.tight_layout()
     FIG_DIR.mkdir(exist_ok=True)

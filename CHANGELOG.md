@@ -78,6 +78,34 @@ one release; there is no compatibility layer.
   (`get_fiber`, `available_fibers`, `@register_fiber`), a catalog of
   SMF/NZDSF/DCF, a D20 self-check against the published beta2, and
   unit-plausibility guards whose messages name the unit they want.
+- `solve_raman` describes a *set of waves* (D45b), not a pump-signal
+  pair: every signal channel and every pump, in each direction, is one
+  equation, and every pair is coupled through the gain spectrum at the
+  shift separating it. Pump-to-signal gain, pump-to-pump transfer
+  (hence second-order pumping) and the inter-channel tilt of a WDM comb
+  all follow from the same equations. Every signal or pump argument now
+  takes a scalar -- shared by the group -- or one value per wave, and a
+  scalar in gives a scalar out, so the single-channel case reads
+  unchanged. `spectrum=` is required as soon as a group has more than
+  one wavelength: its default means "the pair sits at the gain peak",
+  which would silently invent a tilt across a comb. New on
+  `RamanSolution`: `n_signals`, `n_pumps`, `tilt_dB`, and a compact
+  `__repr__`.
+- `FiberLink` turns a multi-signal solution into a *transfer function*:
+  the multiplexer sums the channels into one field (D44), so the gain
+  is interpolated from the solved channels onto the FFT grid and
+  applied half-step by half-step. The EDFA is flat and cannot undo a
+  tilt, so it makes up the *mean* on-off gain and the channels come out
+  spread around transparency by `tilt_dB` -- the physical situation a
+  gain-flattening filter exists to fix.
+- `validation/optical_raman.py` gained the two analytical references
+  that cover exactly the two new axes: Zirngibl's closed form for the
+  comb tilt (reproduced to 0.7 % of the tilt, the size of the
+  approximation that model itself makes) and the sum of the undepleted
+  per-pump gains, whose residual falls by a factor 101 when the pump
+  power falls by ten -- the exponent that identifies it as the
+  pump-to-pump transfer rather than an error. Plus photon-number
+  conservation over ten simultaneous waves.
 - `comnumpy.optical.raman` (D45): `RamanGainSpectrum` (frozen, two
   closed-form models -- Blow-Wood single oscillator and the triangular
   tilt model -- with a registry and a construction-time self-check
