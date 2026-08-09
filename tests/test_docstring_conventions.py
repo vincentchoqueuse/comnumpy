@@ -31,6 +31,8 @@ CONVERTED_MODULES = [
     "comnumpy.optical.devices",
     "comnumpy.mimo.channels",
     "comnumpy.mimo.detectors",
+    "comnumpy.mimo.compensators",
+    "comnumpy.ofdm.chains",
 ]
 
 
