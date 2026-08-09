@@ -1,9 +1,11 @@
-import numpy as np
 import dataclasses
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional, Callable, Union, Dict
+from typing import (Any, Callable, Dict, List, Optional, Set, Tuple, TypedDict,
+                    Union)
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ class Processor():
         """
         return x
 
-    def set_debug(self, debug=None):
+    def set_debug(self, debug: Optional[bool] = None) -> None:
         """
         Change the debugging mode
         """
@@ -79,6 +81,21 @@ class Processor():
             return Y
         else:
             return self.forward(X)
+
+
+class ChainGraph(TypedDict):
+    """Renderer-independent model returned by :meth:`Sequential.graph`."""
+
+    nodes: List[Dict[str, str]]
+    signal_edges: List[Tuple[str, str]]
+    data_edges: List[Tuple[str, str, str]]
+    taps: List[str]
+
+
+# (index, class name, block id, output shape, dtype, elapsed ms)
+_SummaryRow = Tuple[int, str, str, Optional[Tuple[int, ...]], str, float]
+# (block ids, ids to record, {block index: [(param, source id)]})
+_EdgePlan = Tuple[Optional[List[str]], Set[str], Dict[int, List[Tuple[str, str]]]]
 
 
 @dataclass(slots=True)
@@ -155,17 +172,18 @@ class Sequential():
     >>> print(chain.tap("generator"))
     [0 0 3 1 3]
     """
-    module_list: list
+    module_list: List[Processor]
     debug: bool = False
     name: str = 'sequential'
-    callbacks: Optional[Dict[Union[str, int], Callable]] = field(default_factory=dict)
-    taps: Optional[list] = field(default=None, kw_only=True)
+    callbacks: Optional[Dict[Union[str, int], Callable[[Any], None]]] = \
+        field(default_factory=dict)
+    taps: Optional[List[str]] = field(default=None, kw_only=True)
     wiring: Optional[Dict[str, str]] = field(default=None, kw_only=True)
     # signals recorded at the declared taps (references, not copies)
-    tapped_: dict = field(init=False, repr=False, default_factory=dict)
+    tapped_: Dict[str, Any] = field(init=False, repr=False, default_factory=dict)
 
 
-    def block_ids(self):
+    def block_ids(self) -> List[str]:
         """
         Return the addressable identifier of each block (decision D31/D34).
 
@@ -175,7 +193,7 @@ class Sequential():
         """
         import re
 
-        def base_id(module):
+        def base_id(module: object) -> str:
             name = getattr(module, "name", None)
             if not name:
                 name = type(module).__name__
@@ -183,21 +201,22 @@ class Sequential():
             slug = re.sub(r"[^0-9a-zA-Z]+", "_", slug).strip("_").lower()
             return slug or "block"
 
-        ids, seen = [], {}
+        ids: List[str] = []
+        seen: Dict[str, int] = {}
         for module in self.module_list:
             base = base_id(module)
             seen[base] = seen.get(base, 0) + 1
             ids.append(base if seen[base] == 1 else f"{base}_{seen[base]}")
         return ids
 
-    def get_module_by_id(self, block_id: str):
+    def get_module_by_id(self, block_id: str) -> Processor:
         """Retrieve a module by its :meth:`block_ids` identifier."""
         ids = self.block_ids()
         if block_id not in ids:
             raise KeyError(f"unknown block id {block_id!r}; known: {ids}")
         return self.module_list[ids.index(block_id)]
 
-    def seed(self, seed):
+    def seed(self, seed: int) -> "Sequential":
         """
         Seed every stochastic block deterministically (decision D6).
 
@@ -225,13 +244,16 @@ class Sequential():
         ]
         for module, child in zip(stochastic, seed_sequence.spawn(len(stochastic)),
                                  strict=True):
-            module.seed = int(child.generate_state(1)[0])
+            # setattr, not module.seed: the field was discovered by name
+            # above and no base class declares it (noqa: B010 is the price)
+            setattr(module, "seed",  # noqa: B010
+                    int(child.generate_state(1)[0]))
             post_init = getattr(module, "__post_init__", None)
             if post_init is not None:
                 post_init()
         return self
 
-    def set_params(self, **params):
+    def set_params(self, **params: Any) -> "Sequential":
         """
         Reconfigure blocks after construction (decision D34).
 
@@ -249,7 +271,7 @@ class Sequential():
         >>> chain[0].sigma2
         0.01
         """
-        touched = []
+        touched: List[Processor] = []
         for dotted, value in params.items():
             block_id, _, field_name = dotted.partition(".")
             if not field_name:
@@ -274,14 +296,14 @@ class Sequential():
         return self
 
     @staticmethod
-    def _format_value(value):
+    def _format_value(value: object) -> str:
         if isinstance(value, np.ndarray):
             return f"ndarray{value.shape}"
         if isinstance(value, Sequential):
             return "Sequential(...)"
         return repr(value)
 
-    def _block_repr(self, module):
+    def _block_repr(self, module: object) -> str:
         if dataclasses.is_dataclass(module):
             args = ", ".join(
                 f"{f.name}={self._format_value(getattr(module, f.name))}"
@@ -289,7 +311,7 @@ class Sequential():
             return f"{type(module).__name__}({args})"
         return repr(module)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Structural view of the chain (decision D33a)."""
         lines = [f"{type(self).__name__}("]
         for index, module in enumerate(self.module_list):
@@ -297,12 +319,12 @@ class Sequential():
         lines.append(")")
         return "\n".join(lines)
 
-    def summary(self, X, print_out=True):
+    def summary(self, X: Any, print_out: bool = True) -> List[_SummaryRow]:
         """
         Run the chain on ``X`` and tabulate each block's output shape,
         dtype and execution time (decision D33b). Returns the rows.
         """
-        rows = []
+        rows: List[_SummaryRow] = []
         Y = X
         for index, (block_id, module) in enumerate(
                 zip(self.block_ids(), self.module_list, strict=True)):
@@ -325,7 +347,7 @@ class Sequential():
                       f"{str(shape):<18} {dtype:<12} {ms:>8.2f}")
         return rows
 
-    def graph(self):
+    def graph(self) -> "ChainGraph":
         """
         Structural view of the chain: nodes, signal edges, data edges.
 
@@ -350,7 +372,7 @@ class Sequential():
         [('generator', 'awgn')]
         """
         ids = self.block_ids()
-        data_edges = []
+        data_edges: List[Tuple[str, str, str]] = []
         for target, source in (self.wiring or {}).items():
             block_id, _, param = target.partition(".")
             data_edges.append((source, block_id, param))
@@ -362,7 +384,7 @@ class Sequential():
             "taps": list(self.taps or ()),
         }
 
-    def to_mermaid(self):
+    def to_mermaid(self) -> str:
         """
         Mermaid flowchart of the chain (decision D33c), renderable by
         sphinxcontrib-mermaid, GitHub, or any mermaid viewer.
@@ -399,29 +421,30 @@ class Sequential():
             lines.append(f"    class {','.join(model['taps'])} tapped")
         return "\n".join(lines)
 
-    def set_debug(self, debug=None):
+    def set_debug(self, debug: Optional[bool] = None) -> None:
         """
         Change the debugging mode
         """
         for module in self.module_list:
             module.set_debug(debug)
 
-    def profile_execution_time(self, X: np.ndarray):
+    def profile_execution_time(self, X: np.ndarray) -> Dict[str, float]:
         """
         Start profiling
         """
         Y = X
-        time_elapsed = {}
+        time_elapsed: Dict[str, float] = {}
 
         for processor in self.module_list:
             start_time = time.time()
             Y = processor(Y)
             stop_time = time.time()
-            time_elapsed[processor.name] = stop_time - start_time
+            key = getattr(processor, "name", type(processor).__name__)
+            time_elapsed[key] = stop_time - start_time
 
         return time_elapsed
 
-    def _resolve_edges(self):
+    def _resolve_edges(self) -> _EdgePlan:
         """Validate taps/wiring against the block ids; return the plan.
 
         Returns ``(ids, recorded, feeds)`` where ``recorded`` is the set of
@@ -433,12 +456,12 @@ class Sequential():
 
         ids = self.block_ids()
         index_of = {block_id: i for i, block_id in enumerate(ids)}
-        recorded = set(self.taps or ())
+        recorded: Set[str] = set(self.taps or ())
         unknown = sorted(recorded - index_of.keys())
         if unknown:
             raise KeyError(f"unknown tap ids {unknown}; known block ids: {ids}")
 
-        feeds: Dict[int, list] = {}
+        feeds: Dict[int, List[Tuple[str, str]]] = {}
         for target, source in (self.wiring or {}).items():
             block_id, _, param = target.partition(".")
             if not param:
@@ -479,12 +502,15 @@ class Sequential():
                 self.tapped_[ids[index]] = Y
 
             # run callback if needed
+            # callbacks= may be explicitly None, and `key in None` used to
+            # raise a TypeError from inside the pass
+            callbacks = self.callbacks or {}
             key = getattr(processor, 'name', None)
-            if key in self.callbacks:
-                self.callbacks[key](Y)
+            if key is not None and key in callbacks:
+                callbacks[key](Y)
         return Y
 
-    def tap(self, block_id: str):
+    def tap(self, block_id: str) -> Any:
         """
         Return the signal recorded at a declared tap during the last run.
         """
@@ -495,7 +521,7 @@ class Sequential():
                 f"(declare the tap, then run the chain)")
         return self.tapped_[block_id]
 
-    def get_module_by_index(self, index: int):
+    def get_module_by_index(self, index: int) -> Processor:
         """
         Retrieve a module from the module list by its index.
         """
@@ -511,17 +537,16 @@ class Sequential():
         """
         self.module_list[index] = module
 
-    def get_module_by_name(self, module_name: str):
+    def get_module_by_name(self, module_name: str) -> Processor:
         """
         Retrieve a module from the module list by its name.
         """
         for module in self.module_list:
-            if hasattr(module, 'name'):
-                if module.name == module_name:
-                    return module
+            if getattr(module, "name", None) == module_name:
+                return module
         raise AttributeError(f"Module '{module_name}' not found in class {self.__class__.__name__}.")
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[str, int]) -> Processor:
         """
         Retrieve a module using the [] operator by its name or index.
 
@@ -537,12 +562,15 @@ class Sequential():
         """
         if isinstance(key, str):
             return self.get_module_by_name(key)
-        elif isinstance(key, int):
-            return self.get_module_by_index(key)
-        else:
-            raise TypeError("Key must be a string (for name) or an integer (for index).")
+        # the annotation says int, but nothing stops a notebook from
+        # slicing a chain, and the message is better than numpy's
+        if not isinstance(key, int):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(
+                f"key must be a block name (str) or an index (int), got "
+                f"{type(key).__name__}")
+        return self.get_module_by_index(key)
 
-    def __call__(self, x):
+    def __call__(self, x: Any) -> np.ndarray:
         """
         Process the input data by calling the forward method.
         """
