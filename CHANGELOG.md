@@ -73,6 +73,26 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- Estimator scope (D49): every estimator now says whether what it
+  measures is **shared** by the paths of a multi-path signal or belongs
+  to **each path**, and behaves accordingly. `BlindCFOCompensator`
+  accepts `(..., P, N)` and estimates the offset *jointly* -- one laser,
+  one number, and twice the data. `BlindIQCompensator`,
+  `BlindPhaseCompensation` and `BlindPhaseTracker` estimate *per path*.
+  The data-aided family is fitted against one reference, so a multi-path
+  input is ambiguous by construction and `validate_single_path` refuses
+  it with a message naming the quantity and both ways out. Estimated
+  quantities keep the library's scalar-in-scalar-out rule: `theta_` is a
+  float for one path and an array otherwise.
+  Two defects surfaced asking the question:
+  * `BlindIQCompensator` on a `(2, N)` signal stacked the real and
+    imaginary parts of *both* polarizations into one 4-row matrix and
+    returned a signal worse than its input -- `var(I)/var(Q) = 2499`
+    instead of 1 -- **without raising**;
+  * `DCCorrector` never broadcast its own documented `axis`: the mean of
+    a `(P, N)` record along `axis=-1` came back as `(P,)` and the
+    subtraction raised a shape error, so the block did not work above
+    one dimension at all.
 - `BlindDualMIMOCompensator`: `norm` is gone -- it was declared,
   documented as "normalize the filter weights", and never read.
   `sub_block_length` now does what its name says: it bounds the block of
