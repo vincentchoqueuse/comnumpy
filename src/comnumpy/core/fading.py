@@ -453,6 +453,7 @@ def _check_expect(profile: PowerDelayProfile,
         "n_taps": float(profile.n_taps),
         "rms_delay_spread_ns": profile.rms_delay_spread_ns,
         "mean_delay_ns": profile.mean_delay_ns,
+        "max_excess_delay_ns": float(profile.delays_ns[-1]),
     }
     for key, wanted in expect.items():
         if key not in checks:
@@ -466,14 +467,31 @@ def _check_expect(profile: PowerDelayProfile,
     return profile
 
 
-# 3GPP TS 36.101 Annex B.2 -- the LTE reference profiles. The published
-# RMS delay spreads (EVA 357 ns, ETU 991 ns) are reproduced by the tables
-# below to better than 0.5 ns, which is what makes them self-checkable.
-# EPA is deliberately checked on its tap count only: this transcription
-# gives 43.1 ns where the literature commonly quotes "45 ns", a figure
-# closer to EPA's mean delay (44.2 ns) than to its RMS spread. Rather
-# than pin a number we cannot source, the entry declares what it is sure
-# of and the discrepancy is documented here.
+# 3GPP TS 36.101 Annex B.2 -- the LTE reference profiles. The summary
+# table (B.2-1) publishes three figures per model: tap count, RMS delay
+# spread, and maximum excess delay. EVA and ETU match all three, so both
+# are pinned on all three.
+#
+# EPA matches two of three. Its tap count (7) and maximum excess delay
+# (410 ns) come out exactly, but the RMS spread of this table is 43.13 ns
+# against a published 45 ns. That gap was investigated rather than
+# tolerated:
+#
+#   * the definition is not in question -- power-weighted and central,
+#     the same one that reproduces EVA to 0.35 ns and ETU to 0.06 ns.
+#     Amplitude weighting gives 69.8 ns, the second moment about zero
+#     61.8 ns, the mean delay 44.2 ns: none of them lands on 45;
+#   * no plausible transcription error bridges it either. Reaching 45 ns
+#     would take +1.67 dB on the last tap, +3.83 dB on the 190 ns tap, or
+#     +76 ns on the 410 ns delay -- none of which is a typo shape in a
+#     table of round values.
+#
+# The tap count and the excess delay confirm the *delays*; the *powers*
+# are not independently confirmed by the summary table, so the two least
+# significant ones (-17.2 and -20.8 dB) are where a discrepancy would
+# hide. Until someone reads Table B.2.1-1 itself, the entry pins the two
+# figures it reproduces and leaves the third unasserted: pinning a number
+# we cannot source would be worse than pinning none.
 
 @register_delay_profile("EPA")
 def _epa(**kwargs: Any) -> PowerDelayProfile:
@@ -482,7 +500,7 @@ def _epa(**kwargs: Any) -> PowerDelayProfile:
         np.array([0, 30, 70, 90, 110, 190, 410], dtype=float),
         np.array([0.0, -1.0, -2.0, -3.0, -8.0, -17.2, -20.8], dtype=float),
         standard="EPA", reference="3GPP TS 36.101 Table B.2.1-1",
-        **kwargs), {"n_taps": 7})
+        **kwargs), {"n_taps": 7, "max_excess_delay_ns": 410})
 
 
 @register_delay_profile("EVA")
@@ -492,7 +510,8 @@ def _eva(**kwargs: Any) -> PowerDelayProfile:
         np.array([0, 30, 150, 310, 370, 710, 1090, 1730, 2510], dtype=float),
         np.array([0.0, -1.5, -1.4, -3.6, -0.6, -9.1, -7.0, -12.0, -16.9], dtype=float),
         standard="EVA", reference="3GPP TS 36.101 Table B.2.1-2",
-        **kwargs), {"n_taps": 9, "rms_delay_spread_ns": 357})
+        **kwargs), {"n_taps": 9, "rms_delay_spread_ns": 357,
+                    "max_excess_delay_ns": 2510})
 
 
 @register_delay_profile("ETU")
@@ -502,7 +521,8 @@ def _etu(**kwargs: Any) -> PowerDelayProfile:
         np.array([0, 50, 120, 200, 230, 500, 1600, 2300, 5000], dtype=float),
         np.array([-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, -3.0, -5.0, -7.0], dtype=float),
         standard="ETU", reference="3GPP TS 36.101 Table B.2.1-3",
-        **kwargs), {"n_taps": 9, "rms_delay_spread_ns": 991})
+        **kwargs), {"n_taps": 9, "rms_delay_spread_ns": 991,
+                    "max_excess_delay_ns": 5000})
 
 
 def validate_taps_fit(profile: PowerDelayProfile, fs: float,

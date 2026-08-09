@@ -111,14 +111,20 @@ one release; there is no compatibility layer.
   application of the D15/D17/D20 pattern: `CarrierType` types the
   frequency axis, `FieldRole` the frame axis, `PowerDelayProfile` the
   delay axis.
-- The D20 self-check earned its place immediately. EVA and ETU reproduce
-  their published RMS delay spread (356.7 ns against 357, 990.9 against
-  991), so both are pinned. **EPA does not**: this transcription gives
-  43.1 ns where the literature commonly quotes 45 ns -- a figure much
-  closer to its *mean* delay (44.2 ns) than to its RMS spread. The entry
-  therefore pins its tap count only, and the discrepancy is documented
-  rather than papered over. It needs a check against the document, like
-  the carrier catalog does.
+- The D20 self-check earned its place immediately. TS 36.101 publishes
+  three figures per model -- tap count, RMS delay spread, maximum excess
+  delay. EVA and ETU match all three and are pinned on all three. **EPA
+  matches two**: 7 taps and 410 ns exactly, but 43.13 ns of delay spread
+  against a published 45. The gap was investigated, not tolerated. The
+  definition is not in question: the same power-weighted central formula
+  reproduces EVA to 0.35 ns and ETU to 0.06 ns, and no variant lands on
+  45 either (amplitude weighting 69.8 ns, second moment about zero 61.8,
+  mean delay 44.2). No plausible typo bridges it either -- it would take
+  +1.67 dB on the last tap or +76 ns on the 410 ns delay, in a table of
+  round values. Since the two matching figures confirm the *delays*, a
+  discrepancy would have to be in the *powers*, which nothing
+  independently confirms. The entry pins what it reproduces and leaves
+  the third figure unasserted, pending a read of Table B.2.1-1 itself.
 - The channel is time-selective, not block fading: each tap is a Doppler
   process synthesized directly on the output FFT grid (only the bins
   under `f_D` are filled), so nothing is resampled or interpolated and

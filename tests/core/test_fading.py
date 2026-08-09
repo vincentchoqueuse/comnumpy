@@ -26,17 +26,49 @@ class TestPowerDelayProfile(unittest.TestCase):
         self.assertAlmostEqual(get_delay_profile("ETU").rms_delay_spread_ns,
                                991, delta=0.5)
 
-    def test_epa_is_only_checked_on_what_we_can_source(self):
-        """EPA's commonly quoted 45 ns is not this table's RMS spread.
+    def test_max_excess_delays_are_reproduced(self):
+        """The third published figure, and the one that confirms EPA's delays."""
+        for name, span in (("EPA", 410), ("EVA", 2510), ("ETU", 5000)):
+            with self.subTest(profile=name):
+                self.assertEqual(float(get_delay_profile(name).delays_ns[-1]),
+                                 span)
 
-        It is much closer to its mean delay. The entry therefore pins the
-        tap count only; pinning an unsourced figure would be worse than
-        pinning none.
+    def test_epa_is_only_checked_on_what_we_can_source(self):
+        """EPA matches two of its three published figures, not the third.
+
+        Tap count and maximum excess delay come out exactly, so the
+        *delays* are confirmed. The RMS spread does not: 43.13 ns against
+        a published 45 ns. The entry therefore leaves that one unasserted
+        -- see the catalog comment for why no definition and no plausible
+        typo bridges the gap.
         """
         epa = get_delay_profile("EPA")
         self.assertEqual(epa.n_taps, 7)
-        self.assertAlmostEqual(epa.rms_delay_spread_ns, 43.1, delta=0.1)
-        self.assertAlmostEqual(epa.mean_delay_ns, 44.2, delta=0.1)
+        self.assertEqual(float(epa.delays_ns[-1]), 410)
+        self.assertAlmostEqual(epa.rms_delay_spread_ns, 43.13, delta=0.02)
+
+    def test_the_delay_spread_definition_is_the_one_3gpp_uses(self):
+        """Power-weighted and central -- confirmed by two models at once.
+
+        This is what makes EPA's gap a finding rather than a suspicion:
+        the same formula reproduces EVA to 0.4 ns and ETU to 0.1 ns, so
+        it cannot be the formula that is wrong for EPA.
+        """
+        for name, published in (("EVA", 357), ("ETU", 991)):
+            with self.subTest(profile=name):
+                profile = get_delay_profile(name)
+                weights = profile.powers_lin
+                delays = profile.delays_ns
+                mean = float(np.sum(weights * delays))
+                central = float(np.sqrt(np.sum(weights * delays ** 2) - mean ** 2))
+                self.assertAlmostEqual(central, published, delta=0.5)
+                # the alternatives are nowhere near, so the choice is not
+                # a coincidence of this profile
+                amplitude = np.sqrt(profile.powers_lin)
+                amplitude = amplitude / amplitude.sum()
+                mean_a = float(np.sum(amplitude * delays))
+                spread_a = float(np.sqrt(np.sum(amplitude * delays ** 2) - mean_a ** 2))
+                self.assertGreater(abs(spread_a - published), 0.1 * published)
 
     def test_powers_are_normalized(self):
         for name in available_delay_profiles():
