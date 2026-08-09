@@ -70,12 +70,20 @@ ignore = [
 ]
 
 [tool.coverage.run]
-source = ["comnumpy"]
+# The src/ path, not the package name. Naming the package (`source` or
+# `source_pkgs` = ["comnumpy"]) makes coverage *import* it to find where
+# it lives, so everything `comnumpy/__init__` pulls in is already loaded
+# when the tracer starts and gets reported as 0%. That made per-file
+# numbers depend on test collection order and the total 16 points too
+# low: 74.76% against a true 90.59% measured on 2026-08-09.
+source = ["src/comnumpy"]
 
 [tool.coverage.report]
 # Ratchet threshold (D39): the measured value is the floor, it can only go up.
-# Measured 31.60% on 2026-08-08 (unit tests + doctests).
-fail_under = 70
+# Measured 90.59% on 2026-08-09 (unit tests + doctests), with the
+# source_pkgs fix above; the 70 that stood here was read off the broken
+# measurement.
+fail_under = 90
 
 [tool.ruff.lint.per-file-ignores]
 # __init__.py files re-export the public API; explicit __all__ comes with D36.
