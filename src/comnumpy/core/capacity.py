@@ -480,7 +480,7 @@ def waterfilling(gains: np.ndarray, snr: float) -> tuple[np.ndarray, float]:
     >>> print(np.round(power, 6), round(capacity, 4))
     [1. 1. 1.] 3.4594
     >>> power, capacity = waterfilling(np.array([4.0, 1.0, 0.01]), snr=10.0)
-    >>> print(np.round(power, 4), round(capacity, 4))
+    >>> print(np.round(power, 4), round(capacity, 4) + 0.0)
     [1.5375 1.4625 0.    ] 3.3105
     """
     gains = np.asarray(gains, dtype=float)

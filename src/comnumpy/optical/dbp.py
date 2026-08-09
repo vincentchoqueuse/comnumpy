@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core import Processor
 from comnumpy.exceptions import ShapeError
-from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
-from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
+from .fiber import FiberSpec
+from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
 
@@ -110,16 +110,10 @@ class DBP(Processor):
     L_span: float = field(default=80, kw_only=True)
     StPS: int = field(default=1, kw_only=True)
     fs: float = field(default=1, kw_only=True)
+    fiber: FiberSpec = field(default_factory=FiberSpec, kw_only=True)
     step_type: Literal["linear", "logarithmic"] = field(default="linear", kw_only=True)
     step_method: Literal["symmetric", "asymetric"] = field(default="symmetric", kw_only=True)
     use_only_linear: bool = field(default=False, kw_only=True)
-    c: float = field(default=SPEED_OF_LIGHT, kw_only=True)
-    h: float = field(default=PLANCK_CONSTANT, kw_only=True)
-    gamma: float = field(default=KERR_COEFFICIENT, kw_only=True)
-    lamb: float = field(default=WAVELENGTH, kw_only=True)
-    alpha_dB: float = field(default=FIBER_LOSS, kw_only=True)
-    cd_coefficient: float = field(default=CD_COEFFICIENT, kw_only=True)
-    nu: float = field(default=OPTICAL_CARRIER_FREQUENCY, kw_only=True)
     step_log_factor: float = field(default=0.4, kw_only=True)
     name: str = field(default="dbp", kw_only=True)
     # internal state (declared for slots, D40a)
@@ -141,12 +135,12 @@ class DBP(Processor):
             case "linear":
                 step_size = get_linear_step_size(self.L_span, self.StPS)
             case "logarithmic":
-                step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.alpha_dB, step_log_factor=self.step_log_factor)
+                step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.fiber.alpha_dB, step_log_factor=self.step_log_factor)
             case _:
                 raise NotImplementedError(f"Step type {self.step_type} is not implemented")
 
-        edfa_gain = compute_erbium_doped_fiber_amplifier_gain(self.alpha_dB, self.L_span)
-        self.beta2 = compute_beta2(self.lamb, self.cd_coefficient, self.c)
+        edfa_gain = compute_erbium_doped_fiber_amplifier_gain(self.fiber.alpha_dB, self.L_span)
+        self.beta2 = self.fiber.beta2
         self.gain = 1/edfa_gain
         self.step_size = step_size[::-1]  # reverse order
 
@@ -159,17 +153,17 @@ class DBP(Processor):
         for _ in range(self.N_spans):
             y = self.gain * y  # correct for edfa gain
             if self.use_only_linear:
-                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=-1)
+                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
             else:
                 for num_step in range(self.StPS):
                     dz = self.step_size[num_step]
                     if self.step_method == "symmetric":
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=-1)
-                        y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=-1)
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=-1)
+                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
 
                     if self.step_method == "asymetric":
-                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=-1)
-                        y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=-1)
+                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=-1)
 
         return y

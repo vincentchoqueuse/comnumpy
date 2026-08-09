@@ -5,6 +5,7 @@ Optical
    :maxdepth: 1
    :caption: Contents:
 
+   fiber
    channels
    compensators
    dbp

@@ -138,7 +138,7 @@ class OFDMReceiver(Processor):
     >>> x = np.arange(8) + 0j
     >>> y = OFDMTransmitter(4, 2)(x)
     >>> x_est = OFDMReceiver(4, 2)(y)
-    >>> print(np.round(x_est.real, 6))
+    >>> print(np.round(x_est.real, 6) + 0.0)
     [0. 1. 2. 3. 4. 5. 6. 7.]
     """
     N_carrier_data: int

@@ -234,7 +234,7 @@ class PtsPaprReductor(Processor):
     --------
     >>> reductor = PtsPaprReductor([1, -1], N_sub=2)
     >>> Y = reductor(np.ones((1, 4), dtype=complex))
-    >>> print(np.round(Y, 3))
+    >>> print(np.round(Y, 3) + 0.0)
     [[0.+0.j 1.+1.j 0.+0.j 1.-1.j]]
     >>> print(round(float(compute_PAPR(Y[0], unit="dB")), 2))
     3.01

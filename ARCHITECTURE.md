@@ -836,6 +836,32 @@ dans la docstring plutôt que laissé à l'intuition du lecteur.
 
 ---
 
+### 4.15 Fibre et simulation, séparées (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D46 | **Ce qu'est la fibre se sépare de la façon dont on la simule.** (a) `FiberSpec` gelé porte les coefficients physiques — perte, Kerr, dispersion, longueur d'onde, gain Raman crête — **et leur provenance** ; quatrième instance du motif D15/D43/D45, avec registre (`get_fiber`, `@register_fiber`) et auto-contrôle D20. (b) `FiberLink` et `DBP` prennent `fiber=FiberSpec(...)` ; il leur reste les paramètres de simulation (`StPS`, `step_type`, `fs`, `L_span`, …). `FiberLink` passe de **21 à 15** arguments constructibles. (c) La fréquence porteuse est **dérivée** de la longueur d'onde, plus un paramètre. (d) `c` et `h` disparaissent de la surface : ce sont des constantes universelles, pas des réglages. (e) **Garde-fous d'unité** : chaque grandeur physique est bornée par la *largeur d'une faute d'unité*, et le message nomme l'unité attendue | Les deux familles changent pour des raisons sans rapport : on remplace une SMF par une DCF sans toucher au pas d'intégration, et on raffine `StPS` sans toucher au verre. Les mélanger obligeait à retaper quatre nombres physiques au milieu de réglages de solveur, sans rien qui les relie ni qui dise d'où ils viennent. **L'incohérence que la séparation supprime** : `lamb` et `nu` étaient deux arguments indépendants qui doivent s'accorder — une chaîne réglée à 1310 nm calculait sa dispersion à 1310 et l'énergie photonique de son ASE à 1550, les deux ne s'accordant que parce que les deux valeurs par défaut s'accordaient. C'est exactement le défaut que D41 interdit. **Sur les unités, le motif a payé immédiatement** : en écrivant `FiberSpec.beta2` j'ai recopié la conversion `D -> beta2` au lieu de déléguer à `compute_beta2`, avec un facteur **1000** d'erreur — et l'auto-contrôle D20 de l'entrée SMF l'a rejeté à la construction, en nommant l'écart (−0,0217 contre −21,7 attendu). Le correctif structurant est la délégation, pas la borne : une grandeur calculable de deux façons doit l'être d'une seule. Les bornes de plausibilité couvrent le cas que le catalogue ne voit pas, les valeurs que l'utilisateur tape ; elles sont **délibérément lâches** — ce sont la taille d'une confusion dB/m contre dB/km, pas des lois de la physique, et un refus y est une unité, pas une question de recherche | Deux classes `FiberLink`/`RamanFiberLink` (découpe selon le mauvais axe : le Raman ajoute 2 arguments sur 21, pas la cause de l'encombrement) ; garder `c` et `h` réglables (aucune raison légitime de redéfinir une constante universelle, et ça fait deux paramètres qui peuvent contredire le reste) ; bornes serrées calées sur les fibres du catalogue (rejetterait une fibre exotique légitime — un garde-fou qui bloque du travail valide est pire que pas de garde-fou) ; `nu` gardé en argument avec validation croisée contre `lamb` (deux sources pour une grandeur, alors que la dériver rend le désaccord impossible) | **Acté** |
+
+**Ce que la CI a attrapé et que la machine locale ne pouvait pas.** Un
+doctest de `DataAidedFIRCompensator` passait en Python 3.11 et échouait
+en 3.12 : `np.round` produisait `-0.` au lieu de `0.`. IEEE 754 a deux
+zéros, `numpy` les affiche différemment, et lequel sort dépend du
+dernier bit avant arrondi — donc de la version, de la plateforme et des
+options de compilation. Sept autres doctests affichaient un zéro arrondi
+et étaient à une version de `numpy` du même sort. Règle ajoutée et
+outillée : **aucune sortie attendue de doctest ne contient de zéro
+négatif**, et on l'évite en ajoutant `+ 0.0` au tableau arrondi, IEEE
+garantissant `-0.0 + 0.0 = +0.0`.
+
+**Un défaut préexistant révélé au passage.** `FiberLink` n'a **jamais**
+été sérialisable : son champ `callbacks` vaut `{}` par défaut, et le
+codeur refusait tout dictionnaire — alors que D31 exige que tout bloc
+fasse l'aller-retour. Le dictionnaire *vide* passe désormais ; un
+dictionnaire peuplé reste refusé, il contient des callables, la
+frontière assumée.
+
+---
+
 ## 5. API d'allocation (résumé normatif)
 
 ```python

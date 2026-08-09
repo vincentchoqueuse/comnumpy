@@ -55,6 +55,7 @@ CONVERTED_MODULES = [
     "comnumpy.optical.compensators",
     "comnumpy.optical.wdm",
     "comnumpy.optical.raman",
+    "comnumpy.optical.fiber",
     "comnumpy.core.compensators",
 ]
 
@@ -89,6 +90,9 @@ NOT_PROCESSING_FUNCTIONS = {
     "comnumpy.optical.raman.register_gain_spectrum",
     "comnumpy.optical.raman.available_gain_spectra",
     "comnumpy.optical.raman.get_gain_spectrum",
+    "comnumpy.optical.fiber.register_fiber",
+    "comnumpy.optical.fiber.available_fibers",
+    "comnumpy.optical.fiber.get_fiber",
 }
 
 

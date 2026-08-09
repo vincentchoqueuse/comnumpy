@@ -10,6 +10,7 @@ import numpy as np
 
 from src.comnumpy.optical.channels import ChromaticDispersion
 from src.comnumpy.optical.dbp import DBP
+from src.comnumpy.optical.fiber import FiberSpec
 from src.comnumpy.optical.links import FiberLink
 from src.comnumpy.optical.utils import compute_beta2
 
@@ -57,8 +58,9 @@ class TestKerrSPM(unittest.TestCase):
 
     def spm_phase(self, alpha_dB, StPS):
         x = np.sqrt(self.P0) * np.ones(256, dtype=complex)
-        link = FiberLink(1, L_span=self.L, StPS=StPS, fs=FS, gamma=self.GAMMA,
-                         alpha_dB=alpha_dB, cd_coefficient=0, noise_scaling=0)
+        link = FiberLink(1, L_span=self.L, StPS=StPS, fs=FS, noise_scaling=0,
+                         fiber=FiberSpec(alpha_dB, gamma=self.GAMMA,
+                                         cd_coefficient=0))
         y = link(x)
         return float(np.angle(y[0] * np.conj(x[0])))
 
@@ -86,16 +88,16 @@ class TestSoliton(unittest.TestCase):
         x = (np.sqrt(P0) / np.cosh(t / T0)).astype(complex)
 
         L = L_D  # one dispersion length is enough to catch a sign error
-        link = FiberLink(1, L_span=L, StPS=int(2 * L), fs=FS, gamma=gamma,
-                         alpha_dB=0, cd_coefficient=17, noise_scaling=0)
+        link = FiberLink(1, L_span=L, StPS=int(2 * L), fs=FS, noise_scaling=0,
+                         fiber=FiberSpec(0, gamma=gamma, cd_coefficient=17))
         y = link(x)
         nmse = float(np.sum(np.abs(np.abs(y) - np.abs(x)) ** 2)
                      / np.sum(np.abs(x) ** 2))
         self.assertLess(nmse, 1e-9)
 
         # counter-check: without Kerr the same pulse disperses
-        link_lin = FiberLink(1, L_span=L, StPS=1, fs=FS, gamma=0,
-                             alpha_dB=0, cd_coefficient=17, noise_scaling=0)
+        link_lin = FiberLink(1, L_span=L, StPS=1, fs=FS, noise_scaling=0,
+                             fiber=FiberSpec(0, gamma=0, cd_coefficient=17))
         y_lin = link_lin(x)
         nmse_lin = float(np.sum(np.abs(np.abs(y_lin) - np.abs(x)) ** 2)
                          / np.sum(np.abs(x) ** 2))
@@ -114,8 +116,8 @@ class TestDBP(unittest.TestCase):
         x = np.fft.ifft(Xf)
         x *= np.sqrt(2e-3) / np.sqrt(np.mean(np.abs(x) ** 2))  # 3 dBm
 
-        params = dict(L_span=80.0, StPS=20, fs=50e9, alpha_dB=0.2,
-                      gamma=1.3, cd_coefficient=17)
+        params = dict(L_span=80.0, StPS=20, fs=50e9,
+                      fiber=FiberSpec(0.2, gamma=1.3, cd_coefficient=17))
         y = FiberLink(2, noise_scaling=0, **params)(x)
         x_hat = DBP(2, **params)(y)
         nmse = float(np.sum(np.abs(x_hat - x) ** 2) / np.sum(np.abs(x) ** 2))

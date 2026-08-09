@@ -12,6 +12,7 @@ import pathlib
 import numpy as np
 
 from comnumpy.optical.dbp import DBP
+from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
@@ -19,8 +20,8 @@ FIG_DIR = pathlib.Path(__file__).parent / "figures"
 FS = 50e9
 N = 4096
 N_SPANS = 4
-FIBER = dict(L_span=80.0, StPS=50, fs=FS, alpha_dB=0.2, gamma=1.3,
-             cd_coefficient=17)
+FIBER = dict(L_span=80.0, StPS=50, fs=FS,
+             fiber=FiberSpec(0.2, gamma=1.3, cd_coefficient=17))
 
 
 def band_limited_signal(rng):

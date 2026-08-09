@@ -6,9 +6,10 @@ from typing import Optional, Literal, Callable, Dict
 from comnumpy.core import Processor
 from comnumpy.exceptions import ShapeError
 from .devices import ErbiumDopedFiberAmplifier
+from .fiber import FiberSpec
 from .raman import RamanSolution
-from .constants import SPEED_OF_LIGHT, PLANCK_CONSTANT, WAVELENGTH, KERR_COEFFICIENT, FIBER_LOSS, CD_COEFFICIENT, OPTICAL_CARRIER_FREQUENCY
-from .utils import (compute_beta2, get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
+from .constants import PLANCK_CONSTANT
+from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity)
 
 logger = logging.getLogger(__name__)
@@ -155,18 +156,12 @@ class FiberLink(Processor):
     L_span: float = field(default=80, kw_only=True)
     StPS: int = field(default=1, kw_only=True)
     fs: float = field(default=1, kw_only=True)
+    fiber: FiberSpec = field(default_factory=FiberSpec, kw_only=True)
     NF_dB: float = field(default=4, kw_only=True)
     noise_scaling: float = field(default=1, kw_only=True)
     step_type: Literal["linear", "logarithmic"] = field(default="linear", kw_only=True)
     step_method: Literal["symmetric", "asymetric"] = field(default="symmetric", kw_only=True)
     use_only_linear: bool = field(default=False, kw_only=True)
-    c: float = field(default=SPEED_OF_LIGHT, kw_only=True)              # in meters per second
-    h: float = field(default=PLANCK_CONSTANT, kw_only=True)             # in Joule seconds
-    gamma: float = field(default=KERR_COEFFICIENT, kw_only=True)        # in rad/W/km
-    lamb: float = field(default=WAVELENGTH, kw_only=True)               # nm
-    alpha_dB: float = field(default=FIBER_LOSS, kw_only=True)           # in dB/km
-    cd_coefficient: float = field(default=CD_COEFFICIENT, kw_only=True)  # in ps/nm/km
-    nu: float = field(default=OPTICAL_CARRIER_FREQUENCY, kw_only=True)  # optical carrier frequency
     step_log_factor: float = field(default=0.4, kw_only=True)
     name: str = field(default="fiber link", kw_only=True)
     # Callable[..., None]: the 'post_span' hook is called as
@@ -198,18 +193,18 @@ class FiberLink(Processor):
             case "linear":
                 self.step_size = get_linear_step_size(self.L_span, self.StPS)
             case "logarithmic":
-                self.step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.alpha_dB, step_log_factor=self.step_log_factor)
+                self.step_size = get_logarithmic_step_size(self.L_span, self.StPS, alpha_dB=self.fiber.alpha_dB, step_log_factor=self.step_log_factor)
             case _:
                 raise NotImplementedError(f"Step type {self.step_type} is not implemented")
 
-        self.beta2 = compute_beta2(self.lamb, self.cd_coefficient, self.c)
+        self.beta2 = self.fiber.beta2
         self.rng_ = np.random.default_rng(self.seed)
 
         # Distributed Raman gain (D45): the profile is sampled at the step
         # boundaries, so each step carries the on-off gain accumulated
         # over exactly that step -- which is what makes *where* the gain
         # happens visible to the Kerr term.
-        residual_dB = self.alpha_dB * self.L_span
+        residual_dB = self.fiber.alpha_dB * self.L_span
         if self.raman is not None:
             self.raman_step_gain_ = self._raman_step_gain()
             if self.step_type == "logarithmic":
@@ -232,14 +227,16 @@ class FiberLink(Processor):
                     "Raman over-compensates the span: %.2f dB of on-off gain "
                     "against %.2f dB of loss, so the EDFA is set to "
                     "attenuate by %.2f dB to keep the span transparent.",
-                    self.raman.on_off_gain_dB, self.alpha_dB * self.L_span,
+                    self.raman.on_off_gain_dB, self.fiber.alpha_dB * self.L_span,
                     -residual_dB)
 
         # the EDFA makes up whatever the Raman gain did not, so a span
         # stays transparent whether or not it is Raman-pumped
         equivalent_alpha_dB = residual_dB / self.L_span
         self.edfa_gain = compute_erbium_doped_fiber_amplifier_gain(equivalent_alpha_dB, self.L_span)
-        self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(equivalent_alpha_dB, self.L_span, self.NF_dB, h=self.h, nu=self.nu)
+        self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(
+            equivalent_alpha_dB, self.L_span, self.NF_dB,
+            h=PLANCK_CONSTANT, nu=self.fiber.carrier_frequency_Hz)
 
     def _raman_step_gain(self) -> np.ndarray:
         """Amplitude gain of each SSFM step, from the Raman profile."""
@@ -279,7 +276,7 @@ class FiberLink(Processor):
         for num_span in range(self.N_spans):
             # perform for each span
             if self.use_only_linear:
-                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
                 if self.raman_step_gain_ is not None:
                     # no step loop here, so the whole profile applies at
                     # once -- the span must stay transparent in this mode
@@ -295,13 +292,13 @@ class FiberLink(Processor):
                                      else (1.0, 1.0))
 
                     if self.step_method == "symmetric":
-                        y = apply_chromatic_dispersion(first*y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
-                        y = apply_kerr_nonlinearity(y, dz, self.gamma, direction=1)
-                        y = apply_chromatic_dispersion(second*y, dz/2, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_chromatic_dispersion(first*y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=1)
+                        y = apply_chromatic_dispersion(second*y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
                     if self.step_method == "asymetric":
-                        y = apply_kerr_nonlinearity(first*second*y, dz, self.gamma, direction=1)
-                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_kerr_nonlinearity(first*second*y, dz, self.fiber.gamma, direction=1)
+                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
             # the ASE the distributed amplifier generated over this span,
             # already amplified by the gain downstream of where it was born

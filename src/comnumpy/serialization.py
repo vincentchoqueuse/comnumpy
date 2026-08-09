@@ -59,6 +59,7 @@ _VALUE_MODULES = [
     ("comnumpy.ofdm.allocation", ["CarrierAllocation"]),
     ("comnumpy.core.frames", ["FrameStructure", "FrameField"]),
     ("comnumpy.optical.wdm", ["WDMGrid"]),
+    ("comnumpy.optical.fiber", ["FiberSpec"]),
 ]
 
 _EXTRA_BLOCKS: dict[str, type] = {}
@@ -112,6 +113,12 @@ def _encode_value(value: object, arrays: dict[str, np.ndarray], key: str) -> obj
         return [_encode_value(v, arrays, f"{key}.{i}") for i, v in enumerate(value)]
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return {"__block__": _encode_block(value, arrays, key)}
+    if isinstance(value, dict) and not value:
+        # An empty hook table is the *default* of FiberLink.callbacks, so
+        # rejecting it meant no FiberLink was ever serializable -- while
+        # D31 says every block round-trips. A populated one still cannot:
+        # it holds callables, the documented frontier.
+        return {}
     raise TypeError(
         f"cannot serialize parameter {key!r} of type {type(value).__name__}: "
         f"only scalars, strings, arrays, lists and dataclass blocks are "
@@ -209,6 +216,8 @@ def _decode_value(value: object, arrays: Any) -> object:
             return complex(real, imag)
         if "__block__" in value:
             return _build(value["__block__"], arrays, _value_registry())
+        if not value:
+            return {}      # the empty hook table the encoder writes
         raise ValueError(f"unknown JSON object {sorted(value)}")
     if isinstance(value, list):
         return [_decode_value(v, arrays) for v in value]

@@ -304,7 +304,7 @@ class FFTProcessor(Processor):
     --------
     >>> fft_processor = FFTProcessor()
     >>> x = np.ones(4)
-    >>> print(np.round(np.abs(fft_processor(x)), 3))
+    >>> print(np.round(np.abs(fft_processor(x)), 3) + 0.0)
     [2. 0. 0. 0.]
     """
     shift: bool = False
