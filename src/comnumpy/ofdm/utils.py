@@ -156,11 +156,12 @@ def plot_carrier_allocation(carrier_type, ax=None, color_list=None, label_list=N
 
     Examples
     --------
-    ```python
-    import numpy as np
-    carrier_type = np.array([1, 1, 0, 2, 1, 0, 0])
-    plot_carrier_allocation(carrier_type)
-    ```
+    >>> import matplotlib
+    >>> matplotlib.use("Agg")
+    >>> carrier_type = np.array([1, 1, 0, 2, 1, 0, 0])
+    >>> ax = plot_carrier_allocation(carrier_type)
+    >>> ax.get_xlabel()
+    'subcarrier index'
     """
     import matplotlib.pyplot as plt  # local import (D36)
 
