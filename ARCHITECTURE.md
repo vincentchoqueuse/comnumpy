@@ -886,6 +886,86 @@ dans la docstring plutôt que laissé à l'intuition du lecteur.
 
 ---
 
+### 4.16 Deux polarisations : l'équation de Manakov (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D47 | **Le modèle de propagation se lit sur la forme du champ.** Un champ `(N,)` ou `(..., 1, N)` obéit à la NLSE scalaire avec `gamma` ; un champ `(..., 2, N)` — l'axe antennes/canaux de D2 — obéit à l'**équation de Manakov**, les deux polarisations partageant l'intensité **totale** `|Ex|² + |Ey|²` et le coefficient portant le facteur `8/9`. Ce facteur est une propriété du **modèle**, pas du verre : il vit dans `optical/utils.manakov_kerr`, jamais dans `FiberSpec`, et `fiber.gamma` reste le coefficient Kerr de la fibre dans les deux modes. `FiberLink` **et** `DBP` lisent la forme par la même fonction, `is_polarization_pair`. Toute autre taille sur l'axe des polarisations est refusée par une `ShapeError` D38 qui nomme les deux lectures possibles | La multiplexion en polarisation n'est pas une option exotique : c'est ce que fait **tout** système cohérent depuis 2010, et sans elle comnumpy ne peut pas décrire une liaison réelle ni se confronter à une simulation publiée. **Lire le modèle sur la forme plutôt que sur un argument** suit exactement D41 et D44 : quelles pompes sont allumées *est* la configuration, la grille WDM *est* la configuration, le nombre de polarisations *est* la configuration. Un argument `polarizations=2` en plus d'un champ `(2, N)` serait une seconde source pour la même information, donc une contradiction possible — la faute que D41 interdit. **Deux classes seraient pires** : le lien et son compensateur doivent intégrer la *même* équation, et deux paires de classes rendent le désaccord possible ; ici `FiberLink` et `DBP` appellent la même fonction de détection, donc ils ne peuvent pas diverger. **La propriété qui rend le modèle vérifiable** est son invariance par rotation unitaire constante des deux polarisations : le terme non linéaire ne dépend que de l'intensité totale, qu'aucune matrice de Jones ne change. Mesurée à **1,8e−15**, elle tomberait immédiatement avec un coefficient croisé faux (1 au lieu de 8/9) ou un terme manquant — c'est le test que le code ne peut pas se réécrire pour passer. S'y ajoutent la réduction exacte au cas scalaire quand `Ey = 0` (avec `8γ/9`, pas `γ` : le facteur appartient au modèle, donc il s'applique aussi à une polarisation seule dans un calcul Manakov) et l'aller-retour DBP à 9e−15. **Défaut trouvé en écrivant ceci** : `apply_chromatic_dispersion` prenait `NFFT = len(x)`, qui vaut **2** pour un champ `(2, N)` ; et l'EDFA tirait son ASE avec `size=len(x)`, donc deux échantillons au lieu de deux polarisations bruitées indépendamment | Un argument `polarizations=` ou `dual_pol=True` (seconde source pour ce que la forme dit déjà) ; une classe `ManakovFiberLink` séparée (le lien et le compensateur pourraient intégrer des équations différentes ; et le Manakov ajoute une ligne au pas de Kerr, pas une famille de blocs) ; mettre le `8/9` dans `FiberSpec.gamma` (fige un modèle dans un objet qui décrit du verre, et rend faux le même `FiberSpec` utilisé en scalaire) ; accepter n'importe quelle taille sur l'axe −2 en appliquant Kerr ligne par ligne (décrit des fibres parallèles sans XPM ni FWM — exactement ce que le garde-fou D44 existait pour empêcher) | **Acté** |
+
+**La confrontation qui a motivé la décision.** `validation/optical_wdm_opticommpy.py`
+reproduit l'exemple de transmission WDM cohérente d'**OptiCommPy**
+(11 × 32 GBd PDM-16QAM, grille 37,5 GHz, −2 dBm/canal, 700 km en
+14 × 50 km, NF 4,5 dB), publié avec sa sortie numérique. C'est la
+première confrontation de comnumpy à une **seconde implémentation**
+plutôt qu'à une forme fermée. Quatre résultats :
+
+* la puissance du peigne tombe sur les **8,41 dBm** que le notebook
+  imprime, à 0,004 dB — la grille et le multiplexeur D44 contre un
+  nombre publié ;
+* le SNR limité par l'ASE, mesuré à travers toute la chaîne, tombe à
+  **0,02 dB** de sa forme fermée (la même équation (54) d'Essiambre que
+  les deux bibliothèques citent) ;
+* un pas fixe de 0,5 km — la valeur nominale du notebook — est **0,83 dB
+  en dessous du convergé** ; c'est leur pas adaptatif qui rend 0,5 km
+  suffisant. Le script mesure la convergence en divisant le pas par
+  deux, et c'est un résultat sur *nos* choix numériques, pas sur les
+  leurs ;
+* la liaison complète donne **21,42 dB** contre les **20,63 dB**
+  publiés, soit **+0,79 dB**, et le signe est celui qu'on attend :
+  chaque dégradation que le notebook modélise et que ce script ne
+  modélise pas — largeur de raie de 100 kHz, oscillateur local,
+  frontend IQ, rotation et retard de polarisation, rehaussement de
+  bruit d'un égaliseur à 35 prises — ne peut que baisser la leur.
+
+**Ce que comnumpy n'a toujours pas** et qui explique ce résidu :
+égaliseur MIMO adaptatif et recherche de phase aveugle. Le récepteur du
+script enlève **un** gain complexe par polarisation, là où le notebook
+fait tourner un `da-rde/rde` à 35 prises et un BPS sur 25 symboles qui
+suivent une partie du bruit de phase non linéaire.
+
+---
+
+### 4.17 Débits atteignables : MI, GMI, NGMI (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D48 | **Un module `core/information.py` porte les débits atteignables mesurés sur des données** : `compute_mi` (décodeur *par symboles*), `compute_gmi` (décodeur *par bits*, la structure de tout système SD réel), `compute_ngmi` (GMI/m, à l'échelle d'un rendement de code) et `compute_llr`. Chaque équation est **citée par son numéro** dans l'article d'Alvarado *et al.* : (6)/(29) pour les L-values exactes, (7)/(31) pour le max-log, (16)/(17) pour la MI, (21)–(26) pour la définition de la GMI, (30) pour son estimateur à L-values exactes et **(32)** pour le max-log. La convention de signe reste celle de comnumpy — LLR positive = bit 0, l'inverse de l'article — et le module le dit | Un TEB pré-FEC ne dit pas ce qu'un code récupérera : c'est la thèse de l'article, et deux canaux de même TEB portent des quantités d'information très différentes. Les trois grandeurs sont des **bornes inférieures** sur le nombre de bits par symbole qu'un décodeur de la structure correspondante peut atteindre, ce qu'un TEB n'est pas. **Le point que le code ne pouvait pas contourner** : l'article écrit que la minimisation sur `s` de (32) est *obligatoire* pour des L-values approchées, parce qu'appliquer (30) à du max-log rend un débit **plus bas que le vrai**. `max_log=True` résout donc la minimisation scalaire, et un test épingle l'écart avec `s = 1`. Deux propriétés séparent les deux débits et servent de tests : la **MI est invariante par ré-étiquetage** de la constellation, la **GMI ne l'est pas** — mesuré, 0,5 bit de chute sur une permutation aléatoire à 16-QAM alors que la MI ne bouge pas de 0,002. Un estimateur de GMI qui ignorerait les étiquettes serait une MI mal nommée, et ce test le verrait. **Défaut trouvé en écrivant le module** : à fort RSB la somme de l'hypothèse faible s'annulait par sous-dépassement et la LLR exacte rendait un infini ; le décalage log-sum-exp est fait **par hypothèse**, pas globalement, ce qui garantit un terme `exp(0) = 1` dans chaque somme et fait dégénérer l'expression continûment vers le max-log | Mettre MI/GMI dans `core/metrics.py` (métriques de *qualité* mesurée contre des symboles connus d'un côté, débits *atteignables* de l'autre : deux natures, et `metrics.py` fait déjà 850 lignes) ; réutiliser telle quelle la LLR de `SymbolDemapper` (elle est max-log, donc (30) y serait faux — c'est exactement le piège que l'article signale) ; suivre la convention de signe de l'article (deux conventions de LLR dans une même bibliothèque est un défaut en attente) ; implémenter le *shaping* probabiliste (les termes a priori de (26) ne sont pas écrits, donc la fonction refuse plutôt que d'approximer) | **Acté** |
+
+**Le filtre de canal du démultiplexeur, et ce qu'il a coûté.** Le
+démux applique un **mur de brique idéal** à ±B/2 sur la DFT du bloc, où
+B est la bande **occupée** portée par la grille. Le script de
+validation lui passait `bandwidth_Hz = Rs` au lieu de `Rs(1+rho)` :
+avec un roll-off de 0,01 il manquait 320 MHz, et les flancs du RRC
+étaient coupés. Coût mesuré : un plancher d'implémentation de
+**33,5 dB au lieu de 54,1 dB**, soit **20,6 dB** perdus en silence sur
+un geste — écrire le débit symbole — qui est le plus naturel du monde.
+
+La mesure tranche aussi la question de fond : faut-il un SRRC dans le
+démux ? **Non.** Dès que le masque laisse passer le canal, il ne fait
+plus rien : masque à `Rs(1+rho)`, masque au slot entier de 37,5 GHz, et
+**aucun masque du tout** donnent 54,13, 54,14 et 54,13 dB. C'est le
+filtre adapté en aval qui sélectionne le canal ; un SRRC dans ce bloc
+serait le filtre adapté du *récepteur* portant le nom du
+démultiplexeur, et les deux rôles se sépareraient mal ensuite. Le
+correctif est donc un **garde-fou**, pas une option : le bloc mesure
+l'énergie qui tombe dans sa propre bande de garde — au-delà du bord du
+canal mais en deçà de la moitié de l'espacement, là où seuls ses
+propres flancs peuvent atterrir — et prévient au-delà d'un millième.
+Compter toute l'énergie hors masque aurait compté les voisins, que le
+masque existe précisément pour enlever : première version du garde-fou,
+qui annonçait 66,67 % de rejet sur un peigne à trois canaux
+parfaitement sain.
+
+**Ce que la confrontation OptiCommPy en tire.** Le notebook publie MI et
+GMI à **4,00 bit/symbole** et une GMI normalisée à **1,00** ; le script
+de validation les retrouve toutes les trois, alors même que les RSB
+diffèrent d'un décibel. C'est exactement l'argument de l'article :
+à ce niveau de bruit le 16-QAM est saturé, donc **les débits sont
+d'accord là où les RSB ne le sont pas**, et c'est le débit, pas le RSB,
+qui dit ce qu'un code récupérera.
+
+---
+
 ### 4.15 Fibre et simulation, séparées (nouveau)
 
 | # | Décision | Motif | Alternatives rejetées | Statut |

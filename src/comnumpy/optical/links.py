@@ -5,13 +5,13 @@ from dataclasses import dataclass, field
 from typing import Optional, Literal, Callable, Dict
 from comnumpy._backend import fft, fftfreq, ifft  # cupy-compatible (D3)
 from comnumpy.core import Processor
-from comnumpy.exceptions import ShapeError
 from .devices import ErbiumDopedFiberAmplifier
 from .fiber import FiberSpec
 from .raman import RamanSolution
 from .constants import PLANCK_CONSTANT
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
-                    compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity)
+                    compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity,
+                    is_polarization_pair, manakov_kerr)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,29 @@ class FiberLink(Processor):
     with :math:`\mathrm{NF} = 10^{\mathrm{NF_{dB}} / 10}` the amplifier
     noise figure and :math:`\kappa` a noise scaling factor.
 
-    Axes: *declared axis* -- requires a full-field 1D signal (N,).
+    **Two polarizations (Manakov).** A field shaped ``(..., 2, N)`` --
+    the antenna/channel axis of D2 -- is propagated with the Manakov
+    equation instead:
+
+    .. math::
+
+        \frac{\partial E_{x,y}}{\partial z} =
+        -\frac{\alpha}{2} E_{x,y}
+        - j \frac{\beta_2}{2} \frac{\partial^2 E_{x,y}}{\partial t^2}
+        + j \frac{8\gamma}{9}
+          \left(|E_x|^2 + |E_y|^2\right) E_{x,y}
+
+    The two polarizations share the *total* intensity, and the
+    :math:`8/9` comes from averaging the nonlinearity over the fast
+    random birefringence of a real fibre. It belongs to the **model**,
+    not to the fibre: ``fiber.gamma`` stays the fibre's Kerr
+    coefficient in both modes, and which equation is integrated is read
+    off the shape of the field, exactly as which pumps are on is read
+    off their powers (D41). A ``(..., 1, N)`` field is a single
+    polarization and keeps the scalar NLSE with :math:`\gamma`.
+
+    Axes: *declared axis* -- a full-field signal ``(N,)`` or ``(..., P, N)``
+    with ``P`` in ``{1, 2}`` polarizations.
 
     Parameters
     ----------
@@ -128,9 +150,11 @@ class FiberLink(Processor):
     Raises
     ------
     ShapeError
-        If the input is not a full-field 1D signal (N,) (validated in
-        ``prepare()``): a pointwise Kerr step on a multi-channel array
-        would silently produce SPM only (no XPM, no FWM).
+        If the input is neither a full-field 1D signal ``(N,)`` nor a
+        polarization pair ``(..., P, N)`` with ``P`` in ``{1, 2}``
+        (validated in ``prepare()``): a pointwise Kerr step on a
+        multi-channel array would silently produce SPM only (no XPM, no
+        FWM).
 
     References
     ----------
@@ -178,19 +202,12 @@ class FiberLink(Processor):
     edfa_N_ase: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     raman_step_gain_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     raman_tilt_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    manakov_: bool = field(init=False, repr=False, default=False)
     raman_sigma2_: float = field(init=False, repr=False, default=0.0)
     rng_: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
-        if x.ndim != 1:
-            raise ShapeError(
-                f"nonlinear propagation requires a full-field signal (N,); "
-                f"got {x.shape}. A pointwise Kerr step on a multi-channel "
-                f"array would silently produce SPM only (no XPM, no FWM). "
-                f"Multiplex the channels first with "
-                f"comnumpy.optical.WDMMultiplexer (decision D44), or use a "
-                f"coupled-NLSE model (not implemented)."
-            )
+        self.manakov_ = is_polarization_pair(x, type(self).__name__)
         match self.step_type:
             case "linear":
                 self.step_size = get_linear_step_size(self.L_span, self.StPS)
@@ -316,6 +333,12 @@ class FiberLink(Processor):
                          for k in range(gains_dB.shape[1])])
         return 10 ** (tilt / 20)
 
+    def _apply_kerr(self, y: np.ndarray, dz: float) -> np.ndarray:
+        """Kerr step: scalar NLSE, or Manakov when the field is a pair."""
+        gamma, intensity = manakov_kerr(y, self.fiber.gamma, self.manakov_)
+        return apply_kerr_nonlinearity(y, dz, gamma, direction=1,
+                                       intensity=intensity)
+
     def _apply_raman(self, y: np.ndarray, index: int) -> np.ndarray:
         """Half-step Raman gain: a number, or a filter when it is tilted."""
         if self.raman_step_gain_ is None:
@@ -350,13 +373,13 @@ class FiberLink(Processor):
                     if self.step_method == "symmetric":
                         y = self._apply_raman(y, 2*num_step)
                         y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
-                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=1)
+                        y = self._apply_kerr(y, dz)
                         y = self._apply_raman(y, 2*num_step+1)
                         y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
                     if self.step_method == "asymetric":
                         y = self._apply_raman(self._apply_raman(y, 2*num_step), 2*num_step+1)
-                        y = apply_kerr_nonlinearity(y, dz, self.fiber.gamma, direction=1)
+                        y = self._apply_kerr(y, dz)
                         y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
 
             # the ASE the distributed amplifier generated over this span,
