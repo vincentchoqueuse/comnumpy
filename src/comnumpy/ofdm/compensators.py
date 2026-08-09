@@ -62,7 +62,7 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     >>> h = np.array([1.0, 0.5])
     >>> equalizer = FrequencyDomainEqualizer(h=h)
     >>> X = np.fft.fft(h, 4)  # the channel frequency response itself
-    >>> print(np.round(equalizer(X), 3))
+    >>> print(np.round(equalizer(X), 3) + 0.0)
     [1.+0.j 1.+0.j 1.+0.j 1.+0.j]
     """
     h: Optional[np.ndarray] = None

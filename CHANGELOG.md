@@ -39,6 +39,7 @@ one release; there is no compatibility layer.
 | `Normalizer(gain, method, …)` (inherited from `Amplifier`) | `Normalizer(method, …)` — `gain` is no longer constructible, so `Normalizer('max')` finally means what it reads; the measured gain is `gain_` (D23) |
 | `Amplifier(gain, axis=…)` | `Amplifier(gain)` — `axis` implemented no defensible model (it scaled only entries at index `axis` of the *last* axis, whatever axis was asked); use `WeightAmplifier` for a per-branch gain |
 | `.gain`, `.alpha`/`.beta`, `.w0`, `.h`, `.delay`/`.scale`/`.cross_corr` read off a compensator | same names with a trailing underscore (D23): these are estimated from the data, and the convention now separates them from configured parameters |
+| `FiberLink(alpha_dB=…, gamma=…, cd_coefficient=…, lamb=…, nu=…, c=…, h=…)` | `FiberLink(fiber=FiberSpec(alpha_dB, gamma=…, cd_coefficient=…, wavelength_nm=…))` (D46) — same for `DBP`. The carrier frequency is derived from the wavelength instead of being a second argument that could disagree with it; `c` and `h` are no longer settable. `FiberLink` goes from 21 constructor arguments to 15 |
 | `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
 
 ### Added (milestones 2-5)
@@ -72,6 +73,11 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- `comnumpy.optical.fiber` (D46): frozen `FiberSpec` carrying the
+  physical coefficients and their provenance, with a registry
+  (`get_fiber`, `available_fibers`, `@register_fiber`), a catalog of
+  SMF/NZDSF/DCF, a D20 self-check against the published beta2, and
+  unit-plausibility guards whose messages name the unit they want.
 - `comnumpy.optical.raman` (D45): `RamanGainSpectrum` (frozen, two
   closed-form models -- Blow-Wood single oscillator and the triangular
   tilt model -- with a registry and a construction-time self-check

@@ -15,6 +15,7 @@ import pathlib
 
 import numpy as np
 
+from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import compute_beta2
 
@@ -34,15 +35,15 @@ def main():
     x = (np.sqrt(P0) / np.cosh(t / T0)).astype(complex)
 
     L = 2 * L_D
-    link = FiberLink(1, L_span=L, StPS=int(4 * L), fs=FS, gamma=GAMMA,
-                     alpha_dB=0, cd_coefficient=17, noise_scaling=0)
+    link = FiberLink(1, L_span=L, StPS=int(4 * L), fs=FS, noise_scaling=0,
+                     fiber=FiberSpec(0, gamma=GAMMA, cd_coefficient=17))
     y = link(x)
     nmse = np.sum(np.abs(np.abs(y) - np.abs(x)) ** 2) / np.sum(np.abs(x) ** 2)
     assert nmse < 1e-9, f"soliton not preserved: NMSE={nmse}"
 
     # counter-check: without Kerr, the pulse must broaden substantially
-    link_lin = FiberLink(1, L_span=L, StPS=1, fs=FS, gamma=0,
-                         alpha_dB=0, cd_coefficient=17, noise_scaling=0)
+    link_lin = FiberLink(1, L_span=L, StPS=1, fs=FS, noise_scaling=0,
+                         fiber=FiberSpec(0, gamma=0, cd_coefficient=17))
     y_lin = link_lin(x)
     nmse_lin = np.sum(np.abs(np.abs(y_lin) - np.abs(x)) ** 2) / np.sum(np.abs(x) ** 2)
     assert nmse_lin > 1e-2, f"linear pulse did not disperse: NMSE={nmse_lin}"

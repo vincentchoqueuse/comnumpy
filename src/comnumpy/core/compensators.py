@@ -848,7 +848,7 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
     >>> compensator = DataAidedFIRCompensator(reference=x_ref)
     >>> print(np.round(compensator(received), 6))
     [ 1. -1.  1.  1.]
-    >>> print(np.round(compensator.h_, 6))
+    >>> print(np.round(compensator.h_, 6) + 0.0)
     [1.  0.5 0.  0. ]
     """
 

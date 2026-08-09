@@ -85,8 +85,8 @@ class CFO(Processor):
     --------
     >>> cfo = CFO(cfo=np.pi/2)
     >>> y = cfo(np.ones(4, dtype=complex))
-    >>> print(np.round(y, 2))
-    [ 1.+0.j  0.+1.j -1.+0.j -0.-1.j]
+    >>> print(np.round(y, 2) + 0.0)
+    [ 1.+0.j  0.+1.j -1.+0.j  0.-1.j]
     """
     cfo: float
     name: str = field(default="cfo_impairment", kw_only=True)

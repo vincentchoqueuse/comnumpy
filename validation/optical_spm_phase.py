@@ -15,6 +15,7 @@ import pathlib
 
 import numpy as np
 
+from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
@@ -29,8 +30,8 @@ ALPHA_DB = 0.2
 
 def spm_phase(alpha_dB, StPS):
     x = np.sqrt(P0) * np.ones(N, dtype=complex)
-    link = FiberLink(1, L_span=L, StPS=StPS, fs=FS, gamma=GAMMA,
-                     alpha_dB=alpha_dB, cd_coefficient=0, noise_scaling=0)
+    link = FiberLink(1, L_span=L, StPS=StPS, fs=FS, noise_scaling=0,
+                     fiber=FiberSpec(alpha_dB, gamma=GAMMA, cd_coefficient=0))
     y = link(x)
     # the EDFA restores the launch power exactly in the noiseless case
     power_ratio = np.abs(y[0]) ** 2 / P0
