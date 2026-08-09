@@ -46,7 +46,7 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
-   :lines: 38-56
+   :lines: 37-56
 
 The chain is composed of the following processors:
 

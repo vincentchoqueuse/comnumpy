@@ -7,8 +7,10 @@ MIMO
    :caption: Contents:
 
    channels
-   detectors   
+   detectors
    compensators
+   utils
+   validators
 
 Notes
 -----

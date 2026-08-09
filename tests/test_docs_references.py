@@ -13,6 +13,15 @@ from pathlib import Path
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
 DIRECTIVE = re.compile(r"\.\.\s+(literalinclude|include)::\s+(\S+)")
+RANGED = re.compile(
+    r"literalinclude::\s+(\S+)\n(?:\s+:\w+:.*\n)*?\s+:lines:\s+(\d+)-(\d+)")
+
+# Figure furniture, not the lesson: the output directory every example
+# writes into, and the matplotlib presentation calls. A tutorial that
+# skipped an actual computation would still be reported.
+NOT_QUOTED = re.compile(
+    r"^\s*(img_dir\s*=|plt\.(show|savefig|figure|grid|legend|title"
+    r"|x(lim|label|scale)|y(lim|label|scale)|tight_layout)\()")
 
 
 class TestDocsReferences(unittest.TestCase):
@@ -36,6 +45,40 @@ class TestDocsReferences(unittest.TestCase):
         self.assertEqual(missing, [],
                          "\n".join(["documentation includes a missing file:"]
                                    + missing))
+
+
+    def test_line_ranges_still_cover_the_whole_example(self):
+        """A ``:lines:`` range is a silent coupling to line numbers.
+
+        Insert one line into an example and every range below it points
+        at the wrong code, with nothing to say so -- the page still
+        builds and still looks right. The invariant that catches it:
+        the ranges of a given page must, together, quote every
+        executable line of the file they cite. Code that appears in the
+        example and in no range is either drift or something the
+        tutorial forgot to explain.
+        """
+        problems = []
+        for page in sorted(DOCS.rglob("*.rst")):
+            ranges: dict[Path, set[int]] = {}
+            for target, first, last in RANGED.findall(page.read_text()):
+                source = (page.parent / target).resolve()
+                ranges.setdefault(source, set()).update(
+                    range(int(first), int(last) + 1))
+            for source, covered in ranges.items():
+                if not source.exists():
+                    continue        # reported by test_included_files_exist
+                for number, line in enumerate(source.read_text().splitlines(), 1):
+                    if (number not in covered and line.strip()
+                            and not line.strip().startswith("#")
+                            and not NOT_QUOTED.match(line)):
+                        problems.append(
+                            f"{page.relative_to(DOCS)} quotes "
+                            f"{source.name} but never line {number}: "
+                            f"{line.strip()[:60]}")
+        self.assertEqual(problems, [],
+                         "\n".join(["literalinclude ranges have drifted:"]
+                                   + problems))
 
 
 if __name__ == "__main__":
