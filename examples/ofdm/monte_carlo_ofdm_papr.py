@@ -10,7 +10,7 @@ from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 from comnumpy.ofdm.metrics import compute_papr
 
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 
 N_sc = 1024

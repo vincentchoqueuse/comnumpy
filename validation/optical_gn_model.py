@@ -64,6 +64,7 @@ from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import gn_model_nli_power
 from comnumpy.optical.links import FiberLink
+from comnumpy.optical.utils import dbm_to_watt
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -72,7 +73,7 @@ SMF = FiberSpec(0.2, gamma=1.3, cd_coefficient=17.0, wavelength_nm=1550.0)
 BAUD = 32e9
 SPACING = 37.5e9
 SPAN_KM = 100.0
-POWER_W = 1e-3 * 10 ** (-4 / 10)          # -4 dBm per channel
+POWER_W = dbm_to_watt(-4.0)               # -4 dBm per channel
 PUBLISHED = {"gaussian": -23.5, "16QAM": -25.1, "QPSK": -26.3}
 
 
@@ -247,7 +248,7 @@ def check_span_accumulation():
 def check_cubic_law():
     """RP1 says the NLI is cubic in the power, so a_NL does not move."""
     powers_dBm = np.array([-10.0, -7.0, -4.0, -1.0, 2.0])
-    powers = 1e-3 * 10 ** (powers_dBm / 10)
+    powers = dbm_to_watt(powers_dBm)
     measured = np.array([dB(measure_a_nl(power_W=float(p))) for p in powers])
     spread = float(np.max(measured) - np.min(measured))
     assert spread < 1.0, measured

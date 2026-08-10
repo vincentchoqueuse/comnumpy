@@ -103,7 +103,7 @@ unexpected success once it is fixed.
 ## Where the figures go
 
 The scripts write into `docs/**/img/` through hardcoded relative paths
-(`img_dir = "../../docs/examples/img/"`), which is why they must be run
+(`img_dir = "../../docs/tutorials/img/"`), which is why they must be run
 from their own directory, and why the smoke test runs them inside a
 throwaway copy of this folder instead of letting them overwrite the
 committed figures.

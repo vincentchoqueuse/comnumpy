@@ -171,6 +171,6 @@ You have built a chain, run it, looked inside it, and compared one
 measurement with theory. That is the whole vocabulary the rest of the series
 uses.
 
-The natural next step is :doc:`../examples/awgn`, which asks the question this
+The natural next step is :doc:`../tutorials/awgn`, which asks the question this
 tutorial left open: one run gives one number at one SNR, so how do you obtain
 a *curve* -- and how many symbols does each of its points deserve?

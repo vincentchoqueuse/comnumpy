@@ -13,7 +13,7 @@ from comnumpy.core.shaping import (AmplitudeDemapper, AmplitudeMapper,
                                    SphereShaper, distribution_entropy,
                                    maxwell_boltzmann, shaping_gain_dB)
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 pam8 = np.arange(-7, 8, 2).astype(float)   # 8-PAM on the odd-integer grid
 amplitudes = pam8[pam8 > 0]                # the half a matcher shapes
@@ -169,7 +169,7 @@ for rate in (1.5, 2.0, 2.5):
     print(f"rate {rate} bit/symbol: uniform needs {plain:.2f} dB, shaped "
           f"{shaped:.2f} dB -- {plain - shaped:.2f} dB saved")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("shaping_pas", link), ("shaping_study", study)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

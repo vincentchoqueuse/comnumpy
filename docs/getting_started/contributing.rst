@@ -46,7 +46,7 @@ We strongly encourage contributors to develop self-contained submodules for addi
 - A ``__init__.py`` file
 - Python modules implementing your algorithms
 - Unit tests in the ``tests/`` directory
-- Documentation under ``docs/`` (e.g., ``docs/examples/`` or ``docs/documentation/``)
+- Documentation under ``docs/`` (e.g., ``docs/tutorials/`` or ``docs/documentation/``)
 
 You can use existing submodules like ``optical`` or ``mimo`` as templates.
 

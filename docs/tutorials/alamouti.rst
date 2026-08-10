@@ -153,7 +153,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 158-161
+   :lines: 157-160
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -189,7 +189,7 @@ The two panels are two taps of the same run:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 44-58
+   :lines: 44-57
 
 .. image:: img/one_shot_alamouti_fig1.png
    :width: 100%
@@ -213,7 +213,7 @@ The comparison needs a link without diversity and a link with receive diversity.
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 60-77
+   :lines: 59-76
 
 Sweep the channel
 """""""""""""""""
@@ -222,7 +222,7 @@ Averaging over fading means running the chain once per channel realization, and 
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 79-96
+   :lines: 78-95
 
 .. note ::
 
@@ -235,7 +235,7 @@ Averaging over fading means running the chain once per channel realization, and 
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 98-110
+   :lines: 97-109
 
 Plot the curves against their closed forms
 """"""""""""""""""""""""""""""""""""""""""
@@ -254,7 +254,7 @@ Alamouti, :math:`N_t` Tx      :math:`N_t N_r`        :math:`\bar\gamma / N_t`
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 112-125
+   :lines: 111-124
 
 .. image:: img/one_shot_alamouti_fig2.png
    :width: 100%
@@ -267,7 +267,7 @@ The two statements the tutorial is about are exact, so they are taken from the e
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 127-156
+   :lines: 126-155
 
 .. code::
 

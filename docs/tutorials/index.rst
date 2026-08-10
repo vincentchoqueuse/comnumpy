@@ -1,5 +1,5 @@
-Examples
-========
+Tutorials
+=========
 
 These tutorials are meant to be read in order. Each one introduces the tools
 the next one uses, so that nothing is ever used before it has been explained,
@@ -62,7 +62,7 @@ If you are looking for one specific thing rather than a course, every page is
 self-contained enough to be read alone -- it will simply point back at the
 tutorial where a tool was introduced instead of explaining it again.
 
-The example scripts are also available on GitHub: `https://github.com/vincentchoqueuse/comnumpy/tree/main/examples <https://github.com/vincentchoqueuse/comnumpy/tree/main/examples>`_.
+The scripts behind these pages are also available on GitHub: `https://github.com/vincentchoqueuse/comnumpy/tree/main/examples <https://github.com/vincentchoqueuse/comnumpy/tree/main/examples>`_.
 
 .. toctree::
    :maxdepth: 1

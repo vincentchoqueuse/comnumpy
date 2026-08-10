@@ -30,9 +30,7 @@ N_carrier_pilots = allocation.N_pilots   # Number of pilot carriers
 
 channel_model = TappedDelayLineChannel(get_delay_profile("TDL-D"), fs=fs,
                                        seed=5)
-impulse = np.zeros(N, dtype=complex)
-impulse[0] = 1.0
-h = channel_model(impulse)[:channel_model.delays_[-1] + 1]
+h = channel_model.impulse_response()
 pilots = 10 * np.ones(N_carrier_pilots)  # Pilot values
 
 chain = Sequential([

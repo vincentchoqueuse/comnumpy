@@ -69,7 +69,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 1-17
+   :lines: 1-18
 
 Define Parameters
 """""""""""""""""
@@ -81,7 +81,7 @@ says what happens if you forget it.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 19-31
+   :lines: 21-32
 
 
 The chain
@@ -95,7 +95,7 @@ rest of the page can reach them.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 34-55
+   :lines: 35-56
 
 .. mermaid:: mermaid/gn_model.mmd
 
@@ -142,7 +142,7 @@ chain will do to a stimulus, and what each block costs:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 84-85
+   :lines: 85-86
 
 .. code::
 
@@ -167,7 +167,7 @@ Measuring the SNR
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 58-68
+   :lines: 59-69
 
 "How much noise is there?" has a subtle answer when part of the damage is a
 phase rotation. The Kerr effect rotates the constellation by the mean
@@ -202,7 +202,7 @@ by :math:`P_{\mathrm{NLI}} = \eta P^3`.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 71-82
+   :lines: 72-83
 
 The model predicts the *fibre's* noise. The amplifiers' noise is not its
 business, so we measure that -- with the same chain, linearized by one call
@@ -210,7 +210,7 @@ to ``set_params``, which is why the fibre was given a name:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 87-90
+   :lines: 88-91
 
 .. code::
 
@@ -233,7 +233,7 @@ half the amplifiers'**:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 92-96
+   :lines: 93-97
 
 .. code::
 
@@ -259,7 +259,7 @@ runs the sweep.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 98-109
+   :lines: 99-110
 
 A few of the fourteen points, and the line that follows the sweep:
 
@@ -278,7 +278,7 @@ And the two on the same axes:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 111-129
+   :lines: 112-130
 
 .. image:: img/gn_model_fig1.png
    :width: 700
@@ -309,7 +309,7 @@ The closed form does not care.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 132-142
+   :lines: 133-143
 
 .. code::
 
@@ -322,7 +322,7 @@ The closed form does not care.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 144-152
+   :lines: 145-153
 
 .. image:: img/gn_model_fig2.png
    :width: 700
@@ -355,7 +355,7 @@ carrier.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 155-164
+   :lines: 156-165
 
 .. code::
 
@@ -414,7 +414,7 @@ finds:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 166-170
+   :lines: 167-171
 
 
 Conclusion
