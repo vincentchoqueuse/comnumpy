@@ -51,7 +51,7 @@ We define the number of transmit/receive antennas, the modulation order (PSK), a
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 17-24
+   :lines: 18-24
 
 Build the MIMO Chain
 """"""""""""""""""""
@@ -79,7 +79,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 139-156
+   :lines: 138-155
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -129,7 +129,7 @@ assuming perfect channel knowledge and ignoring the noise enhancement this cause
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 69-78
+   :lines: 69-77
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -258,7 +258,7 @@ A single channel realization proves nothing: over fading, the error rate is an *
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 80-107
+   :lines: 79-106
 
 .. code::
 
@@ -276,7 +276,7 @@ Plot SER vs SNR
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 109-114
+   :lines: 108-113
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
@@ -293,7 +293,7 @@ The 4-PSK link above has 16 candidates, and an exhaustive search scores them in 
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 116-137
+   :lines: 115-136
 
 .. code::
 

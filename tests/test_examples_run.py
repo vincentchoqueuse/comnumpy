@@ -14,7 +14,7 @@ still runs".
 
 Isolation -- why a sandbox and not a cleanup:
 the examples hardcode their output directory (`img_dir =
-"../../docs/examples/img/"`); there is no environment variable to
+"../../docs/tutorials/img/"`); there is no environment variable to
 redirect it, so the honest options were "let them overwrite the figures
 committed under `docs/` and restore afterwards" or "run them somewhere
 else". Restoring afterwards is racy (a failed run leaves the tree

@@ -15,7 +15,7 @@ from comnumpy.fec import (ConvolutionalEncoder, LDPCDecoder, LDPCEncoder,
 from comnumpy.fec.analysis import distance_spectrum, union_bound_ber
 from comnumpy.fec.ldpc import make_gallager_parity_check
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 BPSK = np.array([1.0 + 0.0j, -1.0 + 0.0j])   # bit 0 -> +1, bit 1 -> -1
 ebn0_dB = np.arange(0.0, 8.0, 1.0)
@@ -115,7 +115,7 @@ ax.set_ylim(1e-6, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/channel_coding_fig2.png")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("channel_coding", coded_chain(True))]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

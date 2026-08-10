@@ -9,6 +9,7 @@ from comnumpy.core.filters import SRRCFilter, BWFilter
 from comnumpy.core.metrics import compute_effective_snr
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.dbp import DBP
+from comnumpy.optical.utils import dbm_to_watt
 
 # This script uses exactly the same setup as described by Hager (https://github.com/chaeger/LDBP/blob/fd5b6f7c3f2a3409f1c30f1725b1474a4dff9662/ldbp/ldbp.py#L431)
 # https://arxiv.org/pdf/2010.14258.pdf
@@ -105,7 +106,7 @@ snr_array = np.zeros((N_dBm, N_curves))
 for index in range(N_dBm):
 
     dBm = dBm_list[index]
-    Po = (1e-3) * (10**(0.1*dBm))
+    Po = dbm_to_watt(dBm)
     amp = np.sqrt(Po)
 
     for _ in range(N_trial):

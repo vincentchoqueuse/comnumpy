@@ -15,8 +15,9 @@ from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
+from comnumpy.optical.utils import dbm_to_watt, watt_to_dbm
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 SMF = FiberSpec(0.2, gamma=1.3, cd_coefficient=17.0, wavelength_nm=1550.0)
 BAUD = 32e9
@@ -85,41 +86,41 @@ chain = link_chain()
 chain.summary(STIMULUS)
 
 chain.set_params(**{"fibre.use_only_linear": True})
-ase_W = 1e-3 * 10 ** (-measure(chain, [1e-3])[0] / 10)
+ase_W = dbm_to_watt(-measure(chain, [dbm_to_watt(0.0)])[0])
 print(f"measured ASE, {N_SPANS} spans at NF = {NF_dB:.0f} dB: "
-      f"{10 * np.log10(ase_W / 1e-3):+.2f} dBm")
+      f"{watt_to_dbm(ase_W):+.2f} dBm")
 
 best_power, best_snr = optimal_launch_power(ase_W, eta)
-print(f"optimum: {10 * np.log10(best_power / 1e-3):+.2f} dBm, "
+print(f"optimum: {watt_to_dbm(best_power):+.2f} dBm, "
       f"SNR = {10 * np.log10(best_snr):.2f} dB")
 print(f"check: eta P^3 / (P_ASE/2) = "
       f"{eta * best_power ** 3 / (ase_W / 2):.6f}")
 
 chain.set_params(**{"fibre.use_only_linear": False})
 powers_dBm = np.arange(-8.0, 5.1, 1.0)
-measured_snr_dB = measure(chain, 1e-3 * 10 ** (powers_dBm / 10))
+measured_snr_dB = measure(chain, dbm_to_watt(powers_dBm))
 for power_dBm, value in zip(powers_dBm, measured_snr_dB, strict=True):
     print(f"  {power_dBm:+5.1f} dBm -> SNR {value:5.2f} dB")
 
 fine_powers = np.logspace(-1.0, 0.6, 400) * 1e-3
 predicted_snr_dB = 10 * np.log10(gn_model_snr(ase_W, eta, fine_powers))
-print(f"optimum: {10 * np.log10(best_power / 1e-3):+.2f} dBm predicted, "
+print(f"optimum: {watt_to_dbm(best_power):+.2f} dBm predicted, "
       f"{powers_dBm[int(np.argmax(measured_snr_dB))]:+.1f} dBm measured; "
       f"peak SNR {10 * np.log10(best_snr):.2f} dB predicted, "
       f"{np.max(measured_snr_dB):.2f} dB measured")
 
 _, ax = plt.subplots(figsize=(7, 5), layout="constrained")
-ax.plot(10 * np.log10(fine_powers / 1e-3), predicted_snr_dB, "-",
+ax.plot(watt_to_dbm(fine_powers), predicted_snr_dB, "-",
         label="GN model (closed form, microseconds)")
 ax.plot(powers_dBm, measured_snr_dB, "o",
         label="split-step simulation, ~1 s per point")
-ax.plot(10 * np.log10(fine_powers / 1e-3),
+ax.plot(watt_to_dbm(fine_powers),
         10 * np.log10(fine_powers / ase_W), ":", color="0.5",
         label="amplifiers alone ($P/P_{ASE}$)")
-ax.axvline(10 * np.log10(best_power / 1e-3), color="0.3", linestyle="--",
+ax.axvline(watt_to_dbm(best_power), color="0.3", linestyle="--",
            linewidth=1)
-ax.annotate(f"optimum {10 * np.log10(best_power / 1e-3):+.1f} dBm",
-            (10 * np.log10(best_power / 1e-3), np.min(predicted_snr_dB) + 1),
+ax.annotate(f"optimum {watt_to_dbm(best_power):+.1f} dBm",
+            (watt_to_dbm(best_power), np.min(predicted_snr_dB) + 1),
             rotation=90, va="bottom", ha="right", color="0.3")
 ax.set_xlabel("launch power per channel [dBm]")
 ax.set_ylabel("SNR [dB]")
@@ -138,12 +139,12 @@ for n_channels in counts:
     curves[n_channels] = 10 * np.log10(
         gn_model_snr(ase_W, channel_eta, fine_powers))
     print(f"{n_channels:8d}   "
-          f"{10*np.log10(channel_eta*(1e-3)**3/1e-3):+8.2f} dBm   "
-          f"{10*np.log10(power/1e-3):+6.2f} dBm   {10*np.log10(snr):6.2f} dB")
+          f"{watt_to_dbm(channel_eta * (1e-3) ** 3):+8.2f} dBm   "
+          f"{watt_to_dbm(power):+6.2f} dBm   {10*np.log10(snr):6.2f} dB")
 
 _, ax = plt.subplots(figsize=(7, 5), layout="constrained")
 for n_channels in counts:
-    ax.plot(10 * np.log10(fine_powers / 1e-3), curves[n_channels],
+    ax.plot(watt_to_dbm(fine_powers), curves[n_channels],
             label=f"{n_channels} channels")
 ax.set_xlabel("launch power per channel [dBm]")
 ax.set_ylabel("SNR [dB]")
@@ -163,7 +164,7 @@ for order, label in ((4, "QPSK"), (16, "16QAM"), (64, "64QAM"),
     value = measure(noiseless, [1e-3])[0]
     print(f"{label:12s} {value:10.2f} dB   {value - nli_only_dB:+10.2f} dB")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
     stream.write(link_chain().to_mermaid())
 

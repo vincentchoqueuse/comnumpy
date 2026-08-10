@@ -44,7 +44,7 @@ First, import the necessary libraries and ``comnumpy`` components:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-13
+   :lines: 1-14
 
 Define System Parameters
 """"""""""""""""""""""""
@@ -53,7 +53,7 @@ Set key parameters such as modulation order, oversampling factors, fiber link pr
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 15-35
+   :lines: 17-37
 
 Create Communication Chain
 """"""""""""""""""""""""""
@@ -62,7 +62,7 @@ Build a processing chain consisting of symbol generation, mapping, pulse shaping
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 37-47
+   :lines: 39-49
 
 This simulates the full transmission over an optical fiber with nonlinear effects and noise.
 
@@ -77,7 +77,7 @@ Execute the chain and extract the transmitted and received signals. Then, plot t
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 48-56
+   :lines: 50-56
 
 Received Signal
 ^^^^^^^^^^^^^^^
@@ -98,7 +98,7 @@ After compensation, the received signal may exhibit a residual phase rotation. T
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 58-88
+   :lines: 58-86
 
 .. code::
 
