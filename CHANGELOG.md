@@ -46,6 +46,35 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- The pyright strict ratchet of D37 now covers **every** module of
+  `src/comnumpy`, and `py.typed` ships with the package. Closing the
+  last four -- `core/metrics.py`, `core/processors.py`,
+  `core/compensators.py`, `mimo/detectors.py` -- was not only
+  annotation. What the type checker was pointing at, in every case, was
+  a value that could be `None` and was dereferenced anyway:
+
+  - `MaximumLikelihoodDetector.get_nb_candidates()` read `self.H.shape`
+    with no check at all, so it raised `AttributeError: 'NoneType'` on a
+    detector whose channel had not been set;
+  - `LinearDetector(method="mmse")` never checked `sigma2`, and passed
+    `None` into the MMSE solver;
+  - `WeightAmplifier.weight` was declared optional and dereferenced in
+    `__post_init__`, so the documented default construction crashed. It
+    is now a required argument, which is what the class always meant;
+  - `DataAidedSimpleSynchronizer.plot()` drew `None` against `None` when
+    the block had not been asked to keep its cross-correlation.
+
+  The two validators of `mimo/detectors.py` now *return* the value they
+  check instead of only asserting it, so a caller cannot use the
+  unchecked one by mistake, and their messages name what is missing and
+  how to supply it (D38).
+
+  Three latent unbound-variable paths were closed the same way:
+  `compute_ser_awgn_psk`, `Serial2Parallel.forward` and
+  `BlindCFOCompensator.fit` each chained independent `if`s over a
+  parameter that could match none of them, leaving a local undefined and
+  raising `UnboundLocalError` instead of saying what was wrong.
+
 - `sphinx.ext.napoleon` is enabled. Without it the numpydoc sections of
   every docstring -- the whole section-4.10 course-material template,
   its parameter tables and its symbol-parameter bijection -- rendered as
