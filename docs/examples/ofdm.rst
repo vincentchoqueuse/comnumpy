@@ -3,11 +3,12 @@ OFDM Tutorial
 
 In this tutorial, we compare the performance of a **Single Carrier (SC)** system
 and an **OFDM** system over a **frequency-selective multipath channel** using the ``comnumpy`` library.
-You will learn how to:
 
-- Define and simulate a frequency-selective channel.
-- Evaluate performance using the Symbol Error Rate (SER).
-- Understand why OFDM outperforms SC in multipath environments.
+**What you'll learn:**
+
+- How to define and simulate a frequency-selective channel.
+- How to evaluate performance using the Symbol Error Rate (SER) and the runtime.
+- What OFDM actually buys against single-carrier equalization -- and what it costs.
 
 This tutorial is suitable for engineers and students interested in digital communications,
 combining practical examples with theoretical insights.
@@ -33,10 +34,12 @@ including the modulation order and the channel impulse response for a frequency-
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 14-24
+   :lines: 15-26
 
 Here, ``h`` represents the channel impulse response.
 The first tap is normalized to 1 to preserve the overall channel energy.
+The generator is seeded: the two chains below are compared on **one**
+realization of that channel, so it has to be the same one on every run.
 
 
 Frequency-Selective Channel
@@ -90,7 +93,7 @@ The chain is implemented in **comnumpy** as follows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 26-41
+   :lines: 28-41
 
 Results
 """""""
@@ -100,12 +103,19 @@ then plot the constellation before and after equalization:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 42-58
+   :lines: 43-60
 
 For the SC chain, we obtain:
 
-- **SER** = 0.007  
-- **Execution time** = 0.562 s  
+.. code::
+
+   SER: 0.0
+   elapsed time: 1.21 s
+
+Not a single symbol error -- and more than a second of computation for 1280
+symbols. Both numbers matter, and the second is the one to keep in mind:
+the ZF equalizer builds the :math:`N \times N` convolution matrix and
+pseudo-inverts it, which costs :math:`O(N^3)`.
 
 .. image:: img/one_shot_ofdm_fig1.png
    :width: 100%
@@ -177,7 +187,7 @@ The OFDM chain in **comnumpy** is implemented as:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 60-79
+   :lines: 62-78
 
 Results
 """""""
@@ -186,12 +196,28 @@ We compute the SER and runtime, then plot the received constellation:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 80-89
+   :lines: 80-92
 
 For the OFDM chain, we obtain:
 
-- **SER** = 0.004 (improved vs SC)  
-- **Execution time** = 0.007 s (much lower than SC)  
+.. code::
+
+   SER: 0.00546875
+   elapsed time: 0.0010 s
+
+Read the two lines together, because the honest conclusion is not the one
+usually advertised. On **this** channel and uncoded, OFDM is *worse* in raw
+symbol error rate: block ZF inverts the whole convolution matrix at once and
+handles every frequency optimally, while OFDM equalizes each subcarrier on its
+own and amplifies the noise on those that happen to fall in a spectral notch.
+There is no coding across subcarriers here to repair them.
+
+What changes by **three orders of magnitude** is the cost: 1.21 s against
+1.0 ms for the same 1280 symbols. And that ratio is not a constant -- the SC
+equalizer grows as :math:`N^3` while OFDM grows as :math:`N \log N`, so the
+comparison only gets more lopsided with the block size. This is why real
+systems are OFDM *plus* a code spread over the subcarriers: the code buys back
+the error rate, and the FFT keeps the receiver affordable.
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -207,11 +233,15 @@ You have compared **Single Carrier** and **OFDM** systems over a multipath chann
 You have learned how to:
 
 - Model a frequency-selective FIR channel in ``comnumpy``.
-- Simulate both SC and OFDM systems.
+- Simulate both SC and OFDM systems on the same channel realization.
 - Apply ZF equalization (SC) vs. one-tap equalization (OFDM).
-- Compare performance in terms of SER and computational cost.
+- Compare the two in symbol error rate *and* in computational cost, and see
+  that the second is where the difference lies.
 
 Key takeaway:
-**OFDM transforms a frequency-selective channel into flat-fading subchannels,
-enabling simple per-subcarrier equalization and superior performance in realistic multipath environments.**
+**OFDM turns a frequency-selective channel into a set of flat subchannels, so
+equalization becomes one complex division per subcarrier instead of an**
+:math:`N \times N` **matrix inversion. That is what makes wideband receivers
+affordable; the per-subcarrier error rate it gives up is bought back by coding
+across the subcarriers.**
 

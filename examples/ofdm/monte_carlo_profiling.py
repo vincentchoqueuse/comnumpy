@@ -9,7 +9,7 @@ from comnumpy.core.utils import get_alphabet
 from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
-from comnumpy.ofdm.utils import get_standard_carrier_allocation
+from comnumpy.ofdm.allocation import get_allocation
 
 
 # parameters
@@ -19,12 +19,12 @@ N_cp = 10
 N = 100000
 sigma2 = 0.01
 alphabet = get_alphabet("QAM", M)
-carrier_type = get_standard_carrier_allocation("802.11ah_128")
+allocation = get_allocation("802.11ac-40")   # 128 subcarriers
 
 # extract carrier information
-N_carriers = len(carrier_type)
-N_carrier_data = np.sum(carrier_type == 1)
-N_carrier_pilots = np.sum(carrier_type == 2)
+N_carriers = allocation.N_fft
+N_carrier_data = allocation.N_data
+N_carrier_pilots = allocation.N_pilots
 
 # generate channel
 h = 0.1*(np.random.randn(N_h) + 1j*np.random.randn(N_h))
@@ -36,7 +36,7 @@ chain = Sequential([
         SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet, name="mapper_tx"),
         Serial2Parallel(N_carrier_data),
-        CarrierAllocator(carrier_type=carrier_type, pilots=pilots, name="carrier_allocator_tx"),
+        CarrierAllocator(carrier_type=allocation, pilots=pilots, name="carrier_allocator_tx"),
         IFFTProcessor(),
         CyclicPrefixer(N_cp),
         Parallel2Serial(),
@@ -46,7 +46,7 @@ chain = Sequential([
         CyclicPrefixRemover(N_cp),
         FFTProcessor(),
         FrequencyDomainEqualizer(h=h),
-        CarrierExtractor(carrier_type, name="data_rx"),
+        CarrierExtractor(allocation, name="data_rx"),
         Parallel2Serial(),
         SymbolDemapper(alphabet)
     ])

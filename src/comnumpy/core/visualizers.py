@@ -392,9 +392,18 @@ def plot_chain_profiling(chain: object, input: object, *,
 
     # Create a box plot
     if ax is None:
-        _, ax = plt.subplots(figsize=(12, 6))
+        # constrained layout: block names are long and would be clipped
+        _, ax = plt.subplots(figsize=(12, 6), layout="constrained")
     ax.boxplot(data_array, tick_labels=list(keys), orientation=orientation)
     ax.set_title(title)
-    ax.set_xlabel('Time (s)')
-    ax.grid(True)
+    # a chain spans several decades -- an FFT and a demapper are not the
+    # same order of magnitude -- so a linear axis shows one block and
+    # flattens all the others against zero
+    if orientation == "horizontal":
+        ax.set_xscale("log")
+        ax.set_xlabel("Time (s)")
+    else:
+        ax.set_yscale("log")
+        ax.set_ylabel("Time (s)")
+    ax.grid(True, which="both")
     return ax

@@ -8,12 +8,12 @@ We reproduce the first figure from the article:
 * "An overview of peak-to-average power ratio reduction techniques for multicarrier transmission"  
   by Han and Lee (2005).
 
-You will learn how to:
+**What you'll learn:**
 
-- Build an OFDM chain with multiple subcarriers.
-- Compute the PAPR of a single OFDM signal.
-- Evaluate the **Complementary Cumulative Distribution Function (CCDF)** of PAPR.
-- Compare simulation results with theoretical curves.
+- How to build an OFDM chain with multiple subcarriers.
+- How to compute the PAPR of a single OFDM signal.
+- How to evaluate the **Complementary Cumulative Distribution Function (CCDF)** of the PAPR.
+- How to compare simulation results with theoretical curves.
 
 
 Introduction
@@ -119,9 +119,13 @@ The resulting figure displays both the experimental and theoretical CCDFs for
    :align: center
    :alt: CCDF of PAPR for OFDM with 256 and 1024 subcarriers
 
-As expected, the probability of large PAPR values increases with the number of subcarriers.  
-For example, with 1024 subcarriers and an oversampling factor of 4, 
-a **PAPR around 12 dB** is typically observed at CCDF = 10⁻³.
+As expected, the probability of large PAPR values increases with the number of
+subcarriers. Solving the expression above for :math:`\mathrm{CCDF} = 10^{-3}`
+gives **11.41 dB** for 256 subcarriers and **11.83 dB** for 1024, both at
+oversampling 4 -- and the simulated curves sit on them. Four times as many
+subcarriers cost only 0.4 dB, because the number of samples enters through a
+logarithm: the peak of a sum of many independent terms grows very slowly with
+how many there are.
 
 
 Conclusion

@@ -1,12 +1,14 @@
 Alamouti Space-Time Coding Tutorial
 ===================================
 
-This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme. You will learn how to:
+This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme.
 
-- Understand why a fading channel is limited by its *deep fades*, not by its average.
-- Build a two-antenna Alamouti transmitter and its receiver with ``comnumpy``.
-- See why the receiver needs only a matched filter, and why that is optimal.
-- Measure the diversity gain, and the 3 dB it costs against receive diversity.
+**What you'll learn:**
+
+- Why a fading channel is limited by its *deep fades*, not by its average.
+- How to build a two-antenna Alamouti transmitter and its receiver with ``comnumpy``.
+- Why the receiver needs only a matched filter, and why that is optimal.
+- How to measure the diversity gain, and the 3 dB it costs against receive diversity.
 
 This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.
 
