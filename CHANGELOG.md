@@ -46,6 +46,34 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `sweep(n_jobs=...)`: the points of a sweep are independent by
+  construction -- each one reconfigures and reseeds the chain from
+  scratch -- so they can run at once. The curve is **identical** value
+  for value, not merely statistically equivalent, because every point
+  already draws from its own child seed; that is asserted in the tests,
+  and it is why `seed=` becomes mandatory when `n_jobs` is not 1.
+
+  Measured on four cores: below ~20 ms a point the pool costs more than
+  it saves (starting a worker and pickling the chain into it is ~130 ms),
+  at ~200 ms a point it returns 2.7x. Threads were measured too and are
+  *four times slower* on a Viterbi sweep -- the decoder holds the GIL --
+  so workers are processes, spawned rather than forked so the BLAS
+  thread limits actually apply. The two traps that follow (a `lambda`
+  metric cannot be pickled; a script must guard its body with
+  `if __name__ == "__main__":`) raise errors that say exactly that,
+  rather than letting `pickle` and `BrokenProcessPool` explain
+  themselves.
+
+- A channel coding tutorial (`examples/simple/channel_coding.py`,
+  `docs/examples/coding.rst`), the one module of the library that had no
+  tutorial at all: the convolutional encoder and what its generator
+  polynomials mean, the Viterbi recursion and the 2 dB that separate
+  hard from soft decisions, the union bound built from the code's own
+  distance spectrum -- which is what answers the question a simulation
+  cannot, since 40 000 bits cannot resolve a BER below 2.5e-5 -- and an
+  LDPC code at the same rate, with its waterfall and what its iterations
+  buy.
+
 - `mimo.detectors.SphereDecoder`: maximum likelihood by tree search
   rather than exhaustion. The thin QR factorization of the channel makes
   the metric a sum of non-negative layer terms, so a partial sum that
@@ -756,6 +784,11 @@ No new feature; the published package becomes consistent with what the
 code actually does.
 
 ### Fixed
+
+- `plot_error_rate` drew every measurement as bare markers, which reads
+  as a scatter when there is no reference curve to follow. A measurement
+  that has a matching entry in `theory=` keeps its markers alone, so the
+  pair still reads as one statement; one that has none is now joined.
 
 - The tutorials were nine good pages in no particular order, each
   re-explaining what the previous one had already introduced. They are

@@ -321,6 +321,7 @@ This tutorial highlighted:
 
 With ``comnumpy``, a space-time code is an object taken from a registry, its orthogonality is verified rather than assumed, and the encoder and decoder are ordinary chain blocks.
 
-Everything so far has taken the constellation for granted: :math:`M` points,
-each sent as often as the others. :doc:`shaping` questions that last
-assumption, and recovers up to 1.53 dB from it.
+Every tutorial so far has accepted the errors its receiver could not avoid.
+:doc:`coding` refuses them: redundancy at the transmitter, a trellis search at
+the receiver, and an analytical bound where the simulation runs out of
+symbols.

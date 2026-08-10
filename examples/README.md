@@ -43,7 +43,7 @@ a validation script. Move it.
 
 | Folder | Subject |
 |---|---|
-| `simple/` | the core chain: symbol generation, mapping, AWGN, multipath fading, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, chain profiling |
+| `simple/` | the core chain: symbol generation, mapping, AWGN, multipath fading, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, channel coding, chain profiling |
 | `ofdm/` | OFDM transmitter and receiver, carrier allocation, cyclic prefix, frequency-domain equalization, PAPR statistics and PAPR reduction |
 | `mimo/` | flat and frequency-selective MIMO channels, space-time block codes, ML / linear / OSIC detectors, blind CMA equalization |
 | `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR), WDM transmission, and fibre nonlinearity: split-step propagation with digital back-propagation |
@@ -77,7 +77,8 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/monte_carlo_awgn.py` | 12.4 s | yes |
 | `mimo/one_shot_alamouti.py` | 14.4 s | yes |
 | `simple/probabilistic_shaping.py` | 14.6 s | yes |
-| `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes — the slowest one kept |
+| `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes |
+| `simple/channel_coding.py` | 29.7 s | yes — the slowest one kept |
 | `mimo/monte_carlo_simulation_1.py` | 32 s | skipped — slow |
 | `ofdm/one_shot_ofdm.py` | 49 s (147 s CPU) | skipped — slow |
 | `optical/one_shot_NLI.py` | 64 s | skipped — slow |

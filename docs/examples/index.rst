@@ -42,10 +42,14 @@ and nothing is explained twice.
      - Diversity without channel knowledge at the transmitter: space-time
        coding, measured against its closed form.
    * - 7
+     - :doc:`coding`
+     - Redundancy: convolutional codes and the Viterbi trellis, the union
+       bound, and an LDPC waterfall.
+   * - 8
      - :doc:`shaping`
      - Sending some constellation points more often than others, and the
        1.53 dB it recovers.
-   * - 8
+   * - 9
      - :doc:`optical_fiber_nonlinearity`
      - A nonlinear channel: fibre propagation, and digital back-propagation
        to undo it.
@@ -66,5 +70,6 @@ The example scripts are also available on GitHub: `https://github.com/vincentcho
    multipath
    mimo
    alamouti
+   coding
    shaping
    optical_fiber_nonlinearity
