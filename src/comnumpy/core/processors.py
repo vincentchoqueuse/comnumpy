@@ -5,6 +5,11 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.filters import BWFilter
 from comnumpy.exceptions import ShapeError
 
+# BlindPhaseTracker builds a (samples, phases, symbols) table of squared
+# distances; 2**22 entries is 32 MB in float64, small enough to fit
+# anywhere and large enough that the chunking costs nothing.
+_COST_BLOCK = 1 << 22
+
 
 def _required_mask(mask: Optional[np.ndarray], block: str,
                    name: str) -> np.ndarray:
@@ -1226,8 +1231,16 @@ class BlindPhaseTracker(Processor):
     residual rotation, so tracking the paths jointly would fit a single
     phase to two different ones.
 
+    The search range is the ambiguity of a **square QAM**. On a
+    constellation of finer rotational symmetry -- 8-PSK repeats every
+    :math:`\pi/4`, so the range covers two of its periods -- several test
+    phases give mathematically identical costs and which one wins is
+    arbitrary. That is a property of the criterion, not of the search.
+
     Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the
-    search loops over the sample axis.
+    decision of a sample under a test phase does not depend on any other
+    sample, so the whole search is a table of decision errors plus a
+    moving sum over it, and nothing is done in order.
 
     Parameters
     ----------
@@ -1307,19 +1320,45 @@ class BlindPhaseTracker(Processor):
                 count += 1
         return float(total_error / count) if count > 0 else float(np.inf)
 
+    def _decision_errors(self, x: np.ndarray) -> np.ndarray:
+        """``|x e^{-j phi} - D(.)|^2`` for every sample and test phase.
+
+        The whole search is this table plus a moving sum over it: the
+        decision of one sample under one test phase does not depend on
+        any other sample, so nothing here has to be done in order.
+        """
+        rotated = x[:, None] * np.exp(-1j * self.phases)[None, :]
+        distance = np.abs(rotated[:, :, None]
+                          - self.alphabet[None, None, :]) ** 2
+        return np.min(distance, axis=-1)
+
     def _track(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """Track one path: the search itself, on a 1-D record."""
-        y_corrected = np.zeros_like(x, dtype=complex)
-        optimal_phases = []
+        """Track one path: the search itself, on a 1-D record.
 
-        for n in range(len(x)):
-            costs = [self.evm_cost(x, n, phi) for phi in self.phases]
-            best_phi_idx = np.argmin(costs)
-            best_phi = self.phases[best_phi_idx]
-            optimal_phases.append(best_phi)
-            y_corrected[n] = x[n] * np.exp(-1j * best_phi)
+        Same quantity as :meth:`evm_cost` minimized sample by sample --
+        a test pins that -- computed in two array operations instead of
+        one Python iteration per (sample, phase, window position).
+        """
+        n_samples = x.size
+        if n_samples == 0:
+            return np.zeros(0, dtype=complex), np.zeros(0)
 
-        return y_corrected, np.asarray(optimal_phases)
+        errors = np.empty((n_samples, self.phase_steps))
+        rows = max(1, _COST_BLOCK // (self.phase_steps * self.alphabet.size))
+        for start in range(0, n_samples, rows):
+            errors[start:start + rows] = self._decision_errors(
+                x[start:start + rows])
+
+        # Moving sum over the 2L+1 window. The record is zero-padded, so
+        # positions outside it add the same nothing to every phase, and
+        # the 1/(2L+1) of the equation does not depend on the phase
+        # either: neither changes which phase wins.
+        padded = np.zeros((n_samples + 2 * self.L, self.phase_steps))
+        padded[self.L:self.L + n_samples] = errors
+        window = np.lib.stride_tricks.sliding_window_view(
+            padded, 2 * self.L + 1, axis=0)
+        best = self.phases[np.argmin(window.sum(axis=-1), axis=-1)]
+        return x * np.exp(-1j * best), best
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         signal = np.asarray(x)
