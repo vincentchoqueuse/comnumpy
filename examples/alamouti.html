@@ -1,0 +1,847 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Alamouti Space-Time Coding Tutorial &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/alamouti';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Optical Fiber Link Simulation Tutorial" href="optical_fiber_nonlinearity.html" />
+    <link rel="prev" title="MIMO Chain Tutorial" href="mimo.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Alamouti Space-Time Coding Tutorial</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="alamouti-space-time-coding-tutorial">
+<h1>Alamouti Space-Time Coding Tutorial<a class="headerlink" href="#alamouti-space-time-coding-tutorial" title="Link to this heading">#</a></h1>
+<p>This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme. You will learn how to:</p>
+<ul class="simple">
+<li><p>Understand why a fading channel is limited by its <em>deep fades</em>, not by its average.</p></li>
+<li><p>Build a two-antenna Alamouti transmitter and its receiver with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
+<li><p>See why the receiver needs only a matched filter, and why that is optimal.</p></li>
+<li><p>Measure the diversity gain, and the 3 dB it costs against receive diversity.</p></li>
+</ul>
+<p>This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<section id="why-diversity">
+<h3>Why diversity<a class="headerlink" href="#why-diversity" title="Link to this heading">#</a></h3>
+<p>Over a flat Rayleigh channel <span class="math notranslate nohighlight">\(y[n] = h\,x[n] + b[n]\)</span>, the instantaneous signal-to-noise ratio is proportional to <span class="math notranslate nohighlight">\(|h|^2\)</span>, which is exponentially distributed. The receiver is therefore not limited by the <em>average</em> channel: it is limited by the probability that the channel is nearly zero. That probability behaves as</p>
+<div class="math notranslate nohighlight">
+\[\mathbb{P}\left[|h|^2 &lt; \epsilon\right] \simeq \epsilon\]</div>
+<p>so the error rate decays only as <span class="math notranslate nohighlight">\(1/\mathrm{SNR}\)</span> – one decade per decade. Ten more decibels buy one decade of error rate, which is a poor exchange.</p>
+<p>If instead the receiver observes the symbol through <span class="math notranslate nohighlight">\(d\)</span> <strong>independent</strong> fading coefficients, all of them must be small at once for the link to fail, and</p>
+<div class="math notranslate nohighlight">
+\[\mathbb{P}\left[\text{all } d \text{ paths weak}\right] \simeq \epsilon^{d}
+\quad \Longrightarrow \quad
+P_e \propto \mathrm{SNR}^{-d}\]</div>
+<p>The exponent <span class="math notranslate nohighlight">\(d\)</span> is the <strong>diversity order</strong>, and it is the slope of the error curve on a log-log plot. Getting <span class="math notranslate nohighlight">\(d = 2\)</span> with two receive antennas is easy – that is maximum ratio combining (MRC). Getting it with two <em>transmit</em> antennas and a single receive antenna is the problem Alamouti solved, and it is the useful one: antennas are expensive on a handset and cheap on a base station.</p>
+<p>The difficulty is that a transmitter has no channel knowledge. Sending the same symbol from both antennas gives <span class="math notranslate nohighlight">\(y = (h_1 + h_2)x + b\)</span>, and <span class="math notranslate nohighlight">\(h_1 + h_2\)</span> is one Gaussian coefficient: no diversity at all.</p>
+</section>
+<section id="the-alamouti-scheme">
+<h3>The Alamouti scheme<a class="headerlink" href="#the-alamouti-scheme" title="Link to this heading">#</a></h3>
+<p>The idea is to spread two symbols over two antennas <strong>and</strong> two time slots, in a pattern that makes the two observations orthogonal. Over one codeword the two antennas transmit</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf{G}\left(s_1, s_2\right) =
+\begin{bmatrix} s_1 &amp; -s_2^{*} \\ s_2 &amp; s_1^{*} \end{bmatrix}\end{split}\]</div>
+<p>the first column being the first time slot and the second column the second. With one receive antenna and a channel <span class="math notranslate nohighlight">\(\mathbf{h} = \left[h_1, h_2\right]\)</span> constant over the two slots, the receiver observes</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}y_1 &amp;= h_1 s_1 + h_2 s_2 + b_1\\
+y_2 &amp;= -h_1 s_2^{*} + h_2 s_1^{*} + b_2\end{split}\]</div>
+<p>Conjugating the second equation makes the pair <em>linear</em> in <span class="math notranslate nohighlight">\(\left(s_1, s_2\right)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{bmatrix} y_1 \\ y_2^{*} \end{bmatrix}
+=
+\underbrace{\begin{bmatrix} h_1 &amp; h_2 \\ h_2^{*} &amp; -h_1^{*}\end{bmatrix}}_{\mathbf{H}_{\mathrm{eq}}}
+\begin{bmatrix} s_1 \\ s_2 \end{bmatrix}
++ \begin{bmatrix} b_1 \\ b_2^{*}\end{bmatrix}\end{split}\]</div>
+<p>and the matrix <span class="math notranslate nohighlight">\(\mathbf{H}_{\mathrm{eq}}\)</span> is <strong>orthogonal</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{H}_{\mathrm{eq}}^{H}\mathbf{H}_{\mathrm{eq}}
+= \left(\left|h_1\right|^2 + \left|h_2\right|^2\right)\mathbf{I}_2\]</div>
+<p>That single identity is the whole scheme. It means the two symbols do not interfere at all, so the maximum-likelihood detector is not a search but a <strong>matched filter</strong>,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{bmatrix} \widehat{s}_1 \\ \widehat{s}_2 \end{bmatrix}
+= \frac{\mathbf{H}_{\mathrm{eq}}^{H}}{\left|h_1\right|^2 + \left|h_2\right|^2}
+  \begin{bmatrix} y_1 \\ y_2^{*} \end{bmatrix}\end{split}\]</div>
+<p>and each symbol comes out with its SNR multiplied by <span class="math notranslate nohighlight">\(\left|h_1\right|^2 + \left|h_2\right|^2\)</span> – the sum of two independent fadings, hence diversity order 2. The code carries two symbols in two slots, so its rate is 1 symbol per channel use: the diversity is free in bandwidth.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> stores every space-time code by its <em>linear dispersion</em>
+matrices, <span class="math notranslate nohighlight">\(\mathbf{G}(\mathbf{s}) = \sum_k \mathbf{A}_k s_k +
+\mathbf{B}_k s_k^{*}\)</span>, and builds the real equivalent channel from
+them. The orthogonality identity above is checked when the code
+object is created, so a code that declares itself orthogonal and is
+not cannot be used at all. The constant it is orthogonal <em>up to</em> is
+measured at the same time and reused by the decoder.</p>
+</div>
+</section>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Ensure you have the following Python libraries installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">matplotlib</span>
+<span class="n">comnumpy</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="simulation-setup">
+<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
+<section id="import-libraries">
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<p>We start by importing the required libraries and <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> components:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span><span class="p">,</span> <span class="n">hard_projector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.coding</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpaceTimeDecoder</span><span class="p">,</span> <span class="n">SpaceTimeEncoder</span><span class="p">,</span> <span class="n">get_code</span>
+</pre></div>
+</div>
+</section>
+<section id="define-system-parameters">
+<h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
+<p>The code is taken from the registry by name, exactly as the constellation is taken from <code class="docutils literal notranslate"><span class="pre">get_alphabet</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameters</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="n">code</span> <span class="o">=</span> <span class="n">get_code</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">)</span>
+<span class="n">power</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span>          <span class="c1"># same total power as one antenna</span>
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">SpaceTimeEncoder</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The scaling by <span class="math notranslate nohighlight">\(1/\sqrt{N_t}\)</span> matters for the comparison that follows. Two antennas each transmitting <span class="math notranslate nohighlight">\(|s|^2\)</span> would spend twice the power of a single antenna, which is a 3 dB advantage that has nothing to do with coding. Splitting the power keeps the comparison about diversity alone.</p>
+</section>
+</section>
+<section id="one-shot-simulation">
+<h2>One-Shot Simulation<a class="headerlink" href="#one-shot-simulation" title="Link to this heading">#</a></h2>
+<section id="transmit-and-receive-one-block">
+<h3>Transmit and receive one block<a class="headerlink" href="#transmit-and-receive-one-block" title="Link to this heading">#</a></h3>
+<p>We draw one channel realization, encode 500 codewords, add noise and decode:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># One channel realization, one block of codewords</span>
+<span class="n">N_codewords</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">s_tx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">*</span> <span class="n">N_codewords</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">(</span><span class="n">alphabet</span><span class="p">[</span><span class="n">s_tx</span><span class="p">]</span> <span class="o">*</span> <span class="n">power</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                           <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">H</span> <span class="o">@</span> <span class="n">X</span> <span class="o">+</span> <span class="n">B</span>
+<span class="n">Z</span> <span class="o">=</span> <span class="n">SpaceTimeDecoder</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">)(</span><span class="n">Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">power</span>
+<span class="n">s_rx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;one-shot SER: </span><span class="si">{</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span><span class="w"> </span><span class="n">s_rx</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SpaceTimeEncoder</span></code> turns a stream of <span class="math notranslate nohighlight">\(N\)</span> symbols into an array of shape <span class="math notranslate nohighlight">\(\left(N_t, N T / K\right)\)</span> – antennas on the second-to-last axis, as everywhere else in the library – so it plugs straight into a MIMO channel. <code class="docutils literal notranslate"><span class="pre">SpaceTimeDecoder</span></code> performs the matched filter above; it needs the channel matrix, which is assumed known at the receiver.</p>
+</section>
+<section id="visualize-the-combining">
+<h3>Visualize the combining<a class="headerlink" href="#visualize-the-combining" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 1: what the single receive antenna sees, and what combining gives</span>
+<span class="n">fig1</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_left</span><span class="p">,</span> <span class="n">ax_right</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">ax_left</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax_left</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;received on the single antenna&quot;</span><span class="p">)</span>
+<span class="n">ax_right</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">Z</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">Z</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax_right</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span> <span class="s2">&quot;kx&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">ax_right</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;after Alamouti combining&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ax_left</span><span class="p">,</span> <span class="n">ax_right</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;in phase&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;quadrature&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_alamouti_fig1.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_alamouti_fig1.png"><img alt="../_images/one_shot_alamouti_fig1.png" class="align-center" src="../_images/one_shot_alamouti_fig1.png" style="width: 100%;" />
+</a>
+<p>The left panel is what the single receive antenna actually sees: two superimposed streams plus noise, with no constellation visible at all. The right panel is the same data after combining, and the four QPSK points are back. Nothing was estimated to get there – only the two conjugations and the matched filter of the equations above.</p>
+</section>
+</section>
+<section id="monte-carlo-evaluation">
+<h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
+<section id="three-schemes-at-equal-transmit-power">
+<h3>Three schemes at equal transmit power<a class="headerlink" href="#three-schemes-at-equal-transmit-power" title="Link to this heading">#</a></h3>
+<p>To see the diversity we compare three links at the same total transmit power. The Alamouti scheme is simulated with the library blocks, over a channel drawn once per block of 25 codewords (quasi-static fading):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">alamouti_ser</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">per_channel</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2 transmit antennas, 1 receive antenna, quasi-static fading.&quot;&quot;&quot;</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">sigma2</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+             <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">sent</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">*</span> <span class="n">per_channel</span><span class="p">)</span>
+        <span class="n">word</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">(</span><span class="n">alphabet</span><span class="p">[</span><span class="n">sent</span><span class="p">]</span> <span class="o">*</span> <span class="n">power</span><span class="p">)</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">word</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">word</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">SpaceTimeDecoder</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">h</span><span class="p">)(</span><span class="n">h</span> <span class="o">@</span> <span class="n">word</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span> <span class="o">/</span> <span class="n">power</span>
+        <span class="n">detected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">estimate</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">detected</span> <span class="o">!=</span> <span class="n">sent</span><span class="p">))</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">sent</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">return</span> <span class="n">errors</span> <span class="o">/</span> <span class="n">total</span>
+</pre></div>
+</div>
+<p>The reference without diversity is a single antenna each side:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">siso_ser</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">n_symbols</span><span class="o">=</span><span class="mi">400000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One transmit antenna, one receive antenna: no diversity.&quot;&quot;&quot;</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">sent</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">)</span>
+         <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sigma2</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">)</span>
+                                   <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">))</span>
+    <span class="n">detected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">((</span><span class="n">h</span> <span class="o">*</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">sent</span><span class="p">]</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">detected</span> <span class="o">!=</span> <span class="n">sent</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>and the reference <em>with</em> diversity is maximum ratio combining on two receive antennas, which is the best a two-path link can do:</p>
+<div class="math notranslate nohighlight">
+\[\widehat{s} = \frac{\mathbf{h}^{H}\mathbf{y}}{\left\|\mathbf{h}\right\|^2},
+\qquad
+\mathrm{SNR}_{\mathrm{out}} = \frac{\left\|\mathbf{h}\right\|^2}{\sigma^2}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">mrc_ser</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">n_symbols</span><span class="o">=</span><span class="mi">400000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One transmit antenna, two receive antennas: maximum ratio combining.&quot;&quot;&quot;</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">sent</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">))</span>
+         <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sigma2</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">))</span>
+                                   <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">generator</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">)))</span>
+    <span class="n">received</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">sent</span><span class="p">]</span> <span class="o">+</span> <span class="n">noise</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">received</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                                                              <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">detected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">detected</span> <span class="o">!=</span> <span class="n">sent</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We sweep the SNR:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Monte-Carlo comparison</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">curves</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">siso_ser</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
+    <span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">alamouti_ser</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
+    <span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">mrc_ser</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="plot-ser-vs-snr">
+<h3>Plot SER vs SNR<a class="headerlink" href="#plot-ser-vs-snr" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2: the diversity order is the slope</span>
+<span class="n">fig2</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;symbol error rate&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_alamouti_fig2.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_alamouti_fig2.png"><img alt="../_images/one_shot_alamouti_fig2.png" class="align-center" src="../_images/one_shot_alamouti_fig2.png" style="width: 100%;" />
+</a>
+<p>Two things are visible, and they are the two things to remember.</p>
+<p><strong>The slope.</strong> The single-antenna curve falls by one decade per decade of SNR; the two diversity schemes fall twice as fast. Since the diversity order is an <em>asymptotic</em> slope, the script prints the local slope of each curve rather than a single fitted number, so that the convergence is visible:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The diversity order is the *asymptotic* slope, so the interesting</span>
+<span class="c1"># thing is the local slope converging to it. Intervals whose upper end</span>
+<span class="c1"># rests on a handful of errors are dropped: their slope is noise.</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ser</span><span class="p">)</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]))</span>
+             <span class="o">/</span> <span class="p">((</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">3e-4</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> local slope &quot;</span>
+          <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">0.72</span> <span class="o">-</span><span class="mf">0.85</span> <span class="o">-</span><span class="mf">0.93</span> <span class="o">-</span><span class="mf">0.97</span> <span class="o">-</span><span class="mf">1.01</span> <span class="o">-</span><span class="mf">1.02</span>
+<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">1.11</span> <span class="o">-</span><span class="mf">1.50</span> <span class="o">-</span><span class="mf">1.79</span> <span class="o">-</span><span class="mf">1.97</span>
+<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">1.40</span> <span class="o">-</span><span class="mf">1.72</span> <span class="o">-</span><span class="mf">1.88</span>
+</pre></div>
+</div>
+<p>The first curve converges to 1, the two others to 2. Intervals whose upper end rests on a handful of errors are dropped: their slope would be Monte-Carlo noise, not physics.</p>
+<p><strong>The 3 dB.</strong> Alamouti is parallel to MRC but shifted right. The script reads the SNR each scheme needs to reach a symbol error rate of <span class="math notranslate nohighlight">\(10^{-3}\)</span>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># and the gap Alamouti pays for transmitting blind: about 3 dB</span>
+<span class="n">target</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<span class="n">gaps</span> <span class="o">=</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ser</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                         <span class="n">snr_dB_list</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNR needed for SER = </span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: &quot;</span>
+      <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">gaps</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>SNR needed for SER = 0.001: 1 Tx, 1 Rx (no diversity) 28.0 dB,
+Alamouti, 2 Tx, 1 Rx 18.4 dB, MRC, 1 Tx, 2 Rx 15.6 dBThe gap to MRC is the price of transmitting *blind*: the receiver knows the channel and can weight its two branches by :math:`h_i^{*}`, while the transmitter cannot, and splits its power evenly instead. Alamouti buys the full diversity order anyway -- it only pays for it in array gain, not in slope.
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The same 3 dB is why the comparison had to be made at equal total
+transmit power. Had each antenna transmitted the full power, the
+Alamouti curve would have landed on top of the MRC one and the plot
+would have proved nothing.</p>
+</div>
+</section>
+</section>
+<section id="beyond-two-antennas">
+<h2>Beyond two antennas<a class="headerlink" href="#beyond-two-antennas" title="Link to this heading">#</a></h2>
+<p>Alamouti is the only complex orthogonal design of rate 1. Beyond two transmit antennas, orthogonality survives only at a reduced rate – <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> ships the designs of Tarokh, Jafarkhani and Calderbank at rates 1/2 and 3/4 for three and four antennas – and above rate 1 nothing is orthogonal at all, so linear decoding is no longer optimal:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.coding</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_codes</span><span class="p">,</span> <span class="n">get_code</span>
+
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">available_codes</span><span class="p">():</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">get_code</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">22s</span><span class="si">}</span><span class="s2"> Nt=</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="si">}</span><span class="s2"> rate=</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">4.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;orthogonal=</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">is_orthogonal</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Golden code sits at the other end of the same trade: rate 2 on two antennas <em>and</em> full diversity, at the price of a decoder that has to search. <code class="docutils literal notranslate"><span class="pre">SpaceTimeDecoder</span></code> refuses it rather than returning a zero-forcing answer under a name that promises optimality; <code class="docutils literal notranslate"><span class="pre">code.equivalent_channel(H)</span></code> builds the equivalent channel to hand to one of the detectors of <a class="reference internal" href="../documentation/mimo/detectors.html"><span class="doc">Detectors</span></a>.</p>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>This tutorial highlighted:</p>
+<ul class="simple">
+<li><p>Why a fading link is limited by its deep fades, and what diversity does about it.</p></li>
+<li><p>How the Alamouti codeword turns two transmit antennas into two independent observations, without any channel knowledge at the transmitter.</p></li>
+<li><p>Why the resulting receiver is a matched filter and why that is exactly maximum likelihood.</p></li>
+<li><p>That the measured slope doubles, and that Alamouti pays 3 dB against receive diversity for transmitting blind.</p></li>
+</ul>
+<p>With <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, a space-time code is an object taken from a registry, its orthogonality is verified rather than assumed, and the encoder and decoder are ordinary chain blocks.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mimo.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">MIMO Chain Tutorial</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="optical_fiber_nonlinearity.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Optical Fiber Link Simulation Tutorial</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-diversity">Why diversity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-alamouti-scheme">The Alamouti scheme</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">Define System Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-simulation">One-Shot Simulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#transmit-and-receive-one-block">Transmit and receive one block</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-combining">Visualize the combining</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#three-schemes-at-equal-transmit-power">Three schemes at equal transmit power</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">Plot SER vs SNR</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beyond-two-antennas">Beyond two antennas</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/examples/alamouti.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

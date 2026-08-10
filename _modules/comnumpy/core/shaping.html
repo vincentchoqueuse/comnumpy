@@ -1,0 +1,1851 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.core.shaping &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/core/shaping';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.core.shaping</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.core.shaping</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Probabilistic shaping: choosing *how often* each symbol is sent.</span>
+
+<span class="sd">A uniform constellation is not the best a channel can do. The capacity</span>
+<span class="sd">of the Gaussian channel is reached by a Gaussian input, and a uniform</span>
+<span class="sd">distribution over a square QAM grid loses up to **1.53 dB** of it -- the</span>
+<span class="sd">*shaping gap*, :math:`10 \log_{10}(\pi e / 6)`. Probabilistic shaping</span>
+<span class="sd">closes that gap by sending inner constellation points more often than</span>
+<span class="sd">outer ones, at the same average power.</span>
+
+<span class="sd">Two things are needed for that, and this module provides both.</span>
+
+<span class="sd">**The target distribution.** For an average-power constraint the</span>
+<span class="sd">entropy-maximizing distribution over a discrete constellation is the</span>
+<span class="sd">Maxwell-Boltzmann family :func:`maxwell_boltzmann`, and nothing else:</span>
+<span class="sd">the shape is forced by the constraint, only its parameter is free.</span>
+
+<span class="sd">**A way to produce it from data.** Data is uniform, so a *distribution</span>
+<span class="sd">matcher* is an invertible map from uniform bit strings onto sequences</span>
+<span class="sd">with the wanted empirical distribution. Two classical constructions are</span>
+<span class="sd">implemented, and they differ in what they hold fixed:</span>
+
+<span class="sd">* :class:`ConstantCompositionMatcher` (CCDM) fixes the **composition** --</span>
+<span class="sd">  every output block contains exactly :math:`n_i` copies of symbol</span>
+<span class="sd">  :math:`i` -- and enumerates the permutations of that multiset;</span>
+<span class="sd">* :class:`SphereShaper` (ESS) fixes an **energy budget** -- every output</span>
+<span class="sd">  block satisfies :math:`\sum_j e(a_j) \leq E_{\max}` -- and enumerates</span>
+<span class="sd">  the sequences inside that sphere. It is the better of the two at short</span>
+<span class="sd">  blocklengths, because it does not force each block to reproduce the</span>
+<span class="sd">  target distribution exactly.</span>
+
+<span class="sd">Both are *exactly* invertible: they are enumerative codes, ranking and</span>
+<span class="sd">unranking a finite set with integer arithmetic, so nothing is</span>
+<span class="sd">approximated and ``decode(encode(bits)) == bits`` holds by construction</span>
+<span class="sd">rather than by tolerance.</span>
+
+<span class="sd">**Where this sits in a transmitter (PAS).** The standard architecture is</span>
+<span class="sd">probabilistic amplitude shaping: the matcher shapes the **amplitudes**,</span>
+<span class="sd">a systematic FEC encoder produces the parity bits, and those parity bits</span>
+<span class="sd">-- which are uniform -- become the **signs**. A sign is equiprobable, so</span>
+<span class="sd">it costs nothing in shaping and the composite constellation keeps the</span>
+<span class="sd">symmetric Maxwell-Boltzmann distribution. That is why the matchers here</span>
+<span class="sd">work on non-negative amplitudes and why their alphabet is half a PAM</span>
+<span class="sd">constellation.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">G. Böcherer, F. Steiner, P. Schulte, &quot;Bandwidth efficient and</span>
+<span class="sd">rate-matched low-density parity-check coded modulation&quot;, IEEE Trans.</span>
+<span class="sd">Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015 (PAS);</span>
+<span class="sd">P. Schulte, G. Böcherer, &quot;Constant composition distribution matching&quot;,</span>
+<span class="sd">IEEE Trans. Inf. Theory, vol. 62, no. 1, pp. 430-434, Jan. 2016 (CCDM);</span>
+<span class="sd">F. M. J. Willems, J. J. Wuijts, &quot;A pragmatic approach to shaped coded</span>
+<span class="sd">modulation&quot;, IEEE Symp. Commun. Veh. Technol., 1993 (enumerative shell</span>
+<span class="sd">mapping); Y. C. Gültekin, W. J. van Houtum, A. G. C. Koonen, F. M. J.</span>
+<span class="sd">Willems, &quot;Enumerative sphere shaping for wireless communications with</span>
+<span class="sd">short packets&quot;, IEEE Trans. Wireless Commun., vol. 19, no. 2,</span>
+<span class="sd">pp. 1098-1112, Feb. 2020; G. D. Forney, L.-F. Wei, &quot;Multidimensional</span>
+<span class="sd">constellations -- Part I&quot;, IEEE J. Sel. Areas Commun., vol. 7, no. 6,</span>
+<span class="sd">pp. 877-892, 1989 (the 1.53 dB shaping gain).</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">&gt;&gt;&gt; import numpy as np</span>
+<span class="sd">&gt;&gt;&gt; amplitudes = np.array([1.0, 3.0, 5.0, 7.0])       # half of 8-PAM</span>
+<span class="sd">&gt;&gt;&gt; target = maxwell_boltzmann(amplitudes, entropy=1.5)</span>
+<span class="sd">&gt;&gt;&gt; print(np.round(target, 4))</span>
+<span class="sd">[0.5376 0.322  0.1156 0.0248]</span>
+<span class="sd">&gt;&gt;&gt; matcher = ConstantCompositionMatcher(amplitudes, distribution=target,</span>
+<span class="sd">...                                      length=32)</span>
+<span class="sd">&gt;&gt;&gt; matcher.n_bits, round(matcher.rate, 4)</span>
+<span class="sd">(42, 1.3125)</span>
+<span class="sd">&gt;&gt;&gt; bits = np.zeros(42, dtype=int); bits[::3] = 1</span>
+<span class="sd">&gt;&gt;&gt; block = matcher.encode(bits)</span>
+<span class="sd">&gt;&gt;&gt; bool(np.array_equal(matcher.decode(block), bits))    # exactly invertible</span>
+<span class="sd">True</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;maxwell_boltzmann&quot;</span><span class="p">,</span> <span class="s2">&quot;distribution_entropy&quot;</span><span class="p">,</span> <span class="s2">&quot;composition_from_distribution&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;shaping_gain_dB&quot;</span><span class="p">,</span> <span class="s2">&quot;ConstantCompositionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;SphereShaper&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DistributionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;DistributionDematcher&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># The bisection on the Maxwell-Boltzmann parameter runs on lambda in</span>
+<span class="c1"># [0, _LAMBDA_MAX / min spacing^2]. The entropy is monotone in lambda, so</span>
+<span class="c1"># a plain bisection converges; 200 iterations take it to the last bit of</span>
+<span class="c1"># a double whatever the bracket.</span>
+<span class="n">_LAMBDA_MAX</span> <span class="o">=</span> <span class="mf">1e4</span>
+<span class="n">_BISECTION_STEPS</span> <span class="o">=</span> <span class="mi">200</span>
+
+
+<div class="viewcode-block" id="distribution_entropy">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.distribution_entropy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">distribution_entropy</span><span class="p">(</span><span class="n">distribution</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Entropy of a symbol distribution, in bits.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        H(P) = -\sum_{i} p_i \log_2 p_i</span>
+
+<span class="sd">    It is the number of bits a symbol of that distribution carries, hence</span>
+<span class="sd">    the ceiling any distribution matcher can approach and the quantity</span>
+<span class="sd">    its *rate loss* is measured against.</span>
+
+<span class="sd">    Axes: *element-wise* -- the distribution is a 1-D array of</span>
+<span class="sd">    probabilities.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    distribution : np.ndarray</span>
+<span class="sd">        Probabilities :math:`p_i`, non-negative and summing to one.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Entropy in bits per symbol, in :math:`[0, \log_2 M]`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the probabilities are negative or do not sum to one.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    T. M. Cover, J. A. Thomas, *Elements of Information Theory*, 2nd ed.,</span>
+<span class="sd">    Wiley, 2006, Section 2.1.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(round(distribution_entropy(np.full(8, 1 / 8)), 4))</span>
+<span class="sd">    3.0</span>
+<span class="sd">    &gt;&gt;&gt; print(round(distribution_entropy(np.array([0.5, 0.25, 0.25])), 4))</span>
+<span class="sd">    1.5</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">p</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a distribution cannot have a negative probability, got a &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;minimum of </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a distribution must sum to one, got </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Divide by the sum if these are unnormalized weights.&quot;</span><span class="p">)</span>
+    <span class="n">positive</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">p</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">positive</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">positive</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="maxwell_boltzmann">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.maxwell_boltzmann">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">maxwell_boltzmann</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">entropy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The distribution shaping uses, and the only one it can use.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Among all distributions on a fixed constellation with a given average</span>
+<span class="sd">    energy, the one of maximum entropy is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        p_i = \frac{e^{-\lambda \left|a_i\right|^2}}</span>
+<span class="sd">                   {\sum_j e^{-\lambda \left|a_j\right|^2}},</span>
+<span class="sd">        \qquad \lambda \geq 0</span>
+
+<span class="sd">    the Maxwell-Boltzmann family. This is not a modelling choice: it is</span>
+<span class="sd">    what maximizing :math:`H(P)` subject to</span>
+<span class="sd">    :math:`\sum_i p_i |a_i|^2 \leq E` gives, :math:`\lambda` being the</span>
+<span class="sd">    Lagrange multiplier of the power constraint. :math:`\lambda = 0`</span>
+<span class="sd">    returns the uniform distribution; growing :math:`\lambda` moves mass</span>
+<span class="sd">    onto the inner points, lowering both the energy and the entropy.</span>
+
+<span class="sd">    Since the entropy is strictly decreasing in :math:`\lambda`,</span>
+<span class="sd">    specifying a target entropy determines :math:`\lambda` uniquely; that</span>
+<span class="sd">    is the useful parameterization in practice, because the entropy *is*</span>
+<span class="sd">    the rate the constellation carries.</span>
+
+<span class="sd">    Axes: *element-wise* -- the alphabet is a 1-D array of constellation</span>
+<span class="sd">    points, and the result is a distribution over it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Constellation points :math:`a_i`, real or complex.</span>
+<span class="sd">    lam : float, optional, keyword-only</span>
+<span class="sd">        The parameter :math:`\lambda` itself, non-negative.</span>
+<span class="sd">    entropy : float, optional, keyword-only</span>
+<span class="sd">        Target entropy :math:`H(P)` in bits per symbol, in</span>
+<span class="sd">        :math:`(0, \log_2 M]`. Exactly one of ``lam`` and ``entropy``</span>
+<span class="sd">        must be given (D41).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        The distribution :math:`p_i`, same length as ``alphabet``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If both or neither parameterization is given, if ``lam`` is</span>
+<span class="sd">        negative, or if ``entropy`` is outside :math:`(0, \log_2 M]`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    F. R. Kschischang, S. Pasupathy, &quot;Optimal nonuniform signaling for</span>
+<span class="sd">    Gaussian channels&quot;, IEEE Trans. Inf. Theory, vol. 39, no. 3,</span>
+<span class="sd">    pp. 913-929, 1993; Böcherer, Steiner, Schulte, IEEE Trans. Commun.</span>
+<span class="sd">    63(12), 2015, Section III.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; amplitudes = np.array([1.0, 3.0, 5.0, 7.0])</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(maxwell_boltzmann(amplitudes, lam=0.0), 4))</span>
+<span class="sd">    [0.25 0.25 0.25 0.25]</span>
+<span class="sd">    &gt;&gt;&gt; shaped = maxwell_boltzmann(amplitudes, entropy=1.5)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(distribution_entropy(shaped), 6))</span>
+<span class="sd">    1.5</span>
+<span class="sd">    &gt;&gt;&gt; float(np.sum(shaped * amplitudes ** 2)) &lt; 21.0    # uniform: 21</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">exclusive</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;maxwell_boltzmann takes exactly one of lam= and entropy=, got &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;lam=</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2"> and entropy=</span><span class="si">{</span><span class="n">entropy</span><span class="si">}</span><span class="s2">. Pass lam= for the parameter &quot;</span>
+        <span class="s2">&quot;itself, entropy= for the rate you want the constellation to &quot;</span>
+        <span class="s2">&quot;carry (D41).&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lam</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">entropy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">exclusive</span><span class="p">)</span>
+    <span class="n">energies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="k">if</span> <span class="n">lam</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lam</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the Maxwell-Boltzmann parameter is non-negative, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;lam=</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">. A negative value would favour the *outer* &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;points, which costs energy and entropy at once.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_mb_from_lambda</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">entropy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">exclusive</span><span class="p">)</span>
+
+    <span class="n">target</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">entropy</span><span class="p">)</span>
+    <span class="n">ceiling</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="c1"># The family cannot go below the entropy of its own minimum-energy</span>
+    <span class="c1"># set: points of equal energy always keep equal probability, so a</span>
+    <span class="c1"># symmetric PAM constellation floors at 1 bit, whatever lambda does.</span>
+    <span class="n">degeneracy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">energies</span><span class="p">))))</span>
+    <span class="n">floor</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">degeneracy</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">floor</span> <span class="o">&lt;=</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;got entropy=</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">, expected a value in &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">floor</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ceiling</span><span class="si">}</span><span class="s2">] for this alphabet. The upper end is &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;log2(M), reached by the uniform distribution. The lower end &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;is log2 of the number of points sharing the smallest &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;energy (</span><span class="si">{</span><span class="n">degeneracy</span><span class="si">}</span><span class="s2"> here): Maxwell-Boltzmann gives equal &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;probability to points of equal energy, so no lambda can &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;separate them -- a symmetric constellation cannot be &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;shaped below 1 bit per symbol.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># H(lambda) is strictly decreasing between those two ends: bisect</span>
+    <span class="n">spread</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">energies</span><span class="p">))</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="n">_LAMBDA_MAX</span> <span class="o">/</span> <span class="n">spread</span> <span class="k">if</span> <span class="n">spread</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_BISECTION_STEPS</span><span class="p">):</span>
+        <span class="n">middle</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">low</span> <span class="o">+</span> <span class="n">high</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distribution_entropy</span><span class="p">(</span><span class="n">_mb_from_lambda</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="n">middle</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">middle</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="n">middle</span>
+    <span class="k">return</span> <span class="n">_mb_from_lambda</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">low</span> <span class="o">+</span> <span class="n">high</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mb_from_lambda</span><span class="p">(</span><span class="n">energies</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Softmax of ``-lam * energies``, shifted so it cannot overflow.&quot;&quot;&quot;</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">lam</span> <span class="o">*</span> <span class="p">(</span><span class="n">energies</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">energies</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="composition_from_distribution">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.composition_from_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">composition_from_distribution</span><span class="p">(</span><span class="n">distribution</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                                  <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Round a distribution to an integer composition of a block.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A constant-composition matcher emits blocks holding exactly</span>
+<span class="sd">    :math:`n_i` copies of symbol :math:`i`, so it needs integers, not</span>
+<span class="sd">    probabilities. The composition closest to :math:`n p_i` under the</span>
+<span class="sd">    constraint :math:`\sum_i n_i = n` is obtained by the largest-remainder</span>
+<span class="sd">    rule: take :math:`\lfloor n p_i \rfloor` for every symbol, then give</span>
+<span class="sd">    the :math:`n - \sum_i \lfloor n p_i \rfloor` remaining slots to the</span>
+<span class="sd">    symbols with the largest fractional parts.</span>
+
+<span class="sd">    The composition is not the distribution: it is a quantization of it,</span>
+<span class="sd">    and the difference is one reason a finite block loses rate. It</span>
+<span class="sd">    vanishes as :math:`n` grows.</span>
+
+<span class="sd">    Axes: *element-wise* -- a 1-D distribution in, a tuple of counts out.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    distribution : np.ndarray</span>
+<span class="sd">        Target probabilities, summing to one.</span>
+<span class="sd">    length : int</span>
+<span class="sd">        Block length :math:`n`, the total number of symbols.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple of int</span>
+<span class="sd">        The counts :math:`n_i`, summing to ``length``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``length`` is not positive, or the distribution is invalid.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    P. Schulte, G. Böcherer, IEEE Trans. Inf. Theory 62(1), 2016,</span>
+<span class="sd">    Section IV (choice of the composition).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; composition_from_distribution(np.array([0.5, 0.25, 0.25]), 8)</span>
+<span class="sd">    (4, 2, 2)</span>
+<span class="sd">    &gt;&gt;&gt; composition_from_distribution(np.array([0.4, 0.35, 0.25]), 10)</span>
+<span class="sd">    (4, 4, 2)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">distribution_entropy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>                      <span class="c1"># validates it (D20)</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a block holds at least one symbol, got length=</span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">length</span> <span class="o">*</span> <span class="n">p</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">remainder</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">remainder</span><span class="p">:</span>
+        <span class="c1"># largest fractional parts first; ties go to the lower index, so</span>
+        <span class="c1"># the result is a function of the input and not of the sort used</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">scaled</span> <span class="o">-</span> <span class="n">counts</span><span class="p">),</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+        <span class="n">counts</span><span class="p">[</span><span class="n">order</span><span class="p">[:</span><span class="n">remainder</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shaping_gain_dB">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.shaping_gain_dB">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shaping_gain_dB</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">distribution</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Energy saved by a shaped distribution, at equal rate.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Shaping is only worth something if it lowers the energy *without*</span>
+<span class="sd">    lowering the rate, so the comparison has to be made at equal entropy.</span>
+<span class="sd">    On a one-dimensional grid of spacing :math:`\Delta`, a source of</span>
+<span class="sd">    entropy :math:`H` spread uniformly would occupy an interval of width</span>
+<span class="sd">    :math:`2^{H}\Delta` and cost</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_{\mathrm{unif}} = \frac{\left(2^{H} \Delta\right)^2}{12}</span>
+
+<span class="sd">    against the :math:`E_P = \sum_i p_i a_i^2` the shaped distribution</span>
+<span class="sd">    actually costs. The gain is their ratio,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        G_s = 10 \log_{10} \frac{E_{\mathrm{unif}}}{E_P}</span>
+
+<span class="sd">    A uniform distribution over :math:`M` points gives</span>
+<span class="sd">    :math:`10\log_{10}(M^2/(M^2-1))`, i.e. essentially 0 dB, which is the</span>
+<span class="sd">    calibration this definition needs to be worth anything. The</span>
+<span class="sd">    supremum over all one-dimensional distributions is</span>
+<span class="sd">    :math:`10\log_{10}(\pi e/6) = 1.53` dB, reached in the limit of a</span>
+<span class="sd">    Gaussian over an infinitely fine, infinitely wide grid.</span>
+
+<span class="sd">    Axes: *element-wise* -- a 1-D real alphabet and its distribution.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Constellation points, **real** and on a regular grid. A complex</span>
+<span class="sd">        constellation is two independent dimensions; pass one of them.</span>
+<span class="sd">    distribution : np.ndarray</span>
+<span class="sd">        Probability of each point.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Shaping gain in dB, at most 1.53.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the alphabet is complex, or has fewer than two points.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. D. Forney, L.-F. Wei, &quot;Multidimensional constellations -- Part I:</span>
+<span class="sd">    Introduction, figures of merit, and generalized cross</span>
+<span class="sd">    constellations&quot;, IEEE J. Sel. Areas Commun., vol. 7, no. 6,</span>
+<span class="sd">    pp. 877-892, 1989, Section III (shaping gain and the 1.53 dB</span>
+<span class="sd">    ultimate gain).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; pam8 = np.arange(-7, 8, 2).astype(float)</span>
+<span class="sd">    &gt;&gt;&gt; uniform = np.full(8, 1 / 8)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(shaping_gain_dB(pam8, uniform), 4))     # the calibration</span>
+<span class="sd">    0.0684</span>
+<span class="sd">    &gt;&gt;&gt; shaped = maxwell_boltzmann(pam8, entropy=2.5)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(shaping_gain_dB(pam8, shaped), 4))</span>
+<span class="sd">    1.5055</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;shaping_gain_dB is defined on a one-dimensional grid, got a &quot;</span>
+            <span class="s2">&quot;complex alphabet. A QAM constellation is the product of two &quot;</span>
+            <span class="s2">&quot;PAM constellations: pass np.unique(np.real(alphabet)).&quot;</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">points</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a grid spacing needs at least two points, got </span><span class="si">{</span><span class="n">points</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">distribution_entropy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>                      <span class="c1"># validates it</span>
+    <span class="n">spacing</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">points</span><span class="p">)))))</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="n">distribution_entropy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">uniform_energy</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">entropy</span> <span class="o">*</span> <span class="n">spacing</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">12</span>
+    <span class="n">shaped_energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">points</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">uniform_energy</span> <span class="o">/</span> <span class="n">shaped_energy</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="ConstantCompositionMatcher">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.ConstantCompositionMatcher">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstantCompositionMatcher</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Constant composition distribution matching (CCDM).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The matcher is an enumerative code on the permutations of a fixed</span>
+<span class="sd">    multiset. Given a composition :math:`(n_1, \ldots, n_M)` with</span>
+<span class="sd">    :math:`\sum_i n_i = n`, the set of output blocks is every sequence</span>
+<span class="sd">    containing exactly :math:`n_i` copies of symbol :math:`i`, and there</span>
+<span class="sd">    are</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        N = \binom{n}{n_1, \ldots, n_M}</span>
+<span class="sd">          = \frac{n!}{n_1! \, n_2! \cdots n_M!}</span>
+
+<span class="sd">    of them. The matcher maps :math:`k = \lfloor \log_2 N \rfloor` input</span>
+<span class="sd">    bits onto them by *unranking*: the integer the bits spell out is the</span>
+<span class="sd">    lexicographic index of the block. Reading the index back off the</span>
+<span class="sd">    block -- *ranking* -- inverts it exactly, which is why the pair is a</span>
+<span class="sd">    bijection and not an approximation.</span>
+
+<span class="sd">    Every block has the same empirical distribution :math:`n_i / n` by</span>
+<span class="sd">    construction, so the shaped statistics are exact at every block</span>
+<span class="sd">    length. What a finite block costs is **rate**: the matcher carries</span>
+<span class="sd">    :math:`k/n` bits per symbol where the composition itself is worth</span>
+<span class="sd">    :math:`H(n_i/n)`, and</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        R_{\mathrm{loss}} = H\left(\frac{n_i}{n}\right) - \frac{k}{n}</span>
+<span class="sd">        \;\xrightarrow[n \to \infty]{}\; 0</span>
+
+<span class="sd">    Axes: *element-wise* -- a block is a 1-D sequence of ``length``</span>
+<span class="sd">    symbol indices; batches are handled by :class:`DistributionMatcher`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        The symbols the matcher emits, usually the non-negative</span>
+<span class="sd">        amplitudes of a PAM constellation (see the module docstring on</span>
+<span class="sd">        PAS). Only its length is used by the enumeration.</span>
+<span class="sd">    composition : tuple of int, optional, keyword-only</span>
+<span class="sd">        The counts :math:`n_i` directly.</span>
+<span class="sd">    distribution : np.ndarray, optional, keyword-only</span>
+<span class="sd">        A target distribution, quantized to a composition by</span>
+<span class="sd">        :func:`composition_from_distribution`. Requires ``length``.</span>
+<span class="sd">        Exactly one of ``composition`` and ``distribution`` is given</span>
+<span class="sd">        (D41).</span>
+<span class="sd">    length : int, optional, keyword-only</span>
+<span class="sd">        Block length :math:`n`, required with ``distribution`` and</span>
+<span class="sd">        forbidden with ``composition``, which already carries it.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_bits : int</span>
+<span class="sd">        :math:`k`, the number of input bits per block.</span>
+<span class="sd">    length : int</span>
+<span class="sd">        :math:`n`, the number of output symbols per block.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the parameterization is ambiguous, or if the composition</span>
+<span class="sd">        supports fewer than one bit.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    P. Schulte, G. Böcherer, &quot;Constant composition distribution</span>
+<span class="sd">    matching&quot;, IEEE Trans. Inf. Theory, vol. 62, no. 1, pp. 430-434,</span>
+<span class="sd">    Jan. 2016.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; matcher = ConstantCompositionMatcher(np.array([1.0, 3.0]),</span>
+<span class="sd">    ...                                      composition=(6, 2))</span>
+<span class="sd">    &gt;&gt;&gt; matcher.n_bits, matcher.length</span>
+<span class="sd">    (4, 8)</span>
+<span class="sd">    &gt;&gt;&gt; block = matcher.encode(np.array([1, 0, 1, 1]))</span>
+<span class="sd">    &gt;&gt;&gt; print(block)</span>
+<span class="sd">    [0 0 1 0 0 0 1 0]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.bincount(block))            # the composition, exactly</span>
+<span class="sd">    [6 2]</span>
+<span class="sd">    &gt;&gt;&gt; print(matcher.decode(block))</span>
+<span class="sd">    [1 0 1 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">composition</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">given_composition</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span>
+        <span class="n">given_distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">given_composition</span> <span class="o">==</span> <span class="n">given_distribution</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;ConstantCompositionMatcher takes exactly one of &quot;</span>
+                <span class="s2">&quot;composition= and distribution=, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;composition=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="si">!r}</span><span class="s2"> and &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;distribution=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="si">!r}</span><span class="s2">. Pass the counts &quot;</span>
+                <span class="s2">&quot;themselves, or a target distribution together with the &quot;</span>
+                <span class="s2">&quot;block length to quantize it (D41).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">given_distribution</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;distribution= needs the block length it is &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;quantized onto, got length=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2">. Pass &quot;</span>
+                    <span class="s2">&quot;length=n, or give the composition directly.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">composition</span> <span class="o">=</span> <span class="n">composition_from_distribution</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;length=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> contradicts composition=&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="si">!r}</span><span class="s2">, which already sums to &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span><span class="si">}</span><span class="s2">. Drop one of the two (D41).&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the composition has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span><span class="si">}</span><span class="s2"> counts but &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;the alphabet has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> symbols -- one &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;count per symbol is expected, zeros included.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">count</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;a composition counts occurrences, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">=</span> <span class="n">_bits_in</span><span class="p">(</span><span class="n">_multinomial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the composition </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="si">!r}</span><span class="s2"> admits &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_multinomial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span><span class="si">}</span><span class="s2"> sequence(s), which &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;carries no bit. Lengthen the block or spread the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;counts over more symbols.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bits per output symbol, :math:`k/n`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rate_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;What the finite block costs, in bits per symbol.&quot;&quot;&quot;</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+        <span class="k">return</span> <span class="n">distribution_entropy</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span>
+
+<div class="viewcode-block" id="ConstantCompositionMatcher.encode">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.ConstantCompositionMatcher.encode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map ``n_bits`` bits onto one block of symbol indices.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">_bits_to_int</span><span class="p">(</span><span class="n">bits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">_multinomial</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">:</span>
+                    <span class="n">output</span><span class="p">[</span><span class="n">position</span><span class="p">]</span> <span class="o">=</span> <span class="n">symbol</span>
+                    <span class="k">break</span>
+                <span class="n">index</span> <span class="o">-=</span> <span class="n">count</span>
+                <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+
+<div class="viewcode-block" id="ConstantCompositionMatcher.decode">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.ConstantCompositionMatcher.decode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the ``n_bits`` bits back off one block of indices.&quot;&quot;&quot;</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">block</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">symbols</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> decodes blocks of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;symbols, got </span><span class="si">{</span><span class="n">symbols</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the block has composition </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">counts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; but this matcher enumerates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="si">!r}</span><span class="s2">. A &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;detector error can produce such a block: it is not in &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;the code, so there is no index to read.&quot;</span><span class="p">)</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">composition</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">symbol</span> <span class="o">==</span> <span class="n">symbols</span><span class="p">[</span><span class="n">position</span><span class="p">]:</span>
+                    <span class="k">break</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="n">_multinomial</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
+                <span class="n">remaining</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">_int_to_bits</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SphereShaper">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.SphereShaper">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SphereShaper</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enumerative sphere shaping (ESS).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Instead of forcing every block to have the same composition, ESS</span>
+<span class="sd">    keeps every block inside an energy sphere: with an integer energy</span>
+<span class="sd">    :math:`e_i` attached to each amplitude, the code is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathcal{C} = \left\{ (s_1, \ldots, s_n) :</span>
+<span class="sd">        \sum_{j=1}^{n} e_{s_j} \leq E_{\max} \right\}</span>
+
+<span class="sd">    and the matcher enumerates it. Counting is a one-dimensional</span>
+<span class="sd">    recursion over the remaining budget,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        N_t(E) = \sum_{i} N_{t-1}\left(E - e_i\right), \qquad</span>
+<span class="sd">        N_0(E) = 1 \;\; \text{for } E \geq 0</span>
+
+<span class="sd">    from which the lexicographic unranking follows exactly as for CCDM.</span>
+
+<span class="sd">    Compared with a constant composition, the sphere is a **larger** set</span>
+<span class="sd">    at the same average energy, because it lets a block spend more on one</span>
+<span class="sd">    symbol and less on another. That is worth up to a few tenths of a dB</span>
+<span class="sd">    at the block lengths where shaping is actually deployed: CCDM needs</span>
+<span class="sd">    thousands of symbols to be efficient, ESS is already good at a few</span>
+<span class="sd">    dozen. What it gives up is the exact per-block distribution, which is</span>
+<span class="sd">    only reproduced on average.</span>
+
+<span class="sd">    The energies are derived from the alphabet: :math:`|a_i|^2` shifted</span>
+<span class="sd">    so the cheapest amplitude costs zero, then divided by the greatest</span>
+<span class="sd">    common divisor. Both steps are exact on the odd-integer grids used in</span>
+<span class="sd">    practice (amplitudes 1, 3, 5, 7 give energies 0, 1, 3, 6) and only</span>
+<span class="sd">    change the *labelling* of the budget, not the code.</span>
+
+<span class="sd">    Axes: *element-wise* -- a block is a 1-D sequence of ``length``</span>
+<span class="sd">    symbol indices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Amplitudes, on a grid whose squared values are integers after</span>
+<span class="sd">        shifting (odd integers, as produced by ``get_alphabet(&quot;PAM&quot;, M,</span>
+<span class="sd">        norm=False)`` restricted to its positive half).</span>
+<span class="sd">    length : int, keyword-only</span>
+<span class="sd">        Block length :math:`n`.</span>
+<span class="sd">    max_energy : int, optional, keyword-only</span>
+<span class="sd">        The budget :math:`E_{\max}`, in the reduced integer unit.</span>
+<span class="sd">    n_bits : int, optional, keyword-only</span>
+<span class="sd">        Target number of input bits; the smallest budget carrying that</span>
+<span class="sd">        many bits is used. Exactly one of the two is given (D41).</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_bits : int</span>
+<span class="sd">        :math:`k = \lfloor \log_2 |\mathcal{C}| \rfloor`.</span>
+<span class="sd">    max_energy : int</span>
+<span class="sd">        The budget actually used.</span>
+<span class="sd">    energies : tuple of int</span>
+<span class="sd">        The reduced integer energy of each amplitude. The ``rate``</span>
+<span class="sd">        property gives :math:`k/n`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the parameterization is ambiguous, if the squared amplitudes</span>
+<span class="sd">        are not integers after shifting, or if the budget carries no bit.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    F. M. J. Willems, J. J. Wuijts, &quot;A pragmatic approach to shaped coded</span>
+<span class="sd">    modulation&quot;, IEEE Symp. Commun. Veh. Technol., 1993; Y. C. Gültekin</span>
+<span class="sd">    et al., &quot;Enumerative sphere shaping for wireless communications with</span>
+<span class="sd">    short packets&quot;, IEEE Trans. Wireless Commun., vol. 19, no. 2,</span>
+<span class="sd">    pp. 1098-1112, Feb. 2020.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; shaper = SphereShaper(np.array([1.0, 3.0]), length=8, max_energy=3)</span>
+<span class="sd">    &gt;&gt;&gt; shaper.energies, shaper.n_bits</span>
+<span class="sd">    ((0, 1), 6)</span>
+<span class="sd">    &gt;&gt;&gt; block = shaper.encode(np.array([1, 0, 1, 1, 0, 1]))</span>
+<span class="sd">    &gt;&gt;&gt; print(block)</span>
+<span class="sd">    [0 1 0 0 0 0 1 1]</span>
+<span class="sd">    &gt;&gt;&gt; int(np.sum(block))                   # at most max_energy = 3</span>
+<span class="sd">    3</span>
+<span class="sd">    &gt;&gt;&gt; print(shaper.decode(block))</span>
+<span class="sd">    [1 0 1 1 0 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">max_energy</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">energies</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">())</span>
+    <span class="c1"># cumulative counts: _reachable[t][E] = sequences of length t of</span>
+    <span class="c1"># energy at most E (declared for slots, D40a)</span>
+    <span class="n">_reachable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;a block holds at least one symbol, got length=&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;SphereShaper takes exactly one of max_energy= and &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;n_bits=, got max_energy=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="si">}</span><span class="s2"> and &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;n_bits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span><span class="si">}</span><span class="s2">. Pass the energy budget, or the &quot;</span>
+                <span class="s2">&quot;number of bits a block must carry and let the budget &quot;</span>
+                <span class="s2">&quot;follow (D41).&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energies</span> <span class="o">=</span> <span class="n">_reduced_energies</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">wanted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span>
+            <span class="n">budget</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">ceiling</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energies</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+            <span class="k">while</span> <span class="n">budget</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_build_table</span><span class="p">(</span><span class="n">budget</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">_bits_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">][</span><span class="n">budget</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">wanted</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">budget</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> symbols over </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;amplitudes carry at most &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_bits_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">][</span><span class="n">ceiling</span><span class="p">])</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;bits, and </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> were asked for. Lengthen the &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;block or widen the alphabet.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span> <span class="o">=</span> <span class="n">budget</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="p">)</span>
+
+        <span class="n">total</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">=</span> <span class="n">_bits_in</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;an energy budget of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="si">}</span><span class="s2"> over &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> symbols admits </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> sequence(s), which &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;carries no bit. Raise max_energy.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cumulative counts up to ``budget``, rebuilt when it grows.&quot;&quot;&quot;</span>
+        <span class="n">exact</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">budget</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">exact</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">row</span><span class="p">,</span> <span class="n">previous</span> <span class="o">=</span> <span class="n">exact</span><span class="p">[</span><span class="n">position</span><span class="p">],</span> <span class="n">exact</span><span class="p">[</span><span class="n">position</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">energy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">budget</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">row</span><span class="p">[</span><span class="n">energy</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">previous</span><span class="p">[</span><span class="n">energy</span> <span class="o">-</span> <span class="n">cost</span><span class="p">]</span>
+                                  <span class="k">for</span> <span class="n">cost</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">energies</span>
+                                  <span class="k">if</span> <span class="n">cost</span> <span class="o">&lt;=</span> <span class="n">energy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">exact</span><span class="p">:</span>
+            <span class="n">running</span><span class="p">,</span> <span class="n">cumulative</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="n">running</span> <span class="o">+=</span> <span class="n">value</span>
+                <span class="n">cumulative</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">running</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cumulative</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SphereShaper.encode">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.SphereShaper.encode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map ``n_bits`` bits onto one block of symbol indices.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">_bits_to_int</span><span class="p">(</span><span class="n">bits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">budget</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+            <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">-</span> <span class="n">position</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">cost</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energies</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">budget</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="p">[</span><span class="n">left</span><span class="p">][</span><span class="n">budget</span> <span class="o">-</span> <span class="n">cost</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">:</span>
+                    <span class="n">output</span><span class="p">[</span><span class="n">position</span><span class="p">]</span> <span class="o">=</span> <span class="n">symbol</span>
+                    <span class="n">budget</span> <span class="o">-=</span> <span class="n">cost</span>
+                    <span class="k">break</span>
+                <span class="n">index</span> <span class="o">-=</span> <span class="n">count</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+
+<div class="viewcode-block" id="SphereShaper.decode">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.SphereShaper.decode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the ``n_bits`` bits back off one block of indices.&quot;&quot;&quot;</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">block</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">symbols</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> decodes blocks of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;symbols, got </span><span class="si">{</span><span class="n">symbols</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">spent</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energies</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">symbol</span><span class="p">)]</span> <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">symbols</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">spent</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the block costs </span><span class="si">{</span><span class="n">spent</span><span class="si">}</span><span class="s2"> energy units and the code &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;holds </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span><span class="si">}</span><span class="s2">: it is outside the sphere, so &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;there is no index to read. A detector error can &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;produce such a block.&quot;</span><span class="p">)</span>
+        <span class="n">budget</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_energy</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+            <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">-</span> <span class="n">position</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">cost</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energies</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="n">budget</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">symbol</span> <span class="o">==</span> <span class="n">symbols</span><span class="p">[</span><span class="n">position</span><span class="p">]:</span>
+                    <span class="n">budget</span> <span class="o">-=</span> <span class="n">cost</span>
+                    <span class="k">break</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reachable</span><span class="p">[</span><span class="n">left</span><span class="p">][</span><span class="n">budget</span> <span class="o">-</span> <span class="n">cost</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">_int_to_bits</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bits per output symbol, :math:`k/n`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span></div>
+
+
+
+<div class="viewcode-block" id="DistributionMatcher">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.DistributionMatcher">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DistributionMatcher</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Shape a bit stream into symbol indices, block by block.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The chain-level wrapper of :class:`ConstantCompositionMatcher` and</span>
+<span class="sd">    :class:`SphereShaper`: it cuts the input into blocks of :math:`k`</span>
+<span class="sd">    bits, maps each one onto :math:`n` symbol indices, and concatenates.</span>
+<span class="sd">    Its output is what ``SymbolMapper`` consumes, so a shaped</span>
+<span class="sd">    transmitter is a chain like any other.</span>
+
+<span class="sd">    Axes: *element-wise* -- the bit stream is read along the last axis,</span>
+<span class="sd">    and leading axes are carried through unchanged.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shaper : ConstantCompositionMatcher or SphereShaper</span>
+<span class="sd">        The enumerative code doing the work.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the input length is not a multiple of ``shaper.n_bits``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. Böcherer, F. Steiner, P. Schulte, IEEE Trans. Commun. 63(12),</span>
+<span class="sd">    2015 (the PAS transmitter this block sits in).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; shaper = ConstantCompositionMatcher(np.array([1.0, 3.0]),</span>
+<span class="sd">    ...                                     composition=(6, 2))</span>
+<span class="sd">    &gt;&gt;&gt; bits = np.array([1, 0, 1, 1, 0, 0, 0, 1])</span>
+<span class="sd">    &gt;&gt;&gt; indices = DistributionMatcher(shaper)(bits)</span>
+<span class="sd">    &gt;&gt;&gt; indices.size, int(np.sum(indices == 1))</span>
+<span class="sd">    (16, 4)</span>
+<span class="sd">    &gt;&gt;&gt; print(DistributionDematcher(shaper)(indices))</span>
+<span class="sd">    [1 0 1 1 0 0 0 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">shaper</span><span class="p">:</span> <span class="n">ConstantCompositionMatcher</span> <span class="o">|</span> <span class="n">SphereShaper</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;distribution matcher&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span>
+        <span class="k">if</span> <span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> consumes </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2"> bits per block &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;and got </span><span class="si">{</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> along the last axis, which is &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;not a multiple of it. Pad the stream, or choose a &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;shaper whose n_bits divides it.&quot;</span><span class="p">)</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">shaper</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">flat</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">blocks</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+
+
+<div class="viewcode-block" id="DistributionDematcher">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.DistributionDematcher">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DistributionDematcher</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Read the bit stream back off shaped symbol indices.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The exact inverse of :class:`DistributionMatcher`: blocks of</span>
+<span class="sd">    :math:`n` indices become blocks of :math:`k` bits. Since the</span>
+<span class="sd">    enumerative code is a bijection onto its block set, this is an</span>
+<span class="sd">    identity on any sequence the matcher produced -- and an error on any</span>
+<span class="sd">    other, which is the honest answer after a detection mistake.</span>
+
+<span class="sd">    Axes: *element-wise* -- indices are read along the last axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shaper : ConstantCompositionMatcher or SphereShaper</span>
+<span class="sd">        The same code used to shape.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the input length is not a multiple of ``shaper.length``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    P. Schulte, G. Böcherer, IEEE Trans. Inf. Theory 62(1), 2016.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; shaper = SphereShaper(np.array([1.0, 3.0]), length=8, max_energy=3)</span>
+<span class="sd">    &gt;&gt;&gt; bits = np.array([1, 0, 1, 1, 0, 1])</span>
+<span class="sd">    &gt;&gt;&gt; indices = DistributionMatcher(shaper)(bits)</span>
+<span class="sd">    &gt;&gt;&gt; print(DistributionDematcher(shaper)(indices))</span>
+<span class="sd">    [1 0 1 1 0 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">shaper</span><span class="p">:</span> <span class="n">ConstantCompositionMatcher</span> <span class="o">|</span> <span class="n">SphereShaper</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;distribution dematcher&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shaper</span><span class="o">.</span><span class="n">length</span>
+        <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> consumes </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2"> symbols per block &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;and got </span><span class="si">{</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> along the last axis, which &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;is not a multiple of it.&quot;</span><span class="p">)</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">shaper</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">flat</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">blocks</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_multinomial</span><span class="p">(</span><span class="n">counts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``n! / prod(n_i!)`` in exact integer arithmetic.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">//=</span> <span class="n">math</span><span class="o">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bits_in</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``floor(log2(count))``, exactly, for an arbitrarily large count.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">count</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bits_to_int</span><span class="p">(</span><span class="n">bits</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">width</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> encodes </span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2"> bits at a time, got </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">((</span><span class="n">values</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">values</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> encodes bits, got values outside </span><span class="se">{{</span><span class="s2">0, 1</span><span class="se">}}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">index</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_int_to_bits</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">index</span> <span class="o">&gt;&gt;</span> <span class="n">shift</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
+                     <span class="k">for</span> <span class="n">shift</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduced_energies</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integer energies, shifted to start at zero and divided by their gcd.&quot;&quot;&quot;</span>
+    <span class="n">squared</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">shifted</span> <span class="o">=</span> <span class="n">squared</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">squared</span><span class="p">)</span>
+    <span class="n">rounded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">shifted</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">shifted</span><span class="p">,</span> <span class="n">rounded</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;enumerative sphere shaping counts sequences by their &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;energy, so the squared amplitudes must be integers once &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;the cheapest one is subtracted. Got </span><span class="si">{</span><span class="n">shifted</span><span class="si">}</span><span class="s2"> -- pass the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;raw odd-integer grid (get_alphabet(..., norm=False)) &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;rather than a normalized alphabet.&quot;</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">rounded</span><span class="p">]</span>
+    <span class="n">divisor</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="n">divisor</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">gcd</span><span class="p">(</span><span class="n">divisor</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span> <span class="o">//</span> <span class="n">divisor</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span> <span class="k">if</span> <span class="n">divisor</span> <span class="k">else</span> \
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

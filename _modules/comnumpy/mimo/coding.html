@@ -1,0 +1,1635 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>comnumpy.mimo.coding &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/mimo/coding';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.mimo.coding</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for comnumpy.mimo.coding</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Space-time block codes: spending antennas on reliability or on rate.</span>
+
+<span class="sd">A MIMO channel offers two things that cannot both be taken in full:</span>
+<span class="sd">**diversity**, the number of independent fading coefficients an error</span>
+<span class="sd">must defeat, and **multiplexing**, the number of symbols carried per</span>
+<span class="sd">channel use. A space-time code is the choice of where to sit between</span>
+<span class="sd">them, and this module describes codes in the one form that makes that</span>
+<span class="sd">choice checkable.</span>
+
+<span class="sd">**Every code here is a linear dispersion code.** A codeword occupying</span>
+<span class="sd">:math:`T` channel uses on :math:`N_t` antennas is</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \mathbf{G}(\mathbf{s}) = \sum_{k=1}^{K}</span>
+<span class="sd">    \left( \mathbf{A}_k s_k + \mathbf{B}_k s_k^{*} \right)</span>
+
+<span class="sd">with fixed matrices :math:`\mathbf{A}_k, \mathbf{B}_k` of size</span>
+<span class="sd">:math:`N_t \times T`. Alamouti, the orthogonal designs of Tarokh *et</span>
+<span class="sd">al.*, spatial multiplexing and the Golden code are all of this form; the</span>
+<span class="sd">conjugate term is what lets an orthogonal design exist at all.</span>
+
+<span class="sd">**Why that form and not a table of matrices.** Writing</span>
+<span class="sd">:math:`s_k = u_k + \mathrm{j} v_k` makes the received block a *real*</span>
+<span class="sd">linear function of the :math:`2K` real unknowns,</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \begin{bmatrix} \Re\{\mathrm{vec}\,\mathbf{Y}\} \\</span>
+<span class="sd">                    \Im\{\mathrm{vec}\,\mathbf{Y}\} \end{bmatrix}</span>
+<span class="sd">    = \mathbf{M}(\mathbf{H})</span>
+<span class="sd">      \begin{bmatrix} \mathbf{u} \\ \mathbf{v} \end{bmatrix}</span>
+<span class="sd">      + \text{noise}</span>
+
+<span class="sd">and :math:`\mathbf{M}(\mathbf{H})` -- the *equivalent channel*,</span>
+<span class="sd">:meth:`SpaceTimeCode.equivalent_channel` -- is where every property of</span>
+<span class="sd">the code becomes a statement about a matrix. A design is orthogonal</span>
+<span class="sd">exactly when</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \mathbf{M}^{\mathsf{T}} \mathbf{M}</span>
+<span class="sd">    = c \left\|\mathbf{H}\right\|_F^2 \, \mathbf{I}_{2K}</span>
+
+<span class="sd">which is checked **at construction** for every code declaring itself</span>
+<span class="sd">orthogonal (D20), so a mistyped sign in a dispersion matrix cannot ship.</span>
+<span class="sd">That same identity is why an orthogonal code is decoded by a matched</span>
+<span class="sd">filter and not by a search: the maximum-likelihood estimate is</span>
+<span class="sd">:math:`\mathbf{M}^{\mathsf{T}} \mathbf{y} / (c\|\mathbf{H}\|_F^2)`,</span>
+<span class="sd">exactly. The constant :math:`c` is a property of the design -- 1 for</span>
+<span class="sd">Alamouti, 2 for the rate-1/2 designs that repeat each symbol over a</span>
+<span class="sd">conjugated half -- and is measured with the identity rather than assumed.</span>
+
+<span class="sd">Codes are taken from a registry, as constellations are taken from</span>
+<span class="sd">:func:`~comnumpy.core.utils.get_alphabet`::</span>
+
+<span class="sd">    code = get_code(&quot;alamouti&quot;)</span>
+<span class="sd">    chain = Sequential([SymbolGenerator(4), SymbolMapper(alphabet),</span>
+<span class="sd">                        SpaceTimeEncoder(code), FlatMIMOChannel(H), ...])</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">S. M. Alamouti, &quot;A simple transmit diversity technique for wireless</span>
+<span class="sd">communications&quot;, IEEE J. Sel. Areas Commun., vol. 16, no. 8,</span>
+<span class="sd">pp. 1451-1458, Oct. 1998; V. Tarokh, H. Jafarkhani, A. R. Calderbank,</span>
+<span class="sd">&quot;Space-time block codes from orthogonal designs&quot;, IEEE Trans. Inf.</span>
+<span class="sd">Theory, vol. 45, no. 5, pp. 1456-1467, Jul. 1999; B. Hassibi,</span>
+<span class="sd">B. M. Hochwald, &quot;High-rate codes that are linear in space and time&quot;,</span>
+<span class="sd">IEEE Trans. Inf. Theory, vol. 48, no. 7, pp. 1804-1824, Jul. 2002</span>
+<span class="sd">(linear dispersion); J.-C. Belfiore, G. Rekaya, E. Viterbo, &quot;The Golden</span>
+<span class="sd">code: a 2x2 full-rate space-time code with nonvanishing determinants&quot;,</span>
+<span class="sd">IEEE Trans. Inf. Theory, vol. 51, no. 4, pp. 1432-1436, Apr. 2005;</span>
+<span class="sd">V. Tarokh, N. Seshadri, A. R. Calderbank, &quot;Space-time codes for high</span>
+<span class="sd">data rate wireless communication: performance criterion and code</span>
+<span class="sd">construction&quot;, IEEE Trans. Inf. Theory, vol. 44, no. 2, pp. 744-765,</span>
+<span class="sd">Mar. 1998 (the rank and determinant criteria).</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">&gt;&gt;&gt; import numpy as np</span>
+<span class="sd">&gt;&gt;&gt; code = get_code(&quot;alamouti&quot;)</span>
+<span class="sd">&gt;&gt;&gt; code.n_tx, code.n_slots, code.n_symbols, code.rate</span>
+<span class="sd">(2, 2, 2, 1.0)</span>
+<span class="sd">&gt;&gt;&gt; print(np.round(code.encode(np.array([1 + 0j, 2 + 1j])), 3))</span>
+<span class="sd">[[ 1.+0.j -2.+1.j]</span>
+<span class="sd"> [ 2.+1.j  1.+0.j]]</span>
+<span class="sd">&gt;&gt;&gt; code.is_orthogonal</span>
+<span class="sd">True</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;SpaceTimeCode&quot;</span><span class="p">,</span> <span class="s2">&quot;get_code&quot;</span><span class="p">,</span> <span class="s2">&quot;register_code&quot;</span><span class="p">,</span> <span class="s2">&quot;available_codes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SpaceTimeEncoder&quot;</span><span class="p">,</span> <span class="s2">&quot;SpaceTimeDecoder&quot;</span><span class="p">,</span> <span class="s2">&quot;coding_gain&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_CODE_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;SpaceTimeCode&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># How the codes are printed in their papers: one list of terms per entry</span>
+<span class="c1"># of the codeword, each term being (symbol index, coefficient, is it the</span>
+<span class="c1"># conjugate of that symbol).</span>
+<span class="n">Term</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">complex</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+<span class="n">CodewordTable</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]</span>
+
+<span class="c1"># The orthogonality identity is checked in floating point; the matrices</span>
+<span class="c1"># hold halves and 1/sqrt(2), so the residual is a few ulps.</span>
+<span class="n">_ORTHOGONALITY_ATOL</span> <span class="o">=</span> <span class="mf">1e-12</span>
+
+
+<div class="viewcode-block" id="SpaceTimeCode">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeCode">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A space-time block code, as its linear dispersion matrices.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The codeword transmitted over :math:`T` channel uses is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{G}(\mathbf{s}) = \sum_{k=1}^{K}</span>
+<span class="sd">        \left(\mathbf{A}_k s_k + \mathbf{B}_k s_k^{*}\right)</span>
+<span class="sd">        \in \mathbb{C}^{N_t \times T}</span>
+
+<span class="sd">    and the receiver observes</span>
+<span class="sd">    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{B}`.</span>
+<span class="sd">    The **rate** is :math:`K/T` symbols per channel use, the **diversity</span>
+<span class="sd">    order** is the minimum rank of</span>
+<span class="sd">    :math:`\mathbf{G}(\mathbf{s}) - \mathbf{G}(\mathbf{s}&#39;)` over</span>
+<span class="sd">    distinct symbol vectors (the rank criterion), and a code reaching</span>
+<span class="sd">    :math:`N_t` there is *full diversity*.</span>
+
+<span class="sd">    Axes: *declared axis* -- codewords are ``(n_tx, n_slots)``, antennas</span>
+<span class="sd">    on axis -2, as everywhere else in the library (D2).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Registry name.</span>
+<span class="sd">    dispersion_direct : np.ndarray</span>
+<span class="sd">        The matrices :math:`\mathbf{A}_k`, stacked as</span>
+<span class="sd">        ``(K, n_tx, n_slots)``.</span>
+<span class="sd">    dispersion_conjugate : np.ndarray</span>
+<span class="sd">        The matrices :math:`\mathbf{B}_k`, same shape. Zero for a code</span>
+<span class="sd">        that does not conjugate, such as spatial multiplexing or the</span>
+<span class="sd">        Golden code.</span>
+<span class="sd">    orthogonal : bool, optional, keyword-only</span>
+<span class="sd">        Declares the design orthogonal. It is **verified** at</span>
+<span class="sd">        construction, not trusted (D20).</span>
+<span class="sd">    reference : str, optional, keyword-only</span>
+<span class="sd">        Where the code comes from.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the two dispersion stacks disagree in shape.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``orthogonal=True`` and the design is not orthogonal.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    B. Hassibi, B. M. Hochwald, IEEE Trans. Inf. Theory 48(7), 2002.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; zero = np.zeros((1, 1, 1))</span>
+<span class="sd">    &gt;&gt;&gt; identity = np.ones((1, 1, 1))</span>
+<span class="sd">    &gt;&gt;&gt; trivial = SpaceTimeCode(&quot;siso&quot;, identity, zero, orthogonal=True)</span>
+<span class="sd">    &gt;&gt;&gt; trivial.rate</span>
+<span class="sd">    1.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dispersion_direct</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">dispersion_conjugate</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">orthogonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># measured at construction for an orthogonal design (D20): the c of</span>
+    <span class="c1"># M^T M = c |H|_F^2 I, which the matched filter divides by</span>
+    <span class="n">orthogonality_gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">direct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">conjugate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_conjugate</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direct</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">conjugate</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the two dispersion stacks describe the same code, so &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;they have the same shape: got </span><span class="si">{</span><span class="n">direct</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> for the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;direct term and </span><span class="si">{</span><span class="n">conjugate</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> for the conjugate &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;one. Pass zeros for a code that does not conjugate.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direct</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;dispersion matrices are stacked as (K, n_tx, n_slots), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got an array of shape </span><span class="si">{</span><span class="n">direct</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;dispersion_direct&quot;</span><span class="p">,</span> <span class="n">direct</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;dispersion_conjugate&quot;</span><span class="p">,</span> <span class="n">conjugate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orthogonal</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;orthogonality_gain&quot;</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">_verify_orthogonality</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_verify_orthogonality</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;D20: a declared orthogonal design proves it before it ships.</span>
+
+<span class="sd">        The gain ``c`` is a property of the design, not something to</span>
+<span class="sd">        assume: a codeword repeating each symbol over two halves, as</span>
+<span class="sd">        Tarokh&#39;s rate-1/2 designs do, collects twice the energy Alamouti</span>
+<span class="sd">        does. It is measured here and reused by the decoder, so the two</span>
+<span class="sd">        cannot disagree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">gains</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n_rx</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span>
+            <span class="n">channel</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">shape</span><span class="p">))</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_channel</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+            <span class="n">gram</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">matrix</span>
+            <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gram</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">energy</span>
+            <span class="n">residual</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
+                <span class="n">gram</span> <span class="o">-</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">energy</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">))))</span>
+            <span class="k">if</span> <span class="n">residual</span> <span class="o">&gt;</span> <span class="n">_ORTHOGONALITY_ATOL</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">energy</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;the code </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is declared orthogonal but &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;its equivalent channel has M^T M off a multiple of &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;the identity by </span><span class="si">{</span><span class="n">residual</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">n_rx</span><span class="si">}</span><span class="s2"> receive &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;antenna(s). An orthogonal design must satisfy that &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;identity exactly: check the signs and the &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;conjugations of its dispersion matrices.&quot;</span><span class="p">)</span>
+            <span class="n">gains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">gains</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">gains</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_ORTHOGONALITY_ATOL</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">gains</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;the orthogonality gain of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> depends on the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;channel (</span><span class="si">{</span><span class="n">gains</span><span class="si">}</span><span class="s2">), which no orthogonal design does.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_symbols</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;:math:`K`, symbols carried by one codeword.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;:math:`N_t`, transmit antennas.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_slots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;:math:`T`, channel uses spanned by one codeword.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;:math:`K/T`, symbols per channel use.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_slots</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_orthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the design was declared -- and verified -- orthogonal.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orthogonal</span>
+
+<div class="viewcode-block" id="SpaceTimeCode.encode">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeCode.encode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbols</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Build codewords from symbols.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        symbols : np.ndarray</span>
+<span class="sd">            ``(..., K)`` or ``(..., n * K)``: the last axis is read in</span>
+<span class="sd">            blocks of :math:`K`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            ``(..., n_tx, n * n_slots)``, antennas on axis -2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> carries </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="si">}</span><span class="s2"> symbols per &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;codeword and got </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> along the last &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;axis, which is not a multiple of it.&quot;</span><span class="p">)</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">))</span>
+        <span class="c1"># (..., n, K) x (K, n_tx, T) -&gt; (..., n, n_tx, T)</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...k,kij-&gt;...ij&quot;</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span><span class="p">)</span>
+                 <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...k,kij-&gt;...ij&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">blocks</span><span class="p">),</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">dispersion_conjugate</span><span class="p">))</span>
+        <span class="c1"># concatenate the codewords along time</span>
+        <span class="n">moved</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>          <span class="c1"># (..., n_tx, n, T)</span>
+        <span class="k">return</span> <span class="n">moved</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">moved</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+
+<div class="viewcode-block" id="SpaceTimeCode.equivalent_channel">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeCode.equivalent_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">equivalent_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The real matrix :math:`\mathbf{M}(\mathbf{H})` of the module docstring.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        H : np.ndarray</span>
+<span class="sd">            Channel matrix, ``(n_rx, n_tx)``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Real matrix of shape ``(2 * n_rx * n_slots, 2 * K)``, mapping</span>
+<span class="sd">            :math:`[\mathbf{u}; \mathbf{v}]` onto the stacked real and</span>
+<span class="sd">            imaginary parts of the received block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">channel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">channel</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tx</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> transmits on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_tx</span><span class="si">}</span><span class="s2"> antennas, so the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;channel is (n_rx, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_tx</span><span class="si">}</span><span class="s2">); got </span><span class="si">{</span><span class="n">channel</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="c1"># G is real-linear in (u, v) with these complex generators</span>
+        <span class="n">for_real</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispersion_conjugate</span>
+        <span class="n">for_imag</span> <span class="o">=</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion_direct</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispersion_conjugate</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">generators</span> <span class="ow">in</span> <span class="p">(</span><span class="n">for_real</span><span class="p">,</span> <span class="n">for_imag</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">):</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="n">channel</span> <span class="o">@</span> <span class="n">generators</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>       <span class="c1"># (n_rx, T)</span>
+                <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">complex_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">complex_matrix</span><span class="p">),</span>
+                          <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">complex_matrix</span><span class="p">)])</span></div>
+
+
+<div class="viewcode-block" id="SpaceTimeCode.minimum_rank">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeCode.minimum_rank">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimum_rank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Diversity order by the rank criterion, over one alphabet.</span>
+
+<span class="sd">        The minimum rank of :math:`\mathbf{G}(\mathbf{s}) -</span>
+<span class="sd">        \mathbf{G}(\mathbf{s}&#39;)` over distinct symbol vectors. It equals</span>
+<span class="sd">        :math:`N_t` for a full-diversity code and 1 for spatial</span>
+<span class="sd">        multiplexing, and the error probability of the code decays as</span>
+<span class="sd">        :math:`\mathrm{SNR}^{-r N_r}` with :math:`r` that rank.</span>
+
+<span class="sd">        Exhaustive over :math:`|\mathcal{A}|^{K}` pairs of a *difference*</span>
+<span class="sd">        vector, so it is meant for small alphabets and short codes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">differences</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="mi">12</span><span class="p">))</span>
+        <span class="n">smallest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tx</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">_nonzero_patterns</span><span class="p">(</span><span class="n">differences</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">):</span>
+            <span class="n">word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+            <span class="n">smallest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">smallest</span><span class="p">,</span>
+                           <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">matrix_rank</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">smallest</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">smallest</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nonzero_patterns</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Every non-zero vector of ``length`` entries drawn from ``values``.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+    <span class="k">for</span> <span class="n">combination</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">length</span><span class="p">):</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">combination</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pattern</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">pattern</span>
+
+
+<div class="viewcode-block" id="coding_gain">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.coding_gain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coding_gain</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="n">SpaceTimeCode</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Determinant criterion: the coding gain of a full-diversity code.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    When the rank criterion is met with full rank :math:`N_t`, the</span>
+<span class="sd">    pairwise error probability is governed by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \delta = \min_{\mathbf{s} \neq \mathbf{s}&#39;}</span>
+<span class="sd">        \det\left[ \left(\mathbf{G} - \mathbf{G}&#39;\right)</span>
+<span class="sd">        \left(\mathbf{G} - \mathbf{G}&#39;\right)^{H} \right]</span>
+
+<span class="sd">    and a code with :math:`\delta` bounded away from zero as the</span>
+<span class="sd">    constellation grows is said to have a *non-vanishing determinant* --</span>
+<span class="sd">    the property the Golden code was built for.</span>
+
+<span class="sd">    Axes: *element-wise* -- takes a code and a 1-D alphabet.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    code : SpaceTimeCode</span>
+<span class="sd">        The code to measure.</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Constellation the symbols are drawn from.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        :math:`\delta`, zero if the code is not full diversity.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    V. Tarokh, N. Seshadri, A. R. Calderbank, IEEE Trans. Inf. Theory</span>
+<span class="sd">    44(2), 1998 (determinant criterion); Belfiore, Rekaya, Viterbo,</span>
+<span class="sd">    IEEE Trans. Inf. Theory 51(4), 2005.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
+<span class="sd">    &gt;&gt;&gt; qpsk = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; print(round(coding_gain(get_code(&quot;alamouti&quot;), qpsk), 6))</span>
+<span class="sd">    4.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">differences</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="mi">12</span><span class="p">))</span>
+    <span class="n">smallest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">_nonzero_patterns</span><span class="p">(</span><span class="n">differences</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">):</span>
+        <span class="n">word</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+        <span class="n">gram</span> <span class="o">=</span> <span class="n">word</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">smallest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">smallest</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">gram</span><span class="p">))))</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">smallest</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="register_code">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.register_code">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_code</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">SpaceTimeCode</span><span class="p">]],</span>
+                                         <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">SpaceTimeCode</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a code factory; users can add their own.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name the factory answers to in :func:`get_code`.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; @register_code(&quot;repetition-2&quot;)</span>
+<span class="sd">    ... def _repetition():</span>
+<span class="sd">    ...     direct = np.zeros((1, 2, 2), dtype=complex)</span>
+<span class="sd">    ...     direct[0, 0, 0] = direct[0, 1, 1] = 1</span>
+<span class="sd">    ...     return SpaceTimeCode(&quot;repetition-2&quot;, direct,</span>
+<span class="sd">    ...                          np.zeros_like(direct))</span>
+<span class="sd">    &gt;&gt;&gt; get_code(&quot;repetition-2&quot;).rate</span>
+<span class="sd">    0.5</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">SpaceTimeCode</span><span class="p">]</span>
+                  <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">SpaceTimeCode</span><span class="p">]:</span>
+        <span class="n">_CODE_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="available_codes">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.available_codes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">available_codes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Names :func:`get_code` answers to.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; &quot;alamouti&quot; in available_codes()</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_CODE_REGISTRY</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_code">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.get_code">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_code</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a catalog code by name, as ``get_alphabet`` returns a constellation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Entry name; see :func:`available_codes`.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Forwarded to the entry factory.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    SpaceTimeCode</span>
+<span class="sd">        The code.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If no entry answers to that name.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; get_code(&quot;alamouti&quot;).n_tx</span>
+<span class="sd">    2</span>
+<span class="sd">    &gt;&gt;&gt; get_code(&quot;spatial-multiplexing&quot;, n_tx=4).rate</span>
+<span class="sd">    4.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_CODE_REGISTRY</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;unknown space-time code </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">, known codes are &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">available_codes</span><span class="p">()</span><span class="si">}</span><span class="s2">. Register your own with &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;@register_code, or build a SpaceTimeCode from its &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;dispersion matrices directly.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_CODE_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_table</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="n">CodewordTable</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                <span class="n">orthogonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the dispersion stacks from a codeword written entry by entry.</span>
+
+<span class="sd">    ``table[i][t]`` lists the terms of :math:`G_{i,t}` as</span>
+<span class="sd">    ``(symbol index, coefficient, conjugated)``, which is how these</span>
+<span class="sd">    codes are printed in their papers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_tx</span><span class="p">,</span> <span class="n">n_slots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_symbols</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">n_slots</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">conjugate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">direct</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">table</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">slot</span><span class="p">,</span> <span class="n">terms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">,</span> <span class="n">is_conjugate</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">conjugate</span> <span class="k">if</span> <span class="n">is_conjugate</span> <span class="k">else</span> <span class="n">direct</span>
+                <span class="n">target</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">slot</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coefficient</span>
+    <span class="k">return</span> <span class="n">SpaceTimeCode</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">direct</span><span class="p">,</span> <span class="n">conjugate</span><span class="p">,</span> <span class="n">orthogonal</span><span class="o">=</span><span class="n">orthogonal</span><span class="p">,</span>
+                         <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_alamouti</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The 2x1 scheme, rate 1, full diversity, exactly ML by matched filter.&quot;&quot;&quot;</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]],</span>
+        <span class="p">[[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]],</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">orthogonal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;S. M. Alamouti, IEEE JSAC 16(8), 1998&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;ostbc-3-1/2&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ostbc_g3</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tarokh&#39;s G3: 3 antennas, rate 1/2, real and conjugate halves.&quot;&quot;&quot;</span>
+    <span class="n">signs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+    <span class="p">]</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[[(</span><span class="n">index</span><span class="p">,</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sign</span><span class="p">),</span> <span class="kc">False</span><span class="p">)]</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">sign</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+        <span class="o">+</span> <span class="p">[[(</span><span class="n">index</span><span class="p">,</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sign</span><span class="p">),</span> <span class="kc">True</span><span class="p">)]</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">sign</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">signs</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;ostbc-3-1/2&quot;</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">orthogonal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;V. Tarokh et al., IEEE Trans. IT 45(5), 1999, G_3&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;ostbc-4-1/2&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ostbc_g4</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tarokh&#39;s G4: 4 antennas, rate 1/2.&quot;&quot;&quot;</span>
+    <span class="n">signs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+    <span class="p">]</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[[(</span><span class="n">index</span><span class="p">,</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sign</span><span class="p">),</span> <span class="kc">False</span><span class="p">)]</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">sign</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+        <span class="o">+</span> <span class="p">[[(</span><span class="n">index</span><span class="p">,</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sign</span><span class="p">),</span> <span class="kc">True</span><span class="p">)]</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">sign</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">signs</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;ostbc-4-1/2&quot;</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">orthogonal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;V. Tarokh et al., IEEE Trans. IT 45(5), 1999, G_4&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rate_three_quarter_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The three rows shared by Tarokh&#39;s H_3 and H_4.</span>
+
+<span class="sd">    The last two entries mix a symbol with its conjugate:</span>
+<span class="sd">    :math:`(-x_1 - x_1^{*} + x_2 - x_2^{*})/2` is</span>
+<span class="sd">    :math:`-\Re\{x_1\} + \mathrm{j}\Im\{x_2\}`, which is why these</span>
+<span class="sd">    designs need the conjugate dispersion term.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">[[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]],</span>
+        <span class="p">[[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">half</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]],</span>
+        <span class="p">[[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+          <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+          <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]],</span>
+    <span class="p">]</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;ostbc-3-3/4&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ostbc_h3</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tarokh&#39;s H3: 3 antennas, rate 3/4 -- three symbols in four slots.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;ostbc-3-3/4&quot;</span><span class="p">,</span> <span class="n">_rate_three_quarter_rows</span><span class="p">(),</span> <span class="mi">3</span><span class="p">,</span> <span class="n">orthogonal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;V. Tarokh et al., IEEE Trans. IT 45(5), 1999, H_3&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;ostbc-4-3/4&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ostbc_h4</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;H4: 4 antennas, rate 3/4, i.e. H3 with a fourth antenna.</span>
+
+<span class="sd">    Provenance, stated because it is not a plain transcription: the</span>
+<span class="sd">    three first rows are H3 as printed in the paper, and the fourth row</span>
+<span class="sd">    is the completion its structure allows -- :math:`\pm x_3/\sqrt{2}`</span>
+<span class="sd">    then two half-sums of :math:`x_1, x_2` and their conjugates. Which</span>
+<span class="sd">    signs those halves carry is *determined*: over the 256 sign patterns</span>
+<span class="sd">    of that structure, exactly two make the design orthogonal, and they</span>
+<span class="sd">    differ by a global sign on the row, hence describe the same code.</span>
+<span class="sd">    The orthogonality identity is therefore what fixes the convention</span>
+<span class="sd">    here, not a reading of the table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">fourth</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">half</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">half</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+         <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+         <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;ostbc-4-3/4&quot;</span><span class="p">,</span> <span class="n">_rate_three_quarter_rows</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="n">fourth</span><span class="p">],</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">orthogonal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;V. Tarokh et al., IEEE Trans. IT 45(5), 1999, H_4 &quot;</span>
+                  <span class="s2">&quot;(sign convention fixed by the orthogonality identity)&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;spatial-multiplexing&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_spatial_multiplexing</span><span class="p">(</span><span class="n">n_tx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;V-BLAST: one symbol per antenna per slot. Rate n_tx, no diversity.&quot;&quot;&quot;</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_tx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tx</span><span class="p">):</span>
+        <span class="n">direct</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">return</span> <span class="n">SpaceTimeCode</span><span class="p">(</span>
+        <span class="s2">&quot;spatial-multiplexing&quot;</span><span class="p">,</span> <span class="n">direct</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">direct</span><span class="p">),</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;G. J. Foschini, Bell Labs Tech. J. 1(2), 1996&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@register_code</span><span class="p">(</span><span class="s2">&quot;golden&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_golden</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SpaceTimeCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The 2x2 full-rate, full-diversity code with non-vanishing determinant.&quot;&quot;&quot;</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">theta_bar</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="n">alpha_bar</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">theta_bar</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">theta</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">theta</span><span class="p">,</span> <span class="kc">False</span><span class="p">)]],</span>
+        <span class="p">[[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha_bar</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+          <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha_bar</span> <span class="o">*</span> <span class="n">theta_bar</span><span class="p">,</span> <span class="kc">False</span><span class="p">)],</span>
+         <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha_bar</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+          <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">alpha_bar</span> <span class="o">*</span> <span class="n">theta_bar</span><span class="p">,</span> <span class="kc">False</span><span class="p">)]],</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">_from_table</span><span class="p">(</span>
+        <span class="s2">&quot;golden&quot;</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Belfiore, Rekaya, Viterbo, IEEE Trans. IT 51(4), 2005&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SpaceTimeEncoder">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeEncoder">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpaceTimeEncoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Map a symbol stream onto antennas and time slots.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Blocks of :math:`K` symbols become codewords</span>
+<span class="sd">    :math:`\mathbf{G}(\mathbf{s})` of :math:`N_t \times T`, concatenated</span>
+<span class="sd">    along time. A stream of :math:`N` symbols therefore leaves as</span>
+<span class="sd">    :math:`(N_t, N T / K)` samples: the code *changes the number of</span>
+<span class="sd">    channel uses*, by the factor :math:`T/K = 1/\text{rate}`.</span>
+
+<span class="sd">    Axes: *declared axis* -- output carries antennas on axis -2 (D2), so</span>
+<span class="sd">    it feeds :class:`~comnumpy.mimo.channels.FlatMIMOChannel` directly.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    code : SpaceTimeCode</span>
+<span class="sd">        The code, usually from :func:`get_code`.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the symbol count is not a multiple of :math:`K`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S. M. Alamouti, IEEE JSAC 16(8), 1998; V. Tarokh et al., IEEE Trans.</span>
+<span class="sd">    Inf. Theory 45(5), 1999.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; encoder = SpaceTimeEncoder(get_code(&quot;alamouti&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; symbols = np.array([1 + 0j, 2 + 1j, -1 + 0j, 0 + 1j])</span>
+<span class="sd">    &gt;&gt;&gt; encoder(symbols).shape                      # 4 symbols -&gt; 2x4</span>
+<span class="sd">    (2, 4)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">code</span><span class="p">:</span> <span class="n">SpaceTimeCode</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;space-time encoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="SpaceTimeDecoder">
+<a class="viewcode-back" href="../../../documentation/mimo/coding.html#comnumpy.mimo.coding.SpaceTimeDecoder">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpaceTimeDecoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover the symbols of an orthogonal design, exactly.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    With the equivalent channel :math:`\mathbf{M}(\mathbf{H})` of the</span>
+<span class="sd">    module docstring, the received block reads</span>
+<span class="sd">    :math:`\mathbf{y} = \mathbf{M}[\mathbf{u};\mathbf{v}] + \mathbf{b}`</span>
+<span class="sd">    with white real noise. When the design is orthogonal,</span>
+<span class="sd">    :math:`\mathbf{M}^{\mathsf{T}}\mathbf{M} = c\|\mathbf{H}\|_F^2</span>
+<span class="sd">    \mathbf{I}`, so the least-squares solution is a **matched filter**</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \begin{bmatrix}\widehat{\mathbf{u}} \\ \widehat{\mathbf{v}}</span>
+<span class="sd">        \end{bmatrix}</span>
+<span class="sd">        = \frac{\mathbf{M}^{\mathsf{T}} \mathbf{y}}</span>
+<span class="sd">               {c \left\|\mathbf{H}\right\|_F^2}</span>
+
+<span class="sd">    and it is *the* maximum-likelihood estimate, not an approximation of</span>
+<span class="sd">    it: this is the whole point of orthogonal designs, and the reason</span>
+<span class="sd">    they cost :math:`O(K)` instead of :math:`O(|\mathcal{A}|^K)`. Each</span>
+<span class="sd">    symbol comes out with an SNR multiplied by</span>
+<span class="sd">    :math:`c\|\mathbf{H}\|_F^2`, i.e. with diversity :math:`N_t N_r`;</span>
+<span class="sd">    the constant :math:`c` belongs to the design and is measured when it</span>
+<span class="sd">    is built, not assumed.</span>
+
+<span class="sd">    A non-orthogonal code has no such shortcut, and this block refuses it</span>
+<span class="sd">    rather than returning a zero-forcing answer under a name that</span>
+<span class="sd">    promises optimality; :meth:`SpaceTimeCode.equivalent_channel` hands</span>
+<span class="sd">    the problem to the detectors of</span>
+<span class="sd">    :mod:`comnumpy.mimo.detectors` instead.</span>
+
+<span class="sd">    Axes: *declared axis* -- input carries antennas on axis -2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    code : SpaceTimeCode</span>
+<span class="sd">        The code used at the transmitter; must be orthogonal.</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix ``(n_rx, n_tx)``, assumed known at the receiver.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the code is not orthogonal, or if ``H`` was not set.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    V. Tarokh, H. Jafarkhani, A. R. Calderbank, IEEE Trans. Inf. Theory</span>
+<span class="sd">    45(5), 1999, Section III (linear decoding of orthogonal designs).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; code = get_code(&quot;alamouti&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; H = np.array([[1 + 0j, 0.5 - 0.2j]])</span>
+<span class="sd">    &gt;&gt;&gt; symbols = np.array([1 + 1j, -1 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; received = H @ code.encode(symbols)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(SpaceTimeDecoder(code, H=H)(received), 6) + 0.0)</span>
+<span class="sd">    [ 1.+1.j -1.+0.j]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">code</span><span class="p">:</span> <span class="n">SpaceTimeCode</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;space-time decoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">is_orthogonal</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SpaceTimeDecoder decodes orthogonal designs by matched &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;filtering, which is exactly ML for them, and &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is not one. Build its equivalent &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;channel with code.equivalent_channel(H) and hand it to &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;a detector of comnumpy.mimo.detectors.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SpaceTimeDecoder needs the channel matrix H and none &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;was set. Got H=None, expected an (n_rx, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; array -- pass it at construction or assign &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;decoder.H once the channel is known.&quot;</span><span class="p">)</span>
+        <span class="n">received</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span>
+        <span class="k">if</span> <span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">code</span><span class="o">.</span><span class="n">n_slots</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> spans </span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">n_slots</span><span class="si">}</span><span class="s2"> channel uses per &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;codeword and got </span><span class="si">{</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> samples, which &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;is not a multiple of it.&quot;</span><span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">equivalent_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">orthogonality_gain</span>
+                  <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="n">n_words</span> <span class="o">=</span> <span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">code</span><span class="o">.</span><span class="n">n_slots</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">received</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                                  <span class="o">+</span> <span class="p">(</span><span class="n">n_words</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">n_slots</span><span class="p">))</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>       <span class="c1"># (..., n, n_rx, T)</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="n">blocks</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">blocks</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span>
+        <span class="n">stacked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">flat</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">flat</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">stacked</span> <span class="o">@</span> <span class="n">matrix</span> <span class="o">/</span> <span class="n">energy</span>       <span class="c1"># (..., n, 2K)</span>
+        <span class="n">half</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">estimate</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">half</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">estimate</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">half</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">symbols</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">symbols</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

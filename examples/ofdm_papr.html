@@ -339,6 +339,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
 </ul>
 </div>
@@ -430,7 +431,7 @@ by Han and Lee (2005).</p></li>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ccdf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">IFFTProcessor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_PAPR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_papr</span>
 
 <span class="c1"># This script reproduces the first figure of the following article :</span>
 <span class="c1"># - “An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).</span>
@@ -500,7 +501,7 @@ and plot its instantaneous power. The computed PAPR value is displayed in the fi
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="c1"># perform parallel2serial conversion (C-order flatten of (..., T, F) blocks)</span>
 
-<span class="n">papr_dB</span> <span class="o">=</span> <span class="n">compute_PAPR</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">papr_dB</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;$|x[n]|^2$&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$n$ [sample]&quot;</span><span class="p">)</span>
@@ -534,7 +535,7 @@ For each case, we compare the simulation results with the theoretical CCDF:</p>
     <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
     <span class="c1"># evaluate metric</span>
-    <span class="n">papr_dB_array</span> <span class="o">=</span> <span class="n">compute_PAPR</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">papr_dB_array</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># display experimental curves</span>
     <span class="n">papr_dB</span><span class="p">,</span> <span class="n">ccdf</span> <span class="o">=</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">papr_dB_array</span><span class="p">)</span>

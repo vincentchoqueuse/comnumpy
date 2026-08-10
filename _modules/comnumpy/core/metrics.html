@@ -726,14 +726,23 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.core.metrics</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">sym_2_bin</span>  <span class="c1"># single definition (annex A.5)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;compute_ser_awgn_psk&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ser_awgn_qam&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_metric_awgn_theo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;compute_ser&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ber&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_evm&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_effective_snr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;compute_power&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ccdf&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_acpr&quot;</span><span class="p">,</span> <span class="s2">&quot;signal_report&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="compute_ser_awgn_psk">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_ser_awgn_psk">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser_awgn_psk</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser_awgn_psk</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span>
+                         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the theoretical Symbol Error Rate (SER) for PSK modulation over an AWGN channel.</span>
 
@@ -817,14 +826,12 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># see book Proakis &quot;Digital communication&quot;, p 271</span>
         <span class="n">argument</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">gamma_b</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
         <span class="c1"># see book Proakis &quot;Digital communication&quot;, p 272</span>
         <span class="n">argument</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">gamma_b</span><span class="p">)</span>
         <span class="n">term</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">term</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">term</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+    <span class="k">else</span><span class="p">:</span>
         <span class="n">M</span> <span class="o">=</span> <span class="n">order</span>
         <span class="n">argument</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">k</span><span class="o">*</span><span class="n">gamma_b</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">M</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">norm</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
@@ -835,7 +842,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="compute_ser_awgn_qam">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_ser_awgn_qam">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser_awgn_qam</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser_awgn_qam</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span>
+                         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the theoretical Symbol Error Rate (SER) for square QAM modulation over an AWGN channel.</span>
 
@@ -911,7 +919,9 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="compute_metric_awgn_theo">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_metric_awgn_theo">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ser&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                             <span class="n">snr_per_bit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the theoretical error rate of a given modulation over an AWGN channel.</span>
 
@@ -985,7 +995,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="compute_ser">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_ser">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_detected</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_ser</span><span class="p">(</span><span class="n">X_target</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_detected</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                <span class="n">axis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the Symbol Error Rate (SER) between the target and detected symbols.</span>
 
@@ -1057,7 +1068,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="compute_ber">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_ber">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_ber</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_detected</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_ber</span><span class="p">(</span><span class="n">X_target</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_detected</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">axis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the Bit Error Rate (BER) between target and detected symbols.</span>
 
@@ -1130,7 +1142,8 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="compute_evm">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_evm">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_evm</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_evm</span><span class="p">(</span><span class="n">X_target</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                <span class="n">axis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the Error Vector Magnitude (EVM) between the target and estimated signals.</span>
 
@@ -1204,9 +1217,11 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<div class="viewcode-block" id="compute_effective_SNR">
-<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_effective_SNR">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_effective_SNR</span><span class="p">(</span><span class="n">X_target</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">,</span> <span class="n">sigma2_s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;natural&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="compute_effective_snr">
+<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_effective_snr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_effective_snr</span><span class="p">(</span><span class="n">X_target</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_estimated</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                          <span class="n">sigma2_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;natural&quot;</span>
+                          <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the effective Signal-to-Noise Ratio (SNR) between a target and an estimated signal.</span>
 
@@ -1274,9 +1289,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; x = np.ones(4)</span>
 <span class="sd">    &gt;&gt;&gt; x_hat = np.array([1.1, 0.9, 1.1, 0.9])   # error power 0.01</span>
-<span class="sd">    &gt;&gt;&gt; print(round(float(compute_effective_SNR(x, x_hat)), 3))</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(compute_effective_snr(x, x_hat)), 3))</span>
 <span class="sd">    100.0</span>
-<span class="sd">    &gt;&gt;&gt; print(round(float(compute_effective_SNR(x, x_hat, unit=&quot;dB&quot;)), 3))</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(compute_effective_snr(x, x_hat, unit=&quot;dB&quot;)), 3))</span>
 <span class="sd">    20.0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">x_target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X_target</span><span class="p">)</span>
@@ -1295,13 +1310,13 @@ window.runMermaid = runMermaid;</script>
         <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown unit: </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">output</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="compute_power">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_power">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_power</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;natural&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_power</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;natural&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the mean power of an input array.</span>
 
@@ -1369,13 +1384,14 @@ window.runMermaid = runMermaid;</script>
         <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown unit: </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">output</span></div>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="compute_ccdf">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_ccdf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_ccdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_ccdf</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the empirical Complementary Cumulative Distribution Function (CCDF) of a dataset.</span>
 
@@ -1400,7 +1416,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    i.e. the fraction of samples strictly above :math:`z_{(i)}` (the last</span>
 <span class="sd">    entry is therefore exactly 0). This is the standard way of plotting</span>
 <span class="sd">    the PAPR distribution of an OFDM signal: feed</span>
-<span class="sd">    :func:`comnumpy.ofdm.metrics.compute_PAPR` values in, then plot</span>
+<span class="sd">    :func:`comnumpy.ofdm.metrics.compute_papr` values in, then plot</span>
 <span class="sd">    ``ccdf`` against ``sorted_data`` on a semilog-y axis.</span>
 
 <span class="sd">    Axes: *declared axis* -- sorting and the sample count :math:`N` use</span>
@@ -1452,9 +1468,10 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<div class="viewcode-block" id="calculate_acpr">
-<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.calculate_acpr">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">calculate_acpr</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">bandwidth</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">):</span>
+<div class="viewcode-block" id="compute_acpr">
+<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.compute_acpr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_acpr</span><span class="p">(</span><span class="n">signal</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">bandwidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.</span>
 
@@ -1525,23 +1542,19 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; n = np.arange(1000)</span>
 <span class="sd">    &gt;&gt;&gt; x = np.cos(2 * np.pi * 4 * n / f_s)     # single tone inside the channel</span>
 <span class="sd">    &gt;&gt;&gt; y = x - 0.2 * x ** 3                    # cubic nonlinearity -&gt; IM3 at 12 Hz</span>
-<span class="sd">    &gt;&gt;&gt; print(np.round(calculate_acpr(y, B, f_s), 4))</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(compute_acpr(y, B, f_s), 4))</span>
 <span class="sd">    [-27.6193 -27.6193]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># NOT TESTED</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_power</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">lower_freq</span><span class="p">,</span> <span class="n">upper_freq</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">):</span>
-
-        <span class="c1"># Perform FFT</span>
-        <span class="n">fft_signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
-        <span class="n">freq_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal</span><span class="p">),</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sampling_rate</span><span class="p">)</span>
-
-        <span class="c1"># Select frequencies within the band</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">band_power</span><span class="p">(</span><span class="n">lower_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">upper_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="c1"># Parseval: the power in a band is the energy of the bins it</span>
+        <span class="c1"># contains, divided by the number of samples</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_axis</span> <span class="o">&gt;=</span> <span class="n">lower_freq</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">freq_axis</span> <span class="o">&lt;=</span> <span class="n">upper_freq</span><span class="p">)</span>
-        <span class="n">band_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_signal</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">spectrum</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">signal</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">band_power</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+    <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+    <span class="n">freq_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sampling_rate</span><span class="p">)</span>
 
     <span class="c1"># Define main and adjacent channel frequency bands</span>
     <span class="n">half_bw</span> <span class="o">=</span> <span class="n">bandwidth</span> <span class="o">/</span> <span class="mi">2</span>
@@ -1555,21 +1568,21 @@ window.runMermaid = runMermaid;</script>
     <span class="n">adj_upper_left</span> <span class="o">=</span> <span class="n">main_lower</span>
 
     <span class="c1"># Calculate power in main and adjacent channels</span>
-    <span class="n">main_power</span> <span class="o">=</span> <span class="n">calculate_power</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">main_lower</span><span class="p">,</span> <span class="n">main_upper</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
-    <span class="n">adj_power_right</span> <span class="o">=</span> <span class="n">calculate_power</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">adj_lower_right</span><span class="p">,</span> <span class="n">adj_upper_right</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
-    <span class="n">adj_power_left</span> <span class="o">=</span> <span class="n">calculate_power</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">adj_lower_left</span><span class="p">,</span> <span class="n">adj_upper_left</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
+    <span class="n">main_power</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">main_lower</span><span class="p">,</span> <span class="n">main_upper</span><span class="p">)</span>
+    <span class="n">adj_power_right</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_right</span><span class="p">,</span> <span class="n">adj_upper_right</span><span class="p">)</span>
+    <span class="n">adj_power_left</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_left</span><span class="p">,</span> <span class="n">adj_upper_left</span><span class="p">)</span>
 
     <span class="c1"># Calculate ACPR in dB</span>
     <span class="n">acpr_right</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">adj_power_right</span> <span class="o">/</span> <span class="n">main_power</span><span class="p">)</span>
     <span class="n">acpr_left</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">adj_power_left</span> <span class="o">/</span> <span class="n">main_power</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">acpr_right</span><span class="p">,</span> <span class="n">acpr_left</span></div>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">acpr_right</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">acpr_left</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="signal_report">
 <a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.signal_report">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">signal_report</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">compute_papr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">signal_report</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">compute_papr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
                   <span class="n">papr_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dB&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;dict[str, float]&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary statistics of a signal, as plain data.</span>
@@ -1626,9 +1639,10 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">&quot;avg_power&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">abs_x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)),</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="n">compute_papr</span><span class="p">:</span>
-        <span class="c1"># local import to avoid a circular dependency (ofdm imports core)</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_PAPR</span>
-        <span class="n">report</span><span class="p">[</span><span class="s2">&quot;papr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">compute_PAPR</span><span class="p">(</span><span class="n">abs_x</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">papr_unit</span><span class="p">))</span>
+        <span class="c1"># local import to avoid a circular dependency (ofdm imports core);</span>
+        <span class="c1"># aliased because the boolean flag above already owns the name</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_papr</span> <span class="k">as</span> <span class="n">papr_of</span>
+        <span class="n">report</span><span class="p">[</span><span class="s2">&quot;papr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">papr_of</span><span class="p">(</span><span class="n">abs_x</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">papr_unit</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">report</span></div>
 
 </pre></div>
