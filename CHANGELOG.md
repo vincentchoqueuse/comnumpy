@@ -46,6 +46,40 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- Closed-form error rates over Rayleigh fading, in `core/metrics.py`:
+  `compute_ser_rayleigh_psk`, `compute_ser_rayleigh_qam` and the
+  `compute_metric_rayleigh_theo` front-end. The library knew only AWGN,
+  so a MIMO or diversity simulation had nothing analytical to be read
+  against -- and the one closed form that existed was hardcoded inside
+  `validation/mimo_zf_ml_ber.py`, where nothing could reuse it.
+
+  One expression covers the four cases, through the MGF average of
+  Simon and Alouini on Craig's contour: L branches at a per-branch SNR,
+  with a *transmit* scheme dividing that SNR by N_t because it splits
+  its power. So one antenna is L=1, receive combining is L=N_r,
+  Alamouti is L=N_t*N_r at gamma/N_t, and zero forcing is
+  L=N_r-N_t+1 per stream. That single division is the 3 dB an
+  orthogonal design pays for transmitting blind.
+
+  Checked three ways rather than trusted: against the closed form of
+  Proakis for L-branch BPSK (1e-10 relative, L = 1 to 8), against the
+  defining property that the high-SNR slope *is* L, and against chains
+  built from the library's own blocks -- the only check that both sides
+  mean the same thing by "SNR per branch".
+
+  `validation/mimo_diversity_ber.py` runs that last confrontation where
+  it belongs: three schemes, up to 80000 channel draws per point, all
+  within 4.4 % of the curves, and the Alamouti penalty measured at
+  3.0 dB against a predicted 10log10(2) = 3.01 dB.
+
+- `core.visualizers.plot_error_rate`, the figure a Monte-Carlo sweep
+  ends with: measurements as hollow markers, the closed form they are
+  read against as a line of the same colour, a logarithmic ordinate and
+  a grid on both decades. Fourteen scripts of this repository drew it by
+  hand. Sweep points where no error was seen are dropped rather than
+  plotted: they mean the estimate ran out of samples, not that the error
+  rate is zero, and a logarithmic axis has no place to put them.
+
 - A tutorial on Alamouti space-time coding,
   `docs/examples/alamouti.rst`, with `examples/mimo/one_shot_alamouti.py`
   behind it. It answers the question the code module cannot: *why*. The
