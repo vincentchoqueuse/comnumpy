@@ -39,7 +39,7 @@ from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
-from comnumpy.ofdm.metrics import compute_PAPR
+from comnumpy.ofdm.metrics import compute_papr
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
@@ -76,7 +76,7 @@ def papr_dB(N, os, n_symbols, seed, chunk=500):
     out, done = [], 0
     while done < n_symbols:    # chunked: N=1024 at os=4 is 2 GB in one go
         count = min(chunk, n_symbols - done)
-        out.append(compute_PAPR(chain(count * N), unit="dB", axis=-1))
+        out.append(compute_papr(chain(count * N), unit="dB", axis=-1))
         done += count
     return np.concatenate(out)
 

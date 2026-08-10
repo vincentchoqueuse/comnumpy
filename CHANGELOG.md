@@ -41,6 +41,8 @@ one release; there is no compatibility layer.
 | `.gain`, `.alpha`/`.beta`, `.w0`, `.h`, `.delay`/`.scale`/`.cross_corr` read off a compensator | same names with a trailing underscore (D23): these are estimated from the data, and the convention now separates them from configured parameters |
 | `FiberLink(alpha_dB=…, gamma=…, cd_coefficient=…, lamb=…, nu=…, c=…, h=…)` | `FiberLink(fiber=FiberSpec(alpha_dB, gamma=…, cd_coefficient=…, wavelength_nm=…))` (D46) — same for `DBP`. The carrier frequency is derived from the wavelength instead of being a second argument that could disagree with it; `c` and `h` are no longer settable. `FiberLink` goes from 21 constructor arguments to 15 |
 | `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
+| `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
+| `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
 ### Added (milestones 2-5)
 
