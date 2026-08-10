@@ -1,13 +1,13 @@
 
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential
-from src.comnumpy.core.generators import SymbolGenerator
-from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.channels import AWGN, FIRChannel
-from src.comnumpy.core.compensators import LinearEqualizer
-from src.comnumpy.core.metrics import compute_ser
+from comnumpy.core import Sequential
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
+from comnumpy.core.utils import get_alphabet
+from comnumpy.core.channels import AWGN, FIRChannel
+from comnumpy.core.compensators import LinearEqualizer
+from comnumpy.core.metrics import compute_ser
 
 
 class TestFIRChannelChain(unittest.TestCase):

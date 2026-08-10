@@ -3,6 +3,7 @@ import numpy as np
 from typing import Optional
 from comnumpy.core import Processor, Sequential
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
+from comnumpy.ofdm.allocation import CarrierAllocation
 from comnumpy.ofdm.processors import (
     CarrierAllocator, CarrierExtractor, IFFTProcessor, FFTProcessor,
     CyclicPrefixer, CyclicPrefixRemover
@@ -42,7 +43,7 @@ class OFDMTransmitter(Processor):
         Number of data subcarriers :math:`N_{data}` per OFDM symbol.
     N_cp : int
         Length :math:`N_{cp}` of the cyclic prefix.
-    carrier_type : np.ndarray or list, optional, keyword-only
+    carrier_type : CarrierAllocation or np.ndarray, optional, keyword-only
         Subcarrier allocation mask (e.g. data, pilot, null), passed to
         :class:`~comnumpy.ofdm.processors.CarrierAllocator`. Default is
         an all-data mask of length ``N_carrier_data``.
@@ -66,7 +67,8 @@ class OFDMTransmitter(Processor):
     """
     N_carrier_data: int
     N_cp: int
-    carrier_type: Optional[np.ndarray] = field(default=None, kw_only=True)
+    carrier_type: Optional[np.ndarray | CarrierAllocation] = field(
+        default=None, kw_only=True)
     pilots: Optional[np.ndarray] = field(default=None, kw_only=True)
     name: str = field(default="ofdm_transmitter", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
@@ -75,11 +77,13 @@ class OFDMTransmitter(Processor):
     chain: Sequential = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        # asarray, not a Union: every downstream block indexes these as
-        # arrays, so a list was only ever tolerated by accident
+        # a list is converted; a CarrierAllocation is passed through, as
+        # CarrierAllocator itself accepts it -- np.asarray on one gives a
+        # 0-d object array, which fails much further down
         if self.carrier_type is None:
             self.carrier_type = np.ones(self.N_carrier_data, dtype=int)
-        self.carrier_type = np.asarray(self.carrier_type)
+        if not isinstance(self.carrier_type, CarrierAllocation):
+            self.carrier_type = np.asarray(self.carrier_type)
         if self.pilots is not None:
             self.pilots = np.asarray(self.pilots)
 
@@ -129,7 +133,7 @@ class OFDMReceiver(Processor):
     h : np.ndarray or list, keyword-only
         Channel impulse response :math:`h[l]` used by the frequency
         domain equalizer. Default is the ideal channel ``[1.0]``.
-    carrier_type : np.ndarray or list, optional, keyword-only
+    carrier_type : CarrierAllocation or np.ndarray, optional, keyword-only
         Subcarrier allocation mask (e.g. data, pilot, null), passed to
         :class:`~comnumpy.ofdm.processors.CarrierExtractor`. Default is
         an all-data mask of length ``N_carrier_data``.
@@ -152,7 +156,8 @@ class OFDMReceiver(Processor):
     N_carrier_data: int
     N_cp: int
     h: np.ndarray = field(default_factory=lambda: np.array([1.0]), kw_only=True)
-    carrier_type: Optional[np.ndarray] = field(default=None, kw_only=True)
+    carrier_type: Optional[np.ndarray | CarrierAllocation] = field(
+        default=None, kw_only=True)
     name: str = field(default="ofdm_receiver", kw_only=True)
     # internal state (declared for slots, D40a): always assigned in __post_init__
     # Sequential, not Processor: Sequential does not subclass it, so the
@@ -162,10 +167,13 @@ class OFDMReceiver(Processor):
     def __post_init__(self) -> None:
         if self.carrier_type is None:
             self.carrier_type = np.ones(self.N_carrier_data, dtype=int)
-        self.carrier_type = np.asarray(self.carrier_type)
+        if isinstance(self.carrier_type, CarrierAllocation):
+            N_carriers = self.carrier_type.N_fft
+        else:
+            self.carrier_type = np.asarray(self.carrier_type)
+            N_carriers = len(self.carrier_type)
         self.h = np.asarray(self.h)
 
-        N_carriers = len(self.carrier_type)
         self.chain = Sequential([
             Serial2Parallel(N_carriers + self.N_cp),
             CyclicPrefixRemover(self.N_cp),

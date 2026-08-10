@@ -8,11 +8,11 @@ import unittest
 
 import numpy as np
 
-from src.comnumpy.optical.channels import ChromaticDispersion
-from src.comnumpy.optical.dbp import DBP
-from src.comnumpy.optical.fiber import FiberSpec
-from src.comnumpy.optical.links import FiberLink
-from src.comnumpy.optical.utils import compute_beta2
+from comnumpy.optical.channels import ChromaticDispersion
+from comnumpy.optical.dbp import DBP
+from comnumpy.optical.fiber import FiberSpec
+from comnumpy.optical.links import FiberLink
+from comnumpy.optical.utils import compute_beta2
 
 FS = 1e12
 

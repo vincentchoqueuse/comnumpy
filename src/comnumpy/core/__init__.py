@@ -48,20 +48,22 @@ __all__ = [
     "zadoff_chu", "schmidl_cox_preamble", "barker", "golay_pair", "m_sequence",
     # lazily loaded (they pull matplotlib, see D36):
     "plot_time", "plot_spectrum", "plot_welch", "plot_iq", "plot_kde",
-    "plot_chain_profiling",
+    "plot_error_rate", "plot_chain_profiling",
 ]
 
 if TYPE_CHECKING:
     # the names below are resolved at runtime by __getattr__; importing
     # them here would pull matplotlib, so the type checker gets them and
     # the interpreter does not
-    from .visualizers import (plot_chain_profiling, plot_iq, plot_kde,
-                              plot_spectrum, plot_time, plot_welch)
+    from .visualizers import (plot_chain_profiling, plot_error_rate,
+                              plot_iq, plot_kde, plot_spectrum, plot_time,
+                              plot_welch)
 
 # PEP 562 lazy loading: importing comnumpy must not import matplotlib (D36).
 _LAZY = {name: ".visualizers"
          for name in ("plot_time", "plot_spectrum", "plot_welch",
-                      "plot_iq", "plot_kde", "plot_chain_profiling")}
+                      "plot_iq", "plot_kde", "plot_error_rate",
+                      "plot_chain_profiling")}
 
 
 def __getattr__(name: str) -> Any:
