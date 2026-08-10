@@ -73,6 +73,95 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- `constellation_capacity` and `bicm_capacity` take `method=`, which
+  chooses the integration rule: `"gauss-hermite"` (the default, matched
+  to the Gaussian weight of the integrand) or `"simpson"` (the classical
+  composite rule on a grid truncated at 8 standard deviations). Both
+  compute the same quantity and share nothing but the integrand, so the
+  second is an independent check of the first without leaving the
+  library -- and it is not a strawman: the integrand decays with all its
+  derivatives, so Euler-Maclaurin's endpoint corrections vanish and the
+  classical rule converges far faster than its nominal fourth order.
+  Measured on 16-QAM at rho = 10 against a 200-node reference, Simpson
+  is 1.9e-2 bit off at 20 nodes, 1.2e-4 at 40 and 1.1e-9 at 80, where
+  Gauss-Hermite is at 1.1e-5, 7.9e-7 and 3.8e-10 -- about a factor two
+  in nodes, four in cost, for the same accuracy. The rule now lives in
+  one place, `_noise_quadrature`, which returns nodes and weights;
+  nothing downstream of it knows which rule it was handed.
+- The MI and GMI estimators of `core/information.py` are cross-checked
+  against `core/capacity.py` over eight constellations of three families
+  (PSK-2/4/8, PAM-4/8, QAM-4/16/64) at 0, 8 and 16 dB. The two modules
+  compute the same two quantities by genuinely different means -- a
+  Monte-Carlo estimator over a record on one side, a deterministic
+  quadrature over the constellation on the other -- and the worst
+  deviation over the 48 comparisons is 0.006 bit on 40000 symbols. A
+  longer record shrinks it, which is what separates a sampling residual
+  from a disagreement on the quantity, and that separation is measured
+  in RMS over several draws rather than trusted to one lucky record.
+  The sweep also pins what a single constellation cannot show: BPSK,
+  QPSK and 4-QAM have MI = GMI exactly, the BICM gap opens beyond four
+  points and is a low-SNR phenomenon, and 8-PAM stays below 8-PSK at
+  equal SNR.
+- `validation/optical_wdm_opticommpy.py --dsp` answers, by measurement,
+  where the decibel between this reproduction and the published result
+  comes from. A finer split step does *not* close it -- it opens it
+  (20.11, 21.15, 21.57, 21.69, 21.69 dB as the step goes 1000 to 62 m),
+  so the converged answer is 1.06 dB above theirs and the agreement at
+  a coarse step was two errors of opposite sign cancelling. The
+  receiver does close it: laser phase noise, a polarization rotation, a
+  blind CMA/RDE butterfly and a blind phase search bring the same link
+  to 20.18 dB against their 20.63, so the published number sits inside
+  the bracket. One byproduct worth keeping: the phase search *gains*
+  0.8 dB with no laser phase noise to remove, because it also tracks
+  the slowly varying nonlinear phase.
+- `validation/optical_wdm_opticommpy.py` uses the notebook's own pulse
+  shaping -- one root-raised-cosine of 1024 taps at 16 samples per
+  symbol, the same object shaping the transmitter and matching the
+  receiver, as OptiCommPy does. It changes nothing it should not: the
+  link reads 21.59 dB against 21.57 dB through a filter four times
+  longer, and the script now *checks* that agreement, because the short
+  filter leaves a floor only 7 dB above the figure under test and the
+  subtraction has to be earned rather than assumed.
+- The WDM slot-width warning moved from `WDMDemultiplexer` to
+  `WDMMultiplexer`. At the receiver the measurement was dominated by
+  amplified spontaneous emission, which is white and fills the guard
+  band whatever the grid says: it fired on a correctly configured comb
+  after 700 km (0.12 % of rejected energy against 0.0004 % of genuinely
+  clipped signal). At the transmitter there is no noise and the
+  question -- does this channel fit the bandwidth the grid declares --
+  is exactly the configuration mistake worth catching.
+- Estimator scope (D49): every estimator now says whether what it
+  measures is **shared** by the paths of a multi-path signal or belongs
+  to **each path**, and behaves accordingly. `BlindCFOCompensator`
+  accepts `(..., P, N)` and estimates the offset *jointly* -- one laser,
+  one number, and twice the data. `BlindIQCompensator`,
+  `BlindPhaseCompensation` and `BlindPhaseTracker` estimate *per path*.
+  The data-aided family is fitted against one reference, so a multi-path
+  input is ambiguous by construction and `validate_single_path` refuses
+  it with a message naming the quantity and both ways out. Estimated
+  quantities keep the library's scalar-in-scalar-out rule: `theta_` is a
+  float for one path and an array otherwise.
+  Two defects surfaced asking the question:
+  * `BlindIQCompensator` on a `(2, N)` signal stacked the real and
+    imaginary parts of *both* polarizations into one 4-row matrix and
+    returned a signal worse than its input -- `var(I)/var(Q) = 2499`
+    instead of 1 -- **without raising**;
+  * `DCCorrector` never broadcast its own documented `axis`: the mean of
+    a `(P, N)` record along `axis=-1` came back as `(P,)` and the
+    subtraction raised a shape error, so the block did not work above
+    one dimension at all.
+- `BlindDualMIMOCompensator`: `norm` is gone -- it was declared,
+  documented as "normalize the filter weights", and never read.
+  `sub_block_length` now does what its name says: it bounds the block of
+  recent outputs handed to `process_after_iteration`, which used to be
+  `Y[:, k-1::-100]`, a stride over the *whole* history -- so the hook
+  cost grew with the sample index and a pass was quadratic. The
+  docstring gained the two things that cost an afternoon to rediscover:
+  the equalizer has a group delay of `L` input samples, and only CMA
+  converges from a cold start (RDE stalls at 3.5 dB where the noise
+  floor is 24). Staged CMA -> RDE -> DD reaches 23.96 dB against a
+  23.98 dB floor, and `tests/mimo/test_blind_equalizer.py` pins all of
+  it.
 - `comnumpy.core.information` (D48): achievable information rates
   measured on data -- `compute_mi` (symbol-wise decoder), `compute_gmi`
   (bit-wise, the structure of every soft-decision system),

@@ -1173,6 +1173,12 @@ class BlindPhaseTracker(Processor):
     pilots). The window half-length :math:`L` sets the usual trade-off:
     a long window averages the noise, a short one follows a fast phase.
 
+    The estimand is **per path** (D49): a ``(..., P, N)`` signal gets one
+    phase trajectory per path, and ``theta_`` has the shape of the
+    input. After a butterfly equalizer each output carries its own
+    residual rotation, so tracking the paths jointly would fit a single
+    phase to two different ones.
+
     Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the
     search loops over the sample axis.
 
@@ -1252,7 +1258,8 @@ class BlindPhaseTracker(Processor):
                 count += 1
         return total_error / count if count > 0 else np.inf
 
-    def forward(self, x):
+    def _track(self, x):
+        """Track one path: the search itself, on a 1-D record."""
         y_corrected = np.zeros_like(x, dtype=complex)
         optimal_phases = []
 
@@ -1263,7 +1270,21 @@ class BlindPhaseTracker(Processor):
             optimal_phases.append(best_phi)
             y_corrected[n] = x[n] * np.exp(-1j * best_phi)
 
-        # estimated quantity (D23), exposed for the caller to plot (D25, D42)
-        self.theta_ = np.asarray(optimal_phases)
+        return y_corrected, np.asarray(optimal_phases)
 
+    def forward(self, x):
+        signal = np.asarray(x)
+        if signal.ndim == 1:
+            y_corrected, phases = self._track(signal)
+        else:
+            # one trajectory per path (D49): after a butterfly equalizer
+            # each output carries its own residual rotation, so tracking
+            # them jointly would fit one phase to two different ones
+            tracked = [self._track(path)
+                       for path in signal.reshape(-1, signal.shape[-1])]
+            y_corrected = np.stack([y for y, _ in tracked]).reshape(signal.shape)
+            phases = np.stack([p for _, p in tracked]).reshape(signal.shape)
+
+        # estimated quantity (D23), exposed for the caller to plot (D25, D42)
+        self.theta_ = phases
         return y_corrected

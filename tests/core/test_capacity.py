@@ -8,8 +8,8 @@ import unittest
 
 import numpy as np
 
-from comnumpy.core.capacity import (awgn_capacity, bicm_capacity,
-                                    constellation_capacity,
+from comnumpy.core.capacity import (_noise_quadrature, awgn_capacity,
+                                    bicm_capacity, constellation_capacity,
                                     mimo_ergodic_capacity, outage_capacity,
                                     rayleigh_ergodic_capacity, waterfilling)
 from comnumpy.core.utils import get_alphabet
@@ -119,6 +119,83 @@ class TestBicmCapacity(unittest.TestCase):
     def test_rejects_non_binary_constellations(self):
         with self.assertRaises(ValueError):
             bicm_capacity(np.array([1.0, -0.5, -0.5]), 1.0)
+
+
+class TestIntegrationMethod(unittest.TestCase):
+    """The quadrature is a choice, and the choice must not show.
+
+    Both capacity functions integrate against a Gaussian weight. The
+    default rule is matched to that weight; ``method="simpson"`` is the
+    textbook composite rule on a truncated grid. They share nothing but
+    the integrand, so agreeing is evidence about the integrand and not
+    about either rule.
+    """
+
+    def test_the_two_rules_agree_on_both_quantities(self):
+        for mod, order in (("PSK", 2), ("PSK", 8), ("PAM", 8),
+                           ("QAM", 16), ("QAM", 64)):
+            alphabet = get_alphabet(mod, order)
+            for snr in (1.0, 10 ** 0.8, 10 ** 1.6):
+                with self.subTest(modulation=f"{mod}-{order}", snr=snr):
+                    self.assertAlmostEqual(
+                        float(constellation_capacity(alphabet, snr)),
+                        float(constellation_capacity(alphabet, snr,
+                                                     method="simpson")),
+                        delta=1e-3)
+                    self.assertAlmostEqual(
+                        float(bicm_capacity(alphabet, snr)),
+                        float(bicm_capacity(alphabet, snr, method="simpson")),
+                        delta=1e-3)
+
+    def test_the_classical_rule_converges_on_the_default_one(self):
+        """Refining it walks towards the answer, it does not wander."""
+        alphabet = get_alphabet("QAM", 16)
+        exact = float(constellation_capacity(alphabet, 10.0, n_nodes=200))
+        errors = [abs(float(constellation_capacity(alphabet, 10.0,
+                                                   n_nodes=nodes,
+                                                   method="simpson")) - exact)
+                  for nodes in (20, 40, 80)]
+        self.assertTrue(all(a > b for a, b in zip(errors, errors[1:],
+                                                  strict=False)), errors)
+        self.assertLess(errors[-1], 1e-6)
+
+    def test_both_rules_integrate_the_constant(self):
+        """A rule whose weights miss one cannot integrate anything else.
+
+        Gauss-Hermite is exact here whatever the node count; Simpson is
+        only asymptotically so, and the defect measures its truncation.
+        """
+        for method in ("gauss-hermite", "simpson"):
+            for n_nodes in (20, 40, 80):
+                with self.subTest(method=method, n_nodes=n_nodes):
+                    _, weights = _noise_quadrature(method, n_nodes)
+                    tolerance = 1e-12 if method == "gauss-hermite" else 1e-3
+                    self.assertAlmostEqual(float(np.sum(weights)), 1.0,
+                                           delta=tolerance)
+
+    def test_the_default_rule_reproduces_the_first_two_moments(self):
+        """It is a standard normal it is integrating, so check that."""
+        nodes, weights = _noise_quadrature("gauss-hermite", 20)
+        self.assertAlmostEqual(float(weights @ nodes), 0.0, places=12)
+        self.assertAlmostEqual(float(weights @ nodes ** 2), 1.0, places=12)
+
+    def test_simpson_is_given_the_odd_node_count_it_needs(self):
+        nodes, _ = _noise_quadrature("simpson", 40)
+        self.assertEqual(nodes.size, 41)
+
+    def test_an_unknown_method_names_the_ones_that_exist(self):
+        with self.assertRaises(ValueError) as ctx:
+            constellation_capacity(get_alphabet("QAM", 4), 1.0,
+                                   method="romberg")
+        message = str(ctx.exception)
+        self.assertIn("romberg", message)
+        self.assertIn("gauss-hermite", message)
+        self.assertIn("simpson", message)
+
+    def test_a_degenerate_node_count_is_refused(self):
+        with self.assertRaises(ValueError) as ctx:
+            bicm_capacity(get_alphabet("QAM", 4), 1.0, n_nodes=1)
+        self.assertIn("at least 2 nodes", str(ctx.exception))
 
 
 class TestFadingCapacity(unittest.TestCase):

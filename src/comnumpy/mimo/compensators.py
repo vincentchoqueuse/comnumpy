@@ -43,9 +43,39 @@ class BlindDualMIMOCompensator(Processor):
     updates :math:`\mathbf{H}` sample by sample, and ``partial_fit(X)``
     runs one adaptation pass over ``X`` from the current state.
 
+    Staged adaptation
+    -----------------
+    **CMA is the only one of the three that converges from a cold
+    start.** RDE and DD both need decisions that are already roughly
+    right: started from the identity equalizer on 16-QAM, RDE stalls --
+    3.5 dB where the noise floor is 24. The usual recipe is to run CMA
+    first and switch once it has opened the eye, which is what a
+    ``['cma', 'rde']`` schedule means in the literature. Two ways to do
+    it here:
+
+    * between passes, with :meth:`partial_fit` and :meth:`set_params`
+      (or a plain assignment) to change ``mode`` and ``mu``;
+    * inside a single pass, by overriding
+      :meth:`process_after_iteration`, which is called after every
+      output sample with the most recent outputs and exists for exactly
+      this (see ``examples/mimo/one_shot_CMA.py``).
+
+    Measured on a static Jones rotation with a 24 dB noise floor, the
+    three stages give 21.0, 23.9 and 23.98 dB: CMA opens the eye, RDE
+    takes it to within a tenth of the floor, and DD closes what is
+    left.
+
     Axes: *declared axis* -- expects the dual-polarization layout
     ``(2, N)``, produces ``(2, N // oversampling)`` (one output sample
     per ``oversampling`` input samples: fractionally spaced equalizer).
+
+    **Delay.** The centre tap of the initial equalizer sits :math:`L`
+    input samples back, so output sample :math:`k` is aligned with
+    input sample :math:`k \cdot os - L`: the block has a group delay of
+    :math:`L` input samples, and comparing its output with the
+    transmitted symbols without accounting for it reads as pure noise.
+    The first :math:`(2L+1)/os` output samples are never written -- the
+    filter has no history yet -- and are left at zero.
 
     Parameters
     ----------
@@ -60,10 +90,13 @@ class BlindDualMIMOCompensator(Processor):
     oversampling : int, optional, keyword-only
         Oversampling factor of the input. When greater than one, the
         algorithm implements a fractionally spaced equalizer. Default is 1.
-    norm : bool, optional, keyword-only
-        Flag to normalize the filter weights. Default is True.
     mode : {"cma", "rde", "dd"}, optional, keyword-only
-        Blind loss used for the update. Default is ``"cma"``.
+        Blind loss used for the update. Default is ``"cma"``. See
+        *Staged adaptation* above: only ``"cma"`` converges from a cold
+        start.
+    sub_block_length : int, optional, keyword-only
+        Number of recent output samples handed to
+        :meth:`process_after_iteration`. Default is 20.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"mimo filter"``.
 
@@ -106,7 +139,6 @@ class BlindDualMIMOCompensator(Processor):
     alphabet: np.ndarray = field(kw_only=True)
     mu: float = field(default=1e-4, kw_only=True)
     oversampling: int = field(default=1, kw_only=True)
-    norm: bool = field(default=True, kw_only=True)
     mode: Literal["cma", "rde", "dd"] = field(default="cma", kw_only=True)
     # a field, not a bare class attribute: unannotated it was excluded
     # from __slots__, so `compensator.sub_block_length = 30` raised
@@ -163,7 +195,19 @@ class BlindDualMIMOCompensator(Processor):
         return term1.reshape(-1, 1) * input
 
     def process_after_iteration(self, n: int, Y_sub: np.ndarray) -> None:
-        pass
+        """Hook called after each output sample; does nothing by default.
+
+        Override it to schedule the stages of the adaptation (switch
+        ``mode`` once the eye is open) or to correct a residual phase.
+
+        Parameters
+        ----------
+        n : int
+            Index of the output sample just produced.
+        Y_sub : np.ndarray
+            The last ``sub_block_length`` outputs, ``(2, K)``, oldest
+            first.
+        """
 
     def partial_fit(self, X: np.ndarray):
         """
@@ -189,9 +233,15 @@ class BlindDualMIMOCompensator(Processor):
             y_sub = np.matmul(np.conjugate(self.H_), x_sub)  # filter output
             grad = self.grad(x_sub, y_sub)
             self.H_ += self.mu*grad  # implement equation in matrix form directly
-            Y[:, n//os] = y_sub
+            index = n//os
+            Y[:, index] = y_sub
 
-            # perform process after_iteration
-            self.process_after_iteration(n//os, Y[:, n//os-1::-100])
+            # the last sub_block_length outputs. This used to be
+            # Y[:, index-1::-100], a strided view of the *whole* history:
+            # it grew with n, so the hook cost O(n) per sample and the
+            # pass was quadratic -- and sub_block_length, which names
+            # exactly this, went unused.
+            start = max(0, index + 1 - self.sub_block_length)
+            self.process_after_iteration(index, Y[:, start:index + 1])
 
         return Y
