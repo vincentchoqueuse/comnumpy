@@ -2,6 +2,12 @@ import numpy as np
 
 from comnumpy.core.utils import sym_2_bin  # single definition (annex A.5)
 
+__all__ = [
+    "compute_ser_awgn_psk", "compute_ser_awgn_qam", "compute_metric_awgn_theo",
+    "compute_ser", "compute_ber", "compute_evm", "compute_effective_snr",
+    "compute_power", "compute_ccdf", "compute_acpr", "signal_report",
+]
+
 
 def compute_ser_awgn_psk(order, snr_per_bit):
     r"""

@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 from comnumpy.core.generics import Processor
 
+__all__ = ["SymbolGenerator", "GaussianGenerator"]
+
 
 @dataclass(slots=True)
 class SymbolGenerator(Processor):

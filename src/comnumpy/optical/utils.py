@@ -6,6 +6,14 @@ from comnumpy.exceptions import ShapeError
 
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
+__all__ = [
+    "compute_beta2", "apply_chromatic_dispersion", "apply_kerr_nonlinearity",
+    "compute_erbium_doped_fiber_amplifier_gain",
+    "compute_erbium_doped_fiber_N_ase", "get_linear_step_size",
+    "get_logarithmic_step_size", "itu_grid_frequency", "is_polarization_pair",
+    "manakov_kerr",
+]
+
 
 def compute_beta2(lamb: float, cd_coefficient: float,
                   speed_of_light: float) -> float:

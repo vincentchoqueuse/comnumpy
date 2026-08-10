@@ -5,6 +5,8 @@ from comnumpy.core import Processor
 from .utils import apply_chromatic_dispersion, apply_kerr_nonlinearity, compute_beta2
 from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT
 
+__all__ = ["PhaseNoise", "ChromaticDispersion", "KerrNonLinearity"]
+
 
 @dataclass(slots=True)
 class PhaseNoise(Processor):
