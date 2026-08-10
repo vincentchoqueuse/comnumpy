@@ -1,5 +1,4 @@
 import numpy as np
-import itertools
 import numpy.linalg as LA
 from dataclasses import dataclass, field
 from typing import Literal, Optional
@@ -7,11 +6,19 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
 __all__ = [
-    "MaximumLikelihoodDetector", "LinearDetector",
+    "MaximumLikelihoodDetector", "SphereDecoder", "LinearDetector",
     "OrderedSuccessiveInterferenceCancellationDetector",
     "ApproximateMessagePassingDetector",
     "OrthogonalApproximateMessagePassingDetector",
 ]
+
+
+# The exhaustive search is blocked on both axes so that its cost matrix
+# stays a few megabytes whatever the constellation: 1024 samples by 2048
+# candidates is 16 MB of float64, against 34 GB for 16-QAM on four
+# antennas taken in one piece.
+_ML_BLOCK = 1024
+_ML_CANDIDATES = 2048
 
 
 def _required_channel(H: Optional[np.ndarray], block: str) -> np.ndarray:
@@ -127,38 +134,269 @@ class MaximumLikelihoodDetector(Processor):
 
     def get_candidates(self, alphabet: np.ndarray,
                        N_t: int) -> tuple[np.ndarray, np.ndarray]:
-        symbols = np.arange(len(alphabet))
-        input_list = [p for p in itertools.product(symbols, repeat=N_t)]
+        """Every vector of :math:`\\mathcal{M}^{N_t}`, as indices and symbols.
 
-        # preallocation of memory
-        X = np.zeros((N_t, len(input_list)), dtype=complex)
-        S = np.zeros((N_t, len(input_list)))
-
-        for indice in range(len(input_list)):
-            input = np.array(input_list[indice])
-            x = alphabet[input]
-            X[:, indice] = x
-            S[:, indice] = input
-
-        return S, X
+        The enumeration is mixed-radix counting -- the order
+        ``itertools.product(range(M), repeat=N_t)`` produces -- written as
+        arithmetic on an index grid, because the loop that built it one
+        candidate at a time was the dominant cost for a large alphabet.
+        """
+        order = len(alphabet)
+        count = order ** N_t
+        # digit k of every integer in [0, order**N_t), most significant
+        # first: that is exactly product(range(order), repeat=N_t)
+        powers = order ** np.arange(N_t - 1, -1, -1)
+        S = (np.arange(count)[None, :] // powers[:, None]) % order
+        return S.astype(float), alphabet[S]
 
     def forward(self, Y: np.ndarray) -> np.ndarray:
         H = _required_channel(self.H, type(self).__name__)
         _, N_t = H.shape
         _, N = Y.shape
-        S = np.zeros((N_t, N), dtype=int)
         alphabet = self.alphabet
 
         S_candidates, X_candidates = self.get_candidates(alphabet, N_t)
-        Y_candidates = np.matmul(
-            H, X_candidates
-        )  # compute all combinaison of received data
+        Y_candidates = np.matmul(H, X_candidates)      # (N_r, C)
 
-        for n in range(N):
-            y = np.transpose(np.atleast_2d(Y[:, n]))
-            index_min = np.argmin(np.sum(np.abs(y - Y_candidates) ** 2, axis=0))
-            S[:, n] = S_candidates[:, index_min]
+        # ||y - Hx||^2 = ||y||^2 - 2 Re(y^H Hx) + ||Hx||^2, and the first
+        # term does not depend on the candidate: the search is one matrix
+        # product against the whole block instead of one pass per sample.
+        energy = np.sum(np.abs(Y_candidates) ** 2, axis=0)          # (C,)
+        S = np.empty((N_t, N), dtype=int)
+        for start in range(0, N, _ML_BLOCK):
+            block = np.conjugate(Y[:, start:start + _ML_BLOCK]).T    # (n, N_r)
+            n_block = block.shape[0]
+            best = np.full(n_block, np.inf)
+            winner = np.zeros(n_block, dtype=int)
+            # blocked on both axes: the cost matrix is (n, C) and would
+            # be hundreds of megabytes for a large constellation. The
+            # running minimum keeps it bounded, and `<` keeps the
+            # first-minimum tie-break of a single argmin.
+            for first in range(0, energy.size, _ML_CANDIDATES):
+                columns = slice(first, first + _ML_CANDIDATES)
+                cost = energy[None, columns] - 2 * np.real(
+                    np.matmul(block, Y_candidates[:, columns]))
+                local = np.argmin(cost, axis=1)
+                values = cost[np.arange(n_block), local]
+                better = values < best
+                winner[better] = local[better] + first
+                best[better] = values[better]
+            S[:, start:start + n_block] = S_candidates[:, winner]
 
+        self.S = S
+        return S
+
+
+@dataclass(slots=True)
+class SphereDecoder(Processor):
+    r"""Maximum likelihood by tree search instead of exhaustion.
+
+    Signal Model
+    ------------
+    The decision is the one of :class:`MaximumLikelihoodDetector` --
+    exactly, not approximately -- reached without evaluating every
+    candidate. Write the thin QR factorization of the channel,
+    :math:`\mathbf{H} = \mathbf{Q}\mathbf{R}` with
+    :math:`\mathbf{Q}^H\mathbf{Q} = \mathbf{I}_{N_t}` and
+    :math:`\mathbf{R}` upper triangular, and project the observation on
+    :math:`\mathbf{z} = \mathbf{Q}^H \mathbf{y}`:
+
+    .. math::
+
+        \left\|\mathbf{y} - \mathbf{H}\mathbf{x}\right\|^2 =
+        \underbrace{\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2}
+        _{\text{depends on } \mathbf{x}}
+        + \left\|\left(\mathbf{I} - \mathbf{Q}\mathbf{Q}^H\right)
+          \mathbf{y}\right\|^2
+
+    The second term is a constant, so minimizing the first *is* maximum
+    likelihood. Its value is what makes the search possible, because
+    :math:`\mathbf{R}` is triangular:
+
+    .. math::
+
+        \left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2 =
+        \sum_{k=N_t-1}^{0} \left|R_{kk}\right|^2
+        \left|c_k(x_{k+1}, \ldots, x_{N_t-1}) - x_k\right|^2,
+        \qquad
+        c_k = \frac{z_k - \sum_{i>k} R_{ki} x_i}{R_{kk}}
+
+    Every term is non-negative and layer :math:`k` depends only on the
+    layers already decided, so a partial sum can only grow: the moment
+    it exceeds the best full metric found so far, the whole subtree
+    below it can be discarded. That is the sphere: the search visits
+    only the lattice points inside a ball whose radius shrinks each time
+    a better solution is found.
+
+    The enumeration order within a layer is the Schnorr-Euchner one --
+    alphabet points by increasing :math:`|c_k - a|` -- for two reasons.
+    The first leaf reached is then the successive-interference-cancelling
+    (Babai) solution, which gives a finite radius immediately, so no
+    initial radius has to be guessed; and since the terms are visited in
+    increasing order, the first one that exceeds the bound ends the
+    layer, no ``continue`` needed.
+
+    **What it costs.** The visited-node count is data dependent -- that
+    is the whole point -- and is reported as ``nodes_``, the average per
+    detected vector. At high SNR it approaches :math:`N_t` (the Babai
+    point is already ML and nothing else survives the first bound);
+    at low SNR, or on an ill-conditioned channel, it grows towards the
+    exhaustive :math:`|\mathcal{M}|^{N_t}`. In Python the per-node
+    overhead is large, so this block is *slower* than the vectorized
+    exhaustive search on small problems and becomes the only option when
+    :math:`|\mathcal{M}|^{N_t}` stops fitting in memory -- 16-QAM on
+    four antennas is 65 536 candidates per symbol, 64-QAM on four is
+    16.7 million.
+
+    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
+    axis -2, and returns the alphabet indices, like every other detector
+    here.
+
+    Parameters
+    ----------
+    alphabet : np.ndarray
+        Symbol constellation :math:`\mathcal{M}` (1D array).
+    H : np.ndarray, optional, keyword-only
+        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`,
+        with :math:`N_r \geq N_t`. Must be set before the call.
+    name : str, optional, keyword-only
+        Name of the detector. Default is ``"Sphere Decoder"``.
+
+    Attributes
+    ----------
+    nodes_ : float
+        Average number of tree nodes visited per detected vector in the
+        last call -- data-dependent, hence the trailing underscore (D23).
+        Compare it with :math:`|\mathcal{M}|^{N_t}`.
+
+    Raises
+    ------
+    ValueError
+        If ``H`` is not set, if the channel has fewer receive than
+        transmit antennas (the decomposition needs a full-column-rank
+        :math:`\mathbf{R}`), or if that rank is deficient.
+
+    References
+    ----------
+    * U. Fincke, M. Pohst, "Improved methods for calculating vectors of
+      short length in a lattice", Mathematics of Computation, vol. 44,
+      no. 170, pp. 463-471, 1985.
+    * C. P. Schnorr, M. Euchner, "Lattice basis reduction: improved
+      practical algorithms and solving subset sum problems",
+      Mathematical Programming, vol. 66, pp. 181-199, 1994.
+    * E. Agrell, T. Eriksson, A. Vardy, K. Zeger, "Closest point search
+      in lattices", IEEE Trans. Inf. Theory, vol. 48, no. 8,
+      pp. 2201-2214, 2002.
+    * B. Hassibi, H. Vikalo, "On the sphere-decoding algorithm I.
+      Expected complexity", IEEE Trans. Signal Process., vol. 53, no. 8,
+      pp. 2806-2818, 2005.
+
+    Examples
+    --------
+    >>> alphabet = np.array([-1.0 + 0j, 1.0 + 0j])
+    >>> H = np.eye(2)
+    >>> Y = np.array([[0.9, -1.1], [-0.8, 1.2]])
+    >>> SphereDecoder(alphabet, H=H)(Y)
+    array([[1, 0],
+           [0, 1]])
+
+    The decision is the exhaustive one, on far fewer candidates:
+
+    >>> from comnumpy.core.utils import get_alphabet
+    >>> from comnumpy.mimo.utils import rayleigh_channel
+    >>> alphabet = get_alphabet("QAM", 16)
+    >>> H = rayleigh_channel(4, 4, seed=0)
+    >>> rng = np.random.default_rng(1)
+    >>> sent = rng.integers(0, 16, size=(4, 200))
+    >>> Y = H @ alphabet[sent] + 0.05 * (rng.standard_normal((4, 200))
+    ...                                  + 1j * rng.standard_normal((4, 200)))
+    >>> decoder = SphereDecoder(alphabet, H=H)
+    >>> exhaustive = MaximumLikelihoodDetector(alphabet, H=H)
+    >>> bool(np.array_equal(decoder(Y), exhaustive(Y)))
+    True
+    >>> print(f"{decoder.nodes_:.1f} nodes visited, against {16 ** 4}")
+    4.5 nodes visited, against 65536
+    """
+
+    alphabet: np.ndarray
+    H: Optional[np.ndarray] = field(default=None, kw_only=True)
+    name: str = field(default="Sphere Decoder", kw_only=True)
+    # internal state (declared for slots, D40a)
+    S: Optional[np.ndarray] = field(init=False, repr=False,
+                                    default_factory=lambda: None)
+    nodes_: float = field(init=False, repr=False, default=0.0)
+
+    def _triangularize(self) -> tuple[np.ndarray, np.ndarray]:
+        """The thin QR of the channel, with the guards it needs."""
+        H = _required_channel(self.H, type(self).__name__)
+        n_rx, n_tx = H.shape
+        if n_rx < n_tx:
+            raise ValueError(
+                f"{type(self).__name__} needs at least as many receive as "
+                f"transmit antennas, got H of shape {H.shape}. An "
+                f"underdetermined channel has no unique closest lattice "
+                f"point; use ApproximateMessagePassingDetector instead.")
+        Q, R = LA.qr(H)
+        diagonal = np.abs(np.diag(R))
+        if np.min(diagonal) <= 1e-12 * np.max(diagonal):
+            raise ValueError(
+                f"{type(self).__name__} got a rank-deficient channel: the "
+                f"triangular factor has a diagonal entry of "
+                f"{np.min(diagonal):.3g} against {np.max(diagonal):.3g}. "
+                f"The tree search divides by it, so no sphere is defined.")
+        return Q, R
+
+    def _closest(self, R: np.ndarray, gains: np.ndarray, z: np.ndarray,
+                 alphabet: np.ndarray) -> tuple[np.ndarray, int]:
+        """The closest lattice point to one observation, and its cost.
+
+        Depth first from the last layer, Schnorr-Euchner order within a
+        layer, and a bound that tightens every time a leaf is reached.
+        """
+        n_tx = R.shape[0]
+        symbols = np.empty(n_tx, dtype=complex)
+        indices = np.empty(n_tx, dtype=int)
+        bound = np.inf
+        best = np.zeros(n_tx, dtype=int)
+        nodes = 0
+
+        def search(level: int, metric: float) -> None:
+            nonlocal bound, best, nodes
+            centre = ((z[level] - np.dot(R[level, level + 1:],
+                                         symbols[level + 1:]))
+                      / R[level, level])
+            distance = np.abs(alphabet - centre) ** 2
+            for choice in np.argsort(distance):
+                step = metric + gains[level] * distance[choice]
+                if step >= bound:
+                    break            # sorted: the rest of the layer too
+                nodes += 1
+                symbols[level] = alphabet[choice]
+                indices[level] = choice
+                if level == 0:
+                    bound = step
+                    best = indices.copy()
+                else:
+                    search(level - 1, step)
+
+        search(n_tx - 1, 0.0)
+        return best, nodes
+
+    def forward(self, Y: np.ndarray) -> np.ndarray:
+        Q, R = self._triangularize()
+        Z = np.matmul(np.conjugate(Q).T, Y)          # (N_t, N)
+        alphabet = np.asarray(self.alphabet).ravel()
+        gains = np.abs(np.diag(R)) ** 2
+
+        n_samples = Y.shape[-1]
+        S = np.empty((R.shape[0], n_samples), dtype=int)
+        visited = 0
+        for sample in range(n_samples):
+            best, nodes = self._closest(R, gains, Z[:, sample], alphabet)
+            S[:, sample] = best
+            visited += nodes
+
+        self.nodes_ = visited / max(1, n_samples)
         self.S = S
         return S
 
