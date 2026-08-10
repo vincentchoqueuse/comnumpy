@@ -14,16 +14,12 @@ from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
 
 img_dir = "../../docs/examples/img/"
 
-# Parameters
 fs = 15.36e6                  # LTE 15.36 MHz: 65 ns per sample
 M = 16
 alphabet = get_alphabet("QAM", M)
 spread_ns = 300.0             # the scenario supplies the delay spread
 profiles = ["TDL-A", "TDL-C", "TDL-D", "EVA", "ETU"]
 
-# 1. The catalog. A TR 38.901 model is a *shape*: its delays are
-# normalized, so the same table serves an indoor 30 ns scenario and an
-# outdoor 1 us one. The LTE profiles are absolute instead, in ns.
 print(f"{'profile':8s} {'taps':>5s} {'rms [ns]':>9s} {'max [ns]':>9s} "
       f"{'K [dB]':>7s}  taps at 15.36 MHz")
 for name in profiles:
@@ -49,8 +45,6 @@ axes1[0].set_ylim(-40, 2)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/multipath_fig1.png")
 
-# 2. What a delay spread does to the frequency response. The channel is
-# a chain block like any other: give it a profile and a sampling rate.
 fig2, ax2 = plt.subplots(figsize=(7, 4))
 print("\ndelay spread -> coherence bandwidth")
 for spread in (100.0, 300.0, 1000.0):
@@ -63,11 +57,6 @@ for spread in (100.0, 300.0, 1000.0):
     frequencies = np.fft.fftshift(np.fft.fftfreq(1024, 1 / fs)) * 1e-6
     ax2.plot(frequencies, 10 * np.log10(response),
              label=f"RMS spread {spread:.0f} ns")
-    # The frequency correlation is the Fourier transform of the power
-    # delay profile, R(df) = sum_l gamma_l exp(-j 2 pi df tau_l), so the
-    # coherence bandwidth is a property of the profile and not of one
-    # draw. Convention here: the width at which the envelope
-    # correlation |R|^2 has fallen to one half.
     grid = np.linspace(0, fs / 2, 8192)
     correlation = np.abs(np.exp(-2j * np.pi * np.outer(
         grid, profile.delays_ns * 1e-9)) @ profile.powers_lin) ** 2
@@ -85,10 +74,6 @@ ax2.grid(True)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/multipath_fig2.png")
 
-# 3. What it costs an OFDM link, and what the cyclic prefix is for.
-# The prefix turns the linear convolution into a circular one -- but
-# only if it is longer than the channel. Shorter, and the previous
-# symbol leaks in: an error floor no SNR removes.
 N_carrier = 128
 N_symbols = 400
 N = N_carrier * N_symbols
@@ -112,8 +97,6 @@ for N_cp in (longest + 8, longest // 4):
         link.seed(11)                     # same channel draw at every SNR
         link.set_params(**{"noise.snr_dB": float(snr_dB)})
         y = link(N)
-        # the receiver has to know the channel: read what the fading
-        # block actually realized (block fading, so column 0 is it)
         fading = link["fading"]
         taps = np.zeros(int(fading.delays_[-1]) + 1, dtype=complex)
         taps[fading.delays_] = fading.h_[:, 0]
@@ -133,8 +116,6 @@ ax.set_ylim(1e-4, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/multipath_fig3.png")
 
-# The chain diagram this tutorial shows is exported from the chain
-# itself (D33c), so the picture cannot drift from the code.
 mermaid_dir = "../../docs/examples/mermaid/"
 for diagram_name, diagram_chain in [("multipath", link)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:

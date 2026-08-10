@@ -53,7 +53,7 @@ Set key parameters such as modulation order, oversampling factors, fiber link pr
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 16-37
+   :lines: 15-35
 
 Create Communication Chain
 """"""""""""""""""""""""""
@@ -62,7 +62,7 @@ Build a processing chain consisting of symbol generation, mapping, pulse shaping
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 39-51
+   :lines: 37-47
 
 This simulates the full transmission over an optical fiber with nonlinear effects and noise.
 
@@ -77,7 +77,7 @@ Execute the chain and extract the transmitted and received signals. Then, plot t
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 51-62
+   :lines: 48-56
 
 Received Signal
 ^^^^^^^^^^^^^^^
@@ -98,7 +98,7 @@ After compensation, the received signal may exhibit a residual phase rotation. T
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 64-100
+   :lines: 58-88
 
 .. code::
 

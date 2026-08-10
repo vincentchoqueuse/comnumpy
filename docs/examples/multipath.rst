@@ -56,7 +56,7 @@ so it belongs with the channel and not with the modulation. At the LTE rate of
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 17-22
+   :lines: 17-21
 
 
 The Power Delay Profile
@@ -89,7 +89,7 @@ the scale:
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 24-37
+   :lines: 23-33
 
 .. code::
 
@@ -124,7 +124,7 @@ a line of sight -- 13.3 dB above the diffuse part of the same tap:
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 39-50
+   :lines: 35-46
 
 .. image:: img/multipath_fig1.png
    :width: 100%
@@ -154,7 +154,7 @@ constant of the profile's *shape*.
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 52-86
+   :lines: 48-75
 
 .. code::
 
@@ -207,7 +207,7 @@ of that condition:
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 88-134
+   :lines: 77-117
 
 .. code::
 
@@ -242,7 +242,7 @@ The chain, as the chain itself describes it:
 
 .. literalinclude:: ../../examples/simple/multipath_channels.py
    :language: python
-   :lines: 136-142
+   :lines: 119-123
 
 
 Conclusion

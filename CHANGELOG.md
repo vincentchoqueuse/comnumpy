@@ -998,6 +998,34 @@ code actually does.
 
 ### Changed
 
+- **The tutorials are now built out of library blocks rather than
+  hand-written numpy.** A tutorial exists to show that the library
+  works; three of them were partly showing that numpy works, which
+  proves nothing and leaves the reader copying code the library already
+  ships. The OFDM tutorial drew its frequency-selective channel from an
+  exponential profile written out by hand and now takes the 3GPP
+  Extended Pedestrian A entry from the catalogue through
+  `TappedDelayLineChannel`, sounding it with an impulse to recover the
+  taps; the MIMO sphere-decoder study built its channel and noise with
+  `@` and `standard_normal` and is now a chain with `FlatMIMOChannel`
+  and `AWGN`; the GN model tutorial replaced its own pulse shaping,
+  matched filter, gain fit and SNR ratio with `SRRCFilter`,
+  `DataAidedComplexGainCompensator` and `compute_effective_snr`, and is
+  now one chain reconfigured by `set_params` and driven by `sweep`
+  instead of three chains composed by hand. The two profiling scripts
+  lost the last hand-rolled channel in the documentation, and gained a
+  seed with it -- they were drawing from an unseeded global RNG.
+
+- **The tutorials no longer display their own narrative comments.** Each
+  example carried a running commentary that the page repeated
+  immediately above it in prose, so every explanation appeared twice and
+  the two could drift apart. The commentary now lives in the page only;
+  the code keeps its names, its one-line docstrings and the short
+  trailing annotations that point at a specific line. 197 comment lines
+  came out of ten examples, and the `:lines:` ranges of every page that
+  quotes them were remapped in the same change -- which is what the
+  coverage guard in `tests/test_docs_references.py` is there to catch.
+
 - Dependencies are now `numpy`, `scipy`, `matplotlib` only. `seaborn`
   (used once, for a KDE plot now implemented with `scipy.stats.gaussian_kde`)
   and `tqdm` (never used) are removed.

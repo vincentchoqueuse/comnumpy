@@ -9,13 +9,10 @@ from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 from comnumpy.ofdm.metrics import compute_papr
 
-# This script reproduces the first figure of the following article :
-# - “An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).
 
 img_dir = "../../docs/examples/img/"
 
 
-# parameters
 N_sc = 1024
 L = 10000
 type, M = "PSK", 4
@@ -25,11 +22,9 @@ papr_dB_threshold = np.arange(4, 13, 0.1)
 gamma = 10**(papr_dB_threshold/10)
 os = 4
 
-# defaut carrier type
 carrier_type = np.zeros(os*N_sc)
 carrier_type[:N_sc] = 1
 
-# perform simulation
 chain = Sequential([
         SymbolGenerator(M),
         SymbolMapper(alphabet),
@@ -38,7 +33,6 @@ chain = Sequential([
         IFFTProcessor()
     ])
 
-# evaluate PAPR for one signal
 N = N_sc*os*L
 y = chain(2**16)
 y = np.ravel(y) # perform parallel2serial conversion (C-order flatten of (..., T, F) blocks)
@@ -55,35 +49,20 @@ N_sc_list = [256, 1024]
 
 for N_sc in N_sc_list:
 
-    # set S2P and carrier allocation
     carrier_type = np.zeros(os*N_sc)
     carrier_type[:N_sc] = 1
 
     chain["s2p"].set_N_sub(N_sc)
     chain["carrier_allocator"].set_carrier_type(carrier_type)
 
-    # generate data
     N = N_sc*os*L
     y = chain(N)
 
-    # evaluate metric
     papr_dB_array = compute_papr(y, unit="dB", axis=-1)
 
-    # display experimental curves
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
     plt.semilogy(papr_dB, ccdf, label=f"exp: N_sc={N_sc}")
 
-    # display theoretical curves
-    #
-    # The exponent is NOT N_sc*os. The Nyquist-rate model treats the N_sc
-    # samples of a symbol as independent, which gives exponent N_sc; an
-    # oversampled signal has more peaks but they are correlated, so the
-    # effective number of independent samples grows much more slowly than
-    # the sample count. van Nee & Prasad (ch. 2) give 2.8*N_sc for 4x
-    # oversampling, and the fitted exponent measured here
-    # (validation/ofdm_papr_ccdf.py) is 2.28 / 2.49 / 2.74 for
-    # N_sc = 64 / 256 / 1024, converging to it. Using N_sc*os overstates
-    # the PAPR by +0.19 dB at N_sc=256 at CCDF 1e-2.
     ccdf_theo = 1 - (1 - np.exp(-gamma))**(2.8*N_sc)
     plt.semilogy(papr_dB_threshold, ccdf_theo, label=f"theo: N_sc={N_sc}")
 

@@ -41,7 +41,7 @@ We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 1-13
+   :lines: 1-11
 
 
 Define Parameters
@@ -52,7 +52,7 @@ the number of subcarriers, modulation, oversampling factor, and thresholds for P
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 16-26
+   :lines: 14-23
 
 Here:
 
@@ -71,7 +71,7 @@ carrier allocation, and IFFT processing.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 29-40
+   :lines: 25-35
 
 
 PAPR metric
@@ -97,7 +97,7 @@ and plot its instantaneous power. The computed PAPR value is displayed in the fi
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 42-51
+   :lines: 36-45
 
 This produces a figure similar to:
 
@@ -116,7 +116,7 @@ For each case, we compare the simulation results with the theoretical CCDF:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 54-88
+   :lines: 48-67
 
 The theoretical CCDF is given by:
 

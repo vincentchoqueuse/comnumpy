@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.channels import AWGN, FIRChannel
+from comnumpy.core.channels import (AWGN, FIRChannel,
+                                    TappedDelayLineChannel)
+from comnumpy.core.fading import get_delay_profile
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.visualizers import plot_chain_profiling
@@ -12,26 +14,25 @@ from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 from comnumpy.ofdm.allocation import get_allocation
 
 
-# parameters
 M = 16
-N_h = 5
+fs = 5e6
 N_cp = 10
 N = 100000
 sigma2 = 0.01
 alphabet = get_alphabet("QAM", M)
 allocation = get_allocation("802.11ac-40")   # 128 subcarriers
 
-# extract carrier information
 N_carriers = allocation.N_fft
 N_carrier_data = allocation.N_data
 N_carrier_pilots = allocation.N_pilots
 
-# generate channel
-h = 0.1*(np.random.randn(N_h) + 1j*np.random.randn(N_h))
-h[0] = 1
+channel_model = TappedDelayLineChannel(get_delay_profile("TDL-D"), fs=fs,
+                                       seed=5)
+impulse = np.zeros(N, dtype=complex)
+impulse[0] = 1.0
+h = channel_model(impulse)[:channel_model.delays_[-1] + 1]
 pilots = 10*np.ones(N_carrier_pilots)
 
-# create sequential
 chain = Sequential([
         SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet, name="mapper_tx"),
@@ -51,6 +52,5 @@ chain = Sequential([
         SymbolDemapper(alphabet)
     ])
 
-# run chain
 plot_chain_profiling(chain, input=N)
 plt.show()
