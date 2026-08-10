@@ -4,7 +4,9 @@ import time
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.channels import AWGN, FIRChannel
+from comnumpy.core.channels import (AWGN, FIRChannel,
+                                    TappedDelayLineChannel)
+from comnumpy.core.fading import get_delay_profile
 from comnumpy.core.compensators import LinearEqualizer
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ser
@@ -14,22 +16,23 @@ img_dir = "../../docs/examples/img/"
 
 # parameters
 M = 16
-N_h = 5
 N = 1280
+fs = 7.68e6
 sigma2 = 0.015
 alphabet = get_alphabet("QAM", M)
 
-# A frequency-selective channel, drawn from an exponential power delay
-# profile -- the standard multipath model -- and seeded, because the
-# whole comparison below is about one realization. Its frequency
-# response has a deep notch (|H| spans a factor 31), which is what
-# "frequency selective" means and what the two receivers will disagree
-# about.
-rng = np.random.default_rng(18)
-power = np.exp(-np.arange(N_h) / 2.0)
-power = power / np.sum(power)
-h = np.sqrt(power / 2) * (rng.standard_normal(N_h)
-                          + 1j * rng.standard_normal(N_h))
+# The channel is a standardized one: the 3GPP Extended Pedestrian A
+# profile, taken from the library catalogue and sampled at 7.68 MHz.
+# Sounding it with an impulse gives the tap vector the equalizers below
+# need; the seed fixes the realization, because the whole comparison is
+# about one channel rather than an average over many.
+channel_model = TappedDelayLineChannel(get_delay_profile("EPA"), fs=fs,
+                                       seed=18, name="sounder")
+impulse = np.zeros(N, dtype=complex)
+impulse[0] = 1.0
+h = channel_model(impulse)[:channel_model.delays_[-1] + 1]
+print(f"EPA at {fs/1e6:.2f} MHz: {len(h)} taps, delay spread "
+      f"{get_delay_profile('EPA').rms_delay_spread_ns:.0f} ns")
 
 # create a simple single carrier chain and simulate
 simple_chain = Sequential([
@@ -102,14 +105,14 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 # noise variances, and the crossing is printed rather than asserted.
 print("sigma2     single carrier      OFDM     |H| spans "
       f"{np.max(np.abs(np.fft.fft(h, N_carrier))) / np.min(np.abs(np.fft.fft(h, N_carrier))):.0f}")
-for variance in [0.015, 0.008, 0.004, 0.002]:
+for variance in [0.015, 0.008, 0.004, 0.002, 0.001, 0.0005]:
     row = []
     for chain, block in ((simple_chain, "data_rx"), (ofdm_chain, "awgn")):
         chain.seed(1)
         chain.set_params(**{f"{block}.sigma2": variance})
         detected = chain(N)
         row.append(compute_ser(chain.tap("data_tx"), detected))
-    print(f"{variance:6.3f}   {row[0]:16.4f} {row[1]:9.4f}")
+    print(f"{variance:8.4f}   {row[0]:14.4f} {row[1]:9.4f}")
 
 # The chain diagrams this tutorial shows are exported from the chains
 # themselves (D33c), so the picture cannot drift from the code -- the

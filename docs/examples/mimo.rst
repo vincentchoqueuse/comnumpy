@@ -79,7 +79,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 174-180
+   :lines: 165-185
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -293,24 +293,24 @@ The 4-PSK link above has 16 candidates, and an exhaustive search scores them in 
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 137-172
+   :lines: 142-163
 
 .. code::
 
    visited nodes per detected vector (16-QAM, 4x4)
-      0 dB       78.0 nodes   1.19e-03 of the exhaustive search   SER 0.7831
-      3 dB       46.7 nodes   7.13e-04 of the exhaustive search   SER 0.7156
-      6 dB       30.0 nodes   4.58e-04 of the exhaustive search   SER 0.6356
-      9 dB       19.3 nodes   2.94e-04 of the exhaustive search   SER 0.5206
-     12 dB       12.9 nodes   1.97e-04 of the exhaustive search   SER 0.3544
-     15 dB        7.8 nodes   1.19e-04 of the exhaustive search   SER 0.1588
-     18 dB        5.9 nodes   8.94e-05 of the exhaustive search   SER 0.0231
+      0 dB       91.8 nodes   1.40e-03 of the exhaustive search   SER 0.7900
+      3 dB       51.3 nodes   7.82e-04 of the exhaustive search   SER 0.7288
+      6 dB       29.8 nodes   4.55e-04 of the exhaustive search   SER 0.6369
+      9 dB       19.2 nodes   2.94e-04 of the exhaustive search   SER 0.5044
+     12 dB       12.8 nodes   1.95e-04 of the exhaustive search   SER 0.3381
+     15 dB        8.6 nodes   1.31e-04 of the exhaustive search   SER 0.1256
+     18 dB        5.8 nodes   8.78e-05 of the exhaustive search   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%
    :align: center
 
-Read the last column against the first. At 18 dB the search visits **5.9 nodes** where the exhaustive one scores 65 536 candidates -- and 4 of those nodes are the single path down the tree that successive cancellation would have taken, so barely two branches are ever explored. At 0 dB it visits 78, still four orders of magnitude below the exhaustive count, but thirteen times more than at 18 dB: the noisier the observation, the wider the sphere has to stay.
+Read the last column against the first. At 18 dB the search visits **5.8 nodes** where the exhaustive one scores 65 536 candidates -- and 4 of those nodes are the single path down the tree that successive cancellation would have taken, so barely two branches are ever explored. At 0 dB it visits 92, still three orders of magnitude below the exhaustive count, but sixteen times more than at 18 dB: the noisier the observation, the wider the sphere has to stay.
 
 That data dependence is the whole character of the algorithm. Its worst case *is* the exhaustive search -- there is no bound to hide behind -- but its expected complexity is polynomial over the range of SNRs where a link is actually operated (Hassibi and Vikalo, 2005). Which is why 64-QAM on four streams, 16.7 million candidates, is out of reach for the exhaustive detector and takes this one about 5 nodes per vector at 25 dB.
 
