@@ -178,6 +178,7 @@ def plot_welch(x: np.ndarray, *, fs: float = 1.0, nperseg: Optional[int] = None,
 
 
 def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "Constellation",
+            reference: Optional[np.ndarray] = None, label: Optional[str] = None,
             ax: Optional[Axes] = None) -> Axes:
     """Scatter the in-phase and quadrature components of a signal.
 
@@ -189,20 +190,49 @@ def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "Constellation",
         Matplotlib format string. Default ``"."``.
     title : str, keyword-only
         Axis title.
+    reference : np.ndarray, optional, keyword-only
+        Ideal constellation to overlay as black crosses -- normally the
+        alphabet the signal was drawn from. A received cloud means little
+        without the points it is supposed to be near: the overlay is what
+        turns the picture into a measurement of how far it drifted, which
+        is why it is here rather than left to each caller.
+    label : str, optional, keyword-only
+        Legend entry for the scatter. Without it a multi-stream signal
+        labels its streams ``stream 0``, ``stream 1``, ... and a
+        single-stream one is not labelled at all; pass a label to
+        overlay two signals on one axis (before and after a
+        compensator, say) and tell them apart.
     ax : matplotlib.axes.Axes, optional
         Axis to draw on; created when None (decision D25).
 
     Returns
     -------
     matplotlib.axes.Axes
+
+    Examples
+    --------
+    >>> from comnumpy.core.utils import get_alphabet
+    >>> alphabet = get_alphabet("QAM", 16)
+    >>> rng = np.random.default_rng(0)
+    >>> received = alphabet[rng.integers(0, 16, 200)] + 0.1 * rng.standard_normal(200)
+    >>> ax = plot_iq(received, reference=alphabet, title="16-QAM")
+    >>> len(ax.lines)             # the cloud, and the ideal points
+    2
     """
     streams = _as_streams(x)
     if ax is None:
         _, ax = plt.subplots()
     for idx, stream in enumerate(streams):
-        ax.plot(np.real(stream), np.imag(stream), marker,
-                label=f"stream {idx}")
-    if streams.shape[0] > 1:
+        if label is not None:
+            entry = label if streams.shape[0] == 1 else f"{label} {idx}"
+        else:
+            entry = f"stream {idx}"
+        ax.plot(np.real(stream), np.imag(stream), marker, label=entry)
+    if reference is not None:
+        ideal = np.ravel(reference)
+        ax.plot(np.real(ideal), np.imag(ideal), "kx", markersize=9,
+                label="reference")
+    if streams.shape[0] > 1 or label is not None or reference is not None:
         ax.legend()
     ax.set_xlabel("real part")
     ax.set_ylabel("imag part")

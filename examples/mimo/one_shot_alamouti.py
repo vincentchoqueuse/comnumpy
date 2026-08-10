@@ -7,14 +7,14 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser, compute_ser_rayleigh_psk
 from comnumpy.core.processors import Amplifier
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.core.utils import get_alphabet
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
 from comnumpy.mimo.detectors import LinearDetector
 from comnumpy.mimo.utils import rayleigh_channel
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 M = 4
 alphabet = get_alphabet("PSK", M)
@@ -44,10 +44,9 @@ alamouti.summary(500 * code.n_symbols)
 received = alamouti.tap("noise")[0]
 combined = alamouti.tap("detector") / power
 fig1, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-ax_left.plot(np.real(received), np.imag(received), ".", markersize=3)
+plot_iq(received, marker=".", ax=ax_left)
 ax_left.set_title("tap('noise'): the single receive antenna")
-ax_right.plot(np.real(combined), np.imag(combined), ".", markersize=3)
-ax_right.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9)
+plot_iq(combined, reference=alphabet, ax=ax_right)
 ax_right.set_title("tap('detector'): after Alamouti combining")
 for ax in (ax_left, ax_right):
     ax.set_xlabel("in phase")
@@ -155,7 +154,7 @@ print(f"SNR for SER = {target:g}: MRC {needed['MRC']:.1f} dB, Alamouti "
       f"{needed['Alamouti']:.1f} dB, gap {needed['Alamouti'] - needed['MRC']:.2f} dB "
       f"(10log10(N_t) = {10 * np.log10(code.n_tx):.2f} dB)")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("alamouti", alamouti), ("mrc", mrc)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

@@ -7,10 +7,12 @@ from comnumpy.core.utils import get_alphabet, hard_projector
 from comnumpy.core.processors import Upsampler, Downsampler, Amplifier
 from comnumpy.core.filters import SRRCFilter, BWFilter
 from comnumpy.core.metrics import compute_ser
+from comnumpy.core.visualizers import plot_iq
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.dbp import DBP
+from comnumpy.optical.utils import dbm_to_watt
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 M = 16
 modulation = "QAM"
@@ -31,7 +33,7 @@ N = N_s*oversampling_sim   # signal length in number of samples
 fs = R_s*oversampling_sim
 oversampling_ratio = int(oversampling_sim/oversampling_dsp)
 fs2 = R_s*oversampling_dsp
-Po = (1e-3) * (10**(0.1*dBm))
+Po = dbm_to_watt(dBm)
 amp = np.sqrt(Po)
 
 chain = Sequential([
@@ -50,9 +52,7 @@ y_rx = chain(N)
 s_tx = chain.tap("data_tx")
 x_tx = chain.tap("signal_tx")
 
-plt.figure()
-plt.plot(np.real(y_rx), np.imag(y_rx), ".")
-plt.title(f"Received Signal (oversampling={oversampling_dsp}, {dBm}dBm)")
+plot_iq(y_rx, title=f"Received Signal (oversampling={oversampling_dsp}, {dBm}dBm)")
 plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 for num_compensator in range(2):
@@ -80,11 +80,9 @@ for num_compensator in range(2):
     print(f"{technique_name:24s} SER={ser:.4f}  "
           f"residual phase={np.rad2deg(theta_est):+.1f} deg")
 
-    plt.figure()
-    plt.plot(np.real(x_rx), np.imag(x_rx), ".", label="before phase correction")
-    plt.plot(np.real(x_rx_phase_compensated), np.imag(x_rx_phase_compensated), ".", label="after phase correction")
-    plt.legend()
-    plt.title(f"{technique_name} (SER={ser:.3f})")
+    ax = plot_iq(x_rx, label="before phase correction",
+                 title=f"{technique_name} (SER={ser:.3f})")
+    plot_iq(x_rx_phase_compensated, label="after phase correction", ax=ax)
     plt.savefig(f"{img_dir}/one_shot_nli_fig{num_compensator+2}.png")
 
 plt.show()

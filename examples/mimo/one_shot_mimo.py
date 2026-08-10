@@ -7,14 +7,14 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import get_alphabet
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
     LinearDetector, MaximumLikelihoodDetector,
     OrderedSuccessiveInterferenceCancellationDetector, SphereDecoder)
 from comnumpy.mimo.utils import rayleigh_channel
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 N = 1000
 N_r, N_t = 3, 2
@@ -59,7 +59,7 @@ for name, chain in chains.items():
 Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
-    axes1[index].plot(np.real(Y[index, :]), np.imag(Y[index, :]), ".")
+    plot_iq(Y[index, :], ax=axes1[index])
     axes1[index].set_title(f"Received signal (antenna {index + 1})")
     axes1[index].set_aspect("equal", adjustable="box")
     axes1[index].set_xlim([-2, 2])
@@ -69,8 +69,7 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
-    axes2[index].plot(np.real(Z[index, :]), np.imag(Z[index, :]), ".")
-    axes2[index].plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9)
+    plot_iq(Z[index, :], reference=alphabet, ax=axes2[index])
     axes2[index].set_title(f"Estimated signal (stream {index + 1})")
     axes2[index].set_aspect("equal", adjustable="box")
     axes2[index].set_xlim([-2, 2])
@@ -150,7 +149,7 @@ ax4.grid(True, which="both")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig4.png")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("mimo_zf", chains["ZF"])]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

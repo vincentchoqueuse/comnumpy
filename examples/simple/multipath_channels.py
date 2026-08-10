@@ -12,7 +12,7 @@ from comnumpy.core.utils import get_alphabet
 from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
 
-img_dir = "../../docs/examples/img/"
+img_dir = "../../docs/tutorials/img/"
 
 fs = 15.36e6                  # LTE 15.36 MHz: 65 ns per sample
 M = 16
@@ -116,7 +116,7 @@ ax.set_ylim(1e-4, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/multipath_fig3.png")
 
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("multipath", link)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

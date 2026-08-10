@@ -998,6 +998,34 @@ code actually does.
 
 ### Changed
 
+- **The documentation section is called Tutorials, not Examples**, and
+  lives at ``docs/tutorials/``. Ten pages meant to be read in order are
+  a course, not a grab bag of samples; the scripts under ``examples/``
+  keep their name, because that is what they are.
+
+- **Three things the tutorials kept writing by hand became library
+  features.** Each was extracted because several pages had the same
+  lines, not because the API looked incomplete:
+
+  - ``plot_iq(..., reference=..., label=...)``. Ten examples scattered
+    a constellation, overlaid the alphabet as black crosses and
+    legended the pair, in three lines each. A received cloud means
+    little without the points it is supposed to be near, so the overlay
+    is what makes the picture a measurement rather than a decoration --
+    it belongs in the function. ``label=`` lets two signals share one
+    axis, which is what a before/after compensator figure needs.
+  - ``TappedDelayLineChannel.impulse_response()``. Three scripts built
+    an impulse, called the block and sliced off the leading taps to get
+    the tap vector an equalizer takes. Sounding a channel with an
+    impulse is how its response is measured; it is now one call, and it
+    is tested to be exactly the filter the channel applies rather than
+    an approximation of it.
+  - ``optical.utils.dbm_to_watt`` / ``watt_to_dbm``. Sixteen places
+    wrote ``1e-3 * 10 ** (dBm / 10)`` or its inverse inline. The factor
+    is 1e-3 and the divisor is 10, not 20; that is exactly the kind of
+    thing to write once. ``watt_to_dbm`` refuses a non-positive power
+    rather than propagating ``-inf`` into a link budget.
+
 - **The tutorials are now built out of library blocks rather than
   hand-written numpy.** A tutorial exists to show that the library
   works; three of them were partly showing that numpy works, which
