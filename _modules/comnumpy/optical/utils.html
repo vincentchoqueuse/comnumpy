@@ -501,8 +501,8 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -614,8 +614,8 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -739,7 +739,7 @@ window.runMermaid = runMermaid;</script>
     <span class="s2">&quot;compute_erbium_doped_fiber_amplifier_gain&quot;</span><span class="p">,</span>
     <span class="s2">&quot;compute_erbium_doped_fiber_N_ase&quot;</span><span class="p">,</span> <span class="s2">&quot;get_linear_step_size&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_logarithmic_step_size&quot;</span><span class="p">,</span> <span class="s2">&quot;itu_grid_frequency&quot;</span><span class="p">,</span> <span class="s2">&quot;is_polarization_pair&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;manakov_kerr&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;manakov_kerr&quot;</span><span class="p">,</span> <span class="s2">&quot;dbm_to_watt&quot;</span><span class="p">,</span> <span class="s2">&quot;watt_to_dbm&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -1185,6 +1185,110 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">manakov</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">gamma</span><span class="p">,</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="mi">8</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="dbm_to_watt">
+<a class="viewcode-back" href="../../../documentation/optical/utils.html#comnumpy.optical.utils.dbm_to_watt">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dbm_to_watt</span><span class="p">(</span><span class="n">power_dBm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Optical power from dBm to watts.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P[\mathrm{W}] = 10^{-3} \times 10^{P[\mathrm{dBm}] / 10}</span>
+
+<span class="sd">    Optical data sheets, standards and papers quote power in dBm while</span>
+<span class="sd">    every equation in this package takes watts, so the conversion sits</span>
+<span class="sd">    at the boundary of nearly every optical script. Written out by hand</span>
+<span class="sd">    it is easy to get subtly wrong -- the factor is :math:`10^{-3}` and</span>
+<span class="sd">    the divisor is 10, not 20, because this is a power and not an</span>
+<span class="sd">    amplitude.</span>
+
+<span class="sd">    Axes: *element-wise*.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    power_dBm : float or np.ndarray</span>
+<span class="sd">        Power in dBm, i.e. decibels relative to one milliwatt.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float or np.ndarray</span>
+<span class="sd">        Power in watts.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. P. Agrawal, *Fiber-Optic Communication Systems*, 4th ed., Wiley,</span>
+<span class="sd">    2010, Section 1.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(dbm_to_watt(0.0))</span>
+<span class="sd">    0.001</span>
+<span class="sd">    &gt;&gt;&gt; print(round(dbm_to_watt(-3.0), 7))</span>
+<span class="sd">    0.0005012</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(dbm_to_watt(np.array([-10.0, 0.0, 10.0])), 6))</span>
+<span class="sd">    [0.0001 0.001  0.01  ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">power_dBm</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">power_dBm</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="watt_to_dbm">
+<a class="viewcode-back" href="../../../documentation/optical/utils.html#comnumpy.optical.utils.watt_to_dbm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">watt_to_dbm</span><span class="p">(</span><span class="n">power_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Optical power from watts to dBm, the inverse of :func:`dbm_to_watt`.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P[\mathrm{dBm}] = 10 \log_{10}\!\left(</span>
+<span class="sd">            \frac{P[\mathrm{W}]}{10^{-3}}\right)</span>
+
+<span class="sd">    Axes: *element-wise*.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    power_W : float or np.ndarray</span>
+<span class="sd">        Power in watts. Must be positive: zero power is</span>
+<span class="sd">        :math:`-\infty` dBm and negative power is not a power.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float or np.ndarray</span>
+<span class="sd">        Power in dBm.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If any value is not strictly positive. A silent ``-inf`` or</span>
+<span class="sd">        ``nan`` propagating into a link budget is worse than a stop.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. P. Agrawal, *Fiber-Optic Communication Systems*, 4th ed., Wiley,</span>
+<span class="sd">    2010, Section 1.2.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; print(watt_to_dbm(1e-3))</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &gt;&gt;&gt; print(round(watt_to_dbm(5.0118723e-4), 4))</span>
+<span class="sd">    -3.0</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(watt_to_dbm(np.array([1e-4, 1e-3, 1e-2])), 6))</span>
+<span class="sd">    [-10.   0.  10.]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">power_W</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">power</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a power in dBm is a logarithm, so it needs a strictly &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;positive power in watts; got a minimum of </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">power</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">power</span> <span class="o">/</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">power_W</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 </pre></div>
 

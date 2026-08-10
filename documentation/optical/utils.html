@@ -149,8 +149,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -264,8 +264,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -750,6 +750,88 @@ and not in <a class="reference internal" href="fiber.html#comnumpy.optical.fiber
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.dbm_to_watt">
+<span class="sig-name descname"><span class="pre">dbm_to_watt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">power_dBm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#dbm_to_watt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.dbm_to_watt" title="Link to this definition">#</a></dt>
+<dd><p>Optical power from dBm to watts.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[P[\mathrm{W}] = 10^{-3} \times 10^{P[\mathrm{dBm}] / 10}\]</div>
+<p>Optical data sheets, standards and papers quote power in dBm while
+every equation in this package takes watts, so the conversion sits
+at the boundary of nearly every optical script. Written out by hand
+it is easy to get subtly wrong – the factor is <span class="math notranslate nohighlight">\(10^{-3}\)</span> and
+the divisor is 10, not 20, because this is a power and not an
+amplitude.</p>
+<p>Axes: <em>element-wise</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param power_dBm<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Power in dBm, i.e. decibels relative to one milliwatt.</p>
+</dd>
+<dt class="field-even">type power_dBm<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Power in watts.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>G. P. Agrawal, <em>Fiber-Optic Communication Systems</em>, 4th ed., Wiley,
+2010, Section 1.2.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
+<span class="go">0.001</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">),</span> <span class="mi">7</span><span class="p">))</span>
+<span class="go">0.0005012</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">])),</span> <span class="mi">6</span><span class="p">))</span>
+<span class="go">[0.0001 0.001  0.01  ]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.watt_to_dbm">
+<span class="sig-name descname"><span class="pre">watt_to_dbm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">power_W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#watt_to_dbm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.watt_to_dbm" title="Link to this definition">#</a></dt>
+<dd><p>Optical power from watts to dBm, the inverse of <a class="reference internal" href="#comnumpy.optical.utils.dbm_to_watt" title="comnumpy.optical.utils.dbm_to_watt"><code class="xref py py-func docutils literal notranslate"><span class="pre">dbm_to_watt()</span></code></a>.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[P[\mathrm{dBm}] = 10 \log_{10}\!\left(
+    \frac{P[\mathrm{W}]}{10^{-3}}\right)\]</div>
+<p>Axes: <em>element-wise</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param power_W<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Power in watts. Must be positive: zero power is
+<span class="math notranslate nohighlight">\(-\infty\)</span> dBm and negative power is not a power.</p>
+</dd>
+<dt class="field-even">type power_W<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Power in dBm.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If any value is not strictly positive. A silent <code class="docutils literal notranslate"><span class="pre">-inf</span></code> or
+    <code class="docutils literal notranslate"><span class="pre">nan</span></code> propagating into a link budget is worse than a stop.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>G. P. Agrawal, <em>Fiber-Optic Communication Systems</em>, 4th ed., Wiley,
+2010, Section 1.2.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">))</span>
+<span class="go">0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="mf">5.0118723e-4</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">-3.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">])),</span> <span class="mi">6</span><span class="p">))</span>
+<span class="go">[-10.   0.  10.]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -809,6 +891,8 @@ and not in <a class="reference internal" href="fiber.html#comnumpy.optical.fiber
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.itu_grid_frequency"><code class="docutils literal notranslate"><span class="pre">itu_grid_frequency()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.is_polarization_pair"><code class="docutils literal notranslate"><span class="pre">is_polarization_pair()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.manakov_kerr"><code class="docutils literal notranslate"><span class="pre">manakov_kerr()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.dbm_to_watt"><code class="docutils literal notranslate"><span class="pre">dbm_to_watt()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.watt_to_dbm"><code class="docutils literal notranslate"><span class="pre">watt_to_dbm()</span></code></a></li>
 </ul>
   </nav></div>
 

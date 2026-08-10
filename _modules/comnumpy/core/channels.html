@@ -501,8 +501,8 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -614,8 +614,8 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -992,6 +992,66 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TappedDelayLineChannel.impulse_response">
+<a class="viewcode-back" href="../../../documentation/core/channels.html#comnumpy.core.channels.TappedDelayLineChannel.impulse_response">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">impulse_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Draw one realization and return it as a tap vector.</span>
+
+<span class="sd">        Signal Model</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Sounding a channel with an impulse is how its response is</span>
+<span class="sd">        measured, and it is what a script needs whenever a *known*</span>
+<span class="sd">        channel is wanted: the equalizers of</span>
+<span class="sd">        :class:`~comnumpy.core.compensators.LinearEqualizer` and</span>
+<span class="sd">        :class:`~comnumpy.ofdm.compensators.FrequencyDomainEqualizer`</span>
+<span class="sd">        take a tap vector, not a fading process. This does exactly that</span>
+<span class="sd">        -- feeds :math:`\delta[n]` through :meth:`forward` and returns</span>
+<span class="sd">        the first :math:`L` samples, with :math:`L` one more than the</span>
+<span class="sd">        longest path in samples.</span>
+
+<span class="sd">        The result is dense: paths that fall between the resolvable</span>
+<span class="sd">        delays of this sampling rate appear as zeros, so the vector can</span>
+<span class="sd">        be handed straight to a convolution.</span>
+
+<span class="sd">        **This draws a new realization** and advances the generator, the</span>
+<span class="sd">        way calling the block does. Seed it (or the chain) to get the</span>
+<span class="sd">        same channel twice.</span>
+
+<span class="sd">        Axes: *returns 1D* ``(L,)``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_samples : int, optional</span>
+<span class="sd">            Length of the sounding record. Defaults to eight times the</span>
+<span class="sd">            longest path, which is enough for the profile to fit and</span>
+<span class="sd">            for a Doppler process to be sampled meaningfully. Only the</span>
+<span class="sd">            first :math:`L` samples are returned either way.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Complex tap vector of length ``delays_[-1] + 1``.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from comnumpy.core.fading import get_delay_profile</span>
+<span class="sd">        &gt;&gt;&gt; channel = TappedDelayLineChannel(get_delay_profile(&quot;EPA&quot;),</span>
+<span class="sd">        ...                                  fs=7.68e6, seed=18)</span>
+<span class="sd">        &gt;&gt;&gt; h = channel.impulse_response()</span>
+<span class="sd">        &gt;&gt;&gt; h.shape                  # 410 ns of spread at 7.68 MHz</span>
+<span class="sd">        (4,)</span>
+<span class="sd">        &gt;&gt;&gt; bool(np.all(h[channel.delays_] == channel.h_[:, 0]))</span>
+<span class="sd">        True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">delays</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">to_taps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">delays</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">length</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+        <span class="n">impulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">impulse</span><span class="p">)[:</span><span class="n">length</span><span class="p">]</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_taps_fit</span>  <span class="c1"># local (D36)</span>

@@ -1,0 +1,1309 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Channel Coding &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/coding';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Probabilistic Shaping" href="shaping.html" />
+    <link rel="prev" title="Alamouti Space-Time Coding Tutorial" href="alamouti.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Channel Coding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gn_model.html">The Gaussian Noise Model</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Channel Coding</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="channel-coding">
+<h1>Channel Coding<a class="headerlink" href="#channel-coding" title="Link to this heading">#</a></h1>
+<p>Every tutorial so far has read the received signal as well as it could and
+accepted the errors that remained. This one refuses them. A <strong>channel code</strong>
+adds redundancy at the transmitter so that the receiver can tell, from the
+structure of what it received, that a particular decision must be wrong – and
+correct it.</p>
+<p>The trade is explicit and it is not free: to send <span class="math notranslate nohighlight">\(k\)</span> useful bits the
+transmitter emits <span class="math notranslate nohighlight">\(n &gt; k\)</span> of them, so at constant symbol rate the useful
+throughput drops by the <strong>code rate</strong> <span class="math notranslate nohighlight">\(R = k/n\)</span>. What one buys in
+exchange is a <strong>coding gain</strong>: the same error rate at a lower
+<span class="math notranslate nohighlight">\(E_b/N_0\)</span>, where <span class="math notranslate nohighlight">\(E_b\)</span> is the energy per <em>useful</em> bit – which is
+the only comparison that means anything, and the reason every curve in this
+tutorial is plotted against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> rather than SNR.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced <code class="docutils literal notranslate"><span class="pre">sweep</span></code> and
+<code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>, both used here without comment. Nothing else is
+assumed: the codes are built from scratch.</p>
+</div>
+<p><strong>What you’ll learn:</strong></p>
+<ul class="simple">
+<li><p>How a convolutional encoder works, and what its generator polynomials mean.</p></li>
+<li><p>What the Viterbi algorithm decides, and why <em>soft</em> decisions are worth
+2 dB over <em>hard</em> ones.</p></li>
+<li><p>How to bound the error rate of a code analytically, from its distance
+spectrum alone – no simulation.</p></li>
+<li><p>How an LDPC code differs, and what its iterations buy.</p></li>
+<li><p>Why a simulated BER of exactly zero is not a result.</p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Make sure you have the following Python libraries installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">matplotlib</span>
+<span class="n">comnumpy</span>
+</pre></div>
+</div>
+</section>
+<section id="import-libraries">
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span><span class="p">,</span> <span class="n">SymbolMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.fec</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">ConvolutionalEncoder</span><span class="p">,</span> <span class="n">LDPCDecoder</span><span class="p">,</span> <span class="n">LDPCEncoder</span><span class="p">,</span>
+                          <span class="n">ViterbiDecoder</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.fec.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">distance_spectrum</span><span class="p">,</span> <span class="n">union_bound_ber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.fec.ldpc</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_gallager_parity_check</span>
+</pre></div>
+</div>
+</section>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>The modulation is BPSK – one bit per symbol, which keeps the accounting
+simple – and the codes below all have rate 1/2.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="n">BPSK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">])</span>   <span class="c1"># bit 0 -&gt; +1, bit 1 -&gt; -1</span>
+<span class="n">ebn0_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="n">n_bits</span> <span class="o">=</span> <span class="mi">40000</span>
+<span class="n">rate</span> <span class="o">=</span> <span class="mf">0.5</span>                                   <span class="c1"># both codes below are rate 1/2</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">snr_dB</span><span class="p">(</span><span class="n">ebn0</span><span class="p">,</span> <span class="n">code_rate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Es/N0 in dB for BPSK: one bit per symbol, code_rate of them useful.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ebn0</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">code_rate</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That helper deserves a line of its own, because it is where most coded
+simulations go wrong. The channel sees <em>symbols</em>, so it is parameterized by
+<span class="math notranslate nohighlight">\(E_s/N_0\)</span>; a code changes how many useful bits a symbol carries, so at
+constant <span class="math notranslate nohighlight">\(E_b/N_0\)</span></p>
+<div class="math notranslate nohighlight">
+\[\frac{E_s}{N_0} = R \, \frac{E_b}{N_0}
+\qquad\Longrightarrow\qquad
+\left(\frac{E_s}{N_0}\right)_{\mathrm{dB}}
+= \left(\frac{E_b}{N_0}\right)_{\mathrm{dB}} + 10\log_{10} R\]</div>
+<p>A rate-1/2 code therefore runs the channel <strong>3 dB colder</strong> than the uncoded
+link it is compared with. Forget that shift and the code appears to gain
+3 dB it has not earned.</p>
+</section>
+</section>
+<section id="the-convolutional-encoder">
+<h2>The Convolutional Encoder<a class="headerlink" href="#the-convolutional-encoder" title="Link to this heading">#</a></h2>
+<p>A convolutional encoder has no block structure: it slides a window of
+<span class="math notranslate nohighlight">\(K\)</span> bits – the <strong>constraint length</strong> – along the input and emits, for
+each input bit, <span class="math notranslate nohighlight">\(n\)</span> modulo-2 sums of the bits in that window,</p>
+<div class="math notranslate nohighlight">
+\[y_i[m] = \bigoplus_{l=0}^{K-1} g_i[l] \; x[m-l],
+\qquad i = 1, \ldots, n\]</div>
+<p>The masks <span class="math notranslate nohighlight">\(g_i\)</span> are the <strong>generator polynomials</strong>, written in octal by
+convention. The pair <span class="math notranslate nohighlight">\((133, 171)_8\)</span> with <span class="math notranslate nohighlight">\(K = 7\)</span> is the one NASA
+standardized and every textbook tabulates, so it is the default here:</p>
+<div class="math notranslate nohighlight">
+\[g_1 = 133_8 = 1011011_2, \qquad g_2 = 171_8 = 1111001_2\]</div>
+<p>The window is the state: the encoder remembers <span class="math notranslate nohighlight">\(K-1 = 6\)</span> past bits, so
+it has <span class="math notranslate nohighlight">\(2^6 = 64\)</span> states, and the sequence of states it walks through is
+a path in a <strong>trellis</strong>. That trellis is the object the decoder searches.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">encoder</span><span class="o">.</span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2">  &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;K = </span><span class="si">{</span><span class="n">encoder</span><span class="o">.</span><span class="n">K</span><span class="si">}</span><span class="s2">  states = </span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">K</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">  &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;rate = </span><span class="si">{</span><span class="n">encoder</span><span class="o">.</span><span class="n">rate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;4 bits in -&gt;&quot;</span><span class="p">,</span> <span class="n">encoder</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])),</span> <span class="s2">&quot;(with the tail)&quot;</span><span class="p">)</span>
+
+<span class="n">spectrum</span> <span class="o">=</span> <span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;free distance d_free = </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">d_free</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;d      &quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">distances</span><span class="p">[:</span><span class="mi">6</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;a_d    &quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">a_d</span><span class="p">[:</span><span class="mi">6</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;beta_d &quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">beta_d</span><span class="p">[:</span><span class="mi">6</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">generators</span> <span class="p">(</span><span class="s1">&#39;0o133&#39;</span><span class="p">,</span> <span class="s1">&#39;0o171&#39;</span><span class="p">)</span>  <span class="n">K</span> <span class="o">=</span> <span class="mi">7</span>  <span class="n">states</span> <span class="o">=</span> <span class="mi">64</span>  <span class="n">rate</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="mi">4</span> <span class="n">bits</span> <span class="ow">in</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">(</span><span class="k">with</span> <span class="n">the</span> <span class="n">tail</span><span class="p">)</span>
+<span class="n">free</span> <span class="n">distance</span> <span class="n">d_free</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">d</span>           <span class="mi">10</span>     <span class="mi">11</span>     <span class="mi">12</span>     <span class="mi">13</span>     <span class="mi">14</span>     <span class="mi">15</span>
+<span class="n">a_d</span>         <span class="mi">11</span>      <span class="mi">0</span>     <span class="mi">38</span>      <span class="mi">0</span>    <span class="mi">193</span>      <span class="mi">0</span>
+<span class="n">beta_d</span>      <span class="mi">36</span>      <span class="mi">0</span>    <span class="mi">211</span>      <span class="mi">0</span>   <span class="mi">1404</span>      <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Four input bits produced twenty output bits rather than eight: the encoder is
+<strong>terminated</strong>, so <span class="math notranslate nohighlight">\(K - 1 = 6\)</span> zero bits are appended to flush the
+register and bring it back to the all-zero state. On a short block that
+overhead is visible; on a realistic one it is not.</p>
+<p>The last three lines are the code’s <strong>distance spectrum</strong>, and they are worth
+more than they look. <span class="math notranslate nohighlight">\(d_{\mathrm{free}} = 10\)</span> is the smallest Hamming
+distance between two distinct code sequences; <span class="math notranslate nohighlight">\(a_d\)</span> counts the error
+events at distance <span class="math notranslate nohighlight">\(d\)</span>, and <span class="math notranslate nohighlight">\(\beta_d\)</span> counts the <em>information</em>
+bits those events get wrong. They come from an enumeration of the trellis, not
+from a simulation, and the last section of this tutorial turns them into a
+bound.</p>
+</section>
+<section id="the-viterbi-decoder">
+<h2>The Viterbi Decoder<a class="headerlink" href="#the-viterbi-decoder" title="Link to this heading">#</a></h2>
+<p>The optimal decoder returns the code sequence closest to what was received –
+over sequences, not over bits. Written naively that is a search over
+<span class="math notranslate nohighlight">\(2^k\)</span> paths, which is hopeless. Viterbi’s observation is that the metric
+is <em>additive along the trellis</em>, so at each state only the best path arriving
+there can ever survive:</p>
+<div class="math notranslate nohighlight">
+\[\Lambda_t(s) = \min_{s' \to s}
+\Big[ \Lambda_{t-1}(s') + \lambda_t\big(s' \to s\big) \Big]\]</div>
+<p>Sixty-four numbers are carried from one trellis step to the next, whatever the
+length of the message: <strong>add, compare, select</strong>. The decoder is exact – it is
+maximum likelihood over sequences – and its cost is linear in the block
+length.</p>
+<p>Everything hinges on the branch metric <span class="math notranslate nohighlight">\(\lambda_t\)</span>, and this is where
+the two flavours part:</p>
+<div class="math notranslate nohighlight">
+\[\lambda_t^{\mathrm{hard}} = d_H\big(\hat{\mathbf{b}}_t, \mathbf{c}_t\big),
+\qquad
+\lambda_t^{\mathrm{soft}} = \big\| \mathbf{r}_t - \mathbf{c}_t \big\|^2\]</div>
+<p>The <strong>hard</strong> decoder is given bits: the demapper has already decided, and the
+metric can only count disagreements. The <strong>soft</strong> decoder is given the
+demapper’s log-likelihood ratios, so a sample that fell halfway between the
+two constellation points weighs less than one that landed squarely on the
+wrong side. The information thrown away by deciding too early is worth about
+2 dB, and the simulation below measures exactly that.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="k">def</span><span class="w"> </span><span class="nf">uncoded_chain</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;uncoded BPSK&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">coded_chain</span><span class="p">(</span><span class="n">soft</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+        <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">),</span>
+        <span class="n">ViterbiDecoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">),</span>
+    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;K=7 convolutional, </span><span class="si">{</span><span class="s1">&#39;soft&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">soft</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;hard&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">code_rate</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;uncoded&quot;</span><span class="p">,</span> <span class="n">uncoded_chain</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">),</span>
+                                <span class="p">(</span><span class="s2">&quot;hard-decision Viterbi&quot;</span><span class="p">,</span> <span class="n">coded_chain</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">rate</span><span class="p">),</span>
+                                <span class="p">(</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">,</span> <span class="n">coded_chain</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span> <span class="n">rate</span><span class="p">)):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">code_rate</span><span class="p">),</span>
+                    <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">curves</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">])</span>
+          <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;   (</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The chain, as the chain itself describes it:</p>
+<pre  class="mermaid">
+        flowchart LR
+    tx[&quot;SymbolGenerator&quot;]
+    conv_encoder[&quot;ConvolutionalEncoder&quot;]
+    symbol_mapper[&quot;SymbolMapper&quot;]
+    noise[&quot;AWGN&quot;]
+    symbol_demapper[&quot;SymbolDemapper&quot;]
+    viterbi[&quot;ViterbiDecoder&quot;]
+    tx --&gt; conv_encoder
+    conv_encoder --&gt; symbol_mapper
+    symbol_mapper --&gt; noise
+    noise --&gt; symbol_demapper
+    symbol_demapper --&gt; viterbi
+    classDef tapped stroke-dasharray: 4 2
+    class tx tapped
+    </pre><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uncoded</span>                  <span class="mf">7.86e-02</span> <span class="mf">5.68e-02</span> <span class="mf">3.79e-02</span> <span class="mf">2.28e-02</span> <span class="mf">1.31e-02</span> <span class="mf">6.45e-03</span> <span class="mf">2.80e-03</span> <span class="mf">7.75e-04</span>   <span class="p">(</span><span class="mf">0.0</span> <span class="n">s</span><span class="p">)</span>
+<span class="n">hard</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>    <span class="mf">3.71e-01</span> <span class="mf">2.43e-01</span> <span class="mf">1.14e-01</span> <span class="mf">3.15e-02</span> <span class="mf">7.52e-03</span> <span class="mf">9.75e-04</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>   <span class="p">(</span><span class="mf">9.3</span> <span class="n">s</span><span class="p">)</span>
+<span class="n">soft</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>    <span class="mf">1.40e-01</span> <span class="mf">4.32e-02</span> <span class="mf">3.63e-03</span> <span class="mf">3.50e-04</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>   <span class="p">(</span><span class="mf">10.4</span> <span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Three readings, and the first one is a warning.</p>
+<p><strong>A code can make things worse.</strong> At 0 dB the hard-decision decoder is at
+0.371 where the uncoded link is at 0.079 – almost five times worse. This is
+not a bug: below a threshold the channel produces more errors than
+<span class="math notranslate nohighlight">\(d_{\mathrm{free}}\)</span> allows the code to correct, the decoder picks the
+wrong path, and a single wrong path corrupts a whole run of information bits.
+The two curves cross around 3 dB, and only above that crossing does the code
+earn its name.</p>
+<p><strong>Soft decisions are worth about 2 dB.</strong> At <span class="math notranslate nohighlight">\(10^{-3}\)</span>, hard decoding
+needs 5 dB and soft decoding a little under 3 – the classic figure for this
+code. Nothing was added to the receiver except <em>not throwing information
+away</em>: the same trellis, the same recursion, a different branch metric.</p>
+<p><strong>And the last two columns are not results.</strong> Zero errors in 40 000 bits does
+not mean the BER is zero; it means it is somewhere below roughly
+<span class="math notranslate nohighlight">\(1/40000 = 2.5 \times 10^{-5}\)</span> and this simulation cannot see it. The
+figure drops those points rather than drawing them at zero on a logarithmic
+axis. Which is exactly why the next section exists.</p>
+</section>
+<section id="the-union-bound">
+<h2>The Union Bound<a class="headerlink" href="#the-union-bound" title="Link to this heading">#</a></h2>
+<p>Where the simulation runs out of symbols, analysis takes over. An error event
+is a path that leaves the correct one and merges back into it; if such an
+event is at Hamming distance <span class="math notranslate nohighlight">\(d\)</span>, the noise must have pushed the
+received sequence closer to it than to the truth, which for BPSK over AWGN has
+probability <span class="math notranslate nohighlight">\(Q\big(\sqrt{2Rd\,E_b/N_0}\big)\)</span>. Summing over every error
+event – counting each one as if it acted alone, hence a bound rather than an
+identity – gives</p>
+<div class="math notranslate nohighlight">
+\[P_b \;\leq\; \sum_{d \geq d_{\mathrm{free}}} \beta_d \;
+Q\left(\sqrt{2 R \, d \, \frac{E_b}{N_0}}\right)\]</div>
+<p>with <span class="math notranslate nohighlight">\(\beta_d\)</span> the information-weight spectrum printed above. This is a
+closed form: no simulation, no random draw, and no floor at
+<span class="math notranslate nohighlight">\(2.5\times10^{-5}\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bound</span> <span class="o">=</span> <span class="n">union_bound_ber</span><span class="p">(</span><span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span> <span class="n">ebn0_dB</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;union bound              &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">bound</span><span class="p">))</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">:</span> <span class="n">bound</span><span class="p">},</span>
+                     <span class="n">x_theory</span><span class="o">=</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rate-1/2 convolutional code, K = 7&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">union</span> <span class="n">bound</span>              <span class="mf">1.82e+01</span> <span class="mf">9.32e-01</span> <span class="mf">2.85e-02</span> <span class="mf">6.81e-04</span> <span class="mf">1.87e-05</span> <span class="mf">4.43e-07</span> <span class="mf">5.61e-09</span> <span class="mf">2.70e-11</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/channel_coding_fig1.png"><img alt="../_images/channel_coding_fig1.png" class="align-center" src="../_images/channel_coding_fig1.png" style="width: 100%;" />
+</a>
+<p>At low <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the bound is above 1, which is true and useless – a
+union bound counts overlapping events several times, and at 0 dB there are
+many. It becomes informative around 2 dB and tight from 3 dB on: at 3 dB it
+gives <span class="math notranslate nohighlight">\(6.8 \times 10^{-4}\)</span> against a measured
+<span class="math notranslate nohighlight">\(3.5\times 10^{-4}\)</span>, a factor of two, and the gap keeps closing because
+the <span class="math notranslate nohighlight">\(d_{\mathrm{free}}\)</span> term comes to dominate the sum. From there the
+bound <em>is</em> the curve, and it costs nothing to evaluate.</p>
+<p>That is the practical division of labour: simulate where a simulation can
+resolve the error rate, bound where it cannot.</p>
+</section>
+<section id="an-ldpc-code-at-the-same-rate">
+<h2>An LDPC Code, at the Same Rate<a class="headerlink" href="#an-ldpc-code-at-the-same-rate" title="Link to this heading">#</a></h2>
+<p>A convolutional code has memory but no block structure. A <strong>low-density
+parity-check</strong> code is the opposite: a block of <span class="math notranslate nohighlight">\(n\)</span> bits is a codeword
+if and only if</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{H}\mathbf{c} = \mathbf{0} \pmod 2\]</div>
+<p>for a parity-check matrix <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> that is <em>sparse</em> – Gallager’s
+regular construction puts exactly <span class="math notranslate nohighlight">\(d_v\)</span> ones per column and <span class="math notranslate nohighlight">\(d_c\)</span>
+per row, here 3 and 6, which fixes the rate at <span class="math notranslate nohighlight">\(1 - d_v/d_c = 1/2\)</span>.</p>
+<p>Sparsity is what makes decoding possible. Read <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> as a
+bipartite graph – one node per bit, one node per parity check, an edge for
+each one – and decode by passing messages along its edges: each check tells
+each bit what the other bits in that check imply about it, each bit collects
+what its checks say, and the process repeats. The <strong>min-sum</strong> rule used here
+approximates the exact update by</p>
+<div class="math notranslate nohighlight">
+\[L_{c \to b} \;\approx\;
+\Big(\prod_{b' \in \mathcal{N}(c)\setminus b} \mathrm{sign}\, L_{b' \to c}\Big)
+\cdot \min_{b' \in \mathcal{N}(c)\setminus b} \left|L_{b' \to c}\right|\]</div>
+<p>which is why the decoder needs the demapper’s LLRs: an LDPC decoder is soft
+by construction, there is no hard-decision variant of it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">make_gallager_parity_check</span><span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="n">d_v</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">d_c</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ldpc_encoder</span> <span class="o">=</span> <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LDPC: H is </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, k = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2"> &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;information bits, rate = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;column weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, row weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">n_frames</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">ldpc_curves</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">n_iter</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+        <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">LDPCDecoder</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iter</span><span class="p">),</span>
+    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;LDPC, </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations&quot;</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="p">),</span>
+                    <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="p">),</span>
+                    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">ldpc_curves</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;LDPC (2040, </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2">), </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LDPC </span><span class="si">{</span><span class="n">n_iter</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> iterations       &quot;</span>
+          <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LDPC</span><span class="p">:</span> <span class="n">H</span> <span class="ow">is</span> <span class="mi">1020</span> <span class="n">x</span> <span class="mi">2040</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">1022</span> <span class="n">information</span> <span class="n">bits</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="mf">0.501</span><span class="p">,</span> <span class="n">column</span> <span class="n">weight</span> <span class="mi">3</span><span class="p">,</span> <span class="n">row</span> <span class="n">weight</span> <span class="mi">6</span>
+<span class="n">LDPC</span>  <span class="mi">5</span> <span class="n">iterations</span>       <span class="mf">1.70e-01</span> <span class="mf">1.09e-01</span> <span class="mf">3.31e-02</span> <span class="mf">2.30e-03</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>
+<span class="n">LDPC</span> <span class="mi">25</span> <span class="n">iterations</span>       <span class="mf">1.70e-01</span> <span class="mf">1.14e-01</span> <span class="mf">8.78e-03</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">comparison</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;uncoded&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">[</span><span class="s2">&quot;uncoded&quot;</span><span class="p">],</span>
+              <span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">[</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">]}</span>
+<span class="n">comparison</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ldpc_curves</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">comparison</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Two rate-1/2 codes, and none&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/channel_coding_fig2.png&quot;</span><span class="p">)</span>
+
+<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
+<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;channel_coding&quot;</span><span class="p">,</span> <span class="n">coded_chain</span><span class="p">(</span><span class="kc">True</span><span class="p">))]:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
+
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/channel_coding_fig2.png"><img alt="../_images/channel_coding_fig2.png" class="align-center" src="../_images/channel_coding_fig2.png" style="width: 100%;" />
+</a>
+<p>The shape of the curve is what distinguishes the two families. The
+convolutional code improves steadily; the LDPC code does almost nothing until
+about 2 dB and then falls off a cliff – the <strong>waterfall</strong>. That threshold
+behaviour is the point of the construction, and it is why long LDPC codes get
+within a fraction of a decibel of capacity where a convolutional code cannot.</p>
+<p>The iterations show the mechanism at work: at 2 dB, five iterations leave
+<span class="math notranslate nohighlight">\(3.3\times10^{-2}\)</span> and twenty-five leave <span class="math notranslate nohighlight">\(8.8\times10^{-3}\)</span>.
+Below the threshold, more iterations change nothing – messages circulate
+without converging; above it, they are what carries the decoder to the
+codeword. At 0 dB the two curves are the same number to three digits, which
+says exactly that.</p>
+</section>
+<section id="when-the-sweep-is-too-slow">
+<h2>When the Sweep Is Too Slow<a class="headerlink" href="#when-the-sweep-is-too-slow" title="Link to this heading">#</a></h2>
+<p>The two Viterbi sweeps took about ten seconds each, and a coded simulation
+that has to resolve <span class="math notranslate nohighlight">\(10^{-6}\)</span> takes minutes. The points of a sweep are
+independent, so they can be run at the same time:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">rate</span><span class="p">),</span>
+                <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                <span class="n">n_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The curve is <strong>identical</strong>, value for value, not merely statistically
+equivalent: every point already draws from its own child seed, so which
+worker runs it changes nothing. That is also why <code class="docutils literal notranslate"><span class="pre">seed=</span></code> becomes mandatory
+when <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code> is not 1.</p>
+<p>Two practical points. Workers are processes, so the chain and the metrics are
+pickled into them – a metric written as a <code class="docutils literal notranslate"><span class="pre">lambda</span></code> cannot make the trip,
+and must be a module-level function. And a script that calls a parallel sweep
+must guard its body:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>without which each worker re-imports the script and runs it again. Both cases
+raise an error that says so.</p>
+<p>It is not free either: starting a worker costs about 130 ms, so a sweep whose
+points take a millisecond will be <em>slower</em> in parallel. Around 200 ms a point,
+four cores return about 2.7x.</p>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>You have coded a link, decoded it two ways, bounded what it can do, and
+compared it with a code built on an entirely different principle.</p>
+<p>You have learned how to:</p>
+<ul class="simple">
+<li><p>Read generator polynomials, and what the constraint length costs and buys.</p></li>
+<li><p>Tell what the Viterbi recursion computes, and why soft decisions are worth
+2 dB.</p></li>
+<li><p>Turn a distance spectrum into a union bound, and use it where simulation
+cannot reach.</p></li>
+<li><p>Decode an LDPC code by message passing, and recognize a waterfall.</p></li>
+<li><p>Run a sweep in parallel without changing its result.</p></li>
+</ul>
+<p>From here, you can:</p>
+<ul class="simple">
+<li><p>Put this code in front of one of the earlier channels – the OFDM link of
+<a class="reference internal" href="ofdm.html"><span class="doc">OFDM Tutorial</span></a> is exactly the case where coding <em>across</em> the subcarriers
+repairs the ones a notch destroyed.</p></li>
+<li><p>Change the constraint length and watch <span class="math notranslate nohighlight">\(d_{\mathrm{free}}\)</span> and the
+decoder cost grow together.</p></li>
+<li><p>Increase the LDPC blocklength and see the waterfall sharpen.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="alamouti.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Alamouti Space-Time Coding Tutorial</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="shaping.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Probabilistic Shaping</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-convolutional-encoder">The Convolutional Encoder</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-viterbi-decoder">The Viterbi Decoder</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-union-bound">The Union Bound</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#an-ldpc-code-at-the-same-rate">An LDPC Code, at the Same Rate</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#when-the-sweep-is-too-slow">When the Sweep Is Too Slow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/tutorials/coding.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

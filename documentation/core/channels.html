@@ -149,8 +149,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -264,8 +264,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../examples/index.html">
-    Examples
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -692,6 +692,56 @@ Communications</em>, Wiley, 1974, Chapter 1.</p>
 <span class="go">(8, 1000)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.channels.TappedDelayLineChannel.impulse_response">
+<span class="sig-name descname"><span class="pre">impulse_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/channels.html#TappedDelayLineChannel.impulse_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.channels.TappedDelayLineChannel.impulse_response" title="Link to this definition">#</a></dt>
+<dd><p>Draw one realization and return it as a tap vector.</p>
+<section id="id3">
+<h3>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<p>Sounding a channel with an impulse is how its response is
+measured, and it is what a script needs whenever a <em>known</em>
+channel is wanted: the equalizers of
+<a class="reference internal" href="compensators.html#comnumpy.core.compensators.LinearEqualizer" title="comnumpy.core.compensators.LinearEqualizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearEqualizer</span></code></a> and
+<a class="reference internal" href="../ofdm/compensators.html#comnumpy.ofdm.compensators.FrequencyDomainEqualizer" title="comnumpy.ofdm.compensators.FrequencyDomainEqualizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code></a>
+take a tap vector, not a fading process. This does exactly that
+– feeds <span class="math notranslate nohighlight">\(\delta[n]\)</span> through <code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code> and returns
+the first <span class="math notranslate nohighlight">\(L\)</span> samples, with <span class="math notranslate nohighlight">\(L\)</span> one more than the
+longest path in samples.</p>
+<p>The result is dense: paths that fall between the resolvable
+delays of this sampling rate appear as zeros, so the vector can
+be handed straight to a convolution.</p>
+<p><strong>This draws a new realization</strong> and advances the generator, the
+way calling the block does. Seed it (or the chain) to get the
+same channel twice.</p>
+<p>Axes: <em>returns 1D</em> <code class="docutils literal notranslate"><span class="pre">(L,)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param n_samples<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Length of the sounding record. Defaults to eight times the
+longest path, which is enough for the profile to fit and
+for a Doppler process to be sampled meaningfully. Only the
+first <span class="math notranslate nohighlight">\(L\)</span> samples are returned either way.</p>
+</dd>
+<dt class="field-even">type n_samples<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Complex tap vector of length <code class="docutils literal notranslate"><span class="pre">delays_[-1]</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_delay_profile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">channel</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;EPA&quot;</span><span class="p">),</span>
+<span class="gp">... </span>                                 <span class="n">fs</span><span class="o">=</span><span class="mf">7.68e6</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">impulse_response</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">shape</span>                  <span class="c1"># 410 ns of spread at 7.68 MHz</span>
+<span class="go">(4,)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">channel</span><span class="o">.</span><span class="n">delays_</span><span class="p">]</span> <span class="o">==</span> <span class="n">channel</span><span class="o">.</span><span class="n">h_</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 </dd></dl>
 
@@ -752,6 +802,7 @@ Communications</em>, Wiley, 1974, Chapter 1.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.channels.TappedDelayLineChannel"><code class="docutils literal notranslate"><span class="pre">TappedDelayLineChannel</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.channels.TappedDelayLineChannel.h_"><code class="docutils literal notranslate"><span class="pre">TappedDelayLineChannel.h_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.channels.TappedDelayLineChannel.delays_"><code class="docutils literal notranslate"><span class="pre">TappedDelayLineChannel.delays_</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.channels.TappedDelayLineChannel.impulse_response"><code class="docutils literal notranslate"><span class="pre">TappedDelayLineChannel.impulse_response()</span></code></a></li>
 </ul>
 </li>
 </ul>

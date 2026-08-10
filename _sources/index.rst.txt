@@ -14,7 +14,7 @@ A Python Library for Communication System Prototyping and Simulation
    :caption: Contents:
 
    getting_started/index
-   examples/index
+   tutorials/index
    documentation/index
 
 
