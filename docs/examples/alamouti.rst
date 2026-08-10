@@ -107,11 +107,9 @@ Simulation Setup
 Import Libraries
 """"""""""""""""
 
-We start by importing the required libraries and ``comnumpy`` components:
-
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 1-6
+   :lines: 1-14
 
 Define System Parameters
 """"""""""""""""""""""""
@@ -120,56 +118,70 @@ The code is taken from the registry by name, exactly as the constellation is tak
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 10-16
+   :lines: 18-23
 
 The scaling by :math:`1/\sqrt{N_t}` matters for the comparison that follows. Two antennas each transmitting :math:`|s|^2` would spend twice the power of a single antenna, which is a 3 dB advantage that has nothing to do with coding. Splitting the power keeps the comparison about diversity alone.
+
+Build the Alamouti Chain
+""""""""""""""""""""""""
+
+The whole link is **one** ``Sequential``: generator, mapper, power split, space-time encoder, channel, noise, decoder, and back to symbol indices. The encoder outputs ``(n_tx, N T / K)`` with antennas on axis -2, so it feeds ``FlatMIMOChannel`` directly, and the decoder gives the symbols back:
+
+.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
+   :language: python
+   :lines: 25-41
+
+Two chain services are used here rather than reimplemented. ``seed`` gives every stochastic block an independent child seed, so the run is reproducible; ``taps`` records the output of the named blocks without inserting anything into the chain.
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
 
-Transmit and receive one block
-""""""""""""""""""""""""""""""
+What each block costs
+"""""""""""""""""""""
 
-We draw one channel realization, encode 500 codewords, add noise and decode:
+``summary`` runs the chain and tabulates what every block hands to the next one, and what it cost:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 18-29
+   :lines: 43-44
 
-``SpaceTimeEncoder`` turns a stream of :math:`N` symbols into an array of shape :math:`\left(N_t, N T / K\right)` -- antennas on the second-to-last axis, as everywhere else in the library -- so it plugs straight into a MIMO channel. ``SpaceTimeDecoder`` performs the matched filter above; it needs the channel matrix, which is assumed known at the receiver.
+.. code::
+
+   #    block                        id                   output shape       dtype         time ms
+   0    SymbolGenerator              tx                   (1000,)            int64            0.03
+   1    SymbolMapper                 symbol_mapper        (1000,)            complex128       0.00
+   2    Amplifier                    signal_amplifier     (1000,)            complex128       0.00
+   3    SpaceTimeEncoder             space_time_encoder   (2, 1000)          complex128       0.07
+   4    FlatMIMOChannel              channel              (1, 1000)          complex128       0.01
+   5    AWGN                         noise                (1, 1000)          complex128       0.04
+   6    SpaceTimeDecoder             detector             (1000,)            complex128       0.08
+   7    Amplifier                    signal_amplifier_2   (1000,)            complex128       0.00
+   8    SymbolDemapper               symbol_demapper      (1000,)            int64            0.07
+
+The shape column is the code at work: 1000 symbols enter, the encoder spreads them over ``(2, 1000)`` -- two antennas, one thousand channel uses, so rate 1 -- one antenna receives, and 1000 symbols come back.
 
 Visualize the combining
 """""""""""""""""""""""
 
+The two panels are two taps of the same run:
+
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 31-44
+   :lines: 46-61
 
 .. image:: img/one_shot_alamouti_fig1.png
    :width: 100%
    :align: center
 
-The left panel is what the single receive antenna actually sees: two superimposed streams plus noise, with no constellation visible at all. The right panel is the same data after combining, and the four QPSK points are back. Nothing was estimated to get there -- only the two conjugations and the matched filter of the equations above.
+The left panel is what the single receive antenna sees: two superimposed streams plus noise, with no constellation visible at all. The right panel is the same run after combining, and the four QPSK points are back. Nothing was estimated to get there -- only the two conjugations and the matched filter of the equations above.
 
 Monte Carlo Evaluation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Three schemes at equal transmit power
-"""""""""""""""""""""""""""""""""""""
+Two references, as chains
+"""""""""""""""""""""""""
 
-To see the diversity we compare three links at the same total transmit power. The Alamouti scheme is simulated with the library blocks, over a channel drawn once per block of 25 codewords (quasi-static fading):
-
-.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
-   :language: python
-   :lines: 47-64
-
-The reference without diversity is a single antenna each side:
-
-.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
-   :language: python
-   :lines: 67-77
-
-and the reference *with* diversity is maximum ratio combining on two receive antennas, which is the best a two-path link can do:
+The comparison needs a link without diversity and a link with receive diversity. Both are the same chain with different blocks, and one detector covers them: zero forcing on an :math:`(N_r, 1)` channel **is** maximum ratio combining, since the pseudo-inverse of a column vector is :math:`\mathbf{h}^{H}/\|\mathbf{h}\|^2`:
 
 .. math ::
 
@@ -179,20 +191,44 @@ and the reference *with* diversity is maximum ratio combining on two receive ant
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 80-93
+   :lines: 63-83
 
-We sweep the SNR:
+The loop, then the same thing with ``sweep``
+""""""""""""""""""""""""""""""""""""""""""""
+
+Averaging over fading means running the chain once per channel realization. Written out, that is: reconfigure, run, count, average --
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 96-102
+   :lines: 86-103
+
+``set_params`` addresses blocks by the names they were given, so a realization is two dotted assignments: the channel the signal goes through, and the channel the detector inverts.
+
+That loop is exactly what :func:`~comnumpy.sweep.sweep` does, and it takes several parameters at once and zips them -- so a sweep point *is* a channel realization:
+
+.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
+   :language: python
+   :lines: 106-128
+
+.. code::
+
+   8 dB over 300 realizations: loop 0.06533, sweep 0.06742
+
+The two estimate the same quantity on the same 300 channels. They do not agree to the last digit and should not: ``sweep`` gives every point its own child seed, so the noise differs, and the gap is the Monte-Carlo error of 24000 symbols.
+
+Sweep the SNR
+"""""""""""""
+
+.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
+   :language: python
+   :lines: 131-145
 
 Plot SER vs SNR
 """""""""""""""
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 104-114
+   :lines: 147-157
 
 .. image:: img/one_shot_alamouti_fig2.png
    :width: 100%
@@ -204,26 +240,28 @@ Two things are visible, and they are the two things to remember.
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 116-125
+   :lines: 159-169
 
 .. code::
 
-   1 Tx, 1 Rx (no diversity)    local slope -0.72 -0.85 -0.93 -0.97 -1.01 -1.02
-   Alamouti, 2 Tx, 1 Rx         local slope -1.11 -1.50 -1.79 -1.97
-   MRC, 1 Tx, 2 Rx              local slope -1.40 -1.72 -1.88
+   1 Tx, 1 Rx (no diversity)    local slope -0.74 -0.90 -1.00 -1.04 -1.07 -1.20
+   Alamouti, 2 Tx, 1 Rx         local slope -1.16 -1.59 -1.94
+   MRC, 1 Tx, 2 Rx              local slope -1.46 -1.86 -2.08
 
-The first curve converges to 1, the two others to 2. Intervals whose upper end rests on a handful of errors are dropped: their slope would be Monte-Carlo noise, not physics.
+The first converges to 1, the two others to 2. Intervals whose upper end rests on a handful of errors are dropped: their slope would be Monte-Carlo noise, not physics.
 
 **The 3 dB.** Alamouti is parallel to MRC but shifted right. The script reads the SNR each scheme needs to reach a symbol error rate of :math:`10^{-3}`:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 127-133
+   :lines: 171-181
 
 .. code::
 
-   SNR needed for SER = 0.001: 1 Tx, 1 Rx (no diversity) 28.0 dB,
-   Alamouti, 2 Tx, 1 Rx 18.4 dB, MRC, 1 Tx, 2 Rx 15.6 dBThe gap to MRC is the price of transmitting *blind*: the receiver knows the channel and can weight its two branches by :math:`h_i^{*}`, while the transmitter cannot, and splits its power evenly instead. Alamouti buys the full diversity order anyway -- it only pays for it in array gain, not in slope.
+   SNR needed for SER = 0.001: 1 Tx, 1 Rx (no diversity) 27.7 dB,
+   Alamouti, 2 Tx, 1 Rx 17.6 dB, MRC, 1 Tx, 2 Rx 14.8 dB
+
+The gap to MRC is the price of transmitting *blind*: the receiver knows the channel and can weight its two branches by :math:`h_i^{*}`, while the transmitter cannot, and splits its power evenly instead. Alamouti buys the full diversity order anyway -- it only pays for it in array gain, not in slope.
 
 .. note ::
 

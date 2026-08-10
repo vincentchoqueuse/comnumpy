@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 from comnumpy.exceptions import ShapeError
 from comnumpy.core.filters import BWFilter
+from comnumpy.core.utils import get_alphabet
 from comnumpy.core.processors import (
     Amplifier, AutoConcatenator, BlindPhaseTracker, Complex2Real, DataAdder,
     DataExtractor, Downsampler, SampleRemover,
@@ -230,6 +231,109 @@ class TestBlindPhaseTracker(unittest.TestCase):
     def test_theta_is_none_before_any_call(self):
         tracker, _ = self._tracker()
         self.assertIsNone(tracker.theta_)
+
+
+class TestBlindPhaseTrackerSearch(unittest.TestCase):
+    r"""The vectorized search must decide exactly what the equation says.
+
+    ``evm_cost`` is the definition, one sample and one test phase at a
+    time, and it stays in the class for that reason: it is the readable
+    form of the criterion. ``_track`` computes the same minimization as
+    two array operations, roughly a thousand times faster per sample,
+    and these tests are what ties the two together -- otherwise the fast
+    path is free to drift away from the documented one.
+    """
+
+    def reference(self, tracker, x):
+        """arg min over the test phases, straight from ``evm_cost``."""
+        return np.array([
+            tracker.phases[int(np.argmin([tracker.evm_cost(x, n, phase)
+                                          for phase in tracker.phases]))]
+            for n in range(len(x))])
+
+    def test_it_reproduces_the_scalar_criterion(self):
+        rng = np.random.default_rng(3)
+        for family, order in (("QAM", 4), ("QAM", 16), ("PSK", 2)):
+            alphabet = get_alphabet(family, order)
+            for half_window in (1, 4):
+                for steps in (4, 16):
+                    symbols = alphabet[rng.integers(0, order, size=50)]
+                    x = (symbols * np.exp(1j * 0.25)
+                         + 0.08 * (rng.normal(size=50)
+                                   + 1j * rng.normal(size=50)))
+                    tracker = BlindPhaseTracker(half_window, alphabet,
+                                                phase_steps=steps)
+                    tracker(x)
+                    with self.subTest(modulation=f"{family}-{order}",
+                                      L=half_window, phase_steps=steps):
+                        np.testing.assert_array_equal(
+                            tracker.theta_, self.reference(tracker, x))
+
+    def test_the_edges_use_the_samples_that_exist(self):
+        """A window running past the record adds nothing, for every phase.
+
+        The zero padding of the fast path and the ``count`` division of
+        ``evm_cost`` are two ways of saying the same thing, and this is
+        where they could disagree: a record shorter than the window.
+        """
+        alphabet = get_alphabet("QAM", 4)
+        rng = np.random.default_rng(4)
+        for length in (1, 2, 3):
+            x = alphabet[rng.integers(0, 4, size=length)] * np.exp(1j * 0.3)
+            tracker = BlindPhaseTracker(5, alphabet, phase_steps=16)
+            tracker(x)
+            with self.subTest(length=length):
+                np.testing.assert_array_equal(tracker.theta_,
+                                              self.reference(tracker, x))
+
+    def test_an_empty_record_is_not_a_crash(self):
+        alphabet = get_alphabet("QAM", 4)
+        tracker = BlindPhaseTracker(3, alphabet, phase_steps=8)
+        self.assertEqual(tracker(np.zeros(0, dtype=complex)).size, 0)
+
+    def test_8psk_is_ambiguous_and_both_answers_are_optimal(self):
+        r"""Not a defect of either implementation: a symmetry of the code.
+
+        The search spans :math:`[-\pi/4, \pi/4)`, which is the ambiguity
+        of a square QAM. An 8-PSK constellation repeats every
+        :math:`\pi/4`, so the range covers **two** of its periods and
+        several test phases give mathematically identical costs. Which
+        of them wins is then decided by the last bit of a floating point
+        sum, so the two implementations may disagree on the phase while
+        agreeing on the cost -- which is what is checked.
+        """
+        alphabet = get_alphabet("PSK", 8)
+        rng = np.random.default_rng(5)
+        symbols = alphabet[rng.integers(0, 8, size=40)]
+        x = symbols * np.exp(1j * 0.2) + 0.1 * (rng.normal(size=40)
+                                                + 1j * rng.normal(size=40))
+        tracker = BlindPhaseTracker(3, alphabet, phase_steps=16)
+        tracker(x)
+        expected = self.reference(tracker, x)
+        self.assertTrue(np.any(tracker.theta_ != expected),
+                        "8-PSK should be ambiguous over this search range")
+        for n in range(len(x)):
+            with self.subTest(sample=n):
+                self.assertAlmostEqual(tracker.evm_cost(x, n, tracker.theta_[n]),
+                                       tracker.evm_cost(x, n, expected[n]),
+                                       places=12)
+
+    def test_a_long_record_stays_within_one_memory_block(self):
+        """The chunking must not change the answer at a block boundary."""
+        alphabet = get_alphabet("QAM", 16)
+        rng = np.random.default_rng(6)
+        x = alphabet[rng.integers(0, 16, size=3000)] * np.exp(1j * 0.3)
+        tracker = BlindPhaseTracker(2, alphabet, phase_steps=16)
+        tracker(x)
+        from comnumpy.core import processors
+        original = processors._COST_BLOCK
+        try:                                   # force a boundary every 4 rows
+            processors._COST_BLOCK = 16 * 4
+            chunked = BlindPhaseTracker(2, alphabet, phase_steps=16)
+            chunked(x)
+        finally:
+            processors._COST_BLOCK = original
+        np.testing.assert_array_equal(chunked.theta_, tracker.theta_)
 
 
 if __name__ == '__main__':
