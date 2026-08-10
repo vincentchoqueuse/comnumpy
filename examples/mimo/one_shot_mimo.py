@@ -11,7 +11,7 @@ from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
     LinearDetector, MaximumLikelihoodDetector,
-    OrderedSuccessiveInterferenceCancellationDetector)
+    OrderedSuccessiveInterferenceCancellationDetector, SphereDecoder)
 from comnumpy.mimo.utils import rayleigh_channel
 
 img_dir = "../../docs/examples/img/"
@@ -48,6 +48,10 @@ detectors = {
     "OSIC": OrderedSuccessiveInterferenceCancellationDetector(
         alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="detector"),
     "ML": MaximumLikelihoodDetector(alphabet, H=H, name="detector"),
+    # exactly the ML decision, reached by pruning a tree instead of
+    # scoring every candidate: the two curves must land on top of
+    # each other, and the difference is entirely in the cost
+    "SD": SphereDecoder(alphabet, H=H, name="detector"),
 }
 chains = {name: link(detector) for name, detector in detectors.items()}
 
@@ -129,6 +133,43 @@ ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
 ax.set_ylim(1e-4, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
+
+# What the sphere decoder buys, where it matters. The chain above is
+# 4-PSK on two streams -- 16 candidates, which an exhaustive search
+# scores in one matrix product. The interesting regime is the one where
+# that product no longer fits: 16-QAM on four streams is 65536
+# candidates per symbol, 64-QAM on four is 16.7 million.
+print("\nvisited nodes per detected vector (16-QAM, 4x4)")
+big_alphabet = get_alphabet("QAM", 16)
+big_H = rayleigh_channel(4, 4, seed=2)
+big_rng = np.random.default_rng(4)
+sent = big_rng.integers(0, 16, size=(4, 400))
+transmitted = big_alphabet[sent]
+node_counts = []
+for snr_dB in snr_dB_list:
+    sigma = np.sqrt(4 * 10 ** (-snr_dB / 10))
+    noise = big_rng.standard_normal((4, 400)) + 1j * big_rng.standard_normal((4, 400))
+    received = big_H @ transmitted + sigma / np.sqrt(2) * noise
+    decoder = SphereDecoder(big_alphabet, H=big_H)
+    errors = np.mean(decoder(received) != sent)
+    node_counts.append(decoder.nodes_)
+    print(f"  {snr_dB:2d} dB   {decoder.nodes_:8.1f} nodes   "
+          f"{decoder.nodes_ / 16 ** 4:.2e} of the exhaustive search   "
+          f"SER {errors:.4f}")
+
+fig4, ax4 = plt.subplots(figsize=(7, 4))
+ax4.semilogy(snr_dB_list, node_counts, "o-", label="sphere decoder")
+ax4.axhline(16 ** 4, color="k", linestyle="--",
+            label="exhaustive search, $|\\mathcal{M}|^{N_t}$")
+ax4.axhline(4, color="0.5", linestyle=":",
+            label="successive cancellation, $N_t$")
+ax4.set_xlabel("SNR [dB]")
+ax4.set_ylabel("nodes visited per vector")
+ax4.set_title("16-QAM, 4x4: what the pruning removes")
+ax4.legend()
+ax4.grid(True, which="both")
+plt.tight_layout()
+plt.savefig(f"{img_dir}/monte_carlo_mimo_fig4.png")
 
 # The chain diagrams this tutorial shows are exported from the chains
 # themselves (D33c), so the picture cannot drift from the code -- the

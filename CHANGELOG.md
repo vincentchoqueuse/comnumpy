@@ -46,6 +46,31 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `mimo.detectors.SphereDecoder`: maximum likelihood by tree search
+  rather than exhaustion. The thin QR factorization of the channel makes
+  the metric a sum of non-negative layer terms, so a partial sum that
+  already exceeds the best complete metric prunes its whole subtree; the
+  Schnorr-Euchner enumeration order reaches the successive-cancellation
+  solution first, which supplies a finite radius immediately and removes
+  the initial-radius parameter such decoders usually carry.
+
+  It returns the *same* decision as `MaximumLikelihoodDetector` -- that
+  is the only claim worth making, and it is tested symbol by symbol on
+  six alphabet/geometry pairs, at three noise levels and on an
+  ill-conditioned channel. What changes is the cost: on 16-QAM over
+  four streams it visits 5.9 nodes per vector at 18 dB and 78 at 0 dB,
+  against 65 536 candidates for the exhaustive search, and the average
+  is reported as `nodes_`. On small problems it is *slower* than the
+  vectorized exhaustive search, which the tutorial says plainly.
+
+- A multipath fading tutorial (`examples/simple/multipath_channels.py`,
+  `docs/examples/multipath.rst`), which is what the TDL catalog was
+  missing: the power delay profile, the exact scaling law between delay
+  spread and coherence bandwidth (B_c x sigma = 0.329 at three spreads,
+  to three digits), and the cyclic prefix rule it all exists to settle
+  -- 48 samples of prefix against a 40-sample channel reaches
+  2e-3 at 30 dB, 10 samples floors at 0.145 whatever the SNR.
+
 - The five 5G NR delay profiles of 3GPP TR 38.901 Section 7.7.2 --
   `TDL-A` to `TDL-E` -- in the `get_delay_profile` catalog, next to the
   LTE ones. Their delays are *normalized*, so a TDL entry is a shape and
@@ -731,6 +756,23 @@ No new feature; the published package becomes consistent with what the
 code actually does.
 
 ### Fixed
+
+- `MaximumLikelihoodDetector` built its candidate table one column at a
+  time with `itertools.product` and then looped over samples in Python.
+  The distance expands as `||y||^2 - 2 Re(y^H Hx) + ||Hx||^2`, whose
+  first term does not depend on the candidate, so the search is a matrix
+  product -- blocked on both axes so the cost matrix stays a few
+  megabytes whatever the constellation. Same decisions, 50x faster on
+  4-PSK 2x2 and 6x on 16-QAM 4x4.
+
+- `BlindDualMIMOCompensator` gained an exact fast path rather than a
+  rewrite: a stochastic gradient cannot be vectorized (the update from
+  y[n] is needed to compute y[n+1]), but with `mu = 0` the equalizer is
+  frozen and the whole pass is a matrix product -- 25 to 30 times
+  faster, bit-for-bit identical, which is the "fit on a preamble, then
+  apply" regime of D22. The docstring now states what the adaptive loop
+  costs (18 us per output sample) and why the only way further down is
+  a compiled kernel.
 
 - The chain diagrams in the tutorials were drawn by hand in mermaid,
   next to a library that can draw them itself. Seven examples now export
