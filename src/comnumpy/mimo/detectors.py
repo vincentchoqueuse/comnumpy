@@ -6,19 +6,43 @@ from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
+__all__ = [
+    "MaximumLikelihoodDetector", "LinearDetector",
+    "OrderedSuccessiveInterferenceCancellationDetector",
+    "ApproximateMessagePassingDetector",
+    "OrthogonalApproximateMessagePassingDetector",
+]
 
-def _validate_H(H):
+
+def _required_channel(H: Optional[np.ndarray], block: str) -> np.ndarray:
+    """The channel matrix, or a message saying how to provide it.
+
+    Returning the value rather than only checking it is what lets the
+    caller -- and the type checker -- treat it as an array from there on.
+    """
     if H is None:
-        raise ValueError("Channel H is not set.")
-    elif not isinstance(H, np.ndarray):
-        raise TypeError("Channel H must be a NumPy array.")
+        raise ValueError(
+            f"{block} needs the channel matrix H and none was set. Got "
+            f"H=None, expected an (N_r, N_t) array. Pass it at "
+            f"construction ({block}(alphabet, H=H)) or assign "
+            f"detector.H once the channel is known.")
+    return np.asarray(H)
 
 
-def _validate_sigma2(sigma2):
+def _required_noise_variance(sigma2: Optional[float], block: str) -> float:
+    """Same, for the noise variance the MMSE-flavoured detectors need."""
     if sigma2 is None:
-        raise ValueError("Noise variance sigma2 is not set.")
-    elif sigma2 < 0:
-        raise TypeError("Noise variance sigma2 should be greater than 0.")
+        raise ValueError(
+            f"{block} needs the noise variance sigma2 and none was set. "
+            f"Got sigma2=None, expected a positive number. Pass it at "
+            f"construction ({block}(alphabet, H=H, sigma2=...)); the "
+            f"variance applied by AWGN is available as its sigma2_.")
+    if sigma2 <= 0:
+        raise ValueError(
+            f"{block} needs a positive noise variance, got sigma2="
+            f"{sigma2}. A zero or negative variance has no MMSE "
+            f"solution; use method='zf' for the noiseless limit.")
+    return float(sigma2)
 
 
 @dataclass(slots=True)
@@ -96,11 +120,13 @@ class MaximumLikelihoodDetector(Processor):
     # internal state (declared for slots, D40a)
     S: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
-    def get_nb_candidates(self):
-        _, N_t = self.H.shape
+    def get_nb_candidates(self) -> int:
+        H = _required_channel(self.H, type(self).__name__)
+        _, N_t = H.shape
         return len(self.alphabet) ** N_t
 
-    def get_candidates(self, alphabet, N_t):
+    def get_candidates(self, alphabet: np.ndarray,
+                       N_t: int) -> tuple[np.ndarray, np.ndarray]:
         symbols = np.arange(len(alphabet))
         input_list = [p for p in itertools.product(symbols, repeat=N_t)]
 
@@ -110,17 +136,14 @@ class MaximumLikelihoodDetector(Processor):
 
         for indice in range(len(input_list)):
             input = np.array(input_list[indice])
-            x = self.alphabet[input]
+            x = alphabet[input]
             X[:, indice] = x
             S[:, indice] = input
 
         return S, X
 
-    def forward(self, Y):
-
-        _validate_H(self.H)
-
-        H = self.H
+    def forward(self, Y: np.ndarray) -> np.ndarray:
+        H = _required_channel(self.H, type(self).__name__)
         _, N_t = H.shape
         _, N = Y.shape
         S = np.zeros((N_t, N), dtype=int)
@@ -213,19 +236,21 @@ class LinearDetector(Processor):
     sigma2: Optional[float] = field(default=None, kw_only=True)
     name: str = field(default="ZF Detector", kw_only=True)
 
-    def linear_estimator(self, Y):
+    def linear_estimator(self, Y: np.ndarray) -> np.ndarray:
         r"""
         Perform Zero Forcing or MMSE linear equalization
         """
+        block = type(self).__name__
+        H = _required_channel(self.H, block)
         match self.method:
             case "zf":
-                output = zf_estimator(Y, self.H)
+                output = zf_estimator(Y, H)
             case "mmse":
-                output = mmse_estimator(Y, self.H, self.sigma2 )
+                output = mmse_estimator(
+                    Y, H, _required_noise_variance(self.sigma2, block))
         return output
 
-    def forward(self, Y):
-        _validate_H(self.H)
+    def forward(self, Y: np.ndarray) -> np.ndarray:
         Z = self.linear_estimator(Y)
         S, _ = hard_projector(Z, self.alphabet)
         return S
@@ -329,19 +354,21 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
         match self.osic_type:
 
             case "sinr":
-                W = LA.inv(H.conj().T @ H + self.sigma2 * np.eye(NT)) @ H.conj().T
+                sigma2 = _required_noise_variance(self.sigma2,
+                                                  type(self).__name__)
+                W = LA.inv(H.conj().T @ H + sigma2 * np.eye(NT)) @ H.conj().T
                 WH = W @ H
 
                 diag_WH2 = np.abs(np.diag(WH))**2                         # |WH[i,i]|^2
                 WH2 = np.abs(WH)**2                                       # |WH[i,j]|^2
                 interference = np.sum(WH2, axis=1) - diag_WH2             # somme des interférences
-                noise_term = self.sigma2 * np.sum(np.abs(W)**2, axis=1)   # bruit résiduel
+                noise_term = sigma2 * np.sum(np.abs(W)**2, axis=1)        # bruit résiduel
                 denominator = interference + noise_term
                 sinr = diag_WH2 / denominator
                 return int(np.argmax(sinr))
 
             case "colnorm":
-                return np.argmax(np.linalg.norm(H, axis=0))
+                return int(np.argmax(np.linalg.norm(H, axis=0)))
 
             case "snr":
                 G = LA.inv(H.conj().T @ H) @ H.conj().T
@@ -351,17 +378,17 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
                 raise ValueError("osic_type must be 'sinr', 'colnorm', or 'snr'.")
 
     def forward(self, Y: np.ndarray) -> np.ndarray:
-        if self.H is None or (self.sigma2 is None and self.osic_type == "sinr"):
-            raise ValueError("H and sigma2 must be set before calling forward().")
+        block = type(self).__name__
+        H_full = _required_channel(self.H, block)
 
         Y_temp = Y.copy()
-        NT = self.H.shape[1]
+        NT = H_full.shape[1]
         S_hat = np.zeros((NT, Y.shape[1]), dtype=int)
         order = []
         remaining_idx = list(range(NT))
 
         for _ in range(NT):
-            H_temp = self.H[:, remaining_idx]
+            H_temp = H_full[:, remaining_idx]
             idx_local = self.ordering(H_temp)
             best_current_idx = remaining_idx[idx_local]
             order.append(best_current_idx)
@@ -371,7 +398,9 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
                 case "zf":
                     Z = zf_estimator(Y_temp, H_temp)
                 case "mmse":
-                    Z = mmse_estimator(Y_temp, H_temp, self.sigma2 )
+                    Z = mmse_estimator(
+                        Y_temp, H_temp,
+                        _required_noise_variance(self.sigma2, block))
 
             # perform detection
             S, _ = hard_projector(Z, self.alphabet)
@@ -473,36 +502,35 @@ class ApproximateMessagePassingDetector(Processor):
     N_it: int = field(default=100, kw_only=True)
     name: str = field(default="AMP Detector", kw_only=True)
 
-    def fit(self, y):
+    def fit(self, y: np.ndarray) -> np.ndarray:
         # see Algorithm 2
-        H = self.H
+        block = type(self).__name__
+        H = _required_channel(self.H, block)
+        sigma2 = _required_noise_variance(self.sigma2, block)
         N_r, N_t = H.shape
         x_t = np.zeros(N_t)
         r_t = y - np.matmul(H, x_t)
         H_H = np.transpose(np.conjugate(H))
         beta = N_t / N_r  # system ratio (below equation 1)
-        tau_2 = beta * 1 / self.sigma2
+        tau_2 = beta * 1 / sigma2
 
         for _ in range(self.N_it):
             z_t = x_t + np.matmul(H_H, r_t)
-            sigma2_t = self.sigma2 * (1 + tau_2)
+            sigma2_t = sigma2 * (1 + tau_2)
             x_t = soft_projector(
                 z_t, self.alphabet, sigma2_t
             )  # F function in the original publication
             kernel = np.abs(self.alphabet.reshape(1, -1) - x_t.reshape(-1, 1)) ** 2
             G = soft_projector(z_t, self.alphabet, tau_2, kernel)
             tau_2_old = tau_2
-            tau_2 = (beta / (self.sigma2)) * np.mean(G)
+            tau_2 = (beta / sigma2) * np.mean(G)
             term1 = tau_2 / (1 + tau_2_old)
-            r_t = y - np.matmul(self.H, x_t) + term1 * r_t
+            r_t = y - np.matmul(H, x_t) + term1 * r_t
 
         return x_t
 
-    def forward(self, Y):
-        _validate_H(self.H)
-        _validate_sigma2(self.sigma2)
-
-        H = self.H
+    def forward(self, Y: np.ndarray) -> np.ndarray:
+        H = _required_channel(self.H, type(self).__name__)
         _, N = Y.shape
         _, N_t = H.shape
         X = np.zeros((N_t, N), dtype=complex)
@@ -604,8 +632,9 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
     type: Literal["H", "pinv", "MMSE"] = field(default="MMSE", kw_only=True)
     name: str = field(default="OAMP Detector", kw_only=True)
 
-    def get_W(self, vt_2=0):
-        H = self.H
+    def get_W(self, vt_2: float = 0.0) -> np.ndarray:
+        block = type(self).__name__
+        H = _required_channel(self.H, block)
 
         match self.type:
 
@@ -619,7 +648,8 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
             case "MMSE":
                 N_r, _ = H.shape
                 H_H = np.transpose(np.conjugate(H))
-                term1 = vt_2 * np.matmul(H, H_H) + self.sigma2 * np.eye(N_r)
+                sigma2 = _required_noise_variance(self.sigma2, block)
+                term1 = vt_2 * np.matmul(H, H_H) + sigma2 * np.eye(N_r)
                 W = vt_2 * np.matmul(H_H, LA.inv(term1))
 
             case _:
@@ -627,34 +657,37 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
 
         return W
 
-    def get_vt_2(self, error, epsilon=0.001):
-        H = self.H
+    def get_vt_2(self, error: np.ndarray, epsilon: float = 0.001) -> float:
+        block = type(self).__name__
+        H = _required_channel(self.H, block)
         N_r, _ = H.shape
-        R = self.sigma2 * np.eye(N_r)
+        R = _required_noise_variance(self.sigma2, block) * np.eye(N_r)
         H_H = np.conjugate(np.transpose(H))
         num = np.sum(np.abs(error) ** 2) - np.trace(R)
         den = np.trace(np.matmul(H_H, H))
-        return max(num / den, epsilon)
+        return float(max(num / den, epsilon))
 
-    def get_tau_2(self, B, W, vt_2):
-        N_r, N_t = self.H.shape
-        R = self.sigma2 * np.eye(N_r)
+    def get_tau_2(self, B: np.ndarray, W: np.ndarray, vt_2: float) -> float:
+        block = type(self).__name__
+        N_r, N_t = _required_channel(self.H, block).shape
+        R = _required_noise_variance(self.sigma2, block) * np.eye(N_r)
         W_H = np.conjugate(np.transpose(W))
         B_H = np.conjugate(np.transpose(B))
         term1 = (vt_2 / N_t) * np.trace(np.matmul(B, B_H))
         term2 = (1 / N_t) * np.trace(np.matmul(W, np.matmul(R, W_H)))
         tau_2 = term1 + term2
-        return tau_2
+        return float(np.real(tau_2))
 
-    def fit(self, y):
-        tau_2, vt_2 = 1, 1
-        _, N_t = self.H.shape
+    def fit(self, y: np.ndarray) -> np.ndarray:
+        tau_2, vt_2 = 1.0, 1.0
+        H = _required_channel(self.H, type(self).__name__)
+        _, N_t = H.shape
         x_t = np.zeros(N_t)
 
         for _ in range(self.N_it):
             W = self.get_W(vt_2)
-            B = np.eye(N_t) - np.matmul(W, self.H)
-            error = y - np.matmul(self.H, x_t)
+            B = np.eye(N_t) - np.matmul(W, H)
+            error = y - np.matmul(H, x_t)
             z_t = x_t + np.matmul(W, error)
             x_t = soft_projector(z_t, self.alphabet, tau_2)
             vt_2 = self.get_vt_2(error)
@@ -662,13 +695,11 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
 
         return x_t
 
-    def forward(self, Y):
-        _validate_H(self.H)
-        _validate_sigma2(self.sigma2)
-
-
+    def forward(self, Y: np.ndarray) -> np.ndarray:
+        block = type(self).__name__
+        _required_noise_variance(self.sigma2, block)
         _, N = Y.shape
-        _, N_t = self.H.shape
+        _, N_t = _required_channel(self.H, block).shape
         X = np.zeros((N_t, N), dtype=complex)
         for n in range(N):
             X[:, n] = self.fit(Y[:, n])

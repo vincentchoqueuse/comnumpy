@@ -1,6 +1,11 @@
 """
 This module contains all the constants used across the optical module
 """
+
+__all__ = [
+    "CD_COEFFICIENT", "WAVELENGTH", "FIBER_LOSS", "KERR_COEFFICIENT",
+    "SPEED_OF_LIGHT", "PLANCK_CONSTANT", "OPTICAL_CARRIER_FREQUENCY",
+]
 CD_COEFFICIENT = 17                             # in ps/nm/km
 WAVELENGTH = 1550                               # nm
 FIBER_LOSS = 0.2                                # in dB/km

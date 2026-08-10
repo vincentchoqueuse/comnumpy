@@ -1,9 +1,18 @@
+from typing import Optional
+
 import numpy as np
 
 from comnumpy.core.utils import sym_2_bin  # single definition (annex A.5)
 
+__all__ = [
+    "compute_ser_awgn_psk", "compute_ser_awgn_qam", "compute_metric_awgn_theo",
+    "compute_ser", "compute_ber", "compute_evm", "compute_effective_snr",
+    "compute_power", "compute_ccdf", "compute_acpr", "signal_report",
+]
 
-def compute_ser_awgn_psk(order, snr_per_bit):
+
+def compute_ser_awgn_psk(order: int, snr_per_bit: np.ndarray | float
+                         ) -> np.ndarray | float:
     r"""
     Compute the theoretical Symbol Error Rate (SER) for PSK modulation over an AWGN channel.
 
@@ -87,14 +96,12 @@ def compute_ser_awgn_psk(order, snr_per_bit):
         # see book Proakis "Digital communication", p 271
         argument = np.sqrt(2*gamma_b)
         value = norm.sf(argument)
-
-    if order == 4:
+    elif order == 4:
         # see book Proakis "Digital communication", p 272
         argument = np.sqrt(2*gamma_b)
         term = norm.sf(argument)
         value = 2*term*(1-0.5*term)
-
-    if order > 4:
+    else:
         M = order
         argument = np.sqrt(2*k*gamma_b)*np.sin(np.pi/M)
         value = 2*norm.sf(argument)
@@ -102,7 +109,8 @@ def compute_ser_awgn_psk(order, snr_per_bit):
     return value
 
 
-def compute_ser_awgn_qam(order, snr_per_bit):
+def compute_ser_awgn_qam(order: int, snr_per_bit: np.ndarray | float
+                         ) -> np.ndarray | float:
     r"""
     Compute the theoretical Symbol Error Rate (SER) for square QAM modulation over an AWGN channel.
 
@@ -175,7 +183,9 @@ def compute_ser_awgn_qam(order, snr_per_bit):
     return value
 
 
-def compute_metric_awgn_theo(modulation, order, snr_per_bit, type="ser"):
+def compute_metric_awgn_theo(modulation: str, order: int,
+                             snr_per_bit: np.ndarray | float,
+                             type: str = "ser") -> np.ndarray | float:
     r"""
     Compute the theoretical error rate of a given modulation over an AWGN channel.
 
@@ -246,7 +256,8 @@ def compute_metric_awgn_theo(modulation, order, snr_per_bit, type="ser"):
 
     return value
 
-def compute_ser(X_target, X_detected, axis=None):
+def compute_ser(X_target: np.ndarray, X_detected: np.ndarray,
+                axis: Optional[int] = None) -> np.ndarray | float:
     r"""
     Compute the Symbol Error Rate (SER) between the target and detected symbols.
 
@@ -315,7 +326,8 @@ def compute_ser(X_target, X_detected, axis=None):
         return nb_errors / N
 
 
-def compute_ber(X_target, X_detected, width, axis=None):
+def compute_ber(X_target: np.ndarray, X_detected: np.ndarray, width: int,
+                axis: Optional[int] = None) -> np.ndarray | float:
     r"""
     Compute the Bit Error Rate (BER) between target and detected symbols.
 
@@ -385,7 +397,8 @@ def compute_ber(X_target, X_detected, width, axis=None):
         return nb_errors / total_bits
 
 
-def compute_evm(X_target, X_estimated, axis=None):
+def compute_evm(X_target: np.ndarray, X_estimated: np.ndarray,
+                axis: Optional[int] = None) -> np.ndarray | float:
     r"""
     Compute the Error Vector Magnitude (EVM) between the target and estimated signals.
 
@@ -458,7 +471,9 @@ def compute_evm(X_target, X_estimated, axis=None):
 
 
 
-def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
+def compute_effective_snr(X_target: np.ndarray, X_estimated: np.ndarray,
+                          sigma2_s: float = 1.0, unit: str = "natural"
+                          ) -> np.ndarray | float:
     r"""
     Compute the effective Signal-to-Noise Ratio (SNR) between a target and an estimated signal.
 
@@ -526,9 +541,9 @@ def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
     --------
     >>> x = np.ones(4)
     >>> x_hat = np.array([1.1, 0.9, 1.1, 0.9])   # error power 0.01
-    >>> print(round(float(compute_effective_SNR(x, x_hat)), 3))
+    >>> print(round(float(compute_effective_snr(x, x_hat)), 3))
     100.0
-    >>> print(round(float(compute_effective_SNR(x, x_hat, unit="dB")), 3))
+    >>> print(round(float(compute_effective_snr(x, x_hat, unit="dB")), 3))
     20.0
     """
     x_target = np.ravel(X_target)
@@ -547,10 +562,10 @@ def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
         case _:
             raise ValueError(f"Unknown unit: {unit}")
 
-    return output
+    return np.asarray(output) if np.ndim(output) else float(output)
 
 
-def compute_power(x, unit="natural"):
+def compute_power(x: np.ndarray, unit: str = "natural") -> float:
     r"""
     Compute the mean power of an input array.
 
@@ -618,10 +633,11 @@ def compute_power(x, unit="natural"):
         case _:
             raise ValueError(f"Unknown unit: {unit}")
 
-    return output
+    return float(output)
 
 
-def compute_ccdf(data, axis=-1):
+def compute_ccdf(data: np.ndarray, axis: int = -1
+                 ) -> tuple[np.ndarray, np.ndarray]:
     r"""
     Compute the empirical Complementary Cumulative Distribution Function (CCDF) of a dataset.
 
@@ -646,7 +662,7 @@ def compute_ccdf(data, axis=-1):
     i.e. the fraction of samples strictly above :math:`z_{(i)}` (the last
     entry is therefore exactly 0). This is the standard way of plotting
     the PAPR distribution of an OFDM signal: feed
-    :func:`comnumpy.ofdm.metrics.compute_PAPR` values in, then plot
+    :func:`comnumpy.ofdm.metrics.compute_papr` values in, then plot
     ``ccdf`` against ``sorted_data`` on a semilog-y axis.
 
     Axes: *declared axis* -- sorting and the sample count :math:`N` use
@@ -697,7 +713,8 @@ def compute_ccdf(data, axis=-1):
     return sorted_data, ccdf
 
 
-def calculate_acpr(signal, bandwidth, sampling_rate):
+def compute_acpr(signal: np.ndarray, bandwidth: float,
+                 sampling_rate: float) -> tuple[float, float]:
     r"""
     Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.
 
@@ -768,23 +785,19 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
     >>> n = np.arange(1000)
     >>> x = np.cos(2 * np.pi * 4 * n / f_s)     # single tone inside the channel
     >>> y = x - 0.2 * x ** 3                    # cubic nonlinearity -> IM3 at 12 Hz
-    >>> print(np.round(calculate_acpr(y, B, f_s), 4))
+    >>> print(np.round(compute_acpr(y, B, f_s), 4))
     [-27.6193 -27.6193]
     """
 
-    # NOT TESTED
-
-    def calculate_power(signal, lower_freq, upper_freq, sampling_rate):
-
-        # Perform FFT
-        fft_signal = np.fft.fft(signal)
-        freq_axis = np.fft.fftfreq(len(signal), 1 / sampling_rate)
-
-        # Select frequencies within the band
+    def band_power(lower_freq: float, upper_freq: float) -> float:
+        # Parseval: the power in a band is the energy of the bins it
+        # contains, divided by the number of samples
         mask = (freq_axis >= lower_freq) & (freq_axis <= upper_freq)
-        band_power = np.sum(np.abs(fft_signal[mask])**2) / len(signal)
+        return float(np.sum(np.abs(spectrum[mask]) ** 2) / signal.size)
 
-        return band_power
+    signal = np.asarray(signal)
+    spectrum = np.fft.fft(signal)
+    freq_axis = np.fft.fftfreq(signal.size, 1 / sampling_rate)
 
     # Define main and adjacent channel frequency bands
     half_bw = bandwidth / 2
@@ -798,18 +811,18 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
     adj_upper_left = main_lower
 
     # Calculate power in main and adjacent channels
-    main_power = calculate_power(signal, main_lower, main_upper, sampling_rate)
-    adj_power_right = calculate_power(signal, adj_lower_right, adj_upper_right, sampling_rate)
-    adj_power_left = calculate_power(signal, adj_lower_left, adj_upper_left, sampling_rate)
+    main_power = band_power(main_lower, main_upper)
+    adj_power_right = band_power(adj_lower_right, adj_upper_right)
+    adj_power_left = band_power(adj_lower_left, adj_upper_left)
 
     # Calculate ACPR in dB
     acpr_right = 10 * np.log10(adj_power_right / main_power)
     acpr_left = 10 * np.log10(adj_power_left / main_power)
 
-    return acpr_right, acpr_left
+    return float(acpr_right), float(acpr_left)
 
 
-def signal_report(x, compute_papr: bool = False,
+def signal_report(x: np.ndarray, compute_papr: bool = False,
                   papr_unit: str = "dB") -> "dict[str, float]":
     r"""
     Summary statistics of a signal, as plain data.
@@ -866,7 +879,8 @@ def signal_report(x, compute_papr: bool = False,
         "avg_power": float(np.mean(abs_x ** 2)),
     }
     if compute_papr:
-        # local import to avoid a circular dependency (ofdm imports core)
-        from comnumpy.ofdm.metrics import compute_PAPR
-        report["papr"] = float(compute_PAPR(abs_x, unit=papr_unit))
+        # local import to avoid a circular dependency (ofdm imports core);
+        # aliased because the boolean flag above already owns the name
+        from comnumpy.ofdm.metrics import compute_papr as papr_of
+        report["papr"] = float(papr_of(abs_x, unit=papr_unit))
     return report

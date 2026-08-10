@@ -1,4 +1,5 @@
 from importlib import import_module
+from typing import TYPE_CHECKING, Any
 
 from .generics import Processor, Sequential
 from .generators import SymbolGenerator, GaussianGenerator
@@ -8,6 +9,10 @@ from .capacity import (awgn_capacity, constellation_capacity, bicm_capacity,
                        rayleigh_ergodic_capacity, mimo_ergodic_capacity,
                        outage_capacity, waterfilling)
 from .information import compute_gmi, compute_llr, compute_mi, compute_ngmi
+from .shaping import (maxwell_boltzmann, distribution_entropy,
+                      composition_from_distribution, shaping_gain_dB,
+                      ConstantCompositionMatcher, SphereShaper,
+                      DistributionMatcher, DistributionDematcher)
 from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
                      get_delay_profile, register_delay_profile,
                      available_delay_profiles)
@@ -27,6 +32,10 @@ __all__ = [
     "rayleigh_ergodic_capacity", "mimo_ergodic_capacity",
     "outage_capacity", "waterfilling",
     "compute_llr", "compute_mi", "compute_gmi", "compute_ngmi",
+    "maxwell_boltzmann", "distribution_entropy",
+    "composition_from_distribution", "shaping_gain_dB",
+    "ConstantCompositionMatcher", "SphereShaper",
+    "DistributionMatcher", "DistributionDematcher",
     "DopplerSpectrum", "PowerDelayProfile", "rayleigh_process",
     "get_delay_profile", "register_delay_profile", "available_delay_profiles",
     "SRRCFilter", "BWFilter",
@@ -42,13 +51,20 @@ __all__ = [
     "plot_chain_profiling",
 ]
 
+if TYPE_CHECKING:
+    # the names below are resolved at runtime by __getattr__; importing
+    # them here would pull matplotlib, so the type checker gets them and
+    # the interpreter does not
+    from .visualizers import (plot_chain_profiling, plot_iq, plot_kde,
+                              plot_spectrum, plot_time, plot_welch)
+
 # PEP 562 lazy loading: importing comnumpy must not import matplotlib (D36).
 _LAZY = {name: ".visualizers"
          for name in ("plot_time", "plot_spectrum", "plot_welch",
                       "plot_iq", "plot_kde", "plot_chain_profiling")}
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name in _LAZY:
         module = import_module(_LAZY[name], __name__)
         return getattr(module, name)

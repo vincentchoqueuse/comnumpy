@@ -2,6 +2,8 @@ import numpy as np
 from dataclasses import dataclass, field
 from comnumpy.core.generics import Processor
 
+__all__ = ["RappAmplifier", "SalehAmplifier"]
+
 
 @dataclass(slots=True)
 class RappAmplifier(Processor):

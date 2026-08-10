@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
@@ -11,9 +11,25 @@ from .utils import hard_projector, zf_estimator, mmse_estimator
 from .processors import Amplifier, DataExtractor
 from .validators import validate_data, validate_single_path
 
+if TYPE_CHECKING:                       # matplotlib stays a local import (D36)
+    from matplotlib.axes import Axes
+
+__all__ = [
+    "DataAidedMixin", "DCCorrector", "Normalizer", "BlindIQCompensator",
+    "BlindCFOCompensator", "BlindPhaseCompensation", "LinearEqualizer",
+    "DataAidedFIRCompensator", "DataAidedPhaseCompensator",
+    "DataAidedComplexGainCompensator", "DataAidedSimpleSynchronizer",
+    "DataAidedFineSynchronizer",
+]
+
 
 @dataclass(slots=True)
 class DataAidedMixin():
+    if TYPE_CHECKING:
+        # declared by every concrete class; annotating it here would
+        # make it a field of the mixin and reorder theirs
+        reference: np.ndarray
+
     def __post_init__(self):
         validate_data(self.reference)
 
@@ -231,7 +247,7 @@ class Normalizer(Amplifier):
                 "power or variance.")
         self.gain_ = 1.0
 
-    def prepare(self, X):
+    def prepare(self, X: np.ndarray) -> None:
         match self.method:
             case "amp":
                 gain = self.value
@@ -373,7 +389,7 @@ class BlindIQCompensator(Processor):
         self.alpha_ = 1 + 0j
         self.beta_ = 0 + 0j
 
-    def fit(self, x):
+    def fit(self, x: np.ndarray) -> "BlindIQCompensator":
         signal = np.asarray(x)
         N = signal.shape[-1]
         paths = signal.reshape(-1, N)
@@ -381,7 +397,7 @@ class BlindIQCompensator(Processor):
         beta = np.empty(paths.shape[0], dtype=complex)
 
         for index, path in enumerate(paths):
-            X = np.vstack([path.real, path.imag])
+            X = np.vstack([np.real(path), np.imag(path)])
 
             # compute covariance matrix
             R = (1/N) * np.matmul(X, np.transpose(X))
@@ -405,6 +421,7 @@ class BlindIQCompensator(Processor):
             shape = signal.shape[:-1] + (1,)
             self.alpha_ = alpha.reshape(shape)
             self.beta_ = beta.reshape(shape)
+        return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
@@ -412,7 +429,7 @@ class BlindIQCompensator(Processor):
             self.fit(x)
 
         coef = np.sqrt(self.coef/2)
-        y = coef*(self.alpha_ * x.real + self.beta_ * x.imag)
+        y = coef*(self.alpha_ * np.real(x) + self.beta_ * np.imag(x))
         return y
 
 
@@ -531,11 +548,12 @@ class BlindCFOCompensator(Processor):
     save_history: bool = field(default=False, kw_only=True)
     method: Literal["grad", "newton"] = field(default="newton", kw_only=True)
     step_size: float = field(default=1e-8, kw_only=True)
-    grid_search_tuple: tuple = field(default=(-0.1, 0.1, 0.0001), kw_only=True)
+    grid_search_tuple: tuple[float, float, float] = field(
+        default=(-0.1, 0.1, 0.0001), kw_only=True)
     name: str = field(default="cfo_compensator", kw_only=True)
     # internal state (declared for slots, D40a)
-    grid_search_array: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
-    history: list = field(init=False, repr=False, default_factory=list)
+    grid_search_array: np.ndarray = field(init=False, repr=False)
+    history: list[float] = field(init=False, repr=False, default_factory=list)
     # estimated quantity (D23), declared for slots (D40a)
     w0_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
@@ -543,25 +561,25 @@ class BlindCFOCompensator(Processor):
         self.grid_search_array = np.arange(self.grid_search_tuple[0], self.grid_search_tuple[1], self.grid_search_tuple[2])
         self.history = []
 
-    def loss(self, x, w):
+    def loss(self, x: np.ndarray, w: float) -> float:
         N = x.shape[-1]
         x4 = x**4
         dtft = self.compute_dtft(x4, w)
-        return (np.abs(dtft)**2)/N
+        return float((np.abs(dtft)**2)/N)
 
-    def compute_dtft(self, x, w):
+    def compute_dtft(self, x: np.ndarray, w: float) -> complex:
         # the sum runs over *every* axis, so several paths contribute to
         # one periodogram: the joint estimate of the shared offset (D49)
         N = x.shape[-1]
         N_vect = np.arange(N)
         dtft = np.sum(x*np.exp(-1j*w*N_vect))
-        return dtft
+        return complex(dtft)
 
-    def callback(self, intermediate_result):
+    def callback(self, intermediate_result: float) -> None:
         if self.save_history:
             self.history.append(intermediate_result)
 
-    def fit(self, x, w0):
+    def fit(self, x: np.ndarray, w0: float) -> None:
         w = 4*w0
         N = x.shape[-1]
         x4 = x**4
@@ -587,7 +605,7 @@ class BlindCFOCompensator(Processor):
                 grad = (1/N) * (dtft_diff*np.conj(dtft) + dtft*np.conj(dtft_diff))
                 h = step_size * grad.real
 
-            if self.method == "newton":
+            elif self.method == "newton":
                 dtft = self.compute_dtft(x4, w)
                 dtft_diff = self.compute_dtft(-1j*N_vect*x4, w)
                 dtft_diff2 = self.compute_dtft(-(N_vect**2)*x4, w)
@@ -595,10 +613,15 @@ class BlindCFOCompensator(Processor):
                 J = (2/N) * (np.real(dtft_diff2*np.conj(dtft)) + np.abs(dtft_diff)**2)
                 h = -grad.real/J.real
 
+            else:
+                raise ValueError(
+                    f"BlindCFOCompensator: unknown method "
+                    f"{self.method!r}, expected 'grad' or 'newton'.")
+
             w = w + h
             self.callback(4*w)
 
-        self.w0_ = np.real(w)/4
+        self.w0_ = float(np.real(w)/4)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         N = x.shape[-1]
@@ -606,13 +629,12 @@ class BlindCFOCompensator(Processor):
 
         if self.should_fit:
             self.fit(x, self.w0_init)
-        elif self.w0_ is None:
+        if self.w0_ is None:
             raise NotFittedError(
                 "BlindCFOCompensator: forward called with should_fit=False "
                 "but fit() was never called -- call fit(x, w0_init) first.")
 
-        x = x*np.exp(-1j*self.w0_*N_vect)
-        return x
+        return x*np.exp(-1j*self.w0_*N_vect)
 
 
 @dataclass(slots=True)
@@ -705,12 +727,13 @@ class BlindPhaseCompensation(Processor):
 
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
-        s, y_est = hard_projector(y, self.alphabet)
+        _, y_est = hard_projector(y, self.alphabet)
         error = np.ravel(y - y_est)
         error_real = np.hstack([np.real(error), np.imag(error)])
         return error_real
 
-    def fit(self, X: np.ndarray, y=None):
+    def fit(self, X: np.ndarray,
+            y: Optional[np.ndarray] = None) -> "BlindPhaseCompensation":
         signal = np.asarray(X)
         paths = signal.reshape(-1, signal.shape[-1])
         angles = np.array([least_squares(self.cost, self.theta0,
@@ -725,12 +748,11 @@ class BlindPhaseCompensation(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
         if self.should_fit:
             self.fit(X)
-        elif self.theta_ is None:
+        if self.theta_ is None:
             raise NotFittedError(
                 "BlindPhaseCompensation: forward called with should_fit=False "
                 "but fit() was never called -- call fit(x) first.")
-        Y = X * np.exp(1j * self.theta_)
-        return Y
+        return X * np.exp(1j * self.theta_)
 
 
 @dataclass(slots=True)
@@ -810,7 +832,7 @@ class LinearEqualizer(Processor):
     name: str = field(default="equalizer", kw_only=True)
 
 
-    def get_H(self, N):
+    def get_H(self, N: int) -> np.ndarray:
         Nx = N - len(self.h)
         c = np.r_[self.h, np.zeros(Nx)]
         r = np.r_[self.h[0], np.zeros(Nx)]
@@ -919,7 +941,8 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
 
     estimand = "one FIR response against a reference"
 
-    def fit(self, x, y=None):
+    def fit(self, x: np.ndarray,
+            y: Optional[np.ndarray] = None) -> "DataAidedFIRCompensator":
         if y is None:
             y = self.get_reference()
         L = len(x)
@@ -931,15 +954,15 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
         self.validate_paths(x)
         if self.should_fit:
             self.fit(x)
-        elif self.h_ is None:
+        if self.h_ is None:
             raise NotFittedError(
                 "DataAidedFIRCompensator: forward called with "
                 "should_fit=False but fit() was never called -- call "
                 "fit(x) first.")
 
-        L = len(self.h_)
-        y, _ = signal.deconvolve(np.hstack([x, np.zeros(L-1)]), self.h_)
-        return y
+        h = self.h_
+        y, _ = signal.deconvolve(np.hstack([x, np.zeros(len(h)-1)]), h)
+        return np.asarray(y)
 
 
 @dataclass(slots=True)
@@ -1020,16 +1043,20 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
         DataAidedMixin.__post_init__(self)
         self.theta_ = None
 
-    def fit(self, x, y=None):
+    def fit(self, x: np.ndarray,
+            y: Optional[np.ndarray] = None) -> "DataAidedPhaseCompensator":
         if y is None:
             y = self.get_reference()
-        self.theta_ = np.angle(np.sum(np.conj(x)*y))
+        self.theta_ = float(np.angle(np.sum(np.conj(x)*y)))
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.validate_paths(x)
-        self.fit(x)
-        return x*np.exp(1j*self.theta_)
+        theta = self.fit(x).theta_
+        if theta is None:
+            raise NotFittedError(
+                "DataAidedPhaseCompensator: fit() left no phase estimate.")
+        return x*np.exp(1j*theta)
 
 
 @dataclass(slots=True)
@@ -1120,7 +1147,9 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
 
     estimand = "one complex gain against a reference"
 
-    def fit(self, x, y=None):
+    def fit(self, x: np.ndarray,
+            y: Optional[np.ndarray] = None
+            ) -> "DataAidedComplexGainCompensator":
         if y is None:
             y = self.get_reference()
         x_resized = np.resize(x, (len(x), 1))
@@ -1261,7 +1290,7 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         self.cross_corr_ = None
         self.n_vect_ = None
 
-    def fit(self, x, y=None):
+    def fit(self, x: np.ndarray, y: Optional[np.ndarray] = None):
         if y is None:
             y = self.get_reference()
         x_preamble = y
@@ -1288,7 +1317,10 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay_ = n_vect[index_max]
+        # int(), not the numpy scalar: delay_ is an index the caller
+        # slices with, and np.intp does not subclass int the way
+        # np.float64 subclasses float
+        self.delay_ = int(n_vect[index_max])
         if self.scale_correction:
             # compensation gain: the inverse of the estimated channel gain
             self.scale_ = 1/value_max
@@ -1298,8 +1330,14 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
             self.cross_corr_ = cross_corr
             self.n_vect_ = n_vect
 
-    def plot(self, ax=None):
+    def plot(self, ax: "Optional[Axes]" = None) -> "Axes":
         import matplotlib.pyplot as plt  # local import (D36)
+        if self.cross_corr_ is None or self.n_vect_ is None:
+            raise NotFittedError(
+                f"{type(self).__name__}.plot has nothing to draw: the "
+                f"cross-correlation was not kept. Construct the block "
+                f"with save_cross_correlation=True and run it once, "
+                f"then call plot().")
         if ax is None:
             _, ax = plt.subplots()
         ax.plot(self.n_vect_, np.abs(self.cross_corr_))
@@ -1312,6 +1350,9 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     def forward(self, x: np.ndarray) -> np.ndarray:
         self.validate_paths(x)
         self.fit(x)
+        if self.delay_ is None:
+            raise NotFittedError(
+                "DataAidedSimpleSynchronizer: fit() left no delay estimate.")
         if self.signal_len:
             y = self.scale_*x[self.delay_:self.delay_+self.signal_len]
         else:
@@ -1449,7 +1490,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         self.cross_corr_ = None
         self.n_vect_ = None
 
-    def fit(self, x, y=None):
+    def fit(self, x: np.ndarray, y: Optional[np.ndarray] = None):
         if y is None:
             y = self.get_reference()
         x_preamble = y
@@ -1475,7 +1516,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay_ = np.max([n_vect[index_max], 0])
+        self.delay_ = int(max(n_vect[index_max], 0))
         if self.scale_correction:
             # compensation gain: the inverse of the estimated channel gain
             self.scale_ = 1/value_max
@@ -1485,8 +1526,14 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
             self.cross_corr_ = cross_corr
             self.n_vect_ = n_vect
 
-    def plot(self, ax=None):
+    def plot(self, ax: "Optional[Axes]" = None) -> "Axes":
         import matplotlib.pyplot as plt  # local import (D36)
+        if self.cross_corr_ is None or self.n_vect_ is None:
+            raise NotFittedError(
+                f"{type(self).__name__}.plot has nothing to draw: the "
+                f"cross-correlation was not kept. Construct the block "
+                f"with save_cross_correlation=True and run it once, "
+                f"then call plot().")
         if ax is None:
             _, ax = plt.subplots()
         ax.plot(self.n_vect_, np.abs(self.cross_corr_))

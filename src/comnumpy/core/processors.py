@@ -6,6 +6,30 @@ from comnumpy.core.filters import BWFilter
 from comnumpy.exceptions import ShapeError
 
 
+def _required_mask(mask: Optional[np.ndarray], block: str,
+                   name: str) -> np.ndarray:
+    """A mask a subclass builds in ``prepare()``, or a message.
+
+    These blocks are legitimately incomplete until the chain calls
+    ``prepare()``: returning the value rather than only asserting it is
+    what lets the rest of the method treat it as an array.
+    """
+    if mask is None:
+        raise ValueError(
+            f"{block} was used before {name} was built. Got None, "
+            f"expected a boolean or index mask -- either pass it at "
+            f"construction, or run the block inside a Sequential, which "
+            f"calls prepare() before the first sample.")
+    return mask
+
+__all__ = [
+    "Upsampler", "Downsampler", "Serial2Parallel", "Parallel2Serial",
+    "Amplifier", "WeightAmplifier", "Complex2Real", "AutoConcatenator",
+    "SampleRemover", "DelayRemover", "DataAdder", "DataExtractor", "Resampler",
+    "Clipper", "BlindPhaseTracker",
+]
+
+
 @dataclass(slots=True)
 class Upsampler(Processor):
     r"""
@@ -102,7 +126,7 @@ class Upsampler(Processor):
         # Perform the operation along the specified axis
         Y[tuple(slices)] = X
 
-        if self.use_filter:
+        if self.use_filter and self.filter is not None:
             Y = self.filter(Y)
 
         return self.scale * Y
@@ -205,7 +229,7 @@ class Downsampler(Processor):
     def forward(self, X: np.ndarray) -> np.ndarray:
 
         # anti-aliasing filtering comes BEFORE the decimation
-        if self.use_filter:
+        if self.use_filter and self.filter is not None:
             X = self.filter(X)
 
         # Create a slice object for the specified axis
@@ -291,7 +315,7 @@ class Serial2Parallel(Processor):
         if not (self.N_sub > 0):
             raise ValueError("N_sub must be a positive number.")
 
-    def set_N_sub(self, N_sub):
+    def set_N_sub(self, N_sub: int) -> None:
         self.N_sub = N_sub
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -307,6 +331,13 @@ class Serial2Parallel(Processor):
                 X_processed[..., :N] = X
             elif self.method == "truncate":
                 X_processed = X[..., :M * N_sub]
+            else:
+                raise ValueError(
+                    f"{type(self).__name__}: unknown method "
+                    f"{self.method!r}, expected 'zero-padding' or "
+                    f"'truncate' -- the input length {N} is not a "
+                    f"multiple of N_sub={N_sub}, so one of the two has "
+                    f"to say what to do with the remainder.")
         else:
             X_processed = X
 
@@ -487,19 +518,21 @@ class WeightAmplifier(Processor):
     [[ 2  4]
      [ 9 12]]
     """
-    weight: Optional[np.ndarray] = None
+    weight: np.ndarray
     axis: int = field(default=-1, kw_only=True)
     name: str = field(default="parallel_signal_weight", kw_only=True)
 
     def __post_init__(self):
+        self.weight = np.asarray(self.weight)
         if self.weight.ndim != 1:
             raise ValueError(f"The weight vector should be a 1D array (current shape: {self.weight.shape})")
 
-    def validate_input(self, X: np.ndarray):
+    def validate_input(self, X: np.ndarray) -> None:
         if len(self.weight) != X.shape[self.axis]:
             raise ValueError(f"Dimension of the weight vector and input signal along axis {self.axis} does not match")
 
-    def get_weight(self, input_shape=None):
+    def get_weight(self, input_shape: Optional[tuple[int, ...]] = None
+                   ) -> np.ndarray:
         return self.weight
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -569,16 +602,16 @@ class Complex2Real(Processor):
     part: Literal["real", "imag"] = "real"
     validate_input: bool = field(default=False, kw_only=True)
 
-    def forward(self, X):
+    def forward(self, X: np.ndarray) -> np.ndarray:
         match self.part:
             case "real":
-                if self.validate_input and (not np.isclose(np.ravel(X).imag, 0, atol=10**-7).all()):
+                if self.validate_input and (not np.isclose(np.imag(np.ravel(X)), 0, atol=10**-7).all()):
                     raise ValueError("the input data is not real since the imag part is non zero ")
-                Y = X.real
+                Y = np.real(X)
             case "imag":
-                if self.validate_input and (not np.isclose(np.ravel(X).real, 0, atol=10**-7).all()):
+                if self.validate_input and (not np.isclose(np.real(np.ravel(X)), 0, atol=10**-7).all()):
                     raise ValueError("the input data is not imaginary since the real part is non zero ")
-                Y = X.imag
+                Y = np.imag(X)
 
         return Y
 
@@ -671,6 +704,10 @@ class AutoConcatenator(Processor):
             return
 
         # Check if the sizes of output_original_mask and output_copy_mask are the same
+        if self.output_copy_mask is None or self.output_original_mask is None:
+            raise ValueError(
+                "AutoConcatenator needs both output masks or neither: "
+                "got one of them set and the other None.")
         if self.output_original_mask.shape != self.output_copy_mask.shape:
             raise ValueError("output_original_mask and output_copy_mask must have the same shape.")
 
@@ -687,21 +724,30 @@ class AutoConcatenator(Processor):
             raise ValueError("The two output masks overlap.")
 
 
-    def extract_copy(self, X: np.ndarray):
+    def extract_copy(self, X: np.ndarray) -> np.ndarray:
         """
         Extract a copy  from the input signal on the specified axis
         """
-        slices = [slice(None)] * len(X.shape)
-        slices[self.axis] = self.input_copy_mask
+        slices: list[slice | np.ndarray] = [slice(None)] * len(X.shape)
+        slices[self.axis] = _required_mask(self.input_copy_mask,
+                                           type(self).__name__,
+                                           "input_copy_mask")
         X_copy = X[tuple(slices)]
         return X_copy
 
-    def process_copy(self, X: np.ndarray):
+    def process_copy(self, X: np.ndarray) -> np.ndarray:
         return X
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        block = type(self).__name__
+        input_copy_mask = _required_mask(self.input_copy_mask, block,
+                                         "input_copy_mask")
+        output_original_mask = _required_mask(self.output_original_mask,
+                                              block, "output_original_mask")
+        output_copy_mask = _required_mask(self.output_copy_mask, block,
+                                          "output_copy_mask")
 
-        if X.shape[self.axis] != len(self.input_copy_mask):
+        if X.shape[self.axis] != len(input_copy_mask):
             raise ValueError(f"input signal for the dimension {self.axis} and input_copy_mask must have the same shape.")
 
         X_copy = self.extract_copy(X)
@@ -709,18 +755,18 @@ class AutoConcatenator(Processor):
 
         # Prepare the output array
         shape = list(X.shape)
-        shape[self.axis] = len(self.output_original_mask)
+        shape[self.axis] = len(output_original_mask)
         Y = np.zeros(shape, dtype=X.dtype)
 
         # Create slicing object
-        slices = [slice(None)] * len(X.shape)
+        slices: list[slice | np.ndarray] = [slice(None)] * len(X.shape)
 
         # Assign original data
-        slices[self.axis] = self.output_original_mask
+        slices[self.axis] = output_original_mask
         Y[tuple(slices)] = X
 
         # Assign copied data
-        slices[self.axis] = self.output_copy_mask
+        slices[self.axis] = output_copy_mask
         Y[tuple(slices)] = X_copy_processed
         return Y
 
@@ -982,7 +1028,8 @@ class DataExtractor(Processor):
     array([[ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
     """
-    selector: Optional[Union[int, slice, tuple, list, np.ndarray]] = None
+    selector: Optional[Union[int, slice, tuple[int, ...], list[int],
+                             np.ndarray]] = None
     name: str = field(default="Data Extractor", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -1238,27 +1285,29 @@ class BlindPhaseTracker(Processor):
     def __post_init__(self):
         self.phases = np.linspace(-np.pi/4, np.pi/4, self.phase_steps, endpoint=False)
 
-    def hard_projector(self, z):
+    def hard_projector(self, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         z = np.atleast_2d(np.ravel(z))
         distances = np.abs(z.T - self.alphabet)**2
         indices = np.argmin(distances, axis=1)
         symbols = self.alphabet[indices]
         return indices, symbols
 
-    def evm_cost(self, x, n, phi):
+    def evm_cost(self, x: np.ndarray, n: int, phi: float) -> float:
         # Compute local EVM cost around index n
-        total_error = 0
+        total_error = 0.0
         count = 0
         for m in range(-self.L, self.L + 1):
             idx = n + m
             if 0 <= idx < len(x):
                 rotated = x[idx] * np.exp(-1j * phi)
                 _, closest = self.hard_projector(rotated)
-                total_error += np.abs(rotated - closest)**2
+                # hard_projector answers with a one-element array, since
+                # it accepts a record as well as a single sample
+                total_error += float(np.sum(np.abs(rotated - closest)**2))
                 count += 1
-        return total_error / count if count > 0 else np.inf
+        return float(total_error / count) if count > 0 else float(np.inf)
 
-    def _track(self, x):
+    def _track(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Track one path: the search itself, on a 1-D record."""
         y_corrected = np.zeros_like(x, dtype=complex)
         optimal_phases = []
@@ -1272,7 +1321,7 @@ class BlindPhaseTracker(Processor):
 
         return y_corrected, np.asarray(optimal_phases)
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         signal = np.asarray(x)
         if signal.ndim == 1:
             y_corrected, phases = self._track(signal)

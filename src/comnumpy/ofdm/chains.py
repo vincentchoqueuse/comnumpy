@@ -9,6 +9,8 @@ from comnumpy.ofdm.processors import (
 )
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 
+__all__ = ["OFDMTransmitter", "OFDMReceiver"]
+
 
 @dataclass(slots=True)
 class OFDMTransmitter(Processor):
