@@ -56,7 +56,7 @@ plot_error_rate(snr_dB_list, {f"{M}-{modulation}": ser_array},
 # The chain diagrams this tutorial shows are exported from the chains
 # themselves (D33c), so the picture cannot drift from the code -- the
 # smoke test compares what a run writes with what the page displays.
-mermaid_dir = "../../docs/examples/mermaid/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 for diagram_name, diagram_chain in [("awgn_chain", chain)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())

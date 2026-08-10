@@ -11,7 +11,7 @@ __all__ = [
     "compute_erbium_doped_fiber_amplifier_gain",
     "compute_erbium_doped_fiber_N_ase", "get_linear_step_size",
     "get_logarithmic_step_size", "itu_grid_frequency", "is_polarization_pair",
-    "manakov_kerr",
+    "manakov_kerr", "dbm_to_watt", "watt_to_dbm",
 ]
 
 
@@ -428,3 +428,101 @@ def manakov_kerr(x: np.ndarray, gamma: float,
     if not manakov:
         return gamma, None
     return 8 / 9 * gamma, np.sum(np.abs(x) ** 2, axis=-2, keepdims=True)
+
+
+def dbm_to_watt(power_dBm: np.ndarray | float) -> np.ndarray | float:
+    r"""Optical power from dBm to watts.
+
+    Signal Model
+    ------------
+    .. math::
+
+        P[\mathrm{W}] = 10^{-3} \times 10^{P[\mathrm{dBm}] / 10}
+
+    Optical data sheets, standards and papers quote power in dBm while
+    every equation in this package takes watts, so the conversion sits
+    at the boundary of nearly every optical script. Written out by hand
+    it is easy to get subtly wrong -- the factor is :math:`10^{-3}` and
+    the divisor is 10, not 20, because this is a power and not an
+    amplitude.
+
+    Axes: *element-wise*.
+
+    Parameters
+    ----------
+    power_dBm : float or np.ndarray
+        Power in dBm, i.e. decibels relative to one milliwatt.
+
+    Returns
+    -------
+    float or np.ndarray
+        Power in watts.
+
+    References
+    ----------
+    G. P. Agrawal, *Fiber-Optic Communication Systems*, 4th ed., Wiley,
+    2010, Section 1.2.
+
+    Examples
+    --------
+    >>> print(dbm_to_watt(0.0))
+    0.001
+    >>> print(round(dbm_to_watt(-3.0), 7))
+    0.0005012
+    >>> print(np.round(dbm_to_watt(np.array([-10.0, 0.0, 10.0])), 6))
+    [0.0001 0.001  0.01  ]
+    """
+    result = 1e-3 * 10 ** (np.asarray(power_dBm, dtype=float) / 10)
+    return result if np.ndim(power_dBm) else float(result)
+
+
+def watt_to_dbm(power_W: np.ndarray | float) -> np.ndarray | float:
+    r"""Optical power from watts to dBm, the inverse of :func:`dbm_to_watt`.
+
+    Signal Model
+    ------------
+    .. math::
+
+        P[\mathrm{dBm}] = 10 \log_{10}\!\left(
+            \frac{P[\mathrm{W}]}{10^{-3}}\right)
+
+    Axes: *element-wise*.
+
+    Parameters
+    ----------
+    power_W : float or np.ndarray
+        Power in watts. Must be positive: zero power is
+        :math:`-\infty` dBm and negative power is not a power.
+
+    Returns
+    -------
+    float or np.ndarray
+        Power in dBm.
+
+    Raises
+    ------
+    ValueError
+        If any value is not strictly positive. A silent ``-inf`` or
+        ``nan`` propagating into a link budget is worse than a stop.
+
+    References
+    ----------
+    G. P. Agrawal, *Fiber-Optic Communication Systems*, 4th ed., Wiley,
+    2010, Section 1.2.
+
+    Examples
+    --------
+    >>> print(watt_to_dbm(1e-3))
+    0.0
+    >>> print(round(watt_to_dbm(5.0118723e-4), 4))
+    -3.0
+    >>> print(np.round(watt_to_dbm(np.array([1e-4, 1e-3, 1e-2])), 6))
+    [-10.   0.  10.]
+    """
+    power = np.asarray(power_W, dtype=float)
+    if np.any(power <= 0):
+        raise ValueError(
+            f"a power in dBm is a logarithm, so it needs a strictly "
+            f"positive power in watts; got a minimum of {float(np.min(power))}.")
+    result = 10 * np.log10(power / 1e-3)
+    return result if np.ndim(power_W) else float(result)

@@ -257,6 +257,63 @@ class TappedDelayLineChannel(Processor):
     def __post_init__(self) -> None:
         self.rng = np.random.default_rng(self.seed)
 
+    def impulse_response(self, n_samples: Optional[int] = None) -> np.ndarray:
+        r"""Draw one realization and return it as a tap vector.
+
+        Signal Model
+        ------------
+        Sounding a channel with an impulse is how its response is
+        measured, and it is what a script needs whenever a *known*
+        channel is wanted: the equalizers of
+        :class:`~comnumpy.core.compensators.LinearEqualizer` and
+        :class:`~comnumpy.ofdm.compensators.FrequencyDomainEqualizer`
+        take a tap vector, not a fading process. This does exactly that
+        -- feeds :math:`\delta[n]` through :meth:`forward` and returns
+        the first :math:`L` samples, with :math:`L` one more than the
+        longest path in samples.
+
+        The result is dense: paths that fall between the resolvable
+        delays of this sampling rate appear as zeros, so the vector can
+        be handed straight to a convolution.
+
+        **This draws a new realization** and advances the generator, the
+        way calling the block does. Seed it (or the chain) to get the
+        same channel twice.
+
+        Axes: *returns 1D* ``(L,)``.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Length of the sounding record. Defaults to eight times the
+            longest path, which is enough for the profile to fit and
+            for a Doppler process to be sampled meaningfully. Only the
+            first :math:`L` samples are returned either way.
+
+        Returns
+        -------
+        np.ndarray
+            Complex tap vector of length ``delays_[-1] + 1``.
+
+        Examples
+        --------
+        >>> from comnumpy.core.fading import get_delay_profile
+        >>> channel = TappedDelayLineChannel(get_delay_profile("EPA"),
+        ...                                  fs=7.68e6, seed=18)
+        >>> h = channel.impulse_response()
+        >>> h.shape                  # 410 ns of spread at 7.68 MHz
+        (4,)
+        >>> bool(np.all(h[channel.delays_] == channel.h_[:, 0]))
+        True
+        """
+        delays, _ = self.profile.to_taps(self.fs)
+        length = int(delays[-1]) + 1
+        if n_samples is None:
+            n_samples = max(8 * length, 64)
+        impulse = np.zeros(n_samples, dtype=complex)
+        impulse[0] = 1.0
+        return self(impulse)[:length]
+
     def prepare(self, x: np.ndarray) -> None:
         from comnumpy.core.fading import validate_taps_fit  # local (D36)
         if x.ndim != 1:

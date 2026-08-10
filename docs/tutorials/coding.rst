@@ -61,7 +61,7 @@ simple -- and the codes below all have rate 1/2.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 18-28
+   :lines: 19-28
 
 That helper deserves a line of its own, because it is where most coded
 simulations go wrong. The channel sees *symbols*, so it is parameterized by

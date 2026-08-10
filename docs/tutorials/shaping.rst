@@ -59,7 +59,7 @@ below.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 16-20
+   :lines: 17-20
 
 
 The Law: Maxwell-Boltzmann

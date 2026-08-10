@@ -55,7 +55,7 @@ We encourage contributors to develop self-contained submodules for new communica
 2. An `__init__.py` file
 3. Python modules implementing your algorithms as `Processor` subclasses
 4. Unit tests in `tests/mymodule/`
-5. Documentation under `docs/documentation/mymodule/` and optionally `docs/examples/`
+5. Documentation under `docs/documentation/mymodule/` and optionally `docs/tutorials/`
 
 Use existing submodules like `optical` or `mimo` as templates.
 
