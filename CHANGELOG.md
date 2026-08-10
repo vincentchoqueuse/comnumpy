@@ -757,6 +757,19 @@ code actually does.
 
 ### Fixed
 
+- The MIMO tutorial gave ZF and MMSE a formula and no explanation, next
+  to a sphere-decoding section that derived everything. The comparison
+  is now five answers to one question -- what to do with the
+  interference the other streams leave on the one being read -- with
+  the noise enhancement of zero forcing and its
+  `sigma^2 [(H^H H)^-1]_ii`, the regularization MMSE trades a bias for,
+  the two limits it sits between (ZF and the matched filter), the
+  ordering rule and error propagation of OSIC, and a table of the five
+  against their cost and their diversity order. With the warning the
+  curves themselves call for: 18 dB is not the asymptotic regime, so
+  the exponents are stated, not read off the figure -- they are checked
+  in `validation/mimo_zf_ml_ber.py` where a limit can be reached (D7).
+
 - `MaximumLikelihoodDetector` built its candidate table one column at a
   time with `itertools.product` and then looped over samples in Python.
   The distance expands as `||y||^2 - 2 Re(y^H Hx) + ||Hx||^2`, whose
