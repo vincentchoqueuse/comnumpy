@@ -6,6 +6,8 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector
 from .utils import plot_alphabet
 
+__all__ = ["SymbolMapper", "SymbolDemapper"]
+
 if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
     from matplotlib.axes import Axes
 

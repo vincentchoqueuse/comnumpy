@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ["compute_papr"]
+
 
 def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = None) -> "np.ndarray | float":
     r"""

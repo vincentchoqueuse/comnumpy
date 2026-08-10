@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
+__all__ = ["plot_subcarrier_amplitude"]
+
 
 def plot_subcarrier_amplitude(X: np.ndarray, *,
                               reduction: Optional[Literal["mean"]] = "mean",

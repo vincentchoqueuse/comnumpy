@@ -17,6 +17,11 @@ from typing import Literal, Optional, Tuple
 from scipy.signal import welch
 from scipy.stats import gaussian_kde
 
+__all__ = [
+    "plot_time", "plot_spectrum", "plot_welch", "plot_iq", "plot_kde",
+    "plot_chain_profiling",
+]
+
 
 def _as_streams(x: np.ndarray) -> np.ndarray:
     """View the input as (n_streams, N); 1D becomes a single stream."""

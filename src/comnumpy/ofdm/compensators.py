@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from comnumpy._backend import fft, fftshift  # cupy-compatible (D3)
 from comnumpy.core.processors import WeightAmplifier
 
+__all__ = ["FrequencyDomainEqualizer"]
+
 
 @dataclass(slots=True)
 class FrequencyDomainEqualizer(WeightAmplifier):

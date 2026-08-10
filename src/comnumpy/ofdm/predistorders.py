@@ -6,6 +6,8 @@ from comnumpy._backend import fft, ifft, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from .metrics import compute_papr
 
+__all__ = ["HardClipper", "IctPaprReductor", "PtsPaprReductor"]
+
 @dataclass(slots=True)
 class HardClipper(Processor):
     r"""

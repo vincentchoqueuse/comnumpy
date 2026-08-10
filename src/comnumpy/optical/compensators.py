@@ -9,6 +9,10 @@ from typing import ClassVar, List, Optional
 from .utils import compute_beta2
 from .constants import WAVELENGTH, CD_COEFFICIENT, SPEED_OF_LIGHT
 
+__all__ = [
+    "ChromaticDispersionFIRCompensator", "ChromaticDispersionLSFIRCompensator",
+]
+
 
 @dataclass(slots=True)
 class ChromaticDispersionFIRCompensator(Processor):

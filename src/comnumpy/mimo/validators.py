@@ -3,6 +3,8 @@ import numpy as np
 
 from comnumpy.exceptions import ShapeError
 
+__all__ = ["validate_input"]
+
 
 def validate_input(X: np.ndarray, N_t: int) -> None:
     """

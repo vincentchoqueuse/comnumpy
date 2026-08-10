@@ -5,6 +5,8 @@ from comnumpy.core.generics import Processor
 from comnumpy.core.fading import PowerDelayProfile
 from comnumpy.exceptions import ShapeError
 
+__all__ = ["AWGN", "FIRChannel", "TappedDelayLineChannel"]
+
 
 @dataclass(slots=True)
 class AWGN(Processor):
