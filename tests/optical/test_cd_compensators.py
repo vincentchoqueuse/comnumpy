@@ -21,7 +21,7 @@ import numpy as np
 import numpy.linalg as LA
 from scipy.integrate import quad
 
-from src.comnumpy.optical.compensators import (
+from comnumpy.optical.compensators import (
     ChromaticDispersionFIRCompensator,
     ChromaticDispersionLSFIRCompensator,
     _cd_cross_correlation,
@@ -192,7 +192,7 @@ class TestLSFilter(unittest.TestCase):
         self.assertLess(np.abs(comp.h).max(), 1.0)
 
     def test_compensates_a_dispersed_pulse(self):
-        from src.comnumpy.optical.channels import ChromaticDispersion
+        from comnumpy.optical.channels import ChromaticDispersion
         x = np.zeros(512, dtype=complex)
         x[256] = 1.0
         y = ChromaticDispersion(Z, fs=FS)(x)

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.comnumpy.core.processors import WeightAmplifier
+from comnumpy.core.processors import WeightAmplifier
 
 class TestWeightAmplifier(unittest.TestCase):
 

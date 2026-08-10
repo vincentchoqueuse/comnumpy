@@ -5,8 +5,9 @@ from comnumpy import sweep
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
-from comnumpy.core.metrics import compute_ser
+from comnumpy.core.metrics import compute_ser, compute_ser_rayleigh_psk
 from comnumpy.core.processors import Amplifier
+from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.core.utils import get_alphabet
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
@@ -83,33 +84,17 @@ mrc = Sequential([
 ], taps=["tx"], name="MRC 1 Tx, 2 Rx")
 
 
-def draw_channels(n_rx, n_tx, n_channels, seed):
-    """The quasi-static fading realizations one sweep point each."""
-    rng = np.random.default_rng(seed)
-    return [rayleigh_channel(n_rx, n_tx, rng=rng) for _ in range(n_channels)]
+def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed=0):
+    """Average one chain over independent quasi-static fading draws.
 
-
-def ser_by_hand(chain, channels, snr_dB, stimulus, seed=0):
-    """The loop, spelled out: reconfigure, run, count, average."""
-    chain.seed(seed)
-    chain.set_params(**{"noise.sigma2": 10 ** (-snr_dB / 10)})
-    errors = total = 0
-    for realization in channels:
-        chain.set_params(**{"channel.H": realization,
-                            "detector.H": realization})
-        detected = chain(stimulus)
-        errors += int(np.sum(chain.tap("tx") != detected))
-        total += detected.size
-    return errors / total
-
-
-def ser_by_sweep(chain, channels, snr_dB, stimulus, seed=0):
-    """The same average, as one call: the sweep is over the channel.
-
-    ``sweep`` takes several dotted parameters at once and zips them, so
-    one sweep point sets the channel of the propagation block *and* the
-    channel the detector inverts -- which is what a realization is.
+    The chain is built once. ``sweep`` takes several dotted parameters
+    at once and zips them, so one sweep point sets the channel the
+    signal goes through *and* the channel the detector inverts -- which
+    is exactly what a fading realization is.
     """
+    rng = np.random.default_rng(seed)
+    channels = [rayleigh_channel(n_rx, n_tx, rng=rng)
+                for _ in range(n_channels)]
     chain.set_params(**{"noise.sigma2": 10 ** (-snr_dB / 10)})
     results = sweep(chain, ("channel.H", "detector.H"),
                     [(H, H) for H in channels],
@@ -118,64 +103,79 @@ def ser_by_sweep(chain, channels, snr_dB, stimulus, seed=0):
     return float(np.mean(results["ser"]))
 
 
-# The two agree on the same realizations. They do not draw the same
-# noise -- sweep gives every point its own child seed (D6/D35) -- so
-# they agree to within the Monte-Carlo error, not to the last digit.
+# Monte-Carlo comparison, at equal total transmit power. The accuracy
+# of an average over fading is set by the number of *channel* draws, not
+# by the symbol count -- the error rate is dominated by the rare deep
+# fades, and an under-sampled tail reads systematically low. Hence more
+# draws where the curve is lower, and a range that stops where this
+# budget stays honest; validation/mimo_diversity_ber.py carries the
+# confrontation to 18 dB with twenty times the draws.
+snr_dB_list = np.arange(4, 25, 4)
+draws = [1500, 2000, 2500, 3500, 5000, 6000]
 n_symbols = 80
-probe = draw_channels(1, 2, 300, seed=0)
-print(f"8 dB over 300 realizations: loop "
-      f"{ser_by_hand(alamouti, probe, 8.0, n_symbols):.5f}, sweep "
-      f"{ser_by_sweep(alamouti, probe, 8.0, n_symbols):.5f}")
-
-
-def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels=2500):
-    return ser_by_sweep(chain, draw_channels(n_rx, n_tx, n_channels, seed=0),
-                        snr_dB, stimulus)
-
-
-# Monte-Carlo comparison, at equal total transmit power
-snr_dB_list = np.arange(4, 29, 4)
 curves = {
-    "1 Tx, 1 Rx (no diversity)": [average_ser(siso, 1, 1, value, (1, n_symbols))
-                                  for value in snr_dB_list],
-    "Alamouti, 2 Tx, 1 Rx": [average_ser(alamouti, 1, 2, value, n_symbols)
-                             for value in snr_dB_list],
-    "MRC, 1 Tx, 2 Rx": [average_ser(mrc, 2, 1, value, (1, n_symbols))
-                        for value in snr_dB_list],
+    "1 Tx, 1 Rx (no diversity)": [average_ser(siso, 1, 1, value,
+                                              (1, n_symbols), count)
+                                  for value, count in zip(snr_dB_list, draws, strict=True)],
+    "Alamouti, 2 Tx, 1 Rx": [average_ser(alamouti, 1, 2, value, n_symbols,
+                                         count)
+                             for value, count in zip(snr_dB_list, draws, strict=True)],
+    "MRC, 1 Tx, 2 Rx": [average_ser(mrc, 2, 1, value, (1, n_symbols), count)
+                        for value, count in zip(snr_dB_list, draws, strict=True)],
 }
 
-# Figure 2: the diversity order is the slope
-fig2, ax = plt.subplots(figsize=(6.5, 5))
-for label, ser in curves.items():
-    ax.semilogy(snr_dB_list, ser, "o-", label=label)
-ax.set_xlabel("SNR [dB]")
-ax.set_ylabel("symbol error rate")
+# Figure 2: the measurements, and the closed forms they must reach.
+# One expression covers the three: L branches at the per-branch SNR,
+# and a transmit scheme divides that SNR by N_t because it splits the
+# power -- which is the 3 dB Alamouti pays against receive diversity.
+fine = np.linspace(snr_dB_list[0], snr_dB_list[-1], 100)
+per_bit = 10 ** (fine / 10) / np.log2(M)
+theory = {
+    "1 Tx, 1 Rx (no diversity)": compute_ser_rayleigh_psk(M, per_bit),
+    "Alamouti, 2 Tx, 1 Rx": compute_ser_rayleigh_psk(M, per_bit / code.n_tx,
+                                                     diversity=2),
+    "MRC, 1 Tx, 2 Rx": compute_ser_rayleigh_psk(M, per_bit, diversity=2),
+}
+ax = plot_error_rate(snr_dB_list, curves, theory=theory, x_theory=fine,
+                     ylabel="symbol error rate",
+                     title=f"{M}-PSK over Rayleigh, equal transmit power")
 ax.set_ylim(1e-5, 1)
-ax.grid(True, which="both")
-ax.legend()
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 
-# The diversity order is the *asymptotic* slope, so the interesting
-# thing is the local slope converging to it. Intervals whose upper end
-# rests on a handful of errors are dropped: their slope is noise.
-for label, ser in curves.items():
-    values = np.array(ser)
-    steps = [(np.log10(values[index + 1]) - np.log10(values[index]))
-             / ((snr_dB_list[index + 1] - snr_dB_list[index]) / 10)
-             for index in range(len(values) - 1) if values[index + 1] > 3e-4]
-    print(f"{label:28s} local slope "
-          + " ".join(f"{value:+.2f}" for value in steps))
+# The two quantitative statements come from the closed form, which is
+# exact and free; the simulation is there to confront them. The last
+# points read low on purpose: 6000 draws still under-sample the deep
+# fades that dominate the average at 24 dB.
+exact = {name: compute_ser_rayleigh_psk(
+    M, 10 ** (snr_dB_list / 10) / np.log2(M) / (code.n_tx if "Alamouti" in name
+                                                else 1),
+    diversity=1 if "no diversity" in name else 2)
+    for name in curves}
+for name, values in curves.items():
+    ratio = np.array(values) / exact[name]
+    print(f"{name:28s} measured / closed form  "
+          + " ".join(f"{value:.2f}" for value in ratio))
 
-# and the gap Alamouti pays for transmitting blind: about 3 dB.
-# Points where no error was seen carry no information, so they are
-# dropped rather than read as a zero error rate.
+# the diversity order, read off the closed form at high SNR
+high = np.array([30.0, 40.0])
+for name in curves:
+    reference = compute_ser_rayleigh_psk(
+        M, 10 ** (high / 10) / np.log2(M) / (code.n_tx if "Alamouti" in name
+                                             else 1),
+        diversity=1 if "no diversity" in name else 2)
+    slope = np.polyfit(high / 10, np.log10(reference), 1)[0]
+    print(f"{name:28s} diversity order {-slope:.2f}")
+
+# and the 3 dB Alamouti pays for transmitting blind, exactly
+alamouti_snr = 10 ** (np.linspace(0, 30, 601) / 10) / np.log2(M)
 target = 1e-3
-gaps = {}
-for label, ser in curves.items():
-    seen = np.array(ser) > 0
-    gaps[label] = np.interp(np.log10(target),
-                            np.log10(np.array(ser)[seen])[::-1],
-                            snr_dB_list[seen][::-1])
-print(f"SNR needed for SER = {target:g}: "
-      + ", ".join(f"{label} {value:.1f} dB" for label, value in gaps.items()))
+of = {"MRC": compute_ser_rayleigh_psk(M, alamouti_snr, diversity=2),
+      "Alamouti": compute_ser_rayleigh_psk(M, alamouti_snr / code.n_tx,
+                                           diversity=2)}
+needed = {name: np.interp(np.log10(target), np.log10(values)[::-1],
+                          np.linspace(0, 30, 601)[::-1])
+          for name, values in of.items()}
+print(f"SNR for SER = {target:g}: MRC {needed['MRC']:.1f} dB, Alamouti "
+      f"{needed['Alamouti']:.1f} dB, gap {needed['Alamouti'] - needed['MRC']:.2f} dB "
+      f"(10log10(N_t) = {10 * np.log10(code.n_tx):.2f} dB)")

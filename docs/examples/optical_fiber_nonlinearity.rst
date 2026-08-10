@@ -1,12 +1,14 @@
 Optical Fiber Link Simulation Tutorial
 ======================================
 
-This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using ``comnumpy``. You will learn how to:
+This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using ``comnumpy``.
 
-- Build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.
-- Visualize received signals before and after linear and nonlinear equalization.
-- Apply digital back-propagation (DBP) for nonlinear compensation.
-- Compute Symbol Error Rate (SER) to quantify performance.
+**What you'll learn:**
+
+- How to build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.
+- How to visualize received signals before and after linear and nonlinear equalization.
+- How to apply digital back-propagation (DBP) for nonlinear compensation.
+- How to compute the Symbol Error Rate (SER) to quantify what each stage recovers.
 
 This tutorial is suited for engineers and students interested in optical communications and nonlinear fiber effects.
 
@@ -58,7 +60,7 @@ Build a processing chain consisting of symbol generation, mapping, pulse shaping
 
 This simulates the full transmission over an optical fiber with nonlinear effects and noise.
 
-The optical channel (``Fiber_Link``) is modeled as a concatenation of ``N_span`` spans of standard single-mode fiber (SMF). Each span has a fixed length ``L_span`` (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure ``NF_dB``).
+The optical channel (``FiberLink``) is modeled as a concatenation of ``N_span`` spans of standard single-mode fiber (SMF). Each span has a fixed length ``L_span`` (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure ``NF_dB``).
 
 Within each span, the signal undergoes chromatic dispersion and nonlinear Kerr effects, simulated using the Split-Step Fourier Method (SSFM). The interplay between dispersion and nonlinearity distorts the signal amplitude and phase, motivating the use of advanced digital signal processing techniques at the receiver.
 
@@ -69,7 +71,7 @@ Execute the chain and extract the transmitted and received signals. Then, plot t
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 52-65
+   :lines: 51-62
 
 Received Signal
 ^^^^^^^^^^^^^^^
@@ -90,7 +92,25 @@ After compensation, the received signal may exhibit a residual phase rotation. T
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 65-98
+   :lines: 64-100
+
+.. code::
+
+   linear equalization      SER=0.0361  residual phase=-38.8 deg
+   nonlinear equalization   SER=0.0000  residual phase=-0.9 deg
+
+The residual phase is the reading that names the culprit. Linear equalization
+undoes the dispersion and the loss, and leaves a **38.8 degree** rotation of
+the whole constellation: that is self-phase modulation, the Kerr effect
+turning average power into phase, which no linear filter can undo. Correcting
+that rotation is not enough either -- the remaining scatter still costs 3.6 %
+of the symbols, because the nonlinearity acts *along* the fibre, interleaved
+with the dispersion, and not as one rotation at the end.
+
+Digital back-propagation inverts that interleaving: it propagates the received
+signal back through the same split-step model with the signs of the dispersion
+and the nonlinearity reversed. The residual rotation falls to a degree and not
+a single symbol error is left.
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%

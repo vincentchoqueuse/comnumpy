@@ -19,8 +19,10 @@ N = 1280
 sigma2 = 0.015
 alphabet = get_alphabet("QAM", M)
 
-# generate a random selective channel
-h = 0.1*(np.random.randn(N_h) + 1j*np.random.randn(N_h))
+# generate a random selective channel (seeded: the whole comparison
+# below is about one channel realization, so it must be the same one)
+rng = np.random.default_rng(4)
+h = 0.1*(rng.standard_normal(N_h) + 1j*rng.standard_normal(N_h))
 h[0] = 1
 
 # create a simple single carrier chain and simulate
@@ -33,6 +35,7 @@ simple_chain = Sequential([
         SymbolDemapper(alphabet)
     ], taps=["data_tx", "data_rx", "data_rx_eq"])
 
+simple_chain.seed(1)
 start_time = time.time()
 s_rx = simple_chain(N)
 stop_time = time.time()
@@ -69,6 +72,7 @@ ofdm_chain = Sequential([
         SymbolDemapper(alphabet)
     ], taps=["data_tx", "data_rx"])
 
+ofdm_chain.seed(1)
 start_time = time.time()
 s_rx = ofdm_chain(N)
 stop_time = time.time()

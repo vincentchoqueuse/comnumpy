@@ -46,6 +46,62 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- The two blocks that turn `core/shaping.py` into a transmitter:
+  `AmplitudeMapper` signs the shaped amplitudes (the sign is a free bit
+  in PAS, spent on the FEC parity), `AmplitudeDemapper` reads the
+  amplitude index back off `|y|` -- which is the maximum-likelihood
+  decision on a constellation symmetric about the origin, not a
+  shortcut. A shaped link is now an ordinary chain: bits, matcher,
+  mapper, channel, demapper, dematcher.
+
+- `SymbolGenerator(distribution=...)`: a source drawing from a
+  non-uniform law, so what a *distribution* is worth can be measured
+  without building a matcher for every parameter value. The docstring
+  says what it is not -- an i.i.d. draw is the idealization a matcher
+  approaches, never what it produces on a finite block.
+
+- A probabilistic shaping tutorial (`examples/simple/probabilistic_shaping.py`,
+  `docs/examples/shaping.rst`): the Maxwell-Boltzmann law and its
+  shaping gain, CCDM against ESS at equal energy (where the CCDM code
+  is a *subset* of the sphere, so the inequality is exact), the PAS
+  chain and its measured distribution, and the achievable rate against
+  a uniform 8-PAM -- 0.8 dB at best, not 1.53 dB, and the figure shows
+  why.
+
+- Closed-form error rates over Rayleigh fading, in `core/metrics.py`:
+  `compute_ser_rayleigh_psk`, `compute_ser_rayleigh_qam` and the
+  `compute_metric_rayleigh_theo` front-end. The library knew only AWGN,
+  so a MIMO or diversity simulation had nothing analytical to be read
+  against -- and the one closed form that existed was hardcoded inside
+  `validation/mimo_zf_ml_ber.py`, where nothing could reuse it.
+
+  One expression covers the four cases, through the MGF average of
+  Simon and Alouini on Craig's contour: L branches at a per-branch SNR,
+  with a *transmit* scheme dividing that SNR by N_t because it splits
+  its power. So one antenna is L=1, receive combining is L=N_r,
+  Alamouti is L=N_t*N_r at gamma/N_t, and zero forcing is
+  L=N_r-N_t+1 per stream. That single division is the 3 dB an
+  orthogonal design pays for transmitting blind.
+
+  Checked three ways rather than trusted: against the closed form of
+  Proakis for L-branch BPSK (1e-10 relative, L = 1 to 8), against the
+  defining property that the high-SNR slope *is* L, and against chains
+  built from the library's own blocks -- the only check that both sides
+  mean the same thing by "SNR per branch".
+
+  `validation/mimo_diversity_ber.py` runs that last confrontation where
+  it belongs: three schemes, up to 80000 channel draws per point, all
+  within 4.4 % of the curves, and the Alamouti penalty measured at
+  3.0 dB against a predicted 10log10(2) = 3.01 dB.
+
+- `core.visualizers.plot_error_rate`, the figure a Monte-Carlo sweep
+  ends with: measurements as hollow markers, the closed form they are
+  read against as a line of the same colour, a logarithmic ordinate and
+  a grid on both decades. Fourteen scripts of this repository drew it by
+  hand. Sweep points where no error was seen are dropped rather than
+  plotted: they mean the estimate ran out of samples, not that the error
+  rate is zero, and a logarithmic axis has no place to put them.
+
 - A tutorial on Alamouti space-time coding,
   `docs/examples/alamouti.rst`, with `examples/mimo/one_shot_alamouti.py`
   behind it. It answers the question the code module cannot: *why*. The
@@ -660,6 +716,38 @@ code actually does.
 
 ### Fixed
 
+- A pass over the tutorials, which had drifted from the library they
+  teach. `examples/mimo/one_shot_mimo.py` inverted the channel by hand
+  with `linalg.pinv`, mutated block attributes instead of
+  `set_params`, rolled its own triple Monte-Carlo loop and was not
+  reproducible: it is now four chains differing by their last block,
+  swept over channel realizations, seeded -- and it runs in 10 s
+  instead of 171 s, so the smoke test covers it again. The OFDM
+  tutorial claimed OFDM won on error rate, which the script it quotes
+  does not show and which is not true uncoded on that channel: the
+  page now quotes the measured numbers and says where the win actually
+  is (three orders of magnitude of computation). The PAPR page's
+  "around 12 dB" is now the two values the expression gives, 11.41 and
+  11.83 dB. The optical page shows the SER it promised to compute, and
+  the example no longer passes `hard_projector`'s `(indices, symbols)`
+  tuple where an array is expected -- it worked only because
+  `compute_ser` truncates to the shorter input.
+- `OFDMTransmitter` and `OFDMReceiver` did not accept the
+  `CarrierAllocation` object that the blocks they wrap accept (D18) --
+  and did not refuse it either: `np.asarray` on a dataclass gives a 0-d
+  object array, so the mistake surfaced several blocks later as
+  `len() of unsized object`. Both now pass the allocation through and
+  read its `N_fft`.
+- The two profiling examples still called the deprecated
+  `get_standard_carrier_allocation`, so running the tutorial printed a
+  `DeprecationWarning`; they use `get_allocation` and the catalog's
+  own counts.
+- `plot_chain_profiling` drew a linear time axis on a quantity that
+  spans four decades, so one block filled the figure and every other
+  one was a line against zero. Logarithmic axis, on whichever axis
+  carries the time (the label was hardcoded to `x` and was wrong for
+  `orientation="vertical"`), and a constrained layout so long block
+  names are not clipped.
 - Coverage was measuring the wrong thing. `[tool.coverage.run] source`
   named the *package*, so coverage imported `comnumpy` to locate it and
   everything `__init__` pulls in was already loaded when the tracer

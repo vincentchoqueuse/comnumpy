@@ -9,7 +9,7 @@ from comnumpy.core.utils import get_alphabet
 from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
-from comnumpy.ofdm.utils import get_standard_carrier_allocation
+from comnumpy.ofdm.allocation import get_allocation
 
 
 # parameters
@@ -21,12 +21,12 @@ N = 100000      # Number of symbols
 sigma2 = 0.01   # Noise variance
 
 alphabet = get_alphabet(modulation, M)  # Get alphabet for QAM modulation
-carrier_type = get_standard_carrier_allocation("802.11ah_128")  # Standard carrier allocation
+allocation = get_allocation("802.11ac-40")  # 128 subcarriers, from the catalog
 
-# extract carrier information
-N_carriers = len(carrier_type)
-N_carrier_data = np.sum(carrier_type == 1)  # Number of data carriers
-N_carrier_pilots = np.sum(carrier_type == 2)  # Number of pilot carriers
+# the allocation carries its own counts, checked against the standard's table
+N_carriers = allocation.N_fft
+N_carrier_data = allocation.N_data       # Number of data carriers
+N_carrier_pilots = allocation.N_pilots   # Number of pilot carriers
 
 # channel parameters
 h = 0.1 * (np.random.randn(N_h) + 1j * np.random.randn(N_h))
@@ -38,7 +38,7 @@ chain = Sequential([
     SymbolGenerator(M),
     SymbolMapper(alphabet),
     Serial2Parallel(N_carrier_data),
-    CarrierAllocator(carrier_type=carrier_type, pilots=pilots),
+    CarrierAllocator(carrier_type=allocation, pilots=pilots),
     IFFTProcessor(),
     CyclicPrefixer(N_cp),
     Parallel2Serial(),
@@ -48,7 +48,7 @@ chain = Sequential([
     CyclicPrefixRemover(N_cp),
     FFTProcessor(),
     FrequencyDomainEqualizer(h=h),
-    CarrierExtractor(carrier_type),
+    CarrierExtractor(allocation),
     Parallel2Serial(),
     SymbolDemapper(alphabet)
 ])

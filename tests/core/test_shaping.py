@@ -22,8 +22,12 @@ import unittest
 
 import numpy as np
 
+from comnumpy.core import Sequential
 from comnumpy.core.capacity import constellation_capacity
-from comnumpy.core.shaping import (ConstantCompositionMatcher,
+from comnumpy.core.channels import AWGN
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.shaping import (AmplitudeDemapper, AmplitudeMapper,
+                                   ConstantCompositionMatcher,
                                    DistributionDematcher, DistributionMatcher,
                                    SphereShaper,
                                    composition_from_distribution,
@@ -446,6 +450,107 @@ class TestChainBlocks(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             shaper.decode(outside)
         self.assertIn("outside the sphere", str(ctx.exception))
+
+
+class TestTheSignHalf(unittest.TestCase):
+    r"""What :class:`AmplitudeMapper` adds, and what it must not disturb.
+
+    In PAS the sign is spent on parity bits, so the block that puts it
+    there has one job -- add an equiprobable :math:`\pm 1` -- and one
+    promise: the amplitude law it was given comes out untouched, which is
+    what makes the composite constellation symmetric Maxwell-Boltzmann at
+    the same energy.
+    """
+
+    def test_the_pair_is_the_identity_on_amplitude_indices(self):
+        rng = np.random.default_rng(3)
+        mapper = AmplitudeMapper(AMPLITUDES, seed=0)
+        demapper = AmplitudeDemapper(AMPLITUDES)
+        indices = rng.integers(0, AMPLITUDES.size, size=5000)
+        np.testing.assert_array_equal(demapper(mapper(indices)), indices)
+
+    def test_deciding_on_the_magnitude_is_the_maximum_likelihood_decision(self):
+        """The shortcut is not one: on a symmetric constellation the
+        nearest point to ``y`` has the amplitude nearest to ``|y|``."""
+        rng = np.random.default_rng(4)
+        pam = np.concatenate([-AMPLITUDES[::-1], AMPLITUDES])
+        received = rng.normal(scale=3.0, size=20000)
+        full = pam[np.argmin(np.abs(received[:, None] - pam), axis=-1)]
+        by_magnitude = AMPLITUDES[AmplitudeDemapper(AMPLITUDES)(received)]
+        np.testing.assert_allclose(np.abs(full), by_magnitude)
+
+    def test_the_sign_leaves_the_amplitude_law_alone(self):
+        """P(+a) = P(-a) = P(a)/2, which is why the sign is free."""
+        mapper = AmplitudeMapper(AMPLITUDES, seed=1)
+        law = maxwell_boltzmann(AMPLITUDES, entropy=1.25)
+        rng = np.random.default_rng(5)
+        indices = rng.choice(AMPLITUDES.size, size=200000, p=law)
+        sent = mapper(indices)
+        for index, amplitude in enumerate(AMPLITUDES):
+            for sign in (-1.0, 1.0):
+                with self.subTest(point=sign * amplitude):
+                    self.assertAlmostEqual(
+                        float(np.mean(sent == sign * amplitude)),
+                        law[index] / 2, delta=0.005)
+
+    def test_a_signed_alphabet_is_refused_by_both_blocks(self):
+        for block in (AmplitudeMapper, AmplitudeDemapper):
+            with self.subTest(block=block.__name__):
+                with self.assertRaises(ValueError) as ctx:
+                    block(np.array([-1.0, 1.0, 3.0]))
+                self.assertIn("-1.0", str(ctx.exception))
+
+    def test_the_shaped_link_recovers_its_bits_and_is_reproducible(self):
+        """The whole architecture, end to end: bits in, bits out."""
+        shaper = ConstantCompositionMatcher(
+            AMPLITUDES, distribution=maxwell_boltzmann(AMPLITUDES,
+                                                       entropy=1.25),
+            length=32)
+        link = Sequential([
+            SymbolGenerator(2, name="bits"),
+            DistributionMatcher(shaper),
+            AmplitudeMapper(AMPLITUDES, name="mapper"),
+            AWGN(snr_dB=30.0, name="noise"),
+            AmplitudeDemapper(AMPLITUDES),
+            DistributionDematcher(shaper),
+        ], taps=["bits", "mapper"])
+        link.seed(2)
+        recovered = link(20 * shaper.n_bits)
+        np.testing.assert_array_equal(recovered, link.tap("bits"))
+        signed = link.tap("mapper")
+        # the sign block is stochastic, so D6 must reach it: same seed,
+        # same signs, not merely the same magnitudes
+        link.seed(2)
+        np.testing.assert_allclose(link(20 * shaper.n_bits), recovered)
+        np.testing.assert_allclose(link.tap("mapper"), signed)
+
+
+class TestShapedSource(unittest.TestCase):
+    """``SymbolGenerator(distribution=...)``: the law as a source."""
+
+    def test_the_empirical_law_is_the_one_asked_for(self):
+        law = maxwell_boltzmann(np.arange(-7, 8, 2).astype(float),
+                                entropy=2.25)
+        generator = SymbolGenerator(8, distribution=law, seed=0)
+        measured = np.bincount(generator(400000), minlength=8) / 400000
+        np.testing.assert_allclose(measured, law, atol=0.004)
+
+    def test_the_default_is_still_uniform(self):
+        measured = np.bincount(SymbolGenerator(4, seed=0)(100000),
+                               minlength=4) / 100000
+        np.testing.assert_allclose(measured, 0.25, atol=0.01)
+
+    def test_a_law_of_the_wrong_length_names_both_numbers(self):
+        with self.assertRaises(ValueError) as ctx:
+            SymbolGenerator(4, distribution=np.full(8, 1 / 8))
+        self.assertIn("8 probabilities", str(ctx.exception))
+        self.assertIn("4 symbols", str(ctx.exception))
+
+    def test_a_law_that_does_not_sum_to_one_is_refused(self):
+        with self.assertRaises(ValueError):
+            SymbolGenerator(4, distribution=np.full(4, 0.2))
+        with self.assertRaises(ValueError):
+            SymbolGenerator(2, distribution=np.array([-0.5, 1.5]))
 
 
 if __name__ == "__main__":

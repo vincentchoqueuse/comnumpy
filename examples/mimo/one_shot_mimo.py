@@ -1,15 +1,18 @@
 import numpy as np
-import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 
+from comnumpy import sweep
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import get_alphabet
-from comnumpy.mimo.channels import FlatMIMOChannel, AWGN
+from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
+from comnumpy.mimo.detectors import (
+    LinearDetector, MaximumLikelihoodDetector,
+    OrderedSuccessiveInterferenceCancellationDetector)
 from comnumpy.mimo.utils import rayleigh_channel
-from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, OrderedSuccessiveInterferenceCancellationDetector
 
 img_dir = "../../docs/examples/img/"
 
@@ -18,109 +21,112 @@ N = 1000
 N_r, N_t = 3, 2
 M = 4
 alphabet = get_alphabet("PSK", M)
-M = len(alphabet)
 sigma2 = 0.1
-H = rayleigh_channel(N_r, N_t)
+H = rayleigh_channel(N_r, N_t, seed=0)
 
-# construct chain
-chain = Sequential([SymbolGenerator(M, name="data_tx"),
-                    SymbolMapper(alphabet),
-                    FlatMIMOChannel(H, name="channel"),
-                    AWGN(sigma2=sigma2, name="noise")
-                    ], taps=["data_tx"])
-Y = chain((N_t, N))
 
-# extract signals
-S_tx = chain.tap("data_tx")
+def link(detector):
+    """The same link, closed by one detector or another.
 
-# Figure 1: received signal
+    Only the last block changes, which is the point: a detector is a
+    chain block like any other, and the comparison further down is four
+    chains that differ by that block alone.
+    """
+    return Sequential([
+        SymbolGenerator(M, name="tx"),
+        SymbolMapper(alphabet),
+        FlatMIMOChannel(H, name="channel"),
+        AWGN(sigma2=sigma2, name="noise"),
+        detector,
+    ], taps=["tx", "noise"], name=f"{N_r}x{N_t} MIMO, {detector.name}")
+
+
+detectors = {
+    "ZF": LinearDetector(alphabet, H=H, method="zf", name="detector"),
+    "MMSE": LinearDetector(alphabet, H=H, sigma2=sigma2, method="mmse",
+                           name="detector"),
+    "OSIC": OrderedSuccessiveInterferenceCancellationDetector(
+        alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="detector"),
+    "ML": MaximumLikelihoodDetector(alphabet, H=H, name="detector"),
+}
+chains = {name: link(detector) for name, detector in detectors.items()}
+
+# One shot, on one channel realization. Every chain is given the same
+# seed, so they see the same symbols and the same noise: the only
+# difference between the four numbers is the detector.
+for name, chain in chains.items():
+    chain.seed(0)
+    detected = chain((N_t, N))
+    print(f"* detector {name:5s}: ser={compute_ser(chain.tap('tx'), detected):.4f}")
+
+# Figure 1: what each receive antenna sees -- the streams are summed by
+# the channel, so no constellation is visible on any of them
+Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
-for num_channel in range(N_r):
-    y = Y[num_channel, :]
-    ax = axes1[num_channel]
-    ax.plot(np.real(y), np.imag(y), ".")
-    ax.set_title(f"Received signal (antenna {num_channel+1})")
-    ax.set_aspect("equal", adjustable="box")
-    ax.set_xlim([-2, 2])
-    ax.set_ylim([-2, 2])
+for index in range(N_r):
+    axes1[index].plot(np.real(Y[index, :]), np.imag(Y[index, :]), ".")
+    axes1[index].set_title(f"Received signal (antenna {index + 1})")
+    axes1[index].set_aspect("equal", adjustable="box")
+    axes1[index].set_xlim([-2, 2])
+    axes1[index].set_ylim([-2, 2])
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
-# ZF equalization
-H_inv = linalg.pinv(H)
-X_est = np.matmul(H_inv, Y)
-
-# Figure 2: estimated signal
+# Figure 2: the same run after zero forcing. The detector applies the
+# pseudo-inverse and then decides; `linear_estimator` is that first step
+# alone, which is what a constellation plot needs.
+Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
-for num_channel in range(N_t):
-    x_est = X_est[num_channel, :]
-    ax = axes2[num_channel]
-    ax.plot(np.real(x_est), np.imag(x_est), ".")
-    ax.set_title(f"Estimated signal (antenna {num_channel+1})")
-    ax.set_aspect("equal", adjustable="box")
-    ax.set_xlim([-2, 2])
-    ax.set_ylim([-2, 2])
+for index in range(N_t):
+    axes2[index].plot(np.real(Z[index, :]), np.imag(Z[index, :]), ".")
+    axes2[index].plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9)
+    axes2[index].set_title(f"Estimated signal (stream {index + 1})")
+    axes2[index].set_aspect("equal", adjustable="box")
+    axes2[index].set_xlim([-2, 2])
+    axes2[index].set_ylim([-2, 2])
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
-# evaluate the BER for several detectors
-detector_list = [
-    LinearDetector(alphabet, H=H, method="zf", name="ZF"),
-    LinearDetector(alphabet, H=H, sigma2=sigma2, method="mmse", name="MMSE"),
-    OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC"),
-    MaximumLikelihoodDetector(alphabet, H=H, name="ML")
-    ]
-for detector in detector_list:
-    S_est = detector(Y)
-    ser = compute_ser(S_tx, S_est)
-    name = detector.name
-    print(f"* detector {name}: ser={ser}")
+# Monte Carlo evaluation. Averaging over fading means running the chain
+# once per channel realization, and that is a sweep whose parameter is
+# the channel: one point sets the matrix the signal goes through *and*
+# the one the detector inverts, which is what a realization is.
+snr_dB_list = np.arange(0, 20, 3)
+n_channels = 200
+n_symbols = 200
 
 
-# perform monte carlo simulation
-snr_dB_list = np.arange(0, 20, 2)
-N_test = 1000
-ser_data = np.zeros((len(snr_dB_list), len(detector_list)))
+NOISE_AWARE = {"MMSE", "OSIC"}   # the two detectors that weight by sigma2
 
-for index_snr, snr_dB in enumerate(snr_dB_list):
-    sigma2 = N_t * (10**(-snr_dB/10))
-    chain["noise"].sigma2 = sigma2
 
-    # update sigma2 for the MMSE and OSIC detector
-    detector_list[1].sigma2 = sigma2
-    detector_list[2].sigma2 = sigma2
+def average_ser(name, chain, snr_dB, seed=0):
+    """Average one chain over independent Rayleigh draws at one SNR."""
+    rng = np.random.default_rng(seed)
+    channels = [rayleigh_channel(N_r, N_t, rng=rng) for _ in range(n_channels)]
+    noise_variance = N_t * 10 ** (-snr_dB / 10)
+    params = {"noise.sigma2": noise_variance}
+    if name in NOISE_AWARE:
+        # ZF and ML have no sigma2 at all: one ignores the noise by
+        # construction, the other only compares distances
+        params["detector.sigma2"] = noise_variance
+    chain.set_params(**params)
+    results = sweep(chain, ("channel.H", "detector.H"),
+                    [(matrix, matrix) for matrix in channels],
+                    {"ser": compute_ser}, stimulus=(N_t, n_symbols),
+                    reference="tx", seed=seed)
+    return float(np.mean(results["ser"]))
 
-    for _ in range(N_test):
 
-        # new channel realization
-        H = rayleigh_channel(N_r, N_t)
-        chain["channel"].H = H
+curves = {name: [average_ser(name, chain, snr_dB) for snr_dB in snr_dB_list]
+          for name, chain in chains.items()}
+for name, values in curves.items():
+    print(f"{name:5s} " + " ".join(f"{value:.4f}" for value in values))
 
-        # generate data
-        Y = chain((N_t, N))
-        S_tx = chain.tap("data_tx")
-
-        # test detector
-        for index, detector in enumerate(detector_list):
-
-            # update channel information
-            detector.H = H
-            # perform detection
-            S_est = detector(Y)
-            # evaluate metrics
-            ser_data[index_snr, index] += compute_ser(S_tx, S_est)
-
-    ser_data[index_snr, :] /= N_test
-
-# plot figures
-plt.figure()
-for index, detector in enumerate(detector_list):
-    plt.semilogy(snr_dB_list, ser_data[:, index], label=detector.name)
-plt.ylabel("SER")
-
-plt.xlabel("SNR (dB)")
-plt.xlim([0, 20])
-plt.ylim([10**-3, 1])
-plt.legend()
-plt.grid(True)
-plt.title("Performance Comparison of several MIMO detectors")
+# Figure 3: the four detectors on one figure. There is no closed form
+# here -- ZF over Rayleigh has one (see the Alamouti tutorial), the
+# three others do not -- so the plot carries measurements only.
+ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
+                     title=f"{N_r}x{N_t} MIMO, {M}-PSK, "
+                           f"{n_channels} channel draws per point")
+ax.set_ylim(1e-4, 1)
+plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
 plt.show()
