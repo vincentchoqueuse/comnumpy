@@ -3,6 +3,12 @@ Optical Fiber Link Simulation Tutorial
 
 This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using ``comnumpy``.
 
+.. note::
+
+   **Before you start.** This is the most advanced tutorial of the series
+   and the only one whose channel is *nonlinear*. Everything before it --
+   the chain, the taps, the error rate -- is used here without comment.
+
 **What you'll learn:**
 
 - How to build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.

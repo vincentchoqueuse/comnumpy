@@ -1,16 +1,22 @@
 First Simulation
 ================
 
-This tutorial guides you through a simple communication simulation using **comnumpy**.
-You will build a basic QAM communication chain, transmit symbols through an AWGN channel,
-and evaluate the Symbol Error Rate (SER).
+A communication system is a series of operations applied to a signal, one
+after the other: generate symbols, map them onto a constellation, send them
+through a channel, decide what was sent. In **comnumpy** you write that series
+down as an object -- a ``Sequential`` chain -- and then you run it, measure
+it, and look inside it.
+
+This first tutorial builds the smallest such chain, runs it once, and reads
+one number off it. Everything else in the series is this same object with more
+blocks in it.
 
 **What you'll learn:**
 
-- Creating a communication chain using ``Sequential`` and built-in processors.
-- Transmitting QAM symbols through an AWGN channel.
-- Measuring the Symbol Error Rate (SER) and comparing it with theory.
-- Using chain ``taps`` to capture and visualize signals.
+- How to assemble a chain from built-in processors with ``Sequential``.
+- How to run it, and what the call actually returns.
+- How to look *inside* it with a tap, instead of only at its output.
+- How to compare the error rate you measured with the one theory predicts.
 
 
 Introduction
@@ -53,9 +59,11 @@ AWGN Communication Chain
 Define the Chain
 """"""""""""""""
 
-We define the communication chain using the ``Sequential`` object, which takes a list of
-processors as input. The **comnumpy** library provides a wide range of built-in processors
-for modulation, coding, channel modeling, and more.
+A chain is a list of **processors**, and ``Sequential`` is what turns that
+list into a single object you can call. Each processor does one thing and
+hands its output to the next, so reading the list from top to bottom *is*
+reading the signal path -- which is why the examples in this series are kept
+linear rather than factored into functions.
 
 The chain, as the chain itself describes it:
 
@@ -75,14 +83,8 @@ outline marks a tapped block:
    :lines: 20-26
 
 
-In this simulation, the communication chain is composed of **four processor objects**:
-
-.. mermaid::
-
-   graph LR;
-      A[Generator] --> B[Mapper];
-      B --> C[AWGN];
-      C --> D[Demapper];
+Four processors, and each one is worth a sentence -- these four come back in
+every tutorial that follows:
 
 - ``SymbolGenerator``
   Generates a sequence of random integers in the range :math:`[0, M-1]`, where each integer represents a symbol to transmit.
@@ -96,16 +98,21 @@ In this simulation, the communication chain is composed of **four processor obje
 - ``SymbolDemapper``
   Performs hard-decision demapping by associating each received point with the nearest constellation symbol.
 
-The chain contains communication blocks only. To observe signals inside it,
-name the blocks of interest and declare them as **taps** --
-``taps=["tx", "awgn"]`` above records the output of the generator and of
-the channel while the chain runs.
+Notice what is *not* in the list: nothing to record, display or measure. A
+chain contains communication blocks only. When you need to see a signal in
+the middle of it, you give the block a name and declare that name as a **tap**
+-- ``taps=["tx", "awgn"]`` above -- and the chain keeps a copy of what that
+block produced. This is how every measurement in this series is made, so it is
+worth getting used to now.
 
 
 Simulate the Chain
 """"""""""""""""""
 
-To run the simulation, simply call the ``Sequential`` object with the desired number of symbols:
+The chain is an object, and running it is calling it. Its first block is a
+*source*, so the argument is not a signal but the number of symbols to
+produce -- and what comes back is what the last block returned, here the
+detected symbol indices:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
@@ -114,26 +121,32 @@ To run the simulation, simply call the ``Sequential`` object with the desired nu
 Evaluate Performance
 """"""""""""""""""""
 
-We evaluate the performance of the communication system by computing the **Symbol Error Rate (SER)**
-from the transmitted and detected symbols, then comparing it with the theoretical value.
+An error rate compares what was sent with what was decided, and the chain
+returned only the second one. The first is at the ``"tx"`` tap:
+``chain.tap("tx")`` returns what that block produced during the last run.
 
-To retrieve the transmitted symbols, we call ``chain.tap("tx")``: it returns the
-signal recorded at the tap during the last run. Any block of the chain can be
-tapped, depending on which signal you want to inspect.
+One habit to take right away: **run the chain first, read the tap after**. A
+tap holds the last run, so reading it before calling the chain raises an
+error rather than returning stale data -- which is the behaviour you want,
+but it does mean the order of the two lines matters.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
    :lines: 31-41
 
-For this simulation, typical output looks like:
+which prints:
 
 .. code::
 
    SER (simu) = 0.0013
    SER (theo) = 0.0015647896369451741
 
-Note: for small SER values, increasing ``N`` (the number of transmitted symbols)
-improves the estimation accuracy.
+The two numbers agree to about 15 %, and that gap is not a modelling error:
+it is the measurement itself. An error rate estimated from :math:`N` symbols
+has a standard deviation of roughly :math:`\sqrt{P_e/N}`, so with 10 000
+symbols and :math:`P_e \approx 1.6 \times 10^{-3}` a spread of that size is
+expected. Increasing ``N`` narrows it -- and *how many symbols a claim needs*
+is the subject of the next tutorial.
 
 Plot the Constellation
 """"""""""""""""""""""
@@ -154,10 +167,10 @@ We read the symbols recorded at the ``"awgn"`` tap and hand them to
 Conclusion
 ^^^^^^^^^^
 
-You have successfully built and simulated your first communication chain with **comnumpy**.
+You have built a chain, run it, looked inside it, and compared one
+measurement with theory. That is the whole vocabulary the rest of the series
+uses.
 
-From here, you can explore:
-
-- The **OFDM and MIMO tutorials** for more advanced communication techniques.
-- The **API reference** for a complete list of available processors.
-- Different modulation orders, SNR values, and channel models to deepen your understanding.
+The natural next step is :doc:`../examples/awgn`, which asks the question this
+tutorial left open: one run gives one number at one SNR, so how do you obtain
+a *curve* -- and how many symbols does each of its points deserve?

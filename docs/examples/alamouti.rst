@@ -3,6 +3,13 @@ Alamouti Space-Time Coding Tutorial
 
 This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme.
 
+.. note::
+
+   **Before you start.** :doc:`mimo` introduced the multi-antenna channel
+   and its detectors, all of which assumed the receiver knows the channel
+   and the transmitter does not. This tutorial asks what the *transmitter*
+   can do without that knowledge.
+
 **What you'll learn:**
 
 - Why a fading channel is limited by its *deep fades*, not by its average.
@@ -313,3 +320,7 @@ This tutorial highlighted:
 - That the measured slope doubles, and that Alamouti pays 3 dB against receive diversity for transmitting blind.
 
 With ``comnumpy``, a space-time code is an object taken from a registry, its orthogonality is verified rather than assumed, and the encoder and decoder are ordinary chain blocks.
+
+Everything so far has taken the constellation for granted: :math:`M` points,
+each sent as often as the others. :doc:`shaping` questions that last
+assumption, and recovers up to 1.53 dB from it.
