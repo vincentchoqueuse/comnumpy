@@ -73,15 +73,35 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
-- The WDM channel-width guard moved from the demultiplexer to the
-  **multiplexer**, because at the receiver it was measuring the wrong
-  thing: amplified spontaneous emission is white and fills the guard
-  band, so "energy the mask rejects" is the *noise*, and the check fired
-  on a correctly configured comb after 700 km -- 0.12 % of rejected
-  energy against 0.0004 % of genuinely clipped signal. At the
-  transmitter there is no noise and the question is exactly the
-  configuration one: does each channel fit the bandwidth the grid
-  declares for it.
+- `constellation_capacity` and `bicm_capacity` take `method=`, which
+  chooses the integration rule: `"gauss-hermite"` (the default, matched
+  to the Gaussian weight of the integrand) or `"simpson"` (the classical
+  composite rule on a grid truncated at 8 standard deviations). Both
+  compute the same quantity and share nothing but the integrand, so the
+  second is an independent check of the first without leaving the
+  library -- and it is not a strawman: the integrand decays with all its
+  derivatives, so Euler-Maclaurin's endpoint corrections vanish and the
+  classical rule converges far faster than its nominal fourth order.
+  Measured on 16-QAM at rho = 10 against a 200-node reference, Simpson
+  is 1.9e-2 bit off at 20 nodes, 1.2e-4 at 40 and 1.1e-9 at 80, where
+  Gauss-Hermite is at 1.1e-5, 7.9e-7 and 3.8e-10 -- about a factor two
+  in nodes, four in cost, for the same accuracy. The rule now lives in
+  one place, `_noise_quadrature`, which returns nodes and weights;
+  nothing downstream of it knows which rule it was handed.
+- The MI and GMI estimators of `core/information.py` are cross-checked
+  against `core/capacity.py` over eight constellations of three families
+  (PSK-2/4/8, PAM-4/8, QAM-4/16/64) at 0, 8 and 16 dB. The two modules
+  compute the same two quantities by genuinely different means -- a
+  Monte-Carlo estimator over a record on one side, a deterministic
+  quadrature over the constellation on the other -- and the worst
+  deviation over the 48 comparisons is 0.006 bit on 40000 symbols. A
+  longer record shrinks it, which is what separates a sampling residual
+  from a disagreement on the quantity, and that separation is measured
+  in RMS over several draws rather than trusted to one lucky record.
+  The sweep also pins what a single constellation cannot show: BPSK,
+  QPSK and 4-QAM have MI = GMI exactly, the BICM gap opens beyond four
+  points and is a low-SNR phenomenon, and 8-PAM stays below 8-PSK at
+  equal SNR.
 - `validation/optical_wdm_opticommpy.py --dsp` answers, by measurement,
   where the decibel between this reproduction and the published result
   comes from. A finer split step does *not* close it -- it opens it
