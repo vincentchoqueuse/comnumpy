@@ -11,6 +11,7 @@ The example scripts are also available on GitHub: `https://github.com/vincentcho
 
    awgn
    shaping
+   multipath
    ofdm
    ofdm_papr
    mimo
