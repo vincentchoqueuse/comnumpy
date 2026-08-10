@@ -46,6 +46,50 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- Space-time block codes, in `mimo/coding.py`, with a `get_code` registry
+  answering by name as `get_alphabet` does for constellations:
+  `alamouti`, Tarokh's four orthogonal designs (`ostbc-3-1/2`,
+  `ostbc-4-1/2`, `ostbc-3-3/4`, `ostbc-4-3/4`), `golden` and
+  `spatial-multiplexing`, plus `register_code` for user codes.
+
+  Every code is stored as its **linear dispersion** matrices, `G(s) =
+  sum_k A_k s_k + B_k conj(s_k)`, and that choice is what makes the
+  module verifiable rather than a table of matrices. Writing the symbols
+  in real and imaginary parts turns a received block into a *real*
+  linear system whose matrix `M(H)` -- `SpaceTimeCode.equivalent_channel`
+  -- carries every property of the code: a design is orthogonal exactly
+  when `M^T M = c |H|_F^2 I`, its rate is `K/T`, and its diversity order
+  is the minimum rank of a difference codeword.
+
+  The orthogonality identity is checked **at construction** for every
+  code declaring itself orthogonal (D20), which is not decoration: it
+  refused a first transcription of Tarokh's G3 on the spot. The constant
+  `c` is measured there too rather than assumed -- 1 for Alamouti, 2 for
+  the rate-1/2 designs that repeat each symbol over a conjugated half --
+  and the decoder divides by the measured value, so the two cannot
+  disagree.
+
+  `SpaceTimeDecoder` implements the matched filter that is *exactly*
+  maximum likelihood for an orthogonal design, and the tests check that
+  claim against an exhaustive ML search, sample by sample, including
+  where noise makes both wrong. A non-orthogonal code is refused rather
+  than silently zero-forced: `equivalent_channel(H)` hands the problem
+  to the detectors of `mimo/detectors.py` instead.
+
+  Provenance stated where it is not a plain transcription: the fourth
+  row of H4 is the completion H3's structure allows, and which signs its
+  half-sums carry is *determined* -- over the 256 sign patterns of that
+  structure exactly two make the design orthogonal, and they differ by a
+  global sign. The orthogonality identity fixes the convention, not a
+  reading of the table.
+
+  Measured, not asserted: the four orthogonal designs are full
+  diversity, the Golden code is full rate (2) *and* full diversity with
+  a non-vanishing determinant, spatial multiplexing has rank 1 and
+  coding gain 0, and Alamouti's error curve has twice the slope of a
+  single antenna at equal total transmit power (-2.03 against -0.98 over
+  13 to 25 dB).
+
 - Probabilistic shaping, in `core/shaping.py`. A uniform QAM loses up to
   1.53 dB of the Gaussian capacity -- the shaping gap -- and closing it
   needs two things, both provided. `maxwell_boltzmann` gives the target
