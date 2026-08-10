@@ -733,6 +733,11 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">BWFilter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
+<span class="c1"># BlindPhaseTracker builds a (samples, phases, symbols) table of squared</span>
+<span class="c1"># distances; 2**22 entries is 32 MB in float64, small enough to fit</span>
+<span class="c1"># anywhere and large enough that the chunking costs nothing.</span>
+<span class="n">_COST_BLOCK</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">22</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_required_mask</span><span class="p">(</span><span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
                    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -2001,8 +2006,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    residual rotation, so tracking the paths jointly would fit a single</span>
 <span class="sd">    phase to two different ones.</span>
 
+<span class="sd">    The search range is the ambiguity of a **square QAM**. On a</span>
+<span class="sd">    constellation of finer rotational symmetry -- 8-PSK repeats every</span>
+<span class="sd">    :math:`\pi/4`, so the range covers two of its periods -- several test</span>
+<span class="sd">    phases give mathematically identical costs and which one wins is</span>
+<span class="sd">    arbitrary. That is a property of the criterion, not of the search.</span>
+
 <span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the</span>
-<span class="sd">    search loops over the sample axis.</span>
+<span class="sd">    decision of a sample under a test phase does not depend on any other</span>
+<span class="sd">    sample, so the whole search is a table of decision errors plus a</span>
+<span class="sd">    moving sum over it, and nothing is done in order.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2082,19 +2095,45 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_error</span> <span class="o">/</span> <span class="n">count</span><span class="p">)</span> <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decision_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``|x e^{-j phi} - D(.)|^2`` for every sample and test phase.</span>
+
+<span class="sd">        The whole search is this table plus a moving sum over it: the</span>
+<span class="sd">        decision of one sample under one test phase does not depend on</span>
+<span class="sd">        any other sample, so nothing here has to be done in order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rotated</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rotated</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+                          <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Track one path: the search itself, on a 1-D record.&quot;&quot;&quot;</span>
-        <span class="n">y_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
-        <span class="n">optimal_phases</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Track one path: the search itself, on a 1-D record.</span>
 
-        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
-            <span class="n">costs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">evm_cost</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">]</span>
-            <span class="n">best_phi_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">costs</span><span class="p">)</span>
-            <span class="n">best_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">[</span><span class="n">best_phi_idx</span><span class="p">]</span>
-            <span class="n">optimal_phases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_phi</span><span class="p">)</span>
-            <span class="n">y_corrected</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">best_phi</span><span class="p">)</span>
+<span class="sd">        Same quantity as :meth:`evm_cost` minimized sample by sample --</span>
+<span class="sd">        a test pins that -- computed in two array operations instead of</span>
+<span class="sd">        one Python iteration per (sample, phase, window position).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">if</span> <span class="n">n_samples</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">y_corrected</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">optimal_phases</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_steps</span><span class="p">))</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_COST_BLOCK</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase_steps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">rows</span><span class="p">):</span>
+            <span class="n">errors</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decision_errors</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">rows</span><span class="p">])</span>
+
+        <span class="c1"># Moving sum over the 2L+1 window. The record is zero-padded, so</span>
+        <span class="c1"># positions outside it add the same nothing to every phase, and</span>
+        <span class="c1"># the 1/(2L+1) of the equation does not depend on the phase</span>
+        <span class="c1"># either: neither changes which phase wins.</span>
+        <span class="n">padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_samples</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_steps</span><span class="p">))</span>
+        <span class="n">padded</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">+</span> <span class="n">n_samples</span><span class="p">]</span> <span class="o">=</span> <span class="n">errors</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">sliding_window_view</span><span class="p">(</span>
+            <span class="n">padded</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">window</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">best</span><span class="p">),</span> <span class="n">best</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
