@@ -165,5 +165,72 @@ class TestGuards(unittest.TestCase):
         self.assertIn("'cma', 'rde' or 'dd'", str(ctx.exception))
 
 
+class TestFrozenFastPath(unittest.TestCase):
+    r"""``mu = 0`` must be the same equalizer, only faster.
+
+    A stochastic gradient cannot be vectorized -- the update from
+    :math:`y[n]` is needed to compute :math:`y[n+1]`. But when the step
+    size is zero the map is the same for every sample, so the pass is a
+    matrix product, and the only thing worth asserting is that it is
+    *exactly* the loop: same output, bit for bit, and an equalizer left
+    where it was.
+    """
+
+    class Hooked(BlindDualMIMOCompensator):
+        """Overriding the hook forces the per-sample loop back on."""
+
+        def process_after_iteration(self, n, Y_sub):
+            pass
+
+    def signal(self, n_samples=3000, seed=3):
+        rng = np.random.default_rng(seed)
+        return (rng.standard_normal((2, n_samples))
+                + 1j * rng.standard_normal((2, n_samples))) / np.sqrt(2)
+
+    def test_the_fast_path_reproduces_the_loop_bit_for_bit(self):
+        X = self.signal()
+        for taps, oversampling in ((5, 1), (5, 2), (10, 2), (3, 4)):
+            with self.subTest(L=taps, oversampling=oversampling):
+                looped = self.Hooked(taps, alphabet=alphabet(), mu=0.0,
+                                     oversampling=oversampling)
+                fast = BlindDualMIMOCompensator(taps, alphabet=alphabet(),
+                                                mu=0.0,
+                                                oversampling=oversampling)
+                np.testing.assert_array_equal(fast(X), looped(X))
+
+    def test_it_spans_the_block_boundary(self):
+        """The gather is chunked; the seam must not be visible."""
+        original = BlindDualMIMOCompensator._FROZEN_BLOCK
+        BlindDualMIMOCompensator._FROZEN_BLOCK = 97
+        try:
+            X = self.signal()
+            fast = BlindDualMIMOCompensator(5, alphabet=alphabet(), mu=0.0,
+                                            oversampling=2)
+            looped = self.Hooked(5, alphabet=alphabet(), mu=0.0,
+                                 oversampling=2)
+            np.testing.assert_array_equal(fast(X), looped(X))
+        finally:
+            BlindDualMIMOCompensator._FROZEN_BLOCK = original
+
+    def test_a_frozen_equalizer_does_not_move(self):
+        X = self.signal()
+        fast = BlindDualMIMOCompensator(5, alphabet=alphabet(), mu=0.0)
+        before = fast.H_.copy()
+        fast(X)
+        np.testing.assert_array_equal(fast.H_, before)
+
+    def test_fit_then_apply_is_the_point(self):
+        """Adapt on a preamble, freeze, apply: the state carries over."""
+        sent, received = rotated_channel(seed=1)
+        compensator = BlindDualMIMOCompensator(L, alphabet=alphabet(),
+                                               mu=1e-3, oversampling=1)
+        compensator.partial_fit(received[:, :N // 2])
+        trained = compensator.H_.copy()
+        compensator.mu = 0.0
+        payload = compensator(received)
+        np.testing.assert_array_equal(compensator.H_, trained)
+        self.assertGreater(min(scored(payload, sent)), 15.0)
+
+
 if __name__ == "__main__":
     unittest.main()
