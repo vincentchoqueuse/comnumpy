@@ -46,6 +46,25 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- A tutorial on Alamouti space-time coding,
+  `docs/examples/alamouti.rst`, with `examples/mimo/one_shot_alamouti.py`
+  behind it. It answers the question the code module cannot: *why*. The
+  fading link is limited by its deep fades, not its average, so the
+  error rate falls only one decade per decade; the Alamouti codeword
+  turns two transmit antennas into two independent observations with no
+  channel knowledge at the transmitter, its equivalent channel is
+  orthogonal, and that identity alone makes the maximum-likelihood
+  receiver a matched filter.
+
+  The measurement is the lesson. Three links at **equal total transmit
+  power** -- one antenna, Alamouti 2x1, and receive diversity 1x2 --
+  give local slopes converging to 1, 2 and 2, and the SNR needed for a
+  symbol error rate of 1e-3 is 28.0, 18.4 and 15.6 dB. The 2.8 dB
+  between Alamouti and maximum ratio combining is the price of
+  transmitting blind, and the page says why the power normalization is
+  what makes that number mean anything: without it the two curves would
+  land on top of each other and prove nothing.
+
 - Space-time block codes, in `mimo/coding.py`, with a `get_code` registry
   answering by name as `get_alphabet` does for constellations:
   `alamouti`, Tarokh's four orthogonal designs (`ostbc-3-1/2`,
