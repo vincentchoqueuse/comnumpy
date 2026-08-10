@@ -555,6 +555,150 @@ def _etu(**kwargs: Any) -> PowerDelayProfile:
                     "max_excess_delay_ns": 5000})
 
 
+# 3GPP TR 38.901 Section 7.7.2 -- the 5G NR tapped delay line models.
+#
+# Two things separate these from the LTE profiles above. Their delays are
+# **normalized**: the tables give tau_l / sigma_tau, so a model is a
+# *shape* and the scenario supplies the RMS delay spread it is stretched
+# to (eq. 7.7-1). And TDL-D and TDL-E have a line of sight: their table
+# lists the specular component and the Rayleigh part of the first tap as
+# two entries at delay zero, whose ratio is the Rice factor K_1.
+#
+# The tables are transcribed in the standard's cluster order -- which is
+# *not* sorted by delay -- so that they can be diffed line by line
+# against the published table. Sorting and the merging of paths sharing a
+# delay happen in the factory below.
+#
+# Provenance: copied from the model files of Sionna (NVIDIA, Apache 2.0,
+# src/sionna/phy/channel/tr38901/models/TDL-*.json), a published
+# implementation of the same clause; TDL-D and TDL-E are independently
+# confirmed tap by tap against OpenAirInterface's transcription, and all
+# five against the invariant the normalization guarantees -- see
+# validation/fading_tdl_3gpp.py.
+_TDL_TABLES: dict[str, tuple[tuple[float, float], ...]] = {
+    "TDL-A": (
+        (0, -13.4), (0.3819, 0), (0.4025, -2.2), (0.5868, -4), (0.461, -6),
+        (0.5375, -8.2), (0.6708, -9.9), (0.575, -10.5), (0.7618, -7.5),
+        (1.5375, -15.9), (1.8978, -6.6), (2.2242, -16.7), (2.1718, -12.4),
+        (2.4942, -15.2), (2.5119, -10.8), (3.0582, -11.3), (4.081, -12.7),
+        (4.4579, -16.2), (4.5695, -18.3), (4.7966, -18.9), (5.0066, -16.6),
+        (5.3043, -19.9), (9.6586, -29.7),
+    ),
+    "TDL-B": (
+        (0, 0), (0.1072, -2.2), (0.2155, -4), (0.2095, -3.2), (0.287, -9.8),
+        (0.2986, -1.2), (0.3752, -3.4), (0.5055, -5.2), (0.3681, -7.6),
+        (0.3697, -3), (0.57, -8.9), (0.5283, -9), (1.1021, -4.8),
+        (1.2756, -5.7), (1.5474, -7.5), (1.7842, -1.9), (2.0169, -7.6),
+        (2.8294, -12.2), (3.0219, -9.8), (3.6187, -11.4), (4.1067, -14.9),
+        (4.279, -9.2), (4.7834, -11.3),
+    ),
+    "TDL-C": (
+        (0, -4.4), (0.2099, -1.2), (0.2219, -3.5), (0.2329, -5.2),
+        (0.2176, -2.5), (0.6366, 0), (0.6448, -2.2), (0.656, -3.9),
+        (0.6584, -7.4), (0.7935, -7.1), (0.8213, -10.7), (0.9336, -11.1),
+        (1.2285, -5.1), (1.3083, -6.8), (2.1704, -8.7), (2.7105, -13.2),
+        (4.2589, -13.9), (4.6003, -13.9), (5.4902, -15.8), (5.6077, -17.1),
+        (6.3065, -16), (6.6374, -15.7), (7.0427, -21.6), (8.6523, -22.8),
+    ),
+    "TDL-D": (
+        (0, -0.2), (0, -13.5), (0.035, -18.8), (0.612, -21), (1.363, -22.8),
+        (1.405, -17.9), (1.804, -20.1), (2.596, -21.9), (1.775, -22.9),
+        (4.042, -27.8), (7.937, -23.6), (9.424, -24.8), (9.708, -30),
+        (12.525, -27.7),
+    ),
+    "TDL-E": (
+        (0, -0.03), (0, -22.03), (0.5133, -15.8), (0.544, -18.1),
+        (0.563, -19.8), (0.544, -22.9), (0.7112, -22.4), (1.9092, -18.6),
+        (1.9293, -20.8), (1.9589, -22.6), (2.6426, -22.3), (3.7136, -25.6),
+        (5.4524, -20.2), (12.0034, -29.8), (20.6519, -29.2),
+    ),
+}
+
+# The RMS delay spread a TDL profile is stretched to when the caller does
+# not say. It is *not* a value from TR 38.901, which deliberately leaves
+# it to the scenario (Table 7.7.3-1 tabulates 10 ns to 1 us); 100 ns is a
+# plausible urban figure and a round number to divide by.
+_TDL_DEFAULT_SPREAD_NS = 100.0
+
+
+def _tdl(standard: str, delay_spread_ns: float, los: bool,
+         expect: dict[str, float], **kwargs: Any) -> PowerDelayProfile:
+    """Build one TR 38.901 entry: sort, merge, scale, self-check."""
+    if delay_spread_ns <= 0:
+        raise ValueError(
+            f"a delay spread is positive, got delay_spread_ns="
+            f"{delay_spread_ns}. The TDL delays are normalized (TR 38.901 "
+            f"eq. 7.7-1); this is the RMS spread they are stretched to.")
+    table = np.asarray(_TDL_TABLES[standard], dtype=float)
+    delays, powers = table[:, 0], table[:, 1]
+    # the two entries at delay zero are the specular component and the
+    # Rayleigh part of the first tap; their ratio is K_1
+    rice_k_dB = float(powers[0] - powers[1]) if los else None
+    # paths sharing a delay are one resolvable tap: independent complex
+    # Gaussians add, so their powers add (np.unique also sorts)
+    unique, inverse = np.unique(delays, return_inverse=True)
+    linear = np.zeros(unique.size)
+    np.add.at(linear, inverse, 10 ** (powers / 10))
+    return _check_expect(PowerDelayProfile(
+        unique * delay_spread_ns, 10 * np.log10(linear / np.sum(linear)),
+        rice_k_dB=rice_k_dB, standard=standard,
+        reference=f"3GPP TR 38.901 Table 7.7.2-{'ABCDE'.index(standard[-1]) + 1}",
+        **kwargs), expect)
+
+
+@register_delay_profile("TDL-A")
+def _tdl_a(*, delay_spread_ns: float = _TDL_DEFAULT_SPREAD_NS,
+           **kwargs: Any) -> PowerDelayProfile:
+    """TDL-A, NLOS (3GPP TR 38.901 Table 7.7.2-1)."""
+    return _tdl("TDL-A", delay_spread_ns, False,
+                {"n_taps": 23, "rms_delay_spread_ns": delay_spread_ns},
+                **kwargs)
+
+
+@register_delay_profile("TDL-B")
+def _tdl_b(*, delay_spread_ns: float = _TDL_DEFAULT_SPREAD_NS,
+           **kwargs: Any) -> PowerDelayProfile:
+    """TDL-B, NLOS (3GPP TR 38.901 Table 7.7.2-2)."""
+    return _tdl("TDL-B", delay_spread_ns, False,
+                {"n_taps": 23, "rms_delay_spread_ns": delay_spread_ns},
+                **kwargs)
+
+
+@register_delay_profile("TDL-C")
+def _tdl_c(*, delay_spread_ns: float = _TDL_DEFAULT_SPREAD_NS,
+           **kwargs: Any) -> PowerDelayProfile:
+    """TDL-C, NLOS (3GPP TR 38.901 Table 7.7.2-3)."""
+    return _tdl("TDL-C", delay_spread_ns, False,
+                {"n_taps": 24, "rms_delay_spread_ns": delay_spread_ns},
+                **kwargs)
+
+
+# TDL-D is the one entry whose normalization does not come out at 1: its
+# table gives 0.9937, six parts in a thousand short, which is rounding in
+# the published powers rather than a transcription error (the same
+# arithmetic gives 1.0001, 1.0000, 1.0000 and 1.0002 for A, B, C and E).
+# Following the EPA precedent above, the entry pins what it reproduces --
+# the tap count and the longest path -- and leaves the spread unasserted
+# rather than pinning a number the standard does not print.
+@register_delay_profile("TDL-D")
+def _tdl_d(*, delay_spread_ns: float = _TDL_DEFAULT_SPREAD_NS,
+           **kwargs: Any) -> PowerDelayProfile:
+    """TDL-D, LOS with K_1 = 13.3 dB (3GPP TR 38.901 Table 7.7.2-4)."""
+    return _tdl("TDL-D", delay_spread_ns, True,
+                {"n_taps": 13,
+                 "max_excess_delay_ns": 12.525 * delay_spread_ns},
+                **kwargs)
+
+
+@register_delay_profile("TDL-E")
+def _tdl_e(*, delay_spread_ns: float = _TDL_DEFAULT_SPREAD_NS,
+           **kwargs: Any) -> PowerDelayProfile:
+    """TDL-E, LOS with K_1 = 22.0 dB (3GPP TR 38.901 Table 7.7.2-5)."""
+    return _tdl("TDL-E", delay_spread_ns, True,
+                {"n_taps": 13, "rms_delay_spread_ns": delay_spread_ns},
+                **kwargs)
+
+
 def validate_taps_fit(profile: PowerDelayProfile, fs: float,
                       n_samples: int) -> None:
     """Raise if the signal is too short to carry the profile's delays.

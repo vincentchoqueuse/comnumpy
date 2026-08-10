@@ -1,0 +1,32 @@
+flowchart LR
+    generator["SymbolGenerator"]
+    symbol_mapper["SymbolMapper"]
+    s2_p["Serial2Parallel"]
+    carrier_allocator["CarrierAllocator"]
+    ifft["IFFTProcessor"]
+    cp_adder["CyclicPrefixer"]
+    p2_s["Parallel2Serial"]
+    fir["FIRChannel"]
+    awgn["AWGN"]
+    s2_p_2["Serial2Parallel"]
+    cp_remover["CyclicPrefixRemover"]
+    fft["FFTProcessor"]
+    frequency_domain_equalizer["FrequencyDomainEqualizer"]
+    carrier_extractor["CarrierExtractor"]
+    p2_s_2["Parallel2Serial"]
+    symbol_demapper["SymbolDemapper"]
+    generator --> symbol_mapper
+    symbol_mapper --> s2_p
+    s2_p --> carrier_allocator
+    carrier_allocator --> ifft
+    ifft --> cp_adder
+    cp_adder --> p2_s
+    p2_s --> fir
+    fir --> awgn
+    awgn --> s2_p_2
+    s2_p_2 --> cp_remover
+    cp_remover --> fft
+    fft --> frequency_domain_equalizer
+    frequency_domain_equalizer --> carrier_extractor
+    carrier_extractor --> p2_s_2
+    p2_s_2 --> symbol_demapper

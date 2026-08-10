@@ -229,6 +229,19 @@ is a target of 1.25 bit/amplitude on the four amplitudes.
 As a chain, that is six blocks -- and the receiver is the transmitter read
 backwards:
 
+The chain, as the chain itself describes it:
+
+.. mermaid:: mermaid/shaping_pas.mmd
+
+The diagram above is not drawn by hand. It is what the chain says about
+itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
+script, so the block names are the ones the code uses and a dashed
+outline marks a tapped block:
+
+.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
+   :language: python
+   :lines: 201-207
+
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
    :lines: 82-102
