@@ -1,12 +1,27 @@
 PAPR in OFDM Communication
 ==========================
 
-In this tutorial, we compute the **Peak-to-Average Power Ratio (PAPR)**
-of an OFDM signal using the ``comnumpy`` library.
-We reproduce the first figure from the article:
+The previous tutorial ended well for OFDM: one division per subcarrier
+instead of a matrix inversion. This one is the bill.
+
+An OFDM symbol is the sum of :math:`N` subcarriers. Most of the time they
+interfere every which way and the sum stays moderate -- but occasionally they
+align, and the waveform produces a peak far above its average power. The
+amplifier has to be sized for that peak while being paid for the average,
+which is the single most quoted drawback of the format.
+
+The metric that quantifies it is the **peak-to-average power ratio**, and
+what matters is not its typical value but how often it is exceeded -- a
+distribution, not a number. We reproduce the first figure of:
 
 * "An overview of peak-to-average power ratio reduction techniques for multicarrier transmission"  
   by Han and Lee (2005).
+
+.. note::
+
+   **Before you start.** :doc:`ofdm` built the OFDM transmitter this
+   tutorial reuses. Here we do not look at the error rate at all, but at the
+   shape of the waveform itself.
 
 **What you'll learn:**
 
@@ -143,4 +158,9 @@ You have learned how to:
 
 Key takeaway:
 **OFDM signals exhibit high PAPR (around 10-13 dB depending on system size),
-which motivates PAPR reduction techniques such as clipping, coding, or tone reservation.**
+which motivates PAPR reduction techniques such as clipping, coding, or tone
+reservation.** The library ships several of them, in
+``examples/ofdm/one_shot_ofdm_papr_reduction.py``.
+
+Next, :doc:`multipath` goes back to the channel and settles the number the
+OFDM tutorial took for granted: how long the cyclic prefix has to be.
