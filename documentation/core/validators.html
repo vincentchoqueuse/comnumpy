@@ -498,6 +498,55 @@
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.validators.validate_single_path">
+<span class="sig-name descname"><span class="pre">validate_single_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/validators.html#validate_single_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.validators.validate_single_path" title="Link to this definition">#</a></dt>
+<dd><p>Refuse a multi-path signal in an estimator that measures one record.</p>
+<p>Decision D49. Once a chain carries several paths on the antenna axis
+– the two polarizations of a coherent link, the branches of a MIMO
+receiver – every estimator has to answer a question it could ignore
+while signals were one-dimensional: <strong>is what it measures one
+physical quantity shared by all the paths, or one per path?</strong></p>
+<ul class="simple">
+<li><p><em>Shared</em>: a carrier frequency offset comes from one laser beating
+against one local oscillator, so there is a single number and it
+should be estimated <strong>jointly</strong>, over all the paths at once.
+Estimating it per path throws away half the data and produces two
+numbers that then have to be reconciled.</p></li>
+<li><p><em>Per path</em>: an IQ imbalance belongs to a receiver, a DC offset to
+an analog-to-digital converter, a residual rotation to whichever
+output of a butterfly equalizer produced it. One estimate each.</p></li>
+</ul>
+<p>Letting numpy broadcast decides the question by accident, and it
+decides it wrong in both directions: it silently pools what should
+be separate, or crashes with a shape error that says nothing. This
+validator is for the blocks that have not been generalized: it
+states which of the two they are and what to do instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em>) – Signal about to be processed.</p></li>
+<li><p><strong>block</strong> (<em>str</em>) – Name of the calling block, for the message.</p></li>
+<li><p><strong>estimand</strong> (<em>str</em>) – What the block measures, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;a</span> <span class="pre">delay&quot;</span></code>, in a form that
+reads after “estimates”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../toplevel/exceptions.html#comnumpy.exceptions.ShapeError" title="comnumpy.exceptions.ShapeError"><strong>ShapeError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">X</span></code> has more than one path on its antenna axis.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate_single_path</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="s2">&quot;Block&quot;</span><span class="p">,</span> <span class="s2">&quot;a delay&quot;</span><span class="p">)</span>   <span class="c1"># fine</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">validate_single_path</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="s2">&quot;Block&quot;</span><span class="p">,</span> <span class="s2">&quot;a delay&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="go">ShapeError</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
 
 
@@ -549,6 +598,7 @@
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.validators.validate_real"><code class="docutils literal notranslate"><span class="pre">validate_real()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.validators.validate_data"><code class="docutils literal notranslate"><span class="pre">validate_data()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.validators.validate_single_path"><code class="docutils literal notranslate"><span class="pre">validate_single_path()</span></code></a></li>
 </ul>
   </nav></div>
 

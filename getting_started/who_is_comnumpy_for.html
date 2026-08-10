@@ -429,21 +429,58 @@
 </li>
 <li><p><strong>OptiCommPy</strong>:</p>
 <ul class="simple">
-<li><p><strong>Advantages</strong>: <a class="reference external" href="https://github.com/edsonportosilva/OptiCommPy">OptiCommPy</a> is an excellent library for <strong>fibre-optic</strong> communication systems, and it tracks recent developments in the field closely. Its coherent optical stack goes further than <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>’s on several points that matter in practice: a Manakov split-step solver with <strong>adaptive</strong> step size (bounded by the nonlinear phase rotation per step, each step iterated to a tolerance) and optional GPU execution, a complete coherent receiver chain – adaptive MIMO equalizer (CMA / RDE / DA-RDE), blind phase search, frequency-offset estimation, symbol synchronization – and device models for lasers with phase noise and RIN, Mach-Zehnder modulators, coherent frontends and photodiodes. If your work is specifically about coherent optical transmission and its DSP, it is the more complete tool today.</p></li>
-<li><p><strong>Disadvantages</strong>: Its scope is optical. <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> is a <em>general</em> digital-communications library – OFDM, MIMO, forward error correction, fading channels and optical fibre share one set of conventions and one chain abstraction – so a study that spans several of these does not mean assembling several toolboxes.</p></li>
-<li><p><strong>Cross-validated against it</strong>: <code class="docutils literal notranslate"><span class="pre">validation/optical_wdm_opticommpy.py</span></code> reproduces the published 11 × 32 GBd PDM-16QAM, 700 km example of OptiCommPy. The transmitted comb power matches their printed figure to 0.004 dB, the achievable rates (MI, GMI, NGMI) match theirs exactly, and the end-to-end SNR lands within about 1 dB – on the side the difference in receiver DSP predicts. The same script measures where they are ahead: on a <em>fixed</em> split-step grid, their nominal 0.5 km step is 0.85 dB short of converged, and it is their adaptive stepping that makes it enough.</p></li>
+<li><p><strong>Advantages</strong>: <a class="reference external" href="https://doi.org/10.21105/joss.06600">OptiCommPy</a> (da Silva and Herbster, <em>JOSS</em> <strong>9</strong>(98), 6600, 2024) is an excellent library for <strong>fibre-optic</strong> communication systems, and it tracks recent developments in the field closely. Its coherent optical stack goes further than <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>’s on several points that matter in practice: a Manakov split-step solver with <strong>adaptive</strong> step size (bounded by the nonlinear phase rotation per step, each step iterated to a tolerance) and optional GPU execution, a complete coherent receiver chain – adaptive MIMO equalizer (CMA / RDE / DA-RDE), blind phase search, frequency-offset estimation, symbol synchronization – and device models for lasers with phase noise and RIN, Mach-Zehnder modulators, coherent frontends and photodiodes. If your work is specifically about coherent optical transmission and its DSP, it is the more complete tool today.</p></li>
+<li><p><strong>Where ``comnumpy`` differs</strong>: not in breadth – breadth is not an advantage to someone who only does optics, and it is partly a liability, since focus is exactly what lets OptiCommPy go deeper. The difference is that OptiCommPy is a library of <strong>functions</strong> you thread arrays through by hand, while in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> the <em>system</em> is an object: named, addressable, re-seeded, swept, serialized to JSON and drawn. See <a class="reference internal" href="#what-makes-it-different"><span class="std std-ref">What makes comnumpy different</span></a> below.</p></li>
+<li><p><strong>Cross-validated against it</strong>: <code class="docutils literal notranslate"><span class="pre">validation/optical_wdm_opticommpy.py</span></code> reproduces the published 11 × 32 GBd PDM-16QAM, 700 km example of OptiCommPy, down to their pulse shaping: the same root-raised-cosine, 1024 taps at 16 samples per symbol, and the same filter object at both ends of the link, as they do. The transmitted comb power matches their printed figure to 0.004 dB, the achievable rates (MI, GMI, NGMI) match theirs exactly, and their end-to-end SNR sits inside the bracket this reproduction gives it: 21.69 dB with a converged split step and no receiver impairments, 20.18 dB through a cruder receiver than theirs, against their 20.63 dB. The gap is the receiver, and the script shows it rather than asserting it – refining the split step <em>widens</em> it, adding phase noise, a polarization rotation, a CMA/RDE butterfly and a blind phase search closes it. The same run measures where they are ahead: on a <em>fixed</em> split-step grid, their nominal 0.5 km step is 0.85 dB short of converged, and it is their adaptive stepping that makes it enough.</p></li>
 </ul>
 </li>
 </ol>
 </section>
-<section id="why-choose-comnumpy">
-<h2>Why Choose <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>?<a class="headerlink" href="#why-choose-comnumpy" title="Link to this heading">#</a></h2>
+<section id="what-makes-comnumpy-different">
+<span id="what-makes-it-different"></span><h2>What makes <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> different<a class="headerlink" href="#what-makes-comnumpy-different" title="Link to this heading">#</a></h2>
+<p>Being general is not, by itself, a reason to choose a library: it only
+pays for someone who actually crosses domains. Three things are.</p>
+<p><strong>1. The chain is an object, not a sequence of calls.</strong> The
+<code class="docutils literal notranslate"><span class="pre">Processor</span></code> / <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> pair is deliberately modelled on
+PyTorch’s <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> / <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code>, and the consequences are
+the ones that matter in daily research work. A chain can be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+                    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">)],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">])</span>
+
+<span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>                            <span class="c1"># every stochastic block, reproducibly</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">})</span>  <span class="c1"># reconfigured after construction</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">to_json</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>                     <span class="c1"># the experiment, as a file</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>                 <span class="c1"># the experiment, as a picture</span>
+</pre></div>
+</div>
+<p>None of that requires rewriting the chain, and none of it is
+instrumentation inserted between the blocks: taps, wiring and seeding
+are chain <em>metadata</em>, so the block list keeps describing the
+communication system and nothing else. A study made of a hundred
+parameter points and a figure is then a few lines, and the exact
+experiment that produced the figure is a JSON file you can archive next
+to it.</p>
+<p><strong>2. Every docstring is teaching material.</strong> Each block documents the
+signal model it implements in mathematics, with a one-to-one
+correspondence between the symbols of the equations and the parameters
+of the code, the references the model comes from, and a worked example
+that is executed on every commit. Reading the source is meant to be a
+way to learn the subject, not only to use the function.</p>
+<p><strong>3. Physical models are confronted with something they cannot fake.</strong>
+Not with their own past output: with a closed form, a conservation law,
+a published table, or another implementation. Those confrontations live
+in <code class="docutils literal notranslate"><span class="pre">validation/</span></code> as readable scripts, they print the numbers they
+obtain, and they run in continuous integration – so a model that
+drifts away from its reference breaks the build. The comparison with
+OptiCommPy above is one of them.</p>
+</section>
+<section id="other-reasons">
+<h2>Other reasons<a class="headerlink" href="#other-reasons" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>Modularity</strong>: Build custom communication chains by combining reusable processor blocks.</p></li>
-<li><p><strong>A familiar way to assemble a chain</strong>: the <code class="docutils literal notranslate"><span class="pre">Processor</span></code> / <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> pair is deliberately modelled on PyTorch’s <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> / <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code>. If you have built a neural network in PyTorch, you already know how to build a communication chain here – and the same flexibility follows: blocks are reconfigured after construction, chains are nested, seeded, swept and serialized without rewriting them.</p></li>
 <li><p><strong>One set of conventions across domains</strong>: the same axis conventions, the same estimator conventions and the same chain services apply whether the chain is an OFDM link, a MIMO detector, a coded system or an optical fibre.</p></li>
 <li><p><strong>Ease of Use</strong>: Get started quickly with clear examples and comprehensive documentation.</p></li>
-<li><p><strong>Checked against references, not against itself</strong>: every physical model in the library is confronted with something it cannot fake – a closed form, a conservation law, a published table, or another implementation. The scripts that do it live in <code class="docutils literal notranslate"><span class="pre">validation/</span></code> and run in continuous integration.</p></li>
 <li><p><strong>Open Source</strong>: As a community-driven project, <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> encourages collaboration and continuous improvement.</p></li>
 </ul>
 </section>
@@ -507,7 +544,8 @@
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-with-other-solutions">Comparison with Other Solutions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-choose-comnumpy">Why Choose <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-makes-comnumpy-different">What makes <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> different</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-reasons">Other reasons</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-concepts">Core Concepts</a></li>
 </ul>
   </nav></div>

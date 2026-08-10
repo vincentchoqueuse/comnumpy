@@ -470,6 +470,18 @@
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedMixin</span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin" title="Link to this definition">#</a></dt>
 <dd><dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.validate_paths">
+<span class="sig-name descname"><span class="pre">validate_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.validate_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths" title="Link to this definition">#</a></dt>
+<dd><p>Refuse a multi-path signal (D49).</p>
+<p>A data-aided estimator is fitted against one reference sequence,
+so it measures one record. Which of the two families it belongs
+to – shared over the paths, or one per path – depends on the
+quantity and on where in the receiver it sits, and the caller is
+the one who knows: this says so instead of broadcasting by
+accident.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.get_reference">
 <span class="sig-name descname"><span class="pre">get_reference</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.get_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.get_reference" title="Link to this definition">#</a></dt>
 <dd><p>Retrieve the reference signal associated with the model.</p>
@@ -505,7 +517,9 @@ a direct-conversion (zero-IF) receiver, where the self-mixing of the
 local oscillator adds a constant term to the baseband signal.</p>
 <p>Axes: <em>declared axis</em> – the mean <span class="math notranslate nohighlight">\(\mu_x\)</span> is computed along
 <code class="docutils literal notranslate"><span class="pre">axis</span></code> (default 0) and broadcast over the remaining axes; use
-<code class="docutils literal notranslate"><span class="pre">axis=-1</span></code> for the canonical serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">axis=-1</span></code> for the canonical serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>. The
+estimand is <strong>per path</strong> (D49): a DC offset belongs to a converter,
+so <code class="docutils literal notranslate"><span class="pre">axis=-1</span></code> on a <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> signal gives each path its own.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param value<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Target mean value <span class="math notranslate nohighlight">\(\alpha\)</span> of the output. Default is 0.0,
@@ -681,8 +695,12 @@ or sign flip) is left to a downstream phase compensator. The
 estimator is therefore <em>not</em> the Gram-Schmidt orthogonalization
 procedure (GSOP) of Fatadin <em>et al.</em>, which whitens by successive
 projection and keeps the in-phase axis fixed.</p>
-<p>Axes: <em>declared axis</em> – expects a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
-<span class="math notranslate nohighlight">\(2 \times 2\)</span> covariance is estimated over the whole record.</p>
+<p>Axes: <em>declared axis</em> – accepts <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>. The
+estimand is <strong>per path</strong> (D49): an IQ imbalance belongs to a
+receiver, so each path gets its own <span class="math notranslate nohighlight">\(2 \times 2\)</span> covariance
+and its own whitening. Pooling them, which is what stacking the real
+and imaginary parts of a multi-path array used to do, mixes the
+paths and returns a signal worse than the one it was given.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param should_fit<span class="colon">:</span></dt>
 <dd class="field-odd"><p>If True (default), <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span> are
@@ -781,9 +799,14 @@ search over <span class="math notranslate nohighlight">\(\omega_0\)</span>, foll
 the criterion by Newton’s method (or by plain gradient ascent). The
 Newton step uses the exact first and second derivatives of the
 periodogram with respect to <span class="math notranslate nohighlight">\(\omega\)</span>.</p>
-<p>Axes: <em>declared axis</em> – expects a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
+<p>Axes: <em>declared axis</em> – accepts <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>; the
 correction <span class="math notranslate nohighlight">\(e^{-j\widehat{\omega}_0 n}\)</span> uses the sample index
-<span class="math notranslate nohighlight">\(n\)</span> along that axis.</p>
+<span class="math notranslate nohighlight">\(n\)</span> along the last axis. The estimand is <strong>shared</strong> (D49): a
+frequency offset is one laser beating against one local oscillator,
+so the periodogram is accumulated over every path and a single
+<span class="math notranslate nohighlight">\(\widehat{\omega}_0\)</span> is applied to all of them. That is not
+only tidier than one estimate per path – it is the better
+estimator, since it sees all the data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param w0_init<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Initial value of <span class="math notranslate nohighlight">\(\omega_0\)</span> in rad/sample, used as the
@@ -929,9 +952,12 @@ least-squares search (<code class="docutils literal notranslate"><span class="pr
 <span class="math notranslate nohighlight">\(\theta_0\)</span>. Being decision-directed, it inherits the
 <span class="math notranslate nohighlight">\(2\pi/M\)</span> phase ambiguity of the constellation, so
 <span class="math notranslate nohighlight">\(\theta_0\)</span> must lie in the correct basin.</p>
-<p>Axes: <em>declared axis</em> – the estimation stage expects a 1D serial
-signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> (the residuals are stacked into a single vector); the
-correction itself is element-wise.</p>
+<p>Axes: <em>declared axis</em> – accepts <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>. The
+estimand is <strong>per path</strong> (D49): after a butterfly equalizer each
+output carries its own residual rotation, so one angle is fitted per
+path and <code class="docutils literal notranslate"><span class="pre">theta_</span></code> holds one value each. A phase <em>common</em> to the
+paths, laser noise before any equalizer, is the shared case – fit
+it on the flattened signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param alphabet<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Modulation alphabet <span class="math notranslate nohighlight">\(\mathcal{A}\)</span>, a 1D array of
@@ -1675,6 +1701,7 @@ pp. 501-507, 1993 (interpolation-based fractional timing recovery).</p></li>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.validate_paths()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.get_reference"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.get_reference()</span></code></a></li>
 </ul>
 </li>

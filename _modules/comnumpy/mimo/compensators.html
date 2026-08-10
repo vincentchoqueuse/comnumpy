@@ -773,9 +773,39 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    updates :math:`\mathbf{H}` sample by sample, and ``partial_fit(X)``</span>
 <span class="sd">    runs one adaptation pass over ``X`` from the current state.</span>
 
+<span class="sd">    Staged adaptation</span>
+<span class="sd">    -----------------</span>
+<span class="sd">    **CMA is the only one of the three that converges from a cold</span>
+<span class="sd">    start.** RDE and DD both need decisions that are already roughly</span>
+<span class="sd">    right: started from the identity equalizer on 16-QAM, RDE stalls --</span>
+<span class="sd">    3.5 dB where the noise floor is 24. The usual recipe is to run CMA</span>
+<span class="sd">    first and switch once it has opened the eye, which is what a</span>
+<span class="sd">    ``[&#39;cma&#39;, &#39;rde&#39;]`` schedule means in the literature. Two ways to do</span>
+<span class="sd">    it here:</span>
+
+<span class="sd">    * between passes, with :meth:`partial_fit` and :meth:`set_params`</span>
+<span class="sd">      (or a plain assignment) to change ``mode`` and ``mu``;</span>
+<span class="sd">    * inside a single pass, by overriding</span>
+<span class="sd">      :meth:`process_after_iteration`, which is called after every</span>
+<span class="sd">      output sample with the most recent outputs and exists for exactly</span>
+<span class="sd">      this (see ``examples/mimo/one_shot_CMA.py``).</span>
+
+<span class="sd">    Measured on a static Jones rotation with a 24 dB noise floor, the</span>
+<span class="sd">    three stages give 21.0, 23.9 and 23.98 dB: CMA opens the eye, RDE</span>
+<span class="sd">    takes it to within a tenth of the floor, and DD closes what is</span>
+<span class="sd">    left.</span>
+
 <span class="sd">    Axes: *declared axis* -- expects the dual-polarization layout</span>
 <span class="sd">    ``(2, N)``, produces ``(2, N // oversampling)`` (one output sample</span>
 <span class="sd">    per ``oversampling`` input samples: fractionally spaced equalizer).</span>
+
+<span class="sd">    **Delay.** The centre tap of the initial equalizer sits :math:`L`</span>
+<span class="sd">    input samples back, so output sample :math:`k` is aligned with</span>
+<span class="sd">    input sample :math:`k \cdot os - L`: the block has a group delay of</span>
+<span class="sd">    :math:`L` input samples, and comparing its output with the</span>
+<span class="sd">    transmitted symbols without accounting for it reads as pure noise.</span>
+<span class="sd">    The first :math:`(2L+1)/os` output samples are never written -- the</span>
+<span class="sd">    filter has no history yet -- and are left at zero.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -790,10 +820,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    oversampling : int, optional, keyword-only</span>
 <span class="sd">        Oversampling factor of the input. When greater than one, the</span>
 <span class="sd">        algorithm implements a fractionally spaced equalizer. Default is 1.</span>
-<span class="sd">    norm : bool, optional, keyword-only</span>
-<span class="sd">        Flag to normalize the filter weights. Default is True.</span>
 <span class="sd">    mode : {&quot;cma&quot;, &quot;rde&quot;, &quot;dd&quot;}, optional, keyword-only</span>
-<span class="sd">        Blind loss used for the update. Default is ``&quot;cma&quot;``.</span>
+<span class="sd">        Blind loss used for the update. Default is ``&quot;cma&quot;``. See</span>
+<span class="sd">        *Staged adaptation* above: only ``&quot;cma&quot;`` converges from a cold</span>
+<span class="sd">        start.</span>
+<span class="sd">    sub_block_length : int, optional, keyword-only</span>
+<span class="sd">        Number of recent output samples handed to</span>
+<span class="sd">        :meth:`process_after_iteration`. Default is 20.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the processor instance. Default is ``&quot;mimo filter&quot;``.</span>
 
@@ -836,7 +869,6 @@ window.runMermaid = runMermaid;</script>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">oversampling</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cma&quot;</span><span class="p">,</span> <span class="s2">&quot;rde&quot;</span><span class="p">,</span> <span class="s2">&quot;dd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cma&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># a field, not a bare class attribute: unannotated it was excluded</span>
     <span class="c1"># from __slots__, so `compensator.sub_block_length = 30` raised</span>
@@ -892,8 +924,23 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">return</span> <span class="n">term1</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nb">input</span>
 
+<div class="viewcode-block" id="BlindDualMIMOCompensator.process_after_iteration">
+<a class="viewcode-back" href="../../../documentation/mimo/compensators.html#comnumpy.mimo.compensators.BlindDualMIMOCompensator.process_after_iteration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process_after_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Y_sub</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called after each output sample; does nothing by default.</span>
+
+<span class="sd">        Override it to schedule the stages of the adaptation (switch</span>
+<span class="sd">        ``mode`` once the eye is open) or to correct a residual phase.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n : int</span>
+<span class="sd">            Index of the output sample just produced.</span>
+<span class="sd">        Y_sub : np.ndarray</span>
+<span class="sd">            The last ``sub_block_length`` outputs, ``(2, K)``, oldest</span>
+<span class="sd">            first.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
 
 <div class="viewcode-block" id="BlindDualMIMOCompensator.partial_fit">
 <a class="viewcode-back" href="../../../documentation/mimo/compensators.html#comnumpy.mimo.compensators.BlindDualMIMOCompensator.partial_fit">[docs]</a>
@@ -922,10 +969,16 @@ window.runMermaid = runMermaid;</script>
             <span class="n">y_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H_</span><span class="p">),</span> <span class="n">x_sub</span><span class="p">)</span>  <span class="c1"># filter output</span>
             <span class="n">grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">x_sub</span><span class="p">,</span> <span class="n">y_sub</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">H_</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">*</span><span class="n">grad</span>  <span class="c1"># implement equation in matrix form directly</span>
-            <span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="o">//</span><span class="n">os</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_sub</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">n</span><span class="o">//</span><span class="n">os</span>
+            <span class="n">Y</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_sub</span>
 
-            <span class="c1"># perform process after_iteration</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">process_after_iteration</span><span class="p">(</span><span class="n">n</span><span class="o">//</span><span class="n">os</span><span class="p">,</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="o">//</span><span class="n">os</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">100</span><span class="p">])</span>
+            <span class="c1"># the last sub_block_length outputs. This used to be</span>
+            <span class="c1"># Y[:, index-1::-100], a strided view of the *whole* history:</span>
+            <span class="c1"># it grew with n, so the hook cost O(n) per sample and the</span>
+            <span class="c1"># pass was quadratic -- and sub_block_length, which names</span>
+            <span class="c1"># exactly this, went unused.</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_block_length</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_after_iteration</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">Y</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">Y</span></div>
 

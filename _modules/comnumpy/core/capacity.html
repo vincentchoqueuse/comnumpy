@@ -764,6 +764,84 @@ window.runMermaid = runMermaid;</script>
 <span class="c1"># library supports.</span>
 <span class="n">_QUAD_CHUNK</span> <span class="o">=</span> <span class="mi">4096</span>
 
+<span class="c1"># Truncation of the classical rule. The Gaussian weight at 8 standard</span>
+<span class="c1"># deviations is 5e-15 of its peak and the tail beyond it carries 1.2e-15</span>
+<span class="c1"># of the mass -- below the accuracy any rule reaches on this integrand,</span>
+<span class="c1"># so the span is fixed and the accuracy knob stays ``n_nodes`` alone.</span>
+<span class="n">_SIMPSON_SPAN</span> <span class="o">=</span> <span class="mf">8.0</span>
+
+<span class="c1"># Measured on 16-QAM at rho = 10, against a 200-node Gauss-Hermite</span>
+<span class="c1"># reference: Simpson is 1.9e-2 bit off at 20 nodes, 1.2e-4 at 40 and</span>
+<span class="c1"># 1.1e-9 at 80, where Gauss-Hermite is already at 1.1e-5, 7.9e-7 and</span>
+<span class="c1"># 3.8e-10. Roughly a factor two in nodes, i.e. four in cost, for the</span>
+<span class="c1"># same accuracy -- which is why the default is what it is, and why the</span>
+<span class="c1"># classical rule is still usable enough to be worth keeping as a check</span>
+<span class="c1"># rather than as a museum piece.</span>
+<span class="n">_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;gauss-hermite&quot;</span><span class="p">,</span> <span class="s2">&quot;simpson&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_noise_quadrature</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Nodes and weights of a standard normal expectation, per dimension.</span>
+
+<span class="sd">    Both capacity functions integrate a smooth function against a</span>
+<span class="sd">    Gaussian weight, so both reduce to the same one-dimensional rule</span>
+<span class="sd">    :math:`\mathbb{E}\left[f(X)\right] \approx \sum_i w_i f(x_i)` with</span>
+<span class="sd">    :math:`X \sim \mathcal{N}(0,1)`, applied as a tensor product on the</span>
+<span class="sd">    two dimensions of the complex noise. Only the rule differs between</span>
+<span class="sd">    methods; nothing downstream of this function knows which one it got.</span>
+
+<span class="sd">    ``&quot;gauss-hermite&quot;`` places :math:`n` nodes at the roots of the</span>
+<span class="sd">    :math:`n`-th Hermite polynomial and solves for the weights, which</span>
+<span class="sd">    makes it exact for every polynomial of degree up to :math:`2n - 1`</span>
+<span class="sd">    -- twice what a fixed grid of the same size can reach -- and needs no</span>
+<span class="sd">    truncation, since the rule is built on the infinite domain.</span>
+
+<span class="sd">    ``&quot;simpson&quot;`` is the textbook composite rule on a truncated grid.</span>
+<span class="sd">    It is not a strawman here: the integrand decays to zero with all its</span>
+<span class="sd">    derivatives, so Euler-Maclaurin&#39;s endpoint corrections vanish and the</span>
+<span class="sd">    rule converges far faster than its nominal :math:`O(h^4)`. What</span>
+<span class="sd">    Gauss-Hermite buys is node *placement* -- it spends its evaluations</span>
+<span class="sd">    where the weight is -- and no truncation to choose.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    method : str</span>
+<span class="sd">        ``&quot;gauss-hermite&quot;`` or ``&quot;simpson&quot;``.</span>
+<span class="sd">    n_nodes : int</span>
+<span class="sd">        Nodes per dimension. Simpson needs an odd count, so an even one</span>
+<span class="sd">        is raised by one.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple of (np.ndarray, np.ndarray)</span>
+<span class="sd">        Nodes and weights, both of shape ``(n,)``. The weights of an</span>
+<span class="sd">        exact rule sum to one.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``method`` is not one of the two, or ``n_nodes`` is below 2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_nodes</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;a quadrature needs at least 2 nodes, got </span><span class="si">{</span><span class="n">n_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;gauss-hermite&quot;</span><span class="p">:</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">hermite_e</span><span class="o">.</span><span class="n">hermegauss</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>   <span class="c1"># normalized N(0, 1)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;simpson&quot;</span><span class="p">:</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">n_nodes</span> <span class="k">if</span> <span class="n">n_nodes</span> <span class="o">%</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">n_nodes</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">_SIMPSON_SPAN</span><span class="p">,</span> <span class="n">_SIMPSON_SPAN</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">coefficients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+        <span class="n">coefficients</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.0</span>                   <span class="c1"># 1, 4, 2, 4, ..., 4, 1</span>
+        <span class="n">coefficients</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">nodes</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span><span class="p">,</span> <span class="p">(</span><span class="n">step</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">coefficients</span> <span class="o">*</span> <span class="n">density</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;unknown integration method </span><span class="si">{</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_METHODS</span><span class="si">}</span><span class="s2"> -- &#39;gauss-hermite&#39; is the default and the accurate &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;one, &#39;simpson&#39; is the classical rule kept as an independent &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;check of it.&quot;</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="awgn_capacity">
 <a class="viewcode-back" href="../../../documentation/core/capacity.html#comnumpy.core.capacity.awgn_capacity">[docs]</a>
@@ -809,7 +887,8 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="constellation_capacity">
 <a class="viewcode-back" href="../../../documentation/core/capacity.html#comnumpy.core.capacity.constellation_capacity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">constellation_capacity</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-                           <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_GH_NODES</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                           <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_GH_NODES</span><span class="p">,</span>
+                           <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gauss-hermite&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mutual information of a discrete constellation over AWGN.</span>
 
 <span class="sd">    Signal Model</span>
@@ -831,9 +910,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ceiling a coded system using that constellation can approach --</span>
 <span class="sd">    not the Shannon capacity, which assumes a Gaussian input.</span>
 
-<span class="sd">    The expectation is evaluated by Gauss-Hermite quadrature on each of</span>
-<span class="sd">    the two noise dimensions, which is exact for the smooth integrand</span>
-<span class="sd">    here and needs no random draws.</span>
+<span class="sd">    The expectation is a two-dimensional integral against a Gaussian</span>
+<span class="sd">    weight, evaluated by quadrature -- no random draws. Which rule does</span>
+<span class="sd">    it is left open by ``method``; see :func:`_noise_quadrature` for what</span>
+<span class="sd">    separates them.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -843,13 +923,24 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    snr : float or np.ndarray</span>
 <span class="sd">        Signal-to-noise ratio :math:`\rho = 1/\sigma^2`, linear.</span>
 <span class="sd">    n_nodes : int, optional, keyword-only</span>
-<span class="sd">        Gauss-Hermite nodes per noise dimension. Default 20.</span>
+<span class="sd">        Quadrature nodes per noise dimension, so the cost grows as</span>
+<span class="sd">        :math:`n^2`. Default 40.</span>
+<span class="sd">    method : str, optional, keyword-only</span>
+<span class="sd">        ``&quot;gauss-hermite&quot;`` (default), the rule matched to the Gaussian</span>
+<span class="sd">        weight, or ``&quot;simpson&quot;``, the classical composite rule on a</span>
+<span class="sd">        truncated grid. Same quantity, different numerics: the second is</span>
+<span class="sd">        there to be able to check the first without leaving the library.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    np.ndarray</span>
 <span class="sd">        Mutual information in bits per channel use, in</span>
 <span class="sd">        :math:`[0, \log_2 M]`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``method`` is not one of the two rules above.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -862,6 +953,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; qpsk = get_alphabet(&quot;PSK&quot;, 4)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(constellation_capacity(qpsk, np.array([1.0, 1e4])), 4))</span>
 <span class="sd">    [0.9719 2.    ]</span>
+
+<span class="sd">    The classical rule lands on the same number, which is the point of</span>
+<span class="sd">    keeping it -- it checks the default rule without leaving the library:</span>
+
+<span class="sd">    &gt;&gt;&gt; qam16 = get_alphabet(&quot;QAM&quot;, 16)</span>
+<span class="sd">    &gt;&gt;&gt; gauss = constellation_capacity(qam16, 10.0)</span>
+<span class="sd">    &gt;&gt;&gt; simpson = constellation_capacity(qam16, 10.0, method=&quot;simpson&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round([float(gauss), float(simpson)], 3))</span>
+<span class="sd">    [3.164 3.164]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">alphabet</span><span class="o">.</span><span class="n">size</span>
@@ -869,8 +969,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">snr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
     <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span>
 
-    <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">hermite_e</span><span class="o">.</span><span class="n">hermegauss</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>          <span class="c1"># normalized N(0, 1)</span>
+    <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">_noise_quadrature</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">)</span>
     <span class="c1"># complex noise: independent N(0, sigma2/2) on each dimension</span>
     <span class="n">grid_r</span><span class="p">,</span> <span class="n">grid_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;ij&quot;</span><span class="p">)</span>
     <span class="n">w2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
@@ -902,7 +1001,8 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="bicm_capacity">
 <a class="viewcode-back" href="../../../documentation/core/capacity.html#comnumpy.core.capacity.bicm_capacity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">bicm_capacity</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-                  <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_GH_NODES</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                  <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_GH_NODES</span><span class="p">,</span>
+                  <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gauss-hermite&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;BICM capacity: the bound a bit-interleaved coded system chases.</span>
 
 <span class="sd">    Signal Model</span>
@@ -932,12 +1032,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    snr : float or np.ndarray</span>
 <span class="sd">        Signal-to-noise ratio, linear.</span>
 <span class="sd">    n_nodes : int, optional, keyword-only</span>
-<span class="sd">        Gauss-Hermite nodes per noise dimension. Default 20.</span>
+<span class="sd">        Quadrature nodes per noise dimension. Default 40.</span>
+<span class="sd">    method : str, optional, keyword-only</span>
+<span class="sd">        ``&quot;gauss-hermite&quot;`` (default) or ``&quot;simpson&quot;``, as in</span>
+<span class="sd">        :func:`constellation_capacity`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    np.ndarray</span>
 <span class="sd">        BICM capacity in bits per channel use.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the constellation size is not a power of two, or ``method``</span>
+<span class="sd">        is not one of the two rules.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -968,8 +1077,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
     <span class="n">bit_value</span> <span class="o">=</span> <span class="p">((</span><span class="n">labels</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">hermite_e</span><span class="o">.</span><span class="n">hermegauss</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">_noise_quadrature</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">)</span>
     <span class="n">grid_r</span><span class="p">,</span> <span class="n">grid_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;ij&quot;</span><span class="p">)</span>
     <span class="n">unit_noise</span> <span class="o">=</span> <span class="p">(</span><span class="n">grid_r</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">grid_i</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">w2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>

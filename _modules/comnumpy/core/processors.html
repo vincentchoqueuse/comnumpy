@@ -1948,6 +1948,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    pilots). The window half-length :math:`L` sets the usual trade-off:</span>
 <span class="sd">    a long window averages the noise, a short one follows a fast phase.</span>
 
+<span class="sd">    The estimand is **per path** (D49): a ``(..., P, N)`` signal gets one</span>
+<span class="sd">    phase trajectory per path, and ``theta_`` has the shape of the</span>
+<span class="sd">    input. After a butterfly equalizer each output carries its own</span>
+<span class="sd">    residual rotation, so tracking the paths jointly would fit a single</span>
+<span class="sd">    phase to two different ones.</span>
+
 <span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the</span>
 <span class="sd">    search loops over the sample axis.</span>
 
@@ -2027,7 +2033,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">total_error</span> <span class="o">/</span> <span class="n">count</span> <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Track one path: the search itself, on a 1-D record.&quot;&quot;&quot;</span>
         <span class="n">y_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
         <span class="n">optimal_phases</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -2038,9 +2045,23 @@ window.runMermaid = runMermaid;</script>
             <span class="n">optimal_phases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_phi</span><span class="p">)</span>
             <span class="n">y_corrected</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">best_phi</span><span class="p">)</span>
 
-        <span class="c1"># estimated quantity (D23), exposed for the caller to plot (D25, D42)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">optimal_phases</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y_corrected</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">optimal_phases</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">signal</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y_corrected</span><span class="p">,</span> <span class="n">phases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># one trajectory per path (D49): after a butterfly equalizer</span>
+            <span class="c1"># each output carries its own residual rotation, so tracking</span>
+            <span class="c1"># them jointly would fit one phase to two different ones</span>
+            <span class="n">tracked</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_track</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">signal</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+            <span class="n">y_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tracked</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">phases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tracked</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># estimated quantity (D23), exposed for the caller to plot (D25, D42)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">phases</span>
         <span class="k">return</span> <span class="n">y_corrected</span></div>
 
 </pre></div>

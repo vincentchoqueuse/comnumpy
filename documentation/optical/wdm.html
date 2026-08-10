@@ -767,11 +767,14 @@ leaky otherwise – the block warns when it does not.</p>
 the grid’s <em>occupied</em> bandwidth, so for a pulse shaped at roll-off
 <span class="math notranslate nohighlight">\(\rho\)</span> it must be <span class="math notranslate nohighlight">\(R_s(1 + \rho)\)</span> and not <span class="math notranslate nohighlight">\(R_s\)</span>;
 setting it to the symbol rate clips the skirts of the pulse, which
-costs far more than it looks – measured on an 11-channel
-32 GBd comb at <span class="math notranslate nohighlight">\(\rho = 0.01\)</span>, an implementation floor of
-33.5 dB instead of 54.1 dB. The block therefore measures how much
-energy its own mask throws away and warns when that is more than a
-thousandth.</p>
+costs far more than it looks – measured on an 11-channel 32 GBd
+comb at <span class="math notranslate nohighlight">\(\rho = 0.01\)</span>, an implementation floor of 33.5 dB
+instead of 54.1 dB. That mistake is caught by
+<a class="reference internal" href="#comnumpy.optical.wdm.WDMMultiplexer" title="comnumpy.optical.wdm.WDMMultiplexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">WDMMultiplexer</span></code></a>, not here: at the receiver the amplified
+spontaneous emission is white and fills the guard band, so measuring
+the energy this mask rejects measures the <strong>noise</strong>, not the
+clipping. Same comb, same grid: 0.12 % of the rejected energy after
+700 km, against 0.0004 % of genuinely clipped signal.</p>
 <p>Conversely, once the mask is wide enough to pass the channel it
 changes nothing: the matched filter downstream does the selecting.
 Measured on the same comb, a mask at <span class="math notranslate nohighlight">\(R_s(1+\rho)\)</span>, one at the
@@ -831,18 +834,6 @@ keeps the rest of the chain shape-agnostic.</p>
 <dt class="sig sig-object py" id="comnumpy.optical.wdm.WDMDemultiplexer.mask_">
 <span class="sig-name descname"><span class="pre">mask_</span></span><a class="headerlink" href="#comnumpy.optical.wdm.WDMDemultiplexer.mask_" title="Link to this definition">#</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">(N,)</span></code> boolean DFT mask of the channel filter.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="comnumpy.optical.wdm.WDMDemultiplexer.guard_">
-<span class="sig-name descname"><span class="pre">guard_</span></span><a class="headerlink" href="#comnumpy.optical.wdm.WDMDemultiplexer.guard_" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(N,)</span></code> boolean DFT mask of the guard band the clipping check
-watches: outside the channel, inside the half spacing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -941,7 +932,6 @@ watches: outside the channel, inside the half spacing.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.phasors_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.phasors_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.mask_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.mask_</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.wdm.WDMDemultiplexer.guard_"><code class="docutils literal notranslate"><span class="pre">WDMDemultiplexer.guard_</span></code></a></li>
 </ul>
 </li>
 </ul>

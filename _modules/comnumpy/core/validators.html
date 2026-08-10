@@ -780,6 +780,74 @@ window.runMermaid = runMermaid;</script>
             <span class="sa">f</span><span class="s2">&quot;reference must be a numeric array, got dtype=object from </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> &quot;</span>
             <span class="s2">&quot;-- extract the reference signal with Sequential(taps=...) first.&quot;</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="validate_single_path">
+<a class="viewcode-back" href="../../../documentation/core/validators.html#comnumpy.core.validators.validate_single_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_single_path</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">estimand</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Refuse a multi-path signal in an estimator that measures one record.</span>
+
+<span class="sd">    Decision D49. Once a chain carries several paths on the antenna axis</span>
+<span class="sd">    -- the two polarizations of a coherent link, the branches of a MIMO</span>
+<span class="sd">    receiver -- every estimator has to answer a question it could ignore</span>
+<span class="sd">    while signals were one-dimensional: **is what it measures one</span>
+<span class="sd">    physical quantity shared by all the paths, or one per path?**</span>
+
+<span class="sd">    * *Shared*: a carrier frequency offset comes from one laser beating</span>
+<span class="sd">      against one local oscillator, so there is a single number and it</span>
+<span class="sd">      should be estimated **jointly**, over all the paths at once.</span>
+<span class="sd">      Estimating it per path throws away half the data and produces two</span>
+<span class="sd">      numbers that then have to be reconciled.</span>
+<span class="sd">    * *Per path*: an IQ imbalance belongs to a receiver, a DC offset to</span>
+<span class="sd">      an analog-to-digital converter, a residual rotation to whichever</span>
+<span class="sd">      output of a butterfly equalizer produced it. One estimate each.</span>
+
+<span class="sd">    Letting numpy broadcast decides the question by accident, and it</span>
+<span class="sd">    decides it wrong in both directions: it silently pools what should</span>
+<span class="sd">    be separate, or crashes with a shape error that says nothing. This</span>
+<span class="sd">    validator is for the blocks that have not been generalized: it</span>
+<span class="sd">    states which of the two they are and what to do instead.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : np.ndarray</span>
+<span class="sd">        Signal about to be processed.</span>
+<span class="sd">    block : str</span>
+<span class="sd">        Name of the calling block, for the message.</span>
+<span class="sd">    estimand : str</span>
+<span class="sd">        What the block measures, e.g. ``&quot;a delay&quot;``, in a form that</span>
+<span class="sd">        reads after &quot;estimates&quot;.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If ``X`` has more than one path on its antenna axis.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; validate_single_path(np.zeros(8), &quot;Block&quot;, &quot;a delay&quot;)   # fine</span>
+<span class="sd">    &gt;&gt;&gt; try:</span>
+<span class="sd">    ...     validate_single_path(np.zeros((2, 8)), &quot;Block&quot;, &quot;a delay&quot;)</span>
+<span class="sd">    ... except Exception as error:</span>
+<span class="sd">    ...     print(type(error).__name__)</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>      <span class="c1"># local: avoids a cycle</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="p">())</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="n">estimand</span><span class="si">}</span><span class="s2"> over one record, and got a signal &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> paths on its antenna axis (shape </span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">). &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Decide which it is: if the quantity is shared by the paths -- one &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;laser, one local oscillator -- estimate it jointly on the flattened &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;signal and apply the result to all of them; if it belongs to each &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;path -- one converter, one receiver, one equalizer output -- apply &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;one instance of this block per path. Letting it broadcast would &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;pick one of the two by accident (decision D49).&quot;</span><span class="p">)</span></div>
+
 </pre></div>
 
                 </article>
