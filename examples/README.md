@@ -69,10 +69,11 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/one_shot_awgn.py` | 2.0 s | yes |
 | `simple/one_shot_cfo_iq_compensation.py` | 2.4 s | yes |
 | `mimo/one_shot_CMA.py` | 5.1 s | yes |
-| `mimo/one_shot_alamouti.py` | 8.9 s | yes |
+
 | `ofdm/monte_carlo_profiling.py` | 5.8 s | yes |
 | `simple/profiling_awgn_ofdm.py` | 5.9 s | yes |
 | `ofdm/one_shot_ofdm_papr_reduction.py` | 6.8 s | yes |
+| `mimo/one_shot_alamouti.py` | 14.4 s | yes |
 | `simple/monte_carlo_awgn.py` | 12.4 s | yes |
 | `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes — the slowest one kept |
 | `mimo/monte_carlo_simulation_1.py` | 32 s | skipped — slow |
