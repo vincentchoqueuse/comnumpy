@@ -109,7 +109,7 @@ Trois constats structurants :
 1. **`optical/` est le différenciateur revendiqué et le module le moins
    testé** : 0 test, et il contient déjà un bloc entièrement mort
    (`PhaseNoise`). Le risque de la §8 n'est pas théorique.
-2. **Les docstrings ne sont pas exécutées.** `compute_PAPR` documente
+2. **Les docstrings ne sont pas exécutées.** `compute_papr` documente
    `2.0` et calcule `1.4606` ; `compute_evm` documente `0.0506` et
    calcule `0.0365`. Les implémentations sont cohérentes — ce sont les
    valeurs des exemples qui sont inventées. Pour une lib dont le produit
@@ -1303,7 +1303,7 @@ ou à corriger.
 
 | Emplacement | Défaut |
 |---|---|
-| `ofdm/metrics.py` — `compute_PAPR` | Documente `2.0`, calcule `1.4606` (implémentation cohérente, exemple inventé) |
+| `ofdm/metrics.py` — `compute_papr` | Documente `2.0`, calcule `1.4606` (implémentation cohérente, exemple inventé) |
 | `core/metrics.py` — `compute_evm` | Documente `0.0506`, calcule `0.0365` |
 | `core/metrics.py` — `compute_ccdf` | Forme de sortie documentée transposée par rapport à la sortie réelle |
 | `core/generators.py` — `GaussianGenerator` | Affiche des réels issus du RNG *legacy* pour une sortie complexe |

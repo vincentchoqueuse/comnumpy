@@ -7,7 +7,7 @@ from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
-from comnumpy.ofdm.metrics import compute_PAPR
+from comnumpy.ofdm.metrics import compute_papr
 
 # This script reproduces the first figure of the following article :
 # - “An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).
@@ -43,7 +43,7 @@ N = N_sc*os*L
 y = chain(2**16)
 y = np.ravel(y) # perform parallel2serial conversion (C-order flatten of (..., T, F) blocks)
 
-papr_dB = compute_PAPR(y, unit="dB", axis=-1)
+papr_dB = compute_papr(y, unit="dB", axis=-1)
 plt.plot(np.abs(y))
 plt.ylabel("$|x[n]|^2$")
 plt.xlabel("$n$ [sample]")
@@ -67,7 +67,7 @@ for N_sc in N_sc_list:
     y = chain(N)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
+    papr_dB_array = compute_papr(y, unit="dB", axis=-1)
 
     # display experimental curves
     papr_dB, ccdf = compute_ccdf(papr_dB_array)

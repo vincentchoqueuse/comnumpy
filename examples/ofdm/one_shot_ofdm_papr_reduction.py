@@ -9,7 +9,7 @@ from comnumpy.core.utils import get_alphabet
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 from comnumpy.ofdm.predistorders import IctPaprReductor
-from comnumpy.ofdm.metrics import compute_PAPR
+from comnumpy.ofdm.metrics import compute_papr
 
 
 # This script reproduces the second figure of the following article :
@@ -53,7 +53,7 @@ for processor in processor_list:
     y = processor(x)
 
     # evaluate metric
-    papr_dB_array = compute_PAPR(y, unit="dB", axis=-1)
+    papr_dB_array = compute_papr(y, unit="dB", axis=-1)
     papr_dB, ccdf = compute_ccdf(papr_dB_array)
     plt.semilogy(papr_dB, ccdf, label=processor.name)
 

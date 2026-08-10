@@ -458,7 +458,7 @@ def compute_evm(X_target, X_estimated, axis=None):
 
 
 
-def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
+def compute_effective_snr(X_target, X_estimated, sigma2_s=1, unit="natural"):
     r"""
     Compute the effective Signal-to-Noise Ratio (SNR) between a target and an estimated signal.
 
@@ -526,9 +526,9 @@ def compute_effective_SNR(X_target, X_estimated, sigma2_s=1, unit="natural"):
     --------
     >>> x = np.ones(4)
     >>> x_hat = np.array([1.1, 0.9, 1.1, 0.9])   # error power 0.01
-    >>> print(round(float(compute_effective_SNR(x, x_hat)), 3))
+    >>> print(round(float(compute_effective_snr(x, x_hat)), 3))
     100.0
-    >>> print(round(float(compute_effective_SNR(x, x_hat, unit="dB")), 3))
+    >>> print(round(float(compute_effective_snr(x, x_hat, unit="dB")), 3))
     20.0
     """
     x_target = np.ravel(X_target)
@@ -646,7 +646,7 @@ def compute_ccdf(data, axis=-1):
     i.e. the fraction of samples strictly above :math:`z_{(i)}` (the last
     entry is therefore exactly 0). This is the standard way of plotting
     the PAPR distribution of an OFDM signal: feed
-    :func:`comnumpy.ofdm.metrics.compute_PAPR` values in, then plot
+    :func:`comnumpy.ofdm.metrics.compute_papr` values in, then plot
     ``ccdf`` against ``sorted_data`` on a semilog-y axis.
 
     Axes: *declared axis* -- sorting and the sample count :math:`N` use
@@ -697,7 +697,7 @@ def compute_ccdf(data, axis=-1):
     return sorted_data, ccdf
 
 
-def calculate_acpr(signal, bandwidth, sampling_rate):
+def compute_acpr(signal, bandwidth, sampling_rate):
     r"""
     Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.
 
@@ -768,7 +768,7 @@ def calculate_acpr(signal, bandwidth, sampling_rate):
     >>> n = np.arange(1000)
     >>> x = np.cos(2 * np.pi * 4 * n / f_s)     # single tone inside the channel
     >>> y = x - 0.2 * x ** 3                    # cubic nonlinearity -> IM3 at 12 Hz
-    >>> print(np.round(calculate_acpr(y, B, f_s), 4))
+    >>> print(np.round(compute_acpr(y, B, f_s), 4))
     [-27.6193 -27.6193]
     """
 
@@ -866,7 +866,8 @@ def signal_report(x, compute_papr: bool = False,
         "avg_power": float(np.mean(abs_x ** 2)),
     }
     if compute_papr:
-        # local import to avoid a circular dependency (ofdm imports core)
-        from comnumpy.ofdm.metrics import compute_PAPR
-        report["papr"] = float(compute_PAPR(abs_x, unit=papr_unit))
+        # local import to avoid a circular dependency (ofdm imports core);
+        # aliased because the boolean flag above already owns the name
+        from comnumpy.ofdm.metrics import compute_papr as papr_of
+        report["papr"] = float(papr_of(abs_x, unit=papr_unit))
     return report
