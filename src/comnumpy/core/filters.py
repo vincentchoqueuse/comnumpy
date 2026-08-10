@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core.generics import Processor
 
+__all__ = ["SRRCFilter", "BWFilter"]
+
 
 @dataclass(slots=True)
 class SRRCFilter(Processor):

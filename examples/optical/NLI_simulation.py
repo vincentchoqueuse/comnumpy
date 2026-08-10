@@ -6,7 +6,7 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import GaussianGenerator
 from comnumpy.core.processors import Upsampler, Downsampler
 from comnumpy.core.filters import SRRCFilter, BWFilter
-from comnumpy.core.metrics import compute_effective_SNR
+from comnumpy.core.metrics import compute_effective_snr
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.dbp import DBP
 
@@ -130,7 +130,7 @@ for index in range(N_dBm):
             x_est = coef * y                                    # compensate signal
 
             # compute metric
-            snr = compute_effective_SNR(x, x_est)
+            snr = compute_effective_snr(x, x_est)
             snr_array[index, indice] += (1/N_trial) * snr
 
 stop_time = time.time()

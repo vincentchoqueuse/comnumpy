@@ -7,6 +7,8 @@ from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Sequence,
 import numpy as np
 from comnumpy._backend import fftshift  # cupy-compatible (D3)
 
+__all__ = ["get_standard_carrier_allocation", "plot_carrier_allocation"]
+
 if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
     from matplotlib.axes import Axes
 

@@ -1,6 +1,11 @@
 import numpy as np
 from typing import Optional, Sequence
 
+__all__ = [
+    "rayleigh_channel", "rician_channel", "kronecker_rayleigh_channel",
+    "pdp_to_scales",
+]
+
 
 def rayleigh_channel(N_r: int, N_t: int,
                 L: int = 1,

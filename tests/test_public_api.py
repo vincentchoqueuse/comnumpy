@@ -1,11 +1,29 @@
 """Public API surface guarantees (decision D36).
 
 Two CI-enforced budgets: ``import comnumpy`` stays under 200 ms (best of
-three runs, so OS caches are warm) and never pulls matplotlib.
+three runs, so OS caches are warm) and never pulls matplotlib. Two more
+guarantees about the surface itself: every public module declares
+``__all__``, and every name it declares is one the module defines.
 """
+import importlib
+import pathlib
 import subprocess
 import sys
 import unittest
+
+SOURCE = pathlib.Path(__file__).resolve().parent.parent / "src" / "comnumpy"
+
+
+def public_modules():
+    """Every module a user may import, i.e. not ``__init__`` nor ``_*``."""
+    return sorted(path for path in SOURCE.rglob("*.py")
+                  if not path.name.startswith("_"))
+
+
+def declares_all(path):
+    return any(line.startswith("__all__")
+               for line in path.read_text().splitlines())
+
 
 IMPORT_CHECK = (
     "import sys, time;"
@@ -41,6 +59,51 @@ class TestPublicAPI(unittest.TestCase):
                        comnumpy.mimo, comnumpy.optical):
             self.assertTrue(hasattr(module, "__all__"),
                             f"{module.__name__} does not declare __all__")
+
+    def test_every_public_module_declares_all(self):
+        """D36 is about modules, not only about the four packages.
+
+        A module with no ``__all__`` exports whatever it happens to have
+        imported: ``from comnumpy.core.channels import np`` used to work.
+        """
+        missing = [str(path.relative_to(SOURCE))
+                   for path in public_modules() if not declares_all(path)]
+        self.assertEqual(missing, [],
+                         f"modules without __all__: {missing}")
+
+    def test_every_exported_name_exists(self):
+        """The other half: a name in ``__all__`` that is not defined.
+
+        It is silent until someone writes ``from module import *`` or
+        reads the documentation, and Sphinx will not catch it either.
+        """
+        for path in public_modules():
+            module_name = ("comnumpy."
+                           + str(path.relative_to(SOURCE))[:-3].replace("/", "."))
+            with self.subTest(module=module_name):
+                module = importlib.import_module(module_name)
+                for name in module.__all__:
+                    self.assertTrue(
+                        hasattr(module, name),
+                        f"{module_name}.__all__ names {name}, which is "
+                        f"not defined there")
+
+    def test_no_module_exports_an_imported_third_party_name(self):
+        """``__all__`` lists what a module *is*, not what it uses."""
+        borrowed = {"np", "numpy", "scipy", "plt", "dataclass", "field",
+                    "Optional", "Literal", "Processor"}
+        for path in public_modules():
+            module_name = ("comnumpy."
+                           + str(path.relative_to(SOURCE))[:-3].replace("/", "."))
+            module = importlib.import_module(module_name)
+            leaked = borrowed & set(module.__all__)
+            with self.subTest(module=module_name):
+                # Processor is legitimately exported by the module that
+                # defines it, and by no other
+                if module_name == "comnumpy.core.generics":
+                    leaked = leaked - {"Processor"}
+                self.assertEqual(leaked, set(),
+                                 f"{module_name} exports borrowed names {leaked}")
 
     def test_lazy_plotting_resolves(self):
         from comnumpy.core import plot_iq

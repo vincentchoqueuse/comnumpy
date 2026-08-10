@@ -57,6 +57,8 @@ CONVERTED_MODULES = [
     "comnumpy.optical.raman",
     "comnumpy.optical.fiber",
     "comnumpy.core.compensators",
+    "comnumpy.core.shaping",
+    "comnumpy.mimo.coding",
 ]
 
 
@@ -93,6 +95,9 @@ NOT_PROCESSING_FUNCTIONS = {
     "comnumpy.optical.fiber.register_fiber",
     "comnumpy.optical.fiber.available_fibers",
     "comnumpy.optical.fiber.get_fiber",
+    "comnumpy.mimo.coding.register_code",
+    "comnumpy.mimo.coding.available_codes",
+    "comnumpy.mimo.coding.get_code",
 }
 
 

@@ -4,6 +4,8 @@ from typing import Literal, Optional
 from comnumpy.core import Processor
 from comnumpy.core.utils import hard_projector
 
+__all__ = ["BlindDualMIMOCompensator"]
+
 
 @dataclass(slots=True)
 class BlindDualMIMOCompensator(Processor):

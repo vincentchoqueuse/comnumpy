@@ -13,6 +13,8 @@ from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erb
                     compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity,
                     is_polarization_pair, manakov_kerr)
 
+__all__ = ["FiberLink"]
+
 logger = logging.getLogger(__name__)
 
 @dataclass(slots=True)

@@ -1,7 +1,9 @@
 import numpy as np
 
+__all__ = ["compute_papr"]
 
-def compute_PAPR(x_data: object, unit: str = "natural", axis: "int | None" = None) -> "np.ndarray | float":
+
+def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = None) -> "np.ndarray | float":
     r"""
     Compute the Peak-to-Average Power Ratio (PAPR) of the input signal.
 
@@ -59,12 +61,12 @@ def compute_PAPR(x_data: object, unit: str = "natural", axis: "int | None" = Non
     --------
     >>> import numpy as np
     >>> data = np.array([1, 2, 3, 4])
-    >>> print(round(float(compute_PAPR(data, unit="natural")), 4))
+    >>> print(round(float(compute_papr(data, unit="natural")), 4))
     1.4606
-    >>> print(round(float(compute_PAPR(data, unit="dB")), 4))
+    >>> print(round(float(compute_papr(data, unit="dB")), 4))
     3.2906
     >>> data_2d = np.array([[1, 2], [3, 4]])
-    >>> print(np.round(compute_PAPR(data_2d, unit="natural", axis=0), 4))
+    >>> print(np.round(compute_papr(data_2d, unit="natural", axis=0), 4))
     [1.3416 1.2649]
     """
     if not isinstance(x_data, np.ndarray):

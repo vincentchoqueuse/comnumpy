@@ -25,7 +25,7 @@ from comnumpy.core.processors import Parallel2Serial, Serial2Parallel
 from comnumpy.core.utils import get_alphabet
 from comnumpy.ofdm.allocation import get_allocation
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
-from comnumpy.ofdm.metrics import compute_PAPR
+from comnumpy.ofdm.metrics import compute_papr
 from comnumpy.ofdm.processors import (CarrierAllocator, CarrierExtractor,
                                       CyclicPrefixer, CyclicPrefixRemover,
                                       FFTProcessor, IFFTProcessor)
@@ -60,7 +60,7 @@ class TestPAPRDistribution(unittest.TestCase):
             IFFTProcessor(),
         ])
         chain.seed(SEED)
-        return compute_PAPR(chain(cls.N_SYMBOLS * cls.N_SUB), unit="dB", axis=-1)
+        return compute_papr(chain(cls.N_SYMBOLS * cls.N_SUB), unit="dB", axis=-1)
 
     @staticmethod
     def gap_dB(papr, N, level):

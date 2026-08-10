@@ -4,7 +4,9 @@ from typing import Optional
 from dataclasses import dataclass, field
 from comnumpy._backend import fft, ifft, ifftshift  # cupy-compatible (D3)
 from comnumpy.core import Processor
-from .metrics import compute_PAPR
+from .metrics import compute_papr
+
+__all__ = ["HardClipper", "IctPaprReductor", "PtsPaprReductor"]
 
 @dataclass(slots=True)
 class HardClipper(Processor):
@@ -139,7 +141,7 @@ class IctPaprReductor(Processor):
     >>> X = np.array([[1, 1, -1, 1, 1, -1, -1, 1]], dtype=complex)
     >>> reductor = IctPaprReductor(PAPR_max_dB=2.0, filter_weight=1.0)
     >>> y = reductor(X)
-    >>> print(round(float(compute_PAPR(y[0], unit="dB")), 2))
+    >>> print(round(float(compute_papr(y[0], unit="dB")), 2))
     2.0
     """
     PAPR_max_dB: float
@@ -236,7 +238,7 @@ class PtsPaprReductor(Processor):
     >>> Y = reductor(np.ones((1, 4), dtype=complex))
     >>> print(np.round(Y, 3) + 0.0)
     [[0.+0.j 1.+1.j 0.+0.j 1.-1.j]]
-    >>> print(round(float(compute_PAPR(Y[0], unit="dB")), 2))
+    >>> print(round(float(compute_papr(Y[0], unit="dB")), 2))
     3.01
     """
     phase_alphabet: Optional[list[complex]] = None
@@ -273,7 +275,7 @@ class PtsPaprReductor(Processor):
 
         for index, combination in enumerate(self.combinations):
             x_m_temp = np.dot(x_m_array, combination)
-            papr_list[index] = compute_PAPR(x_m_temp)
+            papr_list[index] = compute_papr(x_m_temp)
 
         index_min = np.argmin(papr_list)
         combination = self.combinations[index_min]

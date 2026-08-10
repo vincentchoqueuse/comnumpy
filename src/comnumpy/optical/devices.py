@@ -3,6 +3,11 @@ from dataclasses import dataclass, field
 from typing import Callable, Literal, Optional
 from comnumpy.core import Processor
 
+__all__ = [
+    "Laser", "Optical90HybridCircuit", "PowerControl",
+    "ErbiumDopedFiberAmplifier", "MachZehnderModulator",
+]
+
 
 @dataclass(slots=True)
 class Laser(Processor):

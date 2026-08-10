@@ -41,8 +41,138 @@ one release; there is no compatibility layer.
 | `.gain`, `.alpha`/`.beta`, `.w0`, `.h`, `.delay`/`.scale`/`.cross_corr` read off a compensator | same names with a trailing underscore (D23): these are estimated from the data, and the convention now separates them from configured parameters |
 | `FiberLink(alpha_dB=…, gamma=…, cd_coefficient=…, lamb=…, nu=…, c=…, h=…)` | `FiberLink(fiber=FiberSpec(alpha_dB, gamma=…, cd_coefficient=…, wavelength_nm=…))` (D46) — same for `DBP`. The carrier frequency is derived from the wavelength instead of being a second argument that could disagree with it; `c` and `h` are no longer settable. `FiberLink` goes from 21 constructor arguments to 15 |
 | `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
+| `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
+| `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
 ### Added (milestones 2-5)
+
+- A tutorial on Alamouti space-time coding,
+  `docs/examples/alamouti.rst`, with `examples/mimo/one_shot_alamouti.py`
+  behind it. It answers the question the code module cannot: *why*. The
+  fading link is limited by its deep fades, not its average, so the
+  error rate falls only one decade per decade; the Alamouti codeword
+  turns two transmit antennas into two independent observations with no
+  channel knowledge at the transmitter, its equivalent channel is
+  orthogonal, and that identity alone makes the maximum-likelihood
+  receiver a matched filter.
+
+  The measurement is the lesson. Three links at **equal total transmit
+  power** -- one antenna, Alamouti 2x1, and receive diversity 1x2 --
+  give local slopes converging to 1, 2 and 2, and the SNR needed for a
+  symbol error rate of 1e-3 is 28.0, 18.4 and 15.6 dB. The 2.8 dB
+  between Alamouti and maximum ratio combining is the price of
+  transmitting blind, and the page says why the power normalization is
+  what makes that number mean anything: without it the two curves would
+  land on top of each other and prove nothing.
+
+- Space-time block codes, in `mimo/coding.py`, with a `get_code` registry
+  answering by name as `get_alphabet` does for constellations:
+  `alamouti`, Tarokh's four orthogonal designs (`ostbc-3-1/2`,
+  `ostbc-4-1/2`, `ostbc-3-3/4`, `ostbc-4-3/4`), `golden` and
+  `spatial-multiplexing`, plus `register_code` for user codes.
+
+  Every code is stored as its **linear dispersion** matrices, `G(s) =
+  sum_k A_k s_k + B_k conj(s_k)`, and that choice is what makes the
+  module verifiable rather than a table of matrices. Writing the symbols
+  in real and imaginary parts turns a received block into a *real*
+  linear system whose matrix `M(H)` -- `SpaceTimeCode.equivalent_channel`
+  -- carries every property of the code: a design is orthogonal exactly
+  when `M^T M = c |H|_F^2 I`, its rate is `K/T`, and its diversity order
+  is the minimum rank of a difference codeword.
+
+  The orthogonality identity is checked **at construction** for every
+  code declaring itself orthogonal (D20), which is not decoration: it
+  refused a first transcription of Tarokh's G3 on the spot. The constant
+  `c` is measured there too rather than assumed -- 1 for Alamouti, 2 for
+  the rate-1/2 designs that repeat each symbol over a conjugated half --
+  and the decoder divides by the measured value, so the two cannot
+  disagree.
+
+  `SpaceTimeDecoder` implements the matched filter that is *exactly*
+  maximum likelihood for an orthogonal design, and the tests check that
+  claim against an exhaustive ML search, sample by sample, including
+  where noise makes both wrong. A non-orthogonal code is refused rather
+  than silently zero-forced: `equivalent_channel(H)` hands the problem
+  to the detectors of `mimo/detectors.py` instead.
+
+  Provenance stated where it is not a plain transcription: the fourth
+  row of H4 is the completion H3's structure allows, and which signs its
+  half-sums carry is *determined* -- over the 256 sign patterns of that
+  structure exactly two make the design orthogonal, and they differ by a
+  global sign. The orthogonality identity fixes the convention, not a
+  reading of the table.
+
+  Measured, not asserted: the four orthogonal designs are full
+  diversity, the Golden code is full rate (2) *and* full diversity with
+  a non-vanishing determinant, spatial multiplexing has rank 1 and
+  coding gain 0, and Alamouti's error curve has twice the slope of a
+  single antenna at equal total transmit power (-2.03 against -0.98 over
+  13 to 25 dB).
+
+- Probabilistic shaping, in `core/shaping.py`. A uniform QAM loses up to
+  1.53 dB of the Gaussian capacity -- the shaping gap -- and closing it
+  needs two things, both provided. `maxwell_boltzmann` gives the target
+  distribution, which is not a modelling choice but what maximizing the
+  entropy under a power constraint *forces*; it is parameterized either
+  by lambda itself or by the entropy it must reach (D41), the second
+  being the useful one since the entropy is the rate.
+  `ConstantCompositionMatcher` (CCDM, Schulte-Böcherer 2016) and
+  `SphereShaper` (enumerative sphere shaping, Willems-Wuijts 1993,
+  Gültekin et al. 2020) turn uniform bits into that distribution. Both
+  are enumerative codes ranking and unranking a finite set with exact
+  integer arithmetic, so `decode(encode(bits)) == bits` holds by
+  construction rather than by tolerance, and the tests check it on
+  thousands of random inputs and exhaustively on a small code.
+
+  What they hold fixed differs, and so do their guarantees: CCDM emits
+  its composition in *every* block, ESS only keeps every block inside an
+  energy sphere -- which is a larger set at equal average energy, and is
+  measured here to carry a higher rate than the best constant
+  composition at short blocklengths, the reason it exists.
+
+  `shaping_gain_dB` measures what the shaping is worth, against the
+  continuous-uniform reference at equal entropy. Two properties pin the
+  definition: a uniform distribution gives exactly
+  `10*log10(M^2/(M^2-1))`, i.e. 0.28 dB at M=4 and 0.0007 dB at M=64, and
+  no distribution over any tested constellation exceeds
+  `10*log10(pi*e/6) = 1.5329` dB.
+
+  Defect found while writing it, and worth naming because it was silent:
+  `maxwell_boltzmann` returned a distribution whose entropy was *not*
+  the one requested when the target was unreachable. Points of equal
+  energy always keep equal probability, so a symmetric constellation
+  cannot be shaped below one bit per symbol whatever lambda does; the
+  bisection saturated and returned the floor without saying so. It now
+  refuses, and names both the floor and why it exists.
+
+- The pyright strict ratchet of D37 now covers **every** module of
+  `src/comnumpy`, and `py.typed` ships with the package. Closing the
+  last four -- `core/metrics.py`, `core/processors.py`,
+  `core/compensators.py`, `mimo/detectors.py` -- was not only
+  annotation. What the type checker was pointing at, in every case, was
+  a value that could be `None` and was dereferenced anyway:
+
+  - `MaximumLikelihoodDetector.get_nb_candidates()` read `self.H.shape`
+    with no check at all, so it raised `AttributeError: 'NoneType'` on a
+    detector whose channel had not been set;
+  - `LinearDetector(method="mmse")` never checked `sigma2`, and passed
+    `None` into the MMSE solver;
+  - `WeightAmplifier.weight` was declared optional and dereferenced in
+    `__post_init__`, so the documented default construction crashed. It
+    is now a required argument, which is what the class always meant;
+  - `DataAidedSimpleSynchronizer.plot()` drew `None` against `None` when
+    the block had not been asked to keep its cross-correlation.
+
+  The two validators of `mimo/detectors.py` now *return* the value they
+  check instead of only asserting it, so a caller cannot use the
+  unchecked one by mistake, and their messages name what is missing and
+  how to supply it (D38).
+
+  Three latent unbound-variable paths were closed the same way:
+  `compute_ser_awgn_psk`, `Serial2Parallel.forward` and
+  `BlindCFOCompensator.fit` each chained independent `if`s over a
+  parameter that could match none of them, leaving a local undefined and
+  raising `UnboundLocalError` instead of saying what was wrong.
 
 - `sphinx.ext.napoleon` is enabled. Without it the numpydoc sections of
   every docstring -- the whole section-4.10 course-material template,
