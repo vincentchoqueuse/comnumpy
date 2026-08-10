@@ -1317,10 +1317,12 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay_ = n_vect[index_max]
+        # int(), not the numpy scalar: delay_ is an index the caller
+        # slices with, and the numpy 2.5 stubs no longer widen int_ to int
+        self.delay_ = int(n_vect[index_max])
         if self.scale_correction:
             # compensation gain: the inverse of the estimated channel gain
-            self.scale_ = 1/value_max
+            self.scale_ = complex(1/value_max)
 
         # save correlation if needed
         if self.save_cross_correlation:
@@ -1513,10 +1515,10 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         index_max = np.argmax(np.abs(cross_corr)**2)
         value_max = cross_corr[index_max]
 
-        self.delay_ = np.max([n_vect[index_max], 0])
+        self.delay_ = int(max(n_vect[index_max], 0))
         if self.scale_correction:
             # compensation gain: the inverse of the estimated channel gain
-            self.scale_ = 1/value_max
+            self.scale_ = complex(1/value_max)
 
         # save correlation if needed
         if self.save_cross_correlation:
