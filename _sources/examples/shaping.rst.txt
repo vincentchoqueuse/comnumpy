@@ -7,6 +7,14 @@ it loses up to **1.53 dB** against a Gaussian input, and that loss is recovered
 by choosing *how often* each point is transmitted rather than by changing the
 points themselves.
 
+.. note::
+
+   **Before you start.** Every earlier tutorial drew its symbols uniformly,
+   because that is what ``SymbolGenerator`` does. This one questions that
+   choice, so it assumes you are comfortable with a chain
+   (:doc:`../getting_started/first_simulation`) and with reading an
+   achievable rate rather than an error rate.
+
 **What you'll learn:**
 
 - Why the shaped distribution is Maxwell-Boltzmann, and nothing else.
@@ -409,3 +417,7 @@ From here, you can:
   encoder whose parity bits PAS spends on the signs.
 - Replace the i.i.d. source of the last section by the matcher itself, and
   measure how much of the shaping gain a finite blocklength gives back.
+
+The last tutorial of the series, :doc:`optical_fiber_nonlinearity`, changes
+the channel one final time: after noise, echoes and fading, a channel whose
+distortion depends on the *signal itself*.

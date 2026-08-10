@@ -402,7 +402,7 @@ window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Probabilistic Shaping" href="shaping.html" />
+    <link rel="next" title="OFDM Tutorial" href="ofdm.html" />
     <link rel="prev" title="Examples" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -691,12 +691,12 @@ window.runMermaid = runMermaid;</script>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Monte Carlo Simulation over AWGN Channel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
 </ul>
 </div>
@@ -760,15 +760,29 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="monte-carlo-simulation-over-awgn-channel">
 <h1>Monte Carlo Simulation over AWGN Channel<a class="headerlink" href="#monte-carlo-simulation-over-awgn-channel" title="Link to this heading">#</a></h1>
-<p>In this tutorial, we simulate a communication chain with <strong>comnumpy</strong>
-and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).
-Using a <strong>Monte Carlo simulation</strong>, the chain is executed repeatedly at each SNR value
-and the experimental results are compared with theoretical predictions.</p>
+<p>One run of a chain gives one error rate at one SNR. A <em>performance figure</em>
+needs a curve, so the chain has to be run again at every operating point –
+that repetition is what “Monte Carlo simulation” means, and there is nothing
+more to it than a loop.</p>
+<p>We will write that loop by hand first, because it is worth seeing exactly
+what a sweep is made of. Then we will replace it with <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>,
+which does the same four things in one call, and use <em>that</em> in every tutorial
+that follows.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Before you start.</strong> This tutorial follows
+<a class="reference internal" href="../getting_started/first_simulation.html"><span class="doc">First Simulation</span></a>, which built a chain and ran it
+once. Here we run it many times, which is what a performance figure is
+made of.</p>
+</div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>How to run a Monte Carlo simulation over a range of SNR values.</p></li>
-<li><p>How to compute experimental and theoretical SER for QAM over AWGN.</p></li>
-<li><p>How to plot standard SER performance curves on a logarithmic scale.</p></li>
+<li><p>How to reconfigure a chain between runs with <code class="docutils literal notranslate"><span class="pre">set_params</span></code>, and make each
+run reproducible with <code class="docutils literal notranslate"><span class="pre">seed</span></code>.</p></li>
+<li><p>How to write a Monte Carlo loop, and then how to replace it with <code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
+<li><p>How to compare a measured curve with the closed form it should follow.</p></li>
+<li><p>How to draw the result with <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>, the figure this library
+uses for every error rate.</p></li>
 </ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
@@ -869,10 +883,10 @@ outline marks a tapped block:</p>
 </section>
 <section id="monte-carlo-simulation">
 <h3>Monte Carlo Simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">#</a></h3>
-<p>We perform a Monte Carlo simulation over the entire SNR range with
-<code class="docutils literal notranslate"><span class="pre">sweep()</span></code>: at each SNR value it reconfigures the AWGN processor,
-reseeds the chain, runs it, and compares the output with the transmitted
-symbols recorded at the <code class="docutils literal notranslate"><span class="pre">&quot;tx&quot;</span></code> tap.</p>
+<p>Start with the loop you would write yourself. At each SNR value there are
+exactly four things to do: <strong>reseed</strong> the chain so the run is reproducible,
+<strong>reconfigure</strong> the block that has to change, <strong>run</strong> it, and <strong>measure</strong>
+against the transmitted symbols.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A Monte Carlo simulation is a stateless loop: reconfigure the chain,</span>
 <span class="c1"># run it, measure, collect. Written out, at three SNR values:</span>
 <span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">]</span>
@@ -884,8 +898,18 @@ symbols recorded at the <code class="docutils literal notranslate"><span class="
     <span class="n">by_hand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The three services this uses are the ones a study is made of: <code class="docutils literal notranslate"><span class="pre">seed</span></code> makes every point reproducible, <code class="docutils literal notranslate"><span class="pre">set_params</span></code> addresses the block by the name it was given, and the tap returns what the transmitter produced so the metric has something to compare against. Note the ordering – the chain has to <em>run</em> before its tap holds anything.</p>
-<p>That loop is what <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> does, over every point, in one call:</p>
+<p>Three chain services appear there, and they are the ones every study is made
+of.</p>
+<p><code class="docutils literal notranslate"><span class="pre">seed</span></code> gives each stochastic block its own child seed, so the same seed
+always gives the same signal – a curve you cannot reproduce is a curve you
+cannot debug. <code class="docutils literal notranslate"><span class="pre">set_params</span></code> addresses a block by the name it was given at
+construction, with the dotted notation <code class="docutils literal notranslate"><span class="pre">&quot;awgn_channel.snr_dB&quot;</span></code>; this is why
+blocks are named. And the tap returns what the transmitter produced, so the
+metric has something to compare against – after the run, never before.</p>
+<p>Now the same thing in one call. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes the chain,
+the dotted name of what varies, the values it takes, and the metrics to
+collect – and does the reseed, the reconfigure, the run and the measurement
+at every point:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep (decision D35) is that loop, and nothing more: the same</span>
 <span class="c1"># reconfigure-reseed-run-collect, over every point, in one call.</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
@@ -899,7 +923,14 @@ symbols recorded at the <code class="docutils literal notranslate"><span class="
 <span class="n">sweep</span> <span class="p">:</span> <span class="mf">7.410e-01</span> <span class="mf">3.533e-01</span> <span class="mf">7.117e-03</span>
 </pre></div>
 </div>
-<p>The two are the same computation. They do not print the same digits because <code class="docutils literal notranslate"><span class="pre">sweep</span></code> gives each point its own child seed rather than reseeding to the same value, so the noise differs; the gap is the Monte-Carlo error of a million symbols, not a difference of method.</p>
+<p>The two are the same computation. They do not print the same digits because
+<code class="docutils literal notranslate"><span class="pre">sweep</span></code> gives each point its own child seed rather than reseeding every
+point to the same value, so the noise realizations differ; the gap is the
+Monte Carlo error of a million symbols, not a difference of method.</p>
+<p><strong>From here on, the other tutorials use</strong> <code class="docutils literal notranslate"><span class="pre">sweep</span></code> <strong>without rewriting the
+loop.</strong> When you see it sweeping a channel matrix rather than an SNR (in
+<a class="reference internal" href="mimo.html"><span class="doc">MIMO Chain Tutorial</span></a> and <a class="reference internal" href="alamouti.html"><span class="doc">Alamouti Space-Time Coding Tutorial</span></a>), it is still these four steps – only the
+parameter that varies has changed.</p>
 </section>
 <section id="theoretical-ser">
 <h3>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h3>
@@ -912,11 +943,11 @@ symbols recorded at the <code class="docutils literal notranslate"><span class="
 </section>
 <section id="results-and-visualization">
 <h3>Results and Visualization<a class="headerlink" href="#results-and-visualization" title="Link to this heading">#</a></h3>
-<p>Finally, we plot the experimental and theoretical SER curves.
-<code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> is the library’s figure for this: measurements as hollow
-markers, the closed form as a line of the same colour, a logarithmic ordinate
-and a grid on both decades – the standard representation for error rate curves
-in digital communications.</p>
+<p>An error rate curve is always drawn the same way, so the library draws it for
+you: <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> puts the measurements as hollow markers and the
+closed form as a line of the same colour, on a logarithmic ordinate with a
+grid on both decades. A measurement and the theory it is being compared with
+share a colour, so a pair reads as one statement.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot_error_rate draws the measurements as markers and the closed form</span>
 <span class="c1"># as a line of the same colour: the figure every sweep ends with</span>
 <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
@@ -931,21 +962,18 @@ in digital communications.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have completed a <strong>Monte Carlo simulation of SER performance</strong>
-for a QAM-modulated communication system over an AWGN channel.</p>
+<p>You have turned one run into a curve, and you have seen that <code class="docutils literal notranslate"><span class="pre">sweep</span></code> is not
+a new concept but the loop you already wrote, packaged.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
-<li><p>Build a chain with modulation, channel, and demodulation.</p></li>
-<li><p>Run Monte Carlo experiments over a range of SNR values.</p></li>
-<li><p>Compare experimental results with theoretical benchmarks.</p></li>
-<li><p>Plot standard SER performance curves.</p></li>
+<li><p>Reconfigure and reseed a chain between runs.</p></li>
+<li><p>Collect a metric over a range of parameter values, by hand and with
+<code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
+<li><p>Read a measured curve against a closed form.</p></li>
 </ul>
-<p>From here, you can:</p>
-<ul class="simple">
-<li><p>Experiment with different modulation orders (e.g., 4-QAM, 64-QAM).</p></li>
-<li><p>Extend the chain with channel coding or more realistic channel models.</p></li>
-<li><p>Increase the number of transmitted symbols to improve SER estimation accuracy.</p></li>
-</ul>
+<p>From here, <a class="reference internal" href="ofdm.html"><span class="doc">OFDM Tutorial</span></a> keeps the chain and changes the channel: instead of one
+noise term, the signal arrives several times, and the receiver has to undo
+that. Two ways of doing so, at very different prices.</p>
 </section>
 </section>
 
@@ -969,11 +997,11 @@ for a QAM-modulated communication system over an AWGN channel.</p>
       </div>
     </a>
     <a class="right-next"
-       href="shaping.html"
+       href="ofdm.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Probabilistic Shaping</p>
+        <p class="prev-next-title">OFDM Tutorial</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

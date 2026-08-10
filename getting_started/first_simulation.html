@@ -758,15 +758,20 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="first-simulation">
 <h1>First Simulation<a class="headerlink" href="#first-simulation" title="Link to this heading">#</a></h1>
-<p>This tutorial guides you through a simple communication simulation using <strong>comnumpy</strong>.
-You will build a basic QAM communication chain, transmit symbols through an AWGN channel,
-and evaluate the Symbol Error Rate (SER).</p>
+<p>A communication system is a series of operations applied to a signal, one
+after the other: generate symbols, map them onto a constellation, send them
+through a channel, decide what was sent. In <strong>comnumpy</strong> you write that series
+down as an object – a <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> chain – and then you run it, measure
+it, and look inside it.</p>
+<p>This first tutorial builds the smallest such chain, runs it once, and reads
+one number off it. Everything else in the series is this same object with more
+blocks in it.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>Creating a communication chain using <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> and built-in processors.</p></li>
-<li><p>Transmitting QAM symbols through an AWGN channel.</p></li>
-<li><p>Measuring the Symbol Error Rate (SER) and comparing it with theory.</p></li>
-<li><p>Using chain <code class="docutils literal notranslate"><span class="pre">taps</span></code> to capture and visualize signals.</p></li>
+<li><p>How to assemble a chain from built-in processors with <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>.</p></li>
+<li><p>How to run it, and what the call actually returns.</p></li>
+<li><p>How to look <em>inside</em> it with a tap, instead of only at its output.</p></li>
+<li><p>How to compare the error rate you measured with the one theory predicts.</p></li>
 </ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
@@ -813,9 +818,11 @@ the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
 <h2>AWGN Communication Chain<a class="headerlink" href="#awgn-communication-chain" title="Link to this heading">#</a></h2>
 <section id="define-the-chain">
 <h3>Define the Chain<a class="headerlink" href="#define-the-chain" title="Link to this heading">#</a></h3>
-<p>We define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object, which takes a list of
-processors as input. The <strong>comnumpy</strong> library provides a wide range of built-in processors
-for modulation, coding, channel modeling, and more.</p>
+<p>A chain is a list of <strong>processors</strong>, and <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> is what turns that
+list into a single object you can call. Each processor does one thing and
+hands its output to the next, so reading the list from top to bottom <em>is</em>
+reading the signal path – which is why the examples in this series are kept
+linear rather than factored into functions.</p>
 <p>The chain, as the chain itself describes it:</p>
 <pre  class="mermaid">
         flowchart LR
@@ -850,13 +857,9 @@ outline marks a tapped block:</p>
         <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="s2">&quot;awgn&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>In this simulation, the communication chain is composed of <strong>four processor objects</strong>:</p>
-<pre  class="mermaid">
-        graph LR;
-   A[Generator] --&gt; B[Mapper];
-   B --&gt; C[AWGN];
-   C --&gt; D[Demapper];
-    </pre><ul class="simple">
+<p>Four processors, and each one is worth a sentence – these four come back in
+every tutorial that follows:</p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code>
 Generates a sequence of random integers in the range <span class="math notranslate nohighlight">\([0, M-1]\)</span>, where each integer represents a symbol to transmit.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code>
@@ -866,14 +869,19 @@ Simulates an <strong>Additive White Gaussian Noise</strong> channel, modeling th
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
 Performs hard-decision demapping by associating each received point with the nearest constellation symbol.</p></li>
 </ul>
-<p>The chain contains communication blocks only. To observe signals inside it,
-name the blocks of interest and declare them as <strong>taps</strong> –
-<code class="docutils literal notranslate"><span class="pre">taps=[&quot;tx&quot;,</span> <span class="pre">&quot;awgn&quot;]</span></code> above records the output of the generator and of
-the channel while the chain runs.</p>
+<p>Notice what is <em>not</em> in the list: nothing to record, display or measure. A
+chain contains communication blocks only. When you need to see a signal in
+the middle of it, you give the block a name and declare that name as a <strong>tap</strong>
+– <code class="docutils literal notranslate"><span class="pre">taps=[&quot;tx&quot;,</span> <span class="pre">&quot;awgn&quot;]</span></code> above – and the chain keeps a copy of what that
+block produced. This is how every measurement in this series is made, so it is
+worth getting used to now.</p>
 </section>
 <section id="simulate-the-chain">
 <h3>Simulate the Chain<a class="headerlink" href="#simulate-the-chain" title="Link to this heading">#</a></h3>
-<p>To run the simulation, simply call the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object with the desired number of symbols:</p>
+<p>The chain is an object, and running it is calling it. Its first block is a
+<em>source</em>, so the argument is not a signal but the number of symbols to
+produce – and what comes back is what the last block returned, here the
+detected symbol indices:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># test chain</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 </pre></div>
@@ -881,11 +889,13 @@ the channel while the chain runs.</p>
 </section>
 <section id="evaluate-performance">
 <h3>Evaluate Performance<a class="headerlink" href="#evaluate-performance" title="Link to this heading">#</a></h3>
-<p>We evaluate the performance of the communication system by computing the <strong>Symbol Error Rate (SER)</strong>
-from the transmitted and detected symbols, then comparing it with the theoretical value.</p>
-<p>To retrieve the transmitted symbols, we call <code class="docutils literal notranslate"><span class="pre">chain.tap(&quot;tx&quot;)</span></code>: it returns the
-signal recorded at the tap during the last run. Any block of the chain can be
-tapped, depending on which signal you want to inspect.</p>
+<p>An error rate compares what was sent with what was decided, and the chain
+returned only the second one. The first is at the <code class="docutils literal notranslate"><span class="pre">&quot;tx&quot;</span></code> tap:
+<code class="docutils literal notranslate"><span class="pre">chain.tap(&quot;tx&quot;)</span></code> returns what that block produced during the last run.</p>
+<p>One habit to take right away: <strong>run the chain first, read the tap after</strong>. A
+tap holds the last run, so reading it before calling the chain raises an
+error rather than returning stale data – which is the behaviour you want,
+but it does mean the order of the two lines matters.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate simulation performance</span>
 <span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">data_tx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -899,13 +909,17 @@ tapped, depending on which signal you want to inspect.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (theo)= </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For this simulation, typical output looks like:</p>
+<p>which prints:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span> <span class="p">(</span><span class="n">simu</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0013</span>
 <span class="n">SER</span> <span class="p">(</span><span class="n">theo</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0015647896369451741</span>
 </pre></div>
 </div>
-<p>Note: for small SER values, increasing <code class="docutils literal notranslate"><span class="pre">N</span></code> (the number of transmitted symbols)
-improves the estimation accuracy.</p>
+<p>The two numbers agree to about 15 %, and that gap is not a modelling error:
+it is the measurement itself. An error rate estimated from <span class="math notranslate nohighlight">\(N\)</span> symbols
+has a standard deviation of roughly <span class="math notranslate nohighlight">\(\sqrt{P_e/N}\)</span>, so with 10 000
+symbols and <span class="math notranslate nohighlight">\(P_e \approx 1.6 \times 10^{-3}\)</span> a spread of that size is
+expected. Increasing <code class="docutils literal notranslate"><span class="pre">N</span></code> narrows it – and <em>how many symbols a claim needs</em>
+is the subject of the next tutorial.</p>
 </section>
 <section id="plot-the-constellation">
 <h3>Plot the Constellation<a class="headerlink" href="#plot-the-constellation" title="Link to this heading">#</a></h3>
@@ -926,13 +940,12 @@ We read the symbols recorded at the <code class="docutils literal notranslate"><
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have successfully built and simulated your first communication chain with <strong>comnumpy</strong>.</p>
-<p>From here, you can explore:</p>
-<ul class="simple">
-<li><p>The <strong>OFDM and MIMO tutorials</strong> for more advanced communication techniques.</p></li>
-<li><p>The <strong>API reference</strong> for a complete list of available processors.</p></li>
-<li><p>Different modulation orders, SNR values, and channel models to deepen your understanding.</p></li>
-</ul>
+<p>You have built a chain, run it, looked inside it, and compared one
+measurement with theory. That is the whole vocabulary the rest of the series
+uses.</p>
+<p>The natural next step is <a class="reference internal" href="../examples/awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a>, which asks the question this
+tutorial left open: one run gives one number at one SNR, so how do you obtain
+a <em>curve</em> – and how many symbols does each of its points deserve?</p>
 </section>
 </section>
 

@@ -3,11 +3,17 @@ MIMO Chain Tutorial
 
 This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the ``comnumpy`` library.
 
+.. note::
+
+   **Before you start.** :doc:`awgn` introduced ``sweep``, which is used
+   here to average over channel realizations rather than over noise. The
+   chain is the same object; only the number of antennas changes.
+
 **What you'll learn:**
 
 - How to build a MIMO simulation chain with Rayleigh fading.
 - How to visualize received and equalized signals.
-- How to compare detection algorithms (ZF, MMSE, OSIC, ML) on one chain.
+- How ZF, MMSE, OSIC, ML and sphere decoding differ, and what each one costs.
 - How to run a Monte Carlo evaluation of the Symbol Error Rate (SER) with ``sweep``.
 
 This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.
@@ -50,7 +56,7 @@ We define the number of transmit/receive antennas, the modulation order (PSK), a
 Build the MIMO Chain
 """"""""""""""""""""
 
-The link is one ``Sequential``: symbol generator, mapper, flat MIMO channel, noise, and a detector. The detector is the **last block of the chain**, not something applied to its output, so comparing four detectors is comparing four chains that differ by one block:
+The link is one ``Sequential``: symbol generator, mapper, flat MIMO channel, noise, and a detector. The detector is the **last block of the chain**, not something applied to its output, so comparing five detectors is comparing five chains that differ by one block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
@@ -78,10 +84,10 @@ outline marks a tapped block:
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
 
-Run the four chains
+Run the five chains
 """""""""""""""""""
 
-Each chain is given the same seed before running, so the four numbers below differ by the detector alone -- same symbols, same noise, same channel:
+Each chain is given the same seed before running, so the five numbers below differ by the detector alone -- same symbols, same noise, same channel:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
@@ -134,29 +140,61 @@ The estimated points cluster around the ideal constellation points (black crosse
 Detection Comparison
 ^^^^^^^^^^^^^^^^^^^^
 
-The four detection strategies compared here are:
+Five detectors are compared here, and they are five answers to one question: what to do with the interference the other streams put on top of the one being read.
 
-- **ML**: Maximum Likelihood
+Zero forcing: cancel it exactly
+"""""""""""""""""""""""""""""""
+
+The most direct answer is to invert the channel. With :math:`N_r \geq N_t` the pseudo-inverse :math:`\mathbf{H}^{\dagger} = (\mathbf{H}^H\mathbf{H})^{-1}\mathbf{H}^H` is a left inverse, so
+
+.. math ::
+
+   \widehat{\mathbf{x}}_{ZF}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+   \mathbf{z}[n] &= \mathbf{H}^{\dagger}\mathbf{y}[n]
+   = \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]
+
+and the interference is gone -- **exactly**, whatever the SNR. What is left is the second term, and it is the whole story of this detector. The noise on stream :math:`i` comes out with variance
+
+.. math ::
+
+   \sigma_i^2 = \sigma^2 \left[\left(\mathbf{H}^H\mathbf{H}\right)^{-1}\right]_{ii}
+   \;\geq\; \frac{\sigma^2}{\left\|\mathbf{h}_i\right\|^2}
+
+with equality only when the columns of :math:`\mathbf{H}` are orthogonal. Two nearly parallel columns make :math:`\mathbf{H}^H\mathbf{H}` nearly singular and that diagonal entry explodes: this is **noise enhancement**, and it is the price of insisting on exact cancellation. It also costs diversity -- each stream spends :math:`N_t - 1` of its :math:`N_r` degrees of freedom cancelling the others, leaving
+
+.. math ::
+
+   d_{ZF} = N_r - N_t + 1
+
+against the :math:`N_r` a maximum-likelihood receiver keeps. With the :math:`3 \times 2` channel of this tutorial that is 2 against 3.
+
+MMSE: stop insisting
+""""""""""""""""""""
+
+If exact cancellation is what costs, then buy less of it. The MMSE receiver minimizes :math:`\mathbb{E}\left[\|\mathbf{x} - \mathbf{W}\mathbf{y}\|^2\right]` rather than the interference alone:
+
+.. math ::
+
+   \widehat{\mathbf{x}}_{MMSE}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
+   \mathbf{z}[n] &= \left(\mathbf{H}^H\mathbf{H} + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]
+
+The only difference is the :math:`\sigma^2 \mathbf{I}` added before inverting, and it is exactly the regularization that keeps the inverse bounded when the channel is ill conditioned. The two limits say what it does: as :math:`\sigma^2 \to 0` it *is* zero forcing, and as :math:`\sigma^2 \to \infty` it becomes the matched filter :math:`\mathbf{H}^H`, which ignores the interference entirely and just collects energy. In between it accepts a little residual interference -- the estimate is biased -- in exchange for much less amplified noise. That trade is worth a few tenths of a decibel here and much more on a badly conditioned channel; it does not buy diversity, which is why the MMSE and ZF curves run parallel.
+
+Maximum likelihood: do not separate the streams at all
+""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Both linear detectors treat the streams one at a time. The optimal receiver refuses that split and scores the vectors jointly:
 
 .. math ::
 
    \widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2
 
-- **ZF**: Zero-Forcing
+Nothing is inverted, so nothing is amplified, and every receive antenna contributes to every stream: the diversity order is :math:`N_r`. The cost is that the minimum is taken over :math:`|\mathcal{M}|^{N_t}` vectors.
 
-.. math ::
-   \widehat{\mathbf{x}}_{ZF}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
-   \mathbf{z}[n] &= \mathbf{H}^{\dagger}\mathbf{y}[n]
+OSIC: separate them, but in the right order
+"""""""""""""""""""""""""""""""""""""""""""
 
-- **MMSE**: Minimum Mean Square Error
-
-.. math ::
-   \widehat{\mathbf{x}}_{MMSE}[n] &= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
-   \mathbf{z}[n] &= \left(\mathbf{H}^H\mathbf{H} + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]
-
-- **OSIC**: Ordered Successive Interference Cancellation -- detect the strongest stream, subtract it, repeat on what is left.
-
-- **SD**: Sphere Decoding -- the ML decision again, reached by searching a tree instead of scoring every candidate. See the section below.
+Between the two lies successive cancellation. Detect the stream with the best post-detection SNR, subtract its contribution :math:`\mathbf{h}_i \widehat{x}_i` from the observation, and repeat on a channel with one column fewer -- so the second stream is detected on a system with one interferer less, the third with two less, and so on. The last stream detected enjoys the full :math:`N_r` diversity; the first only :math:`N_r - N_t + 1`, which is why the *ordering* matters and why ``osic_type="sinr"`` sorts by post-detection SNR (the V-BLAST rule). The price is error propagation: a wrong decision is subtracted as if it were right, and it corrupts everything after it.
 
 Sphere decoding: the same decision, not the same cost
 """""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -184,6 +222,34 @@ The second term does not depend on :math:`\mathbf{x}`, so minimizing the first *
 Every term is non-negative, so a partial sum can only grow. The moment it exceeds the best complete metric found so far, **the entire subtree below it can be discarded** -- it cannot contain the minimum. That is the sphere: only the lattice points inside a ball are ever visited, and the ball shrinks each time a better solution is found.
 
 One detail makes it work without tuning. Within a layer, the alphabet is enumerated by increasing :math:`|c_k - a|` (the Schnorr-Euchner order), so the first leaf the search reaches is the successive-cancellation solution: a finite radius is available immediately, and no initial radius has to be guessed. It also means the first candidate that exceeds the bound ends the layer -- everything after it is worse.
+
+The five in one table
+"""""""""""""""""""""
+
+============  ==========================================  ===========================  =========================
+detector      what it does                                cost per vector              diversity order
+============  ==========================================  ===========================  =========================
+ZF            inverts the channel                         :math:`O(N_t^3)` once,       :math:`N_r - N_t + 1`
+                                                          then a product
+MMSE          inverts it with :math:`\sigma^2` added      same                         :math:`N_r - N_t + 1`
+OSIC          detects, subtracts, repeats                 :math:`N_t` inversions       :math:`N_r - N_t + 1`
+                                                          of shrinking size            (first stream)
+ML            scores every vector                         :math:`|\mathcal{M}|^{N_t}`  :math:`N_r`
+SD            scores the vectors inside a sphere          data dependent, same         :math:`N_r`
+                                                          decision as ML
+============  ==========================================  ===========================  =========================
+
+The last column is the one that orders the curves at high SNR, and the third is the one that orders the bill. Note that ZF and MMSE share a diversity order: the regularization buys array gain, not slope, which is why their curves are parallel in the figure below and never converge.
+
+.. note ::
+
+   The SNR range simulated here stops at 18 dB, which is *not* the
+   asymptotic regime: reading exponents off these curves would give
+   1.4 and 1.6 rather than 2 and 3. Diversity orders are claims about a
+   limit, so they are checked where a limit can be reached --
+   ``validation/mimo_zf_ml_ber.py`` confirms diversity 1 for zero
+   forcing and 2 for maximum likelihood on a 2x2 channel, against the
+   closed forms of :mod:`comnumpy.core.metrics` (decision D7).
 
 Monte Carlo Evaluation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -255,7 +321,12 @@ This tutorial highlighted:
 
 - How to simulate a MIMO transmission with ``comnumpy``, as a chain whose last block is the receiver.
 - How ZF equalization recovers the streams from a multi-antenna mixture, and what it costs in noise.
-- How the four detectors compare, on one realization and on average.
-- Why ML and OSIC outperform linear detection, and why that difference grows with the SNR.
+- How the five detectors compare, on one realization and on average.
+- Why ML and OSIC outperform linear detection, why that difference grows with the SNR, and why a sphere decoder reaches the ML decision without paying the ML price.
 
 With ``comnumpy``, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.
+
+Every detector here assumed the *receiver* knows the channel and the
+transmitter knows nothing. :doc:`alamouti` asks what the transmitter can do
+anyway -- and answers with a code that buys diversity without a single bit of
+feedback.

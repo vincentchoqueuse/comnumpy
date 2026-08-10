@@ -404,7 +404,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Alamouti Space-Time Coding Tutorial" href="alamouti.html" />
-    <link rel="prev" title="PAPR in OFDM Communication" href="ofdm_papr.html" />
+    <link rel="prev" title="Multipath Fading Channels" href="multipath.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -692,12 +692,12 @@ window.runMermaid = runMermaid;</script>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
 </ul>
 </div>
@@ -762,11 +762,17 @@ window.runMermaid = runMermaid;</script>
   <section id="mimo-chain-tutorial">
 <h1>MIMO Chain Tutorial<a class="headerlink" href="#mimo-chain-tutorial" title="Link to this heading">#</a></h1>
 <p>This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced <code class="docutils literal notranslate"><span class="pre">sweep</span></code>, which is used
+here to average over channel realizations rather than over noise. The
+chain is the same object; only the number of antennas changes.</p>
+</div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
 <li><p>How to build a MIMO simulation chain with Rayleigh fading.</p></li>
 <li><p>How to visualize received and equalized signals.</p></li>
-<li><p>How to compare detection algorithms (ZF, MMSE, OSIC, ML) on one chain.</p></li>
+<li><p>How ZF, MMSE, OSIC, ML and sphere decoding differ, and what each one costs.</p></li>
 <li><p>How to run a Monte Carlo evaluation of the Symbol Error Rate (SER) with <code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
 </ul>
 <p>This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.</p>
@@ -822,7 +828,7 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="build-the-mimo-chain">
 <h3>Build the MIMO Chain<a class="headerlink" href="#build-the-mimo-chain" title="Link to this heading">#</a></h3>
-<p>The link is one <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>: symbol generator, mapper, flat MIMO channel, noise, and a detector. The detector is the <strong>last block of the chain</strong>, not something applied to its output, so comparing four detectors is comparing four chains that differ by one block:</p>
+<p>The link is one <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>: symbol generator, mapper, flat MIMO channel, noise, and a detector. The detector is the <strong>last block of the chain</strong>, not something applied to its output, so comparing five detectors is comparing five chains that differ by one block:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">link</span><span class="p">(</span><span class="n">detector</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The same link, closed by one detector or another.</span>
 
@@ -888,9 +894,9 @@ outline marks a tapped block:</p>
 </section>
 <section id="one-shot-simulation">
 <h2>One-Shot Simulation<a class="headerlink" href="#one-shot-simulation" title="Link to this heading">#</a></h2>
-<section id="run-the-four-chains">
-<h3>Run the four chains<a class="headerlink" href="#run-the-four-chains" title="Link to this heading">#</a></h3>
-<p>Each chain is given the same seed before running, so the four numbers below differ by the detector alone – same symbols, same noise, same channel:</p>
+<section id="run-the-five-chains">
+<h3>Run the five chains<a class="headerlink" href="#run-the-five-chains" title="Link to this heading">#</a></h3>
+<p>Each chain is given the same seed before running, so the five numbers below differ by the detector alone – same symbols, same noise, same channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># One shot, on one channel realization. Every chain is given the same</span>
 <span class="c1"># seed, so they see the same symbols and the same noise: the only</span>
 <span class="c1"># difference between the four numbers is the detector.</span>
@@ -956,28 +962,42 @@ outline marks a tapped block:</p>
 </section>
 <section id="detection-comparison">
 <h2>Detection Comparison<a class="headerlink" href="#detection-comparison" title="Link to this heading">#</a></h2>
-<p>The four detection strategies compared here are:</p>
-<ul class="simple">
-<li><p><strong>ML</strong>: Maximum Likelihood</p></li>
-</ul>
-<div class="math notranslate nohighlight">
-\[\widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2\]</div>
-<ul class="simple">
-<li><p><strong>ZF</strong>: Zero-Forcing</p></li>
-</ul>
+<p>Five detectors are compared here, and they are five answers to one question: what to do with the interference the other streams put on top of the one being read.</p>
+<section id="zero-forcing-cancel-it-exactly">
+<h3>Zero forcing: cancel it exactly<a class="headerlink" href="#zero-forcing-cancel-it-exactly" title="Link to this heading">#</a></h3>
+<p>The most direct answer is to invert the channel. With <span class="math notranslate nohighlight">\(N_r \geq N_t\)</span> the pseudo-inverse <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger} = (\mathbf{H}^H\mathbf{H})^{-1}\mathbf{H}^H\)</span> is a left inverse, so</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\widehat{\mathbf{x}}_{ZF}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
-\mathbf{z}[n] &amp;= \mathbf{H}^{\dagger}\mathbf{y}[n]\end{split}\]</div>
-<ul class="simple">
-<li><p><strong>MMSE</strong>: Minimum Mean Square Error</p></li>
-</ul>
+\mathbf{z}[n] &amp;= \mathbf{H}^{\dagger}\mathbf{y}[n]
+= \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]\end{split}\]</div>
+<p>and the interference is gone – <strong>exactly</strong>, whatever the SNR. What is left is the second term, and it is the whole story of this detector. The noise on stream <span class="math notranslate nohighlight">\(i\)</span> comes out with variance</p>
+<div class="math notranslate nohighlight">
+\[\sigma_i^2 = \sigma^2 \left[\left(\mathbf{H}^H\mathbf{H}\right)^{-1}\right]_{ii}
+\;\geq\; \frac{\sigma^2}{\left\|\mathbf{h}_i\right\|^2}\]</div>
+<p>with equality only when the columns of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> are orthogonal. Two nearly parallel columns make <span class="math notranslate nohighlight">\(\mathbf{H}^H\mathbf{H}\)</span> nearly singular and that diagonal entry explodes: this is <strong>noise enhancement</strong>, and it is the price of insisting on exact cancellation. It also costs diversity – each stream spends <span class="math notranslate nohighlight">\(N_t - 1\)</span> of its <span class="math notranslate nohighlight">\(N_r\)</span> degrees of freedom cancelling the others, leaving</p>
+<div class="math notranslate nohighlight">
+\[d_{ZF} = N_r - N_t + 1\]</div>
+<p>against the <span class="math notranslate nohighlight">\(N_r\)</span> a maximum-likelihood receiver keeps. With the <span class="math notranslate nohighlight">\(3 \times 2\)</span> channel of this tutorial that is 2 against 3.</p>
+</section>
+<section id="mmse-stop-insisting">
+<h3>MMSE: stop insisting<a class="headerlink" href="#mmse-stop-insisting" title="Link to this heading">#</a></h3>
+<p>If exact cancellation is what costs, then buy less of it. The MMSE receiver minimizes <span class="math notranslate nohighlight">\(\mathbb{E}\left[\|\mathbf{x} - \mathbf{W}\mathbf{y}\|^2\right]\)</span> rather than the interference alone:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\widehat{\mathbf{x}}_{MMSE}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
 \mathbf{z}[n] &amp;= \left(\mathbf{H}^H\mathbf{H} + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]\end{split}\]</div>
-<ul class="simple">
-<li><p><strong>OSIC</strong>: Ordered Successive Interference Cancellation – detect the strongest stream, subtract it, repeat on what is left.</p></li>
-<li><p><strong>SD</strong>: Sphere Decoding – the ML decision again, reached by searching a tree instead of scoring every candidate. See the section below.</p></li>
-</ul>
+<p>The only difference is the <span class="math notranslate nohighlight">\(\sigma^2 \mathbf{I}\)</span> added before inverting, and it is exactly the regularization that keeps the inverse bounded when the channel is ill conditioned. The two limits say what it does: as <span class="math notranslate nohighlight">\(\sigma^2 \to 0\)</span> it <em>is</em> zero forcing, and as <span class="math notranslate nohighlight">\(\sigma^2 \to \infty\)</span> it becomes the matched filter <span class="math notranslate nohighlight">\(\mathbf{H}^H\)</span>, which ignores the interference entirely and just collects energy. In between it accepts a little residual interference – the estimate is biased – in exchange for much less amplified noise. That trade is worth a few tenths of a decibel here and much more on a badly conditioned channel; it does not buy diversity, which is why the MMSE and ZF curves run parallel.</p>
+</section>
+<section id="maximum-likelihood-do-not-separate-the-streams-at-all">
+<h3>Maximum likelihood: do not separate the streams at all<a class="headerlink" href="#maximum-likelihood-do-not-separate-the-streams-at-all" title="Link to this heading">#</a></h3>
+<p>Both linear detectors treat the streams one at a time. The optimal receiver refuses that split and scores the vectors jointly:</p>
+<div class="math notranslate nohighlight">
+\[\widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2\]</div>
+<p>Nothing is inverted, so nothing is amplified, and every receive antenna contributes to every stream: the diversity order is <span class="math notranslate nohighlight">\(N_r\)</span>. The cost is that the minimum is taken over <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> vectors.</p>
+</section>
+<section id="osic-separate-them-but-in-the-right-order">
+<h3>OSIC: separate them, but in the right order<a class="headerlink" href="#osic-separate-them-but-in-the-right-order" title="Link to this heading">#</a></h3>
+<p>Between the two lies successive cancellation. Detect the stream with the best post-detection SNR, subtract its contribution <span class="math notranslate nohighlight">\(\mathbf{h}_i \widehat{x}_i\)</span> from the observation, and repeat on a channel with one column fewer – so the second stream is detected on a system with one interferer less, the third with two less, and so on. The last stream detected enjoys the full <span class="math notranslate nohighlight">\(N_r\)</span> diversity; the first only <span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span>, which is why the <em>ordering</em> matters and why <code class="docutils literal notranslate"><span class="pre">osic_type=&quot;sinr&quot;</span></code> sorts by post-detection SNR (the V-BLAST rule). The price is error propagation: a wrong decision is subtracted as if it were right, and it corrupts everything after it.</p>
+</section>
 <section id="sphere-decoding-the-same-decision-not-the-same-cost">
 <h3>Sphere decoding: the same decision, not the same cost<a class="headerlink" href="#sphere-decoding-the-same-decision-not-the-same-cost" title="Link to this heading">#</a></h3>
 <p>The ML detector is exhaustive: <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> candidates per symbol, 16 here and 65 536 for 16-QAM on four streams. The sphere decoder returns the <em>same</em> vector without visiting them all, and the reason is a factorization.</p>
@@ -995,6 +1015,61 @@ outline marks a tapped block:</p>
 c_k = \frac{z_k - \sum_{i&gt;k} R_{ki}\, x_i}{R_{kk}}\]</div>
 <p>Every term is non-negative, so a partial sum can only grow. The moment it exceeds the best complete metric found so far, <strong>the entire subtree below it can be discarded</strong> – it cannot contain the minimum. That is the sphere: only the lattice points inside a ball are ever visited, and the ball shrinks each time a better solution is found.</p>
 <p>One detail makes it work without tuning. Within a layer, the alphabet is enumerated by increasing <span class="math notranslate nohighlight">\(|c_k - a|\)</span> (the Schnorr-Euchner order), so the first leaf the search reaches is the successive-cancellation solution: a finite radius is available immediately, and no initial radius has to be guessed. It also means the first candidate that exceeds the bound ends the layer – everything after it is worse.</p>
+</section>
+<section id="the-five-in-one-table">
+<h3>The five in one table<a class="headerlink" href="#the-five-in-one-table" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>detector</p></th>
+<th class="head"><p>what it does</p></th>
+<th class="head"><p>cost per vector</p></th>
+<th class="head"><p>diversity order</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ZF</p></td>
+<td><p>inverts the channel</p></td>
+<td><p><span class="math notranslate nohighlight">\(O(N_t^3)\)</span> once,
+then a product</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>MMSE</p></td>
+<td><p>inverts it with <span class="math notranslate nohighlight">\(\sigma^2\)</span> added</p></td>
+<td><p>same</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>OSIC</p></td>
+<td><p>detects, subtracts, repeats</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_t\)</span> inversions
+of shrinking size</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span>
+(first stream)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ML</p></td>
+<td><p>scores every vector</p></td>
+<td><p><span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>SD</p></td>
+<td><p>scores the vectors inside a sphere</p></td>
+<td><p>data dependent, same
+decision as ML</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The last column is the one that orders the curves at high SNR, and the third is the one that orders the bill. Note that ZF and MMSE share a diversity order: the regularization buys array gain, not slope, which is why their curves are parallel in the figure below and never converge.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The SNR range simulated here stops at 18 dB, which is <em>not</em> the
+asymptotic regime: reading exponents off these curves would give
+1.4 and 1.6 rather than 2 and 3. Diversity orders are claims about a
+limit, so they are checked where a limit can be reached –
+<code class="docutils literal notranslate"><span class="pre">validation/mimo_zf_ml_ber.py</span></code> confirms diversity 1 for zero
+forcing and 2 for maximum likelihood on a 2x2 channel, against the
+closed forms of <a class="reference internal" href="../documentation/core/metrics.html#module-comnumpy.core.metrics" title="comnumpy.core.metrics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comnumpy.core.metrics</span></code></a> (decision D7).</p>
+</div>
 </section>
 </section>
 <section id="monte-carlo-evaluation">
@@ -1125,10 +1200,14 @@ c_k = \frac{z_k - \sum_{i&gt;k} R_{ki}\, x_i}{R_{kk}}\]</div>
 <ul class="simple">
 <li><p>How to simulate a MIMO transmission with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, as a chain whose last block is the receiver.</p></li>
 <li><p>How ZF equalization recovers the streams from a multi-antenna mixture, and what it costs in noise.</p></li>
-<li><p>How the four detectors compare, on one realization and on average.</p></li>
-<li><p>Why ML and OSIC outperform linear detection, and why that difference grows with the SNR.</p></li>
+<li><p>How the five detectors compare, on one realization and on average.</p></li>
+<li><p>Why ML and OSIC outperform linear detection, why that difference grows with the SNR, and why a sphere decoder reaches the ML decision without paying the ML price.</p></li>
 </ul>
 <p>With <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.</p>
+<p>Every detector here assumed the <em>receiver</em> knows the channel and the
+transmitter knows nothing. <a class="reference internal" href="alamouti.html"><span class="doc">Alamouti Space-Time Coding Tutorial</span></a> asks what the transmitter can do
+anyway – and answers with a code that buys diversity without a single bit of
+feedback.</p>
 </section>
 </section>
 
@@ -1143,12 +1222,12 @@ c_k = \frac{z_k - \sum_{i&gt;k} R_{ki}\, x_i}{R_{kk}}\]</div>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="ofdm_papr.html"
+       href="multipath.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">PAPR in OFDM Communication</p>
+        <p class="prev-next-title">Multipath Fading Channels</p>
       </div>
     </a>
     <a class="right-next"
@@ -1190,13 +1269,18 @@ c_k = \frac{z_k - \sum_{i&gt;k} R_{ki}\, x_i}{R_{kk}}\]</div>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-simulation">One-Shot Simulation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-the-four-chains">Run the four chains</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-the-five-chains">Run the five chains</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">Visualize the Received Signal</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">Zero-Forcing Equalization</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-comparison">Detection Comparison</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-cancel-it-exactly">Zero forcing: cancel it exactly</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mmse-stop-insisting">MMSE: stop insisting</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-do-not-separate-the-streams-at-all">Maximum likelihood: do not separate the streams at all</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#osic-separate-them-but-in-the-right-order">OSIC: separate them, but in the right order</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sphere-decoding-the-same-decision-not-the-same-cost">Sphere decoding: the same decision, not the same cost</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-five-in-one-table">The five in one table</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">

@@ -8,6 +8,13 @@ and the 5G NR ones of TR 38.901 -- ships with the library, and the tutorial
 ends on the one design rule they exist to settle: how long the cyclic prefix
 of an OFDM symbol has to be.
 
+.. note::
+
+   **Before you start.** :doc:`ofdm` used a frequency-selective channel and
+   a cyclic prefix without saying where either number comes from. This
+   tutorial is the answer: the standardized channels of 3GPP, and the rule
+   that sizes the prefix.
+
 **What you'll learn:**
 
 - What a power delay profile is, and why a 5G TDL model is a *shape* rather
@@ -260,3 +267,7 @@ From here, you can:
   :doc:`OFDM tutorial <ofdm>`).
 - Replace the perfect channel knowledge by an estimate from the pilot
   subcarriers of a real allocation.
+
+The next tutorial, :doc:`mimo`, attacks the same fading from the other side:
+instead of surviving a bad channel, use several antennas so that a bad
+channel becomes unlikely.

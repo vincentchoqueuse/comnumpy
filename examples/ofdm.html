@@ -404,7 +404,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PAPR in OFDM Communication" href="ofdm_papr.html" />
-    <link rel="prev" title="Multipath Fading Channels" href="multipath.html" />
+    <link rel="prev" title="Monte Carlo Simulation over AWGN Channel" href="awgn.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -692,12 +692,12 @@ window.runMermaid = runMermaid;</script>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
 </ul>
 </div>
@@ -761,8 +761,21 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="ofdm-tutorial">
 <h1>OFDM Tutorial<a class="headerlink" href="#ofdm-tutorial" title="Link to this heading">#</a></h1>
-<p>In this tutorial, we compare the performance of a <strong>Single Carrier (SC)</strong> system
-and an <strong>OFDM</strong> system over a <strong>frequency-selective multipath channel</strong> using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.</p>
+<p>Until now the channel added noise and nothing else. A radio signal, though,
+usually arrives <em>several times</em>: once by the direct path and again by every
+reflection, each with its own delay and attenuation. The receiver then sees
+each symbol on top of the tails of the previous ones – inter-symbol
+interference – and something has to undo it.</p>
+<p>This tutorial compares the two answers on the same channel: invert it as one
+big matrix (<strong>single carrier</strong>), or split the band into subcarriers narrow
+enough that each sees a <em>flat</em> channel and one division suffices (<strong>OFDM</strong>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced the chain, <code class="docutils literal notranslate"><span class="pre">seed</span></code>,
+<code class="docutils literal notranslate"><span class="pre">set_params</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>; they are used here without being
+re-explained. What is new is the channel: it is no longer a single
+coefficient.</p>
+</div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
 <li><p>How to define and simulate a frequency-selective channel.</p></li>
@@ -815,12 +828,24 @@ including the modulation order and the channel impulse response for a frequency-
 
 </pre></div>
 </div>
-<p>Here, <code class="docutils literal notranslate"><span class="pre">h</span></code> represents the channel impulse response, drawn from an
-<strong>exponential power delay profile</strong> – the standard multipath model – and
-seeded, because the whole comparison below is about one realization. Its
-frequency response spans a factor of 31 between its strongest and weakest
-subcarrier: that notch is what “frequency selective” means, and it is what
-the two receivers will disagree about.</p>
+<p>Here <code class="docutils literal notranslate"><span class="pre">h</span></code> is the channel impulse response: one tap per resolvable echo.
+Its taps are not arbitrary – they are drawn from an <strong>exponential power
+delay profile</strong>, which is the simplest realistic multipath model: later
+echoes have travelled further, so they arrive weaker, and the decay is
+exponential. Each tap is then a complex Gaussian, which is what a sum of many
+unresolved reflections looks like.</p>
+<p>The draw is seeded because the whole comparison below is about <em>one</em>
+realization of that channel. Its frequency response spans a factor of 31
+between its strongest and its weakest subcarrier: that notch is what
+“frequency selective” means, and it is what the two receivers will disagree
+about.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Real systems are simulated against <em>standardized</em> profiles rather than a
+hand-rolled one – the LTE and 5G NR tables that fix these delays and
+powers. They are in the library, and <a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> is where they are
+introduced; the five taps here are enough to see the effect.</p>
+</div>
 </section>
 </section>
 <section id="frequency-selective-channel">
@@ -1117,7 +1142,8 @@ first place.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have compared <strong>Single Carrier</strong> and <strong>OFDM</strong> systems over a multipath channel.</p>
+<p>You have compared the two ways of undoing a multipath channel, on the same
+realization of it.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
 <li><p>Model a frequency-selective FIR channel in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
@@ -1132,6 +1158,12 @@ equalization becomes one complex division per subcarrier instead of an</strong>
 <span class="math notranslate nohighlight">\(N \times N\)</span> <strong>matrix inversion. That is what makes wideband receivers
 affordable; the per-subcarrier error rate it gives up is bought back by coding
 across the subcarriers.</strong></p>
+<p>Two questions are left open, and they are the next two tutorials.
+<a class="reference internal" href="ofdm_papr.html"><span class="doc">PAPR in OFDM Communication</span></a> asks what this waveform costs at the <em>transmitter</em> – summing
+128 subcarriers produces peaks an amplifier has to survive. And
+<a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> asks where <code class="docutils literal notranslate"><span class="pre">N_cp</span> <span class="pre">=</span> <span class="pre">10</span></code> came from: the cyclic prefix has to
+cover the channel, so its length is a property of the environment, and the
+environments are tabulated.</p>
 </section>
 </section>
 
@@ -1146,12 +1178,12 @@ across the subcarriers.</strong></p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="multipath.html"
+       href="awgn.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Multipath Fading Channels</p>
+        <p class="prev-next-title">Monte Carlo Simulation over AWGN Channel</p>
       </div>
     </a>
     <a class="right-next"
