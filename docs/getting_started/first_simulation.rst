@@ -57,6 +57,19 @@ We define the communication chain using the ``Sequential`` object, which takes a
 processors as input. The **comnumpy** library provides a wide range of built-in processors
 for modulation, coding, channel modeling, and more.
 
+The chain, as the chain itself describes it:
+
+.. mermaid:: mermaid/first_simulation.mmd
+
+The diagram above is not drawn by hand. It is what the chain says about
+itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
+script, so the block names are the ones the code uses and a dashed
+outline marks a tapped block:
+
+.. literalinclude:: ../../examples/simple/one_shot_awgn.py
+   :language: python
+   :lines: 49-55
+
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
    :lines: 20-26

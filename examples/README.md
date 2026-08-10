@@ -69,18 +69,17 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/one_shot_awgn.py` | 2.0 s | yes |
 | `simple/one_shot_cfo_iq_compensation.py` | 2.4 s | yes |
 | `mimo/one_shot_CMA.py` | 5.1 s | yes |
-
 | `ofdm/monte_carlo_profiling.py` | 5.8 s | yes |
 | `simple/profiling_awgn_ofdm.py` | 5.9 s | yes |
 | `ofdm/one_shot_ofdm_papr_reduction.py` | 6.8 s | yes |
 | `mimo/one_shot_mimo.py` | 9.9 s | yes |
+| `simple/monte_carlo_awgn.py` | 12.4 s | yes |
 | `mimo/one_shot_alamouti.py` | 14.4 s | yes |
 | `simple/probabilistic_shaping.py` | 14.6 s | yes |
-| `simple/monte_carlo_awgn.py` | 12.4 s | yes |
 | `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes — the slowest one kept |
 | `mimo/monte_carlo_simulation_1.py` | 32 s | skipped — slow |
+| `ofdm/one_shot_ofdm.py` | 49 s (147 s CPU) | skipped — slow |
 | `optical/one_shot_NLI.py` | 64 s | skipped — slow |
-| `ofdm/one_shot_ofdm.py` | 74 s (215 s CPU) | skipped — slow |
 | `simple/one_shot_srrc_awgn.py` | 113 s (316 s CPU) | skipped — slow |
 | `mimo/monte_carlo_simulation_2.py` | 143 s | skipped — slow |
 | `optical/CD_compensation_part1.py` | 227 s | skipped — slow |
@@ -105,3 +104,10 @@ The scripts write into `docs/**/img/` through hardcoded relative paths
 from their own directory, and why the smoke test runs them inside a
 throwaway copy of this folder instead of letting them overwrite the
 committed figures.
+
+Several also write into `docs/**/mermaid/`: the chain diagrams the
+tutorials display are `chain.to_mermaid()` (decision D33c) rather than
+hand-drawn pictures, so a diagram cannot claim something the chain does
+not do. `tests/test_examples_run.py` compares what a sandbox run writes
+with what is committed, and fails if the two disagree — so after
+changing a chain, re-run its example and commit the regenerated `.mmd`.

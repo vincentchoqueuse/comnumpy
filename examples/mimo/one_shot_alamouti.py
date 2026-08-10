@@ -179,3 +179,11 @@ needed = {name: np.interp(np.log10(target), np.log10(values)[::-1],
 print(f"SNR for SER = {target:g}: MRC {needed['MRC']:.1f} dB, Alamouti "
       f"{needed['Alamouti']:.1f} dB, gap {needed['Alamouti'] - needed['MRC']:.2f} dB "
       f"(10log10(N_t) = {10 * np.log10(code.n_tx):.2f} dB)")
+
+# The chain diagrams this tutorial shows are exported from the chains
+# themselves (D33c), so the picture cannot drift from the code -- the
+# smoke test compares what a run writes with what the page displays.
+mermaid_dir = "../../docs/examples/mermaid/"
+for diagram_name, diagram_chain in [("alamouti", alamouti), ("mrc", mrc)]:
+    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
+        stream.write(diagram_chain.to_mermaid())

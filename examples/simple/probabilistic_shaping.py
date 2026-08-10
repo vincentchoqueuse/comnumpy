@@ -197,4 +197,13 @@ for rate in (1.5, 2.0, 2.5):
     shaped = np.interp(rate, best, snr_dB_list)
     print(f"rate {rate} bit/symbol: uniform needs {plain:.2f} dB, shaped "
           f"{shaped:.2f} dB -- {plain - shaped:.2f} dB saved")
+
+# The chain diagrams this tutorial shows are exported from the chains
+# themselves (D33c), so the picture cannot drift from the code -- the
+# smoke test compares what a run writes with what the page displays.
+mermaid_dir = "../../docs/examples/mermaid/"
+for diagram_name, diagram_chain in [("shaping_pas", link), ("shaping_study", study)]:
+    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
+        stream.write(diagram_chain.to_mermaid())
+
 plt.show()
