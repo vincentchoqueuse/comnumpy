@@ -196,7 +196,10 @@ N_SYMBOLS = 2 ** 12          # 4096, against the notebook's 25000:
                              # 3584 symbols survive the guard on each
                              # polarization, so the SNR estimate is
                              # worth about 0.04 dB
-N_TAPS_HALF = 128            # SRRC half-length, in symbols
+# the notebook's own filter: nFilterTaps = 1024 at 16 samples/symbol, i.e.
+# 32 symbols each side. Check 2 shows the choice does not move the answer.
+N_TAPS_HALF = 32             # SRRC half-length, in symbols
+N_TAPS_HALF_LONG = 128       # the same filter, four times longer
 GUARD = 2 * N_TAPS_HALF      # symbols dropped at both ends
 FS = SYMBOL_RATE * SAMPLES_PER_SYMBOL
 CENTRE_CHANNEL = N_CHANNELS // 2
@@ -209,6 +212,20 @@ WAVELENGTH_NM = 2.99792458e8 / CENTRE_HZ * 1e9
 OCCUPIED_HZ = SYMBOL_RATE * (1 + ROLL_OFF)
 GRID = WDMGrid.uniform(N_CHANNELS, spacing_Hz=SPACING_HZ,
                        bandwidth_Hz=OCCUPIED_HZ, center_Hz=CENTRE_HZ)
+
+
+def pulse(half_length: int = 0) -> SRRCFilter:
+    """The shaping filter -- and the matched filter, which is the same one.
+
+    OptiCommPy builds one ``pulse`` array and passes it to ``firFilter``
+    at both ends; this returns one object with the same parameters, used
+    by :func:`transmit` and by :func:`receive` alike. Reusing it is not
+    only tidier: a matched filter that does not match the transmitted
+    pulse is a silent penalty, and sharing the object makes them
+    impossible to drift apart.
+    """
+    return SRRCFilter(ROLL_OFF, SAMPLES_PER_SYMBOL,
+                      N_h=half_length or N_TAPS_HALF, method="fft")
 
 
 def fiber(gamma: float) -> FiberSpec:
@@ -230,7 +247,8 @@ def snr_dB(mse: float) -> float:
     return -10 * np.log10(mse)
 
 
-def transmit(power_dBm: float = POWER_PER_CHANNEL_DBM, seed: int = 1):
+def transmit(power_dBm: float = POWER_PER_CHANNEL_DBM, seed: int = 1,
+             half_length: int = 0):
     """The 11-channel PDM comb: one 16-QAM signal per channel and mode.
 
     Returns the transmitted symbol *indices* and *points*, both
@@ -244,8 +262,7 @@ def transmit(power_dBm: float = POWER_PER_CHANNEL_DBM, seed: int = 1):
                        dtype=complex)
     waveform = np.empty((N_POLARIZATIONS, N_CHANNELS,
                          N_SYMBOLS * SAMPLES_PER_SYMBOL), dtype=complex)
-    shaper = SRRCFilter(ROLL_OFF, SAMPLES_PER_SYMBOL, N_h=N_TAPS_HALF,
-                        method="fft")
+    shaper = pulse(half_length)
     upsampler = Upsampler(SAMPLES_PER_SYMBOL)
     for mode in range(N_POLARIZATIONS):
         for channel in range(N_CHANNELS):
@@ -265,29 +282,30 @@ def transmit(power_dBm: float = POWER_PER_CHANNEL_DBM, seed: int = 1):
     return indices, symbols, field
 
 
-def receive(field: np.ndarray, symbols: np.ndarray) -> float:
+def receive(field: np.ndarray, symbols: np.ndarray,
+            half_length: int = 0) -> float:
     """Demultiplex, matched filter, sample, and return the error power.
 
     Averaged over the two polarizations, as the notebook reports two
     nearly equal numbers.
     """
     errors = []
-    for received, sent in equalize(field, symbols):
+    for received, sent in equalize(field, symbols, half_length):
         errors.append(np.mean(np.abs(received - sent) ** 2)
                       / np.mean(np.abs(sent) ** 2))
     return float(np.mean(errors))
 
 
-def equalize(field: np.ndarray, symbols: np.ndarray):
+def equalize(field: np.ndarray, symbols: np.ndarray, half_length: int = 0):
     """Yield the (received, sent) symbol pairs of the centre channel."""
     demultiplexer = WDMDemultiplexer(GRID, fs=FS)
-    matched_filter = SRRCFilter(ROLL_OFF, SAMPLES_PER_SYMBOL,
-                                N_h=N_TAPS_HALF, method="fft")
+    matched_filter = pulse(half_length)         # the transmitter's own pulse
+    guard = 2 * (half_length or N_TAPS_HALF)
     for mode in range(N_POLARIZATIONS):
         channel = demultiplexer(field[mode])[CENTRE_CHANNEL]
         matched = matched_filter(channel)
-        received = matched[::SAMPLES_PER_SYMBOL][:N_SYMBOLS][GUARD:-GUARD]
-        sent = symbols[mode, CENTRE_CHANNEL][GUARD:-GUARD]
+        received = matched[::SAMPLES_PER_SYMBOL][:N_SYMBOLS][guard:-guard]
+        sent = symbols[mode, CENTRE_CHANNEL][guard:-guard]
         # one complex gain: the amplitude the link left and the mean
         # nonlinear phase. This is where the notebook runs an adaptive
         # equalizer and a blind phase search instead, and the difference
@@ -346,15 +364,33 @@ def check_comb_power(field: np.ndarray) -> float:
 
 def check_implementation_floor(field: np.ndarray,
                                symbols: np.ndarray) -> float:
-    """2. What the transmitter and receiver cost on their own."""
+    """2. What the transmitter and receiver cost, and that removing it works.
+
+    The notebook's 1024-tap filter leaves a floor only a few decibels
+    above the figure under test, so the subtraction has to be trusted.
+    It is not: the same channel measured through a filter four times
+    longer -- a floor 26 dB higher -- must give the same answer, and
+    that agreement is what licenses the short filter.
+    """
     floor = receive(field, symbols)
-    assert snr_dB(floor) > PUBLISHED_SNR_DB + 10, (
+    assert snr_dB(floor) > PUBLISHED_SNR_DB + 5, (
         f"the back-to-back floor is {snr_dB(floor):.2f} dB, too close to the "
-        f"{PUBLISHED_SNR_DB} dB being measured for the result to mean "
-        f"anything -- lengthen the shaping filter")
-    print(f"PASS implementation floor: the transmitter and receiver alone "
-          f"leave {snr_dB(floor):.2f} dB, {snr_dB(floor) - PUBLISHED_SNR_DB:.1f} "
-          f"dB above the figure under test; removed from everything below")
+        f"{PUBLISHED_SNR_DB} dB being measured -- lengthen the filter")
+
+    long_symbols, long_field = transmit(half_length=N_TAPS_HALF_LONG)[1:]
+    long_floor = receive(long_field, long_symbols, N_TAPS_HALF_LONG)
+    short = snr_dB(receive(propagate(field, LINEAR, 1, 1), symbols) - floor)
+    long = snr_dB(receive(propagate(long_field, LINEAR, 1, 1), long_symbols,
+                          N_TAPS_HALF_LONG) - long_floor)
+    assert abs(short - long) < 0.15, (
+        f"the same channel reads {short:.2f} dB through the notebook's filter "
+        f"and {long:.2f} dB through a longer one: the floor subtraction is "
+        f"not doing its job")
+    print(f"PASS implementation floor: the notebook's 1024-tap filter leaves "
+          f"{snr_dB(floor):.2f} dB, a filter 4x longer leaves "
+          f"{snr_dB(long_floor):.2f} dB, and the channel reads the same "
+          f"through both ({short:.2f} against {long:.2f} dB) -- so removing "
+          f"the floor is sound and the short filter is the notebook's")
     return floor
 
 

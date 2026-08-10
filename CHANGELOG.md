@@ -94,6 +94,22 @@ one release; there is no compatibility layer.
   the bracket. One byproduct worth keeping: the phase search *gains*
   0.8 dB with no laser phase noise to remove, because it also tracks
   the slowly varying nonlinear phase.
+- `validation/optical_wdm_opticommpy.py` uses the notebook's own pulse
+  shaping -- one root-raised-cosine of 1024 taps at 16 samples per
+  symbol, the same object shaping the transmitter and matching the
+  receiver, as OptiCommPy does. It changes nothing it should not: the
+  link reads 21.59 dB against 21.57 dB through a filter four times
+  longer, and the script now *checks* that agreement, because the short
+  filter leaves a floor only 7 dB above the figure under test and the
+  subtraction has to be earned rather than assumed.
+- The WDM slot-width warning moved from `WDMDemultiplexer` to
+  `WDMMultiplexer`. At the receiver the measurement was dominated by
+  amplified spontaneous emission, which is white and fills the guard
+  band whatever the grid says: it fired on a correctly configured comb
+  after 700 km (0.12 % of rejected energy against 0.0004 % of genuinely
+  clipped signal). At the transmitter there is no noise and the
+  question -- does this channel fit the bandwidth the grid declares --
+  is exactly the configuration mistake worth catching.
 - Estimator scope (D49): every estimator now says whether what it
   measures is **shared** by the paths of a multi-path signal or belongs
   to **each path**, and behaves accordingly. `BlindCFOCompensator`

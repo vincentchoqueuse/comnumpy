@@ -420,6 +420,13 @@ class WDMMultiplexer(Processor):
         is far larger than the fraction suggests, which is why the
         threshold here is low.
 
+        The same measurement rises when the *shaping filter* is short,
+        because its truncation sidelobes spill too: on that comb, 0.13 %
+        for a clipped grid against 0.0004 % for a correct one at 4097
+        taps, but 0.18 % against 0.038 % at 1025 taps. The check
+        therefore reports "wider than its slot" without claiming which
+        of the two causes it is -- both are real, and the remedy differs.
+
         The check belongs to the transmitter. At the receiver the same
         measurement is dominated by amplified spontaneous emission,
         which is white and fills the guard band whatever the grid says:
@@ -436,14 +443,17 @@ class WDMMultiplexer(Processor):
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = np.where(total > 0, spilled / total, 0.0)
         worst = float(np.max(ratio))
-        if worst > 1e-4:
+        if worst > 1e-3:
             logger.warning(
                 "a WDM channel is wider than the %.6g Hz the grid declares "
-                "for it: %.3f %% of its energy sits outside. bandwidth_Hz is "
-                "the *occupied* bandwidth, so a pulse shaped at roll-off rho "
-                "needs Rs*(1+rho), not Rs -- the demultiplexer will cut what "
-                "does not fit, and a truncated Nyquist pair costs far more "
-                "than that fraction suggests.",
+                "for it: %.3f %% of its energy sits outside, and the "
+                "demultiplexer will cut it. Either bandwidth_Hz is too "
+                "narrow -- it is the *occupied* bandwidth, so a pulse shaped "
+                "at roll-off rho needs Rs*(1+rho), not Rs -- or the shaping "
+                "filter is too short and its truncation sidelobes are what "
+                "spills. The check cannot tell the two apart, and both are "
+                "worth knowing: a truncated Nyquist pair costs far more than "
+                "the fraction suggests.",
                 self.grid.bandwidth_Hz, 100 * worst)
 
     def prepare(self, x: np.ndarray) -> None:
