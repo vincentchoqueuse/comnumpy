@@ -19,11 +19,17 @@ N = 1280
 sigma2 = 0.015
 alphabet = get_alphabet("QAM", M)
 
-# generate a random selective channel (seeded: the whole comparison
-# below is about one channel realization, so it must be the same one)
-rng = np.random.default_rng(4)
-h = 0.1*(rng.standard_normal(N_h) + 1j*rng.standard_normal(N_h))
-h[0] = 1
+# A frequency-selective channel, drawn from an exponential power delay
+# profile -- the standard multipath model -- and seeded, because the
+# whole comparison below is about one realization. Its frequency
+# response has a deep notch (|H| spans a factor 31), which is what
+# "frequency selective" means and what the two receivers will disagree
+# about.
+rng = np.random.default_rng(18)
+power = np.exp(-np.arange(N_h) / 2.0)
+power = power / np.sum(power)
+h = np.sqrt(power / 2) * (rng.standard_normal(N_h)
+                          + 1j * rng.standard_normal(N_h))
 
 # create a simple single carrier chain and simulate
 simple_chain = Sequential([
@@ -90,4 +96,30 @@ plt.figure()
 plt.plot(np.real(data_rx), np.imag(data_rx), ".")
 plt.title("OFDM Chain: received data")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
+
+# The ranking is not a property of the two schemes, it is a property of
+# the operating point -- so the two chains are run again over a range of
+# noise variances, and the crossing is printed rather than asserted.
+print("sigma2     single carrier      OFDM     |H| spans "
+      f"{np.max(np.abs(np.fft.fft(h, N_carrier))) / np.min(np.abs(np.fft.fft(h, N_carrier))):.0f}")
+for variance in [0.015, 0.008, 0.004, 0.002]:
+    row = []
+    for chain, block in ((simple_chain, "data_rx"), (ofdm_chain, "awgn")):
+        chain.seed(1)
+        chain.set_params(**{f"{block}.sigma2": variance})
+        detected = chain(N)
+        row.append(compute_ser(chain.tap("data_tx"), detected))
+    print(f"{variance:6.3f}   {row[0]:16.4f} {row[1]:9.4f}")
+
+# The chain diagrams this tutorial shows are exported from the chains
+# themselves (D33c), so the picture cannot drift from the code -- the
+# smoke test compares what a run writes with what the page displays.
+mermaid_dir = "../../docs/examples/mermaid/"
+for diagram_name, diagram_chain in [("ofdm_single_carrier", simple_chain),
+        ("ofdm_chain", ofdm_chain),
+        ("ofdm_transmitter", ofdm_chain[2].chain),
+        ("ofdm_receiver", ofdm_chain[5].chain)]:
+    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
+        stream.write(diagram_chain.to_mermaid())
+
 plt.show()

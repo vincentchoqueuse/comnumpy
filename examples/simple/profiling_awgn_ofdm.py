@@ -56,4 +56,13 @@ chain = Sequential([
 # profiling chain
 plot_chain_profiling(chain, input=N)
 plt.savefig("../../docs/getting_started/img/profiling_chain_fig1.png")
+
+# The chain diagrams this tutorial shows are exported from the chains
+# themselves (D33c), so the picture cannot drift from the code -- the
+# smoke test compares what a run writes with what the page displays.
+mermaid_dir = "../../docs/getting_started/mermaid/"
+for diagram_name, diagram_chain in [("profiling_chain", chain)]:
+    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
+        stream.write(diagram_chain.to_mermaid())
+
 plt.show()
