@@ -731,6 +731,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span><span class="p">,</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span><span class="p">,</span> <span class="n">Parallel2Serial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">CarrierExtractor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span>
     <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span>
@@ -772,7 +773,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Number of data subcarriers :math:`N_{data}` per OFDM symbol.</span>
 <span class="sd">    N_cp : int</span>
 <span class="sd">        Length :math:`N_{cp}` of the cyclic prefix.</span>
-<span class="sd">    carrier_type : np.ndarray or list, optional, keyword-only</span>
+<span class="sd">    carrier_type : CarrierAllocation or np.ndarray, optional, keyword-only</span>
 <span class="sd">        Subcarrier allocation mask (e.g. data, pilot, null), passed to</span>
 <span class="sd">        :class:`~comnumpy.ofdm.processors.CarrierAllocator`. Default is</span>
 <span class="sd">        an all-data mask of length ``N_carrier_data``.</span>
@@ -796,7 +797,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">N_carrier_data</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">CarrierAllocation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">pilots</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ofdm_transmitter&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a): always assigned in __post_init__</span>
@@ -805,11 +807,13 @@ window.runMermaid = runMermaid;</script>
     <span class="n">chain</span><span class="p">:</span> <span class="n">Sequential</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># asarray, not a Union: every downstream block indexes these as</span>
-        <span class="c1"># arrays, so a list was only ever tolerated by accident</span>
+        <span class="c1"># a list is converted; a CarrierAllocation is passed through, as</span>
+        <span class="c1"># CarrierAllocator itself accepts it -- np.asarray on one gives a</span>
+        <span class="c1"># 0-d object array, which fails much further down</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_carrier_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pilots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pilots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pilots</span><span class="p">)</span>
 
@@ -862,7 +866,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    h : np.ndarray or list, keyword-only</span>
 <span class="sd">        Channel impulse response :math:`h[l]` used by the frequency</span>
 <span class="sd">        domain equalizer. Default is the ideal channel ``[1.0]``.</span>
-<span class="sd">    carrier_type : np.ndarray or list, optional, keyword-only</span>
+<span class="sd">    carrier_type : CarrierAllocation or np.ndarray, optional, keyword-only</span>
 <span class="sd">        Subcarrier allocation mask (e.g. data, pilot, null), passed to</span>
 <span class="sd">        :class:`~comnumpy.ofdm.processors.CarrierExtractor`. Default is</span>
 <span class="sd">        an all-data mask of length ``N_carrier_data``.</span>
@@ -885,7 +889,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">N_carrier_data</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">CarrierAllocation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ofdm_receiver&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a): always assigned in __post_init__</span>
     <span class="c1"># Sequential, not Processor: Sequential does not subclass it, so the</span>
@@ -895,10 +900,13 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_carrier_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
+            <span class="n">N_carriers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">N_fft</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
+            <span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
 
-        <span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_carriers</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">),</span>
             <span class="n">CyclicPrefixRemover</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">),</span>

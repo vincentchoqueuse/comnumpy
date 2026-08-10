@@ -1128,6 +1128,117 @@ other, which is the honest answer after a detection mistake.</p>
 </section>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.shaping.AmplitudeMapper">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AmplitudeMapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'amplitude</span> <span class="pre">mapper'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#AmplitudeMapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.AmplitudeMapper" title="Link to this definition">#</a></dt>
+<dd><p>Amplitude indices to signed PAM symbols: the sign of PAS.</p>
+<section id="id8">
+<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<p>A distribution matcher emits amplitudes; a PAM constellation is
+signed. The missing half is one bit per symbol,</p>
+<div class="math notranslate nohighlight">
+\[y[n] = \varepsilon[n] \, a_{x[n]}, \qquad
+\Pr(\varepsilon[n] = \pm 1) = \tfrac{1}{2}\]</div>
+<p>and it is free: an equiprobable sign leaves the amplitude
+distribution untouched, so the composite constellation carries the
+symmetric Maxwell-Boltzmann law</p>
+<div class="math notranslate nohighlight">
+\[P_Y(\pm a_i) = \tfrac{1}{2} P_A(a_i)\]</div>
+<p>at the same energy, and adds exactly one bit per symbol to the rate.
+That is the whole reason probabilistic amplitude shaping works: the
+systematic FEC encoder’s parity bits, which are uniform, are spent on
+the signs, and only the amplitudes go through the matcher.</p>
+<p>This block draws the signs itself, from its own generator, which is
+the same distribution a parity stream has. It is a stochastic block,
+so <a class="reference internal" href="generics.html#comnumpy.core.generics.Sequential.seed" title="comnumpy.core.generics.Sequential.seed"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seed()</span></code></a> reaches it (D6).</p>
+<p>Axes: <em>element-wise</em> – applied pointwise, shape-agnostic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param alphabet<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Non-negative amplitudes <span class="math notranslate nohighlight">\(a_i\)</span>, indexed by the input.</p>
+</dd>
+<dt class="field-even">type alphabet<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param seed<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Local RNG seed.</p>
+</dd>
+<dt class="field-even">type seed<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param name<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Name of the block. Default <code class="docutils literal notranslate"><span class="pre">&quot;amplitude</span> <span class="pre">mapper&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type name<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If an amplitude is negative – the sign is this block’s business,
+    and a signed input would make the constellation asymmetric.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>G. Böcherer, F. Steiner, P. Schulte, “Bandwidth efficient and
+rate-matched low-density parity-check coded modulation”, IEEE Trans.
+Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015, Section IV
+(the sign bits of PAS).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mapper</span> <span class="o">=</span> <span class="n">AmplitudeMapper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">]),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">mapper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">])))</span>
+<span class="go">[-1. -3. -1.  7.  5.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AmplitudeDemapper</span><span class="p">(</span><span class="n">mapper</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)(</span><span class="n">mapper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))))</span>
+<span class="go">[0 3]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.shaping.AmplitudeDemapper">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AmplitudeDemapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'amplitude</span> <span class="pre">demapper'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#AmplitudeDemapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.AmplitudeDemapper" title="Link to this definition">#</a></dt>
+<dd><p>Signed PAM samples back to amplitude indices.</p>
+<section id="id9">
+<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<p>The inverse of <a class="reference internal" href="#comnumpy.core.shaping.AmplitudeMapper" title="comnumpy.core.shaping.AmplitudeMapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeMapper</span></code></a> on the half that carries the
+shaped data:</p>
+<div class="math notranslate nohighlight">
+\[\hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|\]</div>
+<p>Taking the magnitude first is not a shortcut, it is the maximum
+likelihood decision: on a constellation symmetric about the origin,
+the nearest point to <span class="math notranslate nohighlight">\(y\)</span> always has the amplitude nearest to
+<span class="math notranslate nohighlight">\(|y|\)</span>, so deciding on <span class="math notranslate nohighlight">\(|y|\)</span> and deciding on <span class="math notranslate nohighlight">\(y\)</span>
+give the same amplitude. The sign is dropped because in PAS it
+carries parity, not data – a real receiver feeds it to the FEC
+decoder instead.</p>
+<p>Axes: <em>element-wise</em> – applied pointwise, shape-agnostic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param alphabet<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The same non-negative amplitudes the mapper was given.</p>
+</dd>
+<dt class="field-even">type alphabet<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param name<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Name of the block. Default <code class="docutils literal notranslate"><span class="pre">&quot;amplitude</span> <span class="pre">demapper&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type name<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If an amplitude is negative.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>G. Böcherer, F. Steiner, P. Schulte, IEEE Trans. Commun. 63(12),
+2015, Section IV.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">demapper</span> <span class="o">=</span> <span class="n">AmplitudeDemapper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">demapper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.2</span><span class="p">,</span> <span class="mf">6.2</span><span class="p">])))</span>
+<span class="go">[0 1 2 3]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -1201,6 +1312,8 @@ other, which is the honest answer after a detection mistake.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.DistributionMatcher"><code class="docutils literal notranslate"><span class="pre">DistributionMatcher</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.DistributionDematcher"><code class="docutils literal notranslate"><span class="pre">DistributionDematcher</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.AmplitudeMapper"><code class="docutils literal notranslate"><span class="pre">AmplitudeMapper</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.AmplitudeDemapper"><code class="docutils literal notranslate"><span class="pre">AmplitudeDemapper</span></code></a></li>
 </ul>
   </nav></div>
 

@@ -404,7 +404,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PAPR in OFDM Communication" href="ofdm_papr.html" />
-    <link rel="prev" title="Monte Carlo Simulation over AWGN Channel" href="awgn.html" />
+    <link rel="prev" title="Probabilistic Shaping" href="shaping.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -692,6 +692,7 @@ window.runMermaid = runMermaid;</script>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
@@ -760,12 +761,12 @@ window.runMermaid = runMermaid;</script>
   <section id="ofdm-tutorial">
 <h1>OFDM Tutorial<a class="headerlink" href="#ofdm-tutorial" title="Link to this heading">#</a></h1>
 <p>In this tutorial, we compare the performance of a <strong>Single Carrier (SC)</strong> system
-and an <strong>OFDM</strong> system over a <strong>frequency-selective multipath channel</strong> using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.
-You will learn how to:</p>
+and an <strong>OFDM</strong> system over a <strong>frequency-selective multipath channel</strong> using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>Define and simulate a frequency-selective channel.</p></li>
-<li><p>Evaluate performance using the Symbol Error Rate (SER).</p></li>
-<li><p>Understand why OFDM outperforms SC in multipath environments.</p></li>
+<li><p>How to define and simulate a frequency-selective channel.</p></li>
+<li><p>How to evaluate performance using the Symbol Error Rate (SER) and the runtime.</p></li>
+<li><p>What OFDM actually buys against single-carrier equalization – and what it costs.</p></li>
 </ul>
 <p>This tutorial is suitable for engineers and students interested in digital communications,
 combining practical examples with theoretical insights.</p>
@@ -792,21 +793,24 @@ combining practical examples with theoretical insights.</p>
 <h3>Simulation Parameters<a class="headerlink" href="#simulation-parameters" title="Link to this heading">#</a></h3>
 <p>Next, we define the parameters of the communication chain,
 including the modulation order and the channel impulse response for a frequency-selective channel:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># parameters</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1280</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.015</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 
-<span class="c1"># generate a random selective channel</span>
-<span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
+<span class="c1"># generate a random selective channel (seeded: the whole comparison</span>
+<span class="c1"># below is about one channel realization, so it must be the same one)</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">*</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
 <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 </pre></div>
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">h</span></code> represents the channel impulse response.
-The first tap is normalized to 1 to preserve the overall channel energy.</p>
+The first tap is normalized to 1 to preserve the overall channel energy.
+The generator is seeded: the two chains below are compared on <strong>one</strong>
+realization of that channel, so it has to be the same one on every run.</p>
 </section>
 </section>
 <section id="frequency-selective-channel">
@@ -849,12 +853,10 @@ This formulation highlights that <strong>ISI (Inter-Symbol Interference)</strong
         <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
     <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx_eq&quot;</span><span class="p">])</span>
 
+<span class="n">simple_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">s_rx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 <span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-<span class="c1"># extract signals, compute ser and elapsed time</span>
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -862,7 +864,9 @@ This formulation highlights that <strong>ISI (Inter-Symbol Interference)</strong
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
 <p>We evaluate the performance by computing the SER and the execution time,
 then plot the constellation before and after equalization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals, compute ser and elapsed time</span>
+<span class="n">s_tx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
+<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
 <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
@@ -878,14 +882,17 @@ then plot the constellation before and after equalization:</p>
     <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig1.png&quot;</span><span class="p">)</span>
-
 </pre></div>
 </div>
 <p>For the SC chain, we obtain:</p>
-<ul class="simple">
-<li><p><strong>SER</strong> = 0.007</p></li>
-<li><p><strong>Execution time</strong> = 0.562 s</p></li>
-</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="n">elapsed</span> <span class="n">time</span><span class="p">:</span> <span class="mf">1.21</span> <span class="n">s</span>
+</pre></div>
+</div>
+<p>Not a single symbol error – and more than a second of computation for 1280
+symbols. Both numbers matter, and the second is the one to keep in mind:
+the ZF equalizer builds the <span class="math notranslate nohighlight">\(N \times N\)</span> convolution matrix and
+pseudo-inverts it, which costs <span class="math notranslate nohighlight">\(O(N^3)\)</span>.</p>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig1.png"><img alt="Constellations before and after equalization (Single Carrier)" class="align-center" src="../_images/one_shot_ofdm_fig1.png" style="width: 100%;" />
 </a>
 </section>
@@ -939,7 +946,8 @@ Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
 <section id="id1">
 <h3>Implementation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
 <p>The OFDM chain in <strong>comnumpy</strong> is implemented as:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create an OFDM chain and simulate</span>
+<span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
 <span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">ofdm_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
@@ -951,21 +959,21 @@ Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
         <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
     <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx&quot;</span><span class="p">])</span>
 
+<span class="n">ofdm_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">s_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 <span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-<span class="c1"># extract signals, compute ser and elapsed time</span>
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
-<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_rx&quot;</span><span class="p">)</span>
-<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="id2">
 <h3>Results<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
 <p>We compute the SER and runtime, then plot the received constellation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract signals, compute ser and elapsed time</span>
+<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
+<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_rx&quot;</span><span class="p">)</span>
+<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
+<span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
 
@@ -974,14 +982,25 @@ Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">data_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;OFDM Chain: received data&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig2.png&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>For the OFDM chain, we obtain:</p>
-<ul class="simple">
-<li><p><strong>SER</strong> = 0.004 (improved vs SC)</p></li>
-<li><p><strong>Execution time</strong> = 0.007 s (much lower than SC)</p></li>
-</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span><span class="p">:</span> <span class="mf">0.00546875</span>
+<span class="n">elapsed</span> <span class="n">time</span><span class="p">:</span> <span class="mf">0.0010</span> <span class="n">s</span>
+</pre></div>
+</div>
+<p>Read the two lines together, because the honest conclusion is not the one
+usually advertised. On <strong>this</strong> channel and uncoded, OFDM is <em>worse</em> in raw
+symbol error rate: block ZF inverts the whole convolution matrix at once and
+handles every frequency optimally, while OFDM equalizes each subcarrier on its
+own and amplifies the noise on those that happen to fall in a spectral notch.
+There is no coding across subcarriers here to repair them.</p>
+<p>What changes by <strong>three orders of magnitude</strong> is the cost: 1.21 s against
+1.0 ms for the same 1280 symbols. And that ratio is not a constant – the SC
+equalizer grows as <span class="math notranslate nohighlight">\(N^3\)</span> while OFDM grows as <span class="math notranslate nohighlight">\(N \log N\)</span>, so the
+comparison only gets more lopsided with the block size. This is why real
+systems are OFDM <em>plus</em> a code spread over the subcarriers: the code buys back
+the error rate, and the FFT keeps the receiver affordable.</p>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Constellation at OFDM receiver" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
 </a>
 </section>
@@ -992,13 +1011,17 @@ Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
 <li><p>Model a frequency-selective FIR channel in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
-<li><p>Simulate both SC and OFDM systems.</p></li>
+<li><p>Simulate both SC and OFDM systems on the same channel realization.</p></li>
 <li><p>Apply ZF equalization (SC) vs. one-tap equalization (OFDM).</p></li>
-<li><p>Compare performance in terms of SER and computational cost.</p></li>
+<li><p>Compare the two in symbol error rate <em>and</em> in computational cost, and see
+that the second is where the difference lies.</p></li>
 </ul>
 <p>Key takeaway:
-<strong>OFDM transforms a frequency-selective channel into flat-fading subchannels,
-enabling simple per-subcarrier equalization and superior performance in realistic multipath environments.</strong></p>
+<strong>OFDM turns a frequency-selective channel into a set of flat subchannels, so
+equalization becomes one complex division per subcarrier instead of an</strong>
+<span class="math notranslate nohighlight">\(N \times N\)</span> <strong>matrix inversion. That is what makes wideband receivers
+affordable; the per-subcarrier error rate it gives up is bought back by coding
+across the subcarriers.</strong></p>
 </section>
 </section>
 
@@ -1013,12 +1036,12 @@ enabling simple per-subcarrier equalization and superior performance in realisti
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="awgn.html"
+       href="shaping.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Monte Carlo Simulation over AWGN Channel</p>
+        <p class="prev-next-title">Probabilistic Shaping</p>
       </div>
     </a>
     <a class="right-next"

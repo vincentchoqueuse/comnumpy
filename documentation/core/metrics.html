@@ -658,11 +658,232 @@ with Gray mapping).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ser_rayleigh_psk">
+<span class="sig-name descname"><span class="pre">compute_ser_rayleigh_psk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr_per_bit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diversity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_ser_rayleigh_psk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="Link to this definition">#</a></dt>
+<dd><p>SER of M-PSK over Rayleigh fading with L-branch combining.</p>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>Each of the <span class="math notranslate nohighlight">\(L\)</span> branches carries the symbol through an
+independent Rayleigh coefficient, and the receiver combines them
+coherently, so the post-combining SNR is a sum of <span class="math notranslate nohighlight">\(L\)</span>
+exponential variables. Averaging the AWGN error probability over
+that law is done with Craig’s finite-range form of the Gaussian tail
+function, which turns the average into</p>
+<div class="math notranslate nohighlight">
+\[P_s = \frac{1}{\pi} \int_{0}^{\frac{M-1}{M}\pi}
+\left[ \frac{\sin^2\theta}
+            {\sin^2\theta + g_{\mathrm{PSK}}\,\bar{\gamma}_s}
+\right]^{L} d\theta,
+\qquad g_{\mathrm{PSK}} = \sin^2\frac{\pi}{M}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\bar{\gamma}_s = k \bar{\gamma}_b\)</span> the average SNR per
+symbol <strong>per branch</strong>. The expression is exact, not a bound: the
+bracket is the moment generating function of one branch on Craig’s
+contour, and the exponent <span class="math notranslate nohighlight">\(L\)</span> is what independence buys.</p>
+<p>At high SNR the error rate decays as
+<span class="math notranslate nohighlight">\(\bar{\gamma}^{-L}\)</span>, i.e. <span class="math notranslate nohighlight">\(L\)</span> decades per decade – the
+diversity order <em>is</em> the exponent, and reading it off a simulated
+curve is how a scheme is checked.</p>
+<p><strong>Which scheme has which</strong> <span class="math notranslate nohighlight">\(L\)</span>, at equal total transmit power:</p>
+<ul class="simple">
+<li><p>one antenna each side: <span class="math notranslate nohighlight">\(L = 1\)</span>, per-branch SNR
+<span class="math notranslate nohighlight">\(\bar\gamma\)</span>;</p></li>
+<li><p>maximum ratio combining over <span class="math notranslate nohighlight">\(N_r\)</span> receive antennas:
+<span class="math notranslate nohighlight">\(L = N_r\)</span>, per-branch SNR <span class="math notranslate nohighlight">\(\bar\gamma\)</span>;</p></li>
+<li><p>an orthogonal design (Alamouti, OSTBC) on <span class="math notranslate nohighlight">\(N_t \times N_r\)</span>:
+<span class="math notranslate nohighlight">\(L = N_t N_r\)</span>, per-branch SNR <span class="math notranslate nohighlight">\(\bar\gamma / N_t\)</span>;</p></li>
+<li><p>zero forcing on <span class="math notranslate nohighlight">\(N_r \times N_t\)</span>, per stream:
+<span class="math notranslate nohighlight">\(L = N_r - N_t + 1\)</span>, per-branch SNR <span class="math notranslate nohighlight">\(\bar\gamma\)</span>.</p></li>
+</ul>
+<p>The transmit scheme divides the per-branch SNR by <span class="math notranslate nohighlight">\(N_t\)</span>
+because the power is split over the antennas: that division is the
+3 dB an orthogonal design pays against receive diversity, and it is
+the whole difference between the two.</p>
+<p>Axes: <em>element-wise</em> – broadcasts over <code class="docutils literal notranslate"><span class="pre">snr_per_bit</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param order<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modulation order <span class="math notranslate nohighlight">\(M\)</span> (2, 4, 8, …).</p>
+</dd>
+<dt class="field-even">type order<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Average SNR per bit <strong>per branch</strong>, <span class="math notranslate nohighlight">\(\bar{\gamma}_b\)</span>,
+linear.</p>
+</dd>
+<dt class="field-even">type snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param diversity<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number <span class="math notranslate nohighlight">\(L\)</span> of independent branches combined. Default 1,
+i.e. no diversity.</p>
+</dd>
+<dt class="field-even">type diversity<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Symbol error rate, with the shape of <code class="docutils literal notranslate"><span class="pre">snr_per_bit</span></code>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">order</span></code> is below 2 or <code class="docutils literal notranslate"><span class="pre">diversity</span></code> below 1.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. K. Simon, M.-S. Alouini, <em>Digital Communication over Fading
+Channels</em>, 2nd ed., Wiley, 2005, Sections 5.1 and 9.2 (the MGF
+method and Craig’s representation); J. W. Craig, “A new, simple and
+exact result for calculating the probability of error for
+two-dimensional signal constellations”, MILCOM 1991; J. G. Proakis,
+M. Salehi, <em>Digital Communications</em>, 5th ed., 2008, Section 13.4
+(the closed form this quadrature reproduces for BPSK).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">snr</span><span class="p">)))</span>
+<span class="go">2.327e-02 2.481e-03 2.498e-04</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">two</span> <span class="o">=</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">two</span><span class="p">))</span>
+<span class="go">1.599e-03 1.844e-05 1.872e-07</span>
+</pre></div>
+</div>
+<p>One decade per decade against two: that ratio <em>is</em> the diversity
+order, and it is what a space-time code buys.</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ser_rayleigh_qam">
+<span class="sig-name descname"><span class="pre">compute_ser_rayleigh_qam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr_per_bit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diversity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_ser_rayleigh_qam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_ser_rayleigh_qam" title="Link to this definition">#</a></dt>
+<dd><p>SER of square M-QAM over Rayleigh fading with L-branch combining.</p>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>Same average as <a class="reference internal" href="#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a>, over the exact
+AWGN error probability of a square constellation, which Craig’s form
+writes as a difference of two finite integrals:</p>
+<div class="math notranslate nohighlight">
+\[P_s = \frac{4}{\pi}\left(1 - \frac{1}{\sqrt{M}}\right)
+\int_{0}^{\frac{\pi}{2}} \left[\frac{\sin^2\theta}
+{\sin^2\theta + g\,\bar{\gamma}_s}\right]^{L} d\theta
+- \frac{4}{\pi}\left(1 - \frac{1}{\sqrt{M}}\right)^{2}
+\int_{0}^{\frac{\pi}{4}} \left[\cdots\right]^{L} d\theta\]</div>
+<p>with <span class="math notranslate nohighlight">\(g = \frac{3}{2(M-1)}\)</span> and
+<span class="math notranslate nohighlight">\(\bar{\gamma}_s = k\bar{\gamma}_b\)</span> per branch. The second term
+is the correction that stops the union of the two quadrature
+components from double-counting the corner events; dropping it gives
+the familiar upper bound instead of the exact value.</p>
+<p>The scheme-to-<span class="math notranslate nohighlight">\(L\)</span> table of <a class="reference internal" href="#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a>
+applies unchanged.</p>
+<p>Axes: <em>element-wise</em> – broadcasts over <code class="docutils literal notranslate"><span class="pre">snr_per_bit</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param order<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modulation order <span class="math notranslate nohighlight">\(M\)</span>, a perfect square (4, 16, 64, …).</p>
+</dd>
+<dt class="field-even">type order<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Average SNR per bit per branch, linear.</p>
+</dd>
+<dt class="field-even">type snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param diversity<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number <span class="math notranslate nohighlight">\(L\)</span> of combined branches. Default 1.</p>
+</dd>
+<dt class="field-even">type diversity<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Symbol error rate.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">order</span></code> is not a perfect square, or <code class="docutils literal notranslate"><span class="pre">diversity</span></code> below 1.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Simon &amp; Alouini, <em>Digital Communication over Fading Channels</em>, 2nd
+ed., 2005, Section 9.2.3; Craig, MILCOM 1991.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">compute_ser_rayleigh_qam</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">snr</span><span class="p">)))</span>
+<span class="go">1.346e-01 1.587e-02 1.616e-03</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">four</span> <span class="o">=</span> <span class="n">compute_ser_rayleigh_qam</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">four</span><span class="p">))</span>
+<span class="go">7.043e-04 1.449e-07 1.570e-11</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.compute_metric_rayleigh_theo">
+<span class="sig-name descname"><span class="pre">compute_metric_rayleigh_theo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modulation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr_per_bit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ser'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diversity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_metric_rayleigh_theo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_metric_rayleigh_theo" title="Link to this definition">#</a></dt>
+<dd><p>Theoretical error rate over Rayleigh fading, PSK or QAM.</p>
+<section id="id5">
+<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>Front-end to <a class="reference internal" href="#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a> and
+<a class="reference internal" href="#comnumpy.core.metrics.compute_ser_rayleigh_qam" title="comnumpy.core.metrics.compute_ser_rayleigh_qam"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_qam()</span></code></a>, the fading counterpart of
+<a class="reference internal" href="#comnumpy.core.metrics.compute_metric_awgn_theo" title="comnumpy.core.metrics.compute_metric_awgn_theo"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_metric_awgn_theo()</span></code></a> and parameterized the same way. With
+<code class="docutils literal notranslate"><span class="pre">type=&quot;bin&quot;</span></code> the symbol error rate is converted to a bit error
+rate through the Gray-mapping approximation
+<span class="math notranslate nohighlight">\(P_b \simeq P_s / k\)</span>, which is an upper-SNR statement here
+exactly as it is over AWGN.</p>
+<p>Axes: <em>element-wise</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param modulation<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">&quot;PSK&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;QAM&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type modulation<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+<dt class="field-odd">param order<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modulation order <span class="math notranslate nohighlight">\(M\)</span>.</p>
+</dd>
+<dt class="field-even">type order<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Average SNR per bit per branch, linear.</p>
+</dd>
+<dt class="field-even">type snr_per_bit<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">&quot;ser&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;bin&quot;</span></code>. Default <code class="docutils literal notranslate"><span class="pre">&quot;ser&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional</p>
+</dd>
+<dt class="field-odd">param diversity<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of combined branches <span class="math notranslate nohighlight">\(L\)</span>. Default 1.</p>
+</dd>
+<dt class="field-even">type diversity<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Error rate.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If the modulation or the metric type is unknown.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Simon &amp; Alouini, 2nd ed., 2005, Chapter 9.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ser</span> <span class="o">=</span> <span class="n">compute_metric_rayleigh_theo</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ber</span> <span class="o">=</span> <span class="n">compute_metric_rayleigh_theo</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">ber</span><span class="p">,</span> <span class="n">ser</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ser">
 <span class="sig-name descname"><span class="pre">compute_ser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_detected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_ser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_ser" title="Link to this definition">#</a></dt>
 <dd><p>Compute the Symbol Error Rate (SER) between the target and detected symbols.</p>
-<section id="id3">
-<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>The transmitted symbol indices <span class="math notranslate nohighlight">\(x[n]\)</span> are compared with the
 detected ones <span class="math notranslate nohighlight">\(\hat{x}[n]\)</span> over <span class="math notranslate nohighlight">\(N\)</span> symbols; the SER is
 the normalized count of mismatches:</p>
@@ -723,8 +944,8 @@ McGraw-Hill, 2008, Section 4.2 (symbol error probability).</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ber">
 <span class="sig-name descname"><span class="pre">compute_ber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_detected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_ber"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_ber" title="Link to this definition">#</a></dt>
 <dd><p>Compute the Bit Error Rate (BER) between target and detected symbols.</p>
-<section id="id4">
-<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>Both symbol streams are first expanded into bits by <code class="xref py py-func docutils literal notranslate"><span class="pre">sym_2_bin()</span></code>,
 which writes each symbol on <span class="math notranslate nohighlight">\(w\)</span> bits (natural binary, MSB first).
 The BER is the normalized count of differing bits:</p>
@@ -789,8 +1010,8 @@ McGraw-Hill, 2008, Section 4.3 (bit error probability).</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_evm">
 <span class="sig-name descname"><span class="pre">compute_evm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_estimated</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_evm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_evm" title="Link to this definition">#</a></dt>
 <dd><p>Compute the Error Vector Magnitude (EVM) between the target and estimated signals.</p>
-<section id="id5">
-<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>The error vector is the difference between the estimated (measured)
 symbol <span class="math notranslate nohighlight">\(\hat{x}[n]\)</span> and the ideal reference symbol <span class="math notranslate nohighlight">\(x[n]\)</span>.
 The EVM returned here is the RMS error <strong>normalized by the average
@@ -851,8 +1072,8 @@ of the reference signal.</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_effective_snr">
 <span class="sig-name descname"><span class="pre">compute_effective_snr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_estimated</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'natural'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_effective_snr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_effective_snr" title="Link to this definition">#</a></dt>
 <dd><p>Compute the effective Signal-to-Noise Ratio (SNR) between a target and an estimated signal.</p>
-<section id="id6">
-<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <p>All the impairments accumulated along the link (noise, residual
 distortion, nonlinear interference) are lumped into an equivalent
 additive term of variance</p>
@@ -928,8 +1149,8 @@ memoryless additive-noise link).</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_power">
 <span class="sig-name descname"><span class="pre">compute_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'natural'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_power" title="Link to this definition">#</a></dt>
 <dd><p>Compute the mean power of an input array.</p>
-<section id="id7">
-<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>Signal Model<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <p>The mean power of the signal <span class="math notranslate nohighlight">\(x[n]\)</span> of length <span class="math notranslate nohighlight">\(N\)</span> is the
 time average of its squared modulus:</p>
 <div class="math notranslate nohighlight">
@@ -980,8 +1201,8 @@ McGraw-Hill, 2008, Section 2.2 (energy and power of a signal).</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_ccdf">
 <span class="sig-name descname"><span class="pre">compute_ccdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_ccdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_ccdf" title="Link to this definition">#</a></dt>
 <dd><p>Compute the empirical Complementary Cumulative Distribution Function (CCDF) of a dataset.</p>
-<section id="id8">
-<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id11">
+<h2>Signal Model<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
 <p>The CCDF of a random variable <span class="math notranslate nohighlight">\(Z\)</span> is the probability of
 exceeding a threshold:</p>
 <div class="math notranslate nohighlight">
@@ -1038,8 +1259,8 @@ Artech House, 2000, Chapter 6 (PAPR distribution).</p>
 <dt class="sig sig-object py" id="comnumpy.core.metrics.compute_acpr">
 <span class="sig-name descname"><span class="pre">compute_acpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bandwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#compute_acpr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.compute_acpr" title="Link to this definition">#</a></dt>
 <dd><p>Calculate the Adjacent Channel Power Ratio (ACPR) of a given signal.</p>
-<section id="id9">
-<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id12">
+<h2>Signal Model<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
 <p>ACPR measures spectral regrowth: the power a nonlinear transmitter
 leaks into the neighbouring channels, relative to the power it emits
 in its own channel. With <span class="math notranslate nohighlight">\(X(f)\)</span> the DFT of the baseband signal
@@ -1115,8 +1336,8 @@ adjacent channel power).</p>
 <p>Replaces the former in-chain monitor blocks: extract the signal with
 <code class="docutils literal notranslate"><span class="pre">Sequential(taps=...)</span></code>, compute the report, and let the caller
 decide how to present it (<code class="docutils literal notranslate"><span class="pre">logging</span></code>, table, assertion, …).</p>
-<section id="id10">
-<h2>Signal Model<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<section id="id13">
+<h2>Signal Model<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
 <p>All statistics are computed on the modulus <span class="math notranslate nohighlight">\(|x[n]|\)</span> over every
 element; the average power is</p>
 <div class="math notranslate nohighlight">
@@ -1210,6 +1431,9 @@ McGraw-Hill, 2008, Section 2.2 (signal energy and power).</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser_awgn_psk"><code class="docutils literal notranslate"><span class="pre">compute_ser_awgn_psk()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser_awgn_qam"><code class="docutils literal notranslate"><span class="pre">compute_ser_awgn_qam()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_metric_awgn_theo"><code class="docutils literal notranslate"><span class="pre">compute_metric_awgn_theo()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser_rayleigh_qam"><code class="docutils literal notranslate"><span class="pre">compute_ser_rayleigh_qam()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_metric_rayleigh_theo"><code class="docutils literal notranslate"><span class="pre">compute_metric_rayleigh_theo()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ser"><code class="docutils literal notranslate"><span class="pre">compute_ser()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ber"><code class="docutils literal notranslate"><span class="pre">compute_ber()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_evm"><code class="docutils literal notranslate"><span class="pre">compute_evm()</span></code></a></li>

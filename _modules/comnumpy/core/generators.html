@@ -738,17 +738,34 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/generators.html#comnumpy.core.generators.SymbolGenerator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SymbolGenerator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Generator of independent and identically distributed (IID) uniform integer symbols.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Generator of independent and identically distributed (IID) integer symbols.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
-<span class="sd">    Each output symbol :math:`y[n]` is drawn independently and uniformly</span>
-<span class="sd">    from the integer alphabet :math:`\{0, 1, \ldots, M-1\}`:</span>
+<span class="sd">    Each output symbol :math:`y[n]` is drawn independently from the</span>
+<span class="sd">    integer alphabet :math:`\{0, 1, \ldots, M-1\}`, uniformly by default:</span>
 
 <span class="sd">    .. math::</span>
 
 <span class="sd">        \Pr\left(y[n] = m\right) = \frac{1}{M}, \qquad</span>
 <span class="sd">        m \in \{0, 1, \ldots, M-1\}</span>
+
+<span class="sd">    A source is not always uniform, though: probabilistic shaping sends</span>
+<span class="sd">    inner constellation points more often than outer ones, and</span>
+<span class="sd">    ``distribution=`` gives that source directly,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \Pr\left(y[n] = m\right) = p_m</span>
+
+<span class="sd">    which is what :func:`~comnumpy.core.shaping.maxwell_boltzmann`</span>
+<span class="sd">    returns. Note what this block is *not*: an i.i.d. draw from</span>
+<span class="sd">    :math:`P_X` is the idealization a distribution matcher approaches,</span>
+<span class="sd">    not what it produces -- a matcher maps uniform bits onto a finite set</span>
+<span class="sd">    of sequences, so its output is neither independent nor exactly</span>
+<span class="sd">    :math:`P_X` on a finite block (see</span>
+<span class="sd">    :class:`~comnumpy.core.shaping.DistributionMatcher`). Use this block</span>
+<span class="sd">    to study what a distribution is worth, and the matcher to produce it.</span>
 
 <span class="sd">    This is a source block: the call argument is not an input signal</span>
 <span class="sd">    :math:`x` but the requested output size.</span>
@@ -761,15 +778,25 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    M : int</span>
 <span class="sd">        Alphabet size :math:`M`; symbols are drawn from</span>
 <span class="sd">        :math:`\{0, 1, \ldots, M-1\}`.</span>
+<span class="sd">    distribution : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Probabilities :math:`p_m`, of length :math:`M`. Default (None)</span>
+<span class="sd">        is the uniform law.</span>
 <span class="sd">    seed : int, optional, keyword-only</span>
 <span class="sd">        Local RNG seed.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the generator instance. Default is ``&quot;generator&quot;``.</span>
 
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``distribution`` does not have one non-negative probability</span>
+<span class="sd">        per symbol, summing to one.</span>
+
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
-<span class="sd">    McGraw-Hill, 2008, Chapter 1.</span>
+<span class="sd">    McGraw-Hill, 2008, Chapter 1; G. Böcherer, F. Steiner, P. Schulte,</span>
+<span class="sd">    IEEE Trans. Commun., vol. 63, no. 12, 2015 (non-uniform signaling).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -781,14 +808,38 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(symbols_2D)</span>
 <span class="sd">    [[3 0 2]</span>
 <span class="sd">     [0 0 2]]</span>
+
+<span class="sd">    A shaped source, drawn from a Maxwell-Boltzmann law:</span>
+
+<span class="sd">    &gt;&gt;&gt; from comnumpy.core.shaping import maxwell_boltzmann</span>
+<span class="sd">    &gt;&gt;&gt; pam = np.arange(-3, 4, 2).astype(float)</span>
+<span class="sd">    &gt;&gt;&gt; shaped = SymbolGenerator(4, distribution=maxwell_boltzmann(</span>
+<span class="sd">    ...     pam, entropy=1.5), seed=0)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.bincount(shaped(10000)) / 10000)</span>
+<span class="sd">    [0.0557 0.4433 0.4457 0.0553]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">M</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;generator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
     <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>
+                                           <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;the distribution has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;probabilities and the alphabet </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="si">}</span><span class="s2"> symbols -- &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;one probability per symbol is expected.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;a distribution is non-negative and sums to one, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;a sum of </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">))</span><span class="si">}</span><span class="s2"> and a &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;minimum of </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -799,8 +850,9 @@ window.runMermaid = runMermaid;</script>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;X must be an int, tuple, or list.&quot;</span><span class="p">)</span>
 
-        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Y</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span></div>
 
 
 

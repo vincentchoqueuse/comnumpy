@@ -741,13 +741,14 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">welch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_kde</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;plot_time&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_welch&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_iq&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_kde&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;plot_chain_profiling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;plot_error_rate&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_chain_profiling&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -995,6 +996,89 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<div class="viewcode-block" id="plot_error_rate">
+<a class="viewcode-back" href="../../../documentation/core/visualizers.html#comnumpy.core.visualizers.plot_error_rate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_error_rate</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">measured</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                    <span class="n">theory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">x_theory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span>
+                    <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;error rate&quot;</span><span class="p">,</span>
+                    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot Monte-Carlo error rates, and the curves they are read against.</span>
+
+<span class="sd">    The figure every sweep ends with: measured points as hollow markers,</span>
+<span class="sd">    the closed form they are supposed to reach as a line **in the same</span>
+<span class="sd">    colour**, a logarithmic ordinate and a grid on both decades. Fourteen</span>
+<span class="sd">    scripts of this repository drew it by hand before this existed.</span>
+
+<span class="sd">    Zeros are dropped rather than plotted. A sweep point where no error</span>
+<span class="sd">    was seen means the estimate ran out of samples, not that the error</span>
+<span class="sd">    rate is zero, and a logarithmic axis has no place to put it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : np.ndarray</span>
+<span class="sd">        Abscissa of the measurements, usually an SNR in dB.</span>
+<span class="sd">    measured : mapping of str to np.ndarray, or np.ndarray</span>
+<span class="sd">        Simulated error rates. A bare array is one unnamed curve.</span>
+<span class="sd">    theory : mapping of str to np.ndarray, optional, keyword-only</span>
+<span class="sd">        Reference curves. A key also present in ``measured`` is drawn in</span>
+<span class="sd">        that curve&#39;s colour, so a pair reads as one statement; any other</span>
+<span class="sd">        key gets its own colour.</span>
+<span class="sd">    x_theory : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Abscissa of the reference curves, when they are evaluated on a</span>
+<span class="sd">        finer grid than the measurements. Defaults to ``x``.</span>
+<span class="sd">    xlabel, ylabel, title : str, optional, keyword-only</span>
+<span class="sd">        Axis labels and title.</span>
+<span class="sd">    ax : matplotlib.axes.Axes, optional, keyword-only</span>
+<span class="sd">        Axis to draw on; created when None (decision D25).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matplotlib.axes.Axes</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; snr = np.arange(0, 12, 2)</span>
+<span class="sd">    &gt;&gt;&gt; ax = plot_error_rate(snr, {&quot;QPSK&quot;: 10.0 ** (-snr / 8)},</span>
+<span class="sd">    ...                      theory={&quot;QPSK&quot;: 10.0 ** (-snr / 8 - 0.05)})</span>
+<span class="sd">    &gt;&gt;&gt; len(ax.lines)                      # one marker set, one curve</span>
+<span class="sd">    2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">curves</span> <span class="o">=</span> <span class="p">({</span><span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">measured</span><span class="p">)}</span>
+              <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">measured</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">measured</span><span class="p">))</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">theory</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">abscissa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">fine</span> <span class="o">=</span> <span class="n">abscissa</span> <span class="k">if</span> <span class="n">x_theory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x_theory</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">abscissa</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span>
+                            <span class="n">fillstyle</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span>
+                            <span class="n">label</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;simulation&quot;</span><span class="p">)</span>
+        <span class="n">colors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_color</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">reference</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, theory&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;theory&quot;</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">fine</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                    <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">curves</span><span class="p">):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+
 <div class="viewcode-block" id="plot_chain_profiling">
 <a class="viewcode-back" href="../../../documentation/core/visualizers.html#comnumpy.core.visualizers.plot_chain_profiling">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_chain_profiling</span><span class="p">(</span><span class="n">chain</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
@@ -1056,11 +1140,20 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># Create a box plot</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="c1"># constrained layout: block names are long and would be clipped</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">data_array</span><span class="p">,</span> <span class="n">tick_labels</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">orientation</span><span class="o">=</span><span class="n">orientation</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time (s)&#39;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># a chain spans several decades -- an FFT and a demapper are not the</span>
+    <span class="c1"># same order of magnitude -- so a linear axis shows one block and</span>
+    <span class="c1"># flattens all the others against zero</span>
+    <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span></div>
 
 </pre></div>

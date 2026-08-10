@@ -1,0 +1,1026 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Probabilistic Shaping &#8212; comnumpy  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=119accc5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/shaping';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OFDM Tutorial" href="ofdm.html" />
+    <link rel="prev" title="Monte Carlo Simulation over AWGN Channel" href="awgn.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.jpg" class="logo__image only-light" alt=""/>
+    <img src="../_static/logo.jpg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Comnumpy</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/index.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/vincentchoqueuse/comnumpy.git" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Probabilistic Shaping</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Probabilistic Shaping</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="probabilistic-shaping">
+<h1>Probabilistic Shaping<a class="headerlink" href="#probabilistic-shaping" title="Link to this heading">#</a></h1>
+<p>In this tutorial, we send some constellation points more often than others.
+A uniform QAM or PAM constellation is not the best a Gaussian channel can do:
+it loses up to <strong>1.53 dB</strong> against a Gaussian input, and that loss is recovered
+by choosing <em>how often</em> each point is transmitted rather than by changing the
+points themselves.</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul class="simple">
+<li><p>Why the shaped distribution is Maxwell-Boltzmann, and nothing else.</p></li>
+<li><p>How a <em>distribution matcher</em> turns uniform data bits into shaped symbols,
+exactly and invertibly (CCDM and ESS).</p></li>
+<li><p>How to assemble a probabilistic amplitude shaping (PAS) transmitter as a
+<code class="docutils literal notranslate"><span class="pre">Sequential</span></code> chain, and why the FEC decoder belongs <em>before</em> the dematcher.</p></li>
+<li><p>How to measure what shaping actually buys, in bit/symbol and in dB.</p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
+<p>Make sure you have the following Python libraries installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">matplotlib</span>
+<span class="n">comnumpy</span>
+</pre></div>
+</div>
+</section>
+<section id="import-libraries">
+<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.information</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_mi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.shaping</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">AmplitudeDemapper</span><span class="p">,</span> <span class="n">AmplitudeMapper</span><span class="p">,</span>
+                                   <span class="n">ConstantCompositionMatcher</span><span class="p">,</span>
+                                   <span class="n">DistributionDematcher</span><span class="p">,</span> <span class="n">DistributionMatcher</span><span class="p">,</span>
+                                   <span class="n">SphereShaper</span><span class="p">,</span> <span class="n">distribution_entropy</span><span class="p">,</span>
+                                   <span class="n">maxwell_boltzmann</span><span class="p">,</span> <span class="n">shaping_gain_dB</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="define-parameters">
+<h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
+<p>We work on 8-PAM written on its natural odd-integer grid. Shaping is a
+one-dimensional operation – a square QAM constellation is the product of two
+PAM axes, so shaping the axis shapes the QAM – and a matcher only ever sees
+the <strong>positive half</strong> of the grid, for a reason explained in the PAS section
+below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
+
+<span class="c1"># Parameters</span>
+<span class="n">pam8</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>   <span class="c1"># 8-PAM on the odd-integer grid</span>
+<span class="n">amplitudes</span> <span class="o">=</span> <span class="n">pam8</span><span class="p">[</span><span class="n">pam8</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>                <span class="c1"># the half a matcher shapes</span>
+<span class="n">entropies</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-law-maxwell-boltzmann">
+<h2>The Law: Maxwell-Boltzmann<a class="headerlink" href="#the-law-maxwell-boltzmann" title="Link to this heading">#</a></h2>
+<p>The shaped distribution is not a modelling choice. Among all distributions on
+a fixed constellation with a given average energy, the one of maximum entropy
+is</p>
+<div class="math notranslate nohighlight">
+\[p_i = \frac{e^{-\lambda \left|a_i\right|^2}}
+           {\sum_j e^{-\lambda \left|a_j\right|^2}},
+\qquad \lambda \geq 0\]</div>
+<p>where <span class="math notranslate nohighlight">\(\lambda\)</span> is the Lagrange multiplier of the power constraint.
+<span class="math notranslate nohighlight">\(\lambda = 0\)</span> gives the uniform distribution; growing <span class="math notranslate nohighlight">\(\lambda\)</span>
+moves probability mass onto the inner points, lowering the energy <em>and</em> the
+entropy. Since the entropy is strictly decreasing in <span class="math notranslate nohighlight">\(\lambda\)</span>, asking
+for a target entropy determines <span class="math notranslate nohighlight">\(\lambda\)</span> uniquely – and that is the
+useful parameterization, because the entropy</p>
+<div class="math notranslate nohighlight">
+\[H(P) = -\sum_i p_i \log_2 p_i\]</div>
+<p><em>is</em> the rate the constellation carries. This is what
+<a class="reference internal" href="../documentation/core/shaping.html#comnumpy.core.shaping.maxwell_boltzmann" title="comnumpy.core.shaping.maxwell_boltzmann"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a> computes, by bisection on
+<span class="math notranslate nohighlight">\(\lambda\)</span>.</p>
+<p>What is gained is measured at <strong>equal rate</strong>, which is the only fair
+comparison: a source of entropy <span class="math notranslate nohighlight">\(H\)</span> spread uniformly over a grid of
+spacing <span class="math notranslate nohighlight">\(\Delta\)</span> would occupy an interval of width <span class="math notranslate nohighlight">\(2^H \Delta\)</span>
+and cost <span class="math notranslate nohighlight">\(E_{\mathrm{unif}} = (2^H \Delta)^2 / 12\)</span>, against the
+<span class="math notranslate nohighlight">\(E_P = \sum_i p_i a_i^2\)</span> the shaped law actually costs:</p>
+<div class="math notranslate nohighlight">
+\[G_s = 10 \log_{10} \frac{E_{\mathrm{unif}}}{E_P}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. The law. Among all distributions of a given average energy on a</span>
+<span class="c1"># fixed constellation, the one of maximum entropy is Maxwell-Boltzmann;</span>
+<span class="c1"># specifying the entropy fixes lambda, and the entropy is the rate.</span>
+<span class="n">laws</span> <span class="o">=</span> <span class="p">{</span><span class="n">H</span><span class="p">:</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="n">H</span><span class="p">)</span> <span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">entropies</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">H</span><span class="p">,</span> <span class="n">law</span> <span class="ow">in</span> <span class="n">laws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;H = </span><span class="si">{</span><span class="n">H</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> bit/symbol    energy </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">law</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pam8</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;    shaping gain </span><span class="si">{</span><span class="n">shaping_gain_dB</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span><span class="w"> </span><span class="n">law</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ultimate gain 10log10(pi e / 6) = &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">e</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">6</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">H</span> <span class="o">=</span> <span class="mf">3.00</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span>    <span class="n">energy</span>  <span class="mf">21.000</span>    <span class="n">shaping</span> <span class="n">gain</span> <span class="mf">0.068</span> <span class="n">dB</span>
+<span class="n">H</span> <span class="o">=</span> <span class="mf">2.50</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span>    <span class="n">energy</span>   <span class="mf">7.542</span>    <span class="n">shaping</span> <span class="n">gain</span> <span class="mf">1.505</span> <span class="n">dB</span>
+<span class="n">H</span> <span class="o">=</span> <span class="mf">2.00</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span>    <span class="n">energy</span>   <span class="mf">3.747</span>    <span class="n">shaping</span> <span class="n">gain</span> <span class="mf">1.533</span> <span class="n">dB</span>
+<span class="n">H</span> <span class="o">=</span> <span class="mf">1.50</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span>    <span class="n">energy</span>   <span class="mf">1.874</span>    <span class="n">shaping</span> <span class="n">gain</span> <span class="mf">1.531</span> <span class="n">dB</span>
+<span class="n">ultimate</span> <span class="n">gain</span> <span class="mi">10</span><span class="n">log10</span><span class="p">(</span><span class="n">pi</span> <span class="n">e</span> <span class="o">/</span> <span class="mi">6</span><span class="p">)</span> <span class="o">=</span> <span class="mf">1.533</span> <span class="n">dB</span>
+</pre></div>
+</div>
+<p>Read the first line as the calibration: the uniform distribution scores
+0.068 dB, i.e. essentially nothing, which is what a definition of “shaping
+gain” must give if it is worth anything. The last lines reach
+<span class="math notranslate nohighlight">\(10\log_{10}(\pi e/6) = 1.53\)</span> dB, the supremum over <em>all</em>
+one-dimensional distributions (Forney and Wei, 1989) – but at 2 bit/symbol,
+not at 3: an 8-point constellation asked to carry 3 bit/symbol has no freedom
+left, so there is nothing to shape. <strong>Shaping gain is bought with rate</strong>, and
+that trade is the subject of the last section.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig1</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">H</span><span class="p">,</span> <span class="n">law</span> <span class="ow">in</span> <span class="n">laws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">law</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;H = </span><span class="si">{</span><span class="n">H</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> bit/symbol&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;8-PAM constellation point&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;probability&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Maxwell-Boltzmann: the same shape, one parameter&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">pam8</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/probabilistic_shaping_fig1.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/probabilistic_shaping_fig1.png"><img alt="../_images/probabilistic_shaping_fig1.png" class="align-center" src="../_images/probabilistic_shaping_fig1.png" style="width: 100%;" />
+</a>
+</section>
+<section id="the-matchers-ccdm-and-ess">
+<h2>The Matchers: CCDM and ESS<a class="headerlink" href="#the-matchers-ccdm-and-ess" title="Link to this heading">#</a></h2>
+<p>Data is uniform. A <strong>distribution matcher</strong> is an invertible map from uniform
+bit strings onto sequences with the wanted distribution – and “invertible”
+here is exact, not approximate: both constructions below are <em>enumerative
+codes</em>, which rank and unrank a finite set of blocks with integer arithmetic,
+so <code class="docutils literal notranslate"><span class="pre">decode(encode(bits))</span> <span class="pre">==</span> <span class="pre">bits</span></code> holds by construction.</p>
+<p>They differ in which set they enumerate.</p>
+<p><strong>CCDM</strong> fixes the composition. Every output block contains exactly
+<span class="math notranslate nohighlight">\(n_i\)</span> copies of amplitude <span class="math notranslate nohighlight">\(i\)</span>, and there are</p>
+<div class="math notranslate nohighlight">
+\[N = \binom{n}{n_1, \ldots, n_M} = \frac{n!}{n_1! \, n_2! \cdots n_M!}\]</div>
+<p>such blocks, so the matcher carries
+<span class="math notranslate nohighlight">\(k = \lfloor \log_2 N \rfloor\)</span> bits. Every block has the target
+empirical distribution <em>exactly</em>, at any blocklength. What a finite block
+costs is rate:</p>
+<div class="math notranslate nohighlight">
+\[R_{\mathrm{loss}} = H\left(\frac{n_i}{n}\right) - \frac{k}{n}
+\;\xrightarrow[n \to \infty]{}\; 0\]</div>
+<p><strong>ESS</strong> fixes an energy budget instead. With an integer energy <span class="math notranslate nohighlight">\(e_i\)</span>
+attached to each amplitude, the code is</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{C} = \left\{ (s_1, \ldots, s_n) :
+\sum_{j=1}^{n} e_{s_j} \leq E_{\max} \right\}\]</div>
+<p>and counting it is a one-dimensional recursion over the remaining budget,</p>
+<div class="math notranslate nohighlight">
+\[N_t(E) = \sum_{i} N_{t-1}\left(E - e_i\right), \qquad
+N_0(E) = 1 \;\; \text{for } E \geq 0\]</div>
+<p>from which unranking follows exactly as for CCDM.</p>
+<p>The comparison below is not a benchmark, it is an inclusion. Every CCDM block
+costs exactly <span class="math notranslate nohighlight">\(E = \sum_i n_i e_i\)</span>, so if the sphere is given
+<span class="math notranslate nohighlight">\(E_{\max} = E\)</span> then <strong>every CCDM block is in the sphere</strong>:
+<span class="math notranslate nohighlight">\(\mathcal{C}_{\mathrm{CCDM}} \subset \mathcal{C}_{\mathrm{ESS}}\)</span>. The
+sphere therefore carries at least as many bits at the same energy, and its
+blocks are on average <em>cheaper</em>, since it also contains the blocks that spend
+less. The script measures both readings – same energy, and same rate:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 2. The matchers. Both are enumerative codes on a finite set of blocks;</span>
+<span class="c1"># they differ in which set. The amplitude law is the full-PAM law minus</span>
+<span class="c1"># the sign bit, so a target of 2.25 bit/symbol on 8-PAM is 1.25 on the</span>
+<span class="c1"># four amplitudes.</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">1.25</span><span class="p">)</span>
+<span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]</span>
+<span class="n">rates</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;CCDM (constant composition)&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;ESS (sphere, same energy)&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lengths</span><span class="p">:</span>
+    <span class="n">ccdm</span> <span class="o">=</span> <span class="n">ConstantCompositionMatcher</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                                      <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+    <span class="c1"># the sphere carrying the same rate: its budget is what CCDM&#39;s</span>
+    <span class="c1"># composition costs, or less</span>
+    <span class="n">same_rate</span> <span class="o">=</span> <span class="n">SphereShaper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="n">ccdm</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
+    <span class="n">budget</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ccdm</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">same_rate</span><span class="o">.</span><span class="n">energies</span><span class="p">))</span>
+    <span class="c1"># the sphere holding the same energy: every CCDM block costs exactly</span>
+    <span class="c1"># `budget`, so the CCDM code is a *subset* of this one and the</span>
+    <span class="c1"># inequality below is exact, not statistical</span>
+    <span class="n">same_energy</span> <span class="o">=</span> <span class="n">SphereShaper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">max_energy</span><span class="o">=</span><span class="n">budget</span><span class="p">)</span>
+    <span class="n">rates</span><span class="p">[</span><span class="s2">&quot;CCDM (constant composition)&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ccdm</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+    <span class="n">rates</span><span class="p">[</span><span class="s2">&quot;ESS (sphere, same energy)&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">same_energy</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n = </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">   composition </span><span class="si">{</span><span class="n">ccdm</span><span class="o">.</span><span class="n">composition</span><span class="si">}</span><span class="s2">   &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;rate </span><span class="si">{</span><span class="n">ccdm</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">same_energy</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> bit/amplitude   &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;energy </span><span class="si">{</span><span class="n">budget</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">same_rate</span><span class="o">.</span><span class="n">max_energy</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2"> at equal rate&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span>   <span class="mi">16</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">0.9375</span> <span class="n">vs</span> <span class="mf">1.0625</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>    <span class="mi">8</span> <span class="n">vs</span>    <span class="mi">7</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+<span class="n">n</span> <span class="o">=</span>   <span class="mi">32</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">1.0312</span> <span class="n">vs</span> <span class="mf">1.0938</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>   <span class="mi">16</span> <span class="n">vs</span>   <span class="mi">14</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+<span class="n">n</span> <span class="o">=</span>   <span class="mi">64</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">1.1719</span> <span class="n">vs</span> <span class="mf">1.2344</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>   <span class="mi">37</span> <span class="n">vs</span>   <span class="mi">33</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+<span class="n">n</span> <span class="o">=</span>  <span class="mi">128</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">81</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">1.1797</span> <span class="n">vs</span> <span class="mf">1.2109</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>   <span class="mi">68</span> <span class="n">vs</span>   <span class="mi">65</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+<span class="n">n</span> <span class="o">=</span>  <span class="mi">256</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">161</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">1.2188</span> <span class="n">vs</span> <span class="mf">1.2383</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>  <span class="mi">139</span> <span class="n">vs</span>  <span class="mi">135</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+<span class="n">n</span> <span class="o">=</span>  <span class="mi">512</span>   <span class="n">composition</span> <span class="p">(</span><span class="mi">322</span><span class="p">,</span> <span class="mi">152</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>   <span class="n">rate</span> <span class="mf">1.2324</span> <span class="n">vs</span> <span class="mf">1.2461</span> <span class="n">bit</span><span class="o">/</span><span class="n">amplitude</span>   <span class="n">energy</span>  <span class="mi">278</span> <span class="n">vs</span>  <span class="mi">272</span> <span class="n">at</span> <span class="n">equal</span> <span class="n">rate</span>
+</pre></div>
+</div>
+<p>At <span class="math notranslate nohighlight">\(n = 16\)</span> the sphere carries 13 % more bits than the constant
+composition; at <span class="math notranslate nohighlight">\(n = 512\)</span> the two have nearly converged to the entropy
+of the law, 1.25 bit/amplitude. That is the whole reason ESS exists: CCDM
+needs thousands of symbols to be efficient, ESS is already good at a few
+dozen, which is the regime of a short packet. What ESS gives up is the exact
+per-block distribution – it only reproduces the law on average.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig2</span><span class="p">,</span> <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">rates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">lengths</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">distribution_entropy</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;H(P) = </span><span class="si">{</span><span class="n">distribution_entropy</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, the ceiling&quot;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;blocklength n [amplitudes]&quot;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;rate [bit/amplitude]&quot;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Rate loss is what a finite block costs&quot;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/probabilistic_shaping_fig2.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/probabilistic_shaping_fig2.png"><img alt="../_images/probabilistic_shaping_fig2.png" class="align-center" src="../_images/probabilistic_shaping_fig2.png" style="width: 100%;" />
+</a>
+<p>The convergence is not monotone, and the dip at <span class="math notranslate nohighlight">\(n = 128\)</span> is not noise:
+the composition is a <em>rounding</em> of the law
+(<a class="reference internal" href="../documentation/core/shaping.html#comnumpy.core.shaping.composition_from_distribution" title="comnumpy.core.shaping.composition_from_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">composition_from_distribution()</span></code></a>, largest
+remainder), so its own entropy wobbles around <span class="math notranslate nohighlight">\(H(P)\)</span> as <span class="math notranslate nohighlight">\(n\)</span> grows.
+A finite block loses rate twice – once by quantizing the law, once by taking
+the floor of <span class="math notranslate nohighlight">\(\log_2 N\)</span>.</p>
+</section>
+<section id="the-transmitter-a-pas-chain">
+<h2>The Transmitter: a PAS Chain<a class="headerlink" href="#the-transmitter-a-pas-chain" title="Link to this heading">#</a></h2>
+<p>The standard architecture is <strong>probabilistic amplitude shaping</strong>: the matcher
+shapes the amplitudes, a systematic FEC encoder produces the parity bits, and
+those parity bits – which are uniform – become the <strong>signs</strong>. A sign is
+equiprobable, so it costs nothing in shaping:</p>
+<div class="math notranslate nohighlight">
+\[P_Y(\pm a_i) = \tfrac{1}{2} P_A(a_i)\]</div>
+<p>The composite constellation keeps the symmetric Maxwell-Boltzmann law at the
+same energy, and gains exactly one bit per symbol. This is why the matchers
+work on non-negative amplitudes, and why a target of 2.25 bit/symbol on 8-PAM
+is a target of 1.25 bit/amplitude on the four amplitudes.</p>
+<p>As a chain, that is six blocks – and the receiver is the transmitter read
+backwards:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 3. The transmitter, as a chain. Uniform bits in, shaped amplitudes</span>
+<span class="c1"># out, signs drawn uniformly (in a real PAS transmitter they are the</span>
+<span class="c1"># parity bits of a systematic FEC encoder, which are uniform too).</span>
+<span class="n">n_block</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">shaper</span> <span class="o">=</span> <span class="n">ConstantCompositionMatcher</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                                    <span class="n">length</span><span class="o">=</span><span class="n">n_block</span><span class="p">)</span>
+<span class="n">link</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bits&quot;</span><span class="p">),</span>
+    <span class="n">DistributionMatcher</span><span class="p">(</span><span class="n">shaper</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;matcher&quot;</span><span class="p">),</span>
+    <span class="n">AmplitudeMapper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mapper&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">AmplitudeDemapper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">),</span>
+    <span class="n">DistributionDematcher</span><span class="p">(</span><span class="n">shaper</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bits&quot;</span><span class="p">,</span> <span class="s2">&quot;matcher&quot;</span><span class="p">,</span> <span class="s2">&quot;mapper&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;PAS transmitter&quot;</span><span class="p">)</span>
+
+<span class="n">n_blocks</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">link</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">recovered</span> <span class="o">=</span> <span class="n">link</span><span class="p">(</span><span class="n">n_blocks</span> <span class="o">*</span> <span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="si">}</span><span class="s2"> bits -&gt; </span><span class="si">{</span><span class="n">n_block</span><span class="si">}</span><span class="s2"> amplitudes per block, &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;recovered exactly: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">recovered</span><span class="p">,</span><span class="w"> </span><span class="n">link</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s1">&#39;bits&#39;</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">link</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">n_blocks</span> <span class="o">*</span> <span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">75</span> <span class="n">bits</span> <span class="o">-&gt;</span> <span class="mi">64</span> <span class="n">amplitudes</span> <span class="n">per</span> <span class="n">block</span><span class="p">,</span> <span class="n">recovered</span> <span class="n">exactly</span><span class="p">:</span> <span class="kc">True</span>
+<span class="c1">#    block                        id                   output shape       dtype         time ms</span>
+<span class="o">-----------------------------------------------------------------------------------------------</span>
+<span class="mi">0</span>    <span class="n">SymbolGenerator</span>              <span class="n">bits</span>                 <span class="p">(</span><span class="mi">15000</span><span class="p">,)</span>           <span class="n">int64</span>            <span class="mf">0.13</span>
+<span class="mi">1</span>    <span class="n">DistributionMatcher</span>          <span class="n">matcher</span>              <span class="p">(</span><span class="mi">12800</span><span class="p">,)</span>           <span class="n">int64</span>           <span class="mf">18.62</span>
+<span class="mi">2</span>    <span class="n">AmplitudeMapper</span>              <span class="n">mapper</span>               <span class="p">(</span><span class="mi">12800</span><span class="p">,)</span>           <span class="n">float64</span>          <span class="mf">0.20</span>
+<span class="mi">3</span>    <span class="n">AWGN</span>                         <span class="n">noise</span>                <span class="p">(</span><span class="mi">12800</span><span class="p">,)</span>           <span class="n">float64</span>          <span class="mf">0.25</span>
+<span class="mi">4</span>    <span class="n">AmplitudeDemapper</span>            <span class="n">amplitude_demapper</span>   <span class="p">(</span><span class="mi">12800</span><span class="p">,)</span>           <span class="n">int64</span>            <span class="mf">1.62</span>
+<span class="mi">5</span>    <span class="n">DistributionDematcher</span>        <span class="n">distribution_dematcher</span> <span class="p">(</span><span class="mi">15000</span><span class="p">,)</span>           <span class="n">int64</span>            <span class="mf">9.82</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">summary()</span></code> shows where the rate conversion happens – 15000 bits in, 12800
+amplitudes out – and where the time goes: the enumerative code costs some
+seventy times the channel it feeds, because ranking and unranking are exact
+integer arithmetic done one symbol at a time.</p>
+<p>The distribution the chain actually emits is read at the <code class="docutils literal notranslate"><span class="pre">&quot;mapper&quot;</span></code> tap and
+laid over the law it was built from:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig3</span><span class="p">,</span> <span class="n">ax3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">sent</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;mapper&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sent</span> <span class="o">==</span> <span class="n">point</span><span class="p">)</span> <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">pam8</span><span class="p">])</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;measured at tap(&#39;mapper&#39;)&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">2.25</span><span class="p">),</span> <span class="s2">&quot;ko-&quot;</span><span class="p">,</span>
+         <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Maxwell-Boltzmann, H = 2.25&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;8-PAM constellation point&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;frequency&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;What the matcher emits, </span><span class="si">{</span><span class="n">n_blocks</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_block</span><span class="si">}</span><span class="s2"> symbols&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">pam8</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.40</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/probabilistic_shaping_fig3.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/probabilistic_shaping_fig3.png"><img alt="../_images/probabilistic_shaping_fig3.png" class="align-center" src="../_images/probabilistic_shaping_fig3.png" style="width: 100%;" />
+</a>
+<section id="where-the-fec-decoder-goes">
+<h3>Where the FEC decoder goes<a class="headerlink" href="#where-the-fec-decoder-goes" title="Link to this heading">#</a></h3>
+<p>A matcher is a <em>code</em>, and that has a consequence worth meeting head on. Lower
+the SNR and a symbol error takes the received block <strong>outside</strong> the code: it
+is no longer a permutation of the composition, so there is no index to read
+back and the dematcher says so rather than returning silent nonsense.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The matcher is a code, so a symbol error takes the block out of it and</span>
+<span class="c1"># there is no index to read back. This is why PAS puts the FEC decoder</span>
+<span class="c1"># *between* the demapper and the dematcher.</span>
+<span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="mf">12.0</span><span class="p">})</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">link</span><span class="p">(</span><span class="n">n_blocks</span> <span class="o">*</span> <span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;at 12 dB -- </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">at</span> <span class="mi">12</span> <span class="n">dB</span> <span class="o">--</span> <span class="n">the</span> <span class="n">block</span> <span class="n">has</span> <span class="n">composition</span> <span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="n">but</span> <span class="n">this</span> <span class="n">matcher</span>
+<span class="n">enumerates</span> <span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span> <span class="n">A</span> <span class="n">detector</span> <span class="n">error</span> <span class="n">can</span> <span class="n">produce</span> <span class="n">such</span> <span class="n">a</span> <span class="n">block</span><span class="p">:</span> <span class="n">it</span>
+<span class="ow">is</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">code</span><span class="p">,</span> <span class="n">so</span> <span class="n">there</span> <span class="ow">is</span> <span class="n">no</span> <span class="n">index</span> <span class="n">to</span> <span class="n">read</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>This is not a limitation of the implementation, it is the reason PAS is built
+the way it is: in a real receiver the FEC decoder sits <strong>between</strong> the
+demapper and the dematcher, and the dematcher only ever sees corrected
+amplitudes. It also explains why shaping and coding cannot be designed
+separately – an uncorrected error does not cost one symbol, it costs the
+whole block.</p>
+</section>
+</section>
+<section id="what-shaping-buys">
+<h2>What Shaping Buys<a class="headerlink" href="#what-shaping-buys" title="Link to this heading">#</a></h2>
+<p>The last question is the one that justifies the rest: how many bits per symbol
+does the shaped constellation carry, against the uniform one, at the same
+power? The quantity is the mutual information</p>
+<div class="math notranslate nohighlight">
+\[I(X;Y) \approx \frac{1}{n_s} \sum_{n=1}^{n_s}
+    \log_2 \frac{f_{Y|X}(y[n] \mid x[n])}
+                {\sum_{a \in \mathcal{X}} P_X(a) f_{Y|X}(y[n]|a)}\]</div>
+<p>estimated on the received samples by <a class="reference internal" href="../documentation/core/information.html#comnumpy.core.information.compute_mi" title="comnumpy.core.information.compute_mi"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_mi()</span></code></a>,
+which takes the input law <span class="math notranslate nohighlight">\(P_X\)</span> as an argument – the shaped case is not
+the uniform formula with different symbols, the denominator changes too.</p>
+<p>Two remarks on the setup. The source draws from the law directly, with
+<code class="docutils literal notranslate"><span class="pre">SymbolGenerator(distribution=...)</span></code>, rather than through a matcher: an
+i.i.d. draw is the idealization a matcher approaches, and using it isolates
+what the <em>law</em> is worth from what a finite block costs (which the previous
+section already measured). And <code class="docutils literal notranslate"><span class="pre">AWGN(snr_dB=...)</span></code> derives its variance from
+the power of the signal it is given, so the shaped and the uniform chain are
+compared at the same SNR by construction – the shaped one simply spends that
+power better.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 4. What shaping buys, in bit/symbol. The source draws from the law</span>
+<span class="c1"># directly here: a matcher approaches it, and this isolates what the law</span>
+<span class="c1"># itself is worth. AWGN(snr_dB=) measures the power of the signal it is</span>
+<span class="c1"># given, so every curve below is read at the same SNR.</span>
+<span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">60000</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">noise</span> <span class="o">=</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">)</span>
+<span class="n">study</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">pam8</span><span class="p">),</span>
+    <span class="n">noise</span><span class="p">,</span>
+<span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;8-PAM over AWGN&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rate_curve</span><span class="p">(</span><span class="n">law</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutual information over the SNR range, for one input law.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutual_information</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
+        <span class="c1"># sigma2_ is what the run that just ended actually applied; the</span>
+        <span class="c1"># real channel puts sigma2 on one dimension, hence 1 / (2 sigma2)</span>
+        <span class="k">return</span> <span class="n">compute_mi</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">pam8</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="n">law</span><span class="p">,</span>
+                          <span class="n">snr</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">noise</span><span class="o">.</span><span class="n">sigma2_</span><span class="p">))</span>
+
+    <span class="n">study</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;tx.distribution&quot;</span><span class="p">:</span> <span class="n">law</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">sweep</span><span class="p">(</span><span class="n">study</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;mi&quot;</span><span class="p">:</span> <span class="n">mutual_information</span><span class="p">},</span>
+                 <span class="n">stimulus</span><span class="o">=</span><span class="n">n_symbols</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">)[</span><span class="s2">&quot;mi&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The metric is a closure over the chain: <code class="docutils literal notranslate"><span class="pre">noise.sigma2_</span></code> is the variance the
+run that has just finished actually applied (a data-dependent attribute, hence
+the trailing underscore), and the factor <span class="math notranslate nohighlight">\(1/(2\sigma^2)\)</span> is the real
+channel’s – a real Gaussian puts its variance on one dimension, a complex one
+spreads it over two.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">uniform</span> <span class="o">=</span> <span class="n">rate_curve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">fixed</span> <span class="o">=</span> <span class="n">rate_curve</span><span class="p">(</span><span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">2.25</span><span class="p">))</span>
+
+<span class="c1"># lambda is not a constant of the system: the best law depends on the</span>
+<span class="c1"># SNR, and the envelope is what shaping can actually deliver</span>
+<span class="n">best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+<span class="n">best_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">3.01</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">):</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">rate_curve</span><span class="p">(</span><span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">H</span><span class="p">)))</span>
+    <span class="n">best_H</span><span class="p">[</span><span class="n">values</span> <span class="o">&gt;</span> <span class="n">best</span><span class="p">]</span> <span class="o">=</span> <span class="n">H</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The third curve is the point. <span class="math notranslate nohighlight">\(\lambda\)</span> is not a constant of the system:
+the entropy that maximizes the rate depends on the SNR, and a <em>fixed</em>
+<span class="math notranslate nohighlight">\(\lambda\)</span> eventually loses to no shaping at all – the fixed
+<span class="math notranslate nohighlight">\(H = 2.25\)</span> curve saturates at 2.25 bit/symbol while the uniform one
+keeps climbing to 3.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig4</span><span class="p">,</span> <span class="p">(</span><span class="n">ax4</span><span class="p">,</span> <span class="n">ax5</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="s2">&quot;s-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;uniform 8-PAM&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">fixed</span><span class="p">,</span> <span class="s2">&quot;^-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;shaped, fixed H = 2.25&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">best</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;shaped, H optimized per SNR&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;mutual information [bit/symbol]&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Same power, more bits&quot;</span><span class="p">)</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># the vertical gap of the left panel, read horizontally: the SNR two</span>
+<span class="c1"># systems need to carry the same rate is what an engineer budgets</span>
+<span class="n">rate_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">,</span> <span class="mi">49</span><span class="p">)</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate_grid</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">)</span>
+       <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate_grid</span><span class="p">,</span> <span class="n">best</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">))</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rate_grid</span><span class="p">,</span> <span class="n">gap</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">/</span> <span class="mi">6</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1.53 dB, the ultimate shaping gain&quot;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;rate [bit/symbol]&quot;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;SNR saved [dB]&quot;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;The same gap, read horizontally&quot;</span><span class="p">)</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax5</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/probabilistic_shaping_fig4.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/probabilistic_shaping_fig4.png"><img alt="../_images/probabilistic_shaping_fig4.png" class="align-center" src="../_images/probabilistic_shaping_fig4.png" style="width: 100%;" />
+</a>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;best entropy per SNR point:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">best_H</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">rate</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">):</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">)</span>
+    <span class="n">shaped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">best</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rate </span><span class="si">{</span><span class="n">rate</span><span class="si">}</span><span class="s2"> bit/symbol: uniform needs </span><span class="si">{</span><span class="n">plain</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB, shaped &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shaped</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB -- </span><span class="si">{</span><span class="n">plain</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">shaped</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB saved&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">best</span> <span class="n">entropy</span> <span class="n">per</span> <span class="n">SNR</span> <span class="n">point</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.65</span> <span class="mf">2.4</span>  <span class="mf">1.95</span> <span class="mf">2.25</span> <span class="mf">2.4</span>  <span class="mf">2.55</span> <span class="mf">2.7</span>  <span class="mf">2.7</span>  <span class="mf">2.85</span> <span class="mf">2.85</span> <span class="mf">3.</span>   <span class="mf">3.</span>   <span class="mf">3.</span>  <span class="p">]</span>
+<span class="n">rate</span> <span class="mf">1.5</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span><span class="p">:</span> <span class="n">uniform</span> <span class="n">needs</span> <span class="mf">9.06</span> <span class="n">dB</span><span class="p">,</span> <span class="n">shaped</span> <span class="mf">8.50</span> <span class="n">dB</span> <span class="o">--</span> <span class="mf">0.56</span> <span class="n">dB</span> <span class="n">saved</span>
+<span class="n">rate</span> <span class="mf">2.0</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span><span class="p">:</span> <span class="n">uniform</span> <span class="n">needs</span> <span class="mf">12.57</span> <span class="n">dB</span><span class="p">,</span> <span class="n">shaped</span> <span class="mf">11.80</span> <span class="n">dB</span> <span class="o">--</span> <span class="mf">0.76</span> <span class="n">dB</span> <span class="n">saved</span>
+<span class="n">rate</span> <span class="mf">2.5</span> <span class="n">bit</span><span class="o">/</span><span class="n">symbol</span><span class="p">:</span> <span class="n">uniform</span> <span class="n">needs</span> <span class="mf">16.16</span> <span class="n">dB</span><span class="p">,</span> <span class="n">shaped</span> <span class="mf">15.47</span> <span class="n">dB</span> <span class="o">--</span> <span class="mf">0.69</span> <span class="n">dB</span> <span class="n">saved</span>
+</pre></div>
+</div>
+<p>Three things to read here, and one to distrust.</p>
+<ul class="simple">
+<li><p>The gain is real but <strong>modest: 0.8 dB at its best</strong>, not 1.53 dB. The
+ultimate gain is the limit of an infinitely fine, infinitely wide grid;
+8 points cannot get there. A 64-QAM or 256-QAM constellation, with more
+points to redistribute, gets closer – which is exactly why shaping is
+deployed on high-order formats and nowhere else.</p></li>
+<li><p>The gain <strong>vanishes at both ends</strong>, and the right-hand panel shows it: at
+low rate there is little to gain, and at 3 bit/symbol the constellation is
+saturated and the only law carrying that rate is the uniform one.</p></li>
+<li><p>The optimal entropy <strong>grows with the SNR</strong>, from about 2 bit/symbol at
+6 dB to the full 3 at 20 dB, which is the rate adaptation a real system
+performs by changing <span class="math notranslate nohighlight">\(\lambda\)</span>.</p></li>
+<li><p>The first two entries of <code class="docutils literal notranslate"><span class="pre">best_H</span></code> are noise. Below 4 dB the curves are
+within the Monte-Carlo error of each other (60000 symbols estimate the
+mutual information to a few thousandths of a bit), so the argmax picks an
+arbitrary winner. That is not a defect of the measurement: it <em>is</em> the
+result – at low SNR, shaping buys nothing worth having.</p></li>
+</ul>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>You have built a <strong>probabilistic amplitude shaping transmitter</strong> and measured
+what it is worth.</p>
+<p>You have learned how to:</p>
+<ul class="simple">
+<li><p>Compute the Maxwell-Boltzmann law for a target entropy, and the shaping gain
+it delivers at equal rate.</p></li>
+<li><p>Choose between the two classical matchers – CCDM for exact per-block
+statistics, ESS for short blocks – and see why one contains the other.</p></li>
+<li><p>Assemble the shaped transmitter and its receiver as a <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> chain,
+and where the FEC decoder must sit in it.</p></li>
+<li><p>Measure the achievable rate of a non-uniform input with <code class="docutils literal notranslate"><span class="pre">compute_mi</span></code>, and
+convert the vertical gap into the dB an engineer budgets.</p></li>
+</ul>
+<p>From here, you can:</p>
+<ul class="simple">
+<li><p>Move to 64-QAM by shaping one PAM axis and taking the product of the two.</p></li>
+<li><p>Put a real code in the loop: <code class="xref py py-mod docutils literal notranslate"><span class="pre">comnumpy.fec</span></code> provides the systematic
+encoder whose parity bits PAS spends on the signs.</p></li>
+<li><p>Replace the i.i.d. source of the last section by the matcher itself, and
+measure how much of the shaping gain a finite blocklength gives back.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="awgn.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Monte Carlo Simulation over AWGN Channel</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ofdm.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">OFDM Tutorial</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-law-maxwell-boltzmann">The Law: Maxwell-Boltzmann</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-matchers-ccdm-and-ess">The Matchers: CCDM and ESS</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-transmitter-a-pas-chain">The Transmitter: a PAS Chain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#where-the-fec-decoder-goes">Where the FEC decoder goes</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-shaping-buys">What Shaping Buys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/examples/shaping.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, V. Choqueuse.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

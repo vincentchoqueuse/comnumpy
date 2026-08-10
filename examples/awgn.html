@@ -46,7 +46,7 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="OFDM Tutorial" href="ofdm.html" />
+    <link rel="next" title="Probabilistic Shaping" href="shaping.html" />
     <link rel="prev" title="Examples" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -335,6 +335,7 @@
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
@@ -420,7 +421,6 @@ and the experimental results are compared with theoretical predictions.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
 <span class="n">matplotlib</span>
 <span class="n">comnumpy</span>
-<span class="n">tqdm</span>
 </pre></div>
 </div>
 </section>
@@ -436,7 +436,7 @@ and the experimental results are compared with theoretical predictions.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_metric_awgn_theo</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
 </pre></div>
 </div>
 </section>
@@ -444,12 +444,12 @@ and the experimental results are compared with theoretical predictions.</p>
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
 <p>Next, we set the simulation parameters: modulation order, number of transmitted symbols,
 and the SNR range to sweep.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1000000</span>
 <span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
-
 </pre></div>
 </div>
 </section>
@@ -461,7 +461,8 @@ and the SNR range to sweep.</p>
 <p>We define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
 The chain includes symbol generation, mapping, transmission over an AWGN channel,
 and symbol demapping.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create chain</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># create chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
@@ -490,13 +491,33 @@ Maps received noisy constellation points back to integers.</p></li>
 <code class="docutils literal notranslate"><span class="pre">sweep()</span></code>: at each SNR value it reconfigures the AWGN processor,
 reseeds the chain, runs it, and compares the output with the transmitted
 symbols recorded at the <code class="docutils literal notranslate"><span class="pre">&quot;tx&quot;</span></code> tap.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform the Monte Carlo simulation (decision D35): reconfigure the</span>
-<span class="c1"># SNR at every point and compare the output with the tapped tx symbols</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A Monte Carlo simulation is a stateless loop: reconfigure the chain,</span>
+<span class="c1"># run it, measure, collect. Written out, at three SNR values:</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">]</span>
+<span class="n">by_hand</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">:</span> <span class="n">snr_dB</span><span class="p">})</span>
+    <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>                  <span class="c1"># run first: the tap is filled by it</span>
+    <span class="n">by_hand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The three services this uses are the ones a study is made of: <code class="docutils literal notranslate"><span class="pre">seed</span></code> makes every point reproducible, <code class="docutils literal notranslate"><span class="pre">set_params</span></code> addresses the block by the name it was given, and the tap returns what the transmitter produced so the metric has something to compare against. Note the ordering – the chain has to <em>run</em> before its tap holds anything.</p>
+<p>That loop is what <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> does, over every point, in one call:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep (decision D35) is that loop, and nothing more: the same</span>
+<span class="c1"># reconfigure-reseed-run-collect, over every point, in one call.</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
                 <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ser_array</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loop  :&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">by_hand</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sweep :&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]))</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span>  <span class="p">:</span> <span class="mf">7.406e-01</span> <span class="mf">3.535e-01</span> <span class="mf">7.237e-03</span>
+<span class="n">sweep</span> <span class="p">:</span> <span class="mf">7.410e-01</span> <span class="mf">3.533e-01</span> <span class="mf">7.117e-03</span>
+</pre></div>
+</div>
+<p>The two are the same computation. They do not print the same digits because <code class="docutils literal notranslate"><span class="pre">sweep</span></code> gives each point its own child seed rather than reseeding to the same value, so the noise differs; the gap is the Monte-Carlo error of a million symbols, not a difference of method.</p>
 </section>
 <section id="theoretical-ser">
 <h3>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h3>
@@ -510,15 +531,15 @@ symbols recorded at the <code class="docutils literal notranslate"><span class="
 <section id="results-and-visualization">
 <h3>Results and Visualization<a class="headerlink" href="#results-and-visualization" title="Link to this heading">#</a></h3>
 <p>Finally, we plot the experimental and theoretical SER curves.
-A logarithmic (<code class="docutils literal notranslate"><span class="pre">semilogy</span></code>) scale is used for the SER axis,
-which is the standard representation for error rate curves in digital communications.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_array</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;exp&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser_theo_array</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;theo&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;SNR (dB)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> is the library’s figure for this: measurements as hollow
+markers, the closed form as a line of the same colour, a logarithmic ordinate
+and a grid on both decades – the standard representation for error rate curves
+in digital communications.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot_error_rate draws the measurements as markers and the closed form</span>
+<span class="c1"># as a line of the same colour: the figure every sweep ends with</span>
+<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
+                <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ser_theo_array</span><span class="p">},</span>
+                <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -566,11 +587,11 @@ for a QAM-modulated communication system over an AWGN channel.</p>
       </div>
     </a>
     <a class="right-next"
-       href="ofdm.html"
+       href="shaping.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">OFDM Tutorial</p>
+        <p class="prev-next-title">Probabilistic Shaping</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -817,6 +817,7 @@ window.runMermaid = runMermaid;</script>
     <span class="s2">&quot;maxwell_boltzmann&quot;</span><span class="p">,</span> <span class="s2">&quot;distribution_entropy&quot;</span><span class="p">,</span> <span class="s2">&quot;composition_from_distribution&quot;</span><span class="p">,</span>
     <span class="s2">&quot;shaping_gain_dB&quot;</span><span class="p">,</span> <span class="s2">&quot;ConstantCompositionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;SphereShaper&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DistributionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;DistributionDematcher&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AmplitudeMapper&quot;</span><span class="p">,</span> <span class="s2">&quot;AmplitudeDemapper&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># The bisection on the Maxwell-Boltzmann parameter runs on lambda in</span>
@@ -1721,6 +1722,162 @@ window.runMermaid = runMermaid;</script>
         <span class="n">flat</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
         <span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">shaper</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">flat</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">blocks</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span></div>
+
+
+
+<div class="viewcode-block" id="AmplitudeMapper">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.AmplitudeMapper">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AmplitudeMapper</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Amplitude indices to signed PAM symbols: the sign of PAS.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A distribution matcher emits amplitudes; a PAM constellation is</span>
+<span class="sd">    signed. The missing half is one bit per symbol,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y[n] = \varepsilon[n] \, a_{x[n]}, \qquad</span>
+<span class="sd">        \Pr(\varepsilon[n] = \pm 1) = \tfrac{1}{2}</span>
+
+<span class="sd">    and it is free: an equiprobable sign leaves the amplitude</span>
+<span class="sd">    distribution untouched, so the composite constellation carries the</span>
+<span class="sd">    symmetric Maxwell-Boltzmann law</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        P_Y(\pm a_i) = \tfrac{1}{2} P_A(a_i)</span>
+
+<span class="sd">    at the same energy, and adds exactly one bit per symbol to the rate.</span>
+<span class="sd">    That is the whole reason probabilistic amplitude shaping works: the</span>
+<span class="sd">    systematic FEC encoder&#39;s parity bits, which are uniform, are spent on</span>
+<span class="sd">    the signs, and only the amplitudes go through the matcher.</span>
+
+<span class="sd">    This block draws the signs itself, from its own generator, which is</span>
+<span class="sd">    the same distribution a parity stream has. It is a stochastic block,</span>
+<span class="sd">    so :meth:`~comnumpy.core.generics.Sequential.seed` reaches it (D6).</span>
+
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Non-negative amplitudes :math:`a_i`, indexed by the input.</span>
+<span class="sd">    seed : int, optional, keyword-only</span>
+<span class="sd">        Local RNG seed.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the block. Default ``&quot;amplitude mapper&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If an amplitude is negative -- the sign is this block&#39;s business,</span>
+<span class="sd">        and a signed input would make the constellation asymmetric.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. Böcherer, F. Steiner, P. Schulte, &quot;Bandwidth efficient and</span>
+<span class="sd">    rate-matched low-density parity-check coded modulation&quot;, IEEE Trans.</span>
+<span class="sd">    Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015, Section IV</span>
+<span class="sd">    (the sign bits of PAS).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; mapper = AmplitudeMapper(np.array([1.0, 3.0, 5.0, 7.0]), seed=0)</span>
+<span class="sd">    &gt;&gt;&gt; print(mapper(np.array([0, 1, 0, 3, 2])))</span>
+<span class="sd">    [-1. -3. -1.  7.  5.]</span>
+<span class="sd">    &gt;&gt;&gt; print(AmplitudeDemapper(mapper.alphabet)(mapper(np.array([0, 3]))))</span>
+<span class="sd">    [0 3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;amplitude mapper&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;AmplitudeMapper signs the amplitudes itself, so it &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;expects non-negative ones, got a minimum of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">))</span><span class="si">}</span><span class="s2">. Pass the positive half &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;of the PAM constellation.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">signs</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">signs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="AmplitudeDemapper">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.AmplitudeDemapper">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AmplitudeDemapper</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Signed PAM samples back to amplitude indices.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The inverse of :class:`AmplitudeMapper` on the half that carries the</span>
+<span class="sd">    shaped data:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|</span>
+
+<span class="sd">    Taking the magnitude first is not a shortcut, it is the maximum</span>
+<span class="sd">    likelihood decision: on a constellation symmetric about the origin,</span>
+<span class="sd">    the nearest point to :math:`y` always has the amplitude nearest to</span>
+<span class="sd">    :math:`|y|`, so deciding on :math:`|y|` and deciding on :math:`y`</span>
+<span class="sd">    give the same amplitude. The sign is dropped because in PAS it</span>
+<span class="sd">    carries parity, not data -- a real receiver feeds it to the FEC</span>
+<span class="sd">    decoder instead.</span>
+
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        The same non-negative amplitudes the mapper was given.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the block. Default ``&quot;amplitude demapper&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If an amplitude is negative.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. Böcherer, F. Steiner, P. Schulte, IEEE Trans. Commun. 63(12),</span>
+<span class="sd">    2015, Section IV.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; demapper = AmplitudeDemapper(np.array([1.0, 3.0, 5.0, 7.0]))</span>
+<span class="sd">    &gt;&gt;&gt; print(demapper(np.array([-0.8, 3.4, -5.2, 6.2])))</span>
+<span class="sd">    [0 1 2 3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;amplitude demapper&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;AmplitudeDemapper decides on |y|, so its alphabet holds &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;amplitudes, got a minimum of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)))</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">magnitude</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 

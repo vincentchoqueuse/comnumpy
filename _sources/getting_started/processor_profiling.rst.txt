@@ -102,6 +102,26 @@ The resulting figure shows the time spent in each processor, making it easy to i
    :width: 100%
    :align: center
 
+The time axis is **logarithmic**, and it has to be: a chain spans several
+decades. Here the cyclic-prefix remover costs a few microseconds -- it is a
+slice -- while the symbol demapper costs some twenty milliseconds, four
+decades more, because it computes the distance from every sample to every
+constellation point. On a linear axis that single block would fill the figure
+and every other one would be a line against zero.
+
+Two things follow from reading it. Optimizing anything but the demapper here
+would be wasted work, and the two FFT-based blocks -- which are the ones people
+expect to be expensive -- cost about a millisecond for 100 000 symbols.
+
+.. note::
+
+   ``plot_chain_profiling`` repeats the chain ``N_test`` times and shows the
+   *distribution*, which is why the boxes have whiskers and outliers: a single
+   timing on a shared machine is not a measurement. For a one-shot table of
+   what each block hands to the next, with its shape, its dtype and its time,
+   use :meth:`~comnumpy.core.generics.Sequential.summary` instead -- it is the
+   textual counterpart of this figure.
+
 
 Conclusion
 ^^^^^^^^^^

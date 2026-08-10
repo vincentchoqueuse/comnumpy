@@ -335,6 +335,7 @@
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
@@ -402,12 +403,13 @@
                   
   <section id="optical-fiber-link-simulation-tutorial">
 <h1>Optical Fiber Link Simulation Tutorial<a class="headerlink" href="#optical-fiber-link-simulation-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>. You will learn how to:</p>
+<p>This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>Build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.</p></li>
-<li><p>Visualize received signals before and after linear and nonlinear equalization.</p></li>
-<li><p>Apply digital back-propagation (DBP) for nonlinear compensation.</p></li>
-<li><p>Compute Symbol Error Rate (SER) to quantify performance.</p></li>
+<li><p>How to build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.</p></li>
+<li><p>How to visualize received signals before and after linear and nonlinear equalization.</p></li>
+<li><p>How to apply digital back-propagation (DBP) for nonlinear compensation.</p></li>
+<li><p>How to compute the Symbol Error Rate (SER) to quantify what each stage recovers.</p></li>
 </ul>
 <p>This tutorial is suited for engineers and students interested in optical communications and nonlinear fiber effects.</p>
 <section id="introduction">
@@ -491,13 +493,14 @@
 </pre></div>
 </div>
 <p>This simulates the full transmission over an optical fiber with nonlinear effects and noise.</p>
-<p>The optical channel (<code class="docutils literal notranslate"><span class="pre">Fiber_Link</span></code>) is modeled as a concatenation of <code class="docutils literal notranslate"><span class="pre">N_span</span></code> spans of standard single-mode fiber (SMF). Each span has a fixed length <code class="docutils literal notranslate"><span class="pre">L_span</span></code> (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>).</p>
+<p>The optical channel (<code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>) is modeled as a concatenation of <code class="docutils literal notranslate"><span class="pre">N_span</span></code> spans of standard single-mode fiber (SMF). Each span has a fixed length <code class="docutils literal notranslate"><span class="pre">L_span</span></code> (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>).</p>
 <p>Within each span, the signal undergoes chromatic dispersion and nonlinear Kerr effects, simulated using the Split-Step Fourier Method (SSFM). The interplay between dispersion and nonlinearity distorts the signal amplitude and phase, motivating the use of advanced digital signal processing techniques at the receiver.</p>
 </section>
 <section id="run-simulation-and-extract-signals">
 <h3>Run Simulation and Extract Signals<a class="headerlink" href="#run-simulation-and-extract-signals" title="Link to this heading">#</a></h3>
 <p>Execute the chain and extract the transmitted and received signals. Then, plot the received constellation diagram to inspect signal quality at the receiver.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform simulation</span>
+<span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
 <span class="c1"># extract signal</span>
 <span class="n">s_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
@@ -508,9 +511,6 @@
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received Signal (oversampling=</span><span class="si">{</span><span class="n">oversampling_dsp</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2">dBm)&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig1.png&quot;</span><span class="p">)</span>
-
-<span class="c1"># perform compensation</span>
-<span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
 </pre></div>
 </div>
 </section>
@@ -528,7 +528,8 @@
 <li><p><strong>Nonlinear equalization (DBP)</strong>: performs full Digital Back-Propagation, which mitigates nonlinear fiber effects by numerically inverting the propagation using a reversed Split-Step Fourier Method.</p></li>
 </ul>
 <p>After compensation, the received signal may exhibit a residual phase rotation. Therefore, phase correction is applied before computing the Symbol Error Rate (SER).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform compensation</span>
+<span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
 
     <span class="k">if</span> <span class="n">num_compensator</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">True</span>
@@ -550,8 +551,12 @@
     <span class="c1"># perform phase correction and evaluate metric</span>
     <span class="n">theta_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x_rx</span><span class="p">)</span><span class="o">*</span><span class="n">x_tx</span><span class="p">))</span>
     <span class="n">x_rx_phase_compensated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">theta_est</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_rx</span>
-    <span class="n">s_rx</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+    <span class="c1"># hard_projector returns (indices, symbols): the indices are what a</span>
+    <span class="c1"># symbol error rate compares</span>
+    <span class="n">s_rx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
     <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;residual phase=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">theta_est</span><span class="p">)</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> deg&quot;</span><span class="p">)</span>
 
     <span class="c1"># plot signal</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
@@ -560,10 +565,23 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">}</span><span class="s2"> (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig</span><span class="si">{</span><span class="n">num_compensator</span><span class="o">+</span><span class="mi">2</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linear</span> <span class="n">equalization</span>      <span class="n">SER</span><span class="o">=</span><span class="mf">0.0361</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=-</span><span class="mf">38.8</span> <span class="n">deg</span>
+<span class="n">nonlinear</span> <span class="n">equalization</span>   <span class="n">SER</span><span class="o">=</span><span class="mf">0.0000</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=-</span><span class="mf">0.9</span> <span class="n">deg</span>
+</pre></div>
+</div>
+<p>The residual phase is the reading that names the culprit. Linear equalization
+undoes the dispersion and the loss, and leaves a <strong>38.8 degree</strong> rotation of
+the whole constellation: that is self-phase modulation, the Kerr effect
+turning average power into phase, which no linear filter can undo. Correcting
+that rotation is not enough either – the remaining scatter still costs 3.6 %
+of the symbols, because the nonlinearity acts <em>along</em> the fibre, interleaved
+with the dispersion, and not as one rotation at the end.</p>
+<p>Digital back-propagation inverts that interleaving: it propagates the received
+signal back through the same split-step model with the signs of the dispersion
+and the nonlinearity reversed. The residual rotation falls to a degree and not
+a single symbol error is left.</p>
 <a class="reference internal image-reference" href="../_images/one_shot_nli_fig2.png"><img alt="../_images/one_shot_nli_fig2.png" class="align-center" src="../_images/one_shot_nli_fig2.png" style="width: 100%;" />
 </a>
 <a class="reference internal image-reference" href="../_images/one_shot_nli_fig3.png"><img alt="../_images/one_shot_nli_fig3.png" class="align-center" src="../_images/one_shot_nli_fig3.png" style="width: 100%;" />

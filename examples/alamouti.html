@@ -336,6 +336,7 @@
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
@@ -403,12 +404,13 @@
                   
   <section id="alamouti-space-time-coding-tutorial">
 <h1>Alamouti Space-Time Coding Tutorial<a class="headerlink" href="#alamouti-space-time-coding-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme. You will learn how to:</p>
+<p>This tutorial explains what a space-time code buys you, on the simplest and most widely deployed one: the Alamouti scheme.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>Understand why a fading channel is limited by its <em>deep fades</em>, not by its average.</p></li>
-<li><p>Build a two-antenna Alamouti transmitter and its receiver with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
-<li><p>See why the receiver needs only a matched filter, and why that is optimal.</p></li>
-<li><p>Measure the diversity gain, and the 3 dB it costs against receive diversity.</p></li>
+<li><p>Why a fading channel is limited by its <em>deep fades</em>, not by its average.</p></li>
+<li><p>How to build a two-antenna Alamouti transmitter and its receiver with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
+<li><p>Why the receiver needs only a matched filter, and why that is optimal.</p></li>
+<li><p>How to measure the diversity gain, and the 3 dB it costs against receive diversity.</p></li>
 </ul>
 <p>This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.</p>
 <section id="introduction">
@@ -486,8 +488,9 @@ measured at the same time and reused by the decoder.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span><span class="p">,</span> <span class="n">SymbolMapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_ser_rayleigh_psk</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Amplifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span><span class="p">,</span> <span class="n">FlatMIMOChannel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.coding</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpaceTimeDecoder</span><span class="p">,</span> <span class="n">SpaceTimeEncoder</span><span class="p">,</span> <span class="n">get_code</span>
@@ -613,41 +616,24 @@ measured at the same time and reused by the decoder.</p>
     <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
     <span class="n">LinearDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">mrc_H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
 <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;MRC 1 Tx, 2 Rx&quot;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 </section>
-<section id="the-loop-then-the-same-thing-with-sweep">
-<h3>The loop, then the same thing with <code class="docutils literal notranslate"><span class="pre">sweep</span></code><a class="headerlink" href="#the-loop-then-the-same-thing-with-sweep" title="Link to this heading">#</a></h3>
-<p>Averaging over fading means running the chain once per channel realization. Written out, that is: reconfigure, run, count, average –</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">draw_channels</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The quasi-static fading realizations one sweep point each.&quot;&quot;&quot;</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)]</span>
+<section id="sweep-the-channel">
+<h3>Sweep the channel<a class="headerlink" href="#sweep-the-channel" title="Link to this heading">#</a></h3>
+<p>Averaging over fading means running the chain once per channel realization, and that is a sweep like any other – except that the parameter is the channel. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes several dotted parameter names at once and zips them, so one sweep point sets the channel the signal goes through <strong>and</strong> the channel the detector inverts, which is exactly what a realization is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">average_ser</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Average one chain over independent quasi-static fading draws.</span>
 
-
-<span class="k">def</span><span class="w"> </span><span class="nf">ser_by_hand</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The loop, spelled out: reconfigure, run, count, average.&quot;&quot;&quot;</span>
-    <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)})</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">realization</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
-        <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;channel.H&quot;</span><span class="p">:</span> <span class="n">realization</span><span class="p">,</span>
-                            <span class="s2">&quot;detector.H&quot;</span><span class="p">:</span> <span class="n">realization</span><span class="p">})</span>
-        <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">stimulus</span><span class="p">)</span>
-        <span class="n">errors</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">detected</span><span class="p">))</span>
-        <span class="n">total</span> <span class="o">+=</span> <span class="n">detected</span><span class="o">.</span><span class="n">size</span>
-    <span class="k">return</span> <span class="n">errors</span> <span class="o">/</span> <span class="n">total</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">set_params</span></code> addresses blocks by the names they were given, so a realization is two dotted assignments: the channel the signal goes through, and the channel the detector inverts.</p>
-<p>That loop is exactly what <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> does, and it takes several parameters at once and zips them – so a sweep point <em>is</em> a channel realization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">ser_by_sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The same average, as one call: the sweep is over the channel.</span>
-
-<span class="sd">    ``sweep`` takes several dotted parameters at once and zips them, so</span>
-<span class="sd">    one sweep point sets the channel of the propagation block *and* the</span>
-<span class="sd">    channel the detector inverts -- which is what a realization is.</span>
+<span class="sd">    The chain is built once. ``sweep`` takes several dotted parameters</span>
+<span class="sd">    at once and zips them, so one sweep point sets the channel the</span>
+<span class="sd">    signal goes through *and* the channel the detector inverts -- which</span>
+<span class="sd">    is exactly what a fading realization is.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)]</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)})</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span>
                     <span class="p">[(</span><span class="n">H</span><span class="p">,</span> <span class="n">H</span><span class="p">)</span> <span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">],</span>
@@ -655,105 +641,150 @@ measured at the same time and reused by the decoder.</p>
                     <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]))</span>
 
-
-<span class="c1"># The two agree on the same realizations. They do not draw the same</span>
-<span class="c1"># noise -- sweep gives every point its own child seed (D6/D35) -- so</span>
-<span class="c1"># they agree to within the Monte-Carlo error, not to the last digit.</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The accuracy of an average over fading is set by the number of
+<em>channel</em> draws, not by the symbol count: the error rate is dominated
+by the rare deep fades, and an under-sampled tail reads
+systematically <strong>low</strong>. That is why the draw count grows with the
+SNR below, and why the confrontation at 18 dB with twenty times the
+draws lives in <code class="docutils literal notranslate"><span class="pre">validation/mimo_diversity_ber.py</span></code> rather than here.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Monte-Carlo comparison, at equal total transmit power. The accuracy</span>
+<span class="c1"># of an average over fading is set by the number of *channel* draws, not</span>
+<span class="c1"># by the symbol count -- the error rate is dominated by the rare deep</span>
+<span class="c1"># fades, and an under-sampled tail reads systematically low. Hence more</span>
+<span class="c1"># draws where the curve is lower, and a range that stops where this</span>
+<span class="c1"># budget stays honest; validation/mimo_diversity_ber.py carries the</span>
+<span class="c1"># confrontation to 18 dB with twenty times the draws.</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">draws</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2500</span><span class="p">,</span> <span class="mi">3500</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">6000</span><span class="p">]</span>
 <span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">80</span>
-<span class="n">probe</span> <span class="o">=</span> <span class="n">draw_channels</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;8 dB over 300 realizations: loop &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ser_by_hand</span><span class="p">(</span><span class="n">alamouti</span><span class="p">,</span><span class="w"> </span><span class="n">probe</span><span class="p">,</span><span class="w"> </span><span class="mf">8.0</span><span class="p">,</span><span class="w"> </span><span class="n">n_symbols</span><span class="p">)</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">, sweep &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ser_by_sweep</span><span class="p">(</span><span class="n">alamouti</span><span class="p">,</span><span class="w"> </span><span class="n">probe</span><span class="p">,</span><span class="w"> </span><span class="mf">8.0</span><span class="p">,</span><span class="w"> </span><span class="n">n_symbols</span><span class="p">)</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">8</span> <span class="n">dB</span> <span class="n">over</span> <span class="mi">300</span> <span class="n">realizations</span><span class="p">:</span> <span class="n">loop</span> <span class="mf">0.06533</span><span class="p">,</span> <span class="n">sweep</span> <span class="mf">0.06742</span>
-</pre></div>
-</div>
-<p>The two estimate the same quantity on the same 300 channels. They do not agree to the last digit and should not: <code class="docutils literal notranslate"><span class="pre">sweep</span></code> gives every point its own child seed, so the noise differs, and the gap is the Monte-Carlo error of 24000 symbols.</p>
-</section>
-<section id="sweep-the-snr">
-<h3>Sweep the SNR<a class="headerlink" href="#sweep-the-snr" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">average_ser</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">2500</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">ser_by_sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">draw_channels</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
-                        <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">)</span>
-
-
-<span class="c1"># Monte-Carlo comparison, at equal total transmit power</span>
-<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">curves</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">siso</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">))</span>
-                                  <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
-    <span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">alamouti</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">)</span>
-                             <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
-    <span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">mrc</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">))</span>
-                        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">],</span>
+    <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">siso</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+                                              <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span> <span class="n">count</span><span class="p">)</span>
+                                  <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">draws</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span>
+    <span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">alamouti</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">,</span>
+                                         <span class="n">count</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">draws</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span>
+    <span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">average_ser</span><span class="p">(</span><span class="n">mrc</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span> <span class="n">count</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">draws</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </section>
-<section id="plot-ser-vs-snr">
-<h3>Plot SER vs SNR<a class="headerlink" href="#plot-ser-vs-snr" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2: the diversity order is the slope</span>
-<span class="n">fig2</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">6.5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">ser</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;symbol error rate&quot;</span><span class="p">)</span>
+<section id="plot-the-curves-against-their-closed-forms">
+<h3>Plot the curves against their closed forms<a class="headerlink" href="#plot-the-curves-against-their-closed-forms" title="Link to this heading">#</a></h3>
+<p>The three schemes are three readings of <strong>one</strong> expression, <a class="reference internal" href="../documentation/core/metrics.html#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a>: <span class="math notranslate nohighlight">\(L\)</span> branches evaluated at the per-branch SNR, with a transmit scheme dividing that SNR by <span class="math notranslate nohighlight">\(N_t\)</span> because it splits its power over the antennas.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>scheme</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(L\)</span></p></th>
+<th class="head"><p>SNR per branch</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1 Tx, 1 Rx</p></td>
+<td><p>1</p></td>
+<td><p><span class="math notranslate nohighlight">\(\bar\gamma\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>MRC, 1 Tx, <span class="math notranslate nohighlight">\(N_r\)</span> Rx</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_r\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\bar\gamma\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Alamouti, <span class="math notranslate nohighlight">\(N_t\)</span> Tx</p></td>
+<td><p><span class="math notranslate nohighlight">\(N_t N_r\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\bar\gamma / N_t\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> draws measurements as hollow markers and their references as lines of the same colour, so a pair reads as one statement:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2: the measurements, and the closed forms they must reach.</span>
+<span class="c1"># One expression covers the three: L branches at the per-branch SNR,</span>
+<span class="c1"># and a transmit scheme divides that SNR by N_t because it splits the</span>
+<span class="c1"># power -- which is the 3 dB Alamouti pays against receive diversity.</span>
+<span class="n">fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">per_bit</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">fine</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">per_bit</span><span class="p">),</span>
+    <span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">per_bit</span> <span class="o">/</span> <span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">,</span>
+                                                     <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">per_bit</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory</span><span class="p">,</span> <span class="n">x_theory</span><span class="o">=</span><span class="n">fine</span><span class="p">,</span>
+                     <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;symbol error rate&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-PSK over Rayleigh, equal transmit power&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_alamouti_fig2.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_alamouti_fig2.png"><img alt="../_images/one_shot_alamouti_fig2.png" class="align-center" src="../_images/one_shot_alamouti_fig2.png" style="width: 100%;" />
 </a>
-<p>Two things are visible, and they are the two things to remember.</p>
-<p><strong>The slope.</strong> The single-antenna curve falls by one decade per decade of SNR; the two diversity schemes fall twice as fast. Since the diversity order is an <em>asymptotic</em> slope, the script prints the local slope of each curve rather than a single fitted number, so that the convergence is visible:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The diversity order is the *asymptotic* slope, so the interesting</span>
-<span class="c1"># thing is the local slope converging to it. Intervals whose upper end</span>
-<span class="c1"># rests on a handful of errors are dropped: their slope is noise.</span>
-<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ser</span><span class="p">)</span>
-    <span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]))</span>
-             <span class="o">/</span> <span class="p">((</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
-             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">3e-4</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> local slope &quot;</span>
-          <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">))</span>
+</section>
+<section id="read-the-two-numbers-off-the-closed-form">
+<h3>Read the two numbers off the closed form<a class="headerlink" href="#read-the-two-numbers-off-the-closed-form" title="Link to this heading">#</a></h3>
+<p>The two statements the tutorial is about are exact, so they are taken from the expression rather than fitted to the points; the simulation is what confronts them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The two quantitative statements come from the closed form, which is</span>
+<span class="c1"># exact and free; the simulation is there to confront them. The last</span>
+<span class="c1"># points read low on purpose: 6000 draws still under-sample the deep</span>
+<span class="c1"># fades that dominate the average at 24 dB.</span>
+<span class="n">exact</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
+    <span class="n">M</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_dB_list</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span> <span class="k">if</span> <span class="s2">&quot;Alamouti&quot;</span> <span class="ow">in</span> <span class="n">name</span>
+                                                <span class="k">else</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">diversity</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="s2">&quot;no diversity&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">else</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">curves</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="n">exact</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> measured / closed form  &quot;</span>
+          <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ratio</span><span class="p">))</span>
 
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">0.74</span> <span class="o">-</span><span class="mf">0.90</span> <span class="o">-</span><span class="mf">1.00</span> <span class="o">-</span><span class="mf">1.04</span> <span class="o">-</span><span class="mf">1.07</span> <span class="o">-</span><span class="mf">1.20</span>
-<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">1.16</span> <span class="o">-</span><span class="mf">1.59</span> <span class="o">-</span><span class="mf">1.94</span>
-<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">local</span> <span class="n">slope</span> <span class="o">-</span><span class="mf">1.46</span> <span class="o">-</span><span class="mf">1.86</span> <span class="o">-</span><span class="mf">2.08</span>
-</pre></div>
-</div>
-<p>The first converges to 1, the two others to 2. Intervals whose upper end rests on a handful of errors are dropped: their slope would be Monte-Carlo noise, not physics.</p>
-<p><strong>The 3 dB.</strong> Alamouti is parallel to MRC but shifted right. The script reads the SNR each scheme needs to reach a symbol error rate of <span class="math notranslate nohighlight">\(10^{-3}\)</span>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Points where no error was seen carry no information, so they are</span>
-<span class="c1"># dropped rather than read as a zero error rate.</span>
+<span class="c1"># the diversity order, read off the closed form at high SNR</span>
+<span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">curves</span><span class="p">:</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
+        <span class="n">M</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">high</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span> <span class="k">if</span> <span class="s2">&quot;Alamouti&quot;</span> <span class="ow">in</span> <span class="n">name</span>
+                                             <span class="k">else</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">diversity</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="s2">&quot;no diversity&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">else</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">high</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">reference</span><span class="p">),</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> diversity order </span><span class="si">{</span><span class="o">-</span><span class="n">slope</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># and the 3 dB Alamouti pays for transmitting blind, exactly</span>
+<span class="n">alamouti_snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">target</span> <span class="o">=</span> <span class="mf">1e-3</span>
-<span class="n">gaps</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ser</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">seen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ser</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="n">gaps</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">target</span><span class="p">),</span>
-                            <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ser</span><span class="p">)[</span><span class="n">seen</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                            <span class="n">snr_dB_list</span><span class="p">[</span><span class="n">seen</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNR needed for SER = </span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: &quot;</span>
-      <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">gaps</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+<span class="n">of</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;MRC&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">alamouti_snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+      <span class="s2">&quot;Alamouti&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">alamouti_snr</span> <span class="o">/</span> <span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">,</span>
+                                           <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">)}</span>
+<span class="n">needed</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">601</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+          <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">of</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNR for SER = </span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: MRC </span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;MRC&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB, Alamouti &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;Alamouti&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB, gap </span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;Alamouti&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;MRC&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;(10log10(N_t) = </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SNR</span> <span class="n">needed</span> <span class="k">for</span> <span class="n">SER</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">:</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span> <span class="mf">27.7</span> <span class="n">dB</span><span class="p">,</span>
-<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="mf">17.6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span> <span class="mf">14.8</span> <span class="n">dB</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.99</span> <span class="mf">0.97</span> <span class="mf">0.94</span> <span class="mf">0.90</span> <span class="mf">0.83</span> <span class="mf">0.86</span>
+<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.98</span> <span class="mf">0.92</span> <span class="mf">0.88</span> <span class="mf">0.77</span> <span class="mf">0.84</span> <span class="mf">0.65</span>
+<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.98</span> <span class="mf">0.91</span> <span class="mf">0.82</span> <span class="mf">0.72</span> <span class="mf">0.73</span> <span class="mf">0.28</span>
+<span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">diversity</span> <span class="n">order</span> <span class="mf">1.00</span>
+<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">diversity</span> <span class="n">order</span> <span class="mf">2.00</span>
+<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">diversity</span> <span class="n">order</span> <span class="mf">2.00</span>
+<span class="n">SNR</span> <span class="k">for</span> <span class="n">SER</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">:</span> <span class="n">MRC</span> <span class="mf">15.6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">Alamouti</span> <span class="mf">18.6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">gap</span> <span class="mf">3.01</span> <span class="n">dB</span> <span class="p">(</span><span class="mi">10</span><span class="n">log10</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span> <span class="o">=</span> <span class="mf">3.01</span> <span class="n">dB</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The gap to MRC is the price of transmitting <em>blind</em>: the receiver knows the channel and can weight its two branches by <span class="math notranslate nohighlight">\(h_i^{*}\)</span>, while the transmitter cannot, and splits its power evenly instead. Alamouti buys the full diversity order anyway – it only pays for it in array gain, not in slope.</p>
+<p><strong>The slope.</strong> The single-antenna scheme has diversity order 1, the two others 2 – the error rate falls twice as fast, which is the whole reason a space-time code exists. Read off the closed form the number is exact; read off a simulated curve it is a fit, and it converges to the same value.</p>
+<p><strong>The 3 dB.</strong> Reaching a symbol error rate of <span class="math notranslate nohighlight">\(10^{-3}\)</span> costs 15.6 dB with two receive antennas and 18.6 dB with Alamouti: a gap of <strong>3.01 dB</strong>, against <span class="math notranslate nohighlight">\(10\log_{10} N_t = 3.01\)</span> dB. That is the price of transmitting <em>blind</em> – the receiver knows the channel and weights its branches by <span class="math notranslate nohighlight">\(h_i^{*}\)</span>, the transmitter cannot and splits its power evenly. Alamouti buys the full diversity order anyway; it pays only in array gain, not in slope.</p>
+<p><strong>And the ratios are the honest part.</strong> The measurement tracks the closed form to a few percent at low SNR and drifts below it as the SNR grows, down to 0.28 for the steepest curve: 6000 channel draws no longer sample the deep fades that dominate the average there. Nothing is wrong with either side – <code class="docutils literal notranslate"><span class="pre">validation/mimo_diversity_ber.py</span></code> runs the same three schemes with up to 80000 draws and lands within 4.4 % of the same curves, and measures the 3 dB gap at 3.0 dB.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The same 3 dB is why the comparison had to be made at equal total
-transmit power. Had each antenna transmitted the full power, the
-Alamouti curve would have landed on top of the MRC one and the plot
-would have proved nothing.</p>
+<p>The comparison had to be made at equal total transmit power. Had each
+antenna transmitted the full power, the Alamouti curve would have
+landed on top of the MRC one and the figure would have proved
+nothing. That is the <span class="math notranslate nohighlight">\(1/\sqrt{N_t}\)</span> in the chain, and the
+<span class="math notranslate nohighlight">\(\bar\gamma/N_t\)</span> in the table.</p>
 </div>
 </section>
 </section>
@@ -849,9 +880,9 @@ would have proved nothing.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-references-as-chains">Two references, as chains</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-loop-then-the-same-thing-with-sweep">The loop, then the same thing with <code class="docutils literal notranslate"><span class="pre">sweep</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sweep-the-snr">Sweep the SNR</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">Plot SER vs SNR</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sweep-the-channel">Sweep the channel</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-curves-against-their-closed-forms">Plot the curves against their closed forms</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read-the-two-numbers-off-the-closed-form">Read the two numbers off the closed form</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beyond-two-antennas">Beyond two antennas</a></li>

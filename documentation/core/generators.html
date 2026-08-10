@@ -470,15 +470,28 @@
 <span id="generators"></span><h1>Generators<a class="headerlink" href="#module-comnumpy.core.generators" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.core.generators.SymbolGenerator">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SymbolGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'generator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/generators.html#SymbolGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generators.SymbolGenerator" title="Link to this definition">#</a></dt>
-<dd><p>Generator of independent and identically distributed (IID) uniform integer symbols.</p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SymbolGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'generator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/generators.html#SymbolGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generators.SymbolGenerator" title="Link to this definition">#</a></dt>
+<dd><p>Generator of independent and identically distributed (IID) integer symbols.</p>
 <section id="signal-model">
 <h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
-<p>Each output symbol <span class="math notranslate nohighlight">\(y[n]\)</span> is drawn independently and uniformly
-from the integer alphabet <span class="math notranslate nohighlight">\(\{0, 1, \ldots, M-1\}\)</span>:</p>
+<p>Each output symbol <span class="math notranslate nohighlight">\(y[n]\)</span> is drawn independently from the
+integer alphabet <span class="math notranslate nohighlight">\(\{0, 1, \ldots, M-1\}\)</span>, uniformly by default:</p>
 <div class="math notranslate nohighlight">
 \[\Pr\left(y[n] = m\right) = \frac{1}{M}, \qquad
 m \in \{0, 1, \ldots, M-1\}\]</div>
+<p>A source is not always uniform, though: probabilistic shaping sends
+inner constellation points more often than outer ones, and
+<code class="docutils literal notranslate"><span class="pre">distribution=</span></code> gives that source directly,</p>
+<div class="math notranslate nohighlight">
+\[\Pr\left(y[n] = m\right) = p_m\]</div>
+<p>which is what <a class="reference internal" href="shaping.html#comnumpy.core.shaping.maxwell_boltzmann" title="comnumpy.core.shaping.maxwell_boltzmann"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a>
+returns. Note what this block is <em>not</em>: an i.i.d. draw from
+<span class="math notranslate nohighlight">\(P_X\)</span> is the idealization a distribution matcher approaches,
+not what it produces – a matcher maps uniform bits onto a finite set
+of sequences, so its output is neither independent nor exactly
+<span class="math notranslate nohighlight">\(P_X\)</span> on a finite block (see
+<a class="reference internal" href="shaping.html#comnumpy.core.shaping.DistributionMatcher" title="comnumpy.core.shaping.DistributionMatcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistributionMatcher</span></code></a>). Use this block
+to study what a distribution is worth, and the matcher to produce it.</p>
 <p>This is a source block: the call argument is not an input signal
 <span class="math notranslate nohighlight">\(x\)</span> but the requested output size.</p>
 <p>Axes: <em>element-wise</em> – each symbol is drawn independently; the output
@@ -490,6 +503,13 @@ shape is the requested size (int or tuple).</p>
 </dd>
 <dt class="field-even">type M<span class="colon">:</span></dt>
 <dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param distribution<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Probabilities <span class="math notranslate nohighlight">\(p_m\)</span>, of length <span class="math notranslate nohighlight">\(M\)</span>. Default (None)
+is the uniform law.</p>
+</dd>
+<dt class="field-even">type distribution<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param seed<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Local RNG seed.</p>
@@ -503,10 +523,15 @@ shape is the requested size (int or tuple).</p>
 <dt class="field-even">type name<span class="colon">:</span></dt>
 <dd class="field-even"><p>str, optional, keyword-only</p>
 </dd>
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">distribution</span></code> does not have one non-negative probability
+    per symbol, summing to one.</p>
+</dd>
 </dl>
 <p class="rubric">References</p>
 <p>J. G. Proakis, M. Salehi, <em>Digital Communications</em>, 5th ed.,
-McGraw-Hill, 2008, Chapter 1.</p>
+McGraw-Hill, 2008, Chapter 1; G. Böcherer, F. Steiner, P. Schulte,
+IEEE Trans. Commun., vol. 63, no. 12, 2015 (non-uniform signaling).</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">generator</span> <span class="o">=</span> <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">symbols_1D</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># Generates a 1D array of size 5</span>
@@ -516,6 +541,15 @@ McGraw-Hill, 2008, Chapter 1.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">symbols_2D</span><span class="p">)</span>
 <span class="go">[[3 0 2]</span>
 <span class="go"> [0 0 2]]</span>
+</pre></div>
+</div>
+<p>A shaped source, drawn from a Maxwell-Boltzmann law:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.shaping</span><span class="w"> </span><span class="kn">import</span> <span class="n">maxwell_boltzmann</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shaped</span> <span class="o">=</span> <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">maxwell_boltzmann</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">pam</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">1.5</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">shaped</span><span class="p">(</span><span class="mi">10000</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10000</span><span class="p">)</span>
+<span class="go">[0.0557 0.4433 0.4457 0.0553]</span>
 </pre></div>
 </div>
 </section>

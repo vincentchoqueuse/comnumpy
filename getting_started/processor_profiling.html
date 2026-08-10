@@ -426,7 +426,7 @@ Profiling measures the computational cost of each processor, helping you identif
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_chain_profiling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span> <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span><span class="p">,</span> <span class="n">CarrierExtractor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrequencyDomainEqualizer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_standard_carrier_allocation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_allocation</span>
 
 </pre></div>
 </div>
@@ -442,12 +442,12 @@ Profiling measures the computational cost of each processor, helping you identif
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Noise variance</span>
 
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for QAM modulation</span>
-<span class="n">carrier_type</span> <span class="o">=</span> <span class="n">get_standard_carrier_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ah_128&quot;</span><span class="p">)</span>  <span class="c1"># Standard carrier allocation</span>
+<span class="n">allocation</span> <span class="o">=</span> <span class="n">get_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ac-40&quot;</span><span class="p">)</span>  <span class="c1"># 128 subcarriers, from the catalog</span>
 
-<span class="c1"># extract carrier information</span>
-<span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">)</span>
-<span class="n">N_carrier_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">carrier_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Number of data carriers</span>
-<span class="n">N_carrier_pilots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">carrier_type</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Number of pilot carriers</span>
+<span class="c1"># the allocation carries its own counts, checked against the standard&#39;s table</span>
+<span class="n">N_carriers</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_fft</span>
+<span class="n">N_carrier_data</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_data</span>       <span class="c1"># Number of data carriers</span>
+<span class="n">N_carrier_pilots</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_pilots</span>   <span class="c1"># Number of pilot carriers</span>
 
 <span class="c1"># channel parameters</span>
 <span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
@@ -468,7 +468,7 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
     <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_carrier_data</span><span class="p">),</span>
-    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="n">pilots</span><span class="p">),</span>
+    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">allocation</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="n">pilots</span><span class="p">),</span>
     <span class="n">IFFTProcessor</span><span class="p">(),</span>
     <span class="n">CyclicPrefixer</span><span class="p">(</span><span class="n">N_cp</span><span class="p">),</span>
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
@@ -478,7 +478,7 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
     <span class="n">CyclicPrefixRemover</span><span class="p">(</span><span class="n">N_cp</span><span class="p">),</span>
     <span class="n">FFTProcessor</span><span class="p">(),</span>
     <span class="n">FrequencyDomainEqualizer</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">),</span>
-    <span class="n">CarrierExtractor</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">),</span>
+    <span class="n">CarrierExtractor</span><span class="p">(</span><span class="n">allocation</span><span class="p">),</span>
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
     <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 <span class="p">])</span>
@@ -525,6 +525,24 @@ and produces a bar chart of the results.</p>
 <p>The resulting figure shows the time spent in each processor, making it easy to identify which stages dominate the computation.</p>
 <a class="reference internal image-reference" href="../_images/profiling_chain_fig1.png"><img alt="../_images/profiling_chain_fig1.png" class="align-center" src="../_images/profiling_chain_fig1.png" style="width: 100%;" />
 </a>
+<p>The time axis is <strong>logarithmic</strong>, and it has to be: a chain spans several
+decades. Here the cyclic-prefix remover costs a few microseconds – it is a
+slice – while the symbol demapper costs some twenty milliseconds, four
+decades more, because it computes the distance from every sample to every
+constellation point. On a linear axis that single block would fill the figure
+and every other one would be a line against zero.</p>
+<p>Two things follow from reading it. Optimizing anything but the demapper here
+would be wasted work, and the two FFT-based blocks – which are the ones people
+expect to be expensive – cost about a millisecond for 100 000 symbols.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">plot_chain_profiling</span></code> repeats the chain <code class="docutils literal notranslate"><span class="pre">N_test</span></code> times and shows the
+<em>distribution</em>, which is why the boxes have whiskers and outliers: a single
+timing on a shared machine is not a measurement. For a one-shot table of
+what each block hands to the next, with its shape, its dtype and its time,
+use <a class="reference internal" href="../documentation/core/generics.html#comnumpy.core.generics.Sequential.summary" title="comnumpy.core.generics.Sequential.summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">summary()</span></code></a> instead – it is the
+textual counterpart of this figure.</p>
+</div>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
