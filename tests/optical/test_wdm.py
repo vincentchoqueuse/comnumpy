@@ -301,27 +301,44 @@ class TestChannelFilterClipping(unittest.TestCase):
         return SRRCFilter(roll_off, sps, N_h=32, method="fft")(
             Upsampler(sps)(symbols))
 
-    def test_a_mask_at_the_symbol_rate_warns(self):
+    def test_a_bandwidth_at_the_symbol_rate_warns_at_the_transmitter(self):
         symbol_rate, sps = 32e9, 8
         grid = WDMGrid.uniform(3, spacing_Hz=50e9, bandwidth_Hz=symbol_rate)
         signal = self.shaped(0.2, sps=sps)
-        multiplexed = WDMMultiplexer(grid, fs=symbol_rate * sps)(
-            np.stack([signal] * 3))
         with self.assertLogs("comnumpy.optical.wdm", logging.WARNING) as logs:
-            WDMDemultiplexer(grid, fs=symbol_rate * sps,
-                             channel=1)(multiplexed)
+            WDMMultiplexer(grid, fs=symbol_rate * sps)(np.stack([signal] * 3))
         self.assertIn("occupied", "".join(logs.output))
 
-    def test_a_mask_wide_enough_stays_quiet(self):
+    def test_a_bandwidth_wide_enough_stays_quiet(self):
+        symbol_rate, sps, roll_off = 32e9, 8, 0.2
+        grid = WDMGrid.uniform(3, spacing_Hz=50e9,
+                               bandwidth_Hz=symbol_rate * (1 + roll_off))
+        signal = self.shaped(roll_off, sps=sps)
+        with self.assertNoLogs("comnumpy.optical.wdm", logging.WARNING):
+            WDMMultiplexer(grid, fs=symbol_rate * sps)(np.stack([signal] * 3))
+
+    def test_the_receiver_stays_quiet_under_noise(self):
+        """Out-of-band noise is not a clipped signal, and the guard knew it.
+
+        A first version of this check lived in the demultiplexer and
+        measured the energy its mask rejected. At any realistic
+        receiver, amplified spontaneous emission is white and fills the
+        guard band, so that measurement reported the *noise*: it fired
+        on a correctly configured comb after 700 km.
+        """
         symbol_rate, sps, roll_off = 32e9, 8, 0.2
         grid = WDMGrid.uniform(3, spacing_Hz=50e9,
                                bandwidth_Hz=symbol_rate * (1 + roll_off))
         signal = self.shaped(roll_off, sps=sps)
         multiplexed = WDMMultiplexer(grid, fs=symbol_rate * sps)(
             np.stack([signal] * 3))
+        rng = np.random.default_rng(0)
+        power = np.mean(np.abs(multiplexed) ** 2)
+        noisy = multiplexed + np.sqrt(power * 1e-3) * (
+            rng.normal(size=multiplexed.shape)
+            + 1j * rng.normal(size=multiplexed.shape))
         with self.assertNoLogs("comnumpy.optical.wdm", logging.WARNING):
-            WDMDemultiplexer(grid, fs=symbol_rate * sps,
-                             channel=1)(multiplexed)
+            WDMDemultiplexer(grid, fs=symbol_rate * sps, channel=1)(noisy)
 
     def test_widening_the_mask_past_the_signal_changes_nothing(self):
         """Once it passes the channel, the mask is not doing the work."""

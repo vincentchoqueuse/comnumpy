@@ -73,6 +73,27 @@ one release; there is no compatibility layer.
   `Sequential([`, the PAPR page never showed its oversampling factor,
   and the fibre-nonlinearity page never showed the line that runs the
   chain.
+- The WDM channel-width guard moved from the demultiplexer to the
+  **multiplexer**, because at the receiver it was measuring the wrong
+  thing: amplified spontaneous emission is white and fills the guard
+  band, so "energy the mask rejects" is the *noise*, and the check fired
+  on a correctly configured comb after 700 km -- 0.12 % of rejected
+  energy against 0.0004 % of genuinely clipped signal. At the
+  transmitter there is no noise and the question is exactly the
+  configuration one: does each channel fit the bandwidth the grid
+  declares for it.
+- `validation/optical_wdm_opticommpy.py --dsp` answers, by measurement,
+  where the decibel between this reproduction and the published result
+  comes from. A finer split step does *not* close it -- it opens it
+  (20.11, 21.15, 21.57, 21.69, 21.69 dB as the step goes 1000 to 62 m),
+  so the converged answer is 1.06 dB above theirs and the agreement at
+  a coarse step was two errors of opposite sign cancelling. The
+  receiver does close it: laser phase noise, a polarization rotation, a
+  blind CMA/RDE butterfly and a blind phase search bring the same link
+  to 20.18 dB against their 20.63, so the published number sits inside
+  the bracket. One byproduct worth keeping: the phase search *gains*
+  0.8 dB with no laser phase noise to remove, because it also tracks
+  the slowly varying nonlinear phase.
 - Estimator scope (D49): every estimator now says whether what it
   measures is **shared** by the paths of a multi-path signal or belongs
   to **each path**, and behaves accordingly. `BlindCFOCompensator`
