@@ -826,7 +826,6 @@ the <strong>positive half</strong> of the grid, for a reason explained in the PA
 below.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
 
-<span class="c1"># Parameters</span>
 <span class="n">pam8</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>   <span class="c1"># 8-PAM on the odd-integer grid</span>
 <span class="n">amplitudes</span> <span class="o">=</span> <span class="n">pam8</span><span class="p">[</span><span class="n">pam8</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>                <span class="c1"># the half a matcher shapes</span>
 <span class="n">entropies</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">]</span>
@@ -861,10 +860,7 @@ and cost <span class="math notranslate nohighlight">\(E_{\mathrm{unif}} = (2^H \
 <span class="math notranslate nohighlight">\(E_P = \sum_i p_i a_i^2\)</span> the shaped law actually costs:</p>
 <div class="math notranslate nohighlight">
 \[G_s = 10 \log_{10} \frac{E_{\mathrm{unif}}}{E_P}\]</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. The law. Among all distributions of a given average energy on a</span>
-<span class="c1"># fixed constellation, the one of maximum entropy is Maxwell-Boltzmann;</span>
-<span class="c1"># specifying the entropy fixes lambda, and the entropy is the rate.</span>
-<span class="n">laws</span> <span class="o">=</span> <span class="p">{</span><span class="n">H</span><span class="p">:</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="n">H</span><span class="p">)</span> <span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">entropies</span><span class="p">}</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">laws</span> <span class="o">=</span> <span class="p">{</span><span class="n">H</span><span class="p">:</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="n">H</span><span class="p">)</span> <span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">entropies</span><span class="p">}</span>
 <span class="k">for</span> <span class="n">H</span><span class="p">,</span> <span class="n">law</span> <span class="ow">in</span> <span class="n">laws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;H = </span><span class="si">{</span><span class="n">H</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> bit/symbol    energy </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">law</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pam8</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2">&quot;</span>
           <span class="sa">f</span><span class="s2">&quot;    shaping gain </span><span class="si">{</span><span class="n">shaping_gain_dB</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span><span class="w"> </span><span class="n">law</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
@@ -939,23 +935,14 @@ costs exactly <span class="math notranslate nohighlight">\(E = \sum_i n_i e_i\)<
 sphere therefore carries at least as many bits at the same energy, and its
 blocks are on average <em>cheaper</em>, since it also contains the blocks that spend
 less. The script measures both readings – same energy, and same rate:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 2. The matchers. Both are enumerative codes on a finite set of blocks;</span>
-<span class="c1"># they differ in which set. The amplitude law is the full-PAM law minus</span>
-<span class="c1"># the sign bit, so a target of 2.25 bit/symbol on 8-PAM is 1.25 on the</span>
-<span class="c1"># four amplitudes.</span>
-<span class="n">target</span> <span class="o">=</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">1.25</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">target</span> <span class="o">=</span> <span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">1.25</span><span class="p">)</span>
 <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]</span>
 <span class="n">rates</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;CCDM (constant composition)&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;ESS (sphere, same energy)&quot;</span><span class="p">:</span> <span class="p">[]}</span>
 <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lengths</span><span class="p">:</span>
     <span class="n">ccdm</span> <span class="o">=</span> <span class="n">ConstantCompositionMatcher</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
                                       <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
-    <span class="c1"># the sphere carrying the same rate: its budget is what CCDM&#39;s</span>
-    <span class="c1"># composition costs, or less</span>
     <span class="n">same_rate</span> <span class="o">=</span> <span class="n">SphereShaper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="n">ccdm</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
     <span class="n">budget</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ccdm</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">same_rate</span><span class="o">.</span><span class="n">energies</span><span class="p">))</span>
-    <span class="c1"># the sphere holding the same energy: every CCDM block costs exactly</span>
-    <span class="c1"># `budget`, so the CCDM code is a *subset* of this one and the</span>
-    <span class="c1"># inequality below is exact, not statistical</span>
     <span class="n">same_energy</span> <span class="o">=</span> <span class="n">SphereShaper</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">max_energy</span><span class="o">=</span><span class="n">budget</span><span class="p">)</span>
     <span class="n">rates</span><span class="p">[</span><span class="s2">&quot;CCDM (constant composition)&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ccdm</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
     <span class="n">rates</span><span class="p">[</span><span class="s2">&quot;ESS (sphere, same energy)&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">same_energy</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
@@ -1035,19 +1022,13 @@ backwards:</p>
 itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
 script, so the block names are the ones the code uses and a dashed
 outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
-<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
-<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;shaping_pas&quot;</span><span class="p">,</span> <span class="n">link</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;shaping_study&quot;</span><span class="p">,</span> <span class="n">study</span><span class="p">)]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 3. The transmitter, as a chain. Uniform bits in, shaped amplitudes</span>
-<span class="c1"># out, signs drawn uniformly (in a real PAS transmitter they are the</span>
-<span class="c1"># parity bits of a systematic FEC encoder, which are uniform too).</span>
-<span class="n">n_block</span> <span class="o">=</span> <span class="mi">64</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_block</span> <span class="o">=</span> <span class="mi">64</span>
 <span class="n">shaper</span> <span class="o">=</span> <span class="n">ConstantCompositionMatcher</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
                                     <span class="n">length</span><span class="o">=</span><span class="n">n_block</span><span class="p">)</span>
 <span class="n">link</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
@@ -1109,10 +1090,7 @@ laid over the law it was built from:</p>
 the SNR and a symbol error takes the received block <strong>outside</strong> the code: it
 is no longer a permutation of the composition, so there is no index to read
 back and the dematcher says so rather than returning silent nonsense.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The matcher is a code, so a symbol error takes the block out of it and</span>
-<span class="c1"># there is no index to read back. This is why PAS puts the FEC decoder</span>
-<span class="c1"># *between* the demapper and the dematcher.</span>
-<span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="mf">12.0</span><span class="p">})</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="mf">12.0</span><span class="p">})</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">link</span><span class="p">(</span><span class="n">n_blocks</span> <span class="o">*</span> <span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
@@ -1152,11 +1130,7 @@ section already measured). And <code class="docutils literal notranslate"><span 
 the power of the signal it is given, so the shaped and the uniform chain are
 compared at the same SNR by construction – the shaped one simply spends that
 power better.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 4. What shaping buys, in bit/symbol. The source draws from the law</span>
-<span class="c1"># directly here: a matcher approaches it, and this isolates what the law</span>
-<span class="c1"># itself is worth. AWGN(snr_dB=) measures the power of the signal it is</span>
-<span class="c1"># given, so every curve below is read at the same SNR.</span>
-<span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">60000</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">60000</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
 <span class="n">noise</span> <span class="o">=</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">)</span>
 <span class="n">study</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
@@ -1169,8 +1143,6 @@ power better.</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">rate_curve</span><span class="p">(</span><span class="n">law</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutual information over the SNR range, for one input law.&quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mutual_information</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
-        <span class="c1"># sigma2_ is what the run that just ended actually applied; the</span>
-        <span class="c1"># real channel puts sigma2 on one dimension, hence 1 / (2 sigma2)</span>
         <span class="k">return</span> <span class="n">compute_mi</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">pam8</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="n">law</span><span class="p">,</span>
                           <span class="n">snr</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">noise</span><span class="o">.</span><span class="n">sigma2_</span><span class="p">))</span>
 
@@ -1187,8 +1159,6 @@ spreads it over two.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">uniform</span> <span class="o">=</span> <span class="n">rate_curve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">8</span><span class="p">))</span>
 <span class="n">fixed</span> <span class="o">=</span> <span class="n">rate_curve</span><span class="p">(</span><span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam8</span><span class="p">,</span> <span class="n">entropy</span><span class="o">=</span><span class="mf">2.25</span><span class="p">))</span>
 
-<span class="c1"># lambda is not a constant of the system: the best law depends on the</span>
-<span class="c1"># SNR, and the envelope is what shaping can actually deliver</span>
 <span class="n">best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 <span class="n">best_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">H</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">3.01</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">):</span>
@@ -1212,8 +1182,6 @@ keeps climbing to 3.</p>
 <span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="c1"># the vertical gap of the left panel, read horizontally: the SNR two</span>
-<span class="c1"># systems need to carry the same rate is what an engineer budgets</span>
 <span class="n">rate_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">,</span> <span class="mi">49</span><span class="p">)</span>
 <span class="n">gap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate_grid</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">)</span>
        <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">rate_grid</span><span class="p">,</span> <span class="n">best</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">))</span>

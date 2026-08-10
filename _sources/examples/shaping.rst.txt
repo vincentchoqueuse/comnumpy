@@ -59,7 +59,7 @@ below.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 16-21
+   :lines: 16-20
 
 
 The Law: Maxwell-Boltzmann
@@ -102,7 +102,7 @@ and cost :math:`E_{\mathrm{unif}} = (2^H \Delta)^2 / 12`, against the
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 23-31
+   :lines: 22-27
 
 .. code::
 
@@ -123,7 +123,7 @@ that trade is the subject of the last section.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 33-43
+   :lines: 29-39
 
 .. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
@@ -185,7 +185,7 @@ less. The script measures both readings -- same energy, and same rate:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 45-67
+   :lines: 41-54
 
 .. code::
 
@@ -205,7 +205,7 @@ per-block distribution -- it only reproduces the law on average.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 69-80
+   :lines: 56-67
 
 .. image:: img/probabilistic_shaping_fig2.png
    :width: 100%
@@ -250,11 +250,11 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 201-207
+   :lines: 172-175
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 82-102
+   :lines: 69-86
 
 .. code::
 
@@ -278,7 +278,7 @@ laid over the law it was built from:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 104-118
+   :lines: 88-102
 
 .. image:: img/probabilistic_shaping_fig3.png
    :width: 100%
@@ -294,7 +294,7 @@ back and the dematcher says so rather than returning silent nonsense.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 120-127
+   :lines: 104-108
 
 .. code::
 
@@ -338,7 +338,7 @@ power better.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 129-153
+   :lines: 110-128
 
 The metric is a closure over the chain: ``noise.sigma2_`` is the variance the
 run that has just finished actually applied (a data-dependent attribute, hence
@@ -348,7 +348,7 @@ spreads it over two.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 156-166
+   :lines: 131-139
 
 The third curve is the point. :math:`\lambda` is not a constant of the system:
 the entropy that maximizes the rate depends on the SNR, and a *fixed*
@@ -358,7 +358,7 @@ keeps climbing to 3.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 168-192
+   :lines: 141-163
 
 .. image:: img/probabilistic_shaping_fig4.png
    :width: 100%
@@ -366,7 +366,7 @@ keeps climbing to 3.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 194-199
+   :lines: 165-170
 
 .. code::
 

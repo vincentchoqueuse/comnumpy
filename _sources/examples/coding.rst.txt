@@ -61,7 +61,7 @@ simple -- and the codes below all have rate 1/2.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 18-29
+   :lines: 18-28
 
 That helper deserves a line of its own, because it is where most coded
 simulations go wrong. The channel sees *symbols*, so it is parameterized by
@@ -106,7 +106,7 @@ a path in a **trellis**. That trellis is the object the decoder searches.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 31-46
+   :lines: 30-41
 
 .. code::
 
@@ -168,7 +168,7 @@ wrong side. The information thrown away by deciding too early is worth about
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 48-81
+   :lines: 43-73
 
 The chain, as the chain itself describes it:
 
@@ -224,7 +224,7 @@ closed form: no simulation, no random draw, and no floor at
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 83-91
+   :lines: 75-82
 
 .. code::
 
@@ -279,7 +279,7 @@ by construction, there is no hard-decision variant of it.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 93-120
+   :lines: 84-107
 
 .. code::
 
@@ -289,7 +289,7 @@ by construction, there is no hard-decision variant of it.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 122-137
+   :lines: 109-122
 
 .. image:: img/channel_coding_fig2.png
    :width: 100%

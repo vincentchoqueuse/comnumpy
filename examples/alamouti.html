@@ -868,8 +868,7 @@ measured at the same time and reused by the decoder.</p>
 <section id="define-system-parameters">
 <h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
 <p>The code is taken from the registry by name, exactly as the constellation is taken from <code class="docutils literal notranslate"><span class="pre">get_alphabet</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameters</span>
-<span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">code</span> <span class="o">=</span> <span class="n">get_code</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">)</span>
 <span class="n">power</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span>          <span class="c1"># split the power over the antennas</span>
@@ -881,8 +880,7 @@ measured at the same time and reused by the decoder.</p>
 <section id="build-the-alamouti-chain">
 <h3>Build the Alamouti Chain<a class="headerlink" href="#build-the-alamouti-chain" title="Link to this heading">#</a></h3>
 <p>The whole link is <strong>one</strong> <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>: generator, mapper, power split, space-time encoder, channel, noise, decoder, and back to symbol indices. The encoder outputs <code class="docutils literal notranslate"><span class="pre">(n_tx,</span> <span class="pre">N</span> <span class="pre">T</span> <span class="pre">/</span> <span class="pre">K)</span></code> with antennas on axis -2, so it feeds <code class="docutils literal notranslate"><span class="pre">FlatMIMOChannel</span></code> directly, and the decoder gives the symbols back:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The Alamouti link, as one chain</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">alamouti</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
@@ -927,10 +925,7 @@ measured at the same time and reused by the decoder.</p>
 itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
 script, so the block names are the ones the code uses and a dashed
 outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
-<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
-<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">alamouti</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;mrc&quot;</span><span class="p">,</span> <span class="n">mrc</span><span class="p">)]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
@@ -943,8 +938,7 @@ outline marks a tapped block:</p>
 <section id="what-each-block-costs">
 <h3>What each block costs<a class="headerlink" href="#what-each-block-costs" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">summary</span></code> runs the chain and tabulates what every block hands to the next one, and what it cost:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># what each block costs and what it hands to the next one (D33b)</span>
-<span class="n">alamouti</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">alamouti</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#    block                        id                   output shape       dtype         time ms</span>
@@ -964,8 +958,7 @@ outline marks a tapped block:</p>
 <section id="visualize-the-combining">
 <h3>Visualize the combining<a class="headerlink" href="#visualize-the-combining" title="Link to this heading">#</a></h3>
 <p>The two panels are two taps of the same run:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 1: the tapped signals, before and after combining</span>
-<span class="n">received</span> <span class="o">=</span> <span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">received</span> <span class="o">=</span> <span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">combined</span> <span class="o">=</span> <span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">power</span>
 <span class="n">fig1</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_left</span><span class="p">,</span> <span class="n">ax_right</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
 <span class="n">ax_left</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">received</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">received</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
@@ -996,11 +989,7 @@ outline marks a tapped block:</p>
 \[\widehat{s} = \frac{\mathbf{h}^{H}\mathbf{y}}{\left\|\mathbf{h}\right\|^2},
 \qquad
 \mathrm{SNR}_{\mathrm{out}} = \frac{\left\|\mathbf{h}\right\|^2}{\sigma^2}\]</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The two references are chains differing only in their blocks. Zero</span>
-<span class="c1"># forcing on an (N_r, 1) channel *is* maximum ratio combining -- the</span>
-<span class="c1"># pseudo-inverse of a column vector is h^H / ||h||^2 -- so one</span>
-<span class="c1"># LinearDetector covers both the no-diversity and the diversity case.</span>
-<span class="n">siso_H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">siso_H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">siso</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
     <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
@@ -1053,14 +1042,7 @@ systematically <strong>low</strong>. That is why the draw count grows with the
 SNR below, and why the confrontation at 18 dB with twenty times the
 draws lives in <code class="docutils literal notranslate"><span class="pre">validation/mimo_diversity_ber.py</span></code> rather than here.</p>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Monte-Carlo comparison, at equal total transmit power. The accuracy</span>
-<span class="c1"># of an average over fading is set by the number of *channel* draws, not</span>
-<span class="c1"># by the symbol count -- the error rate is dominated by the rare deep</span>
-<span class="c1"># fades, and an under-sampled tail reads systematically low. Hence more</span>
-<span class="c1"># draws where the curve is lower, and a range that stops where this</span>
-<span class="c1"># budget stays honest; validation/mimo_diversity_ber.py carries the</span>
-<span class="c1"># confrontation to 18 dB with twenty times the draws.</span>
-<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">draws</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2500</span><span class="p">,</span> <span class="mi">3500</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">6000</span><span class="p">]</span>
 <span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">80</span>
 <span class="n">curves</span> <span class="o">=</span> <span class="p">{</span>
@@ -1103,11 +1085,7 @@ draws lives in <code class="docutils literal notranslate"><span class="pre">vali
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> draws measurements as hollow markers and their references as lines of the same colour, so a pair reads as one statement:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2: the measurements, and the closed forms they must reach.</span>
-<span class="c1"># One expression covers the three: L branches at the per-branch SNR,</span>
-<span class="c1"># and a transmit scheme divides that SNR by N_t because it splits the</span>
-<span class="c1"># power -- which is the 3 dB Alamouti pays against receive diversity.</span>
-<span class="n">fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
 <span class="n">per_bit</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">fine</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">theory</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">per_bit</span><span class="p">),</span>
@@ -1129,11 +1107,7 @@ draws lives in <code class="docutils literal notranslate"><span class="pre">vali
 <section id="read-the-two-numbers-off-the-closed-form">
 <h3>Read the two numbers off the closed form<a class="headerlink" href="#read-the-two-numbers-off-the-closed-form" title="Link to this heading">#</a></h3>
 <p>The two statements the tutorial is about are exact, so they are taken from the expression rather than fitted to the points; the simulation is what confronts them:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The two quantitative statements come from the closed form, which is</span>
-<span class="c1"># exact and free; the simulation is there to confront them. The last</span>
-<span class="c1"># points read low on purpose: 6000 draws still under-sample the deep</span>
-<span class="c1"># fades that dominate the average at 24 dB.</span>
-<span class="n">exact</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exact</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
     <span class="n">M</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_dB_list</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span> <span class="k">if</span> <span class="s2">&quot;Alamouti&quot;</span> <span class="ow">in</span> <span class="n">name</span>
                                                 <span class="k">else</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">diversity</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="s2">&quot;no diversity&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">else</span> <span class="mi">2</span><span class="p">)</span>
@@ -1143,7 +1117,6 @@ draws lives in <code class="docutils literal notranslate"><span class="pre">vali
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> measured / closed form  &quot;</span>
           <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ratio</span><span class="p">))</span>
 
-<span class="c1"># the diversity order, read off the closed form at high SNR</span>
 <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">])</span>
 <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">curves</span><span class="p">:</span>
     <span class="n">reference</span> <span class="o">=</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
@@ -1153,7 +1126,6 @@ draws lives in <code class="docutils literal notranslate"><span class="pre">vali
     <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">high</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">reference</span><span class="p">),</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> diversity order </span><span class="si">{</span><span class="o">-</span><span class="n">slope</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="c1"># and the 3 dB Alamouti pays for transmitting blind, exactly</span>
 <span class="n">alamouti_snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">target</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="n">of</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;MRC&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">alamouti_snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>

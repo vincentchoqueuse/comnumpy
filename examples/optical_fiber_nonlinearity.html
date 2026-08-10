@@ -473,7 +473,6 @@ the chain, the taps, the error rate – is used here without comment.</p>
 <span class="n">N_span</span> <span class="o">=</span> <span class="mi">25</span>
 <span class="n">dBm</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
 
-<span class="c1"># compute simulation parameter</span>
 <span class="n">N</span> <span class="o">=</span> <span class="n">N_s</span><span class="o">*</span><span class="n">oversampling_sim</span>   <span class="c1"># signal length in number of samples</span>
 <span class="n">fs</span> <span class="o">=</span> <span class="n">R_s</span><span class="o">*</span><span class="n">oversampling_sim</span>
 <span class="n">oversampling_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="o">/</span><span class="n">oversampling_dsp</span><span class="p">)</span>
@@ -486,8 +485,7 @@ the chain, the taps, the error rate – is used here without comment.</p>
 <section id="create-communication-chain">
 <h3>Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h3>
 <p>Build a processing chain consisting of symbol generation, mapping, pulse shaping (SRRC filter), amplification, fiber propagation via <code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>, and matched filtering with downsampling:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a communication chain</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
                 <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
                 <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">),</span>
                 <span class="n">Upsampler</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">)),</span>
@@ -498,7 +496,6 @@ the chain, the taps, the error rate – is used here without comment.</p>
                 <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">)</span>
                 <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;signal_tx&quot;</span><span class="p">])</span>
 
-<span class="c1"># perform simulation</span>
 </pre></div>
 </div>
 <p>This simulates the full transmission over an optical fiber with nonlinear effects and noise.</p>
@@ -508,14 +505,11 @@ the chain, the taps, the error rate – is used here without comment.</p>
 <section id="run-simulation-and-extract-signals">
 <h3>Run Simulation and Extract Signals<a class="headerlink" href="#run-simulation-and-extract-signals" title="Link to this heading">#</a></h3>
 <p>Execute the chain and extract the transmitted and received signals. Then, plot the received constellation diagram to inspect signal quality at the receiver.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform simulation</span>
-<span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
-<span class="c1"># extract signal</span>
 <span class="n">s_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
 <span class="n">x_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">)</span>
 
-<span class="c1"># plot signal</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">y_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received Signal (oversampling=</span><span class="si">{</span><span class="n">oversampling_dsp</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2">dBm)&quot;</span><span class="p">)</span>
@@ -537,8 +531,7 @@ the chain, the taps, the error rate – is used here without comment.</p>
 <li><p><strong>Nonlinear equalization (DBP)</strong>: performs full Digital Back-Propagation, which mitigates nonlinear fiber effects by numerically inverting the propagation using a reversed Split-Step Fourier Method.</p></li>
 </ul>
 <p>After compensation, the received signal may exhibit a residual phase rotation. Therefore, phase correction is applied before computing the Symbol Error Rate (SER).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># perform compensation</span>
-<span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
 
     <span class="k">if</span> <span class="n">num_compensator</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">True</span>
@@ -554,20 +547,15 @@ the chain, the taps, the error rate – is used here without comment.</p>
                     <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">amp</span><span class="p">),</span>
             <span class="p">])</span>
 
-    <span class="c1"># apply conventional chain</span>
     <span class="n">x_rx</span> <span class="o">=</span> <span class="n">receiver</span><span class="p">(</span><span class="n">y_rx</span><span class="p">)</span>
 
-    <span class="c1"># perform phase correction and evaluate metric</span>
     <span class="n">theta_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x_rx</span><span class="p">)</span><span class="o">*</span><span class="n">x_tx</span><span class="p">))</span>
     <span class="n">x_rx_phase_compensated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">theta_est</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_rx</span>
-    <span class="c1"># hard_projector returns (indices, symbols): the indices are what a</span>
-    <span class="c1"># symbol error rate compares</span>
     <span class="n">s_rx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
     <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  &quot;</span>
           <span class="sa">f</span><span class="s2">&quot;residual phase=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">theta_est</span><span class="p">)</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> deg&quot;</span><span class="p">)</span>
 
-    <span class="c1"># plot signal</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x_rx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x_rx</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;before phase correction&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;after phase correction&quot;</span><span class="p">)</span>

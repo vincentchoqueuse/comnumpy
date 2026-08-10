@@ -450,8 +450,6 @@ shape of the waveform itself.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">IFFTProcessor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_papr</span>
 
-<span class="c1"># This script reproduces the first figure of the following article :</span>
-<span class="c1"># - “An overview of peak-to-average power ratio reduction techniques for multicarrier transmission” by Han and Lee (2005).</span>
 </pre></div>
 </div>
 </section>
@@ -461,7 +459,6 @@ shape of the waveform itself.</p>
 the number of subcarriers, modulation, oversampling factor, and thresholds for PAPR analysis.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 
-<span class="c1"># parameters</span>
 <span class="n">N_sc</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="n">L</span> <span class="o">=</span> <span class="mi">10000</span>
 <span class="nb">type</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span>
@@ -489,7 +486,6 @@ carrier allocation, and IFFT processing.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span><span class="o">*</span><span class="n">N_sc</span><span class="p">)</span>
 <span class="n">carrier_type</span><span class="p">[:</span><span class="n">N_sc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
-<span class="c1"># perform simulation</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
         <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
@@ -540,35 +536,20 @@ For each case, we compare the simulation results with the theoretical CCDF:</p>
 
 <span class="k">for</span> <span class="n">N_sc</span> <span class="ow">in</span> <span class="n">N_sc_list</span><span class="p">:</span>
 
-    <span class="c1"># set S2P and carrier allocation</span>
     <span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span><span class="o">*</span><span class="n">N_sc</span><span class="p">)</span>
     <span class="n">carrier_type</span><span class="p">[:</span><span class="n">N_sc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;s2p&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_N_sub</span><span class="p">(</span><span class="n">N_sc</span><span class="p">)</span>
     <span class="n">chain</span><span class="p">[</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_carrier_type</span><span class="p">(</span><span class="n">carrier_type</span><span class="p">)</span>
 
-    <span class="c1"># generate data</span>
     <span class="n">N</span> <span class="o">=</span> <span class="n">N_sc</span><span class="o">*</span><span class="n">os</span><span class="o">*</span><span class="n">L</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
-    <span class="c1"># evaluate metric</span>
     <span class="n">papr_dB_array</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="c1"># display experimental curves</span>
     <span class="n">papr_dB</span><span class="p">,</span> <span class="n">ccdf</span> <span class="o">=</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">papr_dB_array</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">papr_dB</span><span class="p">,</span> <span class="n">ccdf</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;exp: N_sc=</span><span class="si">{</span><span class="n">N_sc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># display theoretical curves</span>
-    <span class="c1">#</span>
-    <span class="c1"># The exponent is NOT N_sc*os. The Nyquist-rate model treats the N_sc</span>
-    <span class="c1"># samples of a symbol as independent, which gives exponent N_sc; an</span>
-    <span class="c1"># oversampled signal has more peaks but they are correlated, so the</span>
-    <span class="c1"># effective number of independent samples grows much more slowly than</span>
-    <span class="c1"># the sample count. van Nee &amp; Prasad (ch. 2) give 2.8*N_sc for 4x</span>
-    <span class="c1"># oversampling, and the fitted exponent measured here</span>
-    <span class="c1"># (validation/ofdm_papr_ccdf.py) is 2.28 / 2.49 / 2.74 for</span>
-    <span class="c1"># N_sc = 64 / 256 / 1024, converging to it. Using N_sc*os overstates</span>
-    <span class="c1"># the PAPR by +0.19 dB at N_sc=256 at CCDF 1e-2.</span>
     <span class="n">ccdf_theo</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">gamma</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">2.8</span><span class="o">*</span><span class="n">N_sc</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">papr_dB_threshold</span><span class="p">,</span> <span class="n">ccdf_theo</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;theo: N_sc=</span><span class="si">{</span><span class="n">N_sc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>

@@ -802,8 +802,7 @@ blocks in it.</p>
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
 <p>Next, we define the key simulation parameters: the modulation order,
 the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
-<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>       <span class="c1"># Modulation order (4-QAM)</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span>   <span class="c1"># Number of symbols</span>
 <span class="n">snr_dB</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># Signal-to-Noise Ratio in dB</span>
@@ -839,17 +838,13 @@ linear rather than factored into functions.</p>
 itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
 script, so the block names are the ones the code uses and a dashed
 outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
-<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
-<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;first_simulation&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define a communication chain; taps extract the signals to observe</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
             <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
             <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn&quot;</span><span class="p">),</span>
@@ -882,8 +877,7 @@ worth getting used to now.</p>
 <em>source</em>, so the argument is not a signal but the number of symbols to
 produce – and what comes back is what the last block returned, here the
 detected symbol indices:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># test chain</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -896,15 +890,12 @@ returned only the second one. The first is at the <code class="docutils literal 
 tap holds the last run, so reading it before calling the chain raises an
 error rather than returning stale data – which is the behaviour you want,
 but it does mean the order of the two lines matters.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate simulation performance</span>
-<span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span>
 <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">data_tx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
-<span class="c1"># extract theoretical performance</span>
 <span class="n">snr_per_bit</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
 <span class="n">ser_theo</span> <span class="o">=</span> <span class="n">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span>
 
-<span class="c1"># display results</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (simu)= </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER (theo)= </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
@@ -926,8 +917,7 @@ is the subject of the next tutorial.</p>
 <p>Visualizing the received constellation is a useful way to assess signal quality.
 We read the symbols recorded at the <code class="docutils literal notranslate"><span class="pre">&quot;awgn&quot;</span></code> tap and hand them to
 <code class="docutils literal notranslate"><span class="pre">plot_iq</span></code>, which draws on an axis and returns it:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot signals</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;awgn&quot;</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Received Constellation Diagram&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;awgn&quot;</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Received Constellation Diagram&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/first_simulation_fig1.png&quot;</span><span class="p">)</span>

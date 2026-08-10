@@ -776,14 +776,15 @@ Profiling measures the computational cost of each processor, helping you identif
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span><span class="p">,</span>
+                                    <span class="n">TappedDelayLineChannel</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_delay_profile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span><span class="p">,</span> <span class="n">Parallel2Serial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_chain_profiling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span> <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span><span class="p">,</span> <span class="n">CarrierExtractor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrequencyDomainEqualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_allocation</span>
-
 </pre></div>
 </div>
 </section>
@@ -792,7 +793,7 @@ Profiling measures the computational cost of each processor, helping you identif
 <p>Next, we define the communication and channel parameters:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>          <span class="c1"># Modulation order</span>
-<span class="n">N_h</span> <span class="o">=</span> <span class="mi">5</span>         <span class="c1"># Number of channel taps</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="mf">5e6</span>        <span class="c1"># Sample rate the channel is resolved at</span>
 <span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>       <span class="c1"># Cyclic prefix length</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>      <span class="c1"># Number of symbols</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Noise variance</span>
@@ -800,16 +801,16 @@ Profiling measures the computational cost of each processor, helping you identif
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for QAM modulation</span>
 <span class="n">allocation</span> <span class="o">=</span> <span class="n">get_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ac-40&quot;</span><span class="p">)</span>  <span class="c1"># 128 subcarriers, from the catalog</span>
 
-<span class="c1"># the allocation carries its own counts, checked against the standard&#39;s table</span>
 <span class="n">N_carriers</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_fft</span>
 <span class="n">N_carrier_data</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_data</span>       <span class="c1"># Number of data carriers</span>
 <span class="n">N_carrier_pilots</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_pilots</span>   <span class="c1"># Number of pilot carriers</span>
 
-<span class="c1"># channel parameters</span>
-<span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">N_h</span><span class="p">))</span>
-<span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">channel_model</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;TDL-D&quot;</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+                                       <span class="n">seed</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">impulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+<span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">channel_model</span><span class="p">(</span><span class="n">impulse</span><span class="p">)[:</span><span class="n">channel_model</span><span class="o">.</span><span class="n">delays_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">pilots</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N_carrier_pilots</span><span class="p">)</span>  <span class="c1"># Pilot values</span>
-
 </pre></div>
 </div>
 </section>
@@ -838,8 +839,6 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
     <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 <span class="p">])</span>
-
-<span class="c1"># profiling chain</span>
 </pre></div>
 </div>
 <p>The chain is composed of the following processors:</p>
@@ -905,10 +904,7 @@ Maps received constellation points back to integer symbols.</p></li>
 itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
 script, so the block names are the ones the code uses and a dashed
 outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
-<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
-<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;profiling_chain&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>

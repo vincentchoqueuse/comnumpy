@@ -820,8 +820,7 @@ SNR removes.</p></li>
 <p>The sampling rate is what turns delays in nanoseconds into delays in samples,
 so it belongs with the channel and not with the modulation. At the LTE rate of
 15.36 MHz one sample lasts 65 ns.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameters</span>
-<span class="n">fs</span> <span class="o">=</span> <span class="mf">15.36e6</span>                  <span class="c1"># LTE 15.36 MHz: 65 ns per sample</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mf">15.36e6</span>                  <span class="c1"># LTE 15.36 MHz: 65 ns per sample</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">spread_ns</span> <span class="o">=</span> <span class="mf">300.0</span>             <span class="c1"># the scenario supplies the delay spread</span>
@@ -850,10 +849,7 @@ nanoseconds: they <em>are</em> channels, one per environment. The <strong>5G NR<
 of TR 38.901 – TDL-A to TDL-E – give delays normalized by the delay spread
 (its equation 7.7-1), so a TDL model is a <em>shape</em> and the scenario supplies
 the scale:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. The catalog. A TR 38.901 model is a *shape*: its delays are</span>
-<span class="c1"># normalized, so the same table serves an indoor 30 ns scenario and an</span>
-<span class="c1"># outdoor 1 us one. The LTE profiles are absolute instead, in ns.</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;profile&#39;</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;taps&#39;</span><span class="si">:</span><span class="s2">&gt;5s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;rms [ns]&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;max [ns]&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2"> &quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;profile&#39;</span><span class="si">:</span><span class="s2">8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;taps&#39;</span><span class="si">:</span><span class="s2">&gt;5s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;rms [ns]&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;max [ns]&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2"> &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;K [dB]&#39;</span><span class="si">:</span><span class="s2">&gt;7s</span><span class="si">}</span><span class="s2">  taps at 15.36 MHz&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">profiles</span><span class="p">:</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;delay_spread_ns&quot;</span><span class="p">:</span> <span class="n">spread_ns</span><span class="p">}</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;TDL&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
@@ -922,9 +918,7 @@ frequencies further apart than that fade independently. Since <span class="math 
 the transform of the profile, stretching the delays by a factor compresses
 <span class="math notranslate nohighlight">\(R\)</span> by the same factor – the product <span class="math notranslate nohighlight">\(B_c \sigma_\tau\)</span> is a
 constant of the profile’s <em>shape</em>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 2. What a delay spread does to the frequency response. The channel is</span>
-<span class="c1"># a chain block like any other: give it a profile and a sampling rate.</span>
-<span class="n">fig2</span><span class="p">,</span> <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig2</span><span class="p">,</span> <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">delay spread -&gt; coherence bandwidth&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">spread</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">300.0</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">):</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;TDL-C&quot;</span><span class="p">,</span> <span class="n">delay_spread_ns</span><span class="o">=</span><span class="n">spread</span><span class="p">)</span>
@@ -936,11 +930,6 @@ constant of the profile’s <em>shape</em>.</p>
     <span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">fs</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1e-6</span>
     <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">frequencies</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
              <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;RMS spread </span><span class="si">{</span><span class="n">spread</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ns&quot;</span><span class="p">)</span>
-    <span class="c1"># The frequency correlation is the Fourier transform of the power</span>
-    <span class="c1"># delay profile, R(df) = sum_l gamma_l exp(-j 2 pi df tau_l), so the</span>
-    <span class="c1"># coherence bandwidth is a property of the profile and not of one</span>
-    <span class="c1"># draw. Convention here: the width at which the envelope</span>
-    <span class="c1"># correlation |R|^2 has fallen to one half.</span>
     <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">fs</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">8192</span><span class="p">)</span>
     <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span>
         <span class="n">grid</span><span class="p">,</span> <span class="n">profile</span><span class="o">.</span><span class="n">delays_ns</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">))</span> <span class="o">@</span> <span class="n">profile</span><span class="o">.</span><span class="n">powers_lin</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
@@ -995,11 +984,7 @@ basis:</p>
 window opens: inter-symbol interference, and with it a loss of orthogonality
 between subcarriers. The example runs the same link twice, once on each side
 of that condition:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 3. What it costs an OFDM link, and what the cyclic prefix is for.</span>
-<span class="c1"># The prefix turns the linear convolution into a circular one -- but</span>
-<span class="c1"># only if it is longer than the channel. Shorter, and the previous</span>
-<span class="c1"># symbol leaks in: an error floor no SNR removes.</span>
-<span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
 <span class="n">N_symbols</span> <span class="o">=</span> <span class="mi">400</span>
 <span class="n">N</span> <span class="o">=</span> <span class="n">N_carrier</span> <span class="o">*</span> <span class="n">N_symbols</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
@@ -1022,8 +1007,6 @@ of that condition:</p>
         <span class="n">link</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span>                     <span class="c1"># same channel draw at every SNR</span>
         <span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">)})</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">link</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-        <span class="c1"># the receiver has to know the channel: read what the fading</span>
-        <span class="c1"># block actually realized (block fading, so column 0 is it)</span>
         <span class="n">fading</span> <span class="o">=</span> <span class="n">link</span><span class="p">[</span><span class="s2">&quot;fading&quot;</span><span class="p">]</span>
         <span class="n">taps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">fading</span><span class="o">.</span><span class="n">delays_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
         <span class="n">taps</span><span class="p">[</span><span class="n">fading</span><span class="o">.</span><span class="n">delays_</span><span class="p">]</span> <span class="o">=</span> <span class="n">fading</span><span class="o">.</span><span class="n">h_</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
@@ -1080,9 +1063,7 @@ receiver estimates them from pilots.</p>
     fading --&gt; noise
     classDef tapped stroke-dasharray: 4 2
     class tx tapped
-    </pre><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagram this tutorial shows is exported from the chain</span>
-<span class="c1"># itself (D33c), so the picture cannot drift from the code.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
+    </pre><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;multipath&quot;</span><span class="p">,</span> <span class="n">link</span><span class="p">)]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>

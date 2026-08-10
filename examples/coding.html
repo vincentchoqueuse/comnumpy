@@ -829,7 +829,6 @@ spectrum alone – no simulation.</p></li>
 simple – and the codes below all have rate 1/2.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/img/&quot;</span>
 
-<span class="c1"># Parameters</span>
 <span class="n">BPSK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">])</span>   <span class="c1"># bit 0 -&gt; +1, bit 1 -&gt; -1</span>
 <span class="n">ebn0_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="n">n_bits</span> <span class="o">=</span> <span class="mi">40000</span>
@@ -872,10 +871,6 @@ standardized and every textbook tabulates, so it is the default here:</p>
 it has <span class="math notranslate nohighlight">\(2^6 = 64\)</span> states, and the sequence of states it walks through is
 a path in a <strong>trellis</strong>. That trellis is the object the decoder searches.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># 1. The code. A rate-1/2 convolutional encoder is two modulo-2 sums of</span>
-<span class="c1"># the last K bits, taken with the generator polynomials; (133, 171) in</span>
-<span class="c1"># octal with K = 7 is the NASA standard, and the one every textbook</span>
-<span class="c1"># tabulates.</span>
 <span class="n">encoder</span> <span class="o">=</span> <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">encoder</span><span class="o">.</span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2">  &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;K = </span><span class="si">{</span><span class="n">encoder</span><span class="o">.</span><span class="n">K</span><span class="si">}</span><span class="s2">  states = </span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">K</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">  &quot;</span>
@@ -936,9 +931,6 @@ two constellation points weighs less than one that landed squarely on the
 wrong side. The information thrown away by deciding too early is worth about
 2 dB, and the simulation below measures exactly that.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># 2. The three links. Same information bits, same channel, three</span>
-<span class="c1"># receivers: no code at all, the code decoded from hard decisions, and</span>
-<span class="c1"># the code decoded from the demapper&#39;s log-likelihood ratios.</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">uncoded_chain</span><span class="p">():</span>
     <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
@@ -1025,8 +1017,7 @@ Q\left(\sqrt{2 R \, d \, \frac{E_b}{N_0}}\right)\]</div>
 <p>with <span class="math notranslate nohighlight">\(\beta_d\)</span> the information-weight spectrum printed above. This is a
 closed form: no simulation, no random draw, and no floor at
 <span class="math notranslate nohighlight">\(2.5\times10^{-5}\)</span>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 3. The union bound, from the distance spectrum alone -- no simulation.</span>
-<span class="n">bound</span> <span class="o">=</span> <span class="n">union_bound_ber</span><span class="p">(</span><span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span> <span class="n">ebn0_dB</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bound</span> <span class="o">=</span> <span class="n">union_bound_ber</span><span class="p">(</span><span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span> <span class="n">ebn0_dB</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;union bound              &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">bound</span><span class="p">))</span>
 
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">:</span> <span class="n">bound</span><span class="p">},</span>
@@ -1074,16 +1065,12 @@ approximates the exact update by</p>
 <p>which is why the decoder needs the demapper’s LLRs: an LDPC decoder is soft
 by construction, there is no hard-decision variant of it.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># 4. A block code at the same rate: a regular Gallager LDPC code,</span>
-<span class="c1"># decoded by min-sum message passing on its Tanner graph.</span>
 <span class="n">H</span> <span class="o">=</span> <span class="n">make_gallager_parity_check</span><span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="n">d_v</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">d_c</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ldpc_encoder</span> <span class="o">=</span> <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LDPC: H is </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, k = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2"> &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;information bits, rate = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;column weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, row weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="c1"># One call of the encoder is one codeword, so a batch of codewords is a</span>
-<span class="c1"># two-dimensional stimulus: the chain carries the frame axis through.</span>
 <span class="n">n_frames</span> <span class="o">=</span> <span class="mi">40</span>
 <span class="n">ldpc_curves</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">n_iter</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span>
@@ -1117,8 +1104,6 @@ by construction, there is no hard-decision variant of it.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/channel_coding_fig2.png&quot;</span><span class="p">)</span>
 
-<span class="c1"># The chain diagram this tutorial shows is exported from the chain</span>
-<span class="c1"># itself (D33c), so the picture cannot drift from the code.</span>
 <span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/examples/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;channel_coding&quot;</span><span class="p">,</span> <span class="n">coded_chain</span><span class="p">(</span><span class="kc">True</span><span class="p">))]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
