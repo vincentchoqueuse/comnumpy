@@ -72,8 +72,10 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     shift: bool = field(default=False, kw_only=True)
     norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
     name: str = field(default="frequency domain equalizer", kw_only=True)
-    # internal state (declared for slots, D40a)
-    weight: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # the base class takes its weight at construction; here it is
+    # computed from h in prepare(), so it is init=False and starts empty
+    weight: np.ndarray = field(init=False, repr=False,
+                               default_factory=lambda: np.empty(0))
 
     def __post_init__(self) -> None:
         if self.h is None:

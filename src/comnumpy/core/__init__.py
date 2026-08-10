@@ -1,4 +1,5 @@
 from importlib import import_module
+from typing import TYPE_CHECKING, Any
 
 from .generics import Processor, Sequential
 from .generators import SymbolGenerator, GaussianGenerator
@@ -42,13 +43,20 @@ __all__ = [
     "plot_chain_profiling",
 ]
 
+if TYPE_CHECKING:
+    # the names below are resolved at runtime by __getattr__; importing
+    # them here would pull matplotlib, so the type checker gets them and
+    # the interpreter does not
+    from .visualizers import (plot_chain_profiling, plot_iq, plot_kde,
+                              plot_spectrum, plot_time, plot_welch)
+
 # PEP 562 lazy loading: importing comnumpy must not import matplotlib (D36).
 _LAZY = {name: ".visualizers"
          for name in ("plot_time", "plot_spectrum", "plot_welch",
                       "plot_iq", "plot_kde", "plot_chain_profiling")}
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name in _LAZY:
         module = import_module(_LAZY[name], __name__)
         return getattr(module, name)
