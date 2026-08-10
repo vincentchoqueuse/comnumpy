@@ -46,6 +46,74 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `comnumpy.optical.gn_model`: the **Gaussian Noise model** in closed
+  form -- `gn_model_psi` (eq. 123 of arXiv:1209.0394), `gn_model_nli_power`
+  (eq. 120), `gn_model_snr` and `optimal_launch_power`. It answers "how
+  much nonlinear interference will this link make, and what launch power
+  minimizes the total noise" in microseconds where the split-step method
+  takes minutes, which is what makes design sweeps over span length,
+  channel count or amplifier noise figure possible at all.
+
+  Validated three ways, because a model nobody can contradict is not
+  validated. Against **GNPy** (Telecom Infra Project), re-transcribed in
+  SI units in the tests -- metres and s^2/m against this library's
+  kilometres and ps^2/km, so the agreement to twelve digits tests the
+  unit conversions as well as the formula. Against a **published
+  measurement**: the 15-channel, 5 x 100 km `a_NL = -23.5` dB of Serena
+  & Bononi (JLT 33(7), 2015), reproduced to 0.20 dB. And against **this
+  library's own split-step solver**, which shares no code with it: 0.01
+  dB on a five-channel WDM link, and better than a decibel single-channel
+  from 1 to 20 spans, the residual drift being the coherence exponent the
+  model approximates away (measured at 0.21, exposed as
+  `coherence_exponent=`).
+
+  `polarizations=` exists because of a trap worth naming: the model's
+  16/27 is a *Manakov* coefficient, so it describes a dual-polarization
+  field `(..., 2, N)`. Hand `FiberLink` a one-dimensional field and it
+  integrates the scalar equation instead, which makes 27/8 -- 5.3 dB --
+  more interference at the same total power. Table I of Serena & Bononi
+  gives the scalar weights (2 and 4); the validation script measures the
+  ratio at 5.29 dB against the predicted 5.28.
+
+  The **EGN model** -- the modulation-format correction -- is *not*
+  implemented. `validation/optical_gn_model.py` and the tutorial measure
+  it instead of predicting it, so the GN curve is never read as an exact
+  answer for a modulated signal: it is a pessimistic bound, worth about
+  1 dB for PM-16QAM and 2 dB for PM-QPSK on the links tested here.
+
+- `docs/examples/gn_model.rst`, tutorial 10 and the last of the course:
+  the same link designed twice, in closed form and by propagation, with
+  the two overlaid on one figure (0.25 dB apart on the optimal launch
+  power, 0.17 dB on the peak SNR).
+
+- `sweep(n_jobs=...)`: the points of a sweep are independent by
+  construction -- each one reconfigures and reseeds the chain from
+  scratch -- so they can run at once. The curve is **identical** value
+  for value, not merely statistically equivalent, because every point
+  already draws from its own child seed; that is asserted in the tests,
+  and it is why `seed=` becomes mandatory when `n_jobs` is not 1.
+
+  Measured on four cores: below ~20 ms a point the pool costs more than
+  it saves (starting a worker and pickling the chain into it is ~130 ms),
+  at ~200 ms a point it returns 2.7x. Threads were measured too and are
+  *four times slower* on a Viterbi sweep -- the decoder holds the GIL --
+  so workers are processes, spawned rather than forked so the BLAS
+  thread limits actually apply. The two traps that follow (a `lambda`
+  metric cannot be pickled; a script must guard its body with
+  `if __name__ == "__main__":`) raise errors that say exactly that,
+  rather than letting `pickle` and `BrokenProcessPool` explain
+  themselves.
+
+- A channel coding tutorial (`examples/simple/channel_coding.py`,
+  `docs/examples/coding.rst`), the one module of the library that had no
+  tutorial at all: the convolutional encoder and what its generator
+  polynomials mean, the Viterbi recursion and the 2 dB that separate
+  hard from soft decisions, the union bound built from the code's own
+  distance spectrum -- which is what answers the question a simulation
+  cannot, since 40 000 bits cannot resolve a BER below 2.5e-5 -- and an
+  LDPC code at the same rate, with its waterfall and what its iterations
+  buy.
+
 - `mimo.detectors.SphereDecoder`: maximum likelihood by tree search
   rather than exhaustion. The thin QR factorization of the channel makes
   the metric a sum of non-negative layer terms, so a partial sum that
@@ -756,6 +824,21 @@ No new feature; the published package becomes consistent with what the
 code actually does.
 
 ### Fixed
+
+- `SRRCFilter(method="fft")` sized its FFT with `len(x)`, which is the
+  number of *rows* of a 2-D array rather than the number of samples. A
+  polarization pair `(..., 2, N)` -- the shape D47 introduced for the
+  Manakov equation -- therefore transformed two samples and died inside
+  `H()` complaining about negative dimensions, naming neither the filter
+  nor the shape. Both methods now filter along the last axis and
+  broadcast over the leading ones, so pulse shaping a dual-polarization
+  signal works the way the rest of the library already assumed. One-
+  dimensional results are bit-identical.
+
+- `plot_error_rate` drew every measurement as bare markers, which reads
+  as a scatter when there is no reference curve to follow. A measurement
+  that has a matching entry in `theory=` keeps its markers alone, so the
+  pair still reads as one statement; one that has none is now joined.
 
 - The tutorials were nine good pages in no particular order, each
   re-explaining what the previous one had already introduced. They are

@@ -13,7 +13,9 @@ points themselves.
    because that is what ``SymbolGenerator`` does. This one questions that
    choice, so it assumes you are comfortable with a chain
    (:doc:`../getting_started/first_simulation`) and with reading an
-   achievable rate rather than an error rate.
+   achievable rate rather than an error rate. It also sits naturally after
+   :doc:`coding`: shaping and coding are the two halves of the same
+   transmitter, which is what the PAS architecture below is about.
 
 **What you'll learn:**
 

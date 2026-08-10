@@ -5,6 +5,8 @@ from .compensators import ChromaticDispersionFIRCompensator
 from .devices import Laser, ErbiumDopedFiberAmplifier
 from .fiber import (FiberSpec, get_fiber, register_fiber,
                     available_fibers)
+from .gn_model import (gn_model_psi, gn_model_nli_power, gn_model_snr,
+                       optimal_launch_power)
 from .wdm import WDMGrid, WDMMultiplexer, WDMDemultiplexer
 from .raman import (RamanGainSpectrum, RamanSolution, solve_raman,
                     get_gain_spectrum, register_gain_spectrum,
@@ -16,6 +18,8 @@ __all__ = [
     "ChromaticDispersionFIRCompensator",
     "Laser", "ErbiumDopedFiberAmplifier",
     "FiberSpec", "get_fiber", "register_fiber", "available_fibers",
+    "gn_model_psi", "gn_model_nli_power", "gn_model_snr",
+    "optimal_launch_power",
     "WDMGrid", "WDMMultiplexer", "WDMDemultiplexer",
     "RamanGainSpectrum", "RamanSolution", "solve_raman",
     "get_gain_spectrum", "register_gain_spectrum",
