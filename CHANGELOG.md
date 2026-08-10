@@ -757,6 +757,35 @@ code actually does.
 
 ### Fixed
 
+- The tutorials were nine good pages in no particular order, each
+  re-explaining what the previous one had already introduced. They are
+  now a course: `docs/examples/index.rst` opens with the syllabus --
+  which tutorial introduces which tool -- and the order follows the
+  dependencies rather than the history (AWGN, OFDM, PAPR, multipath,
+  MIMO, Alamouti, shaping, optical). Every page opens with a
+  *Before you start* note naming what it assumes, and closes by pointing
+  at the question the next one answers.
+
+  The chain, the tap and the error rate are introduced once, in the
+  first simulation; the Monte-Carlo loop and its `sweep` equivalent
+  once, in the AWGN tutorial, which now states plainly that the rest of
+  the series uses `sweep` without rewriting the loop. The tone follows:
+  each page says what problem it is solving before showing the code
+  that solves it.
+
+- The MIMO tutorial gave ZF and MMSE a formula and no explanation, next
+  to a sphere-decoding section that derived everything. The comparison
+  is now five answers to one question -- what to do with the
+  interference the other streams leave on the one being read -- with
+  the noise enhancement of zero forcing and its
+  `sigma^2 [(H^H H)^-1]_ii`, the regularization MMSE trades a bias for,
+  the two limits it sits between (ZF and the matched filter), the
+  ordering rule and error propagation of OSIC, and a table of the five
+  against their cost and their diversity order. With the warning the
+  curves themselves call for: 18 dB is not the asymptotic regime, so
+  the exponents are stated, not read off the figure -- they are checked
+  in `validation/mimo_zf_ml_ber.py` where a limit can be reached (D7).
+
 - `MaximumLikelihoodDetector` built its candidate table one column at a
   time with `itertools.product` and then looped over samples in Python.
   The distance expands as `||y||^2 - 2 Re(y^H Hx) + ||Hx||^2`, whose

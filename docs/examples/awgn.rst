@@ -1,16 +1,31 @@
 Monte Carlo Simulation over AWGN Channel
 ========================================
 
-In this tutorial, we simulate a communication chain with **comnumpy**
-and evaluate its Symbol Error Rate (SER) over a range of Signal-to-Noise Ratios (SNRs).
-Using a **Monte Carlo simulation**, the chain is executed repeatedly at each SNR value
-and the experimental results are compared with theoretical predictions.
+One run of a chain gives one error rate at one SNR. A *performance figure*
+needs a curve, so the chain has to be run again at every operating point --
+that repetition is what "Monte Carlo simulation" means, and there is nothing
+more to it than a loop.
+
+We will write that loop by hand first, because it is worth seeing exactly
+what a sweep is made of. Then we will replace it with :func:`~comnumpy.sweep.sweep`,
+which does the same four things in one call, and use *that* in every tutorial
+that follows.
+
+.. note::
+
+   **Before you start.** This tutorial follows
+   :doc:`../getting_started/first_simulation`, which built a chain and ran it
+   once. Here we run it many times, which is what a performance figure is
+   made of.
 
 **What you'll learn:**
 
-- How to run a Monte Carlo simulation over a range of SNR values.
-- How to compute experimental and theoretical SER for QAM over AWGN.
-- How to plot standard SER performance curves on a logarithmic scale.
+- How to reconfigure a chain between runs with ``set_params``, and make each
+  run reproducible with ``seed``.
+- How to write a Monte Carlo loop, and then how to replace it with ``sweep``.
+- How to compare a measured curve with the closed form it should follow.
+- How to draw the result with ``plot_error_rate``, the figure this library
+  uses for every error rate.
 
 
 Introduction
@@ -94,18 +109,29 @@ outline marks a tapped block:
 Monte Carlo Simulation
 """"""""""""""""""""""
 
-We perform a Monte Carlo simulation over the entire SNR range with
-``sweep()``: at each SNR value it reconfigures the AWGN processor,
-reseeds the chain, runs it, and compares the output with the transmitted
-symbols recorded at the ``"tx"`` tap.
+Start with the loop you would write yourself. At each SNR value there are
+exactly four things to do: **reseed** the chain so the run is reproducible,
+**reconfigure** the block that has to change, **run** it, and **measure**
+against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
    :lines: 28-36
 
-The three services this uses are the ones a study is made of: ``seed`` makes every point reproducible, ``set_params`` addresses the block by the name it was given, and the tap returns what the transmitter produced so the metric has something to compare against. Note the ordering -- the chain has to *run* before its tap holds anything.
+Three chain services appear there, and they are the ones every study is made
+of.
 
-That loop is what :func:`~comnumpy.sweep.sweep` does, over every point, in one call:
+``seed`` gives each stochastic block its own child seed, so the same seed
+always gives the same signal -- a curve you cannot reproduce is a curve you
+cannot debug. ``set_params`` addresses a block by the name it was given at
+construction, with the dotted notation ``"awgn_channel.snr_dB"``; this is why
+blocks are named. And the tap returns what the transmitter produced, so the
+metric has something to compare against -- after the run, never before.
+
+Now the same thing in one call. :func:`~comnumpy.sweep.sweep` takes the chain,
+the dotted name of what varies, the values it takes, and the metrics to
+collect -- and does the reseed, the reconfigure, the run and the measurement
+at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
@@ -116,7 +142,15 @@ That loop is what :func:`~comnumpy.sweep.sweep` does, over every point, in one c
    loop  : 7.406e-01 3.535e-01 7.237e-03
    sweep : 7.410e-01 3.533e-01 7.117e-03
 
-The two are the same computation. They do not print the same digits because ``sweep`` gives each point its own child seed rather than reseeding to the same value, so the noise differs; the gap is the Monte-Carlo error of a million symbols, not a difference of method.
+The two are the same computation. They do not print the same digits because
+``sweep`` gives each point its own child seed rather than reseeding every
+point to the same value, so the noise realizations differ; the gap is the
+Monte Carlo error of a million symbols, not a difference of method.
+
+**From here on, the other tutorials use** ``sweep`` **without rewriting the
+loop.** When you see it sweeping a channel matrix rather than an SNR (in
+:doc:`mimo` and :doc:`alamouti`), it is still these four steps -- only the
+parameter that varies has changed.
 
 
 Theoretical SER
@@ -132,11 +166,11 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 Results and Visualization
 """""""""""""""""""""""""
 
-Finally, we plot the experimental and theoretical SER curves.
-``plot_error_rate`` is the library's figure for this: measurements as hollow
-markers, the closed form as a line of the same colour, a logarithmic ordinate
-and a grid on both decades -- the standard representation for error rate curves
-in digital communications.
+An error rate curve is always drawn the same way, so the library draws it for
+you: ``plot_error_rate`` puts the measurements as hollow markers and the
+closed form as a line of the same colour, on a logarithmic ordinate with a
+grid on both decades. A measurement and the theory it is being compared with
+share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
@@ -150,19 +184,17 @@ in digital communications.
 Conclusion
 ^^^^^^^^^^
 
-You have completed a **Monte Carlo simulation of SER performance**
-for a QAM-modulated communication system over an AWGN channel.
+You have turned one run into a curve, and you have seen that ``sweep`` is not
+a new concept but the loop you already wrote, packaged.
 
 You have learned how to:
 
-- Build a chain with modulation, channel, and demodulation.
-- Run Monte Carlo experiments over a range of SNR values.
-- Compare experimental results with theoretical benchmarks.
-- Plot standard SER performance curves.
+- Reconfigure and reseed a chain between runs.
+- Collect a metric over a range of parameter values, by hand and with
+  ``sweep``.
+- Read a measured curve against a closed form.
 
-From here, you can:
-
-- Experiment with different modulation orders (e.g., 4-QAM, 64-QAM).
-- Extend the chain with channel coding or more realistic channel models.
-- Increase the number of transmitted symbols to improve SER estimation accuracy.
+From here, :doc:`ofdm` keeps the chain and changes the channel: instead of one
+noise term, the signal arrives several times, and the receiver has to undo
+that. Two ways of doing so, at very different prices.
 
