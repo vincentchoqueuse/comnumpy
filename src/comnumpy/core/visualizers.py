@@ -13,13 +13,14 @@ same axis with a legend; slice beforehand for anything fancier.
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from collections.abc import Mapping
 from typing import Literal, Optional, Tuple
 from scipy.signal import welch
 from scipy.stats import gaussian_kde
 
 __all__ = [
     "plot_time", "plot_spectrum", "plot_welch", "plot_iq", "plot_kde",
-    "plot_chain_profiling",
+    "plot_error_rate", "plot_chain_profiling",
 ]
 
 
@@ -249,6 +250,86 @@ def plot_kde(x: np.ndarray, *, bw_adjust: float = 1.0, thresh: float = 0.05,
     ax.set_xlabel("real part")
     ax.set_ylabel("imag part")
     ax.set_title(title)
+    return ax
+
+
+def plot_error_rate(x: np.ndarray,
+                    measured: Mapping[str, np.ndarray] | np.ndarray, *,
+                    theory: Optional[Mapping[str, np.ndarray]] = None,
+                    x_theory: Optional[np.ndarray] = None,
+                    xlabel: str = "SNR [dB]",
+                    ylabel: str = "error rate",
+                    title: str = "", ax: Optional[Axes] = None) -> Axes:
+    """Plot Monte-Carlo error rates, and the curves they are read against.
+
+    The figure every sweep ends with: measured points as hollow markers,
+    the closed form they are supposed to reach as a line **in the same
+    colour**, a logarithmic ordinate and a grid on both decades. Fourteen
+    scripts of this repository drew it by hand before this existed.
+
+    Zeros are dropped rather than plotted. A sweep point where no error
+    was seen means the estimate ran out of samples, not that the error
+    rate is zero, and a logarithmic axis has no place to put it.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Abscissa of the measurements, usually an SNR in dB.
+    measured : mapping of str to np.ndarray, or np.ndarray
+        Simulated error rates. A bare array is one unnamed curve.
+    theory : mapping of str to np.ndarray, optional, keyword-only
+        Reference curves. A key also present in ``measured`` is drawn in
+        that curve's colour, so a pair reads as one statement; any other
+        key gets its own colour.
+    x_theory : np.ndarray, optional, keyword-only
+        Abscissa of the reference curves, when they are evaluated on a
+        finer grid than the measurements. Defaults to ``x``.
+    xlabel, ylabel, title : str, optional, keyword-only
+        Axis labels and title.
+    ax : matplotlib.axes.Axes, optional, keyword-only
+        Axis to draw on; created when None (decision D25).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+
+    Examples
+    --------
+    >>> snr = np.arange(0, 12, 2)
+    >>> ax = plot_error_rate(snr, {"QPSK": 10.0 ** (-snr / 8)},
+    ...                      theory={"QPSK": 10.0 ** (-snr / 8 - 0.05)})
+    >>> len(ax.lines)                      # one marker set, one curve
+    2
+    """
+    if ax is None:
+        _, ax = plt.subplots()
+    curves = ({"": np.asarray(measured)}
+              if not isinstance(measured, Mapping) else dict(measured))
+    reference = dict(theory or {})
+    abscissa = np.asarray(x, dtype=float)
+    fine = abscissa if x_theory is None else np.asarray(x_theory, dtype=float)
+
+    colors = {}
+    for name, values in curves.items():
+        values = np.asarray(values, dtype=float)
+        seen = values > 0
+        line, = ax.semilogy(abscissa[seen], values[seen], "o",
+                            fillstyle="none",
+                            label=name or "simulation")
+        colors[name] = line.get_color()
+    for name, values in reference.items():
+        values = np.asarray(values, dtype=float)
+        seen = values > 0
+        label = f"{name}, theory" if name else "theory"
+        ax.semilogy(fine[seen], values[seen], "-", color=colors.get(name),
+                    label=label)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if title:
+        ax.set_title(title)
+    ax.grid(True, which="both")
+    if len(curves) + len(reference) > 1 or any(curves):
+        ax.legend()
     return ax
 
 

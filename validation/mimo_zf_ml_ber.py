@@ -19,6 +19,7 @@ import pathlib
 
 import numpy as np
 
+from comnumpy.core.metrics import compute_ser_rayleigh_psk
 from comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
@@ -49,8 +50,12 @@ def simulate(snr_dB, n_realizations, seed):
 
 
 def zf_closed_form(snr_dB):
-    g = 10 ** (snr_dB / 10)
-    return 0.5 * (1 - np.sqrt(g / (1 + g)))
+    """Diversity 1, from the library rather than transcribed here.
+
+    Zero forcing on an i.i.d. Rayleigh N_r x N_t channel leaves each
+    stream with diversity N_r - N_t + 1, which is 1 for the 2x2 case.
+    """
+    return compute_ser_rayleigh_psk(2, 10 ** (snr_dB / 10), diversity=1)
 
 
 def main():

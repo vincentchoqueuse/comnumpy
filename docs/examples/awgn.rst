@@ -61,7 +61,7 @@ and symbol demapping.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 19-25
+   :lines: 19-26
 
 The processors are:
 
@@ -89,7 +89,22 @@ symbols recorded at the ``"tx"`` tap.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 27-31
+   :lines: 28-36
+
+The three services this uses are the ones a study is made of: ``seed`` makes every point reproducible, ``set_params`` addresses the block by the name it was given, and the tap returns what the transmitter produced so the metric has something to compare against. Note the ordering -- the chain has to *run* before its tap holds anything.
+
+That loop is what :func:`~comnumpy.sweep.sweep` does, over every point, in one call:
+
+.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
+   :language: python
+   :lines: 38-44
+
+.. code::
+
+   loop  : 7.406e-01 3.535e-01 7.237e-03
+   sweep : 7.410e-01 3.533e-01 7.117e-03
+
+The two are the same computation. They do not print the same digits because ``sweep`` gives each point its own child seed rather than reseeding to the same value, so the noise differs; the gap is the Monte-Carlo error of a million symbols, not a difference of method.
 
 
 Theoretical SER
@@ -99,19 +114,21 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 33-35
+   :lines: 46-48
 
 
 Results and Visualization
 """""""""""""""""""""""""
 
 Finally, we plot the experimental and theoretical SER curves.
-A logarithmic (``semilogy``) scale is used for the SER axis,
-which is the standard representation for error rate curves in digital communications.
+``plot_error_rate`` is the library's figure for this: measurements as hollow
+markers, the closed form as a line of the same colour, a logarithmic ordinate
+and a grid on both decades -- the standard representation for error rate curves
+in digital communications.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 37-44
+   :lines: 50-55
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%

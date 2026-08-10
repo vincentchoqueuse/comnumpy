@@ -109,7 +109,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 1-14
+   :lines: 1-15
 
 Define System Parameters
 """"""""""""""""""""""""
@@ -118,7 +118,7 @@ The code is taken from the registry by name, exactly as the constellation is tak
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 18-23
+   :lines: 19-24
 
 The scaling by :math:`1/\sqrt{N_t}` matters for the comparison that follows. Two antennas each transmitting :math:`|s|^2` would spend twice the power of a single antenna, which is a 3 dB advantage that has nothing to do with coding. Splitting the power keeps the comparison about diversity alone.
 
@@ -129,7 +129,7 @@ The whole link is **one** ``Sequential``: generator, mapper, power split, space-
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 25-41
+   :lines: 26-42
 
 Two chain services are used here rather than reimplemented. ``seed`` gives every stochastic block an independent child seed, so the run is reproducible; ``taps`` records the output of the named blocks without inserting anything into the chain.
 
@@ -143,7 +143,7 @@ What each block costs
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 43-44
+   :lines: 44-45
 
 .. code::
 
@@ -167,7 +167,7 @@ The two panels are two taps of the same run:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 46-61
+   :lines: 47-62
 
 .. image:: img/one_shot_alamouti_fig1.png
    :width: 100%
@@ -191,84 +191,85 @@ The comparison needs a link without diversity and a link with receive diversity.
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 63-83
+   :lines: 64-85
 
-The loop, then the same thing with ``sweep``
-""""""""""""""""""""""""""""""""""""""""""""
+Sweep the channel
+"""""""""""""""""
 
-Averaging over fading means running the chain once per channel realization. Written out, that is: reconfigure, run, count, average --
-
-.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
-   :language: python
-   :lines: 86-103
-
-``set_params`` addresses blocks by the names they were given, so a realization is two dotted assignments: the channel the signal goes through, and the channel the detector inverts.
-
-That loop is exactly what :func:`~comnumpy.sweep.sweep` does, and it takes several parameters at once and zips them -- so a sweep point *is* a channel realization:
+Averaging over fading means running the chain once per channel realization, and that is a sweep like any other -- except that the parameter is the channel. :func:`~comnumpy.sweep.sweep` takes several dotted parameter names at once and zips them, so one sweep point sets the channel the signal goes through **and** the channel the detector inverts, which is exactly what a realization is:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 106-128
+   :lines: 87-104
 
-.. code::
+.. note ::
 
-   8 dB over 300 realizations: loop 0.06533, sweep 0.06742
-
-The two estimate the same quantity on the same 300 channels. They do not agree to the last digit and should not: ``sweep`` gives every point its own child seed, so the noise differs, and the gap is the Monte-Carlo error of 24000 symbols.
-
-Sweep the SNR
-"""""""""""""
-
-.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
-   :language: python
-   :lines: 131-145
-
-Plot SER vs SNR
-"""""""""""""""
+   The accuracy of an average over fading is set by the number of
+   *channel* draws, not by the symbol count: the error rate is dominated
+   by the rare deep fades, and an under-sampled tail reads
+   systematically **low**. That is why the draw count grows with the
+   SNR below, and why the confrontation at 18 dB with twenty times the
+   draws lives in ``validation/mimo_diversity_ber.py`` rather than here.
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 147-157
+   :lines: 106-125
+
+Plot the curves against their closed forms
+""""""""""""""""""""""""""""""""""""""""""
+
+The three schemes are three readings of **one** expression, :func:`~comnumpy.core.metrics.compute_ser_rayleigh_psk`: :math:`L` branches evaluated at the per-branch SNR, with a transmit scheme dividing that SNR by :math:`N_t` because it splits its power over the antennas.
+
+============================  =====================  ============================
+scheme                        :math:`L`              SNR per branch
+============================  =====================  ============================
+1 Tx, 1 Rx                    1                      :math:`\bar\gamma`
+MRC, 1 Tx, :math:`N_r` Rx     :math:`N_r`            :math:`\bar\gamma`
+Alamouti, :math:`N_t` Tx      :math:`N_t N_r`        :math:`\bar\gamma / N_t`
+============================  =====================  ============================
+
+``plot_error_rate`` draws measurements as hollow markers and their references as lines of the same colour, so a pair reads as one statement:
+
+.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
+   :language: python
+   :lines: 127-144
 
 .. image:: img/one_shot_alamouti_fig2.png
    :width: 100%
    :align: center
 
-Two things are visible, and they are the two things to remember.
+Read the two numbers off the closed form
+""""""""""""""""""""""""""""""""""""""""
 
-**The slope.** The single-antenna curve falls by one decade per decade of SNR; the two diversity schemes fall twice as fast. Since the diversity order is an *asymptotic* slope, the script prints the local slope of each curve rather than a single fitted number, so that the convergence is visible:
-
-.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
-   :language: python
-   :lines: 159-169
-
-.. code::
-
-   1 Tx, 1 Rx (no diversity)    local slope -0.74 -0.90 -1.00 -1.04 -1.07 -1.20
-   Alamouti, 2 Tx, 1 Rx         local slope -1.16 -1.59 -1.94
-   MRC, 1 Tx, 2 Rx              local slope -1.46 -1.86 -2.08
-
-The first converges to 1, the two others to 2. Intervals whose upper end rests on a handful of errors are dropped: their slope would be Monte-Carlo noise, not physics.
-
-**The 3 dB.** Alamouti is parallel to MRC but shifted right. The script reads the SNR each scheme needs to reach a symbol error rate of :math:`10^{-3}`:
+The two statements the tutorial is about are exact, so they are taken from the expression rather than fitted to the points; the simulation is what confronts them:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 171-181
+   :lines: 146-181
 
 .. code::
 
-   SNR needed for SER = 0.001: 1 Tx, 1 Rx (no diversity) 27.7 dB,
-   Alamouti, 2 Tx, 1 Rx 17.6 dB, MRC, 1 Tx, 2 Rx 14.8 dB
+   1 Tx, 1 Rx (no diversity)    measured / closed form  0.99 0.97 0.94 0.90 0.83 0.86
+   Alamouti, 2 Tx, 1 Rx         measured / closed form  0.98 0.92 0.88 0.77 0.84 0.65
+   MRC, 1 Tx, 2 Rx              measured / closed form  0.98 0.91 0.82 0.72 0.73 0.28
+   1 Tx, 1 Rx (no diversity)    diversity order 1.00
+   Alamouti, 2 Tx, 1 Rx         diversity order 2.00
+   MRC, 1 Tx, 2 Rx              diversity order 2.00
+   SNR for SER = 0.001: MRC 15.6 dB, Alamouti 18.6 dB, gap 3.01 dB (10log10(N_t) = 3.01 dB)
 
-The gap to MRC is the price of transmitting *blind*: the receiver knows the channel and can weight its two branches by :math:`h_i^{*}`, while the transmitter cannot, and splits its power evenly instead. Alamouti buys the full diversity order anyway -- it only pays for it in array gain, not in slope.
+**The slope.** The single-antenna scheme has diversity order 1, the two others 2 -- the error rate falls twice as fast, which is the whole reason a space-time code exists. Read off the closed form the number is exact; read off a simulated curve it is a fit, and it converges to the same value.
+
+**The 3 dB.** Reaching a symbol error rate of :math:`10^{-3}` costs 15.6 dB with two receive antennas and 18.6 dB with Alamouti: a gap of **3.01 dB**, against :math:`10\log_{10} N_t = 3.01` dB. That is the price of transmitting *blind* -- the receiver knows the channel and weights its branches by :math:`h_i^{*}`, the transmitter cannot and splits its power evenly. Alamouti buys the full diversity order anyway; it pays only in array gain, not in slope.
+
+**And the ratios are the honest part.** The measurement tracks the closed form to a few percent at low SNR and drifts below it as the SNR grows, down to 0.28 for the steepest curve: 6000 channel draws no longer sample the deep fades that dominate the average there. Nothing is wrong with either side -- ``validation/mimo_diversity_ber.py`` runs the same three schemes with up to 80000 draws and lands within 4.4 % of the same curves, and measures the 3 dB gap at 3.0 dB.
 
 .. note ::
 
-   The same 3 dB is why the comparison had to be made at equal total
-   transmit power. Had each antenna transmitted the full power, the
-   Alamouti curve would have landed on top of the MRC one and the plot
-   would have proved nothing.
+   The comparison had to be made at equal total transmit power. Had each
+   antenna transmitted the full power, the Alamouti curve would have
+   landed on top of the MRC one and the figure would have proved
+   nothing. That is the :math:`1/\sqrt{N_t}` in the chain, and the
+   :math:`\bar\gamma/N_t` in the table.
 
 Beyond two antennas
 ^^^^^^^^^^^^^^^^^^^
