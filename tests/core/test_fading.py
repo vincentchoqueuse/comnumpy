@@ -248,5 +248,74 @@ class TestTappedDelayLineChannel(unittest.TestCase):
         self.assertLess(abs(np.mean(channel.h_[1])), 0.2)
 
 
+class TestTDLProfiles(unittest.TestCase):
+    r"""The TR 38.901 entries, and what makes them different.
+
+    Unlike the LTE profiles, a TDL model is a *shape*: the standard
+    tabulates :math:`\tau_l / \sigma_\tau`, so the caller supplies the
+    RMS delay spread it is stretched to. That is what the tests below
+    pin -- the scaling, the merging of paths that share a delay, and
+    the Rice factor of the two line-of-sight models. The confrontation
+    with an independent transcription lives in
+    ``validation/fading_tdl_3gpp.py`` (D7).
+    """
+
+    NAMES = ("TDL-A", "TDL-B", "TDL-C", "TDL-D", "TDL-E")
+
+    def test_the_spread_is_what_was_asked_for(self):
+        """The normalization invariant, at three scenario spreads."""
+        for name in self.NAMES:
+            for spread in (30.0, 100.0, 1000.0):
+                profile = get_delay_profile(name, delay_spread_ns=spread)
+                with self.subTest(profile=name, spread=spread):
+                    self.assertAlmostEqual(
+                        profile.rms_delay_spread_ns / spread, 1.0,
+                        delta=7e-3)
+
+    def test_the_delays_scale_and_nothing_else_does(self):
+        """Doubling the spread doubles the delays, powers untouched."""
+        one = get_delay_profile("TDL-C", delay_spread_ns=50.0)
+        two = get_delay_profile("TDL-C", delay_spread_ns=100.0)
+        np.testing.assert_allclose(two.delays_ns, 2 * one.delays_ns)
+        np.testing.assert_allclose(two.powers_dB, one.powers_dB)
+
+    def test_paths_sharing_a_delay_become_one_tap(self):
+        """TDL-E lists two clusters at 0.544; a tap is a delay."""
+        profile = get_delay_profile("TDL-E")
+        self.assertEqual(profile.n_taps, 13)          # 15 table entries
+        self.assertTrue(np.all(np.diff(profile.delays_ns) > 0))
+        # the merged tap carries the sum of the two powers, which the
+        # ratio to a neighbouring tap shows without needing the
+        # normalization constant
+        merged = int(np.argmin(np.abs(profile.delays_ns - 54.40)))
+        alone = int(np.argmin(np.abs(profile.delays_ns - 51.33)))
+        self.assertAlmostEqual(
+            profile.powers_lin[merged] / profile.powers_lin[alone],
+            (10 ** (-18.1 / 10) + 10 ** (-22.9 / 10)) / 10 ** (-15.8 / 10),
+            places=9)
+
+    def test_the_line_of_sight_models_carry_their_rice_factor(self):
+        """K_1 is printed in the standard: 13.3 dB and 22.0 dB."""
+        self.assertAlmostEqual(get_delay_profile("TDL-D").rice_k_dB, 13.3,
+                               places=6)
+        self.assertAlmostEqual(get_delay_profile("TDL-E").rice_k_dB, 22.0,
+                               places=6)
+        for name in ("TDL-A", "TDL-B", "TDL-C"):
+            with self.subTest(profile=name):
+                self.assertIsNone(get_delay_profile(name).rice_k_dB)
+
+    def test_a_non_positive_spread_names_the_normalization(self):
+        with self.assertRaises(ValueError) as ctx:
+            get_delay_profile("TDL-A", delay_spread_ns=0.0)
+        self.assertIn("normalized", str(ctx.exception))
+
+    def test_the_powers_are_normalized_like_every_other_profile(self):
+        for name in self.NAMES:
+            with self.subTest(profile=name):
+                self.assertAlmostEqual(
+                    float(np.sum(get_delay_profile(name).powers_lin)), 1.0,
+                    places=12)
+
+
 if __name__ == "__main__":
     unittest.main()

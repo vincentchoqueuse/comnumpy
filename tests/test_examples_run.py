@@ -56,8 +56,8 @@ SLOW = {
         "runner, not an example: re-executes the other mimo scripts -- "
         "~350 s by construction",
     "ofdm/one_shot_ofdm.py":
-        "OFDM chain over a full SNR sweep -- 74 s wall / 215 s CPU "
-        "measured 2026-08-09",
+        "five block zero-forcing inversions of a 1284 x 1280 convolution "
+        "matrix -- 49 s wall / 147 s CPU measured 2026-08-10",
     "optical/CD_compensation_part1.py":
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
         "compensator -- 227 s measured 2026-08-09",
@@ -116,6 +116,9 @@ class TestExamplesRun(unittest.TestCase):
         for img_dir in REPO.glob("docs/**/img"):
             (cls.sandbox / img_dir.relative_to(REPO)).mkdir(parents=True,
                                                             exist_ok=True)
+        for mermaid_dir in REPO.glob("docs/**/mermaid"):
+            (cls.sandbox / mermaid_dir.relative_to(REPO)).mkdir(parents=True,
+                                                                exist_ok=True)
         (cls.sandbox / "validation" / "figures").mkdir(parents=True,
                                                        exist_ok=True)
 
@@ -158,6 +161,31 @@ class TestExamplesRun(unittest.TestCase):
         self.assertEqual(figure_snapshot(), before,
                          "the examples wrote into the working tree; the "
                          "sandbox in setUpClass is not isolating them")
+        self.check_diagrams_did_not_drift()
+
+    def check_diagrams_did_not_drift(self):
+        """A chain diagram in `docs/` must be what the chain draws today.
+
+        The tutorials show `chain.to_mermaid()` rather than a hand-drawn
+        picture, so the two can only agree if something compares them.
+        Only the diagrams the *fast* examples write are covered: an
+        example in SLOW is not re-run here, so its diagram is checked
+        when someone runs it.
+        The sandbox run has just written every diagram from the chains
+        as they are now; the committed copies must match, character for
+        character.
+        """
+        stale = []
+        for produced in sorted(self.sandbox.glob("docs/**/mermaid/*.mmd")):
+            relative = produced.relative_to(self.sandbox)
+            committed = REPO / relative
+            if not committed.exists():
+                stale.append(f"{relative}: never committed")
+            elif committed.read_text() != produced.read_text():
+                stale.append(f"{relative}: the chain draws something else")
+        self.assertEqual(stale, [], "\n".join(
+            ["chain diagrams have drifted from the chains that draw them; "
+             "re-run the example that writes them:"] + stale))
 
     def test_slow_and_broken_lists_are_current(self):
         """A renamed example must not silently drop out of the smoke test."""

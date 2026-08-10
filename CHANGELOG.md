@@ -46,6 +46,22 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- The five 5G NR delay profiles of 3GPP TR 38.901 Section 7.7.2 --
+  `TDL-A` to `TDL-E` -- in the `get_delay_profile` catalog, next to the
+  LTE ones. Their delays are *normalized*, so a TDL entry is a shape and
+  `delay_spread_ns=` is the RMS spread it is stretched to; TDL-D and
+  TDL-E carry the Rice factor of their first tap (13.3 dB, 22.0 dB), and
+  paths sharing a delay are merged into one resolvable tap.
+
+  `validation/fading_tdl_3gpp.py` confronts them with three things that
+  were not used to write them: OpenAirInterface's independent
+  transcription in C (tap by tap on TDL-D/E, including its Rice
+  constants), the invariant the normalization guarantees (the RMS spread
+  of the table *is* the scale factor: four of the five land within 3e-4
+  of it), and the 12-tap TS 38.104 conformance profile, which summarizes
+  to the same channel -- same spread to 4e-5, same longest path to 1e-3,
+  from half the taps and a different specification.
+
 - The two blocks that turn `core/shaping.py` into a transmitter:
   `AmplitudeMapper` signs the shaped amplitudes (the sign is a free bit
   in PAS, spent on the FEC parity), `AmplitudeDemapper` reads the
@@ -715,6 +731,30 @@ No new feature; the published package becomes consistent with what the
 code actually does.
 
 ### Fixed
+
+- The chain diagrams in the tutorials were drawn by hand in mermaid,
+  next to a library that can draw them itself. Seven examples now export
+  `chain.to_mermaid()` (D33c) and the pages include the exported file,
+  so a diagram shows the real block names and the real taps -- and
+  `tests/test_examples_run.py` compares what a sandbox run writes with
+  what is committed, so the picture cannot drift from the chain. The
+  four hand-drawn OFDM graphs were the ones that had already drifted:
+  they named blocks (`S2P`, `CP add`) that no longer exist under those
+  names.
+
+- The OFDM tutorial's channel was not frequency selective (one tap at 1,
+  four at 0.1), which is why its single-carrier and OFDM receivers had
+  nothing to disagree about. It is now drawn from an exponential power
+  delay profile with a 31:1 spectral notch, and the example runs both
+  receivers over a range of noise variances instead of one point. The
+  ranking crosses over, and the page explains why: the single-carrier
+  equalizer inverts a *linear* convolution, `N + L - 1` equations for
+  `N` unknowns, so its least-squares solution never divides by a null
+  and spreads the enhanced noise over the whole block; the cyclic prefix
+  makes the OFDM system exactly determined, one equation per subcarrier,
+  so a subcarrier in the notch is lost whatever the SNR. Concentrated
+  damage wins at low SNR and loses at high SNR -- and the error floor it
+  leaves is why no real OFDM system is uncoded.
 
 - A pass over the tutorials, which had drifted from the library they
   teach. `examples/mimo/one_shot_mimo.py` inverted the channel by hand

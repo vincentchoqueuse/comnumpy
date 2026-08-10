@@ -135,6 +135,19 @@ The whole link is **one** ``Sequential``: generator, mapper, power split, space-
 
 Two chain services are used here rather than reimplemented. ``seed`` gives every stochastic block an independent child seed, so the run is reproducible; ``taps`` records the output of the named blocks without inserting anything into the chain.
 
+The chain, as the chain itself describes it:
+
+.. mermaid:: mermaid/alamouti.mmd
+
+The diagram above is not drawn by hand. It is what the chain says about
+itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
+script, so the block names are the ones the code uses and a dashed
+outline marks a tapped block:
+
+.. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
+   :language: python
+   :lines: 183-189
+
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
 
