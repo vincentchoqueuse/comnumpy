@@ -9,6 +9,10 @@ from .capacity import (awgn_capacity, constellation_capacity, bicm_capacity,
                        rayleigh_ergodic_capacity, mimo_ergodic_capacity,
                        outage_capacity, waterfilling)
 from .information import compute_gmi, compute_llr, compute_mi, compute_ngmi
+from .shaping import (maxwell_boltzmann, distribution_entropy,
+                      composition_from_distribution, shaping_gain_dB,
+                      ConstantCompositionMatcher, SphereShaper,
+                      DistributionMatcher, DistributionDematcher)
 from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
                      get_delay_profile, register_delay_profile,
                      available_delay_profiles)
@@ -28,6 +32,10 @@ __all__ = [
     "rayleigh_ergodic_capacity", "mimo_ergodic_capacity",
     "outage_capacity", "waterfilling",
     "compute_llr", "compute_mi", "compute_gmi", "compute_ngmi",
+    "maxwell_boltzmann", "distribution_entropy",
+    "composition_from_distribution", "shaping_gain_dB",
+    "ConstantCompositionMatcher", "SphereShaper",
+    "DistributionMatcher", "DistributionDematcher",
     "DopplerSpectrum", "PowerDelayProfile", "rayleigh_process",
     "get_delay_profile", "register_delay_profile", "available_delay_profiles",
     "SRRCFilter", "BWFilter",
