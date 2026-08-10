@@ -3,6 +3,12 @@ MIMO Chain Tutorial
 
 This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the ``comnumpy`` library.
 
+.. note::
+
+   **Before you start.** :doc:`awgn` introduced ``sweep``, which is used
+   here to average over channel realizations rather than over noise. The
+   chain is the same object; only the number of antennas changes.
+
 **What you'll learn:**
 
 - How to build a MIMO simulation chain with Rayleigh fading.
@@ -319,3 +325,8 @@ This tutorial highlighted:
 - Why ML and OSIC outperform linear detection, why that difference grows with the SNR, and why a sphere decoder reaches the ML decision without paying the ML price.
 
 With ``comnumpy``, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.
+
+Every detector here assumed the *receiver* knows the channel and the
+transmitter knows nothing. :doc:`alamouti` asks what the transmitter can do
+anyway -- and answers with a code that buys diversity without a single bit of
+feedback.
