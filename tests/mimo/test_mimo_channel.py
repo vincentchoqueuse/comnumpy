@@ -1,15 +1,15 @@
 
 import unittest
 import numpy as np
-from src.comnumpy.core import Sequential
-from src.comnumpy.core.generators import SymbolGenerator
-from src.comnumpy.core.mappers import SymbolMapper
-from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.channels import AWGN
-from src.comnumpy.core.metrics import compute_ser
-from src.comnumpy.mimo.channels import FlatMIMOChannel
-from src.comnumpy.mimo.utils import rayleigh_channel
-from src.comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
+from comnumpy.core import Sequential
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolMapper
+from comnumpy.core.utils import get_alphabet
+from comnumpy.core.channels import AWGN
+from comnumpy.core.metrics import compute_ser
+from comnumpy.mimo.channels import FlatMIMOChannel
+from comnumpy.mimo.utils import rayleigh_channel
+from comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
 
 
 class TestMIMOChannelChain(unittest.TestCase):

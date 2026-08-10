@@ -5,11 +5,11 @@ import unittest
 import numpy as np
 
 from comnumpy.exceptions import ShapeError
-from src.comnumpy.ofdm.allocation import (CarrierAllocation, CarrierType,
+from comnumpy.ofdm.allocation import (CarrierAllocation, CarrierType,
                                           available_allocations,
                                           band_allocation, get_allocation,
                                           scattered_allocation)
-from src.comnumpy.ofdm.processors import CarrierAllocator, CarrierExtractor
+from comnumpy.ofdm.processors import CarrierAllocator, CarrierExtractor
 
 
 class TestCarrierAllocation(unittest.TestCase):
@@ -142,6 +142,29 @@ class TestFullFieldGuard(unittest.TestCase):
         from comnumpy.optical.dbp import DBP
         with self.assertRaises(ShapeError):
             DBP(1)(np.ones((4, 64), dtype=complex))
+
+
+class TestAllocationInTheChainWrappers(unittest.TestCase):
+    """The wrappers must take what the blocks they wrap take (D18).
+
+    ``CarrierAllocator`` and ``CarrierExtractor`` accept a
+    ``CarrierAllocation``; ``OFDMTransmitter`` and ``OFDMReceiver`` did
+    not, and did not refuse it either -- ``np.asarray`` on a dataclass
+    gives a 0-d object array, so the failure surfaced several blocks
+    later as ``len() of unsized object``.
+    """
+
+    def test_the_ofdm_wrappers_accept_a_catalog_allocation(self):
+        from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
+        allocation = get_allocation("802.11a")
+        transmitter = OFDMTransmitter(allocation.N_data, 16,
+                                      carrier_type=allocation,
+                                      pilots=np.ones(allocation.N_pilots))
+        receiver = OFDMReceiver(allocation.N_data, 16,
+                                carrier_type=allocation)
+        sent = np.arange(2 * allocation.N_data) + 0j
+        np.testing.assert_allclose(receiver(transmitter(sent)), sent,
+                                   atol=1e-9)
 
 
 if __name__ == "__main__":

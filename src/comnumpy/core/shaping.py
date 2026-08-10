@@ -89,6 +89,7 @@ __all__ = [
     "maxwell_boltzmann", "distribution_entropy", "composition_from_distribution",
     "shaping_gain_dB", "ConstantCompositionMatcher", "SphereShaper",
     "DistributionMatcher", "DistributionDematcher",
+    "AmplitudeMapper", "AmplitudeDemapper",
 ]
 
 # The bisection on the Maxwell-Boltzmann parameter runs on lambda in
@@ -958,6 +959,156 @@ class DistributionDematcher(Processor):
         flat = indices.reshape(-1, step)
         blocks = np.stack([self.shaper.decode(row) for row in flat])
         return blocks.reshape(indices.shape[:-1] + (-1,))
+
+
+@dataclass(slots=True)
+class AmplitudeMapper(Processor):
+    r"""Amplitude indices to signed PAM symbols: the sign of PAS.
+
+    Signal Model
+    ------------
+    A distribution matcher emits amplitudes; a PAM constellation is
+    signed. The missing half is one bit per symbol,
+
+    .. math::
+
+        y[n] = \varepsilon[n] \, a_{x[n]}, \qquad
+        \Pr(\varepsilon[n] = \pm 1) = \tfrac{1}{2}
+
+    and it is free: an equiprobable sign leaves the amplitude
+    distribution untouched, so the composite constellation carries the
+    symmetric Maxwell-Boltzmann law
+
+    .. math::
+
+        P_Y(\pm a_i) = \tfrac{1}{2} P_A(a_i)
+
+    at the same energy, and adds exactly one bit per symbol to the rate.
+    That is the whole reason probabilistic amplitude shaping works: the
+    systematic FEC encoder's parity bits, which are uniform, are spent on
+    the signs, and only the amplitudes go through the matcher.
+
+    This block draws the signs itself, from its own generator, which is
+    the same distribution a parity stream has. It is a stochastic block,
+    so :meth:`~comnumpy.core.generics.Sequential.seed` reaches it (D6).
+
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
+
+    Parameters
+    ----------
+    alphabet : np.ndarray
+        Non-negative amplitudes :math:`a_i`, indexed by the input.
+    seed : int, optional, keyword-only
+        Local RNG seed.
+    name : str, optional, keyword-only
+        Name of the block. Default ``"amplitude mapper"``.
+
+    Raises
+    ------
+    ValueError
+        If an amplitude is negative -- the sign is this block's business,
+        and a signed input would make the constellation asymmetric.
+
+    References
+    ----------
+    G. Böcherer, F. Steiner, P. Schulte, "Bandwidth efficient and
+    rate-matched low-density parity-check coded modulation", IEEE Trans.
+    Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015, Section IV
+    (the sign bits of PAS).
+
+    Examples
+    --------
+    >>> mapper = AmplitudeMapper(np.array([1.0, 3.0, 5.0, 7.0]), seed=0)
+    >>> print(mapper(np.array([0, 1, 0, 3, 2])))
+    [-1. -3. -1.  7.  5.]
+    >>> print(AmplitudeDemapper(mapper.alphabet)(mapper(np.array([0, 3]))))
+    [0 3]
+    """
+
+    alphabet: np.ndarray
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="amplitude mapper", kw_only=True)
+    # internal state (declared for slots, D40a)
+    rng: np.random.Generator = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.alphabet = np.real(np.asarray(self.alphabet)).ravel().astype(float)
+        if np.any(self.alphabet < 0):
+            raise ValueError(
+                f"AmplitudeMapper signs the amplitudes itself, so it "
+                f"expects non-negative ones, got a minimum of "
+                f"{float(np.min(self.alphabet))}. Pass the positive half "
+                f"of the PAM constellation.")
+        self.rng = np.random.default_rng(self.seed)
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        indices = np.asarray(X)
+        signs = 1.0 - 2.0 * self.rng.integers(0, 2, size=indices.shape)
+        return signs * self.alphabet[indices]
+
+
+@dataclass(slots=True)
+class AmplitudeDemapper(Processor):
+    r"""Signed PAM samples back to amplitude indices.
+
+    Signal Model
+    ------------
+    The inverse of :class:`AmplitudeMapper` on the half that carries the
+    shaped data:
+
+    .. math::
+
+        \hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|
+
+    Taking the magnitude first is not a shortcut, it is the maximum
+    likelihood decision: on a constellation symmetric about the origin,
+    the nearest point to :math:`y` always has the amplitude nearest to
+    :math:`|y|`, so deciding on :math:`|y|` and deciding on :math:`y`
+    give the same amplitude. The sign is dropped because in PAS it
+    carries parity, not data -- a real receiver feeds it to the FEC
+    decoder instead.
+
+    Axes: *element-wise* -- applied pointwise, shape-agnostic.
+
+    Parameters
+    ----------
+    alphabet : np.ndarray
+        The same non-negative amplitudes the mapper was given.
+    name : str, optional, keyword-only
+        Name of the block. Default ``"amplitude demapper"``.
+
+    Raises
+    ------
+    ValueError
+        If an amplitude is negative.
+
+    References
+    ----------
+    G. Böcherer, F. Steiner, P. Schulte, IEEE Trans. Commun. 63(12),
+    2015, Section IV.
+
+    Examples
+    --------
+    >>> demapper = AmplitudeDemapper(np.array([1.0, 3.0, 5.0, 7.0]))
+    >>> print(demapper(np.array([-0.8, 3.4, -5.2, 6.2])))
+    [0 1 2 3]
+    """
+
+    alphabet: np.ndarray
+    name: str = field(default="amplitude demapper", kw_only=True)
+
+    def __post_init__(self) -> None:
+        self.alphabet = np.real(np.asarray(self.alphabet)).ravel().astype(float)
+        if np.any(self.alphabet < 0):
+            raise ValueError(
+                f"AmplitudeDemapper decides on |y|, so its alphabet holds "
+                f"amplitudes, got a minimum of "
+                f"{float(np.min(self.alphabet))}.")
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        magnitude = np.abs(np.real(np.asarray(X)))
+        distance = np.abs(magnitude[..., None] - self.alphabet)
+        return np.argmin(distance, axis=-1)
 
 
 def _multinomial(counts: Sequence[int]) -> int:

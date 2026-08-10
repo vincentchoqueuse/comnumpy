@@ -84,8 +84,12 @@ for num_compensator in range(2):
     # perform phase correction and evaluate metric
     theta_est = np.angle(np.sum(np.conj(x_rx)*x_tx))
     x_rx_phase_compensated = np.exp(1j*theta_est) * x_rx
-    s_rx = hard_projector(x_rx_phase_compensated, alphabet)
+    # hard_projector returns (indices, symbols): the indices are what a
+    # symbol error rate compares
+    s_rx, _ = hard_projector(x_rx_phase_compensated, alphabet)
     ser = compute_ser(s_tx, s_rx)
+    print(f"{technique_name:24s} SER={ser:.4f}  "
+          f"residual phase={np.rad2deg(theta_est):+.1f} deg")
 
     # plot signal
     plt.figure()

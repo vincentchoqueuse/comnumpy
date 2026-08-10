@@ -1,20 +1,20 @@
 import unittest
 import numpy as np
 
-from src.comnumpy.core import Sequential
-from src.comnumpy.core.generators import SymbolGenerator
-from src.comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from src.comnumpy.core.channels import AWGN, FIRChannel
-from src.comnumpy.core.processors import Serial2Parallel, Parallel2Serial
-from src.comnumpy.core.utils import get_alphabet
-from src.comnumpy.core.metrics import compute_ser
-from src.comnumpy.ofdm.processors import (
+from comnumpy.core import Sequential
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
+from comnumpy.core.channels import AWGN, FIRChannel
+from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
+from comnumpy.core.utils import get_alphabet
+from comnumpy.core.metrics import compute_ser
+from comnumpy.ofdm.processors import (
     CarrierAllocator, FFTProcessor, IFFTProcessor,
     CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 )
-from src.comnumpy.ofdm.compensators import FrequencyDomainEqualizer
-from src.comnumpy.ofdm.utils import get_standard_carrier_allocation
-from src.comnumpy.ofdm.chains import OFDMTransmitter, OFDMReceiver
+from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
+from comnumpy.ofdm.allocation import get_allocation
+from comnumpy.ofdm.chains import OFDMTransmitter, OFDMReceiver
 
 
 class TestOFDMSimpleChain(unittest.TestCase):
@@ -30,9 +30,9 @@ class TestOFDMSimpleChain(unittest.TestCase):
         self.alphabet = get_alphabet("QAM", self.M)
 
         # Carrier allocation
-        self.carrier_type = get_standard_carrier_allocation("802.11ah_128")
-        self.N_carrier_data = np.sum(self.carrier_type == 1)
-        self.N_carrier_pilots = np.sum(self.carrier_type == 2)
+        self.carrier_type = get_allocation("802.11ac-40")   # 128 subcarriers
+        self.N_carrier_data = self.carrier_type.N_data
+        self.N_carrier_pilots = self.carrier_type.N_pilots
 
         # Pilots and channel
         self.pilots = 10 * np.ones(self.N_carrier_pilots)
@@ -49,7 +49,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
             Parallel2Serial(),
             FIRChannel(self.h),
             AWGN(sigma2=self.sigma2),
-            Serial2Parallel(len(self.carrier_type) + self.N_cp),
+            Serial2Parallel(self.carrier_type.N_fft + self.N_cp),
             CyclicPrefixRemover(self.N_cp),
             FFTProcessor(),
             FrequencyDomainEqualizer(h=self.h),

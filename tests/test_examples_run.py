@@ -52,8 +52,6 @@ SLOW = {
         "Monte-Carlo BER sweep, 4 detectors -- 32 s measured 2026-08-09",
     "mimo/monte_carlo_simulation_2.py":
         "Monte-Carlo BER sweep, OSIC variants -- 143 s measured 2026-08-09",
-    "mimo/one_shot_mimo.py":
-        "ML detection over a full SNR sweep -- 171 s measured 2026-08-09",
     "mimo/run_all_scripts.py":
         "runner, not an example: re-executes the other mimo scripts -- "
         "~350 s by construction",

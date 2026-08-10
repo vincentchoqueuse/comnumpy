@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.comnumpy.core.processors import Upsampler
+from comnumpy.core.processors import Upsampler
 
 class TestUpsampler(unittest.TestCase):
     def test_upsample_factor_2(self):

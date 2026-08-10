@@ -26,7 +26,6 @@ Make sure you have the following Python libraries installed:
    numpy
    matplotlib
    comnumpy
-   tqdm
 
 Import Libraries
 """"""""""""""""

@@ -10,6 +10,7 @@ The example scripts are also available on GitHub: `https://github.com/vincentcho
    :caption: Contents:
 
    awgn
+   shaping
    ofdm
    ofdm_papr
    mimo
