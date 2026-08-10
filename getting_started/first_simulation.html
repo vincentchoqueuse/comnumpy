@@ -816,6 +816,31 @@ the number of transmitted symbols, and the signal-to-noise ratio (SNR):</p>
 <p>We define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object, which takes a list of
 processors as input. The <strong>comnumpy</strong> library provides a wide range of built-in processors
 for modulation, coding, channel modeling, and more.</p>
+<p>The chain, as the chain itself describes it:</p>
+<pre  class="mermaid">
+        flowchart LR
+    tx[&quot;SymbolGenerator&quot;]
+    symbol_mapper[&quot;SymbolMapper&quot;]
+    awgn[&quot;AWGN&quot;]
+    symbol_demapper[&quot;SymbolDemapper&quot;]
+    tx --&gt; symbol_mapper
+    symbol_mapper --&gt; awgn
+    awgn --&gt; symbol_demapper
+    classDef tapped stroke-dasharray: 4 2
+    class tx,awgn tapped
+    </pre><p>The diagram above is not drawn by hand. It is what the chain says about
+itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
+script, so the block names are the ones the code uses and a dashed
+outline marks a tapped block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
+<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
+<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
+<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
+<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;first_simulation&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
+</pre></div>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define a communication chain; taps extract the signals to observe</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
@@ -892,7 +917,7 @@ We read the symbols recorded at the <code class="docutils literal notranslate"><
 <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/first_simulation_fig1.png&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/first_simulation_fig1.png"><img alt="../_images/first_simulation_fig1.png" class="align-center" src="../_images/first_simulation_fig1.png" style="width: 100%;" />
