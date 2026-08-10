@@ -64,9 +64,9 @@ class SRRCFilter(Processor):
     ISI-free at the symbol instants. The same ``SRRCFilter`` instance is
     therefore placed at the transmitter and at the receiver.
 
-    Axes: *axis -1* -- with ``method="lfilter"`` the filter runs along the
-    last axis and broadcasts over the leading ones; with ``method="fft"``
-    the input must be 1D ``(N,)``.
+    Axes: *axis -1* -- both methods filter along the last axis and
+    broadcast over the leading ones, so a polarization pair
+    ``(..., 2, N)`` is shaped one polarization at a time.
 
     Parameters
     ----------
@@ -189,10 +189,14 @@ class SRRCFilter(Processor):
             y = self.scale * np.asarray(signal.lfilter(h, 1, x, axis=self.axis))
         else:  # "fft" -- validated in __post_init__
             from comnumpy._backend import fft, ifft  # local import (D36), cupy-compatible (D3)
-            NFFT = len(x)
-            fft_x = fft(x, NFFT)
+            # x.shape[-1], not len(x): a polarization pair (..., 2, N)
+            # would otherwise transform two samples instead of N and
+            # fail inside H() with an unrelated message. The response is
+            # (NFFT,) and broadcasts over the leading axes.
+            NFFT = x.shape[-1]
+            fft_x = fft(x, NFFT, axis=-1)
             fft_h = self.H(NFFT)
-            y = self.scale*ifft(fft_x*fft_h, NFFT)
+            y = self.scale*ifft(fft_x*fft_h, NFFT, axis=-1)
 
         return y
 

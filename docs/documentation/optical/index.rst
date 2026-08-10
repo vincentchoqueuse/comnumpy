@@ -11,6 +11,7 @@ Optical
    dbp
    devices
    links
+   gn_model
    wdm
    raman
    utils

@@ -43,10 +43,10 @@ a validation script. Move it.
 
 | Folder | Subject |
 |---|---|
-| `simple/` | the core chain: symbol generation, mapping, AWGN, multipath fading, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, chain profiling |
+| `simple/` | the core chain: symbol generation, mapping, AWGN, multipath fading, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, channel coding, chain profiling |
 | `ofdm/` | OFDM transmitter and receiver, carrier allocation, cyclic prefix, frequency-domain equalization, PAPR statistics and PAPR reduction |
 | `mimo/` | flat and frequency-selective MIMO channels, space-time block codes, ML / linear / OSIC detectors, blind CMA equalization |
-| `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR), WDM transmission, and fibre nonlinearity: split-step propagation with digital back-propagation |
+| `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR), WDM transmission, and fibre nonlinearity: split-step propagation with digital back-propagation, and the Gaussian Noise model in closed form |
 | `nonlinear/` | power-amplifier models — clipper, Rapp, Saleh |
 
 ## Runtime
@@ -77,7 +77,9 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/monte_carlo_awgn.py` | 12.4 s | yes |
 | `mimo/one_shot_alamouti.py` | 14.4 s | yes |
 | `simple/probabilistic_shaping.py` | 14.6 s | yes |
-| `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes — the slowest one kept |
+| `ofdm/monte_carlo_ofdm_papr.py` | 19.6 s | yes |
+| `simple/channel_coding.py` | 29.7 s | yes |
+| `optical/gn_model.py` | 29.7 s | yes — tied for the slowest one kept |
 | `mimo/monte_carlo_simulation_1.py` | 32 s | skipped — slow |
 | `ofdm/one_shot_ofdm.py` | 49 s (147 s CPU) | skipped — slow |
 | `optical/one_shot_NLI.py` | 64 s | skipped — slow |
@@ -87,7 +89,7 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `mimo/run_all_scripts.py` | ~350 s | skipped — it is a runner, not an example |
 | `optical/NLI_simulation.py` | 700 s | skipped — slow |
 
-The smoke test therefore runs about 65 s of examples.
+The smoke test therefore runs about 95 s of examples.
 
 No example is currently broken. `optical/CD_compensation_part1.py`
 was, until 2026-08-09: it built `SymbolMapper([])` / `SymbolDemapper([])`
