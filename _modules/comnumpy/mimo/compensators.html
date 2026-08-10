@@ -809,6 +809,25 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    The first :math:`(2L+1)/os` output samples are never written -- the</span>
 <span class="sd">    filter has no history yet -- and are left at zero.</span>
 
+<span class="sd">    **Cost, and why the loop is a loop.** While it adapts, this block</span>
+<span class="sd">    costs about 18 us per output sample: :math:`\mathbf{H}` is updated</span>
+<span class="sd">    from :math:`y[n]` before :math:`y[n+1]` is computed, so the samples</span>
+<span class="sd">    cannot be processed together -- that is what a stochastic gradient</span>
+<span class="sd">    is, and no amount of vectorization removes it. The time goes into a</span>
+<span class="sd">    dozen tiny numpy calls per iteration, each dominated by Python</span>
+<span class="sd">    overhead rather than arithmetic, so the only real way down is a</span>
+<span class="sd">    compiled kernel.</span>
+
+<span class="sd">    There is one exact exception, and it is the useful one. With</span>
+<span class="sd">    :math:`\mu = 0` the equalizer is **frozen**, every output is the</span>
+<span class="sd">    same linear map, and the pass becomes a sequence of matrix products</span>
+<span class="sd">    -- measured **25 to 30 times faster** on 100 000 output samples, and</span>
+<span class="sd">    bit-for-bit the same output. That is the</span>
+<span class="sd">    &quot;fit, then apply&quot; regime of decision D22: adapt on a preamble with</span>
+<span class="sd">    :meth:`partial_fit`, set ``mu = 0``, and run the payload through.</span>
+<span class="sd">    The fast path is skipped when :meth:`process_after_iteration` is</span>
+<span class="sd">    overridden, since that hook is defined per output sample.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    L : int, optional</span>
@@ -955,6 +974,34 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
+    <span class="c1"># windows per matrix product in the frozen path. The gathered</span>
+    <span class="c1"># tensor costs 32 bytes per (stream, tap), so 4096 windows is a few</span>
+    <span class="c1"># megabytes -- measured 30x faster than the loop at L = 10, against</span>
+    <span class="c1"># 5x for a 65536-window block, which no longer fits in cache</span>
+    <span class="n">_FROZEN_BLOCK</span> <span class="o">=</span> <span class="mi">4096</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_frozen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a non-adapting equalizer to every sample at once.</span>
+
+<span class="sd">        With ``mu = 0`` the loop in :meth:`forward` computes the same</span>
+<span class="sd">        inner product for every output sample and changes nothing</span>
+<span class="sd">        between them, so the pass is a matrix product -- gathered in</span>
+<span class="sd">        blocks so the window tensor stays bounded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">H_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">oversampling</span><span class="p">)</span>
+        <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H_</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>                 <span class="c1"># (2 * width, 2)</span>
+        <span class="k">for</span> <span class="n">first</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">starts</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FROZEN_BLOCK</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">starts</span><span class="p">[</span><span class="n">first</span><span class="p">:</span><span class="n">first</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FROZEN_BLOCK</span><span class="p">]</span>
+            <span class="c1"># one window per output sample, most recent input first --</span>
+            <span class="c1"># the ordering the adaptive loop builds by hand</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">block</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">offsets</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]]</span>
+            <span class="n">stacked</span> <span class="o">=</span> <span class="n">windows</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">Y</span><span class="p">[:,</span> <span class="n">block</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">oversampling</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">stacked</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="n">Y</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
@@ -966,6 +1013,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="o">//</span><span class="n">os</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">H_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># initialize_H ran in __post_init__</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">process_after_iteration</span> <span class="ow">is</span> \
+                <span class="n">BlindDualMIMOCompensator</span><span class="o">.</span><span class="n">process_after_iteration</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_frozen</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">L</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">os</span><span class="p">):</span>
             <span class="n">x_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">n</span><span class="p">:</span><span class="n">n</span><span class="o">-</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">L</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">y_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H_</span><span class="p">),</span> <span class="n">x_sub</span><span class="p">)</span>  <span class="c1"># filter output</span>

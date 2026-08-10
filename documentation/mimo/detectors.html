@@ -538,6 +538,156 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
 <span class="go">       [0, 1]])</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.mimo.detectors.MaximumLikelihoodDetector.get_candidates">
+<span class="sig-name descname"><span class="pre">get_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#MaximumLikelihoodDetector.get_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.MaximumLikelihoodDetector.get_candidates" title="Link to this definition">#</a></dt>
+<dd><p>Every vector of <span class="math notranslate nohighlight">\(\mathcal{M}^{N_t}\)</span>, as indices and symbols.</p>
+<p>The enumeration is mixed-radix counting – the order
+<code class="docutils literal notranslate"><span class="pre">itertools.product(range(M),</span> <span class="pre">repeat=N_t)</span></code> produces – written as
+arithmetic on an index grid, because the loop that built it one
+candidate at a time was the dominant cost for a large alphabet.</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.mimo.detectors.SphereDecoder">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SphereDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Sphere</span> <span class="pre">Decoder'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#SphereDecoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.SphereDecoder" title="Link to this definition">#</a></dt>
+<dd><p>Maximum likelihood by tree search instead of exhaustion.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>The decision is the one of <a class="reference internal" href="#comnumpy.mimo.detectors.MaximumLikelihoodDetector" title="comnumpy.mimo.detectors.MaximumLikelihoodDetector"><code class="xref py py-class docutils literal notranslate"><span class="pre">MaximumLikelihoodDetector</span></code></a> –
+exactly, not approximately – reached without evaluating every
+candidate. Write the thin QR factorization of the channel,
+<span class="math notranslate nohighlight">\(\mathbf{H} = \mathbf{Q}\mathbf{R}\)</span> with
+<span class="math notranslate nohighlight">\(\mathbf{Q}^H\mathbf{Q} = \mathbf{I}_{N_t}\)</span> and
+<span class="math notranslate nohighlight">\(\mathbf{R}\)</span> upper triangular, and project the observation on
+<span class="math notranslate nohighlight">\(\mathbf{z} = \mathbf{Q}^H \mathbf{y}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\left\|\mathbf{y} - \mathbf{H}\mathbf{x}\right\|^2 =
+\underbrace{\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2}
+_{\text{depends on } \mathbf{x}}
++ \left\|\left(\mathbf{I} - \mathbf{Q}\mathbf{Q}^H\right)
+  \mathbf{y}\right\|^2\]</div>
+<p>The second term is a constant, so minimizing the first <em>is</em> maximum
+likelihood. Its value is what makes the search possible, because
+<span class="math notranslate nohighlight">\(\mathbf{R}\)</span> is triangular:</p>
+<div class="math notranslate nohighlight">
+\[\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2 =
+\sum_{k=N_t-1}^{0} \left|R_{kk}\right|^2
+\left|c_k(x_{k+1}, \ldots, x_{N_t-1}) - x_k\right|^2,
+\qquad
+c_k = \frac{z_k - \sum_{i&gt;k} R_{ki} x_i}{R_{kk}}\]</div>
+<p>Every term is non-negative and layer <span class="math notranslate nohighlight">\(k\)</span> depends only on the
+layers already decided, so a partial sum can only grow: the moment
+it exceeds the best full metric found so far, the whole subtree
+below it can be discarded. That is the sphere: the search visits
+only the lattice points inside a ball whose radius shrinks each time
+a better solution is found.</p>
+<p>The enumeration order within a layer is the Schnorr-Euchner one –
+alphabet points by increasing <span class="math notranslate nohighlight">\(|c_k - a|\)</span> – for two reasons.
+The first leaf reached is then the successive-interference-cancelling
+(Babai) solution, which gives a finite radius immediately, so no
+initial radius has to be guessed; and since the terms are visited in
+increasing order, the first one that exceeds the bound ends the
+layer, no <code class="docutils literal notranslate"><span class="pre">continue</span></code> needed.</p>
+<p><strong>What it costs.</strong> The visited-node count is data dependent – that
+is the whole point – and is reported as <code class="docutils literal notranslate"><span class="pre">nodes_</span></code>, the average per
+detected vector. At high SNR it approaches <span class="math notranslate nohighlight">\(N_t\)</span> (the Babai
+point is already ML and nothing else survives the first bound);
+at low SNR, or on an ill-conditioned channel, it grows towards the
+exhaustive <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span>. In Python the per-node
+overhead is large, so this block is <em>slower</em> than the vectorized
+exhaustive search on small problems and becomes the only option when
+<span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> stops fitting in memory – 16-QAM on
+four antennas is 65 536 candidates per symbol, 64-QAM on four is
+16.7 million.</p>
+<p>Axes: <em>declared axis</em> – expects <code class="docutils literal notranslate"><span class="pre">(ant,</span> <span class="pre">N)</span></code> with antennas on
+axis -2, and returns the alphabet indices, like every other detector
+here.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param alphabet<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Symbol constellation <span class="math notranslate nohighlight">\(\mathcal{M}\)</span> (1D array).</p>
+</dd>
+<dt class="field-even">type alphabet<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param H<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Channel matrix <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> of size <span class="math notranslate nohighlight">\(N_r \times N_t\)</span>,
+with <span class="math notranslate nohighlight">\(N_r \geq N_t\)</span>. Must be set before the call.</p>
+</dd>
+<dt class="field-even">type H<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param name<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Name of the detector. Default is <code class="docutils literal notranslate"><span class="pre">&quot;Sphere</span> <span class="pre">Decoder&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type name<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.mimo.detectors.SphereDecoder.nodes_">
+<span class="sig-name descname"><span class="pre">nodes_</span></span><a class="headerlink" href="#comnumpy.mimo.detectors.SphereDecoder.nodes_" title="Link to this definition">#</a></dt>
+<dd><p>Average number of tree nodes visited per detected vector in the
+last call – data-dependent, hence the trailing underscore (D23).
+Compare it with <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">H</span></code> is not set, if the channel has fewer receive than
+    transmit antennas (the decomposition needs a full-column-rank
+    <span class="math notranslate nohighlight">\(\mathbf{R}\)</span>), or if that rank is deficient.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>U. Fincke, M. Pohst, “Improved methods for calculating vectors of
+short length in a lattice”, Mathematics of Computation, vol. 44,
+no. 170, pp. 463-471, 1985.</p></li>
+<li><p>C. P. Schnorr, M. Euchner, “Lattice basis reduction: improved
+practical algorithms and solving subset sum problems”,
+Mathematical Programming, vol. 66, pp. 181-199, 1994.</p></li>
+<li><p>E. Agrell, T. Eriksson, A. Vardy, K. Zeger, “Closest point search
+in lattices”, IEEE Trans. Inf. Theory, vol. 48, no. 8,
+pp. 2201-2214, 2002.</p></li>
+<li><p>B. Hassibi, H. Vikalo, “On the sphere-decoding algorithm I.
+Expected complexity”, IEEE Trans. Signal Process., vol. 53, no. 8,
+pp. 2806-2818, 2005.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.9</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">SphereDecoder</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">)(</span><span class="n">Y</span><span class="p">)</span>
+<span class="go">array([[1, 0],</span>
+<span class="go">       [0, 1]])</span>
+</pre></div>
+</div>
+<p>The decision is the exhaustive one, on far fewer candidates:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">rayleigh_channel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sent</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">H</span> <span class="o">@</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">sent</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+<span class="gp">... </span>                                 <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">200</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">decoder</span> <span class="o">=</span> <span class="n">SphereDecoder</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exhaustive</span> <span class="o">=</span> <span class="n">MaximumLikelihoodDetector</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">decoder</span><span class="p">(</span><span class="n">Y</span><span class="p">),</span> <span class="n">exhaustive</span><span class="p">(</span><span class="n">Y</span><span class="p">)))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">decoder</span><span class="o">.</span><span class="n">nodes_</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> nodes visited, against </span><span class="si">{</span><span class="mi">16</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">4</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">4.5 nodes visited, against 65536</span>
+</pre></div>
+</div>
 </section>
 </dd></dl>
 
@@ -545,8 +695,8 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
 <dt class="sig sig-object py" id="comnumpy.mimo.detectors.LinearDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LinearDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'zf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mmse'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'zf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ZF</span> <span class="pre">Detector'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#LinearDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.LinearDetector" title="Link to this definition">#</a></dt>
 <dd><p>Linear MIMO detector (equalization followed by hard decision).</p>
-<section id="id1">
-<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>The detector assumes the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
@@ -630,8 +780,8 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
 <dt class="sig sig-object py" id="comnumpy.mimo.detectors.OrderedSuccessiveInterferenceCancellationDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">OrderedSuccessiveInterferenceCancellationDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">osic_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sinr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'zf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mmse'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'zf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'OSIC</span> <span class="pre">Detector'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#OrderedSuccessiveInterferenceCancellationDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.OrderedSuccessiveInterferenceCancellationDetector" title="Link to this definition">#</a></dt>
 <dd><p>Ordered Successive Interference Cancellation (OSIC) MIMO detector.</p>
-<section id="id2">
-<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>The detector assumes the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
@@ -723,8 +873,8 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
 <dt class="sig sig-object py" id="comnumpy.mimo.detectors.ApproximateMessagePassingDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ApproximateMessagePassingDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'AMP</span> <span class="pre">Detector'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#ApproximateMessagePassingDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.ApproximateMessagePassingDetector" title="Link to this definition">#</a></dt>
 <dd><p>Approximate Message Passing (AMP) MIMO detector.</p>
-<section id="id3">
-<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>The detector assumes the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
@@ -817,8 +967,8 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
 <dt class="sig sig-object py" id="comnumpy.mimo.detectors.OrthogonalApproximateMessagePassingDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">OrthogonalApproximateMessagePassingDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'H'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pinv'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'MMSE'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'MMSE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'OAMP</span> <span class="pre">Detector'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/mimo/detectors.html#OrthogonalApproximateMessagePassingDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.mimo.detectors.OrthogonalApproximateMessagePassingDetector" title="Link to this definition">#</a></dt>
 <dd><p>Orthogonal Approximate Message Passing (OAMP) MIMO detector.</p>
-<section id="id4">
-<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>The detector assumes the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H} \, \mathbf{x}[n] + \mathbf{b}[n], \qquad
@@ -964,7 +1114,14 @@ Cambridge University Press, 2005, Chapter 8.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.MaximumLikelihoodDetector"><code class="docutils literal notranslate"><span class="pre">MaximumLikelihoodDetector</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.MaximumLikelihoodDetector"><code class="docutils literal notranslate"><span class="pre">MaximumLikelihoodDetector</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.MaximumLikelihoodDetector.get_candidates"><code class="docutils literal notranslate"><span class="pre">MaximumLikelihoodDetector.get_candidates()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.SphereDecoder"><code class="docutils literal notranslate"><span class="pre">SphereDecoder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.SphereDecoder.nodes_"><code class="docutils literal notranslate"><span class="pre">SphereDecoder.nodes_</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.LinearDetector"><code class="docutils literal notranslate"><span class="pre">LinearDetector</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.mimo.detectors.LinearDetector.linear_estimator"><code class="docutils literal notranslate"><span class="pre">LinearDetector.linear_estimator()</span></code></a></li>
 </ul>

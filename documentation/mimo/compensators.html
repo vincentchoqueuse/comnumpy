@@ -534,6 +534,23 @@ input sample <span class="math notranslate nohighlight">\(k \cdot os - L\)</span
 transmitted symbols without accounting for it reads as pure noise.
 The first <span class="math notranslate nohighlight">\((2L+1)/os\)</span> output samples are never written – the
 filter has no history yet – and are left at zero.</p>
+<p><strong>Cost, and why the loop is a loop.</strong> While it adapts, this block
+costs about 18 us per output sample: <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is updated
+from <span class="math notranslate nohighlight">\(y[n]\)</span> before <span class="math notranslate nohighlight">\(y[n+1]\)</span> is computed, so the samples
+cannot be processed together – that is what a stochastic gradient
+is, and no amount of vectorization removes it. The time goes into a
+dozen tiny numpy calls per iteration, each dominated by Python
+overhead rather than arithmetic, so the only real way down is a
+compiled kernel.</p>
+<p>There is one exact exception, and it is the useful one. With
+<span class="math notranslate nohighlight">\(\mu = 0\)</span> the equalizer is <strong>frozen</strong>, every output is the
+same linear map, and the pass becomes a sequence of matrix products
+– measured <strong>25 to 30 times faster</strong> on 100 000 output samples, and
+bit-for-bit the same output. That is the
+“fit, then apply” regime of decision D22: adapt on a preamble with
+<a class="reference internal" href="#comnumpy.mimo.compensators.BlindDualMIMOCompensator.partial_fit" title="comnumpy.mimo.compensators.BlindDualMIMOCompensator.partial_fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partial_fit()</span></code></a>, set <code class="docutils literal notranslate"><span class="pre">mu</span> <span class="pre">=</span> <span class="pre">0</span></code>, and run the payload through.
+The fast path is skipped when <a class="reference internal" href="#comnumpy.mimo.compensators.BlindDualMIMOCompensator.process_after_iteration" title="comnumpy.mimo.compensators.BlindDualMIMOCompensator.process_after_iteration"><code class="xref py py-meth docutils literal notranslate"><span class="pre">process_after_iteration()</span></code></a> is
+overridden, since that hook is defined per output sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param L<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Half-length of the filter (each row of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> holds

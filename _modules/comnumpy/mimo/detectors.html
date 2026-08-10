@@ -727,7 +727,6 @@ window.runMermaid = runMermaid;</script>
                   
   <h1>Source code for comnumpy.mimo.detectors</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
@@ -735,11 +734,19 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">hard_projector</span><span class="p">,</span> <span class="n">soft_projector</span><span class="p">,</span> <span class="n">zf_estimator</span><span class="p">,</span> <span class="n">mmse_estimator</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;MaximumLikelihoodDetector&quot;</span><span class="p">,</span> <span class="s2">&quot;LinearDetector&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MaximumLikelihoodDetector&quot;</span><span class="p">,</span> <span class="s2">&quot;SphereDecoder&quot;</span><span class="p">,</span> <span class="s2">&quot;LinearDetector&quot;</span><span class="p">,</span>
     <span class="s2">&quot;OrderedSuccessiveInterferenceCancellationDetector&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ApproximateMessagePassingDetector&quot;</span><span class="p">,</span>
     <span class="s2">&quot;OrthogonalApproximateMessagePassingDetector&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+
+<span class="c1"># The exhaustive search is blocked on both axes so that its cost matrix</span>
+<span class="c1"># stays a few megabytes whatever the constellation: 1024 samples by 2048</span>
+<span class="c1"># candidates is 16 MB of float64, against 34 GB for 16-QAM on four</span>
+<span class="c1"># antennas taken in one piece.</span>
+<span class="n">_ML_BLOCK</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">_ML_CANDIDATES</span> <span class="o">=</span> <span class="mi">2048</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_required_channel</span><span class="p">(</span><span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -855,40 +862,277 @@ window.runMermaid = runMermaid;</script>
         <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span> <span class="o">**</span> <span class="n">N_t</span>
 
+<div class="viewcode-block" id="MaximumLikelihoodDetector.get_candidates">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.MaximumLikelihoodDetector.get_candidates">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                        <span class="n">N_t</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span>
-        <span class="n">input_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">N_t</span><span class="p">)]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Every vector of :math:`\\mathcal{M}^{N_t}`, as indices and symbols.</span>
 
-        <span class="c1"># preallocation of memory</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
-        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)))</span>
+<span class="sd">        The enumeration is mixed-radix counting -- the order</span>
+<span class="sd">        ``itertools.product(range(M), repeat=N_t)`` produces -- written as</span>
+<span class="sd">        arithmetic on an index grid, because the loop that built it one</span>
+<span class="sd">        candidate at a time was the dominant cost for a large alphabet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">order</span> <span class="o">**</span> <span class="n">N_t</span>
+        <span class="c1"># digit k of every integer in [0, order**N_t), most significant</span>
+        <span class="c1"># first: that is exactly product(range(order), repeat=N_t)</span>
+        <span class="n">powers</span> <span class="o">=</span> <span class="n">order</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N_t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">count</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">//</span> <span class="n">powers</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">%</span> <span class="n">order</span>
+        <span class="k">return</span> <span class="n">S</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">S</span><span class="p">]</span></div>
 
-        <span class="k">for</span> <span class="n">indice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">input_list</span><span class="p">)):</span>
-            <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">input_list</span><span class="p">[</span><span class="n">indice</span><span class="p">])</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[</span><span class="nb">input</span><span class="p">]</span>
-            <span class="n">X</span><span class="p">[:,</span> <span class="n">indice</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
-            <span class="n">S</span><span class="p">[:,</span> <span class="n">indice</span><span class="p">]</span> <span class="o">=</span> <span class="nb">input</span>
-
-        <span class="k">return</span> <span class="n">S</span><span class="p">,</span> <span class="n">X</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
         <span class="n">alphabet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span>
 
         <span class="n">S_candidates</span><span class="p">,</span> <span class="n">X_candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">N_t</span><span class="p">)</span>
-        <span class="n">Y_candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span>
-            <span class="n">H</span><span class="p">,</span> <span class="n">X_candidates</span>
-        <span class="p">)</span>  <span class="c1"># compute all combinaison of received data</span>
+        <span class="n">Y_candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">X_candidates</span><span class="p">)</span>      <span class="c1"># (N_r, C)</span>
 
-        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">Y</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]))</span>
-            <span class="n">index_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">Y_candidates</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
-            <span class="n">S</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">S_candidates</span><span class="p">[:,</span> <span class="n">index_min</span><span class="p">]</span>
+        <span class="c1"># ||y - Hx||^2 = ||y||^2 - 2 Re(y^H Hx) + ||Hx||^2, and the first</span>
+        <span class="c1"># term does not depend on the candidate: the search is one matrix</span>
+        <span class="c1"># product against the whole block instead of one pass per sample.</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Y_candidates</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>          <span class="c1"># (C,)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">_ML_BLOCK</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">Y</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">_ML_BLOCK</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>    <span class="c1"># (n, N_r)</span>
+            <span class="n">n_block</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_block</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+            <span class="n">winner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_block</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="c1"># blocked on both axes: the cost matrix is (n, C) and would</span>
+            <span class="c1"># be hundreds of megabytes for a large constellation. The</span>
+            <span class="c1"># running minimum keeps it bounded, and `&lt;` keeps the</span>
+            <span class="c1"># first-minimum tie-break of a single argmin.</span>
+            <span class="k">for</span> <span class="n">first</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">energy</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">_ML_CANDIDATES</span><span class="p">):</span>
+                <span class="n">columns</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">first</span> <span class="o">+</span> <span class="n">_ML_CANDIDATES</span><span class="p">)</span>
+                <span class="n">cost</span> <span class="o">=</span> <span class="n">energy</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">Y_candidates</span><span class="p">[:,</span> <span class="n">columns</span><span class="p">]))</span>
+                <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="n">cost</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_block</span><span class="p">),</span> <span class="n">local</span><span class="p">]</span>
+                <span class="n">better</span> <span class="o">=</span> <span class="n">values</span> <span class="o">&lt;</span> <span class="n">best</span>
+                <span class="n">winner</span><span class="p">[</span><span class="n">better</span><span class="p">]</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="n">better</span><span class="p">]</span> <span class="o">+</span> <span class="n">first</span>
+                <span class="n">best</span><span class="p">[</span><span class="n">better</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">better</span><span class="p">]</span>
+            <span class="n">S</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">n_block</span><span class="p">]</span> <span class="o">=</span> <span class="n">S_candidates</span><span class="p">[:,</span> <span class="n">winner</span><span class="p">]</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">S</span></div>
+
+
+
+<div class="viewcode-block" id="SphereDecoder">
+<a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.SphereDecoder">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SphereDecoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Maximum likelihood by tree search instead of exhaustion.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The decision is the one of :class:`MaximumLikelihoodDetector` --</span>
+<span class="sd">    exactly, not approximately -- reached without evaluating every</span>
+<span class="sd">    candidate. Write the thin QR factorization of the channel,</span>
+<span class="sd">    :math:`\mathbf{H} = \mathbf{Q}\mathbf{R}` with</span>
+<span class="sd">    :math:`\mathbf{Q}^H\mathbf{Q} = \mathbf{I}_{N_t}` and</span>
+<span class="sd">    :math:`\mathbf{R}` upper triangular, and project the observation on</span>
+<span class="sd">    :math:`\mathbf{z} = \mathbf{Q}^H \mathbf{y}`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \left\|\mathbf{y} - \mathbf{H}\mathbf{x}\right\|^2 =</span>
+<span class="sd">        \underbrace{\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2}</span>
+<span class="sd">        _{\text{depends on } \mathbf{x}}</span>
+<span class="sd">        + \left\|\left(\mathbf{I} - \mathbf{Q}\mathbf{Q}^H\right)</span>
+<span class="sd">          \mathbf{y}\right\|^2</span>
+
+<span class="sd">    The second term is a constant, so minimizing the first *is* maximum</span>
+<span class="sd">    likelihood. Its value is what makes the search possible, because</span>
+<span class="sd">    :math:`\mathbf{R}` is triangular:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2 =</span>
+<span class="sd">        \sum_{k=N_t-1}^{0} \left|R_{kk}\right|^2</span>
+<span class="sd">        \left|c_k(x_{k+1}, \ldots, x_{N_t-1}) - x_k\right|^2,</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        c_k = \frac{z_k - \sum_{i&gt;k} R_{ki} x_i}{R_{kk}}</span>
+
+<span class="sd">    Every term is non-negative and layer :math:`k` depends only on the</span>
+<span class="sd">    layers already decided, so a partial sum can only grow: the moment</span>
+<span class="sd">    it exceeds the best full metric found so far, the whole subtree</span>
+<span class="sd">    below it can be discarded. That is the sphere: the search visits</span>
+<span class="sd">    only the lattice points inside a ball whose radius shrinks each time</span>
+<span class="sd">    a better solution is found.</span>
+
+<span class="sd">    The enumeration order within a layer is the Schnorr-Euchner one --</span>
+<span class="sd">    alphabet points by increasing :math:`|c_k - a|` -- for two reasons.</span>
+<span class="sd">    The first leaf reached is then the successive-interference-cancelling</span>
+<span class="sd">    (Babai) solution, which gives a finite radius immediately, so no</span>
+<span class="sd">    initial radius has to be guessed; and since the terms are visited in</span>
+<span class="sd">    increasing order, the first one that exceeds the bound ends the</span>
+<span class="sd">    layer, no ``continue`` needed.</span>
+
+<span class="sd">    **What it costs.** The visited-node count is data dependent -- that</span>
+<span class="sd">    is the whole point -- and is reported as ``nodes_``, the average per</span>
+<span class="sd">    detected vector. At high SNR it approaches :math:`N_t` (the Babai</span>
+<span class="sd">    point is already ML and nothing else survives the first bound);</span>
+<span class="sd">    at low SNR, or on an ill-conditioned channel, it grows towards the</span>
+<span class="sd">    exhaustive :math:`|\mathcal{M}|^{N_t}`. In Python the per-node</span>
+<span class="sd">    overhead is large, so this block is *slower* than the vectorized</span>
+<span class="sd">    exhaustive search on small problems and becomes the only option when</span>
+<span class="sd">    :math:`|\mathcal{M}|^{N_t}` stops fitting in memory -- 16-QAM on</span>
+<span class="sd">    four antennas is 65 536 candidates per symbol, 64-QAM on four is</span>
+<span class="sd">    16.7 million.</span>
+
+<span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
+<span class="sd">    axis -2, and returns the alphabet indices, like every other detector</span>
+<span class="sd">    here.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Symbol constellation :math:`\mathcal{M}` (1D array).</span>
+<span class="sd">    H : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Channel matrix :math:`\mathbf{H}` of size :math:`N_r \times N_t`,</span>
+<span class="sd">        with :math:`N_r \geq N_t`. Must be set before the call.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Name of the detector. Default is ``&quot;Sphere Decoder&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nodes_ : float</span>
+<span class="sd">        Average number of tree nodes visited per detected vector in the</span>
+<span class="sd">        last call -- data-dependent, hence the trailing underscore (D23).</span>
+<span class="sd">        Compare it with :math:`|\mathcal{M}|^{N_t}`.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``H`` is not set, if the channel has fewer receive than</span>
+<span class="sd">        transmit antennas (the decomposition needs a full-column-rank</span>
+<span class="sd">        :math:`\mathbf{R}`), or if that rank is deficient.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    * U. Fincke, M. Pohst, &quot;Improved methods for calculating vectors of</span>
+<span class="sd">      short length in a lattice&quot;, Mathematics of Computation, vol. 44,</span>
+<span class="sd">      no. 170, pp. 463-471, 1985.</span>
+<span class="sd">    * C. P. Schnorr, M. Euchner, &quot;Lattice basis reduction: improved</span>
+<span class="sd">      practical algorithms and solving subset sum problems&quot;,</span>
+<span class="sd">      Mathematical Programming, vol. 66, pp. 181-199, 1994.</span>
+<span class="sd">    * E. Agrell, T. Eriksson, A. Vardy, K. Zeger, &quot;Closest point search</span>
+<span class="sd">      in lattices&quot;, IEEE Trans. Inf. Theory, vol. 48, no. 8,</span>
+<span class="sd">      pp. 2201-2214, 2002.</span>
+<span class="sd">    * B. Hassibi, H. Vikalo, &quot;On the sphere-decoding algorithm I.</span>
+<span class="sd">      Expected complexity&quot;, IEEE Trans. Signal Process., vol. 53, no. 8,</span>
+<span class="sd">      pp. 2806-2818, 2005.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = np.array([-1.0 + 0j, 1.0 + 0j])</span>
+<span class="sd">    &gt;&gt;&gt; H = np.eye(2)</span>
+<span class="sd">    &gt;&gt;&gt; Y = np.array([[0.9, -1.1], [-0.8, 1.2]])</span>
+<span class="sd">    &gt;&gt;&gt; SphereDecoder(alphabet, H=H)(Y)</span>
+<span class="sd">    array([[1, 0],</span>
+<span class="sd">           [0, 1]])</span>
+
+<span class="sd">    The decision is the exhaustive one, on far fewer candidates:</span>
+
+<span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
+<span class="sd">    &gt;&gt;&gt; from comnumpy.mimo.utils import rayleigh_channel</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 16)</span>
+<span class="sd">    &gt;&gt;&gt; H = rayleigh_channel(4, 4, seed=0)</span>
+<span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(1)</span>
+<span class="sd">    &gt;&gt;&gt; sent = rng.integers(0, 16, size=(4, 200))</span>
+<span class="sd">    &gt;&gt;&gt; Y = H @ alphabet[sent] + 0.05 * (rng.standard_normal((4, 200))</span>
+<span class="sd">    ...                                  + 1j * rng.standard_normal((4, 200)))</span>
+<span class="sd">    &gt;&gt;&gt; decoder = SphereDecoder(alphabet, H=H)</span>
+<span class="sd">    &gt;&gt;&gt; exhaustive = MaximumLikelihoodDetector(alphabet, H=H)</span>
+<span class="sd">    &gt;&gt;&gt; bool(np.array_equal(decoder(Y), exhaustive(Y)))</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; print(f&quot;{decoder.nodes_:.1f} nodes visited, against {16 ** 4}&quot;)</span>
+<span class="sd">    4.5 nodes visited, against 65536</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Sphere Decoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># internal state (declared for slots, D40a)</span>
+    <span class="n">S</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                    <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">nodes_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_triangularize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The thin QR of the channel, with the guards it needs.&quot;&quot;&quot;</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="n">n_rx</span> <span class="o">&lt;</span> <span class="n">n_tx</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> needs at least as many receive as &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;transmit antennas, got H of shape </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">. An &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;underdetermined channel has no unique closest lattice &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;point; use ApproximateMessagePassingDetector instead.&quot;</span><span class="p">)</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+        <span class="n">diagonal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">diagonal</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> got a rank-deficient channel: the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;triangular factor has a diagonal entry of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> against </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The tree search divides by it, so no sphere is defined.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gains</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                 <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The closest lattice point to one observation, and its cost.</span>
+
+<span class="sd">        Depth first from the last layer, Schnorr-Euchner order within a</span>
+<span class="sd">        layer, and a bound that tightens every time a leaf is reached.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_tx</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_tx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_tx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_tx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">bound</span><span class="p">,</span> <span class="n">best</span><span class="p">,</span> <span class="n">nodes</span>
+            <span class="n">centre</span> <span class="o">=</span> <span class="p">((</span><span class="n">z</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">level</span><span class="p">,</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span>
+                                         <span class="n">symbols</span><span class="p">[</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]))</span>
+                      <span class="o">/</span> <span class="n">R</span><span class="p">[</span><span class="n">level</span><span class="p">,</span> <span class="n">level</span><span class="p">])</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">alphabet</span> <span class="o">-</span> <span class="n">centre</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">distance</span><span class="p">):</span>
+                <span class="n">step</span> <span class="o">=</span> <span class="n">metric</span> <span class="o">+</span> <span class="n">gains</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">*</span> <span class="n">distance</span><span class="p">[</span><span class="n">choice</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="n">bound</span><span class="p">:</span>
+                    <span class="k">break</span>            <span class="c1"># sorted: the rest of the layer too</span>
+                <span class="n">nodes</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">symbols</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">choice</span><span class="p">]</span>
+                <span class="n">indices</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="n">choice</span>
+                <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">bound</span> <span class="o">=</span> <span class="n">step</span>
+                    <span class="n">best</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">search</span><span class="p">(</span><span class="n">level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+        <span class="n">search</span><span class="p">(</span><span class="n">n_tx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">nodes</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_triangularize</span><span class="p">()</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>          <span class="c1"># (N_t, N)</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">R</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_samples</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+            <span class="n">best</span><span class="p">,</span> <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closest</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">gains</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span> <span class="n">sample</span><span class="p">],</span> <span class="n">alphabet</span><span class="p">)</span>
+            <span class="n">S</span><span class="p">[:,</span> <span class="n">sample</span><span class="p">]</span> <span class="o">=</span> <span class="n">best</span>
+            <span class="n">visited</span> <span class="o">+=</span> <span class="n">nodes</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="n">visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
         <span class="k">return</span> <span class="n">S</span></div>
 
