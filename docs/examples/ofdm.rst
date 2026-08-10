@@ -48,7 +48,7 @@ including the modulation order and the channel impulse response for a frequency-
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 17-35
+   :lines: 17-29
 
 The channel is not invented for the occasion: **EPA** is the 3GPP Extended
 Pedestrian A profile, one of the standardized tables the library ships in its
@@ -124,7 +124,7 @@ The chain is implemented in **comnumpy** as follows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 38-45
+   :lines: 31-38
 
 Results
 """""""
@@ -134,7 +134,7 @@ then plot the constellation before and after equalization:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 47-67
+   :lines: 40-58
 
 For the SC chain, we obtain:
 
@@ -187,7 +187,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 120-126
+   :lines: 102-108
 
 Key blocks, under the names the diagrams show:
 
@@ -218,7 +218,7 @@ The OFDM chain in **comnumpy** is implemented as:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 71-82
+   :lines: 62-72
 
 Results
 """""""
@@ -227,7 +227,7 @@ We compute the SER and runtime, then plot the received constellation:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 84-101
+   :lines: 74-89
 
 For the OFDM chain, we obtain:
 
@@ -250,7 +250,7 @@ over a range of noise variances:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 106-115
+   :lines: 91-100
 
 .. code::
 

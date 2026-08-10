@@ -15,14 +15,10 @@ from comnumpy.core.shaping import (AmplitudeDemapper, AmplitudeMapper,
 
 img_dir = "../../docs/examples/img/"
 
-# Parameters
 pam8 = np.arange(-7, 8, 2).astype(float)   # 8-PAM on the odd-integer grid
 amplitudes = pam8[pam8 > 0]                # the half a matcher shapes
 entropies = [3.0, 2.5, 2.0, 1.5]
 
-# 1. The law. Among all distributions of a given average energy on a
-# fixed constellation, the one of maximum entropy is Maxwell-Boltzmann;
-# specifying the entropy fixes lambda, and the entropy is the rate.
 laws = {H: maxwell_boltzmann(pam8, entropy=H) for H in entropies}
 for H, law in laws.items():
     print(f"H = {H:.2f} bit/symbol    energy {np.sum(law * pam8 ** 2):7.3f}"
@@ -42,23 +38,14 @@ ax1.grid(True)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig1.png")
 
-# 2. The matchers. Both are enumerative codes on a finite set of blocks;
-# they differ in which set. The amplitude law is the full-PAM law minus
-# the sign bit, so a target of 2.25 bit/symbol on 8-PAM is 1.25 on the
-# four amplitudes.
 target = maxwell_boltzmann(amplitudes, entropy=1.25)
 lengths = [16, 32, 64, 128, 256, 512]
 rates = {"CCDM (constant composition)": [], "ESS (sphere, same energy)": []}
 for n in lengths:
     ccdm = ConstantCompositionMatcher(amplitudes, distribution=target,
                                       length=n)
-    # the sphere carrying the same rate: its budget is what CCDM's
-    # composition costs, or less
     same_rate = SphereShaper(amplitudes, length=n, n_bits=ccdm.n_bits)
     budget = int(np.dot(ccdm.composition, same_rate.energies))
-    # the sphere holding the same energy: every CCDM block costs exactly
-    # `budget`, so the CCDM code is a *subset* of this one and the
-    # inequality below is exact, not statistical
     same_energy = SphereShaper(amplitudes, length=n, max_energy=budget)
     rates["CCDM (constant composition)"].append(ccdm.rate)
     rates["ESS (sphere, same energy)"].append(same_energy.rate)
@@ -79,9 +66,6 @@ ax2.grid(True, which="both")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig2.png")
 
-# 3. The transmitter, as a chain. Uniform bits in, shaped amplitudes
-# out, signs drawn uniformly (in a real PAS transmitter they are the
-# parity bits of a systematic FEC encoder, which are uniform too).
 n_block = 64
 shaper = ConstantCompositionMatcher(amplitudes, distribution=target,
                                     length=n_block)
@@ -117,19 +101,12 @@ ax3.grid(True)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig3.png")
 
-# The matcher is a code, so a symbol error takes the block out of it and
-# there is no index to read back. This is why PAS puts the FEC decoder
-# *between* the demapper and the dematcher.
 link.set_params(**{"noise.snr_dB": 12.0})
 try:
     link(n_blocks * shaper.n_bits)
 except ValueError as error:
     print(f"at 12 dB -- {error}")
 
-# 4. What shaping buys, in bit/symbol. The source draws from the law
-# directly here: a matcher approaches it, and this isolates what the law
-# itself is worth. AWGN(snr_dB=) measures the power of the signal it is
-# given, so every curve below is read at the same SNR.
 n_symbols = 60000
 snr_dB_list = np.arange(0, 25, 2.0)
 noise = AWGN(snr_dB=0.0, name="noise")
@@ -143,8 +120,6 @@ study = Sequential([
 def rate_curve(law):
     """Mutual information over the SNR range, for one input law."""
     def mutual_information(symbols, received):
-        # sigma2_ is what the run that just ended actually applied; the
-        # real channel puts sigma2 on one dimension, hence 1 / (2 sigma2)
         return compute_mi(received, symbols, pam8, px=law,
                           snr=1 / (2 * noise.sigma2_))
 
@@ -156,8 +131,6 @@ def rate_curve(law):
 uniform = rate_curve(np.full(8, 1 / 8))
 fixed = rate_curve(maxwell_boltzmann(pam8, entropy=2.25))
 
-# lambda is not a constant of the system: the best law depends on the
-# SNR, and the envelope is what shaping can actually deliver
 best = np.full(snr_dB_list.size, -np.inf)
 best_H = np.zeros(snr_dB_list.size)
 for H in np.arange(1.2, 3.01, 0.15):
@@ -175,8 +148,6 @@ ax4.set_title("Same power, more bits")
 ax4.legend()
 ax4.grid(True)
 
-# the vertical gap of the left panel, read horizontally: the SNR two
-# systems need to carry the same rate is what an engineer budgets
 rate_grid = np.linspace(0.5, 2.9, 49)
 gap = (np.interp(rate_grid, uniform, snr_dB_list)
        - np.interp(rate_grid, best, snr_dB_list))
@@ -198,9 +169,6 @@ for rate in (1.5, 2.0, 2.5):
     print(f"rate {rate} bit/symbol: uniform needs {plain:.2f} dB, shaped "
           f"{shaped:.2f} dB -- {plain - shaped:.2f} dB saved")
 
-# The chain diagrams this tutorial shows are exported from the chains
-# themselves (D33c), so the picture cannot drift from the code -- the
-# smoke test compares what a run writes with what the page displays.
 mermaid_dir = "../../docs/examples/mermaid/"
 for diagram_name, diagram_chain in [("shaping_pas", link), ("shaping_study", study)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:

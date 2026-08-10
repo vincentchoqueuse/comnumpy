@@ -51,7 +51,7 @@ We define the number of transmit/receive antennas, the modulation order (PSK), a
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 17-25
+   :lines: 17-24
 
 Build the MIMO Chain
 """"""""""""""""""""
@@ -60,7 +60,7 @@ The link is one ``Sequential``: symbol generator, mapper, flat MIMO channel, noi
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 28-56
+   :lines: 27-52
 
 This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal is described by:
 
@@ -79,7 +79,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 165-185
+   :lines: 139-156
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -91,7 +91,7 @@ Each chain is given the same seed before running, so the five numbers below diff
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 58-64
+   :lines: 54-57
 
 .. code::
 
@@ -108,7 +108,7 @@ Let's inspect what each receive antenna sees, read from the ``"noise"`` tap:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 66-76
+   :lines: 59-67
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
@@ -129,7 +129,7 @@ assuming perfect channel knowledge and ignoring the noise enhancement this cause
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 78-90
+   :lines: 69-78
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -258,7 +258,7 @@ A single channel realization proves nothing: over fading, the error rate is an *
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 92-125
+   :lines: 80-107
 
 .. code::
 
@@ -276,7 +276,7 @@ Plot SER vs SNR
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 127-135
+   :lines: 109-114
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
@@ -293,7 +293,7 @@ The 4-PSK link above has 16 candidates, and an exhaustive search scores them in 
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 142-163
+   :lines: 116-137
 
 .. code::
 
