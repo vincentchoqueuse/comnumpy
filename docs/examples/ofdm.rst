@@ -38,7 +38,7 @@ We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 1-11
+   :lines: 1-13
 
 Simulation Parameters
 """""""""""""""""""""
@@ -48,27 +48,31 @@ including the modulation order and the channel impulse response for a frequency-
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 15-33
+   :lines: 17-29
 
-Here ``h`` is the channel impulse response: one tap per resolvable echo.
-Its taps are not arbitrary -- they are drawn from an **exponential power
-delay profile**, which is the simplest realistic multipath model: later
-echoes have travelled further, so they arrive weaker, and the decay is
-exponential. Each tap is then a complex Gaussian, which is what a sum of many
-unresolved reflections looks like.
+The channel is not invented for the occasion: **EPA** is the 3GPP Extended
+Pedestrian A profile, one of the standardized tables the library ships in its
+catalogue, and :class:`~comnumpy.core.channels.TappedDelayLineChannel` draws a
+realization of it. Sampled at 7.68 MHz it resolves into 4 taps -- one per
+echo the receiver can tell apart at that rate.
+
+Getting the tap vector out of it is done the way an engineer would: **sound
+the channel with an impulse** and keep the response. That is what ``h`` is,
+and the equalizers below need it because this tutorial assumes the channel is
+known.
 
 The draw is seeded because the whole comparison below is about *one*
-realization of that channel. Its frequency response spans a factor of 31
+realization. This one has a frequency response spanning a factor of **57**
 between its strongest and its weakest subcarrier: that notch is what
 "frequency selective" means, and it is what the two receivers will disagree
 about.
 
 .. note::
 
-   Real systems are simulated against *standardized* profiles rather than a
-   hand-rolled one -- the LTE and 5G NR tables that fix these delays and
-   powers. They are in the library, and :doc:`multipath` is where they are
-   introduced; the five taps here are enough to see the effect.
+   :doc:`multipath` is where the catalogue is properly introduced -- where
+   these delays and powers come from, what a delay spread is, and how it
+   sizes the cyclic prefix used below. For now it is enough that the channel
+   is a real one rather than a hand-written array.
 
 
 Frequency-Selective Channel
@@ -120,7 +124,7 @@ The chain is implemented in **comnumpy** as follows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 35-42
+   :lines: 31-38
 
 Results
 """""""
@@ -130,7 +134,7 @@ then plot the constellation before and after equalization:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 44-68
+   :lines: 40-58
 
 For the SC chain, we obtain:
 
@@ -183,7 +187,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 114-123
+   :lines: 102-108
 
 Key blocks, under the names the diagrams show:
 
@@ -214,7 +218,7 @@ The OFDM chain in **comnumpy** is implemented as:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 69-81
+   :lines: 62-72
 
 Results
 """""""
@@ -223,7 +227,7 @@ We compute the SER and runtime, then plot the received constellation:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 82-98
+   :lines: 74-89
 
 For the OFDM chain, we obtain:
 
@@ -246,15 +250,17 @@ over a range of noise variances:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 100-112
+   :lines: 91-100
 
 .. code::
 
-   sigma2     single carrier      OFDM     |H| spans 31
-    0.015             0.1211    0.0414
-    0.008             0.0242    0.0242
-    0.004             0.0008    0.0148
-    0.002             0.0000    0.0094
+   sigma2     single carrier      OFDM     |H| spans 57
+     0.0150           0.6242    0.1062
+     0.0080           0.4617    0.0758
+     0.0040           0.2156    0.0469
+     0.0020           0.0539    0.0305
+     0.0010           0.0023    0.0211
+     0.0005           0.0000    0.0141
 
 The ranking **crosses over**, and the reason is structural rather than
 numerical. Both receivers are zero forcing, so both amplify the noise by
@@ -271,11 +277,12 @@ notch is divided by a small number and nothing else can help it.
 
 Concentrated damage wins at low SNR and loses at high SNR. At
 :math:`\sigma^2 = 0.015` everything is marginal and spreading the enhanced
-noise over all 1280 symbols ruins them all, while OFDM only ruins the handful
-of subcarriers in the notch. At :math:`\sigma^2 = 0.002` the spread noise has
-fallen below the decision threshold everywhere and the single carrier makes no
-error at all, while OFDM keeps an **error floor**: those subcarriers are dead
-whatever the SNR.
+noise over all 1280 symbols ruins them all -- six symbols in ten -- while
+OFDM only ruins the handful of subcarriers in the notch. By
+:math:`\sigma^2 = 0.001` the ranking has reversed: the spread noise has
+fallen below the decision threshold almost everywhere and the single carrier
+is down to 2 errors per thousand, while OFDM is stuck at 21, because those
+subcarriers are dead whatever the SNR. That is an **error floor**.
 
 That floor is not a defect of the model, it is the reason no real OFDM system
 is uncoded. A code spread across the subcarriers repairs exactly the carriers

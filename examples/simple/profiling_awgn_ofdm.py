@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.channels import AWGN, FIRChannel
+from comnumpy.core.channels import (AWGN, FIRChannel,
+                                    TappedDelayLineChannel)
+from comnumpy.core.fading import get_delay_profile
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
 from comnumpy.core.utils import get_alphabet
 from comnumpy.core.visualizers import plot_chain_profiling
@@ -12,10 +14,9 @@ from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 from comnumpy.ofdm.allocation import get_allocation
 
 
-# parameters
 modulation = "QAM"
 M = 16          # Modulation order
-N_h = 5         # Number of channel taps
+fs = 5e6        # Sample rate the channel is resolved at
 N_cp = 10       # Cyclic prefix length
 N = 100000      # Number of symbols
 sigma2 = 0.01   # Noise variance
@@ -23,17 +24,17 @@ sigma2 = 0.01   # Noise variance
 alphabet = get_alphabet(modulation, M)  # Get alphabet for QAM modulation
 allocation = get_allocation("802.11ac-40")  # 128 subcarriers, from the catalog
 
-# the allocation carries its own counts, checked against the standard's table
 N_carriers = allocation.N_fft
 N_carrier_data = allocation.N_data       # Number of data carriers
 N_carrier_pilots = allocation.N_pilots   # Number of pilot carriers
 
-# channel parameters
-h = 0.1 * (np.random.randn(N_h) + 1j * np.random.randn(N_h))
-h[0] = 1
+channel_model = TappedDelayLineChannel(get_delay_profile("TDL-D"), fs=fs,
+                                       seed=5)
+impulse = np.zeros(N, dtype=complex)
+impulse[0] = 1.0
+h = channel_model(impulse)[:channel_model.delays_[-1] + 1]
 pilots = 10 * np.ones(N_carrier_pilots)  # Pilot values
 
-# communication chain
 chain = Sequential([
     SymbolGenerator(M),
     SymbolMapper(alphabet),
@@ -53,13 +54,9 @@ chain = Sequential([
     SymbolDemapper(alphabet)
 ])
 
-# profiling chain
 plot_chain_profiling(chain, input=N)
 plt.savefig("../../docs/getting_started/img/profiling_chain_fig1.png")
 
-# The chain diagrams this tutorial shows are exported from the chains
-# themselves (D33c), so the picture cannot drift from the code -- the
-# smoke test compares what a run writes with what the page displays.
 mermaid_dir = "../../docs/getting_started/mermaid/"
 for diagram_name, diagram_chain in [("profiling_chain", chain)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:

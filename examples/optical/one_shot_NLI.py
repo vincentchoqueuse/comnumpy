@@ -12,7 +12,6 @@ from comnumpy.optical.dbp import DBP
 
 img_dir = "../../docs/examples/img/"
 
-# parameters
 M = 16
 modulation = "QAM"
 alphabet = get_alphabet(modulation, M)
@@ -28,7 +27,6 @@ L_span = 80  # in km
 N_span = 25
 dBm = -3
 
-# compute simulation parameter
 N = N_s*oversampling_sim   # signal length in number of samples
 fs = R_s*oversampling_sim
 oversampling_ratio = int(oversampling_sim/oversampling_dsp)
@@ -36,7 +34,6 @@ fs2 = R_s*oversampling_dsp
 Po = (1e-3) * (10**(0.1*dBm))
 amp = np.sqrt(Po)
 
-# create a communication chain
 chain = Sequential([
                 SymbolGenerator(M, name="data_tx"),
                 SymbolMapper(alphabet, name="signal_tx"),
@@ -48,20 +45,16 @@ chain = Sequential([
                 Downsampler(oversampling_ratio)
                 ], taps=["data_tx", "signal_tx"])
 
-# perform simulation
 y_rx = chain(N)
 
-# extract signal
 s_tx = chain.tap("data_tx")
 x_tx = chain.tap("signal_tx")
 
-# plot signal
 plt.figure()
 plt.plot(np.real(y_rx), np.imag(y_rx), ".")
 plt.title(f"Received Signal (oversampling={oversampling_dsp}, {dBm}dBm)")
 plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
-# perform compensation
 for num_compensator in range(2):
 
     if num_compensator == 0:
@@ -78,20 +71,15 @@ for num_compensator in range(2):
                     Amplifier(1/amp),
             ])
 
-    # apply conventional chain
     x_rx = receiver(y_rx)
 
-    # perform phase correction and evaluate metric
     theta_est = np.angle(np.sum(np.conj(x_rx)*x_tx))
     x_rx_phase_compensated = np.exp(1j*theta_est) * x_rx
-    # hard_projector returns (indices, symbols): the indices are what a
-    # symbol error rate compares
     s_rx, _ = hard_projector(x_rx_phase_compensated, alphabet)
     ser = compute_ser(s_tx, s_rx)
     print(f"{technique_name:24s} SER={ser:.4f}  "
           f"residual phase={np.rad2deg(theta_est):+.1f} deg")
 
-    # plot signal
     plt.figure()
     plt.plot(np.real(x_rx), np.imag(x_rx), ".", label="before phase correction")
     plt.plot(np.real(x_rx_phase_compensated), np.imag(x_rx_phase_compensated), ".", label="after phase correction")
