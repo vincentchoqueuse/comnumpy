@@ -406,6 +406,56 @@ class WDMMultiplexer(Processor):
     name: str = field(default="wdm mux", kw_only=True)
     phasors_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
 
+    def _warn_if_wider_than_its_slot(self, x: np.ndarray) -> None:
+        r"""Say so when a channel does not fit the bandwidth declared for it.
+
+        ``bandwidth_Hz`` is the grid's *occupied* bandwidth, so a pulse
+        shaped at roll-off :math:`\rho` needs :math:`R_s(1+\rho)`.
+        Writing the symbol rate is the natural mistake and an expensive
+        one: the demultiplexer's brick wall then cuts the skirts of the
+        pulse, the root-raised-cosine pair stops being Nyquist, and the
+        implementation floor of an 11-channel 32 GBd comb at
+        :math:`\rho = 0.01` falls from 54.1 dB to 33.5 dB -- for
+        **0.15 %** of the energy. It is a coherent effect, so the harm
+        is far larger than the fraction suggests, which is why the
+        threshold here is low.
+
+        The same measurement rises when the *shaping filter* is short,
+        because its truncation sidelobes spill too: on that comb, 0.13 %
+        for a clipped grid against 0.0004 % for a correct one at 4097
+        taps, but 0.18 % against 0.038 % at 1025 taps. The check
+        therefore reports "wider than its slot" without claiming which
+        of the two causes it is -- both are real, and the remedy differs.
+
+        The check belongs to the transmitter. At the receiver the same
+        measurement is dominated by amplified spontaneous emission,
+        which is white and fills the guard band whatever the grid says:
+        0.12 % of rejected energy after 700 km against 0.0004 % of
+        genuinely clipped signal, on the very comb this was written for.
+        """
+        spectrum = np.abs(np.fft.fft(x, axis=-1)) ** 2
+        freq = np.fft.fftfreq(x.shape[-1], d=1 / self.fs)
+        outside = np.abs(freq) > self.grid.bandwidth_Hz / 2
+        if not np.any(outside):
+            return
+        total = np.sum(spectrum, axis=-1)
+        spilled = np.sum(spectrum[..., outside], axis=-1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratio = np.where(total > 0, spilled / total, 0.0)
+        worst = float(np.max(ratio))
+        if worst > 1e-3:
+            logger.warning(
+                "a WDM channel is wider than the %.6g Hz the grid declares "
+                "for it: %.3f %% of its energy sits outside, and the "
+                "demultiplexer will cut it. Either bandwidth_Hz is too "
+                "narrow -- it is the *occupied* bandwidth, so a pulse shaped "
+                "at roll-off rho needs Rs*(1+rho), not Rs -- or the shaping "
+                "filter is too short and its truncation sidelobes are what "
+                "spills. The check cannot tell the two apart, and both are "
+                "worth knowing: a truncated Nyquist pair costs far more than "
+                "the fraction suggests.",
+                self.grid.bandwidth_Hz, 100 * worst)
+
     def prepare(self, x: np.ndarray) -> None:
         self.grid.validate_fs(self.fs)
         if x.ndim < 2:
@@ -419,6 +469,7 @@ class WDMMultiplexer(Processor):
                 f"grid has {self.grid.n_channels}), got {x.shape[-2]} -- "
                 f"the grid and the signal must describe the same comb")
         self.phasors_ = _mixing_phasors(self.grid, self.fs, x.shape[-1])
+        self._warn_if_wider_than_its_slot(x)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         assert self.phasors_ is not None
@@ -449,11 +500,14 @@ class WDMDemultiplexer(Processor):
     the grid's *occupied* bandwidth, so for a pulse shaped at roll-off
     :math:`\rho` it must be :math:`R_s(1 + \rho)` and not :math:`R_s`;
     setting it to the symbol rate clips the skirts of the pulse, which
-    costs far more than it looks -- measured on an 11-channel
-    32 GBd comb at :math:`\rho = 0.01`, an implementation floor of
-    33.5 dB instead of 54.1 dB. The block therefore measures how much
-    energy its own mask throws away and warns when that is more than a
-    thousandth.
+    costs far more than it looks -- measured on an 11-channel 32 GBd
+    comb at :math:`\rho = 0.01`, an implementation floor of 33.5 dB
+    instead of 54.1 dB. That mistake is caught by
+    :class:`WDMMultiplexer`, not here: at the receiver the amplified
+    spontaneous emission is white and fills the guard band, so measuring
+    the energy this mask rejects measures the **noise**, not the
+    clipping. Same comb, same grid: 0.12 % of the rejected energy after
+    700 km, against 0.0004 % of genuinely clipped signal.
 
     Conversely, once the mask is wide enough to pass the channel it
     changes nothing: the matched filter downstream does the selecting.
@@ -493,9 +547,6 @@ class WDMDemultiplexer(Processor):
         ``(C, N)`` mixing phasors, built in ``prepare`` (D23).
     mask_ : np.ndarray
         ``(N,)`` boolean DFT mask of the channel filter.
-    guard_ : np.ndarray
-        ``(N,)`` boolean DFT mask of the guard band the clipping check
-        watches: outside the channel, inside the half spacing.
 
     Raises
     ------
@@ -526,7 +577,6 @@ class WDMDemultiplexer(Processor):
     name: str = field(default="wdm demux", kw_only=True)
     phasors_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     mask_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
-    guard_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
         self.grid.validate_fs(self.fs)
@@ -541,41 +591,6 @@ class WDMDemultiplexer(Processor):
         self.phasors_ = _mixing_phasors(self.grid, self.fs, x.shape[-1])
         freq = np.fft.fftfreq(x.shape[-1], d=1 / self.fs)
         self.mask_ = np.abs(freq) <= self.grid.bandwidth_Hz / 2
-        # the guard band: past the channel edge but short of the next
-        # channel, so whatever lands there belongs to *this* one. With a
-        # single channel there is no neighbour and the whole rest of the
-        # band is its own.
-        spacing = self.grid.spacing_Hz
-        edge = self.fs if spacing is None else spacing
-        self.guard_ = (~self.mask_) & (np.abs(freq) < edge / 2)
-
-    def _warn_if_clipping(self, spectrum: np.ndarray) -> None:
-        """Say so when the brick wall is throwing *this* channel away.
-
-        The grid carries the *occupied* bandwidth, but ``bandwidth_Hz =
-        symbol rate`` is the natural thing to write and silently cuts
-        the roll-off skirts. Nothing in the grid knows the roll-off, so
-        the check is made on the energy actually rejected -- and only in
-        the guard band between the channel edge and the midpoint to the
-        next channel, because the energy further out is the neighbours',
-        which the mask exists to remove.
-        """
-        assert self.mask_ is not None and self.guard_ is not None
-        if not np.any(self.guard_):
-            return                    # the channels touch: no guard band
-        energy = np.abs(spectrum) ** 2
-        kept = np.sum(energy[..., self.mask_], axis=-1)
-        spilled = np.sum(energy[..., self.guard_], axis=-1)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            ratio = np.max(np.where(kept > 0, spilled / kept, 0.0))
-        if ratio > 1e-3:
-            logger.warning(
-                "the WDM channel filter is cutting into the signal: %.2f %% "
-                "of the channel energy sits just outside bandwidth_Hz=%.6g "
-                "Hz, in its own guard band. The grid's bandwidth is the "
-                "*occupied* bandwidth, so a pulse shaped at roll-off rho "
-                "needs Rs*(1+rho), not Rs.",
-                100 * float(ratio), self.grid.bandwidth_Hz)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         assert self.phasors_ is not None and self.mask_ is not None
@@ -585,6 +600,4 @@ class WDMDemultiplexer(Processor):
             mixed = x[..., None, :] * np.conj(phasors)
         else:
             mixed = x * np.conj(phasors)
-        spectrum = np.fft.fft(mixed, axis=-1)
-        self._warn_if_clipping(spectrum)
-        return np.fft.ifft(spectrum * self.mask_, axis=-1)
+        return np.fft.ifft(np.fft.fft(mixed, axis=-1) * self.mask_, axis=-1)

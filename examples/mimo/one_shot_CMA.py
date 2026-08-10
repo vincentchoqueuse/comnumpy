@@ -75,7 +75,12 @@ chain = Sequential([
             AWGN(sigma2=sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             DelayRemover(delay=N_h*4),
-            CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling, commuting_steps=commuting_steps, name="filter"),
+            CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling,
+                                           commuting_steps=commuting_steps,
+                                           # the block handed to process_after_iteration:
+                                           # the phase search below needs enough symbols
+                                           # to decide on, not the default 20
+                                           sub_block_length=500, name="filter"),
             DelayRemover(delay=int(0.9*N), name="tail"),
             ], taps=["filter", "tail"])
 
