@@ -23,6 +23,7 @@ Core
    sequences
    capacity
    information
+   shaping
    metrics
    utils
    validators

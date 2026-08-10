@@ -46,6 +46,42 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- Probabilistic shaping, in `core/shaping.py`. A uniform QAM loses up to
+  1.53 dB of the Gaussian capacity -- the shaping gap -- and closing it
+  needs two things, both provided. `maxwell_boltzmann` gives the target
+  distribution, which is not a modelling choice but what maximizing the
+  entropy under a power constraint *forces*; it is parameterized either
+  by lambda itself or by the entropy it must reach (D41), the second
+  being the useful one since the entropy is the rate.
+  `ConstantCompositionMatcher` (CCDM, Schulte-Böcherer 2016) and
+  `SphereShaper` (enumerative sphere shaping, Willems-Wuijts 1993,
+  Gültekin et al. 2020) turn uniform bits into that distribution. Both
+  are enumerative codes ranking and unranking a finite set with exact
+  integer arithmetic, so `decode(encode(bits)) == bits` holds by
+  construction rather than by tolerance, and the tests check it on
+  thousands of random inputs and exhaustively on a small code.
+
+  What they hold fixed differs, and so do their guarantees: CCDM emits
+  its composition in *every* block, ESS only keeps every block inside an
+  energy sphere -- which is a larger set at equal average energy, and is
+  measured here to carry a higher rate than the best constant
+  composition at short blocklengths, the reason it exists.
+
+  `shaping_gain_dB` measures what the shaping is worth, against the
+  continuous-uniform reference at equal entropy. Two properties pin the
+  definition: a uniform distribution gives exactly
+  `10*log10(M^2/(M^2-1))`, i.e. 0.28 dB at M=4 and 0.0007 dB at M=64, and
+  no distribution over any tested constellation exceeds
+  `10*log10(pi*e/6) = 1.5329` dB.
+
+  Defect found while writing it, and worth naming because it was silent:
+  `maxwell_boltzmann` returned a distribution whose entropy was *not*
+  the one requested when the target was unreachable. Points of equal
+  energy always keep equal probability, so a symmetric constellation
+  cannot be shaped below one bit per symbol whatever lambda does; the
+  bisection saturated and returned the floor without saying so. It now
+  refuses, and names both the floor and why it exists.
+
 - The pyright strict ratchet of D37 now covers **every** module of
   `src/comnumpy`, and `py.typed` ships with the package. Closing the
   last four -- `core/metrics.py`, `core/processors.py`,

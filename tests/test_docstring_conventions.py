@@ -57,6 +57,7 @@ CONVERTED_MODULES = [
     "comnumpy.optical.raman",
     "comnumpy.optical.fiber",
     "comnumpy.core.compensators",
+    "comnumpy.core.shaping",
 ]
 
 
