@@ -53,6 +53,10 @@ and nothing is explained twice.
      - :doc:`optical_fiber_nonlinearity`
      - A nonlinear channel: fibre propagation, and digital back-propagation
        to undo it.
+   * - 10
+     - :doc:`gn_model`
+     - The same fibre in closed form: how much nonlinear noise it makes, the
+       launch power that minimizes it, and a split-step run on top to check.
 
 If you are looking for one specific thing rather than a course, every page is
 self-contained enough to be read alone -- it will simply point back at the
@@ -73,3 +77,4 @@ The example scripts are also available on GitHub: `https://github.com/vincentcho
    coding
    shaping
    optical_fiber_nonlinearity
+   gn_model
