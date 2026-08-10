@@ -313,7 +313,12 @@ def plot_error_rate(x: np.ndarray,
     for name, values in curves.items():
         values = np.asarray(values, dtype=float)
         seen = values > 0
-        line, = ax.semilogy(abscissa[seen], values[seen], "o",
+        # A measurement that has a reference curve is drawn as markers
+        # alone, so that the pair reads as one statement rather than as
+        # two curves; one that has none is joined, because a scatter of
+        # points is not a curve the eye can follow.
+        style = "o" if name in reference else "o-"
+        line, = ax.semilogy(abscissa[seen], values[seen], style,
                             fillstyle="none",
                             label=name or "simulation")
         colors[name] = line.get_color()
