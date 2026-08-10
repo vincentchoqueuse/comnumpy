@@ -16,7 +16,6 @@ from comnumpy.mimo.utils import rayleigh_channel
 
 img_dir = "../../docs/examples/img/"
 
-# Parameters
 N = 1000
 N_r, N_t = 3, 2
 M = 4
@@ -48,23 +47,15 @@ detectors = {
     "OSIC": OrderedSuccessiveInterferenceCancellationDetector(
         alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="detector"),
     "ML": MaximumLikelihoodDetector(alphabet, H=H, name="detector"),
-    # exactly the ML decision, reached by pruning a tree instead of
-    # scoring every candidate: the two curves must land on top of
-    # each other, and the difference is entirely in the cost
     "SD": SphereDecoder(alphabet, H=H, name="detector"),
 }
 chains = {name: link(detector) for name, detector in detectors.items()}
 
-# One shot, on one channel realization. Every chain is given the same
-# seed, so they see the same symbols and the same noise: the only
-# difference between the four numbers is the detector.
 for name, chain in chains.items():
     chain.seed(0)
     detected = chain((N_t, N))
     print(f"* detector {name:5s}: ser={compute_ser(chain.tap('tx'), detected):.4f}")
 
-# Figure 1: what each receive antenna sees -- the streams are summed by
-# the channel, so no constellation is visible on any of them
 Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
@@ -75,9 +66,6 @@ for index in range(N_r):
     axes1[index].set_ylim([-2, 2])
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
-# Figure 2: the same run after zero forcing. The detector applies the
-# pseudo-inverse and then decides; `linear_estimator` is that first step
-# alone, which is what a constellation plot needs.
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
@@ -89,10 +77,6 @@ for index in range(N_t):
     axes2[index].set_ylim([-2, 2])
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
-# Monte Carlo evaluation. Averaging over fading means running the chain
-# once per channel realization, and that is a sweep whose parameter is
-# the channel: one point sets the matrix the signal goes through *and*
-# the one the detector inverts, which is what a realization is.
 snr_dB_list = np.arange(0, 20, 3)
 n_channels = 200
 n_symbols = 200
@@ -108,8 +92,6 @@ def average_ser(name, chain, snr_dB, seed=0):
     noise_variance = N_t * 10 ** (-snr_dB / 10)
     params = {"noise.sigma2": noise_variance}
     if name in NOISE_AWARE:
-        # ZF and ML have no sigma2 at all: one ignores the noise by
-        # construction, the other only compares distances
         params["detector.sigma2"] = noise_variance
     chain.set_params(**params)
     results = sweep(chain, ("channel.H", "detector.H"),
@@ -124,9 +106,6 @@ curves = {name: [average_ser(name, chain, snr_dB) for snr_dB in snr_dB_list]
 for name, values in curves.items():
     print(f"{name:5s} " + " ".join(f"{value:.4f}" for value in values))
 
-# Figure 3: the four detectors on one figure. There is no closed form
-# here -- ZF over Rayleigh has one (see the Alamouti tutorial), the
-# three others do not -- so the plot carries measurements only.
 ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
                      title=f"{N_r}x{N_t} MIMO, {M}-PSK, "
                            f"{n_channels} channel draws per point")
@@ -134,11 +113,6 @@ ax.set_ylim(1e-4, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
 
-# What the sphere decoder buys, where it matters. The chain above is
-# 4-PSK on two streams -- 16 candidates, which an exhaustive search
-# scores in one matrix product. The interesting regime is the one where
-# that product no longer fits: 16-QAM on four streams is 65536
-# candidates per symbol, 64-QAM on four is 16.7 million.
 print("\nvisited nodes per detected vector (16-QAM, 4x4)")
 big_alphabet = get_alphabet("QAM", 16)
 big_H = rayleigh_channel(4, 4, seed=2)
@@ -176,9 +150,6 @@ ax4.grid(True, which="both")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig4.png")
 
-# The chain diagrams this tutorial shows are exported from the chains
-# themselves (D33c), so the picture cannot drift from the code -- the
-# smoke test compares what a run writes with what the page displays.
 mermaid_dir = "../../docs/examples/mermaid/"
 for diagram_name, diagram_chain in [("mimo_zf", chains["ZF"])]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:

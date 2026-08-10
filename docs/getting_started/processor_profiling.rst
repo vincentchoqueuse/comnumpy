@@ -23,7 +23,7 @@ We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
-   :lines: 1-13
+   :lines: 1-14
 
 Define Parameters
 """""""""""""""""
@@ -32,7 +32,7 @@ Next, we define the communication and channel parameters:
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
-   :lines: 16-35
+   :lines: 17-36
 
 
 OFDM Communication Chain
@@ -46,7 +46,7 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
-   :lines: 37-56
+   :lines: 38-55
 
 The chain is composed of the following processors:
 
@@ -94,7 +94,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python
-   :lines: 60-66
+   :lines: 60-63
 
 
 Profiling the Chain

@@ -50,7 +50,7 @@ the number of transmitted symbols, and the signal-to-noise ratio (SNR):
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 12-19
+   :lines: 12-18
 
 
 AWGN Communication Chain
@@ -76,11 +76,11 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 49-55
+   :lines: 42-45
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 20-26
+   :lines: 19-24
 
 
 Four processors, and each one is worth a sentence -- these four come back in
@@ -116,7 +116,7 @@ detected symbol indices:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 28-29
+   :lines: 26-26
 
 Evaluate Performance
 """"""""""""""""""""
@@ -132,7 +132,7 @@ but it does mean the order of the two lines matters.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 31-41
+   :lines: 28-35
 
 which prints:
 
@@ -157,7 +157,7 @@ We read the symbols recorded at the ``"awgn"`` tap and hand them to
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 43-48
+   :lines: 37-41
 
 
 .. image:: img/first_simulation_fig1.png

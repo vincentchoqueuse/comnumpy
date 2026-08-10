@@ -127,7 +127,7 @@ The code is taken from the registry by name, exactly as the constellation is tak
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 19-24
+   :lines: 19-23
 
 The scaling by :math:`1/\sqrt{N_t}` matters for the comparison that follows. Two antennas each transmitting :math:`|s|^2` would spend twice the power of a single antenna, which is a 3 dB advantage that has nothing to do with coding. Splitting the power keeps the comparison about diversity alone.
 
@@ -138,7 +138,7 @@ The whole link is **one** ``Sequential``: generator, mapper, power split, space-
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 26-42
+   :lines: 25-40
 
 Two chain services are used here rather than reimplemented. ``seed`` gives every stochastic block an independent child seed, so the run is reproducible; ``taps`` records the output of the named blocks without inserting anything into the chain.
 
@@ -153,7 +153,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 183-189
+   :lines: 158-161
 
 One-Shot Simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -165,7 +165,7 @@ What each block costs
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 44-45
+   :lines: 42-42
 
 .. code::
 
@@ -189,7 +189,7 @@ The two panels are two taps of the same run:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 47-62
+   :lines: 44-58
 
 .. image:: img/one_shot_alamouti_fig1.png
    :width: 100%
@@ -213,7 +213,7 @@ The comparison needs a link without diversity and a link with receive diversity.
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 64-85
+   :lines: 60-77
 
 Sweep the channel
 """""""""""""""""
@@ -222,7 +222,7 @@ Averaging over fading means running the chain once per channel realization, and 
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 87-104
+   :lines: 79-96
 
 .. note ::
 
@@ -235,7 +235,7 @@ Averaging over fading means running the chain once per channel realization, and 
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 106-125
+   :lines: 98-110
 
 Plot the curves against their closed forms
 """"""""""""""""""""""""""""""""""""""""""
@@ -254,7 +254,7 @@ Alamouti, :math:`N_t` Tx      :math:`N_t N_r`        :math:`\bar\gamma / N_t`
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 127-144
+   :lines: 112-125
 
 .. image:: img/one_shot_alamouti_fig2.png
    :width: 100%
@@ -267,7 +267,7 @@ The two statements the tutorial is about are exact, so they are taken from the e
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 146-181
+   :lines: 127-156
 
 .. code::
 

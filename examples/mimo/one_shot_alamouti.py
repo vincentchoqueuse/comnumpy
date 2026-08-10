@@ -16,14 +16,12 @@ from comnumpy.mimo.utils import rayleigh_channel
 
 img_dir = "../../docs/examples/img/"
 
-# Parameters
 M = 4
 alphabet = get_alphabet("PSK", M)
 code = get_code("alamouti")
 power = 1 / np.sqrt(code.n_tx)          # split the power over the antennas
 sigma2 = 0.2
 
-# The Alamouti link, as one chain
 H = rayleigh_channel(1, 2, seed=42)
 alamouti = Sequential([
     SymbolGenerator(M, name="tx"),
@@ -41,10 +39,8 @@ alamouti.seed(7)                        # every stochastic block, reproducibly
 s_rx = alamouti(500 * code.n_symbols)
 print(f"one-shot SER: {compute_ser(alamouti.tap('tx'), s_rx):.4f}")
 
-# what each block costs and what it hands to the next one (D33b)
 alamouti.summary(500 * code.n_symbols)
 
-# Figure 1: the tapped signals, before and after combining
 received = alamouti.tap("noise")[0]
 combined = alamouti.tap("detector") / power
 fig1, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
@@ -61,10 +57,6 @@ for ax in (ax_left, ax_right):
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig1.png")
 
-# The two references are chains differing only in their blocks. Zero
-# forcing on an (N_r, 1) channel *is* maximum ratio combining -- the
-# pseudo-inverse of a column vector is h^H / ||h||^2 -- so one
-# LinearDetector covers both the no-diversity and the diversity case.
 siso_H = rayleigh_channel(1, 1, seed=1)
 siso = Sequential([
     SymbolGenerator(M, name="tx"),
@@ -103,13 +95,6 @@ def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed=0):
     return float(np.mean(results["ser"]))
 
 
-# Monte-Carlo comparison, at equal total transmit power. The accuracy
-# of an average over fading is set by the number of *channel* draws, not
-# by the symbol count -- the error rate is dominated by the rare deep
-# fades, and an under-sampled tail reads systematically low. Hence more
-# draws where the curve is lower, and a range that stops where this
-# budget stays honest; validation/mimo_diversity_ber.py carries the
-# confrontation to 18 dB with twenty times the draws.
 snr_dB_list = np.arange(4, 25, 4)
 draws = [1500, 2000, 2500, 3500, 5000, 6000]
 n_symbols = 80
@@ -124,10 +109,6 @@ curves = {
                         for value, count in zip(snr_dB_list, draws, strict=True)],
 }
 
-# Figure 2: the measurements, and the closed forms they must reach.
-# One expression covers the three: L branches at the per-branch SNR,
-# and a transmit scheme divides that SNR by N_t because it splits the
-# power -- which is the 3 dB Alamouti pays against receive diversity.
 fine = np.linspace(snr_dB_list[0], snr_dB_list[-1], 100)
 per_bit = 10 ** (fine / 10) / np.log2(M)
 theory = {
@@ -143,10 +124,6 @@ ax.set_ylim(1e-5, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 
-# The two quantitative statements come from the closed form, which is
-# exact and free; the simulation is there to confront them. The last
-# points read low on purpose: 6000 draws still under-sample the deep
-# fades that dominate the average at 24 dB.
 exact = {name: compute_ser_rayleigh_psk(
     M, 10 ** (snr_dB_list / 10) / np.log2(M) / (code.n_tx if "Alamouti" in name
                                                 else 1),
@@ -157,7 +134,6 @@ for name, values in curves.items():
     print(f"{name:28s} measured / closed form  "
           + " ".join(f"{value:.2f}" for value in ratio))
 
-# the diversity order, read off the closed form at high SNR
 high = np.array([30.0, 40.0])
 for name in curves:
     reference = compute_ser_rayleigh_psk(
@@ -167,7 +143,6 @@ for name in curves:
     slope = np.polyfit(high / 10, np.log10(reference), 1)[0]
     print(f"{name:28s} diversity order {-slope:.2f}")
 
-# and the 3 dB Alamouti pays for transmitting blind, exactly
 alamouti_snr = 10 ** (np.linspace(0, 30, 601) / 10) / np.log2(M)
 target = 1e-3
 of = {"MRC": compute_ser_rayleigh_psk(M, alamouti_snr, diversity=2),
@@ -180,9 +155,6 @@ print(f"SNR for SER = {target:g}: MRC {needed['MRC']:.1f} dB, Alamouti "
       f"{needed['Alamouti']:.1f} dB, gap {needed['Alamouti'] - needed['MRC']:.2f} dB "
       f"(10log10(N_t) = {10 * np.log10(code.n_tx):.2f} dB)")
 
-# The chain diagrams this tutorial shows are exported from the chains
-# themselves (D33c), so the picture cannot drift from the code -- the
-# smoke test compares what a run writes with what the page displays.
 mermaid_dir = "../../docs/examples/mermaid/"
 for diagram_name, diagram_chain in [("alamouti", alamouti), ("mrc", mrc)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
