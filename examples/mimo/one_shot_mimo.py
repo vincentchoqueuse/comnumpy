@@ -142,19 +142,24 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
 print("\nvisited nodes per detected vector (16-QAM, 4x4)")
 big_alphabet = get_alphabet("QAM", 16)
 big_H = rayleigh_channel(4, 4, seed=2)
-big_rng = np.random.default_rng(4)
-sent = big_rng.integers(0, 16, size=(4, 400))
-transmitted = big_alphabet[sent]
+big_decoder = SphereDecoder(big_alphabet, H=big_H, name="detector")
+big_chain = Sequential([
+    SymbolGenerator(16, name="tx"),
+    SymbolMapper(big_alphabet),
+    FlatMIMOChannel(big_H, name="channel"),
+    AWGN(sigma2=1.0, name="noise"),
+    big_decoder,
+], taps=["tx"], name="4x4 MIMO, sphere decoder")
+
 node_counts = []
 for snr_dB in snr_dB_list:
-    sigma = np.sqrt(4 * 10 ** (-snr_dB / 10))
-    noise = big_rng.standard_normal((4, 400)) + 1j * big_rng.standard_normal((4, 400))
-    received = big_H @ transmitted + sigma / np.sqrt(2) * noise
-    decoder = SphereDecoder(big_alphabet, H=big_H)
-    errors = np.mean(decoder(received) != sent)
-    node_counts.append(decoder.nodes_)
-    print(f"  {snr_dB:2d} dB   {decoder.nodes_:8.1f} nodes   "
-          f"{decoder.nodes_ / 16 ** 4:.2e} of the exhaustive search   "
+    big_chain.seed(4)
+    big_chain.set_params(**{"noise.sigma2": 4 * 10 ** (-snr_dB / 10)})
+    detected = big_chain((4, 400))
+    errors = compute_ser(big_chain.tap("tx"), detected)
+    node_counts.append(big_decoder.nodes_)
+    print(f"  {snr_dB:2d} dB   {big_decoder.nodes_:8.1f} nodes   "
+          f"{big_decoder.nodes_ / 16 ** 4:.2e} of the exhaustive search   "
           f"SER {errors:.4f}")
 
 fig4, ax4 = plt.subplots(figsize=(7, 4))
