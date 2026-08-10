@@ -794,9 +794,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ISI-free at the symbol instants. The same ``SRRCFilter`` instance is</span>
 <span class="sd">    therefore placed at the transmitter and at the receiver.</span>
 
-<span class="sd">    Axes: *axis -1* -- with ``method=&quot;lfilter&quot;`` the filter runs along the</span>
-<span class="sd">    last axis and broadcasts over the leading ones; with ``method=&quot;fft&quot;``</span>
-<span class="sd">    the input must be 1D ``(N,)``.</span>
+<span class="sd">    Axes: *axis -1* -- both methods filter along the last axis and</span>
+<span class="sd">    broadcast over the leading ones, so a polarization pair</span>
+<span class="sd">    ``(..., 2, N)`` is shaped one polarization at a time.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -922,10 +922,14 @@ window.runMermaid = runMermaid;</script>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># &quot;fft&quot; -- validated in __post_init__</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span>  <span class="c1"># local import (D36), cupy-compatible (D3)</span>
-            <span class="n">NFFT</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="n">fft_x</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">)</span>
+            <span class="c1"># x.shape[-1], not len(x): a polarization pair (..., 2, N)</span>
+            <span class="c1"># would otherwise transform two samples instead of N and</span>
+            <span class="c1"># fail inside H() with an unrelated message. The response is</span>
+            <span class="c1"># (NFFT,) and broadcasts over the leading axes.</span>
+            <span class="n">NFFT</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">fft_x</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">fft_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">NFFT</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">*</span><span class="n">ifft</span><span class="p">(</span><span class="n">fft_x</span><span class="o">*</span><span class="n">fft_h</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">*</span><span class="n">ifft</span><span class="p">(</span><span class="n">fft_x</span><span class="o">*</span><span class="n">fft_h</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">y</span></div>
 
