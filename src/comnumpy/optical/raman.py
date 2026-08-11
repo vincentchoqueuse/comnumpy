@@ -251,10 +251,20 @@ class RamanGainSpectrum:
 
         References
         ----------
-        D. Marcuse, "Loss analysis of single-mode fiber splices", Bell
-        Syst. Tech. J., vol. 56, no. 5, 1977 (Gaussian spot size);
-        A. D'Amico et al., J. Lightwave Technol., vol. 40,
-        pp. 3499-3511, 2022, Section III.D.
+        The Gaussian-mode form :math:`w = a/\sqrt{\ln V}` and the
+        arithmetic-mean overlap are transcribed from GNPy
+        (``gnpy/core/parameters.py``, ``effective_area_scaling`` and
+        ``effective_area_overlap``, BSD-3-Clause), which does not give a
+        source for them; the one-parameter law above is that model with
+        the index contrast eliminated, and is derived in
+        ``validation/optical_raman_gnpy.py`` rather than taken from a
+        paper. The gain profile it is applied to comes from A. D'Amico
+        et al., J. Lightwave Technol., vol. 40, pp. 3499-3511, 2022,
+        Section III.D.
+
+        The confirmation that matters is empirical rather than
+        bibliographic: with this law the coupling coefficients match
+        GNPy's element by element on the gain side, ratio 1.0000.
 
         Examples
         --------
