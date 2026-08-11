@@ -61,6 +61,15 @@ one release; there is no compatibility layer.
   all of them. This one is dominated by the shape, and it found a
   missing effective-area scaling on its first run.
 
+  It also leaves a residual of +0.91 dB that is **not** explained. The
+  obvious suspect -- GNPy defaulting to a perturbative solver where this
+  library is exact -- was tested by installing GNPy and re-running its
+  own reference case at perturbative orders 1 to 4 and with its
+  `numerical` method. The harness reproduces their shipped file to
+  5e-16 and all five settings agree to the last digit, so the expansion
+  is already converged and the gap is ours. Recorded as an open
+  question with the residual bounded, rather than closed with a story.
+
 - `comnumpy.optical.gn_model`: the **Gaussian Noise model** in closed
   form -- `gn_model_psi` (eq. 123 of arXiv:1209.0394), `gn_model_nli_power`
   (eq. 120), `gn_model_snr` and `optimal_launch_power`. It answers "how
