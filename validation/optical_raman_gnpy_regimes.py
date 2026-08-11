@@ -59,8 +59,7 @@ import numpy as np
 from comnumpy.optical.raman import (PLANCK, _coupling_matrix,
                                     _photon_occupancy, solve_raman)
 
-from optical_raman_gnpy import (CHANNEL_W, CORE_RADIUS_um, LENGTH_KM,
-                                LOSS_dB_KM, REFERENCE_AREA_um2, REFERENCE_Hz,
+from optical_raman_gnpy import (CHANNEL_W, LENGTH_KM, LOSS_dB_KM,
                                 SPEED_OF_LIGHT, TEMPERATURE_K,
                                 measured_spectrum)
 
@@ -172,7 +171,7 @@ def check_the_residual_is_ordered_by_depletion(residuals):
     assert values == sorted(values), values
     print("\nPASS the residual is ordered by depletion, not scattered:")
     print("       " + "  <  ".join(f"{name} {value:.3f}"
-                                   for name, value in zip(order, values)))
+                                   for name, value in zip(order, values, strict=True)))
     print("       a wrong coefficient would not sort itself this way; a term "
           "that only exists")
     print("       when the pump is depleted is the one thing that would")

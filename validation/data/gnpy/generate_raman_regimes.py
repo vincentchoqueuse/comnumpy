@@ -99,7 +99,7 @@ def main():
         drift = np.abs(10 * np.log10(fine.power_profile[:n, -1]
                                      / coarse.power_profile[:n, -1])).max()
         print(f"{name:15s} {n:3d} channels, 20 m vs 5 m: {drift:.3f} dB")
-        for frequency, power in zip(fine.frequency[:n], fine.power_profile[:n, -1]):
+        for frequency, power in zip(fine.frequency[:n], fine.power_profile[:n, -1], strict=True):
             rows.append(f"{name},{frequency:.6e},{power:.12e}")
     with open("raman_regimes_expected.csv", "w") as handle:
         handle.write("\n".join(rows) + "\n")
@@ -113,7 +113,7 @@ def main():
     ase = (RamanSolver.calculate_spontaneous_raman_scattering(
         spectral_info, srs, fibre) * srs.loss_profile[:n, -1])
     rows = ["frequency_Hz,ase_W"]
-    for frequency, power in zip(srs.frequency[:n], ase):
+    for frequency, power in zip(srs.frequency[:n], ase, strict=True):
         rows.append(f"{frequency:.6e},{power:.12e}")
     with open("raman_ase_expected.csv", "w") as handle:
         handle.write("\n".join(rows) + "\n")
