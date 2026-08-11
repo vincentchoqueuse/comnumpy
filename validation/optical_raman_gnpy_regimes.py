@@ -55,10 +55,8 @@ difference.
 import pathlib
 
 import numpy as np
-from scipy.integrate import trapezoid
 
-from comnumpy.optical.raman import (PLANCK, _coupling_matrix,
-                                    _photon_occupancy, solve_raman)
+from comnumpy.optical.raman import _coupling_matrix, solve_raman
 
 from optical_raman_gnpy import (CHANNEL_W, LENGTH_KM, LOSS_dB_KM,
                                 SPEED_OF_LIGHT, TEMPERATURE_K,
@@ -190,24 +188,11 @@ def check_the_spontaneous_emission(spectrum, peak_W_km):
     solution = ours("counter", frequency, spectrum, peak_W_km, power_conserving)
     full = np.asarray(solution.ase_W)[:, -1]
 
-    # the same integrating factor GNPy uses, restricted to its source term
-    pumps = np.array([f for f, _ in CASES["counter"][0]])
-    waves = np.concatenate([frequency, pumps])
-    coupling = power_conserving(waves, peak_W_km, spectrum)
-    signal = np.asarray(solution.signal_W)
-    loss = signal / signal[:, :1]
-    pump_profile = np.asarray(solution.pump_backward_W)
-    pump_only = np.zeros(frequency.size)
-    for index in range(pumps.size):
-        shift = waves[frequency.size + index] - frequency
-        source = (2 * PLANCK * frequency * BAUD_RATE
-                  * coupling[:frequency.size, frequency.size + index]
-                  * _photon_occupancy(shift, TEMPERATURE_K)) * (shift > 0)
-        # scipy's, not numpy's: NumPy 2 renamed trapz to trapezoid, and this
-        # repository supports both sides of that rename
-        pump_only += source * trapezoid(
-            pump_profile[index][None, :] / loss, np.asarray(solution.z_km), axis=1)
-    pump_only *= loss[:, -1]
+    # GNPy's source term is the pumps alone; ours also seeds each channel
+    # from every channel above it. RamanSolution splits the two by
+    # superposition, which is exact rather than approximate: the ASE
+    # equation is linear in the ASE, so the parts add back to the total.
+    pump_only = np.asarray(solution.ase_from_pumps_W)[:, -1]
 
     shared = 10 * np.log10(pump_only / theirs)
     extra = 10 * np.log10(full / pump_only)
