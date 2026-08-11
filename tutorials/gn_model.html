@@ -764,10 +764,13 @@ window.runMermaid = runMermaid;</script>
   <section id="the-gaussian-noise-model">
 <h1>The Gaussian Noise Model<a class="headerlink" href="#the-gaussian-noise-model" title="Link to this heading">#</a></h1>
 <p>In this tutorial we answer the question every optical link designer has to
-answer – <strong>how much power should I launch?</strong> – twice. Once by simulating
-the fibre, which takes a second per point, and once with a closed-form
-expression that takes microseconds. Then we put the two on the same axes and
-look at how close they land.</p>
+answer – <strong>how much power should I launch?</strong> – twice, in that order. First
+with closed-form expressions that take microseconds and propagate nothing at
+all. Then by actually simulating the fibre, at about a second per point, to
+find out whether the first answer was any good.</p>
+<p>That order matters. The GN model is a <em>prediction</em>, and a prediction has to
+be stated before it is checked; otherwise the check is a curve fit with extra
+steps.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Before you start.</strong> <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Optical Fiber Link Simulation Tutorial</span></a> propagated a
@@ -781,11 +784,12 @@ damage.</p>
 <ul class="simple">
 <li><p>Why an optical link has an <em>optimum</em> launch power, and why turning the
 laser up eventually makes things worse.</p></li>
-<li><p>What the Gaussian Noise (GN) model is, in one equation, and how to use it.</p></li>
-<li><p>How to read the model’s three characteristic behaviours: the cube law, the
-half-the-ASE rule, and the logarithmic price of bandwidth.</p></li>
-<li><p>How well a closed form can replace a split-step simulation – measured, on
-the same figure.</p></li>
+<li><p>What the Gaussian Noise (GN) model is, in one equation, and how to use it
+without simulating anything.</p></li>
+<li><p>Where the factor of two lives in a dual-polarization link – in the launch
+power, in the amplifier noise, and in the model’s own coefficient.</p></li>
+<li><p>How well a closed form replaces a split-step simulation – measured, on
+the same axes.</p></li>
 <li><p>The one thing the model cannot see, and how big it is.</p></li>
 </ul>
 <section id="introduction">
@@ -835,23 +839,24 @@ largest one. Everything below follows from that single expression.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.gn_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">gn_model_nli_power</span><span class="p">,</span> <span class="n">gn_model_snr</span><span class="p">,</span>
                                        <span class="n">optimal_launch_power</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberLink</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">dbm_to_watt</span><span class="p">,</span> <span class="n">watt_to_dbm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">compute_erbium_doped_fiber_N_ase</span><span class="p">,</span>
+                                    <span class="n">dbm_to_watt</span><span class="p">,</span> <span class="n">watt_to_dbm</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.wdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">WDMGrid</span>
 </pre></div>
 </div>
 </section>
 <section id="define-parameters">
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
-<p>Five 100 km spans of standard single-mode fibre, PM-16QAM at 32 GBd. The
-stimulus is <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N_SYM)</span></code>: two polarizations, one row each. That is not
-decoration – it is the case the model is written for, and the warning below
-says what happens if you forget it.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<p>Five 100 km spans of standard single-mode fibre, PM-16QAM at 32 GBd on a
+50 GHz grid.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
+
 <span class="n">SMF</span> <span class="o">=</span> <span class="n">FiberSpec</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">cd_coefficient</span><span class="o">=</span><span class="mf">17.0</span><span class="p">,</span> <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">)</span>
 <span class="n">BAUD</span> <span class="o">=</span> <span class="mf">32e9</span>
 <span class="n">SPAN_KM</span> <span class="o">=</span> <span class="mf">100.0</span>
 <span class="n">N_SPANS</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">NF_dB</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="n">SPACING</span> <span class="o">=</span> <span class="mf">50e9</span>
 
 <span class="n">OS</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">N_SYM</span> <span class="o">=</span> <span class="mi">4096</span>
@@ -862,14 +867,209 @@ says what happens if you forget it.</p>
 </div>
 </section>
 </section>
-<section id="the-chain">
-<h2>The chain<a class="headerlink" href="#the-chain" title="Link to this heading">#</a></h2>
-<p>The whole link is one <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequential</span></code>: source, mapper,
-pulse shaping, launch amplifier, fibre, linear back-propagation, matched
-filter, sampler. Nothing in it is specific to this tutorial – it is the
-chain of <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Optical Fiber Link Simulation Tutorial</span></a> with two blocks named so that the
-rest of the page can reach them.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">launch_gain</span><span class="p">(</span><span class="n">power_W</span><span class="p">):</span>
+<section id="part-1-the-prediction">
+<h2>Part 1: the prediction<a class="headerlink" href="#part-1-the-prediction" title="Link to this heading">#</a></h2>
+<p>Nothing in this part propagates a sample. Three closed forms answer the
+design question, and each is a function the library already provides.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Part 1 -- the prediction, with no signal propagated at all</span>
+<span class="c1"># ===========================================================================</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">comb</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The channel layout, as an object rather than an arithmetic expression.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">WDMGrid</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="o">=</span><span class="n">SPACING</span><span class="p">,</span>
+                           <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">BAUD</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ROLLOFF</span><span class="p">),</span>
+                           <span class="n">center_Hz</span><span class="o">=</span><span class="n">SMF</span><span class="o">.</span><span class="n">carrier_frequency_Hz</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">comb_eta</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The eta of P_NLI = eta P^3, for a comb of identical channels.&quot;&quot;&quot;</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">comb</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span>
+    <span class="n">nli</span> <span class="o">=</span> <span class="n">gn_model_nli_power</span><span class="p">(</span><span class="n">SMF</span><span class="p">,</span> <span class="n">span_length_km</span><span class="o">=</span><span class="n">SPAN_KM</span><span class="p">,</span> <span class="n">n_spans</span><span class="o">=</span><span class="n">N_SPANS</span><span class="p">,</span>
+                             <span class="n">powers_W</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span>
+                             <span class="n">frequencies_Hz</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">),</span>
+                             <span class="n">baud_rates_Hz</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">BAUD</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">nli</span><span class="p">[</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">analytic_ase</span><span class="p">(</span><span class="n">n_spans</span><span class="o">=</span><span class="n">N_SPANS</span><span class="p">,</span> <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">BAUD</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Amplifier noise in the channel, over both polarizations.</span>
+
+<span class="sd">    ``compute_erbium_doped_fiber_N_ase`` returns the one-sided spectral</span>
+<span class="sd">    density of a single amplifier **per polarization**; the factor two</span>
+<span class="sd">    is the second polarization, which carries its own independent noise</span>
+<span class="sd">    and is the term the channel-power convention makes easy to forget.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">density</span> <span class="o">=</span> <span class="n">compute_erbium_doped_fiber_N_ase</span><span class="p">(</span><span class="n">SMF</span><span class="o">.</span><span class="n">alpha_dB</span><span class="p">,</span> <span class="n">SPAN_KM</span><span class="p">,</span> <span class="n">NF_dB</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_spans</span> <span class="o">*</span> <span class="n">density</span> <span class="o">*</span> <span class="n">bandwidth_Hz</span>
+
+</pre></div>
+</div>
+<p>Three things deserve a word.</p>
+<p><code class="docutils literal notranslate"><span class="pre">comb</span></code> returns a <a class="reference internal" href="../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid" title="comnumpy.optical.wdm.WDMGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">WDMGrid</span></code></a> rather than an
+array of frequencies. A grid is an object that can be asked questions – its
+guard band, the sampling rate a simulation of it would need – and the rest
+of this page asks it several.</p>
+<p><code class="docutils literal notranslate"><span class="pre">comb_eta</span></code> passes <strong>channel</strong> powers, not per-polarization powers. That is
+the GN model’s convention, and the first of three places a factor of two
+hides in this tutorial.</p>
+<p><code class="docutils literal notranslate"><span class="pre">analytic_ase</span></code> is the second. It calls
+<a class="reference internal" href="../documentation/optical/utils.html#comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase" title="comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_erbium_doped_fiber_N_ase()</span></code></a>, which is
+<em>the same function</em> <a class="reference internal" href="../documentation/optical/links.html#comnumpy.optical.links.FiberLink" title="comnumpy.optical.links.FiberLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code></a> uses to
+generate the noise it adds during propagation. That is deliberate: in Part 2
+this prediction is compared against a measurement through the whole chain,
+and had the prediction used a formula retyped from a textbook, the comparison
+would only be checking the transcription. Using the library’s own function
+makes the comparison test the <em>chain</em> instead – the spectral density, the
+bandwidth, the two polarizations, the matched filter.</p>
+<p>The factor two in <code class="docutils literal notranslate"><span class="pre">analytic_ase</span></code> is the polarization: the function returns
+the density for one, and an amplifier emits into both, each with its own
+independent noise.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>The 3 dB that becomes 9 dB.</strong> <code class="docutils literal notranslate"><span class="pre">power_W</span></code> is the power of the
+<em>channel</em>, summed over both polarizations, because that is the convention
+the GN model uses. Each polarization therefore carries half of it, which
+is what <code class="docutils literal notranslate"><span class="pre">launch_gain</span></code> is for in Part 2. Give each polarization the full
+<code class="docutils literal notranslate"><span class="pre">power_W</span></code> instead and you launch 3 dB more than you think; since the
+nonlinear interference goes as the cube of the power, your simulation
+then reports <strong>9 dB</strong> more of it than the model predicts, and the model
+looks broken when it is not.</p>
+<p>The same trap has a third door, the model’s own coefficient.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code> reads the <em>shape</em> of the field to
+decide which equation to integrate: a field <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code> gets the
+Manakov equation, which is what a real fibre with random birefringence
+does and what the model’s 16/27 coefficient assumes; a one-dimensional
+field gets the scalar equation instead, which produces 27/8 – <strong>5.3 dB</strong>
+– more interference at the same total power. If you must compare against
+a scalar simulation, tell the model so with
+<code class="docutils literal notranslate"><span class="pre">gn_model_nli_power(...,</span> <span class="pre">polarizations=1)</span></code>.</p>
+</div>
+<section id="what-the-model-is-looking-at">
+<h3>What the model is looking at<a class="headerlink" href="#what-the-model-is-looking-at" title="Link to this heading">#</a></h3>
+<p>A grid is a layout, so <a class="reference internal" href="../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.plot" title="comnumpy.optical.wdm.WDMGrid.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> draws it
+directly – no signal synthesised, no spectrum estimated, and no pulse-shape
+roll-off smearing the very guard band the figure exists to show.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">grid</span> <span class="o">=</span> <span class="n">comb</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">grid</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cut</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/gn_model_fig1.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;comb: </span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels, </span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">guard_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz of &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;guard, </span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GHz to simulate&quot;</span><span class="p">)</span>
+
+<span class="n">eta</span> <span class="o">=</span> <span class="n">comb_eta</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ase_W</span> <span class="o">=</span> <span class="n">analytic_ase</span><span class="p">()</span>
+<span class="n">best_power</span><span class="p">,</span> <span class="n">best_snr</span> <span class="o">=</span> <span class="n">optimal_launch_power</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">eta      = </span><span class="si">{</span><span class="n">eta</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> /W^2      (GN model, one channel)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;P_ASE    = </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm     &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">N_SPANS</span><span class="si">}</span><span class="s2"> spans, NF = </span><span class="si">{</span><span class="n">NF_dB</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> dB, both polarizations)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;optimum  = </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm     &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;SNR = </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">best_snr</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;check    : eta P^3 / (P_ASE/2) = &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">eta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">best_power</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">ase_W</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/gn_model_fig1.png"><img alt="../_images/gn_model_fig1.png" src="../_images/gn_model_fig1.png" style="width: 100%;" />
+</a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comb</span><span class="p">:</span> <span class="mi">9</span> <span class="n">channels</span><span class="p">,</span> <span class="mf">14.8</span> <span class="n">GHz</span> <span class="n">of</span> <span class="n">guard</span><span class="p">,</span> <span class="mi">435</span> <span class="n">GHz</span> <span class="n">to</span> <span class="n">simulate</span>
+
+<span class="n">eta</span>      <span class="o">=</span> <span class="mi">1223</span> <span class="o">/</span><span class="n">W</span><span class="o">^</span><span class="mi">2</span>      <span class="p">(</span><span class="n">GN</span> <span class="n">model</span><span class="p">,</span> <span class="n">one</span> <span class="n">channel</span><span class="p">)</span>
+<span class="n">P_ASE</span>    <span class="o">=</span> <span class="o">-</span><span class="mf">20.88</span> <span class="n">dBm</span>     <span class="p">(</span><span class="mi">5</span> <span class="n">spans</span><span class="p">,</span> <span class="n">NF</span> <span class="o">=</span> <span class="mi">6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">both</span> <span class="n">polarizations</span><span class="p">)</span>
+<span class="n">optimum</span>  <span class="o">=</span> <span class="o">+</span><span class="mf">1.74</span> <span class="n">dBm</span>      <span class="n">SNR</span> <span class="o">=</span> <span class="mf">20.86</span> <span class="n">dB</span>
+<span class="n">check</span>    <span class="p">:</span> <span class="n">eta</span> <span class="n">P</span><span class="o">^</span><span class="mi">3</span> <span class="o">/</span> <span class="p">(</span><span class="n">P_ASE</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="mf">1.000000</span>
+</pre></div>
+</div>
+<p>Two things read off the figure. The <strong>cut</strong> is the filled channel: the one
+whose noise <span class="math notranslate nohighlight">\(\eta\)</span> counts. Every other one is an <em>interferer</em>, and the
+model adds up what each deposits on the cut – so the weights of
+<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a> are one per pair
+visible here. The cut is the middle channel because that is the worst case,
+neighbours on both sides.</p>
+<p>The second is the <strong>guard</strong>: 14.8 GHz separates the boxes, so no channel
+overlaps its neighbour and nothing linear crosses between them. Everything
+the model computes is therefore <em>nonlinear</em> leakage – the fibre mixing
+channels that never touched in frequency, which is the whole reason a closed
+form for it is worth having.</p>
+<p>The design point falls out of the same expression. Setting the derivative of
+<span class="math notranslate nohighlight">\(P/(P_{\mathrm{ASE}} + \eta P^3)\)</span> to zero gives a rule worth
+remembering in words – <strong>the optimum is where the fibre’s noise is half the
+amplifiers’</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\eta P_{\mathrm{opt}}^3 = \frac{P_{\mathrm{ASE}}}{2},
+\qquad
+P_{\mathrm{opt}} = \left(\frac{P_{\mathrm{ASE}}}{2\eta}\right)^{1/3},
+\qquad
+\mathrm{SNR}_{\mathrm{max}} = \frac{2}{3}\frac{P_{\mathrm{opt}}}
+                                              {P_{\mathrm{ASE}}}\]</div>
+<p>The last printed line is that rule checked rather than asserted. Two
+consequences fall out of it. The peak is <strong>asymmetric</strong> – one side governed
+by a linear term, the other by a cubic one – so missing the optimum by 1 dB
+costs 0.24 dB of SNR upwards but only 0.21 dB downwards, and by 3 dB it is
+2.20 dB against 1.50 dB. Operators consequently run slightly <em>under</em> the
+optimum, where a power error is the cheaper kind. And since
+<span class="math notranslate nohighlight">\(P_{\mathrm{opt}}\)</span> grows only as the cube root of the accumulated ASE,
+ten times the spans moves the optimum by 3.3 dB, not by 10.</p>
+</section>
+<section id="filling-the-band">
+<h3>Filling the band<a class="headerlink" href="#filling-the-band" title="Link to this heading">#</a></h3>
+<p>Here is a question a simulation cannot afford. What happens when the channel
+is not alone, but sits in the middle of a comb filling the amplifier band?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fine_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-3</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">channels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it&quot;</span><span class="p">)</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">81</span><span class="p">]</span>
+<span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">n_channels</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+    <span class="n">channel_eta</span> <span class="o">=</span> <span class="n">comb_eta</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span>
+    <span class="n">power</span><span class="p">,</span> <span class="n">snr</span> <span class="o">=</span> <span class="n">optimal_launch_power</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">channel_eta</span><span class="p">)</span>
+    <span class="n">curves</span><span class="p">[</span><span class="n">n_channels</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span>
+        <span class="n">gn_model_snr</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">channel_eta</span><span class="p">,</span> <span class="n">fine_powers</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_channels</span><span class="si">:</span><span class="s2">8d</span><span class="si">}</span><span class="s2">   &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">channel_eta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">+8.2f</span><span class="si">}</span><span class="s2"> dBm   &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">power</span><span class="p">)</span><span class="si">:</span><span class="s2">+6.2f</span><span class="si">}</span><span class="s2"> dBm   </span><span class="si">{</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">snr</span><span class="p">)</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> dB   &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">comb</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span><span class="o">.</span><span class="n">min_fs</span><span class="o">/</span><span class="mf">1e12</span><span class="si">:</span><span class="s2">11.2f</span><span class="si">}</span><span class="s2"> THz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">channels</span>   <span class="n">NLI</span> <span class="n">at</span> <span class="mi">0</span> <span class="n">dBm</span>   <span class="n">optimum</span>   <span class="n">peak</span> <span class="n">SNR</span>   <span class="n">fs</span> <span class="n">to</span> <span class="n">simulate</span> <span class="n">it</span>
+       <span class="mi">1</span>     <span class="o">-</span><span class="mf">29.12</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">1.74</span> <span class="n">dBm</span>    <span class="mf">20.86</span> <span class="n">dB</span>          <span class="mf">0.04</span> <span class="n">THz</span>
+       <span class="mi">3</span>     <span class="o">-</span><span class="mf">26.52</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">0.88</span> <span class="n">dBm</span>    <span class="mf">20.00</span> <span class="n">dB</span>          <span class="mf">0.14</span> <span class="n">THz</span>
+       <span class="mi">9</span>     <span class="o">-</span><span class="mf">24.83</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">0.31</span> <span class="n">dBm</span>    <span class="mf">19.43</span> <span class="n">dB</span>          <span class="mf">0.44</span> <span class="n">THz</span>
+      <span class="mi">27</span>     <span class="o">-</span><span class="mf">23.60</span> <span class="n">dBm</span>    <span class="o">-</span><span class="mf">0.10</span> <span class="n">dBm</span>    <span class="mf">19.02</span> <span class="n">dB</span>          <span class="mf">1.34</span> <span class="n">THz</span>
+      <span class="mi">81</span>     <span class="o">-</span><span class="mf">22.65</span> <span class="n">dBm</span>    <span class="o">-</span><span class="mf">0.42</span> <span class="n">dBm</span>    <span class="mf">18.71</span> <span class="n">dB</span>          <span class="mf">4.04</span> <span class="n">THz</span>
+</pre></div>
+</div>
+<p>The last column is why this part exists. It is
+<a class="reference internal" href="../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.min_fs" title="comnumpy.optical.wdm.WDMGrid.min_fs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">min_fs</span></code></a>, the sampling rate a split step
+would need for that very comb – so the grid prices its own simulation.
+Eighty-one channels would need <strong>4.04 THz</strong>, a hundred times the single
+channel, and hours of computation. The closed form answers in microseconds.</p>
+<p>Note also how gently the damage grows: eighty times the interferers costs
+<strong>2.2 dB</strong>. Eight neighbours hurting the cut as much as it hurts itself
+would cost <span class="math notranslate nohighlight">\(10\log_{10}(1 + 2 \times 8) = 12.3\)</span> dB; the
+<span class="math notranslate nohighlight">\(\mathrm{asinh}\)</span> in the model turns that into a few tenths. Nonlinear
+interference accumulates logarithmically in the number of channels, which is
+the single most useful thing the GN model has to say.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">n_channels</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">fine_powers</span><span class="p">),</span> <span class="n">curves</span><span class="p">[</span><span class="n">n_channels</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;launch power per channel [dBm]&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filling the band, in closed form only&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/gn_model_fig2.png&quot;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/gn_model_fig2.png"><img alt="../_images/gn_model_fig2.png" src="../_images/gn_model_fig2.png" style="width: 100%;" />
+</a>
+</section>
+</section>
+<section id="part-2-the-check">
+<h2>Part 2: the check<a class="headerlink" href="#part-2-the-check" title="Link to this heading">#</a></h2>
+<p>Everything above is a prediction. Now we propagate samples and find out.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Part 2 -- the simulation, which is here to disagree</span>
+<span class="c1"># ===========================================================================</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">launch_gain</span><span class="p">(</span><span class="n">power_W</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Amplifier gain for a channel power split over two polarizations.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">power_W</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
@@ -891,6 +1091,20 @@ rest of the page can reach them.</p>
         <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">ROLLOFF</span><span class="p">,</span> <span class="n">OS</span><span class="p">,</span> <span class="n">N_h</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">OS</span><span class="p">)),</span>
         <span class="n">Downsampler</span><span class="p">(</span><span class="n">OS</span><span class="p">),</span>
     <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N_SPANS</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">SPAN_KM</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> km SMF&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">effective_snr_dB</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SNR once the complex gain a receiver would remove is removed.&quot;&quot;&quot;</span>
+    <span class="n">compensator</span> <span class="o">=</span> <span class="n">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">corrected</span> <span class="o">=</span> <span class="n">compensator</span><span class="p">(</span><span class="n">received</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">compute_effective_snr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">powers_W</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;launch.gain&quot;</span><span class="p">,</span> <span class="n">launch_gain</span><span class="p">(</span><span class="n">powers_W</span><span class="p">),</span>
+                 <span class="p">{</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">:</span> <span class="n">effective_snr_dB</span><span class="p">},</span> <span class="n">STIMULUS</span><span class="p">,</span>
+                 <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)[</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">]</span>
+
 </pre></div>
 </div>
 <pre  class="mermaid">
@@ -914,76 +1128,16 @@ rest of the page can reach them.</p>
     srrcfilter_2 --&gt; downsampler
     classDef tapped stroke-dasharray: 4 2
     class tx tapped
-    </pre><p>Three things in that builder are doing work.</p>
-<p><code class="docutils literal notranslate"><span class="pre">name=&quot;launch&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">name=&quot;fibre&quot;</span></code> are what let the rest of the tutorial
+    </pre><p><code class="docutils literal notranslate"><span class="pre">launch_gain</span></code> is the factor of two of the warning above, made explicit:
+<span class="math notranslate nohighlight">\(\sqrt{P/2}\)</span> per polarization for a channel power <span class="math notranslate nohighlight">\(P\)</span>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">name=&quot;launch&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">name=&quot;fibre&quot;</span></code> are what let the rest of the page
 <em>reconfigure</em> the link instead of rebuilding it: <code class="docutils literal notranslate"><span class="pre">chain.set_params</span></code> reaches
 a block by its identifier and re-runs its precomputation (decision D34), and
 <a class="reference internal" href="../documentation/toplevel/sweep.html#module-comnumpy.sweep" title="comnumpy.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> drives <code class="docutils literal notranslate"><span class="pre">&quot;launch.gain&quot;</span></code> over a list of values the
 same way. One chain, built once, answers every question below.</p>
 <p><code class="docutils literal notranslate"><span class="pre">taps=[&quot;tx&quot;]</span></code> marks the mapper output as readable from outside the chain –
 the dashed box in the diagram, decision D33c. The transmitted symbols are
-what every measurement compares against, and declaring a tap is how you get
-them without breaking the chain in two.</p>
-<p><code class="docutils literal notranslate"><span class="pre">order=None</span></code> swaps <a class="reference internal" href="../documentation/core/generators.html#comnumpy.core.generators.SymbolGenerator" title="comnumpy.core.generators.SymbolGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">SymbolGenerator</span></code></a> and
-<a class="reference internal" href="../documentation/core/mappers.html#comnumpy.core.mappers.SymbolMapper" title="comnumpy.core.mappers.SymbolMapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SymbolMapper</span></code></a> for
-<a class="reference internal" href="../documentation/core/generators.html#comnumpy.core.generators.GaussianGenerator" title="comnumpy.core.generators.GaussianGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianGenerator</span></code></a>. The last section needs
-a stimulus that really is Gaussian, and the library has one.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p><strong>The 3 dB that becomes 9 dB.</strong> <code class="docutils literal notranslate"><span class="pre">power_W</span></code> is the power of the <em>channel</em>,
-summed over both polarizations, because that is the convention the GN
-model uses. Each polarization therefore carries half of it, which is what
-<code class="docutils literal notranslate"><span class="pre">launch_gain</span></code> is for. Give each polarization the full <code class="docutils literal notranslate"><span class="pre">power_W</span></code>
-instead and you launch 3 dB more than you think; since the nonlinear
-interference goes as the cube of the power, your simulation then reports
-<strong>9 dB</strong> more of it than the model predicts, and the model looks broken
-when it is not.</p>
-<p>The same trap has a second door. <code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code>
-reads the <em>shape</em> of the field to decide which equation to integrate: a
-field <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code> gets the Manakov equation, which is what a real
-fibre with random birefringence does and what the model’s 16/27
-coefficient assumes; a one-dimensional field gets the scalar equation
-instead, which produces 27/8 – <strong>5.3 dB</strong> – more interference at the
-same total power. If you must compare against a scalar simulation, tell
-the model so with <code class="docutils literal notranslate"><span class="pre">gn_model_nli_power(...,</span> <span class="pre">polarizations=1)</span></code>.</p>
-</div>
-<p>Before running anything, <code class="docutils literal notranslate"><span class="pre">chain.summary</span></code> (decision D33b) says what the
-chain will do to a stimulus, and what each block costs:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">link_chain</span><span class="p">()</span>
-<span class="n">chain</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">STIMULUS</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#    block                        id                   output shape       dtype         time ms</span>
-<span class="o">-----------------------------------------------------------------------------------------------</span>
-<span class="mi">0</span>    <span class="n">SymbolGenerator</span>              <span class="n">source</span>               <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>          <span class="n">int64</span>            <span class="mf">0.11</span>
-<span class="mi">1</span>    <span class="n">SymbolMapper</span>                 <span class="n">tx</span>                   <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.11</span>
-<span class="mi">2</span>    <span class="n">Upsampler</span>                    <span class="n">upsampler</span>            <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>       <span class="mf">0.74</span>
-<span class="mi">3</span>    <span class="n">SRRCFilter</span>                   <span class="n">srrcfilter</span>           <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>       <span class="mf">4.31</span>
-<span class="mi">4</span>    <span class="n">Amplifier</span>                    <span class="n">launch</span>               <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>       <span class="mf">0.10</span>
-<span class="mi">5</span>    <span class="n">FiberLink</span>                    <span class="n">fibre</span>                <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>    <span class="mf">1173.90</span>
-<span class="mi">6</span>    <span class="n">DBP</span>                          <span class="n">dbp</span>                  <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>      <span class="mf">12.81</span>
-<span class="mi">7</span>    <span class="n">SRRCFilter</span>                   <span class="n">srrcfilter_2</span>         <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16384</span><span class="p">)</span>         <span class="n">complex128</span>       <span class="mf">2.21</span>
-<span class="mi">8</span>    <span class="n">Downsampler</span>                  <span class="n">downsampler</span>          <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.05</span>
-</pre></div>
-</div>
-<p>The fibre is 98 % of the run time, which is the entire reason the closed form
-below is worth having.</p>
-</section>
-<section id="measuring-the-snr">
-<h2>Measuring the SNR<a class="headerlink" href="#measuring-the-snr" title="Link to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">effective_snr_dB</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SNR once the complex gain a receiver would remove is removed.&quot;&quot;&quot;</span>
-    <span class="n">compensator</span> <span class="o">=</span> <span class="n">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">corrected</span> <span class="o">=</span> <span class="n">compensator</span><span class="p">(</span><span class="n">received</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">compute_effective_snr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">powers_W</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;launch.gain&quot;</span><span class="p">,</span> <span class="n">launch_gain</span><span class="p">(</span><span class="n">powers_W</span><span class="p">),</span>
-                 <span class="p">{</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">:</span> <span class="n">effective_snr_dB</span><span class="p">},</span> <span class="n">STIMULUS</span><span class="p">,</span>
-                 <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)[</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
+what every measurement compares against.</p>
 <p>“How much noise is there?” has a subtle answer when part of the damage is a
 phase rotation. The Kerr effect rotates the constellation by the mean
 nonlinear phase, and a real receiver removes that with its carrier-phase
@@ -992,145 +1146,62 @@ impairment nobody suffers.
 <a class="reference internal" href="../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedComplexGainCompensator" title="comnumpy.core.compensators.DataAidedComplexGainCompensator"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataAidedComplexGainCompensator</span></code></a> fits
 exactly one complex scalar against the reference, which absorbs the rotation
 and any gain; <a class="reference internal" href="../documentation/core/metrics.html#comnumpy.core.metrics.compute_effective_snr" title="comnumpy.core.metrics.compute_effective_snr"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_effective_snr()</span></code></a> then lumps
-everything left over into one equivalent additive term. Whatever remains is
-noise, and the model does not get to argue about where it came from.</p>
-<p>It is fair to ask why the gain is estimated at all rather than divided out,
-since the link’s linear gain is known: run the same chain with the fibre
-linearized and it is right there. Measured against that known value, the
-fitted modulus is it, to within 0.5 % at the worst power below – so on
-amplitude alone, dividing by a constant would indeed do. It is the argument
-that cannot be:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">P</span> <span class="p">(</span><span class="n">dBm</span><span class="p">)</span>   <span class="o">|</span><span class="n">g</span><span class="o">|</span> <span class="n">fitted</span>  <span class="n">arg</span> <span class="n">g</span> <span class="p">(</span><span class="n">deg</span><span class="p">)</span>   <span class="o">|</span><span class="n">g</span><span class="o">|</span> <span class="n">linear</span>     <span class="n">ratio</span>
-   <span class="o">-</span><span class="mf">8.0</span>     <span class="mf">0.008885</span>        <span class="mf">1.757</span>     <span class="mf">0.008885</span>  <span class="mf">1.000004</span>
-   <span class="o">-</span><span class="mf">2.0</span>     <span class="mf">0.017742</span>        <span class="mf">6.638</span>     <span class="mf">0.017745</span>  <span class="mf">0.999833</span>
-    <span class="mf">2.0</span>     <span class="mf">0.028099</span>       <span class="mf">16.503</span>     <span class="mf">0.028133</span>  <span class="mf">0.998789</span>
-    <span class="mf">5.0</span>     <span class="mf">0.039547</span>       <span class="mf">32.874</span>     <span class="mf">0.039746</span>  <span class="mf">0.994970</span>
-</pre></div>
-</div>
-<p>Freezing the <em>whole</em> complex gain charges the link for that rotation, and the
-bill grows with exactly the quantity the tutorial is here to measure: 0.08 dB
-of SNR at -8 dBm, 3.01 dB at -2, 10.79 dB at +2, <strong>14.39 dB at +5</strong>. The curve
-would bend down in the nonlinear regime for a reason that has nothing to do
-with the fibre. Freezing the modulus and fitting only the argument, on the
-other hand, lands within 0.04 dB of the full fit everywhere – so the second
-degree of freedom is not what earns its place, the first one is. One
-component that fits both is simply the shortest way to get the one that
-matters, without having to look the link gain up.</p>
-<p>That 0.5 % is not bookkeeping either. The nonlinear phase varies from symbol
-to symbol, so <span class="math notranslate nohighlight">\(\mathbb{E}[e^{j\varphi}] = e^{j\bar{\varphi}}
-e^{-\sigma_\varphi^2/2}\)</span> and the least-squares modulus shrinks accordingly;
-the 0.4970 % at +5 dBm gives <span class="math notranslate nohighlight">\(\sigma_\varphi \approx 0.1\)</span> rad, about
-6 degrees of spread around a 33 degree mean rotation.</p>
-<p><code class="docutils literal notranslate"><span class="pre">shared=True</span></code> is not a detail either. The nonlinear phase comes from the
-<em>total</em> intensity, so it is common to the two polarizations – a <strong>shared</strong>
-estimand in the sense of decision D49, which is why one gain is fitted
-jointly over both rather than one per row. Fitted per row it would be two
-estimates of the same number, each seeing half the data, and they would
-then have to be reconciled. Without the keyword the compensator refuses a
-two-path signal outright, precisely so that this choice has to be made on
-purpose rather than settled by broadcasting.</p>
-<p>With the metric written, <code class="docutils literal notranslate"><span class="pre">measure</span></code> is a one-liner: <a class="reference internal" href="../documentation/toplevel/sweep.html#module-comnumpy.sweep" title="comnumpy.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>
-sets <code class="docutils literal notranslate"><span class="pre">launch.gain</span></code>, reseeds the chain, runs it, and hands the tapped
-symbols and the output to the metric – the same <code class="docutils literal notranslate"><span class="pre">sweep</span></code> introduced in
-<a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a>, pointed at a different chain.</p>
-</section>
-<section id="one-number-for-the-whole-link">
-<h2>One number for the whole link<a class="headerlink" href="#one-number-for-the-whole-link" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a> collapses the fibre,
-the span count and the comb into a single coefficient <span class="math notranslate nohighlight">\(\eta\)</span>, defined
-by <span class="math notranslate nohighlight">\(P_{\mathrm{NLI}} = \eta P^3\)</span>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">comb_eta</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="o">=</span><span class="mf">50e9</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The eta of P_NLI = eta P^3, for a comb of identical channels.&quot;&quot;&quot;</span>
-    <span class="n">grid</span> <span class="o">=</span> <span class="n">WDMGrid</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="o">=</span><span class="n">spacing_Hz</span><span class="p">,</span>
-                           <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">BAUD</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ROLLOFF</span><span class="p">),</span>
-                           <span class="n">center_Hz</span><span class="o">=</span><span class="n">SMF</span><span class="o">.</span><span class="n">carrier_frequency_Hz</span><span class="p">)</span>
-    <span class="n">nli</span> <span class="o">=</span> <span class="n">gn_model_nli_power</span><span class="p">(</span><span class="n">SMF</span><span class="p">,</span> <span class="n">span_length_km</span><span class="o">=</span><span class="n">SPAN_KM</span><span class="p">,</span> <span class="n">n_spans</span><span class="o">=</span><span class="n">N_SPANS</span><span class="p">,</span>
-                             <span class="n">powers_W</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span>
-                             <span class="n">frequencies_Hz</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">),</span>
-                             <span class="n">baud_rates_Hz</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">BAUD</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">nli</span><span class="p">[</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span>
+everything left over into one equivalent additive term.</p>
+<p><code class="docutils literal notranslate"><span class="pre">shared=True</span></code> is not a detail. The nonlinear phase comes from the <em>total</em>
+intensity, so it is common to the two polarizations – a <strong>shared</strong> estimand
+in the sense of decision D49, which is why one gain is fitted jointly over
+both rather than one per row. Fitted per row it would be two estimates of the
+same number, each seeing half the data. Without the keyword the compensator
+refuses a two-path signal outright, so the choice has to be made on purpose
+rather than settled by broadcasting.</p>
+<section id="does-the-amplifier-noise-match">
+<h3>Does the amplifier noise match?<a class="headerlink" href="#does-the-amplifier-noise-match" title="Link to this heading">#</a></h3>
+<p>Before testing the nonlinear prediction, test the linear one. Setting
+<code class="docutils literal notranslate"><span class="pre">fibre.use_only_linear</span></code> removes the Kerr term and leaves loss and
+amplifiers, so the only noise left is the one Part 1 predicted in closed
+form. At 0 dBm launch the measured SNR <em>is</em> <span class="math notranslate nohighlight">\(-P_{\mathrm{ASE}}\)</span> in dBm.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">link_chain</span><span class="p">()</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">STIMULUS</span><span class="p">)</span>
 
+<span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.use_only_linear&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+<span class="n">measured_ase_W</span> <span class="o">=</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="o">-</span><span class="n">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">[</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)])[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">gap_dB</span> <span class="o">=</span> <span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">measured_ase_W</span><span class="p">)</span> <span class="o">-</span> <span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">P_ASE  predicted </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm   &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;measured </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">measured_ase_W</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm   &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;gap </span><span class="si">{</span><span class="n">gap_dB</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">gap_dB</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">gap_dB</span>
 
-<span class="n">eta</span> <span class="o">=</span> <span class="n">comb_eta</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GN model: eta = </span><span class="si">{</span><span class="n">eta</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> /W^2&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The model predicts the <em>fibre’s</em> noise. The amplifiers’ noise is not its
-business, so we measure that – with the same chain, linearized by one call
-to <code class="docutils literal notranslate"><span class="pre">set_params</span></code>, which is why the fibre was given a name:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.use_only_linear&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
-<span class="n">ase_W</span> <span class="o">=</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="o">-</span><span class="n">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">[</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)])[</span><span class="mi">0</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;measured ASE, </span><span class="si">{</span><span class="n">N_SPANS</span><span class="si">}</span><span class="s2"> spans at NF = </span><span class="si">{</span><span class="n">NF_dB</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> dB: &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">P_ASE</span>  <span class="n">predicted</span> <span class="o">-</span><span class="mf">20.88</span> <span class="n">dBm</span>   <span class="n">measured</span> <span class="o">-</span><span class="mf">20.95</span> <span class="n">dBm</span>   <span class="n">gap</span> <span class="o">-</span><span class="mf">0.07</span> <span class="n">dB</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GN</span> <span class="n">model</span><span class="p">:</span> <span class="n">eta</span> <span class="o">=</span> <span class="mi">1223</span> <span class="o">/</span><span class="n">W</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">measured</span> <span class="n">ASE</span><span class="p">,</span> <span class="mi">5</span> <span class="n">spans</span> <span class="n">at</span> <span class="n">NF</span> <span class="o">=</span> <span class="mi">6</span> <span class="n">dB</span><span class="p">:</span> <span class="o">-</span><span class="mf">20.95</span> <span class="n">dBm</span>
-</pre></div>
-</div>
-<p>With both numbers in hand the design point is a one-liner. Setting the
-derivative of <span class="math notranslate nohighlight">\(P/(P_{\mathrm{ASE}} + \eta P^3)\)</span> to zero gives a rule
-worth remembering in words – <strong>the optimum is where the fibre’s noise is
-half the amplifiers’</strong>:</p>
-<div class="math notranslate nohighlight">
-\[\eta P_{\mathrm{opt}}^3 = \frac{P_{\mathrm{ASE}}}{2},
-\qquad
-P_{\mathrm{opt}} = \left(\frac{P_{\mathrm{ASE}}}{2\eta}\right)^{1/3},
-\qquad
-\mathrm{SNR}_{\mathrm{max}} = \frac{2}{3}\frac{P_{\mathrm{opt}}}
-                                              {P_{\mathrm{ASE}}}\]</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">best_power</span><span class="p">,</span> <span class="n">best_snr</span> <span class="o">=</span> <span class="n">optimal_launch_power</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;optimum: </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm, &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;SNR = </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">best_snr</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;check: eta P^3 / (P_ASE/2) = &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">eta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">best_power</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">ase_W</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">optimum</span><span class="p">:</span> <span class="o">+</span><span class="mf">1.72</span> <span class="n">dBm</span><span class="p">,</span> <span class="n">SNR</span> <span class="o">=</span> <span class="mf">20.91</span> <span class="n">dB</span>
-<span class="n">check</span><span class="p">:</span> <span class="n">eta</span> <span class="n">P</span><span class="o">^</span><span class="mi">3</span> <span class="o">/</span> <span class="p">(</span><span class="n">P_ASE</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="mf">1.000000</span>
-</pre></div>
-</div>
-<p>The last line is the rule checked rather than asserted. Two consequences fall
-out of the same expression. The peak is <strong>asymmetric</strong> – one side of it is
-governed by a linear term, the other by a cubic one – so missing the optimum
-by 1 dB costs 0.24 dB of SNR upwards but only 0.21 dB downwards, and by 3 dB
-it is 2.20 dB against 1.50 dB. Operators consequently run slightly <em>under</em>
-the optimum, where a power error is the cheaper kind. And since
-<span class="math notranslate nohighlight">\(P_{\mathrm{opt}}\)</span> grows only as the cube root of the accumulated ASE,
-ten times the spans moves the optimum by 3.3 dB, not by 10.</p>
+<p><strong>0.07 dB</strong>, and the script asserts it. That number is worth more than it
+looks. The prediction is a spectral density times a bandwidth times two
+polarizations; the measurement is a full chain – pulse shaping, five spans
+of split-step propagation, back-propagation, matched filtering, sampling and
+a least-squares gain fit. They agree to two hundredths of a decibel, which
+says the polarization convention is the same on both sides, that the matched
+filter really does collect the symbol-rate bandwidth, and that no factor of
+two got lost between the two.</p>
+<p>It is also what makes the nonlinear comparison below meaningful. If
+<span class="math notranslate nohighlight">\(P_{\mathrm{ASE}}\)</span> were wrong by a factor of two, the optimum would
+move by <span class="math notranslate nohighlight">\(2^{1/3}\)</span>, a full decibel, and the model would look
+mis-calibrated for a reason having nothing to do with the fibre.</p>
 </section>
-<section id="now-the-expensive-way">
-<h2>Now the expensive way<a class="headerlink" href="#now-the-expensive-way" title="Link to this heading">#</a></h2>
-<p>None of the above propagated a single sample. Let us do that too, at fourteen
-launch powers. The fibre goes back to nonlinear, and the same <code class="docutils literal notranslate"><span class="pre">measure</span></code>
-runs the sweep.</p>
+<section id="the-expensive-way">
+<h3>The expensive way<a class="headerlink" href="#the-expensive-way" title="Link to this heading">#</a></h3>
+<p>Now the nonlinear term, at fourteen launch powers.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
 <span class="n">powers_dBm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">5.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="n">measured_snr_dB</span> <span class="o">=</span> <span class="n">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="n">powers_dBm</span><span class="p">))</span>
-<span class="k">for</span> <span class="n">power_dBm</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">powers_dBm</span><span class="p">,</span> <span class="n">measured_snr_dB</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">power_dBm</span><span class="si">:</span><span class="s2">+5.1f</span><span class="si">}</span><span class="s2"> dBm -&gt; SNR </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">5.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
-
-<span class="n">fine_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-3</span>
 <span class="n">predicted_snr_dB</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">gn_model_snr</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">fine_powers</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;optimum: </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm predicted, &quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;optimum </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm predicted, &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">powers_dBm</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">measured_snr_dB</span><span class="p">))]</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> dBm measured; &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;peak SNR </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">best_snr</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB predicted, &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">measured_snr_dB</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB measured&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>A few of the fourteen points, and the line that follows the sweep:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="o">-</span><span class="mf">8.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">13.13</span> <span class="n">dB</span>
-  <span class="o">-</span><span class="mf">5.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">15.93</span> <span class="n">dB</span>
-  <span class="o">-</span><span class="mf">2.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">18.83</span> <span class="n">dB</span>
-  <span class="o">+</span><span class="mf">1.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">20.87</span> <span class="n">dB</span>
-  <span class="o">+</span><span class="mf">2.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">21.07</span> <span class="n">dB</span>
-  <span class="o">+</span><span class="mf">3.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">20.79</span> <span class="n">dB</span>
-  <span class="o">+</span><span class="mf">5.0</span> <span class="n">dBm</span> <span class="o">-&gt;</span> <span class="n">SNR</span> <span class="mf">18.93</span> <span class="n">dB</span>
-<span class="n">optimum</span><span class="p">:</span> <span class="o">+</span><span class="mf">1.72</span> <span class="n">dBm</span> <span class="n">predicted</span><span class="p">,</span> <span class="o">+</span><span class="mf">2.0</span> <span class="n">dBm</span> <span class="n">measured</span><span class="p">;</span> <span class="n">peak</span> <span class="n">SNR</span> <span class="mf">20.91</span> <span class="n">dB</span> <span class="n">predicted</span><span class="p">,</span> <span class="mf">21.07</span> <span class="n">dB</span> <span class="n">measured</span>
-</pre></div>
-</div>
-<p>And the two on the same axes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
+
+<span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">fine_powers</span><span class="p">),</span> <span class="n">predicted_snr_dB</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
         <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GN model (closed form, microseconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">powers_dBm</span><span class="p">,</span> <span class="n">measured_snr_dB</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span>
@@ -1138,8 +1209,7 @@ runs the sweep.</p>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">fine_powers</span><span class="p">),</span>
         <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_powers</span> <span class="o">/</span> <span class="n">ase_W</span><span class="p">),</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.5&quot;</span><span class="p">,</span>
         <span class="n">label</span><span class="o">=</span><span class="s2">&quot;amplifiers alone ($P/P_</span><span class="si">{ASE}</span><span class="s2">$)&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.3&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
-           <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.3&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;optimum </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> dBm&quot;</span><span class="p">,</span>
             <span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">best_power</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">predicted_snr_dB</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
             <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.3&quot;</span><span class="p">)</span>
@@ -1149,120 +1219,31 @@ runs the sweep.</p>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">measured_snr_dB</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">predicted_snr_dB</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
-</pre></div>
-</div>
-<a class="reference internal image-reference" href="../_images/gn_model_fig1.png"><img alt="../_images/gn_model_fig1.png" class="align-center" src="../_images/gn_model_fig1.png" width="700" />
-</a>
-<p>Three things to read off it. The dotted line is what the link would do if the
-fibre were linear – straight, rising for ever, which is the answer that made
-the question interesting. The measured points leave it at around -2 dBm and
-turn over. And the solid line, computed in microseconds from four fibre
-parameters, passes through the measured points: the predicted optimum is
-+1.72 dBm and the simulated curve peaks at +2.0 dBm, the nearest point of a
-1 dB grid, with <strong>0.16 dB</strong> between the two peak SNRs.</p>
-<p>That is the whole value proposition of the model. It is not a substitute for
-the split step when you need waveforms, constellations or a bit error rate.
-It is what lets you ask a thousand <em>design</em> questions before you simulate
-one.</p>
-</section>
-<section id="what-the-closed-form-buys">
-<h2>What the closed form buys<a class="headerlink" href="#what-the-closed-form-buys" title="Link to this heading">#</a></h2>
-<p>Here is a question the simulation cannot afford: what happens when the
-channel is not alone, but sits in the middle of a comb filling the amplifier
-band? Eighty-one channels at 32 GBd is 4 THz of bandwidth; simulating that
-means a sample rate in the terahertz, and the split step would run for hours.
-The closed form does not care – and the grid says exactly how much it is
-not caring about, since <a class="reference internal" href="../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.min_fs" title="comnumpy.optical.wdm.WDMGrid.min_fs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">min_fs</span></code></a> is the
-sample rate a split step would need for the very comb the model is being
-handed.</p>
-<p>Before the numbers, the picture the model has in mind. A grid is a layout,
-so <a class="reference internal" href="../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.plot" title="comnumpy.optical.wdm.WDMGrid.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> draws it directly – no
-signal is synthesised and no spectrum estimated, which would show the same
-thing through a detour and bury the guard band under the pulse shape’s
-roll-off.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what eta is computed over: the comb, and the cut inside it -----------</span>
-<span class="n">comb</span> <span class="o">=</span> <span class="n">WDMGrid</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="o">=</span><span class="mf">50e9</span><span class="p">,</span> <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">BAUD</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ROLLOFF</span><span class="p">))</span>
-<span class="n">comb</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cut</span><span class="o">=</span><span class="n">comb</span><span class="o">.</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/gn_model_fig3.png&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">comb: </span><span class="si">{</span><span class="n">comb</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels, </span><span class="si">{</span><span class="n">comb</span><span class="o">.</span><span class="n">guard_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz of &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;guard, </span><span class="si">{</span><span class="n">comb</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GHz to simulate&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="../_images/gn_model_fig3.png"><img alt="../_images/gn_model_fig3.png" src="../_images/gn_model_fig3.png" style="width: 100%;" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">optimum</span> <span class="o">+</span><span class="mf">1.74</span> <span class="n">dBm</span> <span class="n">predicted</span><span class="p">,</span> <span class="o">+</span><span class="mf">2.0</span> <span class="n">dBm</span> <span class="n">measured</span><span class="p">;</span>
+<span class="n">peak</span> <span class="n">SNR</span> <span class="mf">20.86</span> <span class="n">dB</span> <span class="n">predicted</span><span class="p">,</span> <span class="mf">21.07</span> <span class="n">dB</span> <span class="n">measured</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/gn_model_fig3.png"><img alt="Measured SNR against the GN model prediction" class="align-center" src="../_images/gn_model_fig3.png" style="width: 100%;" />
 </a>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comb</span><span class="p">:</span> <span class="mi">9</span> <span class="n">channels</span><span class="p">,</span> <span class="mf">14.8</span> <span class="n">GHz</span> <span class="n">of</span> <span class="n">guard</span><span class="p">,</span> <span class="mi">435</span> <span class="n">GHz</span> <span class="n">to</span> <span class="n">simulate</span>
-</pre></div>
-</div>
-<p>Two things to read off it. The <strong>cut</strong> is the filled channel: the one whose
-noise <span class="math notranslate nohighlight">\(\eta\)</span> counts. Every other one is an <em>interferer</em>, and the
-model adds up what each deposits on the cut – so the weights of
-<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a> are one per pair
-visible here. The cut is the middle channel because that is the worst case,
-neighbours on both sides.</p>
-<p>The second is the <strong>guard</strong>: 14.8 GHz separates the boxes, so no channel
-overlaps its neighbour and nothing linear crosses between them. Everything
-the model computes is therefore <em>nonlinear</em> leakage – the fibre mixing
-channels that never touched in frequency, which is the whole reason a
-closed form for it is worth having.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">channels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it&quot;</span><span class="p">)</span>
-<span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">81</span><span class="p">]</span>
-<span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">n_channels</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
-    <span class="n">channel_eta</span> <span class="o">=</span> <span class="n">comb_eta</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span>
-    <span class="n">power</span><span class="p">,</span> <span class="n">snr</span> <span class="o">=</span> <span class="n">optimal_launch_power</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">channel_eta</span><span class="p">)</span>
-    <span class="n">curves</span><span class="p">[</span><span class="n">n_channels</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span>
-        <span class="n">gn_model_snr</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">channel_eta</span><span class="p">,</span> <span class="n">fine_powers</span><span class="p">))</span>
-    <span class="c1"># the grid knows what a split step would cost: it is the same object</span>
-    <span class="n">comb</span> <span class="o">=</span> <span class="n">WDMGrid</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="o">=</span><span class="mf">50e9</span><span class="p">,</span>
-                           <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">BAUD</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ROLLOFF</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_channels</span><span class="si">:</span><span class="s2">8d</span><span class="si">}</span><span class="s2">   &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">channel_eta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">+8.2f</span><span class="si">}</span><span class="s2"> dBm   &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">power</span><span class="p">)</span><span class="si">:</span><span class="s2">+6.2f</span><span class="si">}</span><span class="s2"> dBm   </span><span class="si">{</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">snr</span><span class="p">)</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> dB   &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">comb</span><span class="o">.</span><span class="n">min_fs</span><span class="o">/</span><span class="mf">1e12</span><span class="si">:</span><span class="s2">11.2f</span><span class="si">}</span><span class="s2"> THz&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">channels</span>   <span class="n">NLI</span> <span class="n">at</span> <span class="mi">0</span> <span class="n">dBm</span>   <span class="n">optimum</span>   <span class="n">peak</span> <span class="n">SNR</span>   <span class="n">fs</span> <span class="n">to</span> <span class="n">simulate</span> <span class="n">it</span>
-       <span class="mi">1</span>     <span class="o">-</span><span class="mf">29.12</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">1.72</span> <span class="n">dBm</span>    <span class="mf">20.91</span> <span class="n">dB</span>          <span class="mf">0.04</span> <span class="n">THz</span>
-       <span class="mi">3</span>     <span class="o">-</span><span class="mf">26.52</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">0.85</span> <span class="n">dBm</span>    <span class="mf">20.05</span> <span class="n">dB</span>          <span class="mf">0.14</span> <span class="n">THz</span>
-       <span class="mi">9</span>     <span class="o">-</span><span class="mf">24.83</span> <span class="n">dBm</span>    <span class="o">+</span><span class="mf">0.29</span> <span class="n">dBm</span>    <span class="mf">19.48</span> <span class="n">dB</span>          <span class="mf">0.44</span> <span class="n">THz</span>
-      <span class="mi">27</span>     <span class="o">-</span><span class="mf">23.60</span> <span class="n">dBm</span>    <span class="o">-</span><span class="mf">0.12</span> <span class="n">dBm</span>    <span class="mf">19.07</span> <span class="n">dB</span>          <span class="mf">1.34</span> <span class="n">THz</span>
-      <span class="mi">81</span>     <span class="o">-</span><span class="mf">22.65</span> <span class="n">dBm</span>    <span class="o">-</span><span class="mf">0.44</span> <span class="n">dBm</span>    <span class="mf">18.75</span> <span class="n">dB</span>          <span class="mf">4.04</span> <span class="n">THz</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">n_channels</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">fine_powers</span><span class="p">),</span> <span class="n">curves</span><span class="p">[</span><span class="n">n_channels</span><span class="p">],</span>
-            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;launch power per channel [dBm]&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filling the band, in closed form only&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
-</pre></div>
-</div>
-<a class="reference internal image-reference" href="../_images/gn_model_fig2.png"><img alt="../_images/gn_model_fig2.png" class="align-center" src="../_images/gn_model_fig2.png" width="700" />
-</a>
-<p>Read the first column carefully: eighty-one times the bandwidth costs
-<strong>6.5 dB</strong> of nonlinear interference, not the 19 dB that a proportional
-penalty would give. The reason is one function. The GN model’s kernel
-integrates to an <span class="math notranslate nohighlight">\(\mathrm{asinh}\)</span>, and <span class="math notranslate nohighlight">\(\mathrm{asinh}\)</span> grows
-logarithmically, so each doubling of the comb costs a bounded and shrinking
-amount. The whole viability of wideband optical transmission is in that
-<span class="math notranslate nohighlight">\(\mathrm{asinh}\)</span>, and the peak SNR falls by only 2.2 dB while the link
-carries eighty-one times as many channels.</p>
+<p>The two curves land on top of each other. The optimum is predicted within
+the 1 dB resolution of the sweep, and the peak SNR within <strong>0.21 dB</strong> – for
+a closed form that ran in microseconds against a simulation that took about
+a second per point.</p>
+<p>The dotted line is the link with the fibre’s nonlinearity ignored,
+<span class="math notranslate nohighlight">\(P/P_{\mathrm{ASE}}\)</span>: the answer you get by trusting the amplifiers
+alone. It keeps climbing forever. Everything between it and the measured
+points is what the Kerr effect costs, and the gap only opens past the
+optimum – which is exactly the regime an operator has to avoid, and exactly
+the one the closed form was built to describe.</p>
+</section>
 </section>
 <section id="what-the-model-cannot-see">
 <h2>What the model cannot see<a class="headerlink" href="#what-the-model-cannot-see" title="Link to this heading">#</a></h2>
-<p>The GN model has one assumption in its name: it treats the transmitted signal
-as Gaussian. A real constellation is not Gaussian. Its fourth moment is
-smaller, and a signal with a smaller fourth moment generates <em>less</em> nonlinear
-interference – so the model is systematically <strong>pessimistic</strong> for a
-modulated signal, and the smaller the constellation the more pessimistic it
-is.</p>
-<p>The model cannot tell us by how much, since it never sees the constellation.
-So we measure it: the same link with the amplifiers’ noise switched off, so
-that only the fibre contributes, and five different things modulated onto the
-carrier.</p>
+<p>The GN model assumes the propagating signal has become Gaussian. Real
+modulation formats are not, and the model is blind to the difference.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">nli_only_dB</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">The GN model predicts </span><span class="si">{</span><span class="n">nli_only_dB</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB of nonlinear SNR at &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;0 dBm, whatever is modulated.&quot;</span><span class="p">)</span>
@@ -1273,10 +1254,6 @@ carrier.</p>
     <span class="n">noiseless</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.noise_scaling&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">measure</span><span class="p">(</span><span class="n">noiseless</span><span class="p">,</span> <span class="p">[</span><span class="mf">1e-3</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">10.2f</span><span class="si">}</span><span class="s2"> dB   </span><span class="si">{</span><span class="n">value</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">nli_only_dB</span><span class="si">:</span><span class="s2">+10.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
-
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/gn_model.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">link_chain</span><span class="p">()</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">GN</span> <span class="n">model</span> <span class="n">predicts</span> <span class="mf">29.12</span> <span class="n">dB</span> <span class="n">of</span> <span class="n">nonlinear</span> <span class="n">SNR</span> <span class="n">at</span> <span class="mi">0</span> <span class="n">dBm</span><span class="p">,</span> <span class="n">whatever</span> <span class="ow">is</span> <span class="n">modulated</span><span class="o">.</span>
@@ -1288,88 +1265,37 @@ carrier.</p>
 <span class="n">Gaussian</span>          <span class="mf">28.48</span> <span class="n">dB</span>        <span class="o">-</span><span class="mf">0.65</span> <span class="n">dB</span>
 </pre></div>
 </div>
-<p>That table is the assumption made visible. Every QAM constellation suffers
-<em>less</em> nonlinear interference than the model predicts, and the penalty
-shrinks monotonically as the constellation grows and starts to resemble the
-Gaussian the model assumes: 1.53 dB for QPSK, 0.71 dB by 256QAM.</p>
-<p>The last row is the control. A genuinely Gaussian stimulus does not land
-above the model – it lands 0.65 dB <em>below</em>, which is the model’s <strong>other</strong>
-approximation showing through: spans are assumed to accumulate incoherently,
-and over five spans they do not quite. Taken together the two rows bracket
-the model honestly. It under-predicts the interference of a Gaussian signal
-by about half a decibel, and over-predicts that of a real constellation by
-one to one and a half.</p>
-<p>Closing the constellation half of that gap is the job of the <strong>EGN model</strong>
-(Carena <em>et al.</em>, 2014; Serena and Bononi, 2015), which carries the fourth
-and sixth moments of the constellation through the same perturbation
-analysis. It is <strong>not implemented in this library</strong>, and the table above is
-the honest substitute: the effect measured rather than predicted, so that
-nobody reads the GN curve as an exact answer for a modulated signal. Read it
-as what it is – a pessimistic bound that tightens as the constellation
-grows.</p>
-</section>
-<section id="is-it-right">
-<h2>Is it right?<a class="headerlink" href="#is-it-right" title="Link to this heading">#</a></h2>
-<p>A closed form that agrees with the simulation in the same library proves less
-than it looks: both could share a mistake. <code class="docutils literal notranslate"><span class="pre">validation/optical_gn_model.py</span></code>
-therefore confronts it with things outside the library, and prints what it
-finds:</p>
-<ul class="simple">
-<li><p>Serena and Bononi (JLT 33(7), 2015) published the normalized NLI
-coefficient of a 15-channel, 5 x 100 km link, measured with <em>their</em>
-split-step simulator: <span class="math notranslate nohighlight">\(a_{\mathrm{NL}} = -23.5\)</span> dB. This module
-returns <strong>-23.30 dB</strong> for the same link.</p></li>
-<li><p>The same closed form re-transcribed from GNPy – the Telecom Infra
-Project’s open-source planning tool, which works in metres and s²/m where
-this library works in kilometres and ps²/km – agrees to <strong>twelve digits</strong>
-(<code class="docutils literal notranslate"><span class="pre">tests/optical/test_gn_model.py</span></code>).</p></li>
-<li><p>This library’s own split-step solver, on a five-channel WDM link where
-cross-phase modulation dominates, agrees to <strong>0.01 dB</strong>.</p></li>
-<li><p>The 27/8 polarization factor of the warning above, measured by simulating
-the same link twice, comes out at <strong>5.29 dB</strong> against the 5.28 dB of
-Table I of the paper.</p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<p>The ordering is the whole story. QPSK suffers <strong>1.53 dB less</strong> nonlinear
+interference than the model predicts, and the advantage shrinks monotonically
+as the constellation grows: 16QAM 1.01 dB, 64QAM 0.74 dB, 256QAM 0.71 dB. A
+genuinely Gaussian stimulus lands 0.65 dB on the <em>other</em> side, which is the
+model’s own assumption measured against itself.</p>
+<p>So the GN model is pessimistic for real formats, and predictably so. The
+enhanced GN model exists to recover that gap; this library does not implement
+it, and the table above is the honest statement of what that costs – about a
+decibel for 16QAM, less as the format grows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/gn_model.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+    <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">link_chain</span><span class="p">()</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-
-
 </pre></div>
 </div>
 </section>
-<section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have designed an optical link twice, and the two answers agree.</p>
-<p>You have learned how to:</p>
-<ul class="simple">
-<li><p>Turn a fibre link into one coefficient <span class="math notranslate nohighlight">\(\eta\)</span> with
-<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a>, and read an SNR off
-<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_snr" title="comnumpy.optical.gn_model.gn_model_snr"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_snr()</span></code></a>.</p></li>
-<li><p>Find the optimal launch power in closed form with
-<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.optimal_launch_power" title="comnumpy.optical.gn_model.optimal_launch_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">optimal_launch_power()</span></code></a>, and remember the
-rule behind it – the fibre’s noise is half the amplifiers’.</p></li>
-<li><p>Reconfigure one chain instead of building several, with <code class="docutils literal notranslate"><span class="pre">set_params</span></code> on
-named blocks, and sweep a parameter of it with <a class="reference internal" href="../documentation/toplevel/sweep.html#module-comnumpy.sweep" title="comnumpy.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>.</p></li>
-<li><p>Measure an SNR the way a receiver would, by removing one complex gain with
-a data-aided compensator and lumping the rest into
-<a class="reference internal" href="../documentation/core/metrics.html#comnumpy.core.metrics.compute_effective_snr" title="comnumpy.core.metrics.compute_effective_snr"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_effective_snr()</span></code></a>.</p></li>
-<li><p>Keep the polarization and power conventions straight, which is worth 9 dB
-and 5.3 dB of not being confused.</p></li>
-<li><p>Recognize where the model is a bound rather than an answer.</p></li>
-</ul>
-<p>From here, you can:</p>
-<ul class="simple">
-<li><p>Put digital back-propagation back in the receiver (<a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">the previous
-tutorial</span></a>) and watch the optimum move to
-higher power as the nonlinearity is partly undone.</p></li>
-<li><p>Sweep the span length at fixed total distance: the GN model will tell you,
-in milliseconds, why shorter spans buy reach.</p></li>
-<li><p>Add a Raman amplifier and recompute <span class="math notranslate nohighlight">\(P_{\mathrm{ASE}}\)</span>: the optimum
-moves as its cube root, and no fibre needs to be re-simulated.</p></li>
-</ul>
-<p>This is the last tutorial of the course. If you have read them in order you
-have built, measured and validated a chain in every regime the library
-covers – additive noise, multipath, multiple antennas, coding, shaping and
-nonlinear fibre – and each time against something that could have said no.</p>
+<section id="going-further">
+<h2>Going further<a class="headerlink" href="#going-further" title="Link to this heading">#</a></h2>
+<p>The closed form implemented here is eq. 120 and 123 of the extended version
+of Poggiolini’s GN model paper (arXiv:1209.0394); the published paper numbers
+its equations differently, and its compact single-span form is Eq. (15). Both
+numberings are in the module’s reference block, because a reader following
+one will not find the other.</p>
+<p>That paper also bounds its own formula – span loss at least 7 dB,
+<span class="math notranslate nohighlight">\(|\beta_2|\)</span> at least 4 ps²/km, symbol rate at least 28 GBaud, and
+channel bandwidth at least a quarter of the spacing. Calling
+<a class="reference internal" href="../documentation/optical/gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a> outside those bounds
+logs a warning naming the one that was crossed. It still returns a number:
+the model stays defined there and is often still usable, but silence would be
+a guarantee the paper does not give.</p>
 </section>
 </section>
 
@@ -1426,14 +1352,18 @@ nonlinear fibre – and each time against something that could have said no.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-parameters">Define Parameters</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-chain">The chain</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#measuring-the-snr">Measuring the SNR</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-number-for-the-whole-link">One number for the whole link</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#now-the-expensive-way">Now the expensive way</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-closed-form-buys">What the closed form buys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#part-1-the-prediction">Part 1: the prediction</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-model-is-looking-at">What the model is looking at</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#filling-the-band">Filling the band</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#part-2-the-check">Part 2: the check</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#does-the-amplifier-noise-match">Does the amplifier noise match?</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-expensive-way">The expensive way</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-model-cannot-see">What the model cannot see</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#is-it-right">Is it right?</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#going-further">Going further</a></li>
 </ul>
   </nav></div>
 
