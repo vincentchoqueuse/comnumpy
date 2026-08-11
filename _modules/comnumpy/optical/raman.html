@@ -868,18 +868,51 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">lorentzian</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">triangular</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tabulated</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">quoted_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">given</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">),</span>
-                                          <span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
+                                          <span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span>
+                                          <span class="p">(</span><span class="s2">&quot;tabulated&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">))</span>
                  <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">given</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;expected exactly one parameterization, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">given</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="si">}</span><span class="s2"> -- pass lorentzian=(tau1_fs, tau2_fs) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;or triangular=peak_shift_THz&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">given</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="si">}</span><span class="s2"> -- pass lorentzian=(tau1_fs, tau2_fs), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;triangular=peak_shift_THz, or &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;tabulated=(shift_Hz, gain)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">shift</span><span class="p">,</span> <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">shift</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">shift</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;expected two 1D arrays of the same length, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">shift</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;a measured spectrum needs at least two points, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;expected the Stokes shifts to be strictly increasing; &quot;</span>
+                    <span class="s2">&quot;sort the table before passing it, so that the &quot;</span>
+                    <span class="s2">&quot;interpolation cannot silently fold back on itself&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">shift</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;expected non-negative Stokes shifts: the table gives &quot;</span>
+                    <span class="s2">&quot;the gain a pump grants a signal below it, and the &quot;</span>
+                    <span class="s2">&quot;other side is fixed by the model, not measured&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;expected a positive peak gain, got </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tabulated&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">gain</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
+            <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">tau1</span><span class="p">,</span> <span class="n">tau2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
             <span class="k">if</span> <span class="n">tau1</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">tau2</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
@@ -893,11 +926,99 @@ window.runMermaid = runMermaid;</script>
                     <span class="sa">f</span><span class="s2">&quot;expected a positive peak shift in THz, got &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_quoted_at</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">wavelength_nm</span><span class="p">,</span> <span class="n">area_um2</span><span class="p">,</span> <span class="n">radius_um</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;expected quoted_at=(wavelength_nm, effective_area_um2, &quot;</span>
+                <span class="s2">&quot;core_radius_um) -- the three travel together because the &quot;</span>
+                <span class="s2">&quot;scaling is meaningless with any one of them missing&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+        <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">,</span> <span class="n">area_um2</span><span class="p">,</span> <span class="n">radius_um</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;expected three positive numbers in quoted_at, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">area_um2</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">radius_um</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;quoted_at&quot;</span><span class="p">,</span>
+                           <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
+                            <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="RamanGainSpectrum.pair_scaling">
+<a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum.pair_scaling">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pair_scaling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Waveguide correction of the gain, per (receiver, partner) pair.</span>
+
+<span class="sd">        The gain :meth:`shape` is a property of the glass and depends on</span>
+<span class="sd">        the Stokes shift alone. The coefficient that multiplies</span>
+<span class="sd">        :math:`P_i P_j` in a power equation is not that shape but</span>
+<span class="sd">        :math:`g_R / A_{\mathrm{eff}}`, and the effective area is a</span>
+<span class="sd">        property of the waveguide: the mode spreads as the wavelength</span>
+<span class="sd">        grows, so the same Stokes shift buys less gain further into the</span>
+<span class="sd">        infrared. With a Gaussian mode this reduces to a one-parameter</span>
+<span class="sd">        law, :math:`A_{\mathrm{eff}}(\nu) = A_0 k / (\ln(\nu/\nu_0) + k)`</span>
+<span class="sd">        with :math:`k = \pi a^2 / A_0`. A pair is charged the mean of the</span>
+<span class="sd">        two areas, and the gain is referred back to the frequency the</span>
+<span class="sd">        table was quoted at.</span>
+
+<span class="sd">        Across one band this is a few per cent; across C+L+S it is the</span>
+<span class="sd">        difference between a flat prediction and a wrong tilt.</span>
+
+<span class="sd">        Axes: *returns a matrix* ``(n, n)``, one factor per ordered pair,</span>
+<span class="sd">        with ``j`` the partner that feeds ``i``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        frequency_Hz : array_like</span>
+<span class="sd">            Frequencies of the waves, in Hz.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Scaling factors, all 1 when the spectrum does not record</span>
+<span class="sd">            where it was quoted.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        D. Marcuse, &quot;Loss analysis of single-mode fiber splices&quot;, Bell</span>
+<span class="sd">        Syst. Tech. J., vol. 56, no. 5, 1977 (Gaussian spot size);</span>
+<span class="sd">        A. D&#39;Amico et al., J. Lightwave Technol., vol. 40,</span>
+<span class="sd">        pp. 3499-3511, 2022, Section III.D.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; float(np.max(np.abs(spectrum.pair_scaling(</span>
+<span class="sd">        ...     np.array([193e12, 206e12])) - 1.0)))</span>
+<span class="sd">        0.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">frequency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frequency_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">wavelength_nm</span><span class="p">,</span> <span class="n">area_um2</span><span class="p">,</span> <span class="n">radius_um</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span>
+        <span class="n">reference_Hz</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">radius_um</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">area_um2</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">frequency</span> <span class="o">/</span> <span class="n">reference_Hz</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>     <span class="c1"># in units of A_0</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="p">(</span><span class="n">area</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">area</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">overlap</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">frequency</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">reference_Hz</span><span class="p">)</span></div>
+
 
     <span class="c1"># -- the shape --------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Unnormalized gain, for the shift in Hz (may be negative).&quot;&quot;&quot;</span>
         <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">grid</span><span class="p">,</span> <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span>
+            <span class="c1"># Outside the measured range the gain is zero rather than</span>
+            <span class="c1"># held at the last sample: a table stops where the</span>
+            <span class="c1"># measurement stopped, and extrapolating a Raman spectrum</span>
+            <span class="c1"># off the end of the data is how a tilt gets invented.</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                            <span class="mf">0.0</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">tau1</span><span class="p">,</span> <span class="n">tau2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-15</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-15</span>
             <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">shift</span>
@@ -1190,6 +1311,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">gain</span> <span class="o">=</span> <span class="n">gain_peak_W_km</span> <span class="o">*</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>     <span class="c1"># zero where shift &lt; 0</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span> <span class="o">*</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">pair_scaling</span><span class="p">(</span><span class="n">frequency_Hz</span><span class="p">)</span>
     <span class="n">ratio</span> <span class="o">=</span> <span class="n">frequency_Hz</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">frequency_Hz</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
     <span class="k">return</span> <span class="n">gain</span> <span class="o">-</span> <span class="n">ratio</span> <span class="o">*</span> <span class="n">gain</span><span class="o">.</span><span class="n">T</span>
 
