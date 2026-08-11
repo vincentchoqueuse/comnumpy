@@ -61,6 +61,29 @@ one release; there is no compatibility layer.
   all of them. This one is dominated by the shape, and it found a
   missing effective-area scaling on its first run.
 
+  The two agree to **0.04 dB at worst** across the 96 channels, and the
+  coupling coefficients match GNPy's **exactly** on the gain side --
+  element by element, ratio 1.0000 -- which is what says the
+  effective-area law is right rather than merely closer.
+
+  Getting there took two corrections and one refutation. The
+  effective-area scaling was missing (above). The pump powers were wrong
+  in the comparison, not in the library: GNPy applies the span's 0.5 dB
+  connector loss to its Raman pumps before injecting them, so its
+  configured 224.4 mW reaches the fibre as 200.0 mW, and feeding the
+  configured value over-pumped by 0.5 dB. And the tempting explanation
+  -- GNPy defaulting to a perturbative solver where this library is
+  exact -- was killed by experiment: GNPy was installed and its own case
+  re-run at perturbative orders 1 to 4 and with `numerical`, the harness
+  reproducing the shipped file to 5.5e-16, and all five settings agree
+  to the last digit.
+
+  What is left is a real but small difference of model: GNPy's
+  depletion conserves **energy** after its `vibrational_loss` factor
+  where this library conserves **photons**, so the coefficients differ
+  on the depletion side by up to nu_pump/nu_signal = 1.0716. On this
+  link that is worth 0.04 dB.
+
 - `comnumpy.optical.gn_model`: the **Gaussian Noise model** in closed
   form -- `gn_model_psi` (eq. 123 of arXiv:1209.0394), `gn_model_nli_power`
   (eq. 120), `gn_model_snr` and `optimal_launch_power`. It answers "how
