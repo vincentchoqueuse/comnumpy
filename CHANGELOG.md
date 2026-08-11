@@ -46,6 +46,23 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`validation/fec_ldpc_pyldpc.py`**: the LDPC decoder against a second
+  implementation. The analytic references a decoder can be held to are
+  weak -- a closed form exists for the ensemble threshold, not for a
+  finite code -- and the usual obstacle to using the literature is that
+  published curves rarely come with the exact parity-check matrix behind
+  them, so any disagreement can be blamed on the code rather than the
+  decoder.
+
+  Sharing the matrix removes the obstacle. pyldpc's sum-product decoder
+  and this library's min-sum are given the same H *and* the same LLRs, so
+  only the check-node update differs. Codeword agreement rises from 33 %
+  to 93 % between 1 and 4 dB, plain min-sum is worse at every point --
+  the direction the approximation must go -- and `alpha=0.75` refunds
+  most of the loss. The replayed channel is hashed against the recorded
+  one, so a changed numpy stream fails loudly instead of comparing two
+  decoders on two different channels.
+
 - **`RamanSolution.ase_from_pumps_W` / `.ase_from_signals_W`.** The solver
   returned one total ASE, so asking "how much of this do the channels seed
   in each other?" meant reimplementing the integrating factor by hand --
