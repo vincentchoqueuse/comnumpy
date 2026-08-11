@@ -14,6 +14,8 @@ from comnumpy.optical.raman import (PLANCK, RamanGainSpectrum,
                                     available_gain_spectra, get_gain_spectrum,
                                     register_gain_spectrum, solve_raman)
 
+_COUPLING_MATRIX = raman._coupling_matrix
+
 L_KM = 80.0
 GAIN = 0.4                 # 1/(W km), a typical SMF value
 ALPHA_P_DB = 0.25
@@ -255,6 +257,71 @@ class TestPhotonConservation(unittest.TestCase):
                                pump_forward_W=1.0, alpha_signal_dB_km=0.0,
                                alpha_pump_dB_km=0.0, bandwidth_Hz=0.0)
         self.assertLess(solution.pump_forward_W[-1], 0.1 * 1.0)
+
+
+class TestTheConventionIsNotArbitrary(unittest.TestCase):
+    r"""The closed form rejects the other way of writing the pair.
+
+    :math:`C_{ji} = -\frac{\nu_j}{\nu_i} C_{ij}` conserves photon number:
+    a pump photon annihilated gives a Stokes photon *and* an optical
+    phonon, so the pump loses :math:`\nu_p/\nu_s` times what the signal
+    gains and the difference leaves the optical field. Dropping that
+    factor gives an antisymmetric matrix, which conserves total power
+    instead -- the phonon is never paid for. Both are self-consistent
+    and both pass photon- or energy-accounting on their own terms, so
+    neither is refuted by an invariant.
+
+    The logistic of :class:`TestExactSolution` does refute one of them,
+    and by a predictable amount: the two conventions saturate at
+    :math:`P_{s0} + \frac{\nu_s}{\nu_p} P_{p0}` and at
+    :math:`P_{s0} + P_{p0}`, whose ratio is 6.5% here.
+
+    This test exists because that check is the only thing standing
+    behind the factor. Without it the choice reads as a detail of the
+    implementation rather than the physics it is.
+    """
+
+    @staticmethod
+    def _power_conserving(frequency_Hz, gain_peak_W_km, spectrum):
+        # the captured original, not the module attribute: that one is the
+        # patch itself while this runs
+        full = _COUPLING_MATRIX(frequency_Hz, gain_peak_W_km, spectrum)
+        gain = np.where(full > 0, full, 0.0)
+        return gain - gain.T
+
+    def _profile(self, pump_W, coupling=None):
+        original = raman._coupling_matrix
+        if coupling is not None:
+            raman._coupling_matrix = coupling
+        try:
+            return solve_raman(
+                length_km=L_KM, gain_peak_W_km=GAIN, pump_forward_W=pump_W,
+                alpha_signal_dB_km=0.0, alpha_pump_dB_km=0.0,
+                bandwidth_Hz=0.0, tol=1e-12)
+        finally:
+            raman._coupling_matrix = original
+
+    def test_dropping_the_photon_factor_misses_the_closed_form(self):
+        for pump in (0.5, 2.0):
+            with self.subTest(pump_W=pump):
+                exact = exact_copumped_signal(
+                    self._profile(pump).z_km, 1e-3, pump)
+                theirs = self._profile(pump, self._power_conserving).signal_W
+                error = float(np.max(np.abs(theirs - exact) / exact))
+                self.assertGreater(error, 0.04, "the two conventions are "
+                                   "indistinguishable here, so this test "
+                                   "proves nothing about the factor")
+
+    def test_the_two_conventions_differ_by_the_saturation_ratio(self):
+        """The size of the miss is predicted, not merely observed."""
+        pump = 2.0
+        signal = 1e-3
+        photon_limit = signal + (NU_S / NU_P) * pump
+        power_limit = signal + pump
+        theirs = self._profile(pump, self._power_conserving).signal_W
+        # driven to saturation, the wrong convention lands on the wrong limit
+        self.assertAlmostEqual(float(theirs[-1]) / power_limit, 1.0, places=2)
+        self.assertAlmostEqual(power_limit / photon_limit, 1.0653, places=3)
 
 
 class TestPumpingSchemes(unittest.TestCase):

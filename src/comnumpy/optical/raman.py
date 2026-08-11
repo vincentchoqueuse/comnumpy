@@ -383,6 +383,16 @@ def register_gain_spectrum(name: str):
     ...                              reference="bench")
     >>> round(get_gain_spectrum("LAB").peak_shift_THz, 1)
     14.0
+
+    The registry is process-wide, so an example that adds to it has to
+    take it back out: a doctest that leaves "LAB" behind makes every
+    later test that iterates the catalog see an entry that only exists
+    when the doctests ran first, which is a failure that depends on
+    collection order.
+
+    >>> _ = _SPECTRUM_REGISTRY.pop("LAB")
+    >>> "LAB" in available_gain_spectra()
+    False
     """
     def decorator(func: Callable[..., RamanGainSpectrum]):
         _SPECTRUM_REGISTRY[name] = func
