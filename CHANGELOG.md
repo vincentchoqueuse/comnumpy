@@ -46,6 +46,24 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`RamanSolution.ase_from_pumps_W` / `.ase_from_signals_W`.** The solver
+  returned one total ASE, so asking "how much of this do the channels seed
+  in each other?" meant reimplementing the integrating factor by hand --
+  which is exactly what `optical_raman_gnpy_regimes.py` had to do to
+  compare against GNPy, whose source term is the pumps alone.
+
+  The split is exact rather than approximate. The ASE equation is linear
+  in the ASE, so `A_i = sum_j A_i^(j)` identically, and the integrating
+  factor is free: the net gain the ASE sees is the one the signal obeys,
+  so `exp(int g_i)` is `P_s,i(z)/P_s,i(0)`, the signal's own profile. No
+  second solve, no model.
+
+  The tests pin the *split*, which a correct total does not: the bluest
+  channel receives exactly zero from the other channels, since Raman only
+  flows downhill in frequency and nothing sits above it -- an assertion
+  needing no reference value that neither a sign error nor a transposed
+  index survives. The validation script drops seventeen lines for one.
+
 - **`shared=` on the data-aided compensators (D49).** `validate_single_path`
   already told a caller to decide whether an estimand is shared over the
   paths or one per path, but `DataAidedComplexGainCompensator` and

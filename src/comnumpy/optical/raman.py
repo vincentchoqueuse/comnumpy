@@ -722,6 +722,11 @@ class RamanSolution:
     """
 
     z_km: np.ndarray
+    # the two the ASE decomposition needs, in the solver's own wave order
+    # (signals first): S[i, j] is what multiplies P_j in the spontaneous
+    # source of signal i, and wave_power_W[j] is that P_j
+    wave_power_W: np.ndarray
+    spontaneous_per_wave: np.ndarray
     signal_W: np.ndarray
     pump_forward_W: np.ndarray
     pump_backward_W: np.ndarray
@@ -729,6 +734,56 @@ class RamanSolution:
     loss_only_W: np.ndarray
     bandwidth_Hz: float
     frequency_signal_Hz: Union[float, np.ndarray]
+
+    def _ase_from(self, columns: np.ndarray) -> np.ndarray:
+        r"""ASE seeded by a subset of the waves, by superposition.
+
+        The ASE equation is *linear* in the ASE, with a source that is a
+        sum over the waves above the channel:
+
+        .. math::
+
+            \frac{\mathrm{d}A_i}{\mathrm{d}z} =
+                g_i(z) A_i + \sum_j S_{ij} P_j(z)
+
+        so :math:`A_i = \sum_j A_i^{(j)}` exactly, each term solving the
+        same equation with one source kept. The decomposition is
+        therefore not an approximation or a re-run: it is arithmetic on
+        the profiles already computed.
+
+        The integrating factor is free. :math:`g_i` is the *same* net
+        gain the signal obeys, so :math:`\exp \int_0^z g_i` is simply
+        :math:`P_{s,i}(z)/P_{s,i}(0)` -- the signal's own profile.
+        """
+        from scipy.integrate import cumulative_trapezoid
+
+        signal = np.atleast_2d(self.signal_W)
+        loss = signal / signal[:, :1]
+        source = (np.atleast_2d(self.spontaneous_per_wave)[:, columns]
+                  @ np.atleast_2d(self.wave_power_W)[columns])
+        integral = cumulative_trapezoid(source / loss, self.z_km,
+                                        initial=0.0, axis=-1)
+        contribution = loss * integral
+        return contribution[0] if contribution.shape[0] == 1 else contribution
+
+    @property
+    def ase_from_pumps_W(self) -> np.ndarray:
+        """ASE the pumps seed, which is what a Raman amplifier is charged for."""
+        columns = np.arange(self.n_signals, np.atleast_2d(self.wave_power_W).shape[0])
+        return self._ase_from(columns)
+
+    @property
+    def ase_from_signals_W(self) -> np.ndarray:
+        r"""ASE the channels seed in each other, which pump-only models omit.
+
+        Every channel sits below some of its neighbours, so the comb
+        seeds itself. The shifts involved are small -- a few terahertz
+        across a band -- where the Bose occupancy :math:`1/(e^{h \Delta
+        \nu / k T} - 1)` is of order one rather than negligible, so the
+        term is thermally enhanced. Planning tools commonly drop it; on
+        a 96-channel C-band comb it is worth about 0.17 dB of ASE.
+        """
+        return self._ase_from(np.arange(self.n_signals))
 
     @property
     def n_signals(self) -> int:
@@ -1186,6 +1241,8 @@ def solve_raman(*, length_km: float, gain_peak_W_km: float,
     transmission = np.exp(-alpha_pump * length_km)
     return RamanSolution(
         z_km=z,
+        wave_power_W=profile[:n_waves],
+        spontaneous_per_wave=spontaneous,
         signal_W=fold(profile[:n_signals]),
         pump_forward_W=fold(pump_profile[0]),
         pump_backward_W=fold(pump_profile[1]),
