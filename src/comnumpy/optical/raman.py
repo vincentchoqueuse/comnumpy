@@ -140,6 +140,8 @@ class RamanGainSpectrum:
     triangular: Optional[float] = field(default=None, kw_only=True)
     tabulated: Optional[tuple[np.ndarray, np.ndarray]] = field(
         default=None, kw_only=True)
+    quoted_at: Optional[tuple[float, float, float]] = field(
+        default=None, kw_only=True)
     standard: str = field(default="custom", kw_only=True)
     reference: str = field(default="", kw_only=True)
 
@@ -179,6 +181,7 @@ class RamanGainSpectrum:
                 raise ValueError(
                     f"expected a positive peak gain, got {np.max(gain)}")
             object.__setattr__(self, "tabulated", (shift, gain))
+            self._check_quoted_at()
             return
         if self.lorentzian is not None:
             tau1, tau2 = self.lorentzian
@@ -193,6 +196,110 @@ class RamanGainSpectrum:
                     f"expected a positive peak shift in THz, got "
                     f"{self.triangular}")
             object.__setattr__(self, "triangular", float(self.triangular))
+        self._check_quoted_at()
+
+    def _check_quoted_at(self) -> None:
+        if self.quoted_at is None:
+            return
+        try:
+            wavelength_nm, area_um2, radius_um = self.quoted_at
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                "expected quoted_at=(wavelength_nm, effective_area_um2, "
+                "core_radius_um) -- the three travel together because the "
+                "scaling is meaningless with any one of them missing"
+            ) from error
+        if min(wavelength_nm, area_um2, radius_um) <= 0:
+            raise ValueError(
+                f"expected three positive numbers in quoted_at, got "
+                f"({wavelength_nm}, {area_um2}, {radius_um})")
+        object.__setattr__(self, "quoted_at",
+                           (float(wavelength_nm), float(area_um2),
+                            float(radius_um)))
+
+    def pair_scaling(self, frequency_Hz: np.ndarray) -> np.ndarray:
+        r"""Waveguide correction of the gain, per (receiver, partner) pair.
+
+        Signal Model
+        ------------
+        :meth:`shape` is a property of the **glass**: it depends on the
+        Stokes shift alone. The coefficient that multiplies
+        :math:`P_i P_j` in a power equation is not that shape but
+        :math:`g_R(\Delta
+u) / A_{\mathrm{eff}}`, and the effective
+        area is a property of the **waveguide**, which does depend on
+        the absolute frequency: the mode spreads as the wavelength
+        grows, so the same Stokes shift buys less gain at 1600 nm than
+        at 1500 nm.
+
+        With a Gaussian approximation of the mode, the fibre's V number
+        is proportional to the frequency and the spot size follows
+        :math:`w = a/\sqrt{\ln V}`, which after eliminating the index
+        contrast leaves a one-parameter law:
+
+        .. math::
+
+            A_{\mathrm{eff}}(
+u) = A_0 \,
+                rac{k}{\ln(
+u/
+u_0) + k},
+            \qquad k = rac{\pi a^2}{A_0}
+
+        A pair is charged the mean of the two areas, and the gain is
+        referred back to the frequency the table was quoted at:
+
+        .. math::
+
+            rac{A_0}{	frac{1}{2}
+                \left(A_{\mathrm{eff}}(
+u_i)+A_{\mathrm{eff}}(
+u_j)ight)}
+            \cdot rac{
+u_j}{
+u_0}
+
+        Over one band this is a few per cent. Over C+L+S it is the
+        difference between a flat prediction and a wrong tilt, which is
+        why it is here and not left to the caller.
+
+        Axes: *returns a matrix* ``(n, n)``, one factor per ordered pair,
+        with ``j`` the partner that feeds ``i``.
+
+        Parameters
+        ----------
+        frequency_Hz : array_like
+            Frequencies of the waves, in Hz.
+
+        Returns
+        -------
+        np.ndarray
+            Scaling factors, all 1 when the spectrum does not say where
+            it was quoted.
+
+        References
+        ----------
+        D. Marcuse, "Loss analysis of single-mode fiber splices", Bell
+        Syst. Tech. J. 56(5), 1977 (the Gaussian spot-size
+        approximation); A. D'Amico et al., J. Lightwave Technol. 40,
+        3499-3511 (2022), Section III.D.
+
+        Examples
+        --------
+        >>> spectrum = get_gain_spectrum("blow-wood")
+        >>> float(np.max(np.abs(spectrum.pair_scaling(
+        ...     np.array([193e12, 206e12])) - 1.0)))
+        0.0
+        """
+        frequency = np.asarray(frequency_Hz, dtype=float)
+        if self.quoted_at is None:
+            return np.ones((frequency.size, frequency.size))
+        wavelength_nm, area_um2, radius_um = self.quoted_at
+        reference_Hz = SPEED_OF_LIGHT / (wavelength_nm * 1e-9)
+        k = np.pi * (radius_um ** 2) / area_um2
+        area = k / (np.log(frequency / reference_Hz) + k)     # in units of A_0
+        overlap = (area[:, None] + area[None, :]) / 2
+        return (1.0 / overlap) * (frequency[None, :] / reference_Hz)
 
     # -- the shape --------------------------------------------------------
     def _raw(self, shift_Hz: np.ndarray) -> np.ndarray:
@@ -486,6 +593,7 @@ def _coupling_matrix(frequency_Hz: np.ndarray, gain_peak_W_km: float,
         gain = gain_peak_W_km * (shift > 0).astype(float)
     else:
         gain = gain_peak_W_km * spectrum.shape(shift)     # zero where shift < 0
+        gain = gain * spectrum.pair_scaling(frequency_Hz)
     ratio = frequency_Hz[:, None] / frequency_Hz[None, :]
     return gain - ratio * gain.T
 
