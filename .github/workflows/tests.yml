@@ -52,6 +52,39 @@ jobs:
       - name: Run tests and doctests with coverage
         run: pytest --cov --cov-report=term-missing
 
+  # Every other job resolves the newest release of everything, so the
+  # floors in pyproject are a promise nothing checks -- and it was false:
+  # matplotlib had no constraint while the code called a 3.10 keyword. This
+  # job installs the declared floors exactly. If it goes red, either the
+  # code gained a dependency on something newer (raise the floor and say
+  # so) or the floor was wrong; do not relax the pins to make it pass.
+  oldest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the oldest supported dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy==1.26.*" "scipy==1.11.*" "matplotlib==3.10.*"
+          pip install --no-deps -e .
+          pip install pytest pytest-cov pytest-subtests
+
+      # The pins above are installed with --no-deps, so nothing enforces
+      # that they still satisfy the floors in pyproject. pip check does:
+      # raise a floor above a pin and this fails instead of passing quietly
+      # against versions the project no longer claims to support.
+      - name: The pins must still satisfy the declared floors
+        run: pip check
+
+      - name: Run tests and doctests
+        run: pytest -q
+
   # The D7 layer: each script asserts its comparison against an
   # analytical or published reference, so a green run is a proof that the
   # curves in the figures are the curves the library computes. Measured

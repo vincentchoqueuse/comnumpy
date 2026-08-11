@@ -46,6 +46,35 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **The dependency floors are now true, and tested.** `pyproject.toml`
+  claimed `numpy>=1.24`, `scipy>=1.10` and no matplotlib constraint at
+  all, while every CI job installed the newest release of each -- so the
+  claim was never exercised. Measured on pinned environments, it was
+  false: `numpy 1.24` breaks the 8-PSK phase-search test on a tie that
+  breaks the other way, and `plot_chain_profiling` calls
+  `boxplot(orientation=...)`, a matplotlib **3.10** keyword, so any user
+  below that met a `TypeError` at plotting time that no job could see.
+
+  The floors are now `numpy>=1.26`, `scipy>=1.11`, `matplotlib>=3.10` --
+  the oldest combination that passes, verified rather than guessed -- and
+  a new `oldest` CI job installs exactly those pins and runs the suite.
+  It ends with `pip check`, so raising a floor above the pins fails loudly
+  instead of passing quietly against versions the project no longer
+  supports.
+
+- **`py.typed` ships.** The pyright strict ratchet (D37) now covers all 58
+  modules of `src/comnumpy`, which was the gate the architecture document
+  set for the marker -- a partial `py.typed` being worse than none. The
+  last module to join, `optical/gn_model.py`, brought one real defect with
+  it: `gn_model_psi` annotated `baud_pump_Hz` as a scalar while
+  `gn_model_nli_power` passes the whole vector of symbol rates.
+
+  `tests/test_type_marker.py` keeps the promise honest: the set of modules
+  on disk must equal the set on the strict list, both ways. Without it a
+  new module would inherit the marker's guarantee with nothing checking
+  it, and the failure would be silent -- a type checker trusts the marker
+  rather than looking.
+
 - `RamanGainSpectrum(tabulated=(shift_Hz, gain))`: a **measured**
   spectrum, alongside the analytic `lorentzian=` and `triangular=`
   shapes. Outside the measured range the gain is zero rather than held

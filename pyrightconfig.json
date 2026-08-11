@@ -1,9 +1,14 @@
 // Decision D37 -- strict-typing ratchet. The include list only grows:
 // add a module once it passes strict, never remove one. The disabled
 // reportUnknown* family measures numpy's incomplete stubs, not our API
-// contracts. py.typed ships only when all of src/ is on this list (the
-// architecture document warns a partial py.typed is worse than none);
-// that is the v1.0.0 tag gate.
+// contracts.
+//
+// All of src/comnumpy is on this list as of the py.typed commit, so the
+// gate the architecture document set -- no partial py.typed, since one
+// is worse than none -- is met and src/comnumpy/py.typed ships. The list
+// is now a *completeness* check as much as a ratchet: a new module that
+// is not added here is a module whose types the marker file promises and
+// nothing verifies.
 {
     "include": [
         "src/comnumpy/exceptions.py",
@@ -62,7 +67,8 @@
         "src/comnumpy/fec/__init__.py",
         "src/comnumpy/mimo/__init__.py",
         "src/comnumpy/ofdm/__init__.py",
-        "src/comnumpy/optical/__init__.py"
+        "src/comnumpy/optical/__init__.py",
+        "src/comnumpy/optical/gn_model.py"
     ],
     "typeCheckingMode": "strict",
     "pythonVersion": "3.11",
