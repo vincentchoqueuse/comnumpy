@@ -138,18 +138,48 @@ class RamanGainSpectrum:
 
     lorentzian: Optional[tuple[float, float]] = field(default=None, kw_only=True)
     triangular: Optional[float] = field(default=None, kw_only=True)
+    tabulated: Optional[tuple[np.ndarray, np.ndarray]] = field(
+        default=None, kw_only=True)
     standard: str = field(default="custom", kw_only=True)
     reference: str = field(default="", kw_only=True)
 
     def __post_init__(self) -> None:
         given = [name for name, value in (("lorentzian", self.lorentzian),
-                                          ("triangular", self.triangular))
+                                          ("triangular", self.triangular),
+                                          ("tabulated", self.tabulated))
                  if value is not None]
         if len(given) != 1:
             raise ValueError(
                 f"expected exactly one parameterization, got "
-                f"{given or 'none'} -- pass lorentzian=(tau1_fs, tau2_fs) "
-                f"or triangular=peak_shift_THz")
+                f"{given or 'none'} -- pass lorentzian=(tau1_fs, tau2_fs), "
+                f"triangular=peak_shift_THz, or "
+                f"tabulated=(shift_Hz, gain)")
+        if self.tabulated is not None:
+            shift, gain = (np.asarray(self.tabulated[0], dtype=float),
+                           np.asarray(self.tabulated[1], dtype=float))
+            if shift.ndim != 1 or shift.shape != gain.shape:
+                raise ValueError(
+                    f"expected two 1D arrays of the same length, got "
+                    f"{shift.shape} and {gain.shape}")
+            if shift.size < 2:
+                raise ValueError(
+                    f"a measured spectrum needs at least two points, got "
+                    f"{shift.size}")
+            if np.any(np.diff(shift) <= 0):
+                raise ValueError(
+                    "expected the Stokes shifts to be strictly increasing; "
+                    "sort the table before passing it, so that the "
+                    "interpolation cannot silently fold back on itself")
+            if np.any(shift < 0):
+                raise ValueError(
+                    "expected non-negative Stokes shifts: the table gives "
+                    "the gain a pump grants a signal below it, and the "
+                    "other side is fixed by the model, not measured")
+            if np.max(gain) <= 0:
+                raise ValueError(
+                    f"expected a positive peak gain, got {np.max(gain)}")
+            object.__setattr__(self, "tabulated", (shift, gain))
+            return
         if self.lorentzian is not None:
             tau1, tau2 = self.lorentzian
             if tau1 <= 0 or tau2 <= 0:
@@ -168,6 +198,15 @@ class RamanGainSpectrum:
     def _raw(self, shift_Hz: np.ndarray) -> np.ndarray:
         """Unnormalized gain, for the shift in Hz (may be negative)."""
         shift = np.asarray(shift_Hz, dtype=float)
+        if self.tabulated is not None:
+            grid, gain = self.tabulated
+            # Outside the measured range the gain is zero rather than
+            # held at the last sample: a table stops where the
+            # measurement stopped, and extrapolating a Raman spectrum
+            # off the end of the data is how a tilt gets invented.
+            return np.where(shift > 0,
+                            np.interp(shift, grid, gain, left=0.0, right=0.0),
+                            0.0)
         if self.lorentzian is not None:
             tau1, tau2 = self.lorentzian[0] * 1e-15, self.lorentzian[1] * 1e-15
             omega = 2 * np.pi * shift
