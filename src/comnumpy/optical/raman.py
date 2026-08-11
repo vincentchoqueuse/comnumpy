@@ -220,48 +220,20 @@ class RamanGainSpectrum:
     def pair_scaling(self, frequency_Hz: np.ndarray) -> np.ndarray:
         r"""Waveguide correction of the gain, per (receiver, partner) pair.
 
-        Signal Model
-        ------------
-        :meth:`shape` is a property of the **glass**: it depends on the
-        Stokes shift alone. The coefficient that multiplies
+        The gain :meth:`shape` is a property of the glass and depends on
+        the Stokes shift alone. The coefficient that multiplies
         :math:`P_i P_j` in a power equation is not that shape but
-        :math:`g_R(\Delta
-u) / A_{\mathrm{eff}}`, and the effective
-        area is a property of the **waveguide**, which does depend on
-        the absolute frequency: the mode spreads as the wavelength
-        grows, so the same Stokes shift buys less gain at 1600 nm than
-        at 1500 nm.
+        :math:`g_R / A_{\mathrm{eff}}`, and the effective area is a
+        property of the waveguide: the mode spreads as the wavelength
+        grows, so the same Stokes shift buys less gain further into the
+        infrared. With a Gaussian mode this reduces to a one-parameter
+        law, :math:`A_{\mathrm{eff}}(\nu) = A_0 k / (\ln(\nu/\nu_0) + k)`
+        with :math:`k = \pi a^2 / A_0`. A pair is charged the mean of the
+        two areas, and the gain is referred back to the frequency the
+        table was quoted at.
 
-        With a Gaussian approximation of the mode, the fibre's V number
-        is proportional to the frequency and the spot size follows
-        :math:`w = a/\sqrt{\ln V}`, which after eliminating the index
-        contrast leaves a one-parameter law:
-
-        .. math::
-
-            A_{\mathrm{eff}}(
-u) = A_0 \,
-                rac{k}{\ln(
-u/
-u_0) + k},
-            \qquad k = rac{\pi a^2}{A_0}
-
-        A pair is charged the mean of the two areas, and the gain is
-        referred back to the frequency the table was quoted at:
-
-        .. math::
-
-            rac{A_0}{	frac{1}{2}
-                \left(A_{\mathrm{eff}}(
-u_i)+A_{\mathrm{eff}}(
-u_j)ight)}
-            \cdot rac{
-u_j}{
-u_0}
-
-        Over one band this is a few per cent. Over C+L+S it is the
-        difference between a flat prediction and a wrong tilt, which is
-        why it is here and not left to the caller.
+        Across one band this is a few per cent; across C+L+S it is the
+        difference between a flat prediction and a wrong tilt.
 
         Axes: *returns a matrix* ``(n, n)``, one factor per ordered pair,
         with ``j`` the partner that feeds ``i``.
@@ -274,15 +246,15 @@ u_0}
         Returns
         -------
         np.ndarray
-            Scaling factors, all 1 when the spectrum does not say where
-            it was quoted.
+            Scaling factors, all 1 when the spectrum does not record
+            where it was quoted.
 
         References
         ----------
         D. Marcuse, "Loss analysis of single-mode fiber splices", Bell
-        Syst. Tech. J. 56(5), 1977 (the Gaussian spot-size
-        approximation); A. D'Amico et al., J. Lightwave Technol. 40,
-        3499-3511 (2022), Section III.D.
+        Syst. Tech. J., vol. 56, no. 5, 1977 (Gaussian spot size);
+        A. D'Amico et al., J. Lightwave Technol., vol. 40,
+        pp. 3499-3511, 2022, Section III.D.
 
         Examples
         --------
