@@ -15,7 +15,8 @@ from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import dbm_to_watt, watt_to_dbm
+from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
+                                    dbm_to_watt, watt_to_dbm)
 from comnumpy.optical.wdm import WDMGrid
 
 img_dir = "../../docs/tutorials/img/"
@@ -25,6 +26,7 @@ BAUD = 32e9
 SPAN_KM = 100.0
 N_SPANS = 5
 NF_dB = 6.0
+SPACING = 50e9
 
 OS = 4
 N_SYM = 4096
@@ -32,6 +34,86 @@ ROLLOFF = 0.1
 FS = BAUD * OS
 STIMULUS = (2, N_SYM)
 
+
+# ===========================================================================
+#  Part 1 -- the prediction, with no signal propagated at all
+# ===========================================================================
+
+def comb(n_channels):
+    """The channel layout, as an object rather than an arithmetic expression."""
+    return WDMGrid.uniform(n_channels, spacing_Hz=SPACING,
+                           bandwidth_Hz=BAUD * (1 + ROLLOFF),
+                           center_Hz=SMF.carrier_frequency_Hz)
+
+
+def comb_eta(n_channels):
+    """The eta of P_NLI = eta P^3, for a comb of identical channels."""
+    grid = comb(n_channels)
+    nli = gn_model_nli_power(SMF, span_length_km=SPAN_KM, n_spans=N_SPANS,
+                             powers_W=np.full(n_channels, 1e-3),
+                             frequencies_Hz=np.asarray(grid.frequencies_Hz),
+                             baud_rates_Hz=np.full(n_channels, BAUD))
+    return nli[n_channels // 2] / (1e-3) ** 3
+
+
+def analytic_ase(n_spans=N_SPANS, bandwidth_Hz=BAUD):
+    """Amplifier noise in the channel, over both polarizations.
+
+    ``compute_erbium_doped_fiber_N_ase`` returns the one-sided spectral
+    density of a single amplifier **per polarization**; the factor two
+    is the second polarization, which carries its own independent noise
+    and is the term the channel-power convention makes easy to forget.
+    """
+    density = compute_erbium_doped_fiber_N_ase(SMF.alpha_dB, SPAN_KM, NF_dB)
+    return 2 * n_spans * density * bandwidth_Hz
+
+
+grid = comb(9)
+grid.plot(cut=grid.n_channels // 2)
+plt.savefig(f"{img_dir}/gn_model_fig1.png")
+print(f"comb: {grid.n_channels} channels, {grid.guard_Hz / 1e9:.1f} GHz of "
+      f"guard, {grid.min_fs / 1e9:.0f} GHz to simulate")
+
+eta = comb_eta(1)
+ase_W = analytic_ase()
+best_power, best_snr = optimal_launch_power(ase_W, eta)
+print(f"\neta      = {eta:.4g} /W^2      (GN model, one channel)")
+print(f"P_ASE    = {watt_to_dbm(ase_W):+.2f} dBm     "
+      f"({N_SPANS} spans, NF = {NF_dB:.0f} dB, both polarizations)")
+print(f"optimum  = {watt_to_dbm(best_power):+.2f} dBm     "
+      f"SNR = {10 * np.log10(best_snr):.2f} dB")
+print(f"check    : eta P^3 / (P_ASE/2) = "
+      f"{eta * best_power ** 3 / (ase_W / 2):.6f}")
+
+fine_powers = np.logspace(-1.0, 0.6, 400) * 1e-3
+print("\nchannels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it")
+counts = [1, 3, 9, 27, 81]
+curves = {}
+for n_channels in counts:
+    channel_eta = comb_eta(n_channels)
+    power, snr = optimal_launch_power(ase_W, channel_eta)
+    curves[n_channels] = 10 * np.log10(
+        gn_model_snr(ase_W, channel_eta, fine_powers))
+    print(f"{n_channels:8d}   "
+          f"{watt_to_dbm(channel_eta * (1e-3) ** 3):+8.2f} dBm   "
+          f"{watt_to_dbm(power):+6.2f} dBm   {10*np.log10(snr):6.2f} dB   "
+          f"{comb(n_channels).min_fs/1e12:11.2f} THz")
+
+_, ax = plt.subplots(figsize=(7, 5), layout="constrained")
+for n_channels in counts:
+    ax.plot(watt_to_dbm(fine_powers), curves[n_channels],
+            label=f"{n_channels} channels")
+ax.set_xlabel("launch power per channel [dBm]")
+ax.set_ylabel("SNR [dB]")
+ax.set_title("Filling the band, in closed form only")
+ax.legend()
+ax.grid(True, alpha=0.4)
+plt.savefig(f"{img_dir}/gn_model_fig2.png")
+
+
+# ===========================================================================
+#  Part 2 -- the simulation, which is here to disagree
+# ===========================================================================
 
 def launch_gain(power_W):
     """Amplifier gain for a channel power split over two polarizations."""
@@ -70,44 +152,22 @@ def measure(chain, powers_W, seed=3):
                  reference="tx", seed=seed)["snr_dB"]
 
 
-def comb_eta(n_channels, spacing_Hz=50e9):
-    """The eta of P_NLI = eta P^3, for a comb of identical channels."""
-    grid = WDMGrid.uniform(n_channels, spacing_Hz=spacing_Hz,
-                           bandwidth_Hz=BAUD * (1 + ROLLOFF),
-                           center_Hz=SMF.carrier_frequency_Hz)
-    nli = gn_model_nli_power(SMF, span_length_km=SPAN_KM, n_spans=N_SPANS,
-                             powers_W=np.full(n_channels, 1e-3),
-                             frequencies_Hz=np.asarray(grid.frequencies_Hz),
-                             baud_rates_Hz=np.full(n_channels, BAUD))
-    return nli[n_channels // 2] / (1e-3) ** 3
-
-
-eta = comb_eta(1)
-print(f"GN model: eta = {eta:.4g} /W^2")
-
 chain = link_chain()
 chain.summary(STIMULUS)
 
 chain.set_params(**{"fibre.use_only_linear": True})
-ase_W = dbm_to_watt(-measure(chain, [dbm_to_watt(0.0)])[0])
-print(f"measured ASE, {N_SPANS} spans at NF = {NF_dB:.0f} dB: "
-      f"{watt_to_dbm(ase_W):+.2f} dBm")
-
-best_power, best_snr = optimal_launch_power(ase_W, eta)
-print(f"optimum: {watt_to_dbm(best_power):+.2f} dBm, "
-      f"SNR = {10 * np.log10(best_snr):.2f} dB")
-print(f"check: eta P^3 / (P_ASE/2) = "
-      f"{eta * best_power ** 3 / (ase_W / 2):.6f}")
+measured_ase_W = dbm_to_watt(-measure(chain, [dbm_to_watt(0.0)])[0])
+gap_dB = watt_to_dbm(measured_ase_W) - watt_to_dbm(ase_W)
+print(f"\nP_ASE  predicted {watt_to_dbm(ase_W):+.2f} dBm   "
+      f"measured {watt_to_dbm(measured_ase_W):+.2f} dBm   "
+      f"gap {gap_dB:+.2f} dB")
+assert abs(gap_dB) < 0.3, gap_dB
 
 chain.set_params(**{"fibre.use_only_linear": False})
 powers_dBm = np.arange(-8.0, 5.1, 1.0)
 measured_snr_dB = measure(chain, dbm_to_watt(powers_dBm))
-for power_dBm, value in zip(powers_dBm, measured_snr_dB, strict=True):
-    print(f"  {power_dBm:+5.1f} dBm -> SNR {value:5.2f} dB")
-
-fine_powers = np.logspace(-1.0, 0.6, 400) * 1e-3
 predicted_snr_dB = 10 * np.log10(gn_model_snr(ase_W, eta, fine_powers))
-print(f"optimum: {watt_to_dbm(best_power):+.2f} dBm predicted, "
+print(f"optimum {watt_to_dbm(best_power):+.2f} dBm predicted, "
       f"{powers_dBm[int(np.argmax(measured_snr_dB))]:+.1f} dBm measured; "
       f"peak SNR {10 * np.log10(best_snr):.2f} dB predicted, "
       f"{np.max(measured_snr_dB):.2f} dB measured")
@@ -120,8 +180,7 @@ ax.plot(powers_dBm, measured_snr_dB, "o",
 ax.plot(watt_to_dbm(fine_powers),
         10 * np.log10(fine_powers / ase_W), ":", color="0.5",
         label="amplifiers alone ($P/P_{ASE}$)")
-ax.axvline(watt_to_dbm(best_power), color="0.3", linestyle="--",
-           linewidth=1)
+ax.axvline(watt_to_dbm(best_power), color="0.3", linestyle="--", linewidth=1)
 ax.annotate(f"optimum {watt_to_dbm(best_power):+.1f} dBm",
             (watt_to_dbm(best_power), np.min(predicted_snr_dB) + 1),
             rotation=90, va="bottom", ha="right", color="0.3")
@@ -131,34 +190,7 @@ ax.set_title(f"PM-16QAM, {BAUD/1e9:.0f} GBd, {N_SPANS} x {SPAN_KM:.0f} km SMF")
 ax.set_ylim(np.min(measured_snr_dB) - 2, np.max(predicted_snr_dB) + 2)
 ax.legend()
 ax.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/gn_model_fig1.png")
-
-print("\nchannels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it")
-counts = [1, 3, 9, 27, 81]
-curves = {}
-for n_channels in counts:
-    channel_eta = comb_eta(n_channels)
-    power, snr = optimal_launch_power(ase_W, channel_eta)
-    curves[n_channels] = 10 * np.log10(
-        gn_model_snr(ase_W, channel_eta, fine_powers))
-    # the grid knows what a split step would cost: it is the same object
-    comb = WDMGrid.uniform(n_channels, spacing_Hz=50e9,
-                           bandwidth_Hz=BAUD * (1 + ROLLOFF))
-    print(f"{n_channels:8d}   "
-          f"{watt_to_dbm(channel_eta * (1e-3) ** 3):+8.2f} dBm   "
-          f"{watt_to_dbm(power):+6.2f} dBm   {10*np.log10(snr):6.2f} dB   "
-          f"{comb.min_fs/1e12:11.2f} THz")
-
-_, ax = plt.subplots(figsize=(7, 5), layout="constrained")
-for n_channels in counts:
-    ax.plot(watt_to_dbm(fine_powers), curves[n_channels],
-            label=f"{n_channels} channels")
-ax.set_xlabel("launch power per channel [dBm]")
-ax.set_ylabel("SNR [dB]")
-ax.set_title("Filling the band, in closed form only")
-ax.legend()
-ax.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/gn_model_fig2.png")
+plt.savefig(f"{img_dir}/gn_model_fig3.png")
 
 nli_only_dB = -10 * np.log10(eta * (1e-3) ** 2)
 print(f"\nThe GN model predicts {nli_only_dB:.2f} dB of nonlinear SNR at "
@@ -176,11 +208,3 @@ with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
     stream.write(link_chain().to_mermaid())
 
 plt.show()
-
-
-# --- what eta is computed over: the comb, and the cut inside it -----------
-comb = WDMGrid.uniform(9, spacing_Hz=50e9, bandwidth_Hz=BAUD * (1 + ROLLOFF))
-comb.plot(cut=comb.n_channels // 2)
-plt.savefig(f"{img_dir}/gn_model_fig3.png")
-print(f"\ncomb: {comb.n_channels} channels, {comb.guard_Hz / 1e9:.1f} GHz of "
-      f"guard, {comb.min_fs / 1e9:.0f} GHz to simulate")
