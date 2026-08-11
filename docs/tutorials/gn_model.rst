@@ -69,7 +69,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 1-18
+   :lines: 1-19
 
 Define Parameters
 """""""""""""""""
@@ -81,7 +81,7 @@ says what happens if you forget it.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 21-32
+   :lines: 22-33
 
 
 The chain
@@ -95,7 +95,7 @@ rest of the page can reach them.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 35-56
+   :lines: 36-57
 
 .. mermaid:: mermaid/gn_model.mmd
 
@@ -142,7 +142,7 @@ chain will do to a stimulus, and what each block costs:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 85-86
+   :lines: 88-89
 
 .. code::
 
@@ -167,7 +167,7 @@ Measuring the SNR
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 59-69
+   :lines: 60-70
 
 "How much noise is there?" has a subtle answer when part of the damage is a
 phase rotation. The Kerr effect rotates the constellation by the mean
@@ -235,7 +235,7 @@ by :math:`P_{\mathrm{NLI}} = \eta P^3`.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 72-83
+   :lines: 73-86
 
 The model predicts the *fibre's* noise. The amplifiers' noise is not its
 business, so we measure that -- with the same chain, linearized by one call
@@ -243,7 +243,7 @@ to ``set_params``, which is why the fibre was given a name:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 88-91
+   :lines: 91-94
 
 .. code::
 
@@ -266,7 +266,7 @@ half the amplifiers'**:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 93-97
+   :lines: 96-100
 
 .. code::
 
@@ -292,7 +292,7 @@ runs the sweep.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 99-110
+   :lines: 102-113
 
 A few of the fourteen points, and the line that follows the sweep:
 
@@ -311,7 +311,7 @@ And the two on the same axes:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 112-130
+   :lines: 115-133
 
 .. image:: img/gn_model_fig1.png
    :width: 700
@@ -338,7 +338,10 @@ Here is a question the simulation cannot afford: what happens when the
 channel is not alone, but sits in the middle of a comb filling the amplifier
 band? Eighty-one channels at 32 GBd is 4 THz of bandwidth; simulating that
 means a sample rate in the terahertz, and the split step would run for hours.
-The closed form does not care.
+The closed form does not care -- and the grid says exactly how much it is
+not caring about, since :attr:`~comnumpy.optical.wdm.WDMGrid.min_fs` is the
+sample rate a split step would need for the very comb the model is being
+handed.
 
 Before the numbers, the picture the model has in mind. The comb below is
 built with the library rather than drawn: nine 16-QAM channels, each pulse
@@ -348,7 +351,7 @@ photodiode would see.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 174-211
+   :lines: 181-216
 
 .. image:: img/gn_model_fig3.png
    :width: 100 %
@@ -373,20 +376,20 @@ is worth having.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 133-143
+   :lines: 136-150
 
 .. code::
 
-   channels   NLI at 0 dBm   optimum   peak SNR
-          1     -29.12 dBm    +1.72 dBm    20.91 dB
-          3     -26.52 dBm    +0.85 dBm    20.05 dB
-          9     -24.83 dBm    +0.29 dBm    19.48 dB
-         27     -23.60 dBm    -0.12 dBm    19.07 dB
-         81     -22.65 dBm    -0.44 dBm    18.75 dB
+   channels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it
+          1     -29.12 dBm    +1.72 dBm    20.91 dB          0.04 THz
+          3     -26.52 dBm    +0.85 dBm    20.05 dB          0.14 THz
+          9     -24.83 dBm    +0.29 dBm    19.48 dB          0.44 THz
+         27     -23.60 dBm    -0.12 dBm    19.07 dB          1.34 THz
+         81     -22.65 dBm    -0.44 dBm    18.75 dB          4.04 THz
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 145-153
+   :lines: 152-160
 
 .. image:: img/gn_model_fig2.png
    :width: 700
@@ -419,7 +422,7 @@ carrier.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 156-165
+   :lines: 163-176
 
 .. code::
 
@@ -478,7 +481,7 @@ finds:
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 167-171
+   :lines: 177-180
 
 
 Conclusion

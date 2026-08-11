@@ -16,6 +16,7 @@ from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import dbm_to_watt, watt_to_dbm
+from comnumpy.optical.wdm import WDMGrid, WDMMultiplexer
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -71,10 +72,12 @@ def measure(chain, powers_W, seed=3):
 
 def comb_eta(n_channels, spacing_Hz=50e9):
     """The eta of P_NLI = eta P^3, for a comb of identical channels."""
-    offsets = spacing_Hz * (np.arange(n_channels) - (n_channels - 1) / 2)
+    grid = WDMGrid.uniform(n_channels, spacing_Hz=spacing_Hz,
+                           bandwidth_Hz=BAUD * (1 + ROLLOFF),
+                           center_Hz=SMF.carrier_frequency_Hz)
     nli = gn_model_nli_power(SMF, span_length_km=SPAN_KM, n_spans=N_SPANS,
                              powers_W=np.full(n_channels, 1e-3),
-                             frequencies_Hz=SMF.carrier_frequency_Hz + offsets,
+                             frequencies_Hz=np.asarray(grid.frequencies_Hz),
                              baud_rates_Hz=np.full(n_channels, BAUD))
     return nli[n_channels // 2] / (1e-3) ** 3
 
@@ -130,7 +133,7 @@ ax.legend()
 ax.grid(True, alpha=0.4)
 plt.savefig(f"{img_dir}/gn_model_fig1.png")
 
-print("\nchannels   NLI at 0 dBm   optimum   peak SNR")
+print("\nchannels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it")
 counts = [1, 3, 9, 27, 81]
 curves = {}
 for n_channels in counts:
@@ -138,9 +141,13 @@ for n_channels in counts:
     power, snr = optimal_launch_power(ase_W, channel_eta)
     curves[n_channels] = 10 * np.log10(
         gn_model_snr(ase_W, channel_eta, fine_powers))
+    # the grid knows what a split step would cost: it is the same object
+    comb = WDMGrid.uniform(n_channels, spacing_Hz=50e9,
+                           bandwidth_Hz=BAUD * (1 + ROLLOFF))
     print(f"{n_channels:8d}   "
           f"{watt_to_dbm(channel_eta * (1e-3) ** 3):+8.2f} dBm   "
-          f"{watt_to_dbm(power):+6.2f} dBm   {10*np.log10(snr):6.2f} dB")
+          f"{watt_to_dbm(power):+6.2f} dBm   {10*np.log10(snr):6.2f} dB   "
+          f"{comb.min_fs/1e12:11.2f} THz")
 
 _, ax = plt.subplots(figsize=(7, 5), layout="constrained")
 for n_channels in counts:
@@ -173,13 +180,11 @@ plt.show()
 
 # --- what eta is computed over: the comb, and the cut inside it -----------
 from scipy.signal import welch                          # noqa: E402
-from comnumpy.optical.wdm import WDMGrid, WDMMultiplexer  # noqa: E402
-
 N_CH, SPACING = 9, 50e9
 fs_comb = N_CH * SPACING * 1.6
 os_comb = int(np.ceil(fs_comb / BAUD))
-grid = WDMGrid(tuple(SPACING * (np.arange(N_CH) - N_CH // 2)),
-               bandwidth_Hz=BAUD * (1 + ROLLOFF))
+grid = WDMGrid.uniform(N_CH, spacing_Hz=SPACING,
+                       bandwidth_Hz=BAUD * (1 + ROLLOFF), center_Hz=0.0)
 channel = Sequential([
     SymbolGenerator(16), SymbolMapper(get_alphabet("QAM", 16)),
     Upsampler(os_comb, scale=np.sqrt(os_comb)),
