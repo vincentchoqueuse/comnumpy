@@ -46,6 +46,21 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`RamanGainSpectrum` rejects unit slips.** Its three parameterizations
+  take three different units -- femtoseconds for `lorentzian=`, terahertz
+  for `triangular=`, hertz for `tabulated=` -- and `quoted_at=` adds
+  nanometres, square micrometres and micrometres. A value given in a
+  neighbouring unit passed every existing check: `triangular=13.2e12` is
+  positive, well-formed, and yields a spectrum rising linearly across the
+  whole band instead of peaking at 13.2 THz. Nothing downstream
+  complained; the tilt was simply wrong. That is how this was found.
+
+  Each parameter is now checked against a window wide enough that no real
+  glass or fibre reaches it, so what it rejects is a scale mistake rather
+  than an unusual design. The message names the unit the value was
+  probably in: `triangular = 1.32e+13 is far outside the plausible 0.1 to
+  1000 THz, but reading it as hertz gives 13.2 THz`.
+
 - **The dependency floors are now true, and tested.** `pyproject.toml`
   claimed `numpy>=1.24`, `scipy>=1.10` and no matplotlib constraint at
   all, while every CI job installed the newest release of each -- so the
