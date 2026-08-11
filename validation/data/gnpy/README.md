@@ -22,6 +22,33 @@ reference implementation should have.
 | `raman_gain_ssmf.csv` | Measured SSMF Raman gain profile, 90 points from 0 to 42 THz of Stokes shift, referenced at 206.185 THz (1454 nm) and an effective area of 75.75 um^2 | `gnpy/core/parameters.py`, `DEFAULT_RAMAN_COEFFICIENT`. GNPy cites D'Amico *et al.*, *J. Lightwave Technol.* **40**, 3499-3511 (2022), Section III.D |
 | `raman_reference_expected.csv` | Per-channel signal, ASE and NLI power at the output of the reference span below, computed by GNPy's own solver | `tests/data/test_raman_fiber_expected_results.csv` |
 
+## Chain of title, stated so that it can be audited
+
+GNPy licenses its own work under BSD-3-Clause and that is what covers
+its solver and the expected results below. The **gain profile is
+different in kind**: GNPy gives its source as D'Amico *et al.*, *J.
+Lightwave Technol.* **40**, 3499-3511 (2022), an IEEE-published article
+whose copyright is held by IEEE, not by the Telecom Infra Project.
+
+Reading GNPy's licence therefore does not, by itself, settle whether
+that table could be relicensed. Two things make the risk small. Several
+of the paper's authors are GNPy contributors, so the contribution is
+most likely deliberate and made with the rights to make it. And
+measured physical constants are facts, which carry thin protection at
+best -- 90 points is unlikely to amount to the "substantial investment"
+an EU database right requires.
+
+This project's position is to comply with BSD-3-Clause regardless,
+because complying with a licence one may not have needed costs nothing
+and the reverse is not true. The chain is written out here rather than
+left implied so that anyone redistributing comnumpy downstream can
+reach their own conclusion instead of inheriting ours.
+
+Note also that nothing in this directory is distributed: the package
+declares `packages.find where = ["src"]` and carries no `MANIFEST.in`,
+so `pip install comnumpy` ships `src/comnumpy` and nothing else. These
+files travel with the git repository, like any test fixture.
+
 ## Why this data and not a closed form
 
 `validation/optical_raman.py` already confronts the Raman solver with an
