@@ -2,10 +2,14 @@ The Gaussian Noise Model
 ========================
 
 In this tutorial we answer the question every optical link designer has to
-answer -- **how much power should I launch?** -- twice. Once by simulating
-the fibre, which takes a second per point, and once with a closed-form
-expression that takes microseconds. Then we put the two on the same axes and
-look at how close they land.
+answer -- **how much power should I launch?** -- twice, in that order. First
+with closed-form expressions that take microseconds and propagate nothing at
+all. Then by actually simulating the fibre, at about a second per point, to
+find out whether the first answer was any good.
+
+That order matters. The GN model is a *prediction*, and a prediction has to
+be stated before it is checked; otherwise the check is a curve fit with extra
+steps.
 
 .. note::
 
@@ -20,11 +24,12 @@ look at how close they land.
 
 - Why an optical link has an *optimum* launch power, and why turning the
   laser up eventually makes things worse.
-- What the Gaussian Noise (GN) model is, in one equation, and how to use it.
-- How to read the model's three characteristic behaviours: the cube law, the
-  half-the-ASE rule, and the logarithmic price of bandwidth.
-- How well a closed form can replace a split-step simulation -- measured, on
-  the same figure.
+- What the Gaussian Noise (GN) model is, in one equation, and how to use it
+  without simulating anything.
+- Where the factor of two lives in a dual-polarization link -- in the launch
+  power, in the amplifier noise, and in the model's own coefficient.
+- How well a closed form replaces a split-step simulation -- measured, on
+  the same axes.
 - The one thing the model cannot see, and how big it is.
 
 
@@ -69,191 +74,115 @@ Import Libraries
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 1-19
+   :lines: 1-20
 
 Define Parameters
 """""""""""""""""
 
-Five 100 km spans of standard single-mode fibre, PM-16QAM at 32 GBd. The
-stimulus is ``(2, N_SYM)``: two polarizations, one row each. That is not
-decoration -- it is the case the model is written for, and the warning below
-says what happens if you forget it.
+Five 100 km spans of standard single-mode fibre, PM-16QAM at 32 GBd on a
+50 GHz grid.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 22-33
+   :lines: 22-35
 
 
-The chain
-^^^^^^^^^
+Part 1: the prediction
+^^^^^^^^^^^^^^^^^^^^^^
 
-The whole link is one :class:`~comnumpy.core.Sequential`: source, mapper,
-pulse shaping, launch amplifier, fibre, linear back-propagation, matched
-filter, sampler. Nothing in it is specific to this tutorial -- it is the
-chain of :doc:`optical_fiber_nonlinearity` with two blocks named so that the
-rest of the page can reach them.
+Nothing in this part propagates a sample. Three closed forms answer the
+design question, and each is a function the library already provides.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 36-57
+   :lines: 39-69
 
-.. mermaid:: mermaid/gn_model.mmd
+Three things deserve a word.
 
-Three things in that builder are doing work.
+``comb`` returns a :class:`~comnumpy.optical.wdm.WDMGrid` rather than an
+array of frequencies. A grid is an object that can be asked questions -- its
+guard band, the sampling rate a simulation of it would need -- and the rest
+of this page asks it several.
 
-``name="launch"`` and ``name="fibre"`` are what let the rest of the tutorial
-*reconfigure* the link instead of rebuilding it: ``chain.set_params`` reaches
-a block by its identifier and re-runs its precomputation (decision D34), and
-:func:`~comnumpy.sweep` drives ``"launch.gain"`` over a list of values the
-same way. One chain, built once, answers every question below.
+``comb_eta`` passes **channel** powers, not per-polarization powers. That is
+the GN model's convention, and the first of three places a factor of two
+hides in this tutorial.
 
-``taps=["tx"]`` marks the mapper output as readable from outside the chain --
-the dashed box in the diagram, decision D33c. The transmitted symbols are
-what every measurement compares against, and declaring a tap is how you get
-them without breaking the chain in two.
+``analytic_ase`` is the second. It calls
+:func:`~comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase`, which is
+*the same function* :class:`~comnumpy.optical.links.FiberLink` uses to
+generate the noise it adds during propagation. That is deliberate: in Part 2
+this prediction is compared against a measurement through the whole chain,
+and had the prediction used a formula retyped from a textbook, the comparison
+would only be checking the transcription. Using the library's own function
+makes the comparison test the *chain* instead -- the spectral density, the
+bandwidth, the two polarizations, the matched filter.
 
-``order=None`` swaps :class:`~comnumpy.core.generators.SymbolGenerator` and
-:class:`~comnumpy.core.mappers.SymbolMapper` for
-:class:`~comnumpy.core.generators.GaussianGenerator`. The last section needs
-a stimulus that really is Gaussian, and the library has one.
+The factor two in ``analytic_ase`` is the polarization: the function returns
+the density for one, and an amplifier emits into both, each with its own
+independent noise.
 
 .. warning::
 
-   **The 3 dB that becomes 9 dB.** ``power_W`` is the power of the *channel*,
-   summed over both polarizations, because that is the convention the GN
-   model uses. Each polarization therefore carries half of it, which is what
-   ``launch_gain`` is for. Give each polarization the full ``power_W``
-   instead and you launch 3 dB more than you think; since the nonlinear
-   interference goes as the cube of the power, your simulation then reports
-   **9 dB** more of it than the model predicts, and the model looks broken
-   when it is not.
+   **The 3 dB that becomes 9 dB.** ``power_W`` is the power of the
+   *channel*, summed over both polarizations, because that is the convention
+   the GN model uses. Each polarization therefore carries half of it, which
+   is what ``launch_gain`` is for in Part 2. Give each polarization the full
+   ``power_W`` instead and you launch 3 dB more than you think; since the
+   nonlinear interference goes as the cube of the power, your simulation
+   then reports **9 dB** more of it than the model predicts, and the model
+   looks broken when it is not.
 
-   The same trap has a second door. :class:`~comnumpy.optical.FiberLink`
-   reads the *shape* of the field to decide which equation to integrate: a
-   field ``(..., 2, N)`` gets the Manakov equation, which is what a real
-   fibre with random birefringence does and what the model's 16/27
-   coefficient assumes; a one-dimensional field gets the scalar equation
-   instead, which produces 27/8 -- **5.3 dB** -- more interference at the
-   same total power. If you must compare against a scalar simulation, tell
-   the model so with ``gn_model_nli_power(..., polarizations=1)``.
+   The same trap has a third door, the model's own coefficient.
+   :class:`~comnumpy.optical.FiberLink` reads the *shape* of the field to
+   decide which equation to integrate: a field ``(..., 2, N)`` gets the
+   Manakov equation, which is what a real fibre with random birefringence
+   does and what the model's 16/27 coefficient assumes; a one-dimensional
+   field gets the scalar equation instead, which produces 27/8 -- **5.3 dB**
+   -- more interference at the same total power. If you must compare against
+   a scalar simulation, tell the model so with
+   ``gn_model_nli_power(..., polarizations=1)``.
 
-Before running anything, ``chain.summary`` (decision D33b) says what the
-chain will do to a stimulus, and what each block costs:
+What the model is looking at
+""""""""""""""""""""""""""""
+
+A grid is a layout, so :meth:`~comnumpy.optical.wdm.WDMGrid.plot` draws it
+directly -- no signal synthesised, no spectrum estimated, and no pulse-shape
+roll-off smearing the very guard band the figure exists to show.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 88-89
+   :lines: 71-86
+
+.. image:: img/gn_model_fig1.png
+   :width: 100 %
 
 .. code::
 
-   #    block                        id                   output shape       dtype         time ms
-   -----------------------------------------------------------------------------------------------
-   0    SymbolGenerator              source               (2, 4096)          int64            0.11
-   1    SymbolMapper                 tx                   (2, 4096)          complex128       0.11
-   2    Upsampler                    upsampler            (2, 16384)         complex128       0.74
-   3    SRRCFilter                   srrcfilter           (2, 16384)         complex128       4.31
-   4    Amplifier                    launch               (2, 16384)         complex128       0.10
-   5    FiberLink                    fibre                (2, 16384)         complex128    1173.90
-   6    DBP                          dbp                  (2, 16384)         complex128      12.81
-   7    SRRCFilter                   srrcfilter_2         (2, 16384)         complex128       2.21
-   8    Downsampler                  downsampler          (2, 4096)          complex128       0.05
+   comb: 9 channels, 14.8 GHz of guard, 435 GHz to simulate
 
-The fibre is 98 % of the run time, which is the entire reason the closed form
-below is worth having.
+   eta      = 1223 /W^2      (GN model, one channel)
+   P_ASE    = -20.88 dBm     (5 spans, NF = 6 dB, both polarizations)
+   optimum  = +1.74 dBm      SNR = 20.86 dB
+   check    : eta P^3 / (P_ASE/2) = 1.000000
 
+Two things read off the figure. The **cut** is the filled channel: the one
+whose noise :math:`\eta` counts. Every other one is an *interferer*, and the
+model adds up what each deposits on the cut -- so the weights of
+:func:`~comnumpy.optical.gn_model.gn_model_nli_power` are one per pair
+visible here. The cut is the middle channel because that is the worst case,
+neighbours on both sides.
 
-Measuring the SNR
-^^^^^^^^^^^^^^^^^
+The second is the **guard**: 14.8 GHz separates the boxes, so no channel
+overlaps its neighbour and nothing linear crosses between them. Everything
+the model computes is therefore *nonlinear* leakage -- the fibre mixing
+channels that never touched in frequency, which is the whole reason a closed
+form for it is worth having.
 
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 60-70
-
-"How much noise is there?" has a subtle answer when part of the damage is a
-phase rotation. The Kerr effect rotates the constellation by the mean
-nonlinear phase, and a real receiver removes that with its carrier-phase
-estimator -- so counting it as noise would be charging the link for an
-impairment nobody suffers.
-:class:`~comnumpy.core.compensators.DataAidedComplexGainCompensator` fits
-exactly one complex scalar against the reference, which absorbs the rotation
-and any gain; :func:`~comnumpy.core.metrics.compute_effective_snr` then lumps
-everything left over into one equivalent additive term. Whatever remains is
-noise, and the model does not get to argue about where it came from.
-
-It is fair to ask why the gain is estimated at all rather than divided out,
-since the link's linear gain is known: run the same chain with the fibre
-linearized and it is right there. Measured against that known value, the
-fitted modulus is it, to within 0.5 % at the worst power below -- so on
-amplitude alone, dividing by a constant would indeed do. It is the argument
-that cannot be:
-
-.. code::
-
-     P (dBm)   |g| fitted  arg g (deg)   |g| linear     ratio
-        -8.0     0.008885        1.757     0.008885  1.000004
-        -2.0     0.017742        6.638     0.017745  0.999833
-         2.0     0.028099       16.503     0.028133  0.998789
-         5.0     0.039547       32.874     0.039746  0.994970
-
-Freezing the *whole* complex gain charges the link for that rotation, and the
-bill grows with exactly the quantity the tutorial is here to measure: 0.08 dB
-of SNR at -8 dBm, 3.01 dB at -2, 10.79 dB at +2, **14.39 dB at +5**. The curve
-would bend down in the nonlinear regime for a reason that has nothing to do
-with the fibre. Freezing the modulus and fitting only the argument, on the
-other hand, lands within 0.04 dB of the full fit everywhere -- so the second
-degree of freedom is not what earns its place, the first one is. One
-component that fits both is simply the shortest way to get the one that
-matters, without having to look the link gain up.
-
-That 0.5 % is not bookkeeping either. The nonlinear phase varies from symbol
-to symbol, so :math:`\mathbb{E}[e^{j\varphi}] = e^{j\bar{\varphi}}
-e^{-\sigma_\varphi^2/2}` and the least-squares modulus shrinks accordingly;
-the 0.4970 % at +5 dBm gives :math:`\sigma_\varphi \approx 0.1` rad, about
-6 degrees of spread around a 33 degree mean rotation.
-
-``shared=True`` is not a detail either. The nonlinear phase comes from the
-*total* intensity, so it is common to the two polarizations -- a **shared**
-estimand in the sense of decision D49, which is why one gain is fitted
-jointly over both rather than one per row. Fitted per row it would be two
-estimates of the same number, each seeing half the data, and they would
-then have to be reconciled. Without the keyword the compensator refuses a
-two-path signal outright, precisely so that this choice has to be made on
-purpose rather than settled by broadcasting.
-
-With the metric written, ``measure`` is a one-liner: :func:`~comnumpy.sweep`
-sets ``launch.gain``, reseeds the chain, runs it, and hands the tapped
-symbols and the output to the metric -- the same ``sweep`` introduced in
-:doc:`awgn`, pointed at a different chain.
-
-
-One number for the whole link
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:func:`~comnumpy.optical.gn_model.gn_model_nli_power` collapses the fibre,
-the span count and the comb into a single coefficient :math:`\eta`, defined
-by :math:`P_{\mathrm{NLI}} = \eta P^3`.
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 73-86
-
-The model predicts the *fibre's* noise. The amplifiers' noise is not its
-business, so we measure that -- with the same chain, linearized by one call
-to ``set_params``, which is why the fibre was given a name:
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 91-94
-
-.. code::
-
-   GN model: eta = 1223 /W^2
-   measured ASE, 5 spans at NF = 6 dB: -20.95 dBm
-
-With both numbers in hand the design point is a one-liner. Setting the
-derivative of :math:`P/(P_{\mathrm{ASE}} + \eta P^3)` to zero gives a rule
-worth remembering in words -- **the optimum is where the fibre's noise is
-half the amplifiers'**:
+The design point falls out of the same expression. Setting the derivative of
+:math:`P/(P_{\mathrm{ASE}} + \eta P^3)` to zero gives a rule worth
+remembering in words -- **the optimum is where the fibre's noise is half the
+amplifiers'**:
 
 .. math::
 
@@ -264,164 +193,168 @@ half the amplifiers'**:
    \mathrm{SNR}_{\mathrm{max}} = \frac{2}{3}\frac{P_{\mathrm{opt}}}
                                                  {P_{\mathrm{ASE}}}
 
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 96-100
-
-.. code::
-
-   optimum: +1.72 dBm, SNR = 20.91 dB
-   check: eta P^3 / (P_ASE/2) = 1.000000
-
-The last line is the rule checked rather than asserted. Two consequences fall
-out of the same expression. The peak is **asymmetric** -- one side of it is
-governed by a linear term, the other by a cubic one -- so missing the optimum
-by 1 dB costs 0.24 dB of SNR upwards but only 0.21 dB downwards, and by 3 dB
-it is 2.20 dB against 1.50 dB. Operators consequently run slightly *under*
-the optimum, where a power error is the cheaper kind. And since
+The last printed line is that rule checked rather than asserted. Two
+consequences fall out of it. The peak is **asymmetric** -- one side governed
+by a linear term, the other by a cubic one -- so missing the optimum by 1 dB
+costs 0.24 dB of SNR upwards but only 0.21 dB downwards, and by 3 dB it is
+2.20 dB against 1.50 dB. Operators consequently run slightly *under* the
+optimum, where a power error is the cheaper kind. And since
 :math:`P_{\mathrm{opt}}` grows only as the cube root of the accumulated ASE,
 ten times the spans moves the optimum by 3.3 dB, not by 10.
 
+Filling the band
+""""""""""""""""
 
-Now the expensive way
-^^^^^^^^^^^^^^^^^^^^^
-
-None of the above propagated a single sample. Let us do that too, at fourteen
-launch powers. The fibre goes back to nonlinear, and the same ``measure``
-runs the sweep.
+Here is a question a simulation cannot afford. What happens when the channel
+is not alone, but sits in the middle of a comb filling the amplifier band?
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 102-113
-
-A few of the fourteen points, and the line that follows the sweep:
-
-.. code::
-
-     -8.0 dBm -> SNR 13.13 dB
-     -5.0 dBm -> SNR 15.93 dB
-     -2.0 dBm -> SNR 18.83 dB
-     +1.0 dBm -> SNR 20.87 dB
-     +2.0 dBm -> SNR 21.07 dB
-     +3.0 dBm -> SNR 20.79 dB
-     +5.0 dBm -> SNR 18.93 dB
-   optimum: +1.72 dBm predicted, +2.0 dBm measured; peak SNR 20.91 dB predicted, 21.07 dB measured
-
-And the two on the same axes:
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 115-133
-
-.. image:: img/gn_model_fig1.png
-   :width: 700
-   :align: center
-
-Three things to read off it. The dotted line is what the link would do if the
-fibre were linear -- straight, rising for ever, which is the answer that made
-the question interesting. The measured points leave it at around -2 dBm and
-turn over. And the solid line, computed in microseconds from four fibre
-parameters, passes through the measured points: the predicted optimum is
-+1.72 dBm and the simulated curve peaks at +2.0 dBm, the nearest point of a
-1 dB grid, with **0.16 dB** between the two peak SNRs.
-
-That is the whole value proposition of the model. It is not a substitute for
-the split step when you need waveforms, constellations or a bit error rate.
-It is what lets you ask a thousand *design* questions before you simulate
-one.
-
-
-What the closed form buys
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Here is a question the simulation cannot afford: what happens when the
-channel is not alone, but sits in the middle of a comb filling the amplifier
-band? Eighty-one channels at 32 GBd is 4 THz of bandwidth; simulating that
-means a sample rate in the terahertz, and the split step would run for hours.
-The closed form does not care -- and the grid says exactly how much it is
-not caring about, since :attr:`~comnumpy.optical.wdm.WDMGrid.min_fs` is the
-sample rate a split step would need for the very comb the model is being
-handed.
-
-Before the numbers, the picture the model has in mind. A grid is a layout,
-so :meth:`~comnumpy.optical.wdm.WDMGrid.plot` draws it directly -- no
-signal is synthesised and no spectrum estimated, which would show the same
-thing through a detour and bury the guard band under the pulse shape's
-roll-off.
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 181-186
-
-.. image:: img/gn_model_fig3.png
-   :width: 100 %
-
-.. code::
-
-   comb: 9 channels, 14.8 GHz of guard, 435 GHz to simulate
-
-Two things to read off it. The **cut** is the filled channel: the one whose
-noise :math:`\eta` counts. Every other one is an *interferer*, and the
-model adds up what each deposits on the cut -- so the weights of
-:func:`~comnumpy.optical.gn_model.gn_model_nli_power` are one per pair
-visible here. The cut is the middle channel because that is the worst case,
-neighbours on both sides.
-
-The second is the **guard**: 14.8 GHz separates the boxes, so no channel
-overlaps its neighbour and nothing linear crosses between them. Everything
-the model computes is therefore *nonlinear* leakage -- the fibre mixing
-channels that never touched in frequency, which is the whole reason a
-closed form for it is worth having.
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 136-150
+   :lines: 88-100
 
 .. code::
 
    channels   NLI at 0 dBm   optimum   peak SNR   fs to simulate it
-          1     -29.12 dBm    +1.72 dBm    20.91 dB          0.04 THz
-          3     -26.52 dBm    +0.85 dBm    20.05 dB          0.14 THz
-          9     -24.83 dBm    +0.29 dBm    19.48 dB          0.44 THz
-         27     -23.60 dBm    -0.12 dBm    19.07 dB          1.34 THz
-         81     -22.65 dBm    -0.44 dBm    18.75 dB          4.04 THz
+          1     -29.12 dBm    +1.74 dBm    20.86 dB          0.04 THz
+          3     -26.52 dBm    +0.88 dBm    20.00 dB          0.14 THz
+          9     -24.83 dBm    +0.31 dBm    19.43 dB          0.44 THz
+         27     -23.60 dBm    -0.10 dBm    19.02 dB          1.34 THz
+         81     -22.65 dBm    -0.42 dBm    18.71 dB          4.04 THz
+
+The last column is why this part exists. It is
+:attr:`~comnumpy.optical.wdm.WDMGrid.min_fs`, the sampling rate a split step
+would need for that very comb -- so the grid prices its own simulation.
+Eighty-one channels would need **4.04 THz**, a hundred times the single
+channel, and hours of computation. The closed form answers in microseconds.
+
+Note also how gently the damage grows: eighty times the interferers costs
+**2.2 dB**. Eight neighbours hurting the cut as much as it hurts itself
+would cost :math:`10\log_{10}(1 + 2 \times 8) = 12.3` dB; the
+:math:`\mathrm{asinh}` in the model turns that into a few tenths. Nonlinear
+interference accumulates logarithmically in the number of channels, which is
+the single most useful thing the GN model has to say.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 152-160
+   :lines: 102-112
 
 .. image:: img/gn_model_fig2.png
-   :width: 700
-   :align: center
+   :width: 100 %
 
-Read the first column carefully: eighty-one times the bandwidth costs
-**6.5 dB** of nonlinear interference, not the 19 dB that a proportional
-penalty would give. The reason is one function. The GN model's kernel
-integrates to an :math:`\mathrm{asinh}`, and :math:`\mathrm{asinh}` grows
-logarithmically, so each doubling of the comb costs a bounded and shrinking
-amount. The whole viability of wideband optical transmission is in that
-:math:`\mathrm{asinh}`, and the peak SNR falls by only 2.2 dB while the link
-carries eighty-one times as many channels.
+
+Part 2: the check
+^^^^^^^^^^^^^^^^^
+
+Everything above is a prediction. Now we propagate samples and find out.
+
+.. literalinclude:: ../../examples/optical/gn_model.py
+   :language: python
+   :lines: 115-153
+
+.. mermaid:: mermaid/gn_model.mmd
+
+``launch_gain`` is the factor of two of the warning above, made explicit:
+:math:`\sqrt{P/2}` per polarization for a channel power :math:`P`.
+
+``name="launch"`` and ``name="fibre"`` are what let the rest of the page
+*reconfigure* the link instead of rebuilding it: ``chain.set_params`` reaches
+a block by its identifier and re-runs its precomputation (decision D34), and
+:func:`~comnumpy.sweep` drives ``"launch.gain"`` over a list of values the
+same way. One chain, built once, answers every question below.
+
+``taps=["tx"]`` marks the mapper output as readable from outside the chain --
+the dashed box in the diagram, decision D33c. The transmitted symbols are
+what every measurement compares against.
+
+"How much noise is there?" has a subtle answer when part of the damage is a
+phase rotation. The Kerr effect rotates the constellation by the mean
+nonlinear phase, and a real receiver removes that with its carrier-phase
+estimator -- so counting it as noise would be charging the link for an
+impairment nobody suffers.
+:class:`~comnumpy.core.compensators.DataAidedComplexGainCompensator` fits
+exactly one complex scalar against the reference, which absorbs the rotation
+and any gain; :func:`~comnumpy.core.metrics.compute_effective_snr` then lumps
+everything left over into one equivalent additive term.
+
+``shared=True`` is not a detail. The nonlinear phase comes from the *total*
+intensity, so it is common to the two polarizations -- a **shared** estimand
+in the sense of decision D49, which is why one gain is fitted jointly over
+both rather than one per row. Fitted per row it would be two estimates of the
+same number, each seeing half the data. Without the keyword the compensator
+refuses a two-path signal outright, so the choice has to be made on purpose
+rather than settled by broadcasting.
+
+Does the amplifier noise match?
+"""""""""""""""""""""""""""""""
+
+Before testing the nonlinear prediction, test the linear one. Setting
+``fibre.use_only_linear`` removes the Kerr term and leaves loss and
+amplifiers, so the only noise left is the one Part 1 predicted in closed
+form. At 0 dBm launch the measured SNR *is* :math:`-P_{\mathrm{ASE}}` in dBm.
+
+.. literalinclude:: ../../examples/optical/gn_model.py
+   :language: python
+   :lines: 155-165
+
+.. code::
+
+   P_ASE  predicted -20.88 dBm   measured -20.95 dBm   gap -0.07 dB
+
+**0.07 dB**, and the script asserts it. That number is worth more than it
+looks. The prediction is a spectral density times a bandwidth times two
+polarizations; the measurement is a full chain -- pulse shaping, five spans
+of split-step propagation, back-propagation, matched filtering, sampling and
+a least-squares gain fit. They agree to two hundredths of a decibel, which
+says the polarization convention is the same on both sides, that the matched
+filter really does collect the symbol-rate bandwidth, and that no factor of
+two got lost between the two.
+
+It is also what makes the nonlinear comparison below meaningful. If
+:math:`P_{\mathrm{ASE}}` were wrong by a factor of two, the optimum would
+move by :math:`2^{1/3}`, a full decibel, and the model would look
+mis-calibrated for a reason having nothing to do with the fibre.
+
+The expensive way
+"""""""""""""""""
+
+Now the nonlinear term, at fourteen launch powers.
+
+.. literalinclude:: ../../examples/optical/gn_model.py
+   :language: python
+   :lines: 166-193
+
+.. code::
+
+   optimum +1.74 dBm predicted, +2.0 dBm measured;
+   peak SNR 20.86 dB predicted, 21.07 dB measured
+
+.. image:: img/gn_model_fig3.png
+   :width: 100 %
+   :align: center
+   :alt: Measured SNR against the GN model prediction
+
+The two curves land on top of each other. The optimum is predicted within
+the 1 dB resolution of the sweep, and the peak SNR within **0.21 dB** -- for
+a closed form that ran in microseconds against a simulation that took about
+a second per point.
+
+The dotted line is the link with the fibre's nonlinearity ignored,
+:math:`P/P_{\mathrm{ASE}}`: the answer you get by trusting the amplifiers
+alone. It keeps climbing forever. Everything between it and the measured
+points is what the Kerr effect costs, and the gap only opens past the
+optimum -- which is exactly the regime an operator has to avoid, and exactly
+the one the closed form was built to describe.
 
 
 What the model cannot see
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The GN model has one assumption in its name: it treats the transmitted signal
-as Gaussian. A real constellation is not Gaussian. Its fourth moment is
-smaller, and a signal with a smaller fourth moment generates *less* nonlinear
-interference -- so the model is systematically **pessimistic** for a
-modulated signal, and the smaller the constellation the more pessimistic it
-is.
-
-The model cannot tell us by how much, since it never sees the constellation.
-So we measure it: the same link with the amplifiers' noise switched off, so
-that only the fibre contributes, and five different things modulated onto the
-carrier.
+The GN model assumes the propagating signal has become Gaussian. Real
+modulation formats are not, and the model is blind to the difference.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 163-176
+   :lines: 195-204
 
 .. code::
 
@@ -433,89 +366,35 @@ carrier.
    256QAM            29.83 dB        +0.71 dB
    Gaussian          28.48 dB        -0.65 dB
 
-That table is the assumption made visible. Every QAM constellation suffers
-*less* nonlinear interference than the model predicts, and the penalty
-shrinks monotonically as the constellation grows and starts to resemble the
-Gaussian the model assumes: 1.53 dB for QPSK, 0.71 dB by 256QAM.
+The ordering is the whole story. QPSK suffers **1.53 dB less** nonlinear
+interference than the model predicts, and the advantage shrinks monotonically
+as the constellation grows: 16QAM 1.01 dB, 64QAM 0.74 dB, 256QAM 0.71 dB. A
+genuinely Gaussian stimulus lands 0.65 dB on the *other* side, which is the
+model's own assumption measured against itself.
 
-The last row is the control. A genuinely Gaussian stimulus does not land
-above the model -- it lands 0.65 dB *below*, which is the model's **other**
-approximation showing through: spans are assumed to accumulate incoherently,
-and over five spans they do not quite. Taken together the two rows bracket
-the model honestly. It under-predicts the interference of a Gaussian signal
-by about half a decibel, and over-predicts that of a real constellation by
-one to one and a half.
-
-Closing the constellation half of that gap is the job of the **EGN model**
-(Carena *et al.*, 2014; Serena and Bononi, 2015), which carries the fourth
-and sixth moments of the constellation through the same perturbation
-analysis. It is **not implemented in this library**, and the table above is
-the honest substitute: the effect measured rather than predicted, so that
-nobody reads the GN curve as an exact answer for a modulated signal. Read it
-as what it is -- a pessimistic bound that tightens as the constellation
-grows.
-
-
-Is it right?
-^^^^^^^^^^^^
-
-A closed form that agrees with the simulation in the same library proves less
-than it looks: both could share a mistake. ``validation/optical_gn_model.py``
-therefore confronts it with things outside the library, and prints what it
-finds:
-
-- Serena and Bononi (JLT 33(7), 2015) published the normalized NLI
-  coefficient of a 15-channel, 5 x 100 km link, measured with *their*
-  split-step simulator: :math:`a_{\mathrm{NL}} = -23.5` dB. This module
-  returns **-23.30 dB** for the same link.
-- The same closed form re-transcribed from GNPy -- the Telecom Infra
-  Project's open-source planning tool, which works in metres and s²/m where
-  this library works in kilometres and ps²/km -- agrees to **twelve digits**
-  (``tests/optical/test_gn_model.py``).
-- This library's own split-step solver, on a five-channel WDM link where
-  cross-phase modulation dominates, agrees to **0.01 dB**.
-- The 27/8 polarization factor of the warning above, measured by simulating
-  the same link twice, comes out at **5.29 dB** against the 5.28 dB of
-  Table I of the paper.
+So the GN model is pessimistic for real formats, and predictably so. The
+enhanced GN model exists to recover that gap; this library does not implement
+it, and the table above is the honest statement of what that costs -- about a
+decibel for 16QAM, less as the format grows.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 177-180
+   :lines: 206-210
 
 
-Conclusion
-^^^^^^^^^^
+Going further
+^^^^^^^^^^^^^
 
-You have designed an optical link twice, and the two answers agree.
+The closed form implemented here is eq. 120 and 123 of the extended version
+of Poggiolini's GN model paper (arXiv:1209.0394); the published paper numbers
+its equations differently, and its compact single-span form is Eq. (15). Both
+numberings are in the module's reference block, because a reader following
+one will not find the other.
 
-You have learned how to:
-
-- Turn a fibre link into one coefficient :math:`\eta` with
-  :func:`~comnumpy.optical.gn_model.gn_model_nli_power`, and read an SNR off
-  :func:`~comnumpy.optical.gn_model.gn_model_snr`.
-- Find the optimal launch power in closed form with
-  :func:`~comnumpy.optical.gn_model.optimal_launch_power`, and remember the
-  rule behind it -- the fibre's noise is half the amplifiers'.
-- Reconfigure one chain instead of building several, with ``set_params`` on
-  named blocks, and sweep a parameter of it with :func:`~comnumpy.sweep`.
-- Measure an SNR the way a receiver would, by removing one complex gain with
-  a data-aided compensator and lumping the rest into
-  :func:`~comnumpy.core.metrics.compute_effective_snr`.
-- Keep the polarization and power conventions straight, which is worth 9 dB
-  and 5.3 dB of not being confused.
-- Recognize where the model is a bound rather than an answer.
-
-From here, you can:
-
-- Put digital back-propagation back in the receiver (:doc:`the previous
-  tutorial <optical_fiber_nonlinearity>`) and watch the optimum move to
-  higher power as the nonlinearity is partly undone.
-- Sweep the span length at fixed total distance: the GN model will tell you,
-  in milliseconds, why shorter spans buy reach.
-- Add a Raman amplifier and recompute :math:`P_{\mathrm{ASE}}`: the optimum
-  moves as its cube root, and no fibre needs to be re-simulated.
-
-This is the last tutorial of the course. If you have read them in order you
-have built, measured and validated a chain in every regime the library
-covers -- additive noise, multipath, multiple antennas, coding, shaping and
-nonlinear fibre -- and each time against something that could have said no.
+That paper also bounds its own formula -- span loss at least 7 dB,
+:math:`|\beta_2|` at least 4 ps²/km, symbol rate at least 28 GBaud, and
+channel bandwidth at least a quarter of the spacing. Calling
+:func:`~comnumpy.optical.gn_model.gn_model_nli_power` outside those bounds
+logs a warning naming the one that was crossed. It still returns a number:
+the model stays defined there and is often still usable, but silence would be
+a guarantee the paper does not give.
