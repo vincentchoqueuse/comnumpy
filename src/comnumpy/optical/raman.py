@@ -138,18 +138,51 @@ class RamanGainSpectrum:
 
     lorentzian: Optional[tuple[float, float]] = field(default=None, kw_only=True)
     triangular: Optional[float] = field(default=None, kw_only=True)
+    tabulated: Optional[tuple[np.ndarray, np.ndarray]] = field(
+        default=None, kw_only=True)
+    quoted_at: Optional[tuple[float, float, float]] = field(
+        default=None, kw_only=True)
     standard: str = field(default="custom", kw_only=True)
     reference: str = field(default="", kw_only=True)
 
     def __post_init__(self) -> None:
         given = [name for name, value in (("lorentzian", self.lorentzian),
-                                          ("triangular", self.triangular))
+                                          ("triangular", self.triangular),
+                                          ("tabulated", self.tabulated))
                  if value is not None]
         if len(given) != 1:
             raise ValueError(
                 f"expected exactly one parameterization, got "
-                f"{given or 'none'} -- pass lorentzian=(tau1_fs, tau2_fs) "
-                f"or triangular=peak_shift_THz")
+                f"{given or 'none'} -- pass lorentzian=(tau1_fs, tau2_fs), "
+                f"triangular=peak_shift_THz, or "
+                f"tabulated=(shift_Hz, gain)")
+        if self.tabulated is not None:
+            shift, gain = (np.asarray(self.tabulated[0], dtype=float),
+                           np.asarray(self.tabulated[1], dtype=float))
+            if shift.ndim != 1 or shift.shape != gain.shape:
+                raise ValueError(
+                    f"expected two 1D arrays of the same length, got "
+                    f"{shift.shape} and {gain.shape}")
+            if shift.size < 2:
+                raise ValueError(
+                    f"a measured spectrum needs at least two points, got "
+                    f"{shift.size}")
+            if np.any(np.diff(shift) <= 0):
+                raise ValueError(
+                    "expected the Stokes shifts to be strictly increasing; "
+                    "sort the table before passing it, so that the "
+                    "interpolation cannot silently fold back on itself")
+            if np.any(shift < 0):
+                raise ValueError(
+                    "expected non-negative Stokes shifts: the table gives "
+                    "the gain a pump grants a signal below it, and the "
+                    "other side is fixed by the model, not measured")
+            if np.max(gain) <= 0:
+                raise ValueError(
+                    f"expected a positive peak gain, got {np.max(gain)}")
+            object.__setattr__(self, "tabulated", (shift, gain))
+            self._check_quoted_at()
+            return
         if self.lorentzian is not None:
             tau1, tau2 = self.lorentzian
             if tau1 <= 0 or tau2 <= 0:
@@ -163,11 +196,96 @@ class RamanGainSpectrum:
                     f"expected a positive peak shift in THz, got "
                     f"{self.triangular}")
             object.__setattr__(self, "triangular", float(self.triangular))
+        self._check_quoted_at()
+
+    def _check_quoted_at(self) -> None:
+        if self.quoted_at is None:
+            return
+        try:
+            wavelength_nm, area_um2, radius_um = self.quoted_at
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                "expected quoted_at=(wavelength_nm, effective_area_um2, "
+                "core_radius_um) -- the three travel together because the "
+                "scaling is meaningless with any one of them missing"
+            ) from error
+        if min(wavelength_nm, area_um2, radius_um) <= 0:
+            raise ValueError(
+                f"expected three positive numbers in quoted_at, got "
+                f"({wavelength_nm}, {area_um2}, {radius_um})")
+        object.__setattr__(self, "quoted_at",
+                           (float(wavelength_nm), float(area_um2),
+                            float(radius_um)))
+
+    def pair_scaling(self, frequency_Hz: np.ndarray) -> np.ndarray:
+        r"""Waveguide correction of the gain, per (receiver, partner) pair.
+
+        The gain :meth:`shape` is a property of the glass and depends on
+        the Stokes shift alone. The coefficient that multiplies
+        :math:`P_i P_j` in a power equation is not that shape but
+        :math:`g_R / A_{\mathrm{eff}}`, and the effective area is a
+        property of the waveguide: the mode spreads as the wavelength
+        grows, so the same Stokes shift buys less gain further into the
+        infrared. With a Gaussian mode this reduces to a one-parameter
+        law, :math:`A_{\mathrm{eff}}(\nu) = A_0 k / (\ln(\nu/\nu_0) + k)`
+        with :math:`k = \pi a^2 / A_0`. A pair is charged the mean of the
+        two areas, and the gain is referred back to the frequency the
+        table was quoted at.
+
+        Across one band this is a few per cent; across C+L+S it is the
+        difference between a flat prediction and a wrong tilt.
+
+        Axes: *returns a matrix* ``(n, n)``, one factor per ordered pair,
+        with ``j`` the partner that feeds ``i``.
+
+        Parameters
+        ----------
+        frequency_Hz : array_like
+            Frequencies of the waves, in Hz.
+
+        Returns
+        -------
+        np.ndarray
+            Scaling factors, all 1 when the spectrum does not record
+            where it was quoted.
+
+        References
+        ----------
+        D. Marcuse, "Loss analysis of single-mode fiber splices", Bell
+        Syst. Tech. J., vol. 56, no. 5, 1977 (Gaussian spot size);
+        A. D'Amico et al., J. Lightwave Technol., vol. 40,
+        pp. 3499-3511, 2022, Section III.D.
+
+        Examples
+        --------
+        >>> spectrum = get_gain_spectrum("blow-wood")
+        >>> float(np.max(np.abs(spectrum.pair_scaling(
+        ...     np.array([193e12, 206e12])) - 1.0)))
+        0.0
+        """
+        frequency = np.asarray(frequency_Hz, dtype=float)
+        if self.quoted_at is None:
+            return np.ones((frequency.size, frequency.size))
+        wavelength_nm, area_um2, radius_um = self.quoted_at
+        reference_Hz = SPEED_OF_LIGHT / (wavelength_nm * 1e-9)
+        k = np.pi * (radius_um ** 2) / area_um2
+        area = k / (np.log(frequency / reference_Hz) + k)     # in units of A_0
+        overlap = (area[:, None] + area[None, :]) / 2
+        return (1.0 / overlap) * (frequency[None, :] / reference_Hz)
 
     # -- the shape --------------------------------------------------------
     def _raw(self, shift_Hz: np.ndarray) -> np.ndarray:
         """Unnormalized gain, for the shift in Hz (may be negative)."""
         shift = np.asarray(shift_Hz, dtype=float)
+        if self.tabulated is not None:
+            grid, gain = self.tabulated
+            # Outside the measured range the gain is zero rather than
+            # held at the last sample: a table stops where the
+            # measurement stopped, and extrapolating a Raman spectrum
+            # off the end of the data is how a tilt gets invented.
+            return np.where(shift > 0,
+                            np.interp(shift, grid, gain, left=0.0, right=0.0),
+                            0.0)
         if self.lorentzian is not None:
             tau1, tau2 = self.lorentzian[0] * 1e-15, self.lorentzian[1] * 1e-15
             omega = 2 * np.pi * shift
@@ -447,6 +565,7 @@ def _coupling_matrix(frequency_Hz: np.ndarray, gain_peak_W_km: float,
         gain = gain_peak_W_km * (shift > 0).astype(float)
     else:
         gain = gain_peak_W_km * spectrum.shape(shift)     # zero where shift < 0
+        gain = gain * spectrum.pair_scaling(frequency_Hz)
     ratio = frequency_Hz[:, None] / frequency_Hz[None, :]
     return gain - ratio * gain.T
 
