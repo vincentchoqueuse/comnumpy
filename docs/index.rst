@@ -9,6 +9,17 @@ Comnumpy
 A Python Library for Communication System Prototyping and Simulation
 --------------------------------------------------------------------
 
+.. warning::
+
+   **Under active development -- not yet ready for production use.**
+   The current version is ``1.0.0.dev0``, on the way to a first stable
+   release, and the public API is still being reshaped: blocks get
+   renamed, arguments change meaning, and conventions are still being
+   settled. Code written against today's version may not run against
+   tomorrow's. Breaking changes are recorded in the changelog, with a
+   migration table where one applies; pin an exact version if you need
+   a stable interface right now.
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
