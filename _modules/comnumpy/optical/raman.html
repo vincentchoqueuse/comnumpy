@@ -772,6 +772,38 @@ window.runMermaid = runMermaid;</script>
 <span class="n">SPEED_OF_LIGHT</span> <span class="o">=</span> <span class="mf">2.99792458e8</span>    <span class="c1"># m/s</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_scale</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">low</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">slips</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reject a value that is off by orders of magnitude, and say why.</span>
+
+<span class="sd">    Every parameter below is a physical quantity in a stated unit, and</span>
+<span class="sd">    the failure that matters is not a wrong value -- it is the *right*</span>
+<span class="sd">    value in the wrong unit. Those slips are large: seconds for</span>
+<span class="sd">    femtoseconds is 1e15, hertz for terahertz is 1e12. Positivity checks</span>
+<span class="sd">    let all of them through, and the model then runs and produces a</span>
+<span class="sd">    plausible-looking curve, which is the worst outcome available.</span>
+
+<span class="sd">    The window is deliberately wide: it is a unit check, not a physics</span>
+<span class="sd">    check, so any real glass or fibre must fit inside it. ``slips`` maps</span>
+<span class="sd">    a candidate unit to the factor that converts it *to* the expected</span>
+<span class="sd">    one, so the message can name the mistake instead of only the bound.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">candidate</span><span class="p">,</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">slips</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">converted</span> <span class="o">=</span> <span class="n">value</span> <span class="o">*</span> <span class="n">factor</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">converted</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, but reading it as </span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;gives </span><span class="si">{</span><span class="n">converted</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, which is in range -- the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;parameter is expected in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible </span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">; this is a unit check rather than a physical &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;one, so a value outside it is almost always a scale mistake&quot;</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="RamanGainSpectrum">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -846,7 +878,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If neither or both parameterizations are given, or if a time</span>
-<span class="sd">        constant or the peak shift is not positive.</span>
+<span class="sd">        constant or the peak shift is not positive, or if any of them is</span>
+<span class="sd">        off by orders of magnitude from its stated unit. The last check</span>
+<span class="sd">        is there because the units differ between parameterizations --</span>
+<span class="sd">        femtoseconds here, terahertz there, hertz in the table -- and a</span>
+<span class="sd">        slip is silent otherwise: ``triangular=13.2e12`` is positive and</span>
+<span class="sd">        valid-looking, and yields a spectrum that rises linearly across</span>
+<span class="sd">        the whole band instead of peaking at 13.2 THz. The bounds are</span>
+<span class="sd">        wide enough that no real glass or fibre reaches them, so what</span>
+<span class="sd">        they reject is a scale mistake rather than an unusual design.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -910,6 +950,14 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;expected a positive peak gain, got </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># the shifts are the axis a unit slip hides in: a table given</span>
+            <span class="c1"># in THz is still increasing, still positive, and still</span>
+            <span class="c1"># interpolates -- it simply puts the whole Raman band inside</span>
+            <span class="c1"># the first 40 Hz, where no pump-signal pair ever lands, and</span>
+            <span class="c1"># the model then reports no gain at all rather than an error</span>
+            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the largest tabulated Stokes shift&quot;</span><span class="p">,</span>
+                         <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">shift</span><span class="p">)),</span> <span class="mf">1e11</span><span class="p">,</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">&quot;Hz&quot;</span><span class="p">,</span>
+                         <span class="p">{</span><span class="s2">&quot;terahertz&quot;</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">,</span> <span class="s2">&quot;gigahertz&quot;</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">})</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tabulated&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">gain</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
             <span class="k">return</span>
@@ -919,12 +967,17 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;expected positive time constants in fs, got &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">tau1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">tau2</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">tau</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;tau1&quot;</span><span class="p">,</span> <span class="n">tau1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;tau2&quot;</span><span class="p">,</span> <span class="n">tau2</span><span class="p">)):</span>
+                <span class="n">_check_scale</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">,</span>
+                             <span class="p">{</span><span class="s2">&quot;seconds&quot;</span><span class="p">:</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">&quot;picoseconds&quot;</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tau1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau2</span><span class="p">)))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;expected a positive peak shift in THz, got &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;THz&quot;</span><span class="p">,</span>
+                         <span class="p">{</span><span class="s2">&quot;hertz&quot;</span><span class="p">:</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="s2">&quot;gigahertz&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
 
@@ -943,6 +996,12 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;expected three positive numbers in quoted_at, got &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">area_um2</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">radius_um</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted wavelength&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span>
+                     <span class="mf">100.0</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;metres&quot;</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">,</span> <span class="s2">&quot;micrometres&quot;</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted effective area&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
+                     <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;um^2&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;square metres&quot;</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">})</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted core radius&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">),</span>
+                     <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;um&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;metres&quot;</span><span class="p">:</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">&quot;nanometres&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;quoted_at&quot;</span><span class="p">,</span>
                            <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
                             <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">)))</span>
