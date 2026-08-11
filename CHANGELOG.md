@@ -78,6 +78,51 @@ one release; there is no compatibility layer.
   reproducing the shipped file to 5.5e-16, and all five settings agree
   to the last digit.
 
+- `validation/optical_raman_gnpy_regimes.py`: the same second
+  implementation over **four regimes and the spontaneous emission**, to
+  establish what the residual above is made of. Counter-pumped, the same
+  pumps co-propagating, both pumps at 600 mW, and 202 channels over
+  10 THz. Under GNPy's own conservation convention the four agree to
+  **0.011 dB**, against a reference whose own 20 m / 5 m convergence is
+  0.030 dB: two independently written solvers, one a boundary-value
+  formulation and the other a forward integration, on 96 and then 202
+  channels.
+
+  Under this library's convention the residual is 0.054, 0.140, 0.204
+  and 0.320 dB -- *ordered by depletion*, which the script asserts. A
+  wrong coefficient would not sort itself that way; a term that only
+  exists when the pump depletes would. That term is the optical phonon:
+  this library conserves photon number, GNPy's matrix comes out exactly
+  antisymmetric and so conserves total power instead.
+
+  The spontaneous emission is checked too, since nothing above touches
+  it. Restricted to the pump-sourced term GNPy models, the two agree to
+  **0.002 dB**, which tests the coefficient, the Bose occupancy, the
+  dual-polarization factor and the integrating factor at once. This
+  library additionally seeds each channel from every channel above it,
+  worth +0.17 dB of ASE on this comb, and the decomposition shows that
+  term accounts for the whole difference rather than part of it.
+
+  Two settings had to be pinned to generate the reference, neither of
+  them a default, and both recorded in `generate_raman_regimes.py`.
+  `RamanParams` defaults to a second-order perturbative expansion:
+  converged on a counter-pumped span -- which is what the row above
+  measured -- but 0.4 dB off when the pump falls 25 dB co-propagating,
+  so that earlier result does not generalize the way it reads. And
+  calling `RamanSolver` directly bypasses `Fiber.propagate`, so the
+  connector reaches the pumps but not the signals; mixing that with the
+  full element's accounting cancels a 0.5 dB pump error against a 1 dB
+  connector error, which is a way to look right while being wrong twice.
+
+- `tests/optical/test_raman.py::TestTheConventionIsNotArbitrary`: the
+  check that stands behind the `C_ji = -(nu_j/nu_i) C_ij` factor.
+  Photon accounting cannot justify it -- the coupling matrix imposes it
+  by construction -- and the multi-wave comparisons agree with GNPy
+  either way, so neither established that the factor had to be there.
+  The closed-form logistic does: the power-conserving alternative misses
+  it by 6.5%, which is the ratio of the two saturation limits,
+  `(P_s0 + P_p0) / (P_s0 + (nu_s/nu_p) P_p0)`, and not a fitted number.
+
   What is left is a real but small difference of model: GNPy's
   depletion conserves **energy** after its `vibrational_loss` factor
   where this library conserves **photons**, so the coefficients differ
