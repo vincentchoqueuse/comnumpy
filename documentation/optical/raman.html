@@ -1120,6 +1120,16 @@ tilt – which is the whole reason multi-pump Raman exists:</p>
 <span class="go">14.0</span>
 </pre></div>
 </div>
+<p>The registry is process-wide, so an example that adds to it has to
+take it back out: a doctest that leaves “LAB” behind makes every
+later test that iterates the catalog see an entry that only exists
+when the doctests ran first, which is a failure that depends on
+collection order.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">_SPECTRUM_REGISTRY</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;LAB&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot;LAB&quot;</span> <span class="ow">in</span> <span class="n">available_gain_spectra</span><span class="p">()</span>
+<span class="go">False</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">

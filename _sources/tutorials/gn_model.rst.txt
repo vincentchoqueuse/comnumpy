@@ -180,6 +180,37 @@ and any gain; :func:`~comnumpy.core.metrics.compute_effective_snr` then lumps
 everything left over into one equivalent additive term. Whatever remains is
 noise, and the model does not get to argue about where it came from.
 
+It is fair to ask why the gain is estimated at all rather than divided out,
+since the link's linear gain is known: run the same chain with the fibre
+linearized and it is right there. Measured against that known value, the
+fitted modulus is it, to within 0.5 % at the worst power below -- so on
+amplitude alone, dividing by a constant would indeed do. It is the argument
+that cannot be:
+
+.. code::
+
+     P (dBm)   |g| fitted  arg g (deg)   |g| linear     ratio
+        -8.0     0.008885        1.757     0.008885  1.000004
+        -2.0     0.017742        6.638     0.017745  0.999833
+         2.0     0.028099       16.503     0.028133  0.998789
+         5.0     0.039547       32.874     0.039746  0.994970
+
+Freezing the *whole* complex gain charges the link for that rotation, and the
+bill grows with exactly the quantity the tutorial is here to measure: 0.08 dB
+of SNR at -8 dBm, 3.01 dB at -2, 10.79 dB at +2, **14.39 dB at +5**. The curve
+would bend down in the nonlinear regime for a reason that has nothing to do
+with the fibre. Freezing the modulus and fitting only the argument, on the
+other hand, lands within 0.04 dB of the full fit everywhere -- so the second
+degree of freedom is not what earns its place, the first one is. One
+component that fits both is simply the shortest way to get the one that
+matters, without having to look the link gain up.
+
+That 0.5 % is not bookkeeping either. The nonlinear phase varies from symbol
+to symbol, so :math:`\mathbb{E}[e^{j\varphi}] = e^{j\bar{\varphi}}
+e^{-\sigma_\varphi^2/2}` and the least-squares modulus shrinks accordingly;
+the 0.4970 % at +5 dBm gives :math:`\sigma_\varphi \approx 0.1` rad, about
+6 degrees of spread around a 33 degree mean rotation.
+
 The ``ravel`` is not a detail either. The nonlinear phase comes from the
 *total* intensity, so it is common to the two polarizations -- a **shared**
 estimand in the sense of decision D49, which is why it is fitted jointly on

@@ -1122,6 +1122,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                              reference=&quot;bench&quot;)</span>
 <span class="sd">    &gt;&gt;&gt; round(get_gain_spectrum(&quot;LAB&quot;).peak_shift_THz, 1)</span>
 <span class="sd">    14.0</span>
+
+<span class="sd">    The registry is process-wide, so an example that adds to it has to</span>
+<span class="sd">    take it back out: a doctest that leaves &quot;LAB&quot; behind makes every</span>
+<span class="sd">    later test that iterates the catalog see an entry that only exists</span>
+<span class="sd">    when the doctests ran first, which is a failure that depends on</span>
+<span class="sd">    collection order.</span>
+
+<span class="sd">    &gt;&gt;&gt; _ = _SPECTRUM_REGISTRY.pop(&quot;LAB&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; &quot;LAB&quot; in available_gain_spectra()</span>
+<span class="sd">    False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">RamanGainSpectrum</span><span class="p">]):</span>
         <span class="n">_SPECTRUM_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
