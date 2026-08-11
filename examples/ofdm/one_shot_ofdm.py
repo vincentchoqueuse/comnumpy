@@ -103,3 +103,35 @@ for diagram_name, diagram_chain in [("ofdm_single_carrier", simple_chain),
         stream.write(diagram_chain.to_mermaid())
 
 plt.show()
+
+
+# --- the channel itself, which is what the subcarriers are answering to ---
+H = np.fft.fftshift(np.fft.fft(h, N_carrier))
+bins = np.fft.fftshift(np.fft.fftfreq(N_carrier, d=1 / fs)) / 1e6
+gain_dB = 20 * np.log10(np.abs(H))
+
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(11, 4))
+axes[0].stem(np.arange(len(h)) / fs * 1e9, np.abs(h), basefmt=" ")
+axes[0].set_xlabel("delay [ns]")
+axes[0].set_ylabel("|h|")
+axes[0].set_title(f"EPA impulse response, {len(h)} taps")
+axes[0].grid(True, alpha=0.4)
+
+axes[1].plot(bins, gain_dB, lw=1.2)
+axes[1].axhline(0, color="0.6", lw=0.8)
+axes[1].fill_between(bins, gain_dB, -30, where=gain_dB < -10,
+                     color="C3", alpha=0.20, label="more than 10 dB down")
+axes[1].set_xlabel("frequency [MHz]")
+axes[1].set_ylabel(r"$|H(f)|$ [dB]")
+axes[1].set_title("what each subcarrier sees")
+axes[1].set_ylim(-30, 15)
+axes[1].legend()
+axes[1].grid(True, alpha=0.4)
+plt.tight_layout()
+plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
+
+deep = int(np.sum(gain_dB < -10))
+print(f"\nchannel: {gain_dB.max() - gain_dB.min():.1f} dB peak-to-null across "
+      f"{fs/1e6:.2f} MHz, {deep} of {N_carrier} subcarriers more than 10 dB "
+      f"down; 1/tau_rms = {1e3/get_delay_profile('EPA').rms_delay_spread_ns:.1f} MHz "
+      f"against {fs/N_carrier/1e3:.1f} kHz of subcarrier spacing")

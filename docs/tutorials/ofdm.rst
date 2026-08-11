@@ -147,7 +147,38 @@ Twelve percent of the symbols are wrong, and it took more than a second of
 computation for 1280 symbols. Both numbers matter. The error rate is the
 notch: zero forcing inverts the channel, so where :math:`|H(f)|` is small it
 multiplies the noise by :math:`1/|H(f)|`, and that amplified noise is spread
-over the whole block. The second number is the price of doing it this way --
+over the whole block.
+
+That notch is worth looking at rather than taking on faith, because
+everything below is a reaction to it. The same taps, as an impulse response
+and as a transfer function:
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 108-137
+
+.. image:: img/one_shot_ofdm_fig3.png
+   :width: 100%
+   :align: center
+   :alt: EPA impulse response and its transfer function
+
+.. code::
+
+   channel: 35.0 dB peak-to-null across 7.68 MHz, 17 of 128 subcarriers more
+   than 10 dB down; 1/tau_rms = 23.2 MHz against 60.0 kHz of subcarrier spacing
+
+**35 dB between the best and the worst frequency.** That is the whole
+problem in one number: a single-carrier receiver has to undo all of it at
+once, and the 17 subcarriers sitting more than 10 dB down are where zero
+forcing amplifies noise instead of removing distortion.
+
+The last comparison is why OFDM works at all. The channel changes over
+roughly 23 MHz, while a subcarrier is 60 kHz wide -- nearly four hundred
+times narrower. Across one subcarrier :math:`H(f)` is therefore flat, so the
+frequency-selective channel becomes a few hundred *flat* channels, each
+undone by dividing by one complex number. The transform below is what turns
+one hard problem into many easy ones, and this figure is the reason it is
+allowed to. The second number is the price of doing it this way --
 the equalizer builds the :math:`(N + L - 1) \times N` convolution matrix and
 pseudo-inverts it, which costs :math:`O(N^3)`.
 
