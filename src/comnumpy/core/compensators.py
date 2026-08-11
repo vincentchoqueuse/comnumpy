@@ -46,6 +46,47 @@ class DataAidedMixin():
         validate_single_path(np.asarray(X), type(self).__name__,
                              self.estimand)
 
+    def path_mode(self, X: np.ndarray) -> str:
+        """Answer the D49 question instead of only asking it.
+
+        :meth:`validate_paths` refuses a multi-path signal because the
+        block cannot know which family its estimand belongs to. Blocks
+        that expose ``shared=`` let the caller say, which is the only
+        place the answer exists:
+
+        * ``shared=True`` -- one physical quantity behind every path (a
+          laser's phase before any equalizer, the mean nonlinear phase
+          of a dual-polarization link, which comes from the *total*
+          intensity). Fitted jointly over the flattened signal, which
+          is also the better estimator since it sees all the data.
+        * ``shared=False`` -- one per path (each output of a butterfly
+          equalizer, each receiver front end). One estimate each.
+
+        Leaving it unset keeps the refusal, because silently picking
+        one is how a wrong answer looks right.
+
+        Returns
+        -------
+        str
+            ``"single"``, ``"shared"`` or ``"per_path"``.
+        """
+        array = np.asarray(X)
+        if array.ndim < 2 or array.shape[-2] == 1:
+            return "single"
+        shared = getattr(self, "shared", None)
+        if shared is None:
+            from comnumpy.exceptions import ShapeError
+            raise ShapeError(
+                f"{type(self).__name__} estimates {self.estimand}, and got "
+                f"{array.shape[-2]} paths on the antenna axis (shape "
+                f"{array.shape}) without being told which kind it is. Pass "
+                f"shared=True if one quantity lies behind every path -- one "
+                f"laser, or a nonlinear phase driven by the total intensity "
+                f"-- so that it is fitted jointly; pass shared=False if each "
+                f"path carries its own. Broadcasting would pick one by "
+                f"accident (decision D49).")
+        return "shared" if shared else "per_path"
+
     estimand = "a quantity"
 
     def get_reference(self):
@@ -992,8 +1033,10 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
     constellation ambiguity, since the reference fixes the absolute
     phase.
 
-    Axes: *declared axis* -- estimation expects a 1D serial signal
-    ``(N,)`` aligned with ``reference``; the correction is element-wise.
+    Axes: *declared axis* -- estimation expects a signal aligned with
+    ``reference`` along the last axis; the correction is element-wise. A
+    ``(..., P, N)`` signal needs ``shared=`` to say which D49 family the
+    phase belongs to, and is refused otherwise.
 
     Parameters
     ----------
@@ -1002,6 +1045,12 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
         the chain itself, declare the edge with
         ``Sequential(wiring={"data_aided_phase.reference": "source"})``
         instead of freezing an array.
+    shared : bool, optional, keyword-only
+        Which D49 family the phase belongs to, for a multi-path signal.
+        ``True`` fits one angle jointly over every path -- laser phase
+        noise ahead of any equalizer is common to both polarizations.
+        ``False`` fits one per path. Default is ``None``, which refuses
+        a multi-path signal rather than choosing for the caller.
     name : str, optional, keyword-only
         Name of the processor. Default is ``"data_aided_phase"``.
 
@@ -1031,9 +1080,11 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
      -0.707107-0.707107j]
     """
     reference: np.ndarray
+    shared: Optional[bool] = field(default=None, kw_only=True)
     name: str = field(default="data_aided_phase", kw_only=True)
-    # estimated quantity (D23), declared for slots (D40a)
-    theta_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated quantity (D23), declared for slots (D40a). A scalar when
+    # the estimand is single or shared, one value per path otherwise.
+    theta_: Optional[Union[float, np.ndarray]] = field(init=False, repr=False, default_factory=lambda: None)
 
     estimand = "one phase against a reference"
 
@@ -1047,16 +1098,22 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
             y: Optional[np.ndarray] = None) -> "DataAidedPhaseCompensator":
         if y is None:
             y = self.get_reference()
-        self.theta_ = float(np.angle(np.sum(np.conj(x)*y)))
+        x = np.asarray(x)
+        y = np.broadcast_to(np.asarray(y), x.shape)
+        if self.path_mode(x) == "per_path":
+            self.theta_ = np.angle(np.sum(np.conj(x)*y, axis=-1))
+        else:
+            self.theta_ = float(np.angle(np.sum(np.conj(x)*y)))
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.validate_paths(x)
+        self.path_mode(x)
         theta = self.fit(x).theta_
         if theta is None:
             raise NotFittedError(
                 "DataAidedPhaseCompensator: fit() left no phase estimate.")
-        return x*np.exp(1j*theta)
+        theta = np.asarray(theta)
+        return x*np.exp(1j*(theta[..., None] if theta.ndim else theta))
 
 
 @dataclass(slots=True)
@@ -1087,9 +1144,11 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
     ``DataAidedPhaseCompensator``, which keeps only
     :math:`\arg(\widehat{g})`.
 
-    Axes: *declared axis* -- estimation expects a 1D preamble ``(N_d,)``
-    (after ``extractor``) aligned with ``reference``; the correction is
-    element-wise on the full record.
+    Axes: *declared axis* -- estimation expects a preamble aligned with
+    ``reference`` along the last axis (after ``extractor``); the
+    correction is element-wise on the full record. A ``(..., P, N)``
+    signal needs ``shared=`` to say which D49 family the gain belongs
+    to, and is refused otherwise.
 
     Parameters
     ----------
@@ -1098,6 +1157,14 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
         itself, declare the edge with
         ``Sequential(wiring={"complex_gain_compensator.reference":
         "source"})`` instead of freezing an array.
+    shared : bool, optional, keyword-only
+        Which D49 family the gain belongs to, for a multi-path signal.
+        ``True`` fits one gain jointly over every path -- the case of a
+        dual-polarization link whose nonlinear phase comes from the
+        *total* intensity, or of one laser feeding both. ``False`` fits
+        one gain per path, as after a butterfly equalizer. Default is
+        ``None``, which refuses a multi-path signal rather than choosing
+        for the caller.
     extractor : DataExtractor, optional, keyword-only
         Selects the preamble samples inside the received record. Default
         is a pass-through (the whole record is the preamble).
@@ -1141,9 +1208,12 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
     reference: np.ndarray
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
+    shared: Optional[bool] = field(default=None, kw_only=True)
     name: str = field(default="complex_gain_compensator", kw_only=True)
-    # estimated quantity (D23), declared for slots (D40a)
-    gain_: Optional[complex] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated quantity (D23), declared for slots (D40a). A scalar when
+    # the estimand is single or shared, one value per path otherwise.
+    gain_: Optional[Union[complex, np.ndarray]] = field(
+        init=False, repr=False, default_factory=lambda: None)
 
     estimand = "one complex gain against a reference"
 
@@ -1152,13 +1222,19 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
             ) -> "DataAidedComplexGainCompensator":
         if y is None:
             y = self.get_reference()
-        x_resized = np.resize(x, (len(x), 1))
-        x_pinv = np.linalg.pinv(x_resized)
-        self.gain_ = np.dot(x_pinv, y).item()
+        x = np.asarray(x)
+        y = np.broadcast_to(np.asarray(y), x.shape)
+        # least squares over the last axis: g = <x, y> / <x, x>, which is
+        # what pinv computes for a single column and stays shape-aware
+        if self.path_mode(x) == "per_path":
+            energy = np.sum(np.conj(x) * x, axis=-1).real
+            self.gain_ = np.sum(np.conj(x) * y, axis=-1) / energy
+        else:
+            self.gain_ = complex(np.vdot(x, y) / np.vdot(x, x))
         return self
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        self.validate_paths(x)
+        self.path_mode(x)
         if self.should_fit:
             x_preamble = self.extractor(x)
             self.fit(x_preamble)
@@ -1168,8 +1244,9 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
                 "should_fit=False but fit() was never called -- call "
                 "fit(x_preamble) first.")
 
-        y = x * self.gain_
-        return y
+        gain = np.asarray(self.gain_)
+        # one gain per path needs an axis to broadcast against the samples
+        return x * (gain[..., None] if gain.ndim else gain)
 
 
 @dataclass(slots=True)

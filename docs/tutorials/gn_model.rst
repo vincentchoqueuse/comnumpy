@@ -211,12 +211,14 @@ e^{-\sigma_\varphi^2/2}` and the least-squares modulus shrinks accordingly;
 the 0.4970 % at +5 dBm gives :math:`\sigma_\varphi \approx 0.1` rad, about
 6 degrees of spread around a 33 degree mean rotation.
 
-The ``ravel`` is not a detail either. The nonlinear phase comes from the
+``shared=True`` is not a detail either. The nonlinear phase comes from the
 *total* intensity, so it is common to the two polarizations -- a **shared**
-estimand in the sense of decision D49, which is why it is fitted jointly on
-the flattened pair rather than once per row. The compensator refuses a
+estimand in the sense of decision D49, which is why one gain is fitted
+jointly over both rather than one per row. Fitted per row it would be two
+estimates of the same number, each seeing half the data, and they would
+then have to be reconciled. Without the keyword the compensator refuses a
 two-path signal outright, precisely so that this choice has to be made on
-purpose.
+purpose rather than settled by broadcasting.
 
 With the metric written, ``measure`` is a one-liner: :func:`~comnumpy.sweep`
 sets ``launch.gain``, reseeds the chain, runs it, and hands the tapped

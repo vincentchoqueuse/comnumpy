@@ -58,8 +58,8 @@ def link_chain(order=16, power_W=1e-3):
 
 def effective_snr_dB(sent, received):
     """SNR once the complex gain a receiver would remove is removed."""
-    compensator = DataAidedComplexGainCompensator(sent.ravel())
-    corrected = compensator(received.ravel()).reshape(received.shape)
+    compensator = DataAidedComplexGainCompensator(sent, shared=True)
+    corrected = compensator(received)
     return compute_effective_snr(sent, corrected, unit="dB")
 
 
