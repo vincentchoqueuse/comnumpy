@@ -340,6 +340,37 @@ band? Eighty-one channels at 32 GBd is 4 THz of bandwidth; simulating that
 means a sample rate in the terahertz, and the split step would run for hours.
 The closed form does not care.
 
+Before the numbers, the picture the model has in mind. The comb below is
+built with the library rather than drawn: nine 16-QAM channels, each pulse
+shaped and placed on a 50 GHz grid by
+:class:`~comnumpy.optical.wdm.WDMMultiplexer`, and the spectrum is what a
+photodiode would see.
+
+.. literalinclude:: ../../examples/optical/gn_model.py
+   :language: python
+   :lines: 174-211
+
+.. image:: img/gn_model_fig3.png
+   :width: 100 %
+
+.. code::
+
+   comb: 9 channels, 50 GHz spacing, 35.2 GHz occupied per channel, guard 14.8 GHz
+
+Two things to read off it. The **cut** is the shaded channel: the one whose
+noise :math:`\eta` counts. Every other channel is an *interferer*, and the
+model's job is to add up what each of them deposits on the cut -- so the
+weights of :func:`~comnumpy.optical.gn_model.gn_model_nli_power` are not
+abstract, they are one per pair visible here. The cut is the middle channel
+because that is the worst case: it has neighbours on both sides.
+
+The second thing is the **guard**. Each channel occupies 35.2 GHz of a
+50 GHz slot, so 14.8 GHz separates the spectra and no channel overlaps its
+neighbour. Nothing linear crosses between them. Everything the model
+computes is therefore *nonlinear* leakage -- the fibre mixing channels that
+never touched in frequency, which is the whole reason a closed form for it
+is worth having.
+
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
    :lines: 133-143
