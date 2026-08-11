@@ -972,8 +972,8 @@ below is worth having.</p>
 <h2>Measuring the SNR<a class="headerlink" href="#measuring-the-snr" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">effective_snr_dB</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;SNR once the complex gain a receiver would remove is removed.&quot;&quot;&quot;</span>
-    <span class="n">compensator</span> <span class="o">=</span> <span class="n">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">sent</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
-    <span class="n">corrected</span> <span class="o">=</span> <span class="n">compensator</span><span class="p">(</span><span class="n">received</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">compensator</span> <span class="o">=</span> <span class="n">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">corrected</span> <span class="o">=</span> <span class="n">compensator</span><span class="p">(</span><span class="n">received</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">compute_effective_snr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)</span>
 
 
@@ -1020,12 +1020,14 @@ to symbol, so <span class="math notranslate nohighlight">\(\mathbb{E}[e^{j\varph
 e^{-\sigma_\varphi^2/2}\)</span> and the least-squares modulus shrinks accordingly;
 the 0.4970 % at +5 dBm gives <span class="math notranslate nohighlight">\(\sigma_\varphi \approx 0.1\)</span> rad, about
 6 degrees of spread around a 33 degree mean rotation.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">ravel</span></code> is not a detail either. The nonlinear phase comes from the
+<p><code class="docutils literal notranslate"><span class="pre">shared=True</span></code> is not a detail either. The nonlinear phase comes from the
 <em>total</em> intensity, so it is common to the two polarizations – a <strong>shared</strong>
-estimand in the sense of decision D49, which is why it is fitted jointly on
-the flattened pair rather than once per row. The compensator refuses a
+estimand in the sense of decision D49, which is why one gain is fitted
+jointly over both rather than one per row. Fitted per row it would be two
+estimates of the same number, each seeing half the data, and they would
+then have to be reconciled. Without the keyword the compensator refuses a
 two-path signal outright, precisely so that this choice has to be made on
-purpose.</p>
+purpose rather than settled by broadcasting.</p>
 <p>With the metric written, <code class="docutils literal notranslate"><span class="pre">measure</span></code> is a one-liner: <a class="reference internal" href="../documentation/toplevel/sweep.html#module-comnumpy.sweep" title="comnumpy.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>
 sets <code class="docutils literal notranslate"><span class="pre">launch.gain</span></code>, reseeds the chain, runs it, and hands the tapped
 symbols and the output to the metric – the same <code class="docutils literal notranslate"><span class="pre">sweep</span></code> introduced in

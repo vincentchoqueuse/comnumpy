@@ -779,6 +779,50 @@ window.runMermaid = runMermaid;</script>
                              <span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="DataAidedMixin.path_mode">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.path_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">path_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Answer the D49 question instead of only asking it.</span>
+
+<span class="sd">        :meth:`validate_paths` refuses a multi-path signal because the</span>
+<span class="sd">        block cannot know which family its estimand belongs to. Blocks</span>
+<span class="sd">        that expose ``shared=`` let the caller say, which is the only</span>
+<span class="sd">        place the answer exists:</span>
+
+<span class="sd">        * ``shared=True`` -- one physical quantity behind every path (a</span>
+<span class="sd">          laser&#39;s phase before any equalizer, the mean nonlinear phase</span>
+<span class="sd">          of a dual-polarization link, which comes from the *total*</span>
+<span class="sd">          intensity). Fitted jointly over the flattened signal, which</span>
+<span class="sd">          is also the better estimator since it sees all the data.</span>
+<span class="sd">        * ``shared=False`` -- one per path (each output of a butterfly</span>
+<span class="sd">          equalizer, each receiver front end). One estimate each.</span>
+
+<span class="sd">        Leaving it unset keeps the refusal, because silently picking</span>
+<span class="sd">        one is how a wrong answer looks right.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            ``&quot;single&quot;``, ``&quot;shared&quot;`` or ``&quot;per_path&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;single&quot;</span>
+        <span class="n">shared</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shared</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2">, and got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> paths on the antenna axis (shape &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) without being told which kind it is. Pass &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;shared=True if one quantity lies behind every path -- one &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;laser, or a nonlinear phase driven by the total intensity &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;-- so that it is fitted jointly; pass shared=False if each &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;path carries its own. Broadcasting would pick one by &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;accident (decision D49).&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;shared&quot;</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="s2">&quot;per_path&quot;</span></div>
+
+
     <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;a quantity&quot;</span>
 
 <div class="viewcode-block" id="DataAidedMixin.get_reference">
@@ -1752,8 +1796,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    constellation ambiguity, since the reference fixes the absolute</span>
 <span class="sd">    phase.</span>
 
-<span class="sd">    Axes: *declared axis* -- estimation expects a 1D serial signal</span>
-<span class="sd">    ``(N,)`` aligned with ``reference``; the correction is element-wise.</span>
+<span class="sd">    Axes: *declared axis* -- estimation expects a signal aligned with</span>
+<span class="sd">    ``reference`` along the last axis; the correction is element-wise. A</span>
+<span class="sd">    ``(..., P, N)`` signal needs ``shared=`` to say which D49 family the</span>
+<span class="sd">    phase belongs to, and is refused otherwise.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1762,6 +1808,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        the chain itself, declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;data_aided_phase.reference&quot;: &quot;source&quot;})``</span>
 <span class="sd">        instead of freezing an array.</span>
+<span class="sd">    shared : bool, optional, keyword-only</span>
+<span class="sd">        Which D49 family the phase belongs to, for a multi-path signal.</span>
+<span class="sd">        ``True`` fits one angle jointly over every path -- laser phase</span>
+<span class="sd">        noise ahead of any equalizer is common to both polarizations.</span>
+<span class="sd">        ``False`` fits one per path. Default is ``None``, which refuses</span>
+<span class="sd">        a multi-path signal rather than choosing for the caller.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the processor. Default is ``&quot;data_aided_phase&quot;``.</span>
 
@@ -1791,9 +1843,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">     -0.707107-0.707107j]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_phase&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
-    <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a). A scalar when</span>
+    <span class="c1"># the estimand is single or shared, one value per path otherwise.</span>
+    <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one phase against a reference&quot;</span>
 
@@ -1807,16 +1861,22 @@ window.runMermaid = runMermaid;</script>
             <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataAidedPhaseCompensator&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">)))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;per_path&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">)))</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_paths</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">theta_</span>
         <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
                 <span class="s2">&quot;DataAidedPhaseCompensator: fit() left no phase estimate.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">theta</span><span class="p">)</span></div>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="k">if</span> <span class="n">theta</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="n">theta</span><span class="p">))</span></div>
 
 
 
@@ -1850,9 +1910,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ``DataAidedPhaseCompensator``, which keeps only</span>
 <span class="sd">    :math:`\arg(\widehat{g})`.</span>
 
-<span class="sd">    Axes: *declared axis* -- estimation expects a 1D preamble ``(N_d,)``</span>
-<span class="sd">    (after ``extractor``) aligned with ``reference``; the correction is</span>
-<span class="sd">    element-wise on the full record.</span>
+<span class="sd">    Axes: *declared axis* -- estimation expects a preamble aligned with</span>
+<span class="sd">    ``reference`` along the last axis (after ``extractor``); the</span>
+<span class="sd">    correction is element-wise on the full record. A ``(..., P, N)``</span>
+<span class="sd">    signal needs ``shared=`` to say which D49 family the gain belongs</span>
+<span class="sd">    to, and is refused otherwise.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1861,6 +1923,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        itself, declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;complex_gain_compensator.reference&quot;:</span>
 <span class="sd">        &quot;source&quot;})`` instead of freezing an array.</span>
+<span class="sd">    shared : bool, optional, keyword-only</span>
+<span class="sd">        Which D49 family the gain belongs to, for a multi-path signal.</span>
+<span class="sd">        ``True`` fits one gain jointly over every path -- the case of a</span>
+<span class="sd">        dual-polarization link whose nonlinear phase comes from the</span>
+<span class="sd">        *total* intensity, or of one laser feeding both. ``False`` fits</span>
+<span class="sd">        one gain per path, as after a butterfly equalizer. Default is</span>
+<span class="sd">        ``None``, which refuses a multi-path signal rather than choosing</span>
+<span class="sd">        for the caller.</span>
 <span class="sd">    extractor : DataExtractor, optional, keyword-only</span>
 <span class="sd">        Selects the preamble samples inside the received record. Default</span>
 <span class="sd">        is a pass-through (the whole record is the preamble).</span>
@@ -1904,9 +1974,12 @@ window.runMermaid = runMermaid;</script>
     <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">extractor</span><span class="p">:</span> <span class="n">DataExtractor</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DataExtractor</span><span class="p">(</span><span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;complex_gain_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
-    <span class="n">gain_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">complex</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># estimated quantity (D23), declared for slots (D40a). A scalar when</span>
+    <span class="c1"># the estimand is single or shared, one value per path otherwise.</span>
+    <span class="n">gain_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one complex gain against a reference&quot;</span>
 
@@ -1915,13 +1988,19 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataAidedComplexGainCompensator&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
-        <span class="n">x_resized</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">x_pinv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">x_resized</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x_pinv</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># least squares over the last axis: g = &lt;x, y&gt; / &lt;x, x&gt;, which is</span>
+        <span class="c1"># what pinv computes for a single column and stays shape-aware</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;per_path&quot;</span><span class="p">:</span>
+            <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">energy</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_paths</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_fit</span><span class="p">:</span>
             <span class="n">x_preamble</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extractor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span>
@@ -1931,8 +2010,9 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;should_fit=False but fit() was never called -- call &quot;</span>
                 <span class="s2">&quot;fit(x_preamble) first.&quot;</span><span class="p">)</span>
 
-        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span>
-        <span class="k">return</span> <span class="n">y</span></div>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_</span><span class="p">)</span>
+        <span class="c1"># one gain per path needs an axis to broadcast against the samples</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">gain</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="k">if</span> <span class="n">gain</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="n">gain</span><span class="p">)</span></div>
 
 
 

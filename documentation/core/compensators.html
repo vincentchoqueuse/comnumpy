@@ -485,6 +485,32 @@ accident.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.path_mode">
+<span class="sig-name descname"><span class="pre">path_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.path_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.path_mode" title="Link to this definition">#</a></dt>
+<dd><p>Answer the D49 question instead of only asking it.</p>
+<p><a class="reference internal" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths" title="comnumpy.core.compensators.DataAidedMixin.validate_paths"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_paths()</span></code></a> refuses a multi-path signal because the
+block cannot know which family its estimand belongs to. Blocks
+that expose <code class="docutils literal notranslate"><span class="pre">shared=</span></code> let the caller say, which is the only
+place the answer exists:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shared=True</span></code> – one physical quantity behind every path (a
+laser’s phase before any equalizer, the mean nonlinear phase
+of a dual-polarization link, which comes from the <em>total</em>
+intensity). Fitted jointly over the flattened signal, which
+is also the better estimator since it sees all the data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shared=False</span></code> – one per path (each output of a butterfly
+equalizer, each receiver front end). One estimate each.</p></li>
+</ul>
+<p>Leaving it unset keeps the refusal, because silently picking
+one is how a wrong answer looks right.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>str</em> – <code class="docutils literal notranslate"><span class="pre">&quot;single&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;shared&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;per_path&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.get_reference">
 <span class="sig-name descname"><span class="pre">get_reference</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.get_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.get_reference" title="Link to this definition">#</a></dt>
 <dd><p>Retrieve the reference signal associated with the model.</p>
@@ -1195,7 +1221,7 @@ and zero-forcing equalization).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedPhaseCompensator">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedPhaseCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data_aided_phase'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedPhaseCompensator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedPhaseCompensator" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedPhaseCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data_aided_phase'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedPhaseCompensator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedPhaseCompensator" title="Link to this definition">#</a></dt>
 <dd><p>Data-aided phase compensator (maximum-likelihood phase from a known reference).</p>
 <section id="id7">
 <h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
@@ -1213,8 +1239,10 @@ input and the reference at lag zero:</p>
 <p>Unlike the blind estimator, this one is free of the <span class="math notranslate nohighlight">\(2\pi/M\)</span>
 constellation ambiguity, since the reference fixes the absolute
 phase.</p>
-<p>Axes: <em>declared axis</em> – estimation expects a 1D serial signal
-<code class="docutils literal notranslate"><span class="pre">(N,)</span></code> aligned with <code class="docutils literal notranslate"><span class="pre">reference</span></code>; the correction is element-wise.</p>
+<p>Axes: <em>declared axis</em> – estimation expects a signal aligned with
+<code class="docutils literal notranslate"><span class="pre">reference</span></code> along the last axis; the correction is element-wise. A
+<code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> signal needs <code class="docutils literal notranslate"><span class="pre">shared=</span></code> to say which D49 family the
+phase belongs to, and is refused otherwise.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param reference<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Known reference <span class="math notranslate nohighlight">\(d[n]\)</span>. When the reference is produced by
@@ -1224,6 +1252,16 @@ instead of freezing an array.</p>
 </dd>
 <dt class="field-even">type reference<span class="colon">:</span></dt>
 <dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param shared<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Which D49 family the phase belongs to, for a multi-path signal.
+<code class="docutils literal notranslate"><span class="pre">True</span></code> fits one angle jointly over every path – laser phase
+noise ahead of any equalizer is common to both polarizations.
+<code class="docutils literal notranslate"><span class="pre">False</span></code> fits one per path. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>, which refuses
+a multi-path signal rather than choosing for the caller.</p>
+</dd>
+<dt class="field-even">type shared<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param name<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Name of the processor. Default is <code class="docutils literal notranslate"><span class="pre">&quot;data_aided_phase&quot;</span></code>.</p>
@@ -1266,7 +1304,7 @@ phase estimation).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedComplexGainCompensator">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedComplexGainCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extractor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="processors.html#comnumpy.core.processors.DataExtractor" title="comnumpy.core.processors.DataExtractor"><span class="pre">DataExtractor</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'complex_gain_compensator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedComplexGainCompensator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedComplexGainCompensator" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedComplexGainCompensator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extractor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="processors.html#comnumpy.core.processors.DataExtractor" title="comnumpy.core.processors.DataExtractor"><span class="pre">DataExtractor</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'complex_gain_compensator'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedComplexGainCompensator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedComplexGainCompensator" title="Link to this definition">#</a></dt>
 <dd><p>Data-aided compensator of a flat complex gain (amplitude and phase).</p>
 <section id="id8">
 <h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
@@ -1285,9 +1323,11 @@ channel gain), applied to the whole record:</p>
 <p>It corrects amplitude and phase at once, and generalizes
 <code class="docutils literal notranslate"><span class="pre">DataAidedPhaseCompensator</span></code>, which keeps only
 <span class="math notranslate nohighlight">\(\arg(\widehat{g})\)</span>.</p>
-<p>Axes: <em>declared axis</em> – estimation expects a 1D preamble <code class="docutils literal notranslate"><span class="pre">(N_d,)</span></code>
-(after <code class="docutils literal notranslate"><span class="pre">extractor</span></code>) aligned with <code class="docutils literal notranslate"><span class="pre">reference</span></code>; the correction is
-element-wise on the full record.</p>
+<p>Axes: <em>declared axis</em> – estimation expects a preamble aligned with
+<code class="docutils literal notranslate"><span class="pre">reference</span></code> along the last axis (after <code class="docutils literal notranslate"><span class="pre">extractor</span></code>); the
+correction is element-wise on the full record. A <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>
+signal needs <code class="docutils literal notranslate"><span class="pre">shared=</span></code> to say which D49 family the gain belongs
+to, and is refused otherwise.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param reference<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Known preamble <span class="math notranslate nohighlight">\(d[n]\)</span>. When it is produced by the chain
@@ -1297,6 +1337,18 @@ itself, declare the edge with
 </dd>
 <dt class="field-even">type reference<span class="colon">:</span></dt>
 <dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param shared<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Which D49 family the gain belongs to, for a multi-path signal.
+<code class="docutils literal notranslate"><span class="pre">True</span></code> fits one gain jointly over every path – the case of a
+dual-polarization link whose nonlinear phase comes from the
+<em>total</em> intensity, or of one laser feeding both. <code class="docutils literal notranslate"><span class="pre">False</span></code> fits
+one gain per path, as after a butterfly equalizer. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>, which refuses a multi-path signal rather than choosing
+for the caller.</p>
+</dd>
+<dt class="field-even">type shared<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param extractor<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Selects the preamble samples inside the received record. Default
@@ -1705,6 +1757,7 @@ pp. 501-507, 1993 (interpolation-based fractional timing recovery).</p></li>
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.validate_paths()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.path_mode"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.path_mode()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.get_reference"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.get_reference()</span></code></a></li>
 </ul>
 </li>
