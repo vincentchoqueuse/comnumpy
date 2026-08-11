@@ -46,6 +46,21 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- `RamanGainSpectrum(tabulated=(shift_Hz, gain))`: a **measured**
+  spectrum, alongside the analytic `lorentzian=` and `triangular=`
+  shapes. Outside the measured range the gain is zero rather than held
+  at the last sample -- a table stops where the measurement stopped,
+  and extrapolating a Raman spectrum off the end of the data is how a
+  tilt gets invented.
+
+- `validation/optical_raman_gnpy.py`: counter-pumped Raman against a
+  second implementation. The six analytic confrontations in
+  `optical_raman.py` share a blind spot -- photon conservation is
+  imposed by the coupling matrix by construction, and the closed form
+  comes from the same two-wave system, so a wrong gain *shape* passes
+  all of them. This one is dominated by the shape, and it found a
+  missing effective-area scaling on its first run.
+
 - `comnumpy.optical.gn_model`: the **Gaussian Noise model** in closed
   form -- `gn_model_psi` (eq. 123 of arXiv:1209.0394), `gn_model_nli_power`
   (eq. 120), `gn_model_snr` and `optimal_launch_power`. It answers "how
@@ -997,6 +1012,23 @@ code actually does.
   (`rcParams['agg.path.chunksize']`).
 
 ### Changed
+
+- **The Raman gain is scaled by the effective area.**
+  `RamanGainSpectrum` takes an optional
+  `quoted_at=(wavelength_nm, effective_area_um2, core_radius_um)`. The
+  gain *shape* depends on the Stokes shift alone -- that is the glass --
+  but the coefficient multiplying `P_i P_j` is `g_R / A_eff`, and the
+  effective area belongs to the waveguide, so it does depend on the
+  absolute frequency: the mode spreads with wavelength and the same
+  shift buys less gain. With a Gaussian mode this reduces to
+  `A_eff(nu) = A_0 k / (ln(nu/nu_0) + k)` with `k = pi a^2 / A_0`.
+
+  A spectrum that does not say where it was quoted scales by exactly 1,
+  so the catalogue and every existing call are untouched. Across one
+  band the correction is 5.3 %, which is why nothing had noticed it;
+  across C+L+S it is the difference between a flat prediction and a
+  wrong tilt. It was found by the confrontation below, not by reading
+  the code.
 
 - **The documentation section is called Tutorials, not Examples**, and
   lives at ``docs/tutorials/``. Ten pages meant to be read in order are
