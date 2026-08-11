@@ -1470,6 +1470,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">z_km</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="c1"># the two the ASE decomposition needs, in the solver&#39;s own wave order</span>
+    <span class="c1"># (signals first): S[i, j] is what multiplies P_j in the spontaneous</span>
+    <span class="c1"># source of signal i, and wave_power_W[j] is that P_j</span>
+    <span class="n">wave_power_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">spontaneous_per_wave</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">signal_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">pump_forward_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">pump_backward_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
@@ -1477,6 +1482,56 @@ window.runMermaid = runMermaid;</script>
     <span class="n">loss_only_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">frequency_signal_Hz</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ase_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ASE seeded by a subset of the waves, by superposition.</span>
+
+<span class="sd">        The ASE equation is *linear* in the ASE, with a source that is a</span>
+<span class="sd">        sum over the waves above the channel:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \frac{\mathrm{d}A_i}{\mathrm{d}z} =</span>
+<span class="sd">                g_i(z) A_i + \sum_j S_{ij} P_j(z)</span>
+
+<span class="sd">        so :math:`A_i = \sum_j A_i^{(j)}` exactly, each term solving the</span>
+<span class="sd">        same equation with one source kept. The decomposition is</span>
+<span class="sd">        therefore not an approximation or a re-run: it is arithmetic on</span>
+<span class="sd">        the profiles already computed.</span>
+
+<span class="sd">        The integrating factor is free. :math:`g_i` is the *same* net</span>
+<span class="sd">        gain the signal obeys, so :math:`\exp \int_0^z g_i` is simply</span>
+<span class="sd">        :math:`P_{s,i}(z)/P_{s,i}(0)` -- the signal&#39;s own profile.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">cumulative_trapezoid</span>
+
+        <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">signal</span> <span class="o">/</span> <span class="n">signal</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spontaneous_per_wave</span><span class="p">)[:,</span> <span class="n">columns</span><span class="p">]</span>
+                  <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wave_power_W</span><span class="p">)[</span><span class="n">columns</span><span class="p">])</span>
+        <span class="n">integral</span> <span class="o">=</span> <span class="n">cumulative_trapezoid</span><span class="p">(</span><span class="n">source</span> <span class="o">/</span> <span class="n">loss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_km</span><span class="p">,</span>
+                                        <span class="n">initial</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">contribution</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="n">integral</span>
+        <span class="k">return</span> <span class="n">contribution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">contribution</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">contribution</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ase_from_pumps_W</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;ASE the pumps seed, which is what a Raman amplifier is charged for.&quot;&quot;&quot;</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wave_power_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ase_from</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ase_from_signals_W</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ASE the channels seed in each other, which pump-only models omit.</span>
+
+<span class="sd">        Every channel sits below some of its neighbours, so the comb</span>
+<span class="sd">        seeds itself. The shifts involved are small -- a few terahertz</span>
+<span class="sd">        across a band -- where the Bose occupancy :math:`1/(e^{h \Delta</span>
+<span class="sd">        \nu / k T} - 1)` is of order one rather than negligible, so the</span>
+<span class="sd">        term is thermally enhanced. Planning tools commonly drop it; on</span>
+<span class="sd">        a 96-channel C-band comb it is worth about 0.17 dB of ASE.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ase_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="p">))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -1937,6 +1992,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">transmission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_pump</span> <span class="o">*</span> <span class="n">length_km</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">RamanSolution</span><span class="p">(</span>
         <span class="n">z_km</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+        <span class="n">wave_power_W</span><span class="o">=</span><span class="n">profile</span><span class="p">[:</span><span class="n">n_waves</span><span class="p">],</span>
+        <span class="n">spontaneous_per_wave</span><span class="o">=</span><span class="n">spontaneous</span><span class="p">,</span>
         <span class="n">signal_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">profile</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">]),</span>
         <span class="n">pump_forward_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">pump_profile</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
         <span class="n">pump_backward_W</span><span class="o">=</span><span class="n">fold</span><span class="p">(</span><span class="n">pump_profile</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
