@@ -410,3 +410,48 @@ class TestTheGuards(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestThePublishedDomain(unittest.TestCase):
+    """Poggiolini 2012 bounds its own closed form; the code now says so.
+
+    The paper states the formula "may not be reliable" outside span loss
+    >= 7 dB, |beta2| >= 4 ps^2/km, Rs >= 28 GBaud and Bch/df >= 0.25.
+    Nothing enforced that, so a call from outside returned a number
+    indistinguishable from a good one. It warns rather than raises: the
+    model stays defined there and is often still usable, but silence
+    would be a claim the paper does not make.
+    """
+
+    COMB = 193.4e12 + 50e9 * np.arange(-4, 5)
+
+    def _nli(self, **kwargs):
+        settings = dict(span_length_km=80.0, n_spans=1,
+                        powers_W=np.full(9, 1e-3), frequencies_Hz=self.COMB,
+                        baud_rates_Hz=np.full(9, 32e9))
+        settings.update(kwargs)
+        return gn_model_nli_power(get_fiber("SMF"), **settings)
+
+    def test_a_standard_link_says_nothing(self):
+        with self.assertNoLogs("comnumpy.optical.gn_model", level="WARNING"):
+            self._nli()
+
+    def test_each_boundary_is_reported_by_name(self):
+        cases = {
+            "span loss": dict(span_length_km=20.0),
+            "symbol rate": dict(baud_rates_Hz=np.full(9, 10e9)),
+            "bandwidth over spacing": dict(
+                frequencies_Hz=193.4e12 + 400e9 * np.arange(-4, 5)),
+        }
+        for name, kwargs in cases.items():
+            with self.subTest(boundary=name):
+                with self.assertLogs("comnumpy.optical.gn_model",
+                                     level="WARNING") as caught:
+                    self._nli(**kwargs)
+                self.assertIn(name, "\n".join(caught.output))
+
+    def test_it_warns_but_still_answers(self):
+        """A warning is not a refusal: the caller may know what they are doing."""
+        with self.assertLogs("comnumpy.optical.gn_model", level="WARNING"):
+            nli = self._nli(span_length_km=20.0)
+        self.assertTrue(np.all(np.asarray(nli) > 0.0))

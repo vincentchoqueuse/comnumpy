@@ -47,8 +47,12 @@ References
 ----------
 P. Poggiolini, "The GN model of non-linear propagation in uncompensated
 coherent optical systems", J. Lightwave Technol., vol. 30, no. 24,
-pp. 3857-3879, 2012 (eq. 120 and 123 of the extended version,
-arXiv:1209.0394, are the two implemented below);
+pp. 3857-3879, 2012. The published paper and its extended version
+number their equations differently, so both are given here: the compact
+single-span form is Eq. (15) of the published paper, while the per-pair
+sum and the per-pair psi implemented below are eq. 120 and 123 of the
+extended version, arXiv:1209.0394. A post-print is at
+https://iris.polito.it/handle/11583/2503175 ;
 P. Poggiolini, G. Bosco, A. Carena, V. Curri, Y. Jiang, F. Forghieri,
 "The GN-model of fiber non-linear propagation and its applications",
 J. Lightwave Technol., vol. 32, no. 4, pp. 694-721, 2014;
@@ -88,6 +92,8 @@ from __future__ import annotations
 
 import math
 
+import logging
+
 import numpy as np
 
 from comnumpy.optical.fiber import FiberSpec
@@ -105,6 +111,46 @@ __all__ = ["gn_model_psi", "gn_model_nli_power", "gn_model_snr",
 # and the weights are exactly 2 and 4 -- 3.375 times the Manakov pair.
 _SPM_WEIGHT = {2: 16.0 / 27.0, 1: 2.0}
 _XPM_WEIGHT = {2: 32.0 / 27.0, 1: 4.0}
+
+
+# Validity boundaries stated by Poggiolini 2012 for the closed form
+# (published paper, end of Section IV.B).  The model stays defined outside
+# them and often stays usable, so this warns rather than raises -- but it
+# warns, because a formula quietly used past its stated domain returns a
+# number that looks exactly like a good one.
+_VALIDITY = {
+    "span loss": (7.0, "dB", "span_loss_dB"),
+    "beta2 magnitude": (4.0, "ps^2/km", "beta2"),
+    "symbol rate": (28e9, "Bd", "baud"),
+    "bandwidth over spacing": (0.25, "", "occupancy"),
+}
+
+
+logger = logging.getLogger(__name__)
+
+
+def _warn_outside_the_published_domain(fiber: FiberSpec,
+                                       span_length_km: float,
+                                       frequencies_Hz: np.ndarray,
+                                       baud_rates_Hz: np.ndarray) -> None:
+    """Say so when the closed form is asked for something it does not claim."""
+    span_loss_dB = float(fiber.alpha_dB * span_length_km)
+    beta2 = abs(float(fiber.beta2))
+    baud = float(np.min(baud_rates_Hz))
+    spacing = (float(np.min(np.diff(np.sort(np.asarray(frequencies_Hz)))))
+               if np.size(frequencies_Hz) > 1 else np.inf)
+    occupancy = baud / spacing if np.isfinite(spacing) else 1.0
+    measured = {"span_loss_dB": span_loss_dB, "beta2": beta2,
+                "baud": baud, "occupancy": occupancy}
+    outside = [f"{name} = {measured[key]:.3g} {unit} (< {bound:g})"
+               for name, (bound, unit, key) in _VALIDITY.items()
+               if measured[key] < bound]
+    if outside:
+        logger.warning(
+            "the GN closed form is being evaluated outside the domain "
+            "Poggiolini 2012 claims for it: %s; the result is still "
+            "computed, but the paper does not vouch for it there",
+            "; ".join(outside))
 
 
 def gn_model_psi(delta_f_Hz: np.ndarray | float, baud_cut_Hz: float,
@@ -348,6 +394,8 @@ def gn_model_nli_power(fiber: FiberSpec, *, span_length_km: float,
             f"equation a coherent link uses, 1 to compare against a "
             f"scalar simulation.")
 
+    _warn_outside_the_published_domain(fiber, span_length_km,
+                                       frequencies, bauds)
     alpha = fiber.alpha_per_km
     effective_length = fiber.effective_length_km(span_length_km)
     asymptotic_length = 1.0 / alpha

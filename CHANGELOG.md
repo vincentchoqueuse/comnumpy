@@ -46,6 +46,19 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`WDMGrid.plot(ax=None, cut=None)`.** A grid is a layout, so looking at
+  one should not require synthesising a signal and estimating its spectrum.
+  The GN tutorial did exactly that -- generate nine channels, pulse shape
+  them, multiplex, Welch -- to show a picture the grid already contains.
+  Worse, the roll-off of whatever pulse shape was chosen buried the guard
+  band, which is the thing the figure exists to show.
+
+  Each channel is now drawn over the bandwidth it occupies, so the gaps
+  between the boxes *are* the guard; a test asserts the smallest gap equals
+  `guard_Hz`, so it is drawn rather than merely suggested. `cut=` fills one
+  channel, which is how a nonlinear-interference model says which channel's
+  noise it is counting. The example drops from 39 lines to 6.
+
 - **`validation/fec_ldpc_pyldpc.py`**: the LDPC decoder against a second
   implementation. The analytic references a decoder can be held to are
   weak -- a closed form exists for the ensemble threshold, not for a
