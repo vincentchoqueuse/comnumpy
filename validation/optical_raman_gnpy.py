@@ -31,14 +31,29 @@ by reading GNPy's source rather than by fitting:
   has the wrong sign to explain the residual: conserving photons
   depletes the pump *more*, which would lower our gain further.
 
-The open candidate is the solver itself. GNPy defaults to a
-*perturbative* expansion where this library solves the boundary value
-problem exactly, and a truncated series under-estimates gain the harder
-it is driven -- which is the shape of what is left, largest where the
-gain peaks. If that is the explanation then the remaining gap is
-GNPy's, and closing it would be the error. GNPy can be asked for a
-``numerical`` solution instead; regenerating its expected results that
-way is the way to settle it, and is not done here.
+**The residual is unexplained, and the obvious explanation has been
+ruled out.** It was tempting to blame GNPy's solver: it defaults to a
+perturbative expansion where this library solves the boundary value
+problem exactly, and a truncated series would under-estimate gain the
+harder it is driven -- the shape of what is left. That was tested by
+installing GNPy and re-running its own reference case at perturbative
+orders 1 through 4 and with its ``numerical`` method. The harness is
+faithful (the default reproduces the shipped file to 5e-16) and **all
+five settings agree to the last digit**: 12.15 -> 5.56 dB, 6.59 dB of
+tilt, every time. The expansion is already converged at order 1 for
+this case, so the solver is not the cause and the gap is ours.
+
+Two candidates were examined and neither survives. The conservation
+difference has the wrong sign, as noted above. Anchoring the waveguide
+law on the fibre's own effective area (83 um^2) rather than the area
+the gain table is quoted at (75.75 um^2) makes the disagreement worse,
+not better, which says the anchoring is subtler than the model here
+assumes rather than simply misplaced.
+
+So this script records a disagreement it cannot yet explain. That is
+the honest state, and it is worth more than a comfortable one: the
+checks below bound the residual so it cannot quietly grow while
+somebody works out where it comes from.
 """
 import pathlib
 
