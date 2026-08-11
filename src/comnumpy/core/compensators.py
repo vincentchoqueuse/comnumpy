@@ -1227,7 +1227,9 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
         # least squares over the last axis: g = <x, y> / <x, x>, which is
         # what pinv computes for a single column and stays shape-aware
         if self.path_mode(x) == "per_path":
-            energy = np.sum(np.conj(x) * x, axis=-1).real
+            # abs()**2 rather than conj(x)*x + .real: the product is real
+            # by construction, and newer numpy stubs refuse .real on the sum
+            energy = np.sum(np.abs(x) ** 2, axis=-1)
             self.gain_ = np.sum(np.conj(x) * y, axis=-1) / energy
         else:
             self.gain_ = complex(np.vdot(x, y) / np.vdot(x, x))
