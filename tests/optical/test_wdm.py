@@ -362,3 +362,37 @@ class TestChannelFilterClipping(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestGridPlot(unittest.TestCase):
+    """A layout should be drawable without synthesising a signal."""
+
+    def setUp(self):
+        matplotlib = __import__("matplotlib")
+        matplotlib.use("Agg")
+
+    def test_it_draws_one_box_per_channel(self):
+        grid = WDMGrid.uniform(9, spacing_Hz=50e9, bandwidth_Hz=35.2e9)
+        ax = grid.plot()
+        self.assertEqual(len(ax.patches), grid.n_channels)
+
+    def test_the_cut_is_the_only_filled_box(self):
+        """Otherwise the figure would not say which channel is being counted."""
+        grid = WDMGrid.uniform(5, spacing_Hz=50e9, bandwidth_Hz=35.2e9)
+        ax = grid.plot(cut=2)
+        filled = [p for p in ax.patches
+                  if p.get_facecolor()[3] > 0.0]
+        self.assertEqual(len(filled), 1)
+
+    def test_the_boxes_leave_the_guard_visible(self):
+        """The gaps between boxes are the guard band, so they must be real."""
+        grid = WDMGrid.uniform(4, spacing_Hz=50e9, bandwidth_Hz=35.2e9)
+        ax = grid.plot()
+        edges = sorted((p.get_x(), p.get_x() + p.get_width()) for p in ax.patches)
+        gaps = [b[0] - a[1] for a, b in zip(edges, edges[1:], strict=False)]
+        self.assertTrue(all(gap > 0 for gap in gaps), gaps)
+        self.assertAlmostEqual(min(gaps), grid.guard_Hz / 1e9, places=6)
+
+    def test_a_single_channel_has_no_guard_and_still_draws(self):
+        ax = WDMGrid.uniform(1, spacing_Hz=50e9, bandwidth_Hz=35.2e9).plot()
+        self.assertEqual(len(ax.patches), 1)
