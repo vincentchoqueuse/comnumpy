@@ -19,26 +19,45 @@ developed planning tool used by network operators, together with the
 measured SSMF gain profile it carries. Provenance and licence are in
 ``data/gnpy/README.md``; nothing from GNPy is in ``src/``.
 
-**This comparison does not agree to the last decibel, and the residual
-is reported rather than tuned away.** Two conventions were established
-by reading GNPy's source rather than by fitting:
+The two agree to **0.04 dB at worst** across the 96 channels, which is
+a statement about the gain *shape*: the tilt comes out 6.53 dB against
+6.59 dB, and its sign -- more gain at the bottom of the band -- is
+predicted by where the channels sit under the Raman spectrum of the two
+pumps, not by any scale factor.
 
-- its gain coefficient scales as ``nu_pump / nu_reference`` and as
-  ``1 / A_eff``, both of which this library now applies through
-  ``RamanGainSpectrum(quoted_at=...)``;
-- its depletion, after the ``vibrational_loss`` factor, conserves
-  **energy** where this library conserves **photons**. That difference
-  has the wrong sign to explain the residual: conserving photons
-  depletes the pump *more*, which would lower our gain further.
+Getting there took two corrections and one refutation, all of them
+worth recording because each was a way to be wrong while looking right.
 
-The open candidate is the solver itself. GNPy defaults to a
-*perturbative* expansion where this library solves the boundary value
-problem exactly, and a truncated series under-estimates gain the harder
-it is driven -- which is the shape of what is left, largest where the
-gain peaks. If that is the explanation then the remaining gap is
-GNPy's, and closing it would be the error. GNPy can be asked for a
-``numerical`` solution instead; regenerating its expected results that
-way is the way to settle it, and is not done here.
+The **effective-area scaling** was missing. The gain shape depends on
+the Stokes shift alone -- that is the glass -- but the coefficient
+multiplying the powers is g_R / A_eff, and the effective area belongs
+to the waveguide, so it grows with wavelength. Without it the tilt came
+out 8.00 dB instead of 6.59: an excess of *tilt* rather than of level,
+which is what identified the cause. With it, this library's coupling
+coefficients now match GNPy's **exactly** on the gain side -- element
+by element, ratio 1.0000 -- which is the check that says the law is
+right rather than merely closer.
+
+The **pump powers** were wrong here, not in the library. GNPy applies
+the span's 0.5 dB connector loss to its Raman pumps before injecting
+them, so the 224.4 mW and 231.1 mW of its configuration file reach the
+fibre as 200.0 mW and 206.0 mW. Feeding the configuration values
+over-pumped the link by 0.5 dB and left a 0.9 dB disagreement that was
+briefly, and wrongly, blamed on the model.
+
+The **solver was exonerated by experiment**. It was tempting to blame
+GNPy's default perturbative expansion, since a truncated series would
+under-estimate gain the harder it is driven. GNPy was installed and its
+own reference case re-run at perturbative orders 1 to 4 and with its
+``numerical`` method: the harness reproduces the shipped file to
+5.5e-16, and all five settings agree to the last digit. The expansion
+is already converged at order 1 here, so that explanation is dead.
+
+What remains is a real difference of model, and it is small. GNPy's
+depletion, after its ``vibrational_loss`` factor, conserves **energy**
+where this library conserves **photons**; the coupling coefficients
+differ on the depletion side by up to nu_pump/nu_signal = 1.0716. On
+this link that is worth the 0.04 dB above.
 """
 import pathlib
 
@@ -56,7 +75,11 @@ LOSS_dB_KM = 0.2
 CONNECTOR_dB = 0.5
 PASSIVE_dB = LENGTH_KM * LOSS_dB_KM + 2 * CONNECTOR_dB
 PUMP_Hz = np.array([205e12, 201e12])
-PUMP_W = np.array([0.224403, 0.231135])
+# The configuration file quotes 224.403 mW and 231.135 mW; GNPy applies
+# the span's connector loss to its pumps before injecting them, so these
+# are what actually reach the fibre. Read off gnpy's own raman_pumps,
+# not inferred -- feeding the configuration values over-pumps by 0.5 dB.
+PUMP_W = np.array([0.224403, 0.231135]) * 10 ** (-0.5 / 10)
 TEMPERATURE_K = 283.0
 N_CHANNELS = 96
 CHANNEL_Hz = 191.3e12 + 50e9 * np.arange(N_CHANNELS)
@@ -118,17 +141,14 @@ def check_the_peak_gain(peak_W_km):
 def check_the_gain_profile(ours, theirs):
     error = ours - theirs
     assert np.all(ours > 0), "no gain at all"
-    # The two disagree; the bound is the measured residual, recorded so
-    # that it cannot quietly grow.
-    assert np.abs(error).max() < 1.5, np.abs(error).max()
+    assert np.abs(error).max() < 0.1, np.abs(error).max()
     print("\nPASS 96-channel counter-pumped profile, 2 pumps, 80 km:")
     print("       channel      ours    GNPy    error")
     for index in (0, 24, 48, 72, 95):
         print(f"       {CHANNEL_Hz[index]/1e12:7.2f} THz  {ours[index]:6.2f}  "
               f"{theirs[index]:6.2f}  {error[index]:+6.2f} dB")
-    print(f"       mean error {error.mean():+.2f} dB, worst "
-          f"{np.abs(error).max():.2f} dB -- a real disagreement, see the "
-          f"module docstring")
+    print(f"       mean error {error.mean():+.3f} dB, worst "
+          f"{np.abs(error).max():.3f} dB")
 
 
 def check_the_tilt(ours, theirs):
@@ -139,7 +159,7 @@ def check_the_tilt(ours, theirs):
     # near the bottom of the band: more gain at low frequency.
     assert ours[0] > ours[-1], "the tilt has the wrong sign"
     assert theirs[0] > theirs[-1], "the reference tilt has the wrong sign"
-    assert abs(tilt_ours - tilt_theirs) < 1.0, (tilt_ours, tilt_theirs)
+    assert abs(tilt_ours - tilt_theirs) < 0.2, (tilt_ours, tilt_theirs)
     print(f"\nPASS gain tilt across the band: ours {tilt_ours:.2f} dB, "
           f"GNPy {tilt_theirs:.2f} dB")
     print("       both fall from low to high frequency, which is a "
@@ -201,10 +221,10 @@ def main():
     FIG_DIR.mkdir(exist_ok=True)
     plt.savefig(FIG_DIR / "optical_raman_gnpy.png", dpi=150)
 
-    print("\nAll checks passed. The agreement is not exact and the module "
-          "docstring says why; what")
-    print("this pins is the gain *shape*, which the analytic confrontations "
-          "in optical_raman.py cannot.")
+    print("\nAll checks passed, to 0.04 dB across 96 channels. What this "
+          "pins is the gain *shape*,")
+    print("which the analytic confrontations in optical_raman.py cannot -- "
+          "they test the integrator.")
 
 
 if __name__ == "__main__":
