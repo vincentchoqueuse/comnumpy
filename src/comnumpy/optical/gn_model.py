@@ -108,7 +108,7 @@ _XPM_WEIGHT = {2: 32.0 / 27.0, 1: 4.0}
 
 
 def gn_model_psi(delta_f_Hz: np.ndarray | float, baud_cut_Hz: float,
-                 baud_pump_Hz: float, beta2_ps2_km: float,
+                 baud_pump_Hz: np.ndarray | float, beta2_ps2_km: float,
                  effective_length_km: float,
                  asymptotic_length_km: float) -> np.ndarray:
     r"""The :math:`\psi` factor of the GN model, eq. 123.
@@ -147,7 +147,7 @@ def gn_model_psi(delta_f_Hz: np.ndarray | float, baud_cut_Hz: float,
         itself).
     baud_cut_Hz : float
         Symbol rate of the channel the NLI lands on, in Bd.
-    baud_pump_Hz : float
+    baud_pump_Hz : np.ndarray or float
         Symbol rate of the channel producing it, in Bd.
     beta2_ps2_km : float
         Group-velocity dispersion in ps^2/km (the library's unit; see
