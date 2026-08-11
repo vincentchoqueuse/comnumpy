@@ -28,7 +28,7 @@ keeps a WDM chain readable: one block, one job.
 """
 import logging
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import numpy as np
 
@@ -178,6 +178,58 @@ class WDMGrid:
         condition in the signal model.
         """
         return 2.0 * (float(np.max(np.abs(self.offsets_Hz))) + self.bandwidth_Hz / 2)
+
+    def plot(self, ax: Any = None, cut: Optional[int] = None) -> Any:
+        """Draw the grid: one box per channel, on the frequency axis.
+
+        A grid is a layout, so looking at it should not require
+        synthesising a signal and estimating its spectrum -- that shows
+        the same information through an unnecessary detour, and buries
+        the guard band under the roll-off of whatever pulse shape was
+        chosen. Each channel is drawn over the bandwidth it occupies, so
+        the gaps between the boxes *are* the guard.
+
+        Parameters
+        ----------
+        ax : matplotlib axis, optional
+            Axis to draw on; a new figure is created when omitted
+            (decision D25).
+        cut : int, optional
+            Index of the channel to single out -- the *cut* in the sense
+            of a nonlinear-interference model, the one whose noise is
+            being counted. Drawn filled where the others are outlined.
+
+        Returns
+        -------
+        matplotlib axis
+            The axis, so the caller keeps control of the figure.
+        """
+        import matplotlib.pyplot as plt  # local import (D36)
+        from matplotlib.patches import Rectangle
+        if ax is None:
+            _, ax = plt.subplots(figsize=(9, 2.6), layout="constrained")
+        offsets = np.asarray(self.offsets_Hz) / 1e9
+        width = self.bandwidth_Hz / 1e9
+        for index, offset in enumerate(offsets):
+            chosen = index == cut
+            ax.add_patch(Rectangle(
+                (offset - width / 2, 0.0), width, 1.0,
+                facecolor="C1" if chosen else "none",
+                alpha=0.45 if chosen else 1.0,
+                edgecolor="C0", linewidth=1.2))
+            if chosen:
+                ax.annotate("cut", (offset, 1.06), ha="center", fontsize=9,
+                            color="C1")
+        span = float(np.max(offsets) - np.min(offsets)) + width
+        ax.set_xlim(np.min(offsets) - width, np.max(offsets) + width)
+        ax.set_ylim(0.0, 1.35)
+        ax.set_yticks([])
+        ax.set_xlabel("frequency offset [GHz]")
+        guard = "" if self.guard_Hz is None else \
+            f", {self.guard_Hz / 1e9:.1f} GHz guard"
+        ax.set_title(f"{self.standard} grid: {self.n_channels} channels over "
+                     f"{span:.0f} GHz, {width:.1f} GHz each{guard}")
+        return ax
 
     # -- constructors ---------------------------------------------------
     @classmethod
