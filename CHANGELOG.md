@@ -46,6 +46,24 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`shared=` on the data-aided compensators (D49).** `validate_single_path`
+  already told a caller to decide whether an estimand is shared over the
+  paths or one per path, but `DataAidedComplexGainCompensator` and
+  `DataAidedPhaseCompensator` gave no way to say -- so the only route for a
+  dual-polarization signal was to flatten it outside the chain, which also
+  put the block out of reach of `wiring=`, the mechanism its own docstring
+  advertises.
+
+  `shared=True` fits one estimate jointly over every path, `shared=False`
+  one per path, and leaving it unset keeps the refusal, since picking one
+  silently is how a wrong answer looks right. The joint fit is not merely
+  tidier: a test measures it beating either single-path fit on noisy data,
+  because it sees twice as much of it.
+
+  The GN tutorial drops its `ravel`/`reshape` pair accordingly, and the
+  text now explains why the fit is joint instead of justifying a
+  workaround.
+
 - **`RamanGainSpectrum` rejects unit slips.** Its three parameterizations
   take three different units -- femtoseconds for `lorentzian=`, terahertz
   for `triangular=`, hertz for `tabulated=` -- and `quoted_at=` adds
