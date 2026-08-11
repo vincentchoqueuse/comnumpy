@@ -775,8 +775,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">----------</span>
 <span class="sd">P. Poggiolini, &quot;The GN model of non-linear propagation in uncompensated</span>
 <span class="sd">coherent optical systems&quot;, J. Lightwave Technol., vol. 30, no. 24,</span>
-<span class="sd">pp. 3857-3879, 2012 (eq. 120 and 123 of the extended version,</span>
-<span class="sd">arXiv:1209.0394, are the two implemented below);</span>
+<span class="sd">pp. 3857-3879, 2012. The published paper and its extended version</span>
+<span class="sd">number their equations differently, so both are given here: the compact</span>
+<span class="sd">single-span form is Eq. (15) of the published paper, while the per-pair</span>
+<span class="sd">sum and the per-pair psi implemented below are eq. 120 and 123 of the</span>
+<span class="sd">extended version, arXiv:1209.0394. A post-print is at</span>
+<span class="sd">https://iris.polito.it/handle/11583/2503175 ;</span>
 <span class="sd">P. Poggiolini, G. Bosco, A. Carena, V. Curri, Y. Jiang, F. Forghieri,</span>
 <span class="sd">&quot;The GN-model of fiber non-linear propagation and its applications&quot;,</span>
 <span class="sd">J. Lightwave Technol., vol. 32, no. 4, pp. 694-721, 2014;</span>
@@ -816,6 +820,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.fiber</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberSpec</span>
@@ -833,6 +839,46 @@ window.runMermaid = runMermaid;</script>
 <span class="c1"># and the weights are exactly 2 and 4 -- 3.375 times the Manakov pair.</span>
 <span class="n">_SPM_WEIGHT</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="mf">16.0</span> <span class="o">/</span> <span class="mf">27.0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">}</span>
 <span class="n">_XPM_WEIGHT</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="mf">32.0</span> <span class="o">/</span> <span class="mf">27.0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">}</span>
+
+
+<span class="c1"># Validity boundaries stated by Poggiolini 2012 for the closed form</span>
+<span class="c1"># (published paper, end of Section IV.B).  The model stays defined outside</span>
+<span class="c1"># them and often stays usable, so this warns rather than raises -- but it</span>
+<span class="c1"># warns, because a formula quietly used past its stated domain returns a</span>
+<span class="c1"># number that looks exactly like a good one.</span>
+<span class="n">_VALIDITY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;span loss&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">7.0</span><span class="p">,</span> <span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="s2">&quot;span_loss_dB&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;beta2 magnitude&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;ps^2/km&quot;</span><span class="p">,</span> <span class="s2">&quot;beta2&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;symbol rate&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">28e9</span><span class="p">,</span> <span class="s2">&quot;Bd&quot;</span><span class="p">,</span> <span class="s2">&quot;baud&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;bandwidth over spacing&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;occupancy&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_warn_outside_the_published_domain</span><span class="p">(</span><span class="n">fiber</span><span class="p">:</span> <span class="n">FiberSpec</span><span class="p">,</span>
+                                       <span class="n">span_length_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                       <span class="n">frequencies_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                                       <span class="n">baud_rates_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Say so when the closed form is asked for something it does not claim.&quot;&quot;&quot;</span>
+    <span class="n">span_loss_dB</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fiber</span><span class="o">.</span><span class="n">alpha_dB</span> <span class="o">*</span> <span class="n">span_length_km</span><span class="p">)</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">fiber</span><span class="o">.</span><span class="n">beta2</span><span class="p">))</span>
+    <span class="n">baud</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">baud_rates_Hz</span><span class="p">))</span>
+    <span class="n">spacing</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frequencies_Hz</span><span class="p">)))))</span>
+               <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">frequencies_Hz</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">occupancy</span> <span class="o">=</span> <span class="n">baud</span> <span class="o">/</span> <span class="n">spacing</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">spacing</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">measured</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;span_loss_dB&quot;</span><span class="p">:</span> <span class="n">span_loss_dB</span><span class="p">,</span> <span class="s2">&quot;beta2&quot;</span><span class="p">:</span> <span class="n">beta2</span><span class="p">,</span>
+                <span class="s2">&quot;baud&quot;</span><span class="p">:</span> <span class="n">baud</span><span class="p">,</span> <span class="s2">&quot;occupancy&quot;</span><span class="p">:</span> <span class="n">occupancy</span><span class="p">}</span>
+    <span class="n">outside</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">measured</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2"> (&lt; </span><span class="si">{</span><span class="n">bound</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)&quot;</span>
+               <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_VALIDITY</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+               <span class="k">if</span> <span class="n">measured</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">bound</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">outside</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;the GN closed form is being evaluated outside the domain &quot;</span>
+            <span class="s2">&quot;Poggiolini 2012 claims for it: </span><span class="si">%s</span><span class="s2">; the result is still &quot;</span>
+            <span class="s2">&quot;computed, but the paper does not vouch for it there&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outside</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="gn_model_psi">
@@ -1081,6 +1127,8 @@ window.runMermaid = runMermaid;</script>
             <span class="sa">f</span><span class="s2">&quot;equation a coherent link uses, 1 to compare against a &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;scalar simulation.&quot;</span><span class="p">)</span>
 
+    <span class="n">_warn_outside_the_published_domain</span><span class="p">(</span><span class="n">fiber</span><span class="p">,</span> <span class="n">span_length_km</span><span class="p">,</span>
+                                       <span class="n">frequencies</span><span class="p">,</span> <span class="n">bauds</span><span class="p">)</span>
     <span class="n">alpha</span> <span class="o">=</span> <span class="n">fiber</span><span class="o">.</span><span class="n">alpha_per_km</span>
     <span class="n">effective_length</span> <span class="o">=</span> <span class="n">fiber</span><span class="o">.</span><span class="n">effective_length_km</span><span class="p">(</span><span class="n">span_length_km</span><span class="p">)</span>
     <span class="n">asymptotic_length</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">alpha</span>
