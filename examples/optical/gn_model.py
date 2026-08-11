@@ -169,3 +169,43 @@ with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
     stream.write(link_chain().to_mermaid())
 
 plt.show()
+
+
+# --- what eta is computed over: the comb, and the cut inside it -----------
+from scipy.signal import welch                          # noqa: E402
+from comnumpy.optical.wdm import WDMGrid, WDMMultiplexer  # noqa: E402
+
+N_CH, SPACING = 9, 50e9
+fs_comb = N_CH * SPACING * 1.6
+os_comb = int(np.ceil(fs_comb / BAUD))
+grid = WDMGrid(tuple(SPACING * (np.arange(N_CH) - N_CH // 2)),
+               bandwidth_Hz=BAUD * (1 + ROLLOFF))
+channel = Sequential([
+    SymbolGenerator(16), SymbolMapper(get_alphabet("QAM", 16)),
+    Upsampler(os_comb, scale=np.sqrt(os_comb)),
+    SRRCFilter(ROLLOFF, os_comb, N_h=64, method="fft")])
+comb = WDMMultiplexer(grid, fs=BAUD * os_comb)(
+    np.stack([channel.seed(i)(2048) for i in range(N_CH)]))
+
+freq, psd = welch(comb, fs=BAUD * os_comb, nperseg=4096, return_onesided=False)
+order = np.argsort(freq)
+cut = N_CH // 2
+plt.figure(figsize=(9, 4))
+plt.plot(freq[order] / 1e9, 10 * np.log10(psd[order] / psd.max()),
+         color="0.55", lw=1)
+plt.axvspan(-BAUD / 2e9, BAUD / 2e9, color="C1", alpha=0.25,
+            label=f"the cut, channel {cut}")
+for k in range(N_CH):
+    if k != cut:
+        plt.axvline(grid.frequencies_Hz[k] / 1e9, color="C0", ls=":", lw=0.8)
+plt.xlabel("frequency offset [GHz]")
+plt.ylabel("power spectral density [dB]")
+plt.title(f"{N_CH} channels on a {SPACING/1e9:.0f} GHz grid at "
+          f"{BAUD/1e9:.0f} GBd -- eta is the NLI falling on the cut")
+plt.legend()
+plt.grid(True, alpha=0.4)
+plt.ylim(-45, 5)
+plt.savefig(f"{img_dir}/gn_model_fig3.png")
+print(f"\ncomb: {N_CH} channels, {SPACING/1e9:.0f} GHz spacing, "
+      f"{BAUD*(1+ROLLOFF)/1e9:.1f} GHz occupied per channel, "
+      f"guard {(SPACING - BAUD*(1+ROLLOFF))/1e9:.1f} GHz")
