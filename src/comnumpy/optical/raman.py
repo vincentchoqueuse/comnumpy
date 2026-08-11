@@ -44,6 +44,38 @@ BOLTZMANN = 1.380649e-23         # J/K
 SPEED_OF_LIGHT = 2.99792458e8    # m/s
 
 
+def _check_scale(name: str, value: float, low: float, high: float,
+                 unit: str, slips: Dict[str, float]) -> None:
+    """Reject a value that is off by orders of magnitude, and say why.
+
+    Every parameter below is a physical quantity in a stated unit, and
+    the failure that matters is not a wrong value -- it is the *right*
+    value in the wrong unit. Those slips are large: seconds for
+    femtoseconds is 1e15, hertz for terahertz is 1e12. Positivity checks
+    let all of them through, and the model then runs and produces a
+    plausible-looking curve, which is the worst outcome available.
+
+    The window is deliberately wide: it is a unit check, not a physics
+    check, so any real glass or fibre must fit inside it. ``slips`` maps
+    a candidate unit to the factor that converts it *to* the expected
+    one, so the message can name the mistake instead of only the bound.
+    """
+    if low <= value <= high:
+        return
+    for candidate, factor in slips.items():
+        converted = value * factor
+        if low <= converted <= high:
+            raise ValueError(
+                f"{name} = {value:g} is far outside the plausible "
+                f"{low:g} to {high:g} {unit}, but reading it as {candidate} "
+                f"gives {converted:g} {unit}, which is in range -- the "
+                f"parameter is expected in {unit}")
+    raise ValueError(
+        f"{name} = {value:g} is far outside the plausible {low:g} to "
+        f"{high:g} {unit}; this is a unit check rather than a physical "
+        f"one, so a value outside it is almost always a scale mistake")
+
+
 @dataclass(frozen=True)
 class RamanGainSpectrum:
     r"""Normalized Raman gain shape against the pump-signal frequency shift.
@@ -116,7 +148,15 @@ class RamanGainSpectrum:
     ------
     ValueError
         If neither or both parameterizations are given, or if a time
-        constant or the peak shift is not positive.
+        constant or the peak shift is not positive, or if any of them is
+        off by orders of magnitude from its stated unit. The last check
+        is there because the units differ between parameterizations --
+        femtoseconds here, terahertz there, hertz in the table -- and a
+        slip is silent otherwise: ``triangular=13.2e12`` is positive and
+        valid-looking, and yields a spectrum that rises linearly across
+        the whole band instead of peaking at 13.2 THz. The bounds are
+        wide enough that no real glass or fibre reaches them, so what
+        they reject is a scale mistake rather than an unusual design.
 
     References
     ----------
@@ -180,6 +220,14 @@ class RamanGainSpectrum:
             if np.max(gain) <= 0:
                 raise ValueError(
                     f"expected a positive peak gain, got {np.max(gain)}")
+            # the shifts are the axis a unit slip hides in: a table given
+            # in THz is still increasing, still positive, and still
+            # interpolates -- it simply puts the whole Raman band inside
+            # the first 40 Hz, where no pump-signal pair ever lands, and
+            # the model then reports no gain at all rather than an error
+            _check_scale("the largest tabulated Stokes shift",
+                         float(np.max(shift)), 1e11, 1e15, "Hz",
+                         {"terahertz": 1e12, "gigahertz": 1e9})
             object.__setattr__(self, "tabulated", (shift, gain))
             self._check_quoted_at()
             return
@@ -189,12 +237,17 @@ class RamanGainSpectrum:
                 raise ValueError(
                     f"expected positive time constants in fs, got "
                     f"({tau1}, {tau2})")
+            for label, tau in (("tau1", tau1), ("tau2", tau2)):
+                _check_scale(label, float(tau), 0.1, 1e6, "fs",
+                             {"seconds": 1e15, "picoseconds": 1e3})
             object.__setattr__(self, "lorentzian", (float(tau1), float(tau2)))
         else:
             if self.triangular is None or self.triangular <= 0:
                 raise ValueError(
                     f"expected a positive peak shift in THz, got "
                     f"{self.triangular}")
+            _check_scale("triangular", float(self.triangular), 0.1, 1e3, "THz",
+                         {"hertz": 1e-12, "gigahertz": 1e-3})
             object.__setattr__(self, "triangular", float(self.triangular))
         self._check_quoted_at()
 
@@ -213,6 +266,12 @@ class RamanGainSpectrum:
             raise ValueError(
                 f"expected three positive numbers in quoted_at, got "
                 f"({wavelength_nm}, {area_um2}, {radius_um})")
+        _check_scale("the quoted wavelength", float(wavelength_nm),
+                     100.0, 1e5, "nm", {"metres": 1e9, "micrometres": 1e3})
+        _check_scale("the quoted effective area", float(area_um2),
+                     1.0, 1e4, "um^2", {"square metres": 1e12})
+        _check_scale("the quoted core radius", float(radius_um),
+                     0.1, 1e3, "um", {"metres": 1e6, "nanometres": 1e-3})
         object.__setattr__(self, "quoted_at",
                            (float(wavelength_nm), float(area_um2),
                             float(radius_um)))

@@ -413,6 +413,69 @@ class TestAse(unittest.TestCase):
         self.assertAlmostEqual(photon, 1.602e-9, delta=0.002e-9)
 
 
+class TestUnitSlips(unittest.TestCase):
+    r"""The right number in the wrong unit, which positivity lets through.
+
+    ``RamanGainSpectrum`` takes femtoseconds in one parameterization,
+    terahertz in another and hertz in the table, so a slip is easy and
+    silent: ``triangular=13.2e12`` is positive, well-formed and produces
+    a spectrum rising linearly across the whole band rather than peaking
+    at 13.2 THz. Nothing downstream complains -- the tilt is simply
+    wrong, which is how this was found in the first place.
+
+    Each case below is the *correct physical value* expressed in a
+    neighbouring unit, since that is the mistake that actually happens.
+    """
+
+    SLIPS = {
+        "triangular in Hz": dict(triangular=13.2e12),
+        "triangular in GHz": dict(triangular=13200.0),
+        "lorentzian in seconds": dict(lorentzian=(12.2e-15, 32e-15)),
+        "lorentzian in picoseconds": dict(lorentzian=(0.0122, 0.032)),
+        "tabulated shifts in THz": dict(
+            tabulated=(np.array([0.0, 13.2, 42.0]),
+                       np.array([0.0, 1.0, 0.0]))),
+        "quoted wavelength in metres": dict(
+            triangular=13.2, quoted_at=(1.454e-6, 75.75, 4.2)),
+        "quoted area in square metres": dict(
+            triangular=13.2, quoted_at=(1454.0, 75.75e-12, 4.2)),
+        "quoted radius in metres": dict(
+            triangular=13.2, quoted_at=(1454.0, 75.75, 4.2e-6)),
+    }
+
+    def test_every_slip_is_rejected(self):
+        for label, kwargs in self.SLIPS.items():
+            with self.subTest(slip=label):
+                with self.assertRaises(ValueError):
+                    RamanGainSpectrum(**kwargs)
+
+    def test_the_message_names_the_unit_actually_used(self):
+        """A bound alone leaves the reader to work out which unit."""
+        with self.assertRaises(ValueError) as ctx:
+            RamanGainSpectrum(triangular=13.2e12)
+        message = str(ctx.exception)
+        self.assertIn("hertz", message)
+        self.assertIn("13.2 THz", message)
+
+    def test_the_catalogue_and_a_measured_table_still_pass(self):
+        """The window has to be wide enough for the real thing."""
+        for standard in available_gain_spectra():
+            with self.subTest(standard=standard):
+                self.assertGreater(get_gain_spectrum(standard).peak_shift_THz, 0)
+        RamanGainSpectrum(
+            tabulated=(np.array([0.0, 13.2e12, 42e12]),
+                       np.array([0.0, 1.0, 0.0])),
+            quoted_at=(1454.0, 75.746, 4.2))
+
+    def test_an_unusual_but_real_design_is_not_rejected(self):
+        """The guard must catch scale mistakes, not unfamiliar fibres.
+
+        A 2 um mid-infrared design with a small core sits far from SSMF
+        yet nowhere near a decade-scale slip, so it has to pass.
+        """
+        RamanGainSpectrum(triangular=13.2, quoted_at=(2000.0, 20.0, 1.5))
+
+
 class TestGuards(unittest.TestCase):
 
     def test_rejects_having_no_pump_on(self):
