@@ -55,6 +55,7 @@ difference.
 import pathlib
 
 import numpy as np
+from scipy.integrate import trapezoid
 
 from comnumpy.optical.raman import (PLANCK, _coupling_matrix,
                                     _photon_occupancy, solve_raman)
@@ -202,7 +203,9 @@ def check_the_spontaneous_emission(spectrum, peak_W_km):
         source = (2 * PLANCK * frequency * BAUD_RATE
                   * coupling[:frequency.size, frequency.size + index]
                   * _photon_occupancy(shift, TEMPERATURE_K)) * (shift > 0)
-        pump_only += source * np.trapz(
+        # scipy's, not numpy's: NumPy 2 renamed trapz to trapezoid, and this
+        # repository supports both sides of that rename
+        pump_only += source * trapezoid(
             pump_profile[index][None, :] / loss, np.asarray(solution.z_km), axis=1)
     pump_only *= loss[:, -1]
 
