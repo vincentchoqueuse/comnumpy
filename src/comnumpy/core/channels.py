@@ -1,9 +1,12 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.fading import PowerDelayProfile
 from comnumpy.exceptions import ShapeError
+
+if TYPE_CHECKING:                      # matplotlib is never imported at
+    from matplotlib.axes import Axes   # module load time (decision D36)
 
 __all__ = ["AWGN", "FIRChannel", "TappedDelayLineChannel"]
 
@@ -159,6 +162,48 @@ class FIRChannel(Processor):
         y = signal.convolve(x, self.h, mode=self.mode)
         return y
 
+    def info(self) -> dict[str, Any]:
+        """What this channel is, as a dictionary.
+
+        The figures an engineer reads off a tap vector before deciding
+        anything: how long it is, how much of the energy sits in the
+        first path, and how far the frequency response swings between
+        its best and its worst point -- the number that says whether one
+        equalizer tap will do.
+
+        Returns
+        -------
+        dict of str to object
+
+        Examples
+        --------
+        >>> info = FIRChannel(np.array([1.0, 0.0, 0.5])).info()
+        >>> info["n_taps"], round(info["peak_to_notch_dB"], 2)
+        (3, 9.54)
+        """
+        taps = np.asarray(self.h).ravel()
+        energy = float(np.sum(np.abs(taps) ** 2))
+        response = np.abs(np.fft.fft(taps, 512)) ** 2
+        return {
+            "kind": "FIR",
+            "n_taps": int(taps.size),
+            "energy": energy,
+            "first_tap_fraction": float(np.abs(taps[0]) ** 2 / energy),
+            "peak_to_notch_dB": float(
+                10 * np.log10(response.max() / max(response.min(), 1e-300))),
+        }
+
+    def plot(self, domain: Literal["impulse", "frequency"] = "impulse", *,
+             scale: Literal["linear", "dB"] = "linear",
+             fs: Optional[float] = None, ax: "Optional[Axes]" = None):
+        """Draw the impulse response, or the frequency response of it.
+
+        See :func:`~comnumpy.core.visualizers.plot_channel_response`.
+        """
+        from comnumpy.core.visualizers import plot_channel_response  # D36
+        return plot_channel_response(np.asarray(self.h), domain=domain,
+                                     scale=scale, fs=fs, ax=ax)
+
 
 @dataclass(slots=True)
 class TappedDelayLineChannel(Processor):
@@ -313,6 +358,66 @@ class TappedDelayLineChannel(Processor):
         impulse = np.zeros(n_samples, dtype=complex)
         impulse[0] = 1.0
         return self(impulse)[:length]
+
+    def info(self) -> dict[str, Any]:
+        """What this channel is, as a dictionary.
+
+        Everything the profile fixes, plus what this sampling rate makes
+        of it: a delay spread in nanoseconds becomes a number of taps,
+        and a coherence bandwidth is what decides whether a subcarrier
+        sees a flat channel.
+
+        Returns
+        -------
+        dict of str to object
+
+        Examples
+        --------
+        >>> from comnumpy.core.fading import get_delay_profile
+        >>> info = TappedDelayLineChannel(get_delay_profile("EPA"),
+        ...                               fs=7.68e6).info()
+        >>> info["standard"], info["n_paths"], info["n_taps"]
+        ('EPA', 7, 4)
+        >>> round(info["rms_delay_spread_ns"]), round(info["fs_Hz"] / 1e6, 2)
+        (43, 7.68)
+        """
+        delays, powers = self.profile.to_taps(self.fs)
+        return {
+            "kind": "tapped delay line",
+            "standard": self.profile.standard,
+            "n_paths": self.profile.n_taps,
+            "delays_ns": self.profile.delays_ns.tolist(),
+            "powers_dB": self.profile.powers_dB.tolist(),
+            "rms_delay_spread_ns": self.profile.rms_delay_spread_ns,
+            "coherence_bandwidth_Hz": self.profile.coherence_bandwidth_hz,
+            "rice_k_dB": getattr(self.profile, "rice_k_dB", None),
+            "fs_Hz": float(self.fs),
+            "f_doppler_Hz": float(self.f_doppler),
+            "n_taps": int(delays[-1]) + 1,
+            "resolvable_delays_samples": delays.tolist(),
+            "resolvable_powers": powers.tolist(),
+        }
+
+    def plot(self, domain: Literal["impulse", "frequency"] = "impulse", *,
+             scale: Literal["linear", "dB"] = "linear",
+             ax: "Optional[Axes]" = None):
+        """Draw one realization, in delay or in frequency.
+
+        A fading channel has no single impulse response, so this draws
+        the **last one realized** if the block has been run, and a fresh
+        one otherwise -- which advances the generator, exactly as
+        :meth:`impulse_response` does.
+
+        See :func:`~comnumpy.core.visualizers.plot_channel_response`.
+        """
+        from comnumpy.core.visualizers import plot_channel_response  # D36
+        if self.h_ is None or self.delays_ is None:
+            taps = self.impulse_response()
+        else:
+            taps = np.zeros(int(self.delays_[-1]) + 1, dtype=complex)
+            taps[self.delays_] = self.h_[:, 0]
+        return plot_channel_response(taps, domain=domain, scale=scale,
+                                     fs=self.fs, ax=ax)
 
     def prepare(self, x: np.ndarray) -> None:
         from comnumpy.core.fading import validate_taps_fit  # local (D36)
