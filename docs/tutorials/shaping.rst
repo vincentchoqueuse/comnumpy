@@ -8,13 +8,12 @@ a finite set of points, sent equally often -- and a uniform square QAM pays
 for that with up to **1.53 dB** of the available SNR. That loss has a name,
 the *shaping gap*, and closing it is what this tutorial is about.
 
-There are exactly two ways to make a finite constellation look Gaussian, and
-naming both is the right way in:
-
-* **Geometric shaping** moves the *points*, packing them densely near the
-  origin and sparsely at the edges, and keeps sending them equally often.
-* **Probabilistic shaping** keeps the points on their regular grid and
-  changes *how often* each one is sent.
+A finite constellation can be made to look Gaussian either by moving the
+points -- *geometric* shaping -- or by keeping them on their grid and
+sending the inner ones more often. This page is about the second, which is
+the one that gets deployed: it is tuned by a single number, the points stay
+on the square grid every receiver algorithm expects, and the Gray labelling
+survives.
 
 Shaping was worked out around 1990 and then sat unused for twenty-five
 years: 1.53 dB is not much next to the 10 dB that turbo and LDPC codes began
@@ -32,7 +31,6 @@ That arrived in 2015, and it is the architecture step 2 builds.
 
 **What you'll learn:**
 
-- The two ways to shape a constellation, and why the probabilistic one won.
 - **Step 1, the target distribution:** what a constellation carries over a
   noisy channel, which law carries the most at a given power budget, and how
   close the closed-form Maxwell-Boltzmann law comes to it.
@@ -63,7 +61,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 1-17
+   :lines: 1-16
 
 Define Parameters
 """""""""""""""""
@@ -87,56 +85,7 @@ size.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 19-44
-
-
-Two ways to shape a constellation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Before choosing a law it is worth seeing what the alternative looks like.
-Geometric shaping puts the :math:`i`-th of :math:`M` points at the
-:math:`(i + \tfrac{1}{2})/M` quantile of a Gaussian and keeps the law flat;
-probabilistic shaping keeps the odd-integer grid and bends the law instead.
-
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 72-83
-
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 91-119
-
-.. image:: img/probabilistic_shaping_fig1.png
-   :width: 100%
-   :align: center
-
-.. code::
-
-     SNR   uniform   geometric   probabilistic   best H
-       6    1.1182      1.1513          1.1582     2.65
-      12    1.9240      2.0086          2.0372     3.10
-      18    2.8200      2.8986          2.9859     3.60
-      24    3.7023      3.6551          3.7644     3.95
-
-Both beat the uniform constellation at the same power, which is the point of
-shaping at all. But read the last row. **At 24 dB the geometric
-constellation is worse than the uniform one** -- 3.6551 against 3.7023 --
-while the probabilistic one is still ahead.
-
-Nothing went wrong. The geometric layout was built to look Gaussian, and at
-high SNR the noise is small enough that what matters is the *minimum
-distance* between points, which a regular grid maximizes. The layout is
-right at one SNR and wrong at the others, and moving it means moving every
-point. The probabilistic constellation retunes with the single number in the
-last column: :math:`H` falls to 2.65 bit at 6 dB and rises to 3.95 at 24 dB,
-and the grid never moves.
-
-Retuning by one number is also what makes the probabilistic kind practical:
-the points stay on the square grid, so coherent receiver DSP built for QAM
-keeps working, and the Gray labelling the next part depends on survives.
-Neither is true of a geometric layout. The rest of this page is therefore
-about the probabilistic kind, and measures the two things it buys --
-**sensitivity**, in step 1, and **rate adaptability**, after step 2.
+   :lines: 18-43
 
 
 Three objects
@@ -219,7 +168,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 47-70
+   :lines: 46-69
 
 .. warning::
 
@@ -237,7 +186,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 86-89
+   :lines: 71-74
 
 .. code::
 
@@ -247,17 +196,13 @@ The 0.017 dB is the calibration of :func:`~comnumpy.core.shaping.shaping_gain_dB
 a uniform law must score essentially zero on any scale of shaping gain worth
 having.
 
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 91-119
-
 The measurement uses the chain the rest of the page reuses -- a source, a
 mapper, a channel -- with the transmitted symbols tapped so every estimator
 has its reference:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 121-150
+   :lines: 76-106
 
 .. mermaid:: mermaid/shaping_study.mmd
 
@@ -268,15 +213,15 @@ it was asked for.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 153-170
+   :lines: 109-126
 
-.. image:: img/probabilistic_shaping_fig2.png
+.. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
    :align: center
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 172-179
+   :lines: 128-135
 
 .. code::
 
@@ -342,11 +287,11 @@ silently be against the wrong law:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 185-210
+   :lines: 141-166
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 212-226
+   :lines: 168-182
 
 .. code::
 
@@ -376,9 +321,9 @@ Drawn on top of each other the two laws are one curve:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 228-243
+   :lines: 184-199
 
-.. image:: img/probabilistic_shaping_fig3.png
+.. image:: img/probabilistic_shaping_fig2.png
    :width: 70%
    :align: center
 
@@ -396,7 +341,7 @@ idealization a real matcher approaches.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 250-253
+   :lines: 206-209
 
 .. code::
 
@@ -409,9 +354,9 @@ the half bit given up.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 255-272
+   :lines: 211-228
 
-.. image:: img/probabilistic_shaping_fig4.png
+.. image:: img/probabilistic_shaping_fig3.png
    :width: 100%
    :align: center
 
@@ -433,15 +378,15 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 274-300
+   :lines: 230-256
 
-.. image:: img/probabilistic_shaping_fig5.png
+.. image:: img/probabilistic_shaping_fig4.png
    :width: 100%
    :align: center
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 302-306
+   :lines: 258-262
 
 .. code::
 
@@ -491,7 +436,7 @@ energy and gains exactly one bit per symbol (Böcherer, Steiner and Schulte,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 313-315
+   :lines: 269-271
 
 **CCDM** fixes the composition. Every output block holds exactly :math:`n_i`
 copies of amplitude :math:`i`, and there are
@@ -518,7 +463,7 @@ the rest of this page uses CCDM.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 317-324
+   :lines: 273-280
 
 .. code::
 
@@ -537,9 +482,9 @@ quantizing the law and once taking the floor of :math:`\log_2 N`.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 326-338
+   :lines: 282-293
 
-.. image:: img/probabilistic_shaping_fig6.png
+.. image:: img/probabilistic_shaping_fig5.png
    :width: 100%
    :align: center
 
@@ -551,7 +496,7 @@ backwards:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 340-357
+   :lines: 296-313
 
 .. mermaid:: mermaid/shaping_pas.mmd
 
@@ -574,9 +519,9 @@ exact big-integer arithmetic done one symbol at a time.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 359-371
+   :lines: 315-327
 
-.. image:: img/probabilistic_shaping_fig7.png
+.. image:: img/probabilistic_shaping_fig6.png
    :width: 100%
    :align: center
 
@@ -597,7 +542,7 @@ back, and the dematcher says so rather than returning silent nonsense.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 373-377
+   :lines: 329-333
 
 .. code::
 
@@ -637,11 +582,11 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 384-397
+   :lines: 340-353
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 400-422
+   :lines: 356-378
 
 .. code::
 
@@ -654,15 +599,15 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 424-448
+   :lines: 380-404
 
-.. image:: img/probabilistic_shaping_fig8.png
+.. image:: img/probabilistic_shaping_fig7.png
    :width: 100%
    :align: center
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 450-454
+   :lines: 406-410
 
 .. code::
 
@@ -717,7 +662,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 461-469
+   :lines: 417-425
 
 .. code::
 
@@ -725,7 +670,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 471-479
+   :lines: 427-435
 
 .. image:: img/probabilistic_shaping_fig8.png
    :width: 70%
@@ -745,7 +690,7 @@ small constellation has nothing to redistribute.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 481-498
+   :lines: 437-454
 
 .. code::
 
@@ -771,7 +716,7 @@ same time, and why nobody bothers on QPSK.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 500-503
+   :lines: 456-459
 
 
 Conclusion
@@ -843,7 +788,7 @@ References
 - J. Cho and P. J. Winzer, "Probabilistic constellation shaping for optical
   fiber communications", *J. Lightwave Technol.*, vol. 37, no. 6,
   pp. 1590-1607, 2019 -- the review this page follows for its framing: the
-  geometric/probabilistic split of the introduction, and the rate equation
-  of the rate-adaptation section (its eq. (5)).
+  framing of the introduction, and the rate equation of the rate-adaptation
+  section (its eq. (5)).
 - T. M. Cover and J. A. Thomas, *Elements of Information Theory*, 2nd ed.,
   Wiley, 2006, Chapters 2, 9 and 10.

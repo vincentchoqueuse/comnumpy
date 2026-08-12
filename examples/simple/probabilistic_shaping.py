@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import erfinv
 
 from comnumpy import sweep
 from comnumpy.core import Sequential
@@ -69,55 +68,12 @@ def bitwise_rate(snr_dB):
     return bicm_capacity(PAM16, rho)
 
 
-def gaussian_points(order, energy):
-    """Geometric shaping: equiprobable points at Gaussian quantiles.
-
-    The other way to make a constellation look Gaussian is to *move* the
-    points instead of reweighting them. Placing the i-th of M points at
-    the (i + 1/2)/M quantile of a Gaussian and rescaling to the wanted
-    energy is the textbook construction: equiprobable points, denser in
-    the middle, sparse at the edges.
-    """
-    quantile = (np.arange(order) + 0.5) / order
-    points = np.sqrt(2.0) * erfinv(2 * quantile - 1)
-    return points / np.sqrt(np.mean(points ** 2)) * np.sqrt(energy)
-
-
 snr_axis = np.linspace(0.0, 30.0, 121)
 print(f"16-PAM, uniform law: H = {distribution_entropy(UNIFORM):.3f} "
       f"bit/symbol, energy {energy_of(UNIFORM):.0f}, "
       f"shaping gain {shaping_gain_dB(PAM16, UNIFORM):.3f} dB")
 
-GEOMETRIC = gaussian_points(16, energy_of(UNIFORM))
 order = np.argsort(PAM16)
-_, (ax_geo, ax_prob) = plt.subplots(ncols=2, figsize=(11, 4),
-                                    layout="constrained", sharey=True)
-ax_geo.stem(GEOMETRIC, UNIFORM, basefmt=" ", linefmt="C2-", markerfmt="C2o")
-ax_geo.set_xlabel("constellation point")
-ax_geo.set_ylabel("$P_X(a)$")
-ax_geo.set_title("Geometric: move the points, keep the law flat")
-ax_geo.grid(True, alpha=0.4)
-ax_prob.stem(PAM16[order], maxwell_boltzmann(PAM16, entropy=3.5)[order],
-             basefmt=" ", linefmt="C0-", markerfmt="C0o")
-ax_prob.set_xlabel("constellation point")
-ax_prob.set_title("Probabilistic: keep the grid, move the law")
-ax_prob.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig1.png")
-
-print("\n  SNR   uniform   geometric   probabilistic   best H")
-for point in (6.0, 12.0, 18.0, 24.0):
-    flat = float(mutual_information(UNIFORM, point))
-    moved = float(constellation_capacity(
-        GEOMETRIC, 10 ** (point / 10) / (2 * energy_of(UNIFORM)), px=UNIFORM))
-    best, best_entropy = -np.inf, 0.0
-    for entropy in np.arange(1.5, 3.99, 0.05):
-        law = maxwell_boltzmann(PAM16, entropy=float(entropy))
-        value = float(mutual_information(law, point))
-        if value > best:
-            best, best_entropy = value, entropy
-    print(f"{point:5.0f} {flat:9.4f} {moved:11.4f} {best:15.4f} {best_entropy:8.2f}")
-
-
 _, (ax_pmf, ax_rate) = plt.subplots(ncols=2, figsize=(11, 4.2),
                                     layout="constrained")
 ax_pmf.stem(PAM16[order], UNIFORM[order], basefmt=" ")
@@ -167,7 +123,7 @@ ax_rate.set_ylim(0, 5.2)
 ax_rate.set_title("What it carries: markers measured, lines integrated")
 ax_rate.legend(loc="upper left", fontsize=9)
 ax_rate.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig2.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig1.png")
 
 print("\n SNR      MI       GMI    MI-GMI    measured MI   measured GMI")
 for point, mi_hat, gmi_hat in zip(checkpoints, measured["mi"],
@@ -240,7 +196,7 @@ ax_pair.set_title(f"At {OPERATING_SNR_dB:.0f} dB, budget "
                   f"{SHOWN_BUDGET:.0f}: the same curve")
 ax_pair.legend(fontsize=9)
 ax_pair.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig3.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig2.png")
 
 
 # ===========================================================================
@@ -269,7 +225,7 @@ for panel, n_draws in zip(axes, (200, 20000, 2000000), strict=True):
     print(f"{n_draws:9d} {distribution_entropy(seen / seen.sum()):13.4f} "
           f"{energy_of(seen):18.3f} {0.5 * np.sum(np.abs(seen - TARGET)):17.4f}")
 axes[0].set_ylabel("frequency")
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig4.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig3.png")
 
 shaped_rate = mutual_information(TARGET, snr_axis)
 uniform_rate = mutual_information(UNIFORM, snr_axis)
@@ -297,7 +253,7 @@ ax_dB.set_ylabel("SNR saved [dB]")
 ax_dB.set_title("The same gap, read horizontally")
 ax_dB.legend(fontsize=9)
 ax_dB.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig5.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig4.png")
 
 for rate in (1.5, 2.0, 2.5, 3.0):
     plain = float(np.interp(rate, uniform_rate, snr_axis))
@@ -334,7 +290,7 @@ ax_loss.set_ylabel("rate [bit/amplitude]")
 ax_loss.set_title("Rate loss is what a finite block costs")
 ax_loss.legend(fontsize=9)
 ax_loss.grid(True, which="both", alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig6.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig5.png")
 
 
 n_block = 64
@@ -368,7 +324,7 @@ ax_emit.set_ylabel("frequency")
 ax_emit.set_title("What a matcher emits, against what it was asked for")
 ax_emit.legend(fontsize=9)
 ax_emit.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig7.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig6.png")
 
 link.set_params(**{"channel.snr_dB": 20.0})
 try:
@@ -445,7 +401,7 @@ ax_entropy.set_xlabel("SNR [dB]")
 ax_entropy.set_ylabel("entropy H(P) the matcher is set to [bit/symbol]")
 ax_entropy.set_title("The one knob that does it")
 ax_entropy.grid(True, alpha=0.4)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig8.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig7.png")
 
 print(f"\nwith the single code rate Rc = {FIXED_RATE}:")
 for point in (8.0, 12.0, 16.0, 20.0, 24.0):
@@ -476,7 +432,7 @@ ax_qam.set_ylabel("quadrature")
 ax_qam.set_title("Shaped 256-QAM: area is probability")
 ax_qam.set_aspect("equal")
 ax_qam.grid(True, alpha=0.3)
-plt.savefig(f"{img_dir}/probabilistic_shaping_fig9.png")
+plt.savefig(f"{img_dir}/probabilistic_shaping_fig8.png")
 
 wide_axis = np.linspace(0.0, 34.0, 69)
 print("\n   M   best SNR saved   at rate   still short of 1.53 dB")
