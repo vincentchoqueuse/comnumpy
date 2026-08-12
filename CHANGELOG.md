@@ -46,6 +46,27 @@ one release; there is no compatibility layer.
 
 ### Added (milestones 2-5)
 
+- **`Channel.info()` and `Channel.plot()`, and
+  `core.visualizers.plot_channel_response`.** A tutorial that shows a
+  multipath channel was spending a page recomputing what the channel
+  already knows: how many taps this sampling rate resolves out of the
+  profile's arrivals, how much energy sits in the first path, how deep
+  the worst fade is, what the frequency response looks like. Those are
+  properties of the channel, so `FIRChannel` and `TappedDelayLineChannel`
+  now answer them -- `info()` as a dictionary, `plot("impulse")` or
+  `plot("frequency", scale="dB")` as a figure. On a fading channel the
+  plot shows the realization that was actually used, if the block has
+  been run.
+
+- **`plot_error_rate` axis scales and marker cycling.** `yscale="linear"`
+  for the quantities read on a linear axis (a rate in bit/symbol, a
+  throughput), `xscale="log"` for a sweep over a blocklength. Zeros are
+  now dropped only on a logarithmic ordinate, where they mean "no error
+  was seen"; on a linear one a zero is an ordinary value. Each measured
+  curve also gets its own marker shape, so two detectors that are
+  supposed to agree -- a sphere decoder and the maximum-likelihood search
+  it accelerates -- do not read as one missing simulation.
+
 - **`WDMGrid.plot(ax=None, cut=None)`.** A grid is a layout, so looking at
   one should not require synthesising a signal and estimating its spectrum.
   The GN tutorial did exactly that -- generate nine channels, pulse shape

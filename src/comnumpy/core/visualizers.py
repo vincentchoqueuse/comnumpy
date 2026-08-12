@@ -283,12 +283,21 @@ def plot_kde(x: np.ndarray, *, bw_adjust: float = 1.0, thresh: float = 0.05,
     return ax
 
 
+# Two detectors that are equivalent -- a sphere decoder and the maximum
+# likelihood search it accelerates -- produce the *same* curve, and one
+# hidden under the other reads as a missing simulation. Hollow markers of
+# different shapes stay legible when they are exactly superposed.
+_MARKERS = ("o", "s", "^", "v", "D", "P", "X", "*")
+
+
 def plot_error_rate(x: np.ndarray,
                     measured: Mapping[str, np.ndarray] | np.ndarray, *,
                     theory: Optional[Mapping[str, np.ndarray]] = None,
                     x_theory: Optional[np.ndarray] = None,
                     xlabel: str = "SNR [dB]",
                     ylabel: str = "error rate",
+                    xscale: Literal["linear", "log"] = "linear",
+                    yscale: Literal["linear", "log"] = "log",
                     title: str = "", ax: Optional[Axes] = None) -> Axes:
     """Plot Monte-Carlo error rates, and the curves they are read against.
 
@@ -300,6 +309,10 @@ def plot_error_rate(x: np.ndarray,
     Zeros are dropped rather than plotted. A sweep point where no error
     was seen means the estimate ran out of samples, not that the error
     rate is zero, and a logarithmic axis has no place to put it.
+
+    Each measured curve gets its own marker shape, so that two detectors
+    which are supposed to agree -- and therefore plot on top of each
+    other -- can still be told apart.
 
     Parameters
     ----------
@@ -316,6 +329,13 @@ def plot_error_rate(x: np.ndarray,
         finer grid than the measurements. Defaults to ``x``.
     xlabel, ylabel, title : str, optional, keyword-only
         Axis labels and title.
+    xscale, yscale : {"linear", "log"}, optional, keyword-only
+        Axis scales. The defaults are the ones an error-rate sweep wants,
+        a linear SNR in dB against a logarithmic rate; ``yscale="linear"``
+        is for the quantities that are read on a linear axis -- a
+        throughput, a rate in bit/symbol, a probability close to one --
+        and ``xscale="log"`` for a sweep over a blocklength or a number
+        of iterations.
     ax : matplotlib.axes.Axes, optional, keyword-only
         Axis to draw on; created when None (decision D25).
 
@@ -330,6 +350,16 @@ def plot_error_rate(x: np.ndarray,
     ...                      theory={"QPSK": 10.0 ** (-snr / 8 - 0.05)})
     >>> len(ax.lines)                      # one marker set, one curve
     2
+    >>> ax.get_yscale()
+    'log'
+
+    A linear ordinate keeps the zeros, because there a zero is a point
+    and not a missing measurement:
+
+    >>> ax = plot_error_rate(snr, {"rate": np.array([0., 1., 2., 2., 3., 3.])},
+    ...                      ylabel="bit/symbol", yscale="linear")
+    >>> len(ax.lines[0].get_xdata())
+    6
     """
     if ax is None:
         _, ax = plt.subplots()
@@ -339,25 +369,34 @@ def plot_error_rate(x: np.ndarray,
     abscissa = np.asarray(x, dtype=float)
     fine = abscissa if x_theory is None else np.asarray(x_theory, dtype=float)
 
+    # A zero is dropped only on a logarithmic ordinate, where it has no
+    # place to go and means "no error was seen", i.e. the estimate ran
+    # out of samples. On a linear axis a zero is an ordinary value and
+    # removing it would silently shorten the curve.
+    def drawn(values: np.ndarray) -> np.ndarray:
+        return values > 0 if yscale == "log" else np.ones(values.shape, bool)
+
     colors = {}
-    for name, values in curves.items():
+    for index, (name, values) in enumerate(curves.items()):
         values = np.asarray(values, dtype=float)
-        seen = values > 0
+        seen = drawn(values)
         # A measurement that has a reference curve is drawn as markers
         # alone, so that the pair reads as one statement rather than as
         # two curves; one that has none is joined, because a scatter of
         # points is not a curve the eye can follow.
-        style = "o" if name in reference else "o-"
-        line, = ax.semilogy(abscissa[seen], values[seen], style,
-                            fillstyle="none",
-                            label=name or "simulation")
+        style = "" if name in reference else "-"
+        line, = ax.plot(abscissa[seen], values[seen], style,
+                        marker=_MARKERS[index % len(_MARKERS)],
+                        fillstyle="none", label=name or "simulation")
         colors[name] = line.get_color()
     for name, values in reference.items():
         values = np.asarray(values, dtype=float)
-        seen = values > 0
+        seen = drawn(values)
         label = f"{name}, theory" if name else "theory"
-        ax.semilogy(fine[seen], values[seen], "-", color=colors.get(name),
-                    label=label)
+        ax.plot(fine[seen], values[seen], "-", color=colors.get(name),
+                label=label)
+    ax.set_xscale(xscale)
+    ax.set_yscale(yscale)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     if title:
@@ -365,6 +404,105 @@ def plot_error_rate(x: np.ndarray,
     ax.grid(True, which="both")
     if len(curves) + len(reference) > 1 or any(curves):
         ax.legend()
+    return ax
+
+
+def plot_channel_response(h: np.ndarray, *,
+                          domain: Literal["impulse", "frequency"] = "impulse",
+                          scale: Literal["linear", "dB"] = "linear",
+                          fs: Optional[float] = None, n_fft: int = 512,
+                          title: str = "", ax: Optional[Axes] = None) -> Axes:
+    r"""Draw a channel's impulse response, or the frequency response of it.
+
+    Signal Model
+    ------------
+    The two readings of the same tap vector :math:`h[l]`. In the delay
+    domain it is drawn as a stem plot, one line per resolvable path,
+    because a channel with four taps is four arrivals and not a curve.
+    In the frequency domain it is the discrete-time Fourier transform
+    evaluated on ``n_fft`` points,
+
+    .. math::
+
+        H(f) = \sum_{l=0}^{L-1} h[l] \, e^{-j 2 \pi f l / f_s}
+
+    which is what says whether the channel is flat over the signal band
+    or not -- and, on a decibel scale, how deep its worst fade is.
+
+    Parameters
+    ----------
+    h : np.ndarray
+        Tap vector :math:`h[l]`, 1-D, real or complex.
+    domain : {"impulse", "frequency"}, optional, keyword-only
+        Which of the two to draw. Default ``"impulse"``.
+    scale : {"linear", "dB"}, optional, keyword-only
+        Magnitude scale. Default ``"linear"``. On a frequency response a
+        decibel scale is usually the readable one, since it turns a
+        deep fade into a depth one can quote.
+    fs : float, optional, keyword-only
+        Sampling frequency in Hz. Given, the abscissa is a delay in
+        microseconds or a frequency in MHz; otherwise it is a tap index
+        or a normalized frequency.
+    n_fft : int, optional, keyword-only
+        Points of the frequency grid. Default 512.
+    title : str, optional, keyword-only
+        Axis title.
+    ax : matplotlib.axes.Axes, optional, keyword-only
+        Axis to draw on; created when None (decision D25).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+
+    Raises
+    ------
+    ValueError
+        If ``domain`` or ``scale`` is not one of the values above.
+
+    Examples
+    --------
+    >>> ax = plot_channel_response(np.array([1.0, 0.0, 0.5]))
+    >>> ax.get_xlabel()
+    'tap index'
+    >>> ax = plot_channel_response(np.array([1.0, 0.0, 0.5]),
+    ...                            domain="frequency", scale="dB")
+    >>> ax.get_ylabel()
+    '$|H(f)|$ [dB]'
+    """
+    if domain not in ("impulse", "frequency"):
+        raise ValueError(
+            f"domain is 'impulse' or 'frequency', got {domain!r}.")
+    if scale not in ("linear", "dB"):
+        raise ValueError(f"scale is 'linear' or 'dB', got {scale!r}.")
+    taps = np.asarray(h).ravel()
+    if ax is None:
+        _, ax = plt.subplots()
+
+    def magnitude(values: np.ndarray) -> np.ndarray:
+        size = np.abs(values)
+        if scale == "linear":
+            return size
+        # a tap that is exactly zero is a path that does not exist; -inf
+        # would rescale the whole axis, so it is floored well below the
+        # smallest thing worth reading
+        return 20 * np.log10(np.maximum(size, np.max(size) * 1e-6))
+
+    if domain == "impulse":
+        index = np.arange(taps.size)
+        abscissa = index / fs * 1e6 if fs else index.astype(float)
+        ax.stem(abscissa, magnitude(taps), basefmt=" ")
+        ax.set_xlabel("delay [us]" if fs else "tap index")
+        ax.set_ylabel("$|h[l]|$" + (" [dB]" if scale == "dB" else ""))
+    else:
+        response = np.fft.fftshift(np.fft.fft(taps, n_fft))
+        grid = np.fft.fftshift(np.fft.fftfreq(n_fft))
+        abscissa = grid * fs / 1e6 if fs else grid
+        ax.plot(abscissa, magnitude(response))
+        ax.set_xlabel("frequency [MHz]" if fs else "normalized frequency")
+        ax.set_ylabel("$|H(f)|$" + (" [dB]" if scale == "dB" else ""))
+    if title:
+        ax.set_title(title)
+    ax.grid(True, alpha=0.4)
     return ax
 
 
