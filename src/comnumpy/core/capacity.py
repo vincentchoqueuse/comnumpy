@@ -287,6 +287,8 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     unit_noise = (grid_r + 1j * grid_i).ravel()     # unit variance per dim
     w2 = w2.ravel()
 
+    with np.errstate(divide="ignore"):
+        log_weight = np.log(weight)      # -inf on a point that is never sent
     diff = alphabet[:, None] - alphabet[None, :]    # (M, M)
     diff2 = np.abs(diff) ** 2
     diff_re, diff_im = np.real(diff), np.imag(diff)
@@ -302,11 +304,21 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
             arg = -(diff2[:, :, None] + 2 * (
                 diff_re[:, :, None] * np.real(block)
                 + diff_im[:, :, None] * np.imag(block))) / s2
-            # the inner sum is weighted by P_X, the outer one too: with a
+            # The inner sum is weighted by P_X, the outer one too: with a
             # uniform input both weights are 1/M and the two log2(M) they
-            # produce collapse into the closed form written above
-            inner = np.log2(np.sum(weight[None, :, None] * np.exp(arg),
-                                   axis=1))                   # (M, q)
+            # produce collapse into the closed form written above.
+            #
+            # The shift is not optional once P_X is inside. With a uniform
+            # input the j = i term of the sum is exp(0) = 1, so the sum can
+            # never underflow; weighted, that term is P_X(x_i), which a
+            # strongly shaped law drives to zero -- and then every term of
+            # the sum can underflow at once, log2 returns -inf, and the
+            # outer 0 * (-inf) makes the whole rate NaN. Shifting by the
+            # largest exponent keeps a term equal to one in every sum.
+            shifted = log_weight[None, :, None] + arg
+            top = np.max(shifted, axis=1)                     # (M, q)
+            inner = (top + np.log(np.sum(np.exp(shifted - top[:, None, :]),
+                                         axis=1))) / np.log(2)
             total += float(weight @ (inner @ w2[start:start + _QUAD_CHUNK]))
         out[index] = -total
     return out[0] if scalar_input else out

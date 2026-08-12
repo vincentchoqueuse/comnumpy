@@ -133,6 +133,40 @@ class TestANonUniformInput(unittest.TestCase):
                     self.PAM16, 1 / (2 * sigma2), px=law))
                 self.assertAlmostEqual(measured, exact, delta=0.01)
 
+    def test_a_strongly_shaped_law_does_not_underflow_to_nan(self):
+        """The regression the ``px`` path introduced.
+
+        With a uniform input the ``j = i`` term of the inner sum is
+        ``exp(0) = 1``, so it can never underflow. Weighted by the input
+        law that term becomes :math:`P_X(x_i)`, which a strongly shaped
+        law drives to zero -- and then every term of the sum underflows
+        at once, ``log2`` returns ``-inf``, and the outer ``0 * (-inf)``
+        turns the whole rate into a silent NaN. The log-sum-exp shift is
+        what keeps a term equal to one in every sum.
+        """
+        for entropy in (1.0, 1.02, 1.5, 2.5, 3.5):
+            law = maxwell_boltzmann(self.PAM16, entropy=entropy)
+            energy = float(law @ self.PAM16 ** 2)
+            for snr_dB in (2.0, 10.0, 20.0, 30.0):
+                with self.subTest(entropy=entropy, snr_dB=snr_dB):
+                    rate = float(constellation_capacity(
+                        self.PAM16, 10 ** (snr_dB / 10) / (2 * energy),
+                        px=law))
+                    self.assertTrue(np.isfinite(rate), rate)
+                    self.assertGreaterEqual(rate, 0.0)
+                    self.assertLessEqual(rate, entropy + 1e-9)
+
+    def test_a_law_with_exact_zeros_is_the_smaller_constellation(self):
+        """Points that are never sent must not change the answer."""
+        law = np.zeros(16)
+        law[[6, 7, 8, 9]] = 0.25
+        kept = self.PAM16[[6, 7, 8, 9]]
+        for snr in (1.0, 10.0, 100.0):
+            with self.subTest(snr=snr):
+                self.assertAlmostEqual(
+                    float(constellation_capacity(self.PAM16, snr, px=law)),
+                    float(constellation_capacity(kept, snr)), places=9)
+
     def test_the_refusals(self):
         for bad in (np.full(8, 1 / 8),            # wrong length
                     np.full(16, 1 / 8),           # does not sum to one
