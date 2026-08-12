@@ -44,7 +44,57 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Documentation — the tutorials on one plan
+
+The OFDM, MIMO, Alamouti and PAPR tutorials are rewritten on a single
+structure: the signal model first, then its implementation and the
+figure that shows the problem, then the strategies that answer it (one
+idea and one equation each, no comparison tables), then the
+implementation and the Monte-Carlo results, then what the winner costs.
+
+Substantive changes rather than reorganisation:
+
+- **The OFDM tutorial no longer rests on a pathological channel.** Its
+  conclusion -- that OFDM wins on error rate -- came from one EPA
+  realization with a 35 dB notch that annihilated 15 subcarriers of 128.
+  On an ordinary realization (12 dB across the band, no subcarrier more
+  than 10 dB down) the ranking reverses above 15 dB, and uncoded OFDM is
+  the *worse* receiver, which the page now says. What survives, and is
+  the actual reason wideband receivers are built this way, is the cost:
+  measured against the block length, 9x at N=128 and 868x at N=1024.
+- **The PAPR tutorial's theoretical curve and its prose disagreed.** The
+  text quoted thresholds computed with `N_sc * os` effective samples
+  while the figure plotted `2.8 * N_sc` (van Nee and Prasad). The script
+  now solves the same expression it draws, and prints the answer instead
+  of the page asserting it.
+- **The Alamouti tutorial starts from the fading law**, with the
+  histogram of `|h|^2` against its exponential density, since diversity
+  is an answer to that law and not to the average channel.
+
 ### Added (milestones 2-5)
+
+- **`Channel.info()` and `Channel.plot()`, and
+  `core.visualizers.plot_channel_response`.** A tutorial that shows a
+  multipath channel was spending a page recomputing what the channel
+  already knows: how many taps this sampling rate resolves out of the
+  profile's arrivals, how much energy sits in the first path, how deep
+  the worst fade is, what the frequency response looks like. Those are
+  properties of the channel, so `FIRChannel` and `TappedDelayLineChannel`
+  now answer them -- `info()` as a dictionary, `plot("impulse")` or
+  `plot("frequency", scale="dB")` as a figure. On a fading channel the
+  plot shows the realization that was actually used, if the block has
+  been run.
+
+- **`plot_error_rate` axis scales and marker cycling.** `yscale="linear"`
+  for the quantities read on a linear axis (a rate in bit/symbol, a
+  throughput), `xscale="log"` for a sweep over a blocklength. Zeros are
+  now dropped only on a logarithmic ordinate, where they mean "no error
+  was seen"; on a linear one a zero is an ordinary value. Each measured
+  curve also gets its own marker shape, and a slightly larger one than
+  the curve before it, so two detectors that are supposed to agree -- a
+  sphere decoder and the maximum-likelihood search it accelerates -- do
+  not read as one missing simulation. Shape alone was not enough: a
+  triangle sits inside a diamond and disappears.
 
 - **`WDMGrid.plot(ax=None, cut=None)`.** A grid is a layout, so looking at
   one should not require synthesising a signal and estimating its spectrum.

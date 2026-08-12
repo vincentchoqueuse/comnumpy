@@ -56,8 +56,8 @@ SLOW = {
         "runner, not an example: re-executes the other mimo scripts -- "
         "~350 s by construction",
     "ofdm/one_shot_ofdm.py":
-        "five block zero-forcing inversions of a 1284 x 1280 convolution "
-        "matrix -- 49 s wall / 147 s CPU measured 2026-08-10",
+        "twenty zero-forcing inversions of a 1284 x 1280 convolution "
+        "matrix, plus a runtime sweep -- 33 s wall measured 2026-08-12",
     "optical/CD_compensation_part1.py":
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
         "compensator -- 227 s measured 2026-08-09",
