@@ -22,6 +22,8 @@ chain = Sequential([
             SymbolDemapper(constellation)
         ], taps=["tx", "awgn"])
 
+# seeded, so the number this page quotes is the number you get (D6)
+chain.seed(0)
 y = chain(N)
 
 data_tx = chain.tap("tx")

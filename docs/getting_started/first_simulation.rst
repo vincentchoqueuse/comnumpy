@@ -45,12 +45,18 @@ We start by importing the necessary libraries:
 Define Parameters
 """""""""""""""""
 
-Next, we define the key simulation parameters: the modulation order,
-the number of transmitted symbols, and the signal-to-noise ratio (SNR):
+Next, we define the key simulation parameters: the number of transmitted
+symbols, the signal-to-noise ratio (SNR), and the constellation.
+
+:class:`~comnumpy.core.utils.Constellation` is the modulation as one
+object: it holds the alphabet the mapper needs, its order, and the
+closed-form error rate we will compare the measurement against. Naming
+the modulation once is the point -- the theory below cannot describe a
+different one from the one the chain transmits.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 10-17
+   :lines: 9-16
 
 
 AWGN Communication Chain
@@ -76,7 +82,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 42-45
+   :lines: 44-47
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
@@ -112,11 +118,12 @@ Simulate the Chain
 The chain is an object, and running it is calling it. Its first block is a
 *source*, so the argument is not a signal but the number of symbols to
 produce -- and what comes back is what the last block returned, here the
-detected symbol indices:
+detected symbol indices. ``seed`` fixes every random draw in the chain, so
+the numbers below are the numbers you get (decision D6):
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 25-25
+   :lines: 24-27
 
 Evaluate Performance
 """"""""""""""""""""
@@ -132,14 +139,14 @@ but it does mean the order of the two lines matters.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 27-35
+   :lines: 29-37
 
 which prints:
 
 .. code::
 
-   SER (simu) = 0.0013
-   SER (theo) = 0.0015647896369451741
+   SER (simu)= 0.0017
+   SER (theo)= 0.0015647896369451741
 
 The two numbers agree to about 15 %, and that gap is not a modelling error:
 it is the measurement itself. An error rate estimated from :math:`N` symbols
@@ -157,7 +164,7 @@ We read the symbols recorded at the ``"awgn"`` tap and hand them to
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 37-41
+   :lines: 39-43
 
 
 .. image:: img/first_simulation_fig1.png

@@ -55,8 +55,10 @@ We start by importing the necessary libraries:
 Define Parameters
 """""""""""""""""
 
-Next, we set the simulation parameters: modulation order, number of transmitted symbols,
-and the SNR range to sweep.
+Next, we set the simulation parameters: the number of transmitted symbols,
+the constellation, and the SNR range to sweep. The constellation is one
+object -- it carries the alphabet the mapper needs, its order, and the
+closed form we compare against below.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
@@ -156,7 +158,11 @@ parameter that varies has changed.
 Theoretical SER
 """""""""""""""
 
-For comparison, we also compute the theoretical SER curve for QAM modulation over AWGN.
+For comparison, we ask the constellation for its own closed form. It
+knows its family and its order, so the theory cannot describe a
+modulation other than the one the chain transmits; ``per="symbol"`` says
+that the swept SNR is the symbol SNR ``AWGN(snr_dB=)`` takes, and the
+conversion to :math:`E_b/N_0` happens inside.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
