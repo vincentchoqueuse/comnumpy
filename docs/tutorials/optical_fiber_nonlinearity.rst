@@ -80,7 +80,7 @@ The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-87
+   :lines: 1-86
 
 Two things in that chain are worth naming.
 
@@ -106,7 +106,7 @@ only thing that changes is the distance travelled:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 90-112
+   :lines: 89-111
 
 .. code::
 
@@ -129,7 +129,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 114-128
+   :lines: 113-127
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -160,7 +160,7 @@ block on the way through:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 130-135
+   :lines: 129-134
 
 .. code::
 
@@ -213,7 +213,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 137-158
+   :lines: 136-157
 
 .. code::
 
@@ -263,11 +263,26 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-80
+   :lines: 1-84
+
+Before propagating anything, the closed form of :doc:`gn_model` says where
+the optimum should fall. It describes this link with two changes from the
+page it was introduced on -- ten spans instead of five, and one polarization
+instead of two, which is what ``polarizations=1`` is for:
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 83-159
+   :lines: 87-104
+
+.. code::
+
+   GN model for this link: P_ASE = -21.88 dBm, optimum -1.35 dBm, peak SNR 18.77 dB
+
+That is the prediction the sweep below has to land on.
+
+.. literalinclude:: ../../examples/optical/NLI_simulation.py
+   :language: python
+   :lines: 107-198
 
 .. code::
 
