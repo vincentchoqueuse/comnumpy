@@ -6,16 +6,14 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.processors import Upsampler, Downsampler, DataExtractor
 from comnumpy.core.filters import SRRCFilter
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.channels import AWGN
-from comnumpy.core.metrics import compute_ser, compute_metric_awgn_theo
+from comnumpy.core.metrics import compute_ser
 
 
 # parameters
-M = 16
 N = 10000
-modulation = "QAM"
-alphabet = get_alphabet(modulation, M)
+constellation = Constellation("QAM", 16)
 oversampling = 8
 rolloff = 0.25
 N_h = 1000
@@ -23,15 +21,15 @@ sigma2 = 3e-2
 
 # create chain; taps extract the signals to observe after the run
 chain = Sequential([
-    SymbolGenerator(M, name="tx"),
-    SymbolMapper(alphabet),
+    SymbolGenerator(constellation.order, name="tx"),
+    SymbolMapper(constellation),
     Upsampler(oversampling),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     AWGN(sigma2=sigma2, name="awgn_channel"),
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     Downsampler(oversampling, phase=2*oversampling*N_h),
     DataExtractor(selector=(0, N), name="extractor"),
-    SymbolDemapper(alphabet),
+    SymbolDemapper(constellation),
     ], taps=["tx", "awgn_channel", "extractor"])
 
 # run chain
@@ -54,8 +52,8 @@ plt.ylabel("error")
 plt.title("error distribution")
 
 # theoretical metrics
-snr_per_bit = (1/sigma2) / np.log2(M)
-ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
+ser_theo = constellation.metrics(-10 * np.log10(sigma2),
+                                 per="symbol")["ser"]
 
 # print metric and plot
 print(f"exp: SER={ser_exp}")

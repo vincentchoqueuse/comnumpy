@@ -28,10 +28,16 @@ class DataAidedMixin():
     if TYPE_CHECKING:
         # declared by every concrete class; annotating it here would
         # make it a field of the mixin and reorder theirs
-        reference: np.ndarray
+        reference: Optional[np.ndarray]
 
     def __post_init__(self):
-        validate_data(self.reference)
+        # None means "the chain supplies it": a reference produced
+        # upstream does not exist yet when the block is built, and
+        # demanding a placeholder array only to overwrite it before the
+        # first call is a lie about what the block was configured with.
+        # The error moves to the call, where the value is really missing.
+        if self.reference is not None:
+            validate_data(self.reference)
 
     def validate_paths(self, X: np.ndarray) -> None:
         """Refuse a multi-path signal (D49).
@@ -98,12 +104,26 @@ class DataAidedMixin():
         ``reference=...``; when it is produced by the chain itself, the
         edge is declared with ``Sequential(wiring={"block.reference":
         "source"})`` so that each Monte-Carlo run uses its own reference.
+        Until one of the two has happened, ``reference`` is ``None`` and
+        this raises.
 
         Returns
         -------
         np.ndarray
             The reference signal array.
+
+        Raises
+        ------
+        NotFittedError
+            If no reference was given and none was wired in.
         """
+        if self.reference is None:
+            raise NotFittedError(
+                f"{type(self).__name__} estimates {self.estimand} and was "
+                f"given no reference to fit against. Pass reference= if the "
+                f"sequence is known in advance, or declare the edge with "
+                f"Sequential(wiring={{'<block_id>.reference': '<source_id>'}}) "
+                f"if the chain produces it.")
         return np.asarray(self.reference)
 
 
@@ -766,6 +786,10 @@ class BlindPhaseCompensation(Processor):
     # estimated quantity (D23), declared for slots (D40a)
     theta_: Optional[Union[float, np.ndarray]] = field(init=False, repr=False, default_factory=lambda: None)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
         _, y_est = hard_projector(y, self.alphabet)
@@ -931,9 +955,9 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    reference : np.ndarray
+    reference : np.ndarray, optional
         Known reference :math:`d[n]`. When the reference is produced by
-        the chain itself, declare the edge with
+        the chain itself, leave it unset and declare the edge with
         ``Sequential(wiring={"data_aided_fir.reference": "source"})``
         instead of freezing an array.
     should_fit : bool, optional, keyword-only
@@ -974,7 +998,7 @@ class DataAidedFIRCompensator(DataAidedMixin, Processor):
     [1.  0.5 0.  0. ]
     """
 
-    reference: np.ndarray
+    reference: Optional[np.ndarray] = None
     should_fit: bool = field(default=True, kw_only=True)
     name: str = field(default="data_aided_fir", kw_only=True)
     # estimated quantity (D23), declared for slots (D40a)
@@ -1040,9 +1064,9 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    reference : np.ndarray
+    reference : np.ndarray, optional
         Known reference :math:`d[n]`. When the reference is produced by
-        the chain itself, declare the edge with
+        the chain itself, leave it unset and declare the edge with
         ``Sequential(wiring={"data_aided_phase.reference": "source"})``
         instead of freezing an array.
     shared : bool, optional, keyword-only
@@ -1079,7 +1103,7 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
     [ 0.707107+0.707107j  0.707107-0.707107j -0.707107+0.707107j
      -0.707107-0.707107j]
     """
-    reference: np.ndarray
+    reference: Optional[np.ndarray] = None
     shared: Optional[bool] = field(default=None, kw_only=True)
     name: str = field(default="data_aided_phase", kw_only=True)
     # estimated quantity (D23), declared for slots (D40a). A scalar when
@@ -1152,9 +1176,9 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    reference : np.ndarray
+    reference : np.ndarray, optional
         Known preamble :math:`d[n]`. When it is produced by the chain
-        itself, declare the edge with
+        itself, leave it unset and declare the edge with
         ``Sequential(wiring={"complex_gain_compensator.reference":
         "source"})`` instead of freezing an array.
     shared : bool, optional, keyword-only
@@ -1205,7 +1229,7 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
     >>> print(np.round(y, 6))
     [ 1.+1.j  1.-1.j -1.+1.j -1.-1.j]
     """
-    reference: np.ndarray
+    reference: Optional[np.ndarray] = None
     extractor: DataExtractor = field(default_factory=lambda: DataExtractor(selector=None), kw_only=True)
     should_fit: bool = field(default=True, kw_only=True)
     shared: Optional[bool] = field(default=None, kw_only=True)
@@ -1292,9 +1316,9 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    reference : np.ndarray
+    reference : np.ndarray, optional
         Known preamble :math:`d[n]`. When it is produced by the chain
-        itself, declare the edge with
+        itself, leave it unset and declare the edge with
         ``Sequential(wiring={"synchronizer.reference": "source"})``
         instead of freezing an array.
     scale_correction : bool, optional
@@ -1348,7 +1372,7 @@ class DataAidedSimpleSynchronizer(DataAidedMixin, Processor):
     >>> print(np.round(DataAidedSimpleSynchronizer(d)(0.5 * x), 6))   # 6 dB attenuation
     [ 1. -1.  1.  1.  1. -1.]
     """
-    reference: np.ndarray
+    reference: Optional[np.ndarray] = None
     scale_correction: bool = True
     save_cross_correlation: bool = field(default=True, kw_only=True)
     signal_len: Optional[int] = field(default=None, kw_only=True)
@@ -1485,9 +1509,9 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
 
     Parameters
     ----------
-    reference : np.ndarray
+    reference : np.ndarray, optional
         Known preamble :math:`d[n]`. When it is produced by the chain
-        itself, declare the edge with
+        itself, leave it unset and declare the edge with
         ``Sequential(wiring={"synchronizer.reference": "source"})``
         instead of freezing an array.
     scale_correction : bool, optional
@@ -1546,7 +1570,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
     >>> print(synchronizer.delay_, synchronizer.delay_ / synchronizer.up_factor, y.shape)
     6 3.0 (4,)
     """
-    reference: np.ndarray
+    reference: Optional[np.ndarray] = None
     scale_correction: bool = True
     up_factor: int = field(default=2, kw_only=True)
     save_cross_correlation: bool = field(default=True, kw_only=True)

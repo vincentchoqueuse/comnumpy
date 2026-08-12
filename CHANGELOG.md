@@ -44,6 +44,56 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — `bicm_capacity(px=...)`
+
+`constellation_capacity` already took a law; its bit-interleaved
+counterpart did not, so the rate a *shaped* BICM chain can reach --
+which is the quantity probabilistic amplitude shaping is paid in -- had
+no way to be computed. It does now, returning
+`H(X) - sum_i H(B_i | Y)`.
+
+The ceiling is `H(X)`, not the sum of the per-bit entropies. Those agree
+only when the labelling bits are independent, which a uniform law makes
+them and a shaped one does not, so `sum_i I(B_i; Y)` counts twice what
+the bits share and comes out *above* `I(X; Y)` -- which no achievable
+rate may be. The first implementation here did exactly that and
+overstated the rate by 0.002 bit, small enough to read as quadrature
+noise; the test now sweeps two constellations, five laws and three SNRs
+against the mutual information rather than spot-checking one.
+
+A law with exact zeros reduces to the smaller constellation instead of
+returning NaN, and an explicit uniform law reproduces the previous
+result to the last digit.
+
+### Added — `compute_papr_ccdf_theo`, and a `reduction` on `compute_papr`
+
+The closed-form CCDF of the PAPR lived in the tutorial that drew it,
+which is the wrong place for a *fitted* constant: the expression
+`1 - (1 - exp(-g))**(alpha * N)` is exact for `N` independent samples,
+and oversampled samples are not independent, so `alpha ~ 2.8` is an
+empirical effective count reported for an oversampling of 4 or more.
+`compute_papr_ccdf_theo(threshold, n_sub, oversampling=..., unit=...)`
+takes the oversampling rather than the fitted count, applies `alpha = 1`
+at the Nyquist rate, and logs a warning when it is asked to extrapolate
+between the two -- a domain a script cannot carry.
+
+It also carries the other model of the same quantity, under
+`method="level_crossing"`: counting how often a Gaussian process crosses
+a level makes the effective count grow with the threshold instead of
+being fitted. That form has no constant to fit, but it describes the
+*continuous-time* waveform, so it reads 20-60 % above a measurement at
+oversampling 4 where the fitted one is within 20 %, and it is a
+large-threshold approximation -- below about 9 dB at 256 subcarriers it
+is not even ordered against the other. Both statements are measured on
+the page that draws them.
+
+`compute_papr` gains `reduction={"none", "mean", "max", "min"}`. `axis`
+already named the axis one waveform lies along, so an array of OFDM
+symbols gives one value per symbol; `reduction` says what to do with
+those, which removes the reshaping and the `np.atleast_1d` the examples
+had grown around it. The reduction is applied to the value in the unit
+asked for: the mean of a set of decibels, not the decibel of a mean.
+
 ### Changed — `set_params` accepts scikit-learn's separator
 
 `set_params` was borrowed from scikit-learn but not its separator, so a
@@ -61,6 +111,116 @@ is computed rather than typed -- `sweep` builds its addresses as
 strings. The split is unambiguous because `block_ids` collapses every
 run of non-alphanumerics into a single underscore, so no block id can
 contain a double one; a test pins that.
+
+### Added — `Constellation`, and `SpaceTimeCode.info()`
+
+`get_alphabet("QAM", 16)` returns an array, and everything else the
+constellation determines — its bits per symbol, its average energy, its
+minimum distance, its closed-form error rate, the rate it carries — was
+asked for somewhere else, with the family and the order passed a second
+time. Nothing checked that the two agreed, so a page could draw the
+closed form of a 16-QAM under the measurement of a 64-QAM and look
+right.
+
+```python
+qam = Constellation("QAM", 16)
+qam.info()                       # family, order, k, Es, d_min, PAPR
+qam.plot()                       # the constellation diagram
+qam.metrics(snr_dB)              # {"ser": ..., "ber": ...}
+qam.metrics(snr_dB, metrics=("mi", "gmi"))          # the rates, on request
+qam.metrics(snr_dB, channel="rayleigh", diversity=2)
+```
+
+`metrics` takes dB, like every chain-level SNR in the library, and
+`per="bit"|"symbol"` says which SNR it is: the error rates are quoted
+against `Eb/N0`, the rates against the symbol SNR, `k` times larger, and
+getting that wrong shifts a curve by `10log10(k)` dB with nothing to
+signal it. The object knows `k`, so the conversion happens once, inside.
+`"mi"` and `"gmi"` are quadratures rather than closed forms, so they are
+opt-in — seconds rather than microseconds on a large constellation.
+`px=` passes a shaped law through to the rates, rescaling the
+constellation to unit energy under that law, since a shaped input
+compared as it stands is simply a quieter one.
+
+`np.asarray(constellation)` returns the alphabet, and the blocks that
+take one now coerce their field, so a `Constellation` goes wherever an
+array went: `SymbolMapper`, `SymbolDemapper`, `BlindPhaseCompensation`
+and every MIMO detector. Nothing existing changes — `get_alphabet` stays
+as the low-level builder the class is built on.
+
+`SpaceTimeCode` was already the object on the coding side (registry,
+verified orthogonality, rate); it gains the matching `info()`.
+
+Every script under `examples/` and `validation/` is migrated. What that
+removed, in twenty-one places, is this line:
+
+```python
+snr_per_bit = 10 ** (snr_dB / 10) / np.log2(M)      # before
+constellation.metrics(snr_dB, per="symbol")          # after
+```
+
+`AWGN(snr_dB=)` is a symbol SNR and the closed forms are quoted against
+`Eb/N0`; the factor `k` now lives where `k` is known.
+
+### Documentation — the getting-started page argues for the object
+
+`first_simulation.rst` used to open on a `Sequential` chain, which asks
+the reader to accept the library's shape before seeing what it is for.
+It now writes the simulation twice: first in twenty lines of plain
+NumPy, then as a chain, and it names what the first version leaves to
+the reader — the energy normalization, the symbol-versus-bit SNR
+convention, the decision rule, and the modulation described a second
+time inside the closed form, with its order appearing three times in a
+formula that has to be right.
+
+The point is made by `constellation.info()` rather than asserted: every
+field it prints (`energy`, `bits_per_symbol`, `min_distance`, `papr_dB`)
+is one of the quantities the by-hand version carried implicitly. The
+constellation also draws itself beside what the channel did to it.
+
+### Changed — the closed-form performance front-ends return a dictionary
+
+`compute_metric_awgn_theo` and `compute_metric_rayleigh_theo` took a
+`type="ser"` / `"bin"` string and returned one number, so a figure that
+wants both curves called them twice and a string was the only thing
+saying which was which. They now return a dict:
+
+| Before (0.91) | After (1.0.0) |
+|---|---|
+| `compute_metric_awgn_theo("QAM", 16, g, "ser")` | `compute_metric_awgn_theo("QAM", 16, g)["ser"]` |
+| `compute_metric_awgn_theo("QAM", 16, g, "bin")` | `compute_metric_awgn_theo("QAM", 16, g)["ber"]` |
+| `compute_metric_rayleigh_theo("PSK", 4, g, "bin", diversity=2)` | `compute_metric_rayleigh_theo("PSK", 4, g, diversity=2)["ber"]` |
+
+`"bin"` is spelled `"ber"`, next to `"ser"`. The AWGN one also takes
+`metrics=` and can add `"mi"` and `"gmi"` — the mutual information and
+the bit-interleaved rate of the same constellation at the same SNR — for
+a page that draws rates rather than error rates. Those two are quadrature,
+not closed forms, so they are opt-in.
+
+### Added — `Sequential.elapsed_`
+
+Every pass records its own wall time, so "how long does this chain take"
+no longer needs a stopwatch around the call site — which is what the
+tutorials were doing, four times over.
+`profile_execution_time` breaks the same number down block by block, and
+the two now agree by construction.
+
+### Changed — a wired reference no longer needs a placeholder array
+
+`DataAidedMixin` advertised `Sequential(wiring={"comp.reference":
+"source"})` as the way to give a data-aided estimator a reference the
+chain produces itself, but the constructor still demanded an array — so
+building the block meant passing a dummy that the first pass overwrote.
+`reference` now defaults to `None` on the five `DataAided*` blocks, and
+`get_reference()` raises `NotFittedError` at call time if nothing was
+passed and nothing was wired. The error moves from "you gave me no
+placeholder" to "no reference reached me", which is the real failure.
+
+`Sequential.profile_execution_time` ran a *different* pass from
+`forward`: it walked `module_list` directly, so taps were not recorded
+and wiring was not fed, and profiling a wired chain raised. It now
+shares the edge plan with `forward` and keys its result by block id
+(`block_ids()`), so two blocks with the same name get one entry each.
 
 ### Documentation — the tutorials on one plan
 
@@ -88,6 +248,35 @@ Substantive changes rather than reorganisation:
 - **The Alamouti tutorial starts from the fading law**, with the
   histogram of `|h|^2` against its exponential density, since diversity
   is an answer to that law and not to the average channel.
+- **The shaping tutorial follows the argument instead of the API.** It
+  now runs capacity → the gap a uniform QAM leaves → Maxwell-Boltzmann →
+  distribution matching → PAS and the GMI. The matcher's output is
+  measured and laid over the law it targets, which is where the
+  quantization of a constant composition becomes visible.
+- **The back-propagation tutorial is written around one chain.**
+  `get_full_chain(n_spans)` builds transmitter, link and receiver
+  together, with the data-aided phase correction wired to the
+  transmitter (`wiring={"phase.reference": "signal_tx"}`) instead of a
+  hand-rolled `np.angle` on the side. Every figure of the one-shot page
+  comes from that one chain, called at six span counts;
+  `profile_execution_time` shows the split-step propagation to be 99.9 %
+  of the run. The chain is cut in two only in the Monte-Carlo example,
+  where six receivers share one propagation — `get_unprocessed_chain`
+  once, `get_receiver` per strategy — and the page says why, with the
+  profile that justifies it. The forward propagation drops from 500 to
+  200 steps per span (same effective SNR to three decimals).
+- **Removed the multipath tutorial**, its example and its figures, and
+  the OFDM page's maximum-likelihood digression and self-drawn chain
+  diagram.
+- **No comprehensions in the tutorial scripts.** A list, dict or
+  generator expression reads as one dense line to someone learning the
+  library; the loop is written out instead. Applied to every script
+  under `examples/`, and checked: each one was re-run and its printed
+  output compared with what its page quotes, which is unchanged apart
+  from run times. The rule, the plan and the register live in
+  `.claude/skills/comnumpy-tutorial`, which `.gitignore` now lets
+  through -- the rest of `.claude/` is scratch, the skills are project
+  assets and must survive a fresh checkout.
 
 ### Added (milestones 2-5)
 

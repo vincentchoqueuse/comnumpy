@@ -90,7 +90,7 @@ True
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
 
@@ -264,6 +264,38 @@ class SpaceTimeCode:
     def is_orthogonal(self) -> bool:
         """Whether the design was declared -- and verified -- orthogonal."""
         return self.orthogonal
+
+    def info(self) -> dict[str, Any]:
+        r"""What the code is, as a dictionary ready to print.
+
+        The same service the channels and
+        :class:`~comnumpy.core.utils.Constellation` offer: the facts a
+        page would otherwise restate in prose, read off the object that
+        holds them.
+
+        Returns
+        -------
+        dict
+            ``name``, ``n_tx``, ``n_slots``, ``n_symbols``, ``rate``,
+            ``orthogonal``, ``orthogonality_gain`` -- the constant
+            :math:`c` of :math:`M^T M = c \|H\|_F^2 I` that the matched
+            filter divides by, zero for a non-orthogonal design -- and
+            ``reference``.
+
+        Examples
+        --------
+        >>> info = get_code("alamouti").info()
+        >>> info["n_tx"], info["rate"], info["orthogonal"]
+        (2, 1.0, True)
+        """
+        return {"name": self.name,
+                "n_tx": self.n_tx,
+                "n_slots": self.n_slots,
+                "n_symbols": self.n_symbols,
+                "rate": self.rate,
+                "orthogonal": self.orthogonal,
+                "orthogonality_gain": self.orthogonality_gain,
+                "reference": self.reference}
 
     def encode(self, symbols: np.ndarray) -> np.ndarray:
         r"""Build codewords from symbols.

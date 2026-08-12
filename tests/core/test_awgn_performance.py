@@ -33,7 +33,8 @@ class TestAWGNChainPerformance(unittest.TestCase):
         ser = compute_ser(data_tx, y)
 
         snr_per_bit = (10**(SNR_dB/10))/np.log2(M)
-        ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
+        theory = compute_metric_awgn_theo(modulation, M, snr_per_bit)
+        ser_theo = theory["ser"]
         np.testing.assert_allclose(ser, ser_theo, atol=1e-3)
 
 

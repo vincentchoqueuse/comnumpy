@@ -7,14 +7,13 @@ from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.impairments import IQImbalance, CFO
 from comnumpy.core.channels import AWGN
 from comnumpy.core.compensators import BlindIQCompensator, BlindCFOCompensator, DataAidedPhaseCompensator
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.metrics import compute_ser
 
 
 # parameters
-type, M = "QAM", 16
+constellation = Constellation("QAM", 16)
 N = 5000
-alphabet = get_alphabet(type, M)
 
 # generate random IQ imbalance
 iq_params = np.array([1, 0]) + 0.2*(np.random.randn(2) + 1j*np.random.randn(2))
@@ -24,15 +23,15 @@ iq_params = np.array([1, 0]) + 0.2*(np.random.randn(2) + 1j*np.random.randn(2))
 # produced upstream by the mapper -- so the reference is never stale.
 # `taps` extracts the signals we want to look at afterwards.
 chain = Sequential([
-            SymbolGenerator(M, name="data_tx"),
-            SymbolMapper(alphabet, name="signal_tx"),
+            SymbolGenerator(constellation.order, name="data_tx"),
+            SymbolMapper(constellation, name="signal_tx"),
             CFO(0.001),
             IQImbalance(iq_params[0], iq_params[1]),
             AWGN(sigma2=0.005, name="awgn"),
             BlindIQCompensator(name="gsop"),
             BlindCFOCompensator(save_history=True, name="cfo_comp"),
             DataAidedPhaseCompensator(reference=np.zeros(1), name="phase_comp"),
-            SymbolDemapper(alphabet)
+            SymbolDemapper(constellation)
             ],
             taps=["data_tx", "awgn", "gsop", "cfo_comp", "phase_comp"],
             wiring={"phase_comp.reference": "signal_tx"})

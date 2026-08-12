@@ -58,7 +58,7 @@ means comparing five chains that differ by their last block alone:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 21-59
+   :lines: 21-61
 
 .. mermaid:: mermaid/mimo_zf.mmd
 
@@ -69,7 +69,7 @@ block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 156-159
+   :lines: 170-173
 
 Each chain is given the same seed before running, so the five numbers below
 differ by the detector alone -- same symbols, same noise, same channel:
@@ -89,7 +89,7 @@ Let us look at what each receive antenna sees, read from the ``"noise"`` tap:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 61-69
+   :lines: 63-71
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
@@ -103,7 +103,7 @@ Applying the pseudo-inverse of the channel matrix separates the streams:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 71-79
+   :lines: 73-81
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -233,7 +233,7 @@ the matrix the signal goes through **and** the one the detector inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 81-115
+   :lines: 83-127
 
 .. code::
 
@@ -276,16 +276,16 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 117-154
+   :lines: 129-168
 
 .. code::
 
-     ML  0 dB    161.4 ms    65536 nodes   SER 0.7900
-     ML  9 dB    132.1 ms    65536 nodes   SER 0.5044
-     ML 18 dB    118.5 ms    65536 nodes   SER 0.0112
-     SD  0 dB    243.1 ms     91.8 nodes   SER 0.7900
-     SD  9 dB     50.5 ms     19.2 nodes   SER 0.5044
-     SD 18 dB     17.7 ms      5.8 nodes   SER 0.0112
+     ML  0 dB    142.3 ms    65536 nodes   SER 0.7900
+     ML  9 dB    129.7 ms    65536 nodes   SER 0.5044
+     ML 18 dB    127.2 ms    65536 nodes   SER 0.0112
+     SD  0 dB    236.3 ms     91.8 nodes   SER 0.7900
+     SD  9 dB     49.5 ms     19.2 nodes   SER 0.5044
+     SD 18 dB     16.7 ms      5.8 nodes   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%

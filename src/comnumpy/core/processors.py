@@ -1296,6 +1296,7 @@ class BlindPhaseTracker(Processor):
 
 
     def __post_init__(self):
+        self.alphabet = np.asarray(self.alphabet)
         self.phases = np.linspace(-np.pi/4, np.pi/4, self.phase_steps, endpoint=False)
 
     def hard_projector(self, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

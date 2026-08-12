@@ -5,7 +5,7 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ber
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, OrderedSuccessiveInterferenceCancellationDetector
@@ -20,15 +20,14 @@ from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, O
 N_test = 500  # increase the value for smoothing the ber
 N = 400
 N_r, N_t = 2, 2
-M = 4
-alphabet = get_alphabet("PSK", M)
-M = len(alphabet)
+constellation = Constellation("PSK", 4)
+M = constellation.order
 
 H = rayleigh_channel(N_r=N_r, N_t=N_t)
 
 # construct chain
-chain = Sequential([SymbolGenerator(M, name="data_tx"),
-                    SymbolMapper(alphabet),
+chain = Sequential([SymbolGenerator(constellation.order, name="data_tx"),
+                    SymbolMapper(constellation),
                     FlatMIMOChannel(H, name="channel"),
                     AWGN(sigma2=0, name="noise")
                     ], taps=["data_tx"])
@@ -62,11 +61,11 @@ for index_snr, snr_dB in enumerate(snr_dB_list):
 
             match detector_name:
                 case "ML":
-                    detector = MaximumLikelihoodDetector(alphabet=alphabet, H=H)
+                    detector = MaximumLikelihoodDetector(alphabet=constellation, H=H)
                 case "ZF":
-                    detector = LinearDetector(alphabet=alphabet, H=H, method="zf")
+                    detector = LinearDetector(alphabet=constellation, H=H, method="zf")
                 case "OSIC":
-                    detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC")
+                    detector = OrderedSuccessiveInterferenceCancellationDetector(constellation, osic_type="sinr", H=H, sigma2=sigma2, name="OSIC")
 
             # perform detection
             S_est = detector(Y)

@@ -162,7 +162,7 @@ from comnumpy.core.information import compute_gmi, compute_mi, compute_ngmi
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.processors import BlindPhaseTracker, Upsampler
 from comnumpy.mimo.compensators import BlindDualMIMOCompensator
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.optical import (DBP, FiberLink, WDMDemultiplexer, WDMGrid,
                               WDMMultiplexer)
 from comnumpy.optical.constants import PLANCK_CONSTANT
@@ -256,7 +256,8 @@ def transmit(power_dBm: float = POWER_PER_CHANNEL_DBM, seed: int = 1,
     polarization on the antenna axis of D2, which is what makes
     ``FiberLink`` integrate Manakov.
     """
-    alphabet = get_alphabet("QAM", ORDER)
+    constellation = Constellation("QAM", ORDER)
+    alphabet = constellation.alphabet
     indices = np.empty((N_POLARIZATIONS, N_CHANNELS, N_SYMBOLS), dtype=int)
     symbols = np.empty((N_POLARIZATIONS, N_CHANNELS, N_SYMBOLS),
                        dtype=complex)
@@ -462,7 +463,8 @@ def check_full_link(field: np.ndarray, symbols: np.ndarray, floor: float,
 def check_rates(field: np.ndarray, symbols: np.ndarray,
                 indices: np.ndarray) -> None:
     """4. MI, GMI and normalized GMI against the notebook's own three."""
-    alphabet = get_alphabet("QAM", ORDER)
+    constellation = Constellation("QAM", ORDER)
+    alphabet = constellation.alphabet
     rates = []
     for mode, (received, sent) in enumerate(equalize(field, symbols)):
         # the metrics work on the unit-energy alphabet the symbols were
@@ -502,7 +504,8 @@ def wiener_phase(n_samples: int, rng: np.random.Generator) -> np.ndarray:
 def transmit_with_phase_noise(rng: np.random.Generator):
     """The same comb, each channel behind its own noisy laser."""
     indices, _, _ = transmit()
-    alphabet = get_alphabet("QAM", ORDER)
+    constellation = Constellation("QAM", ORDER)
+    alphabet = constellation.alphabet
     shaper = SRRCFilter(ROLL_OFF, SAMPLES_PER_SYMBOL, N_h=N_TAPS_HALF,
                         method="fft")
     upsampler = Upsampler(SAMPLES_PER_SYMBOL)
@@ -526,7 +529,8 @@ def transmit_with_phase_noise(rng: np.random.Generator):
 def receive_with_dsp(field, indices, *, lo_phase=None, jones=None,
                      equalizer=False, tracker=False) -> float:
     """The receiver the notebook has, as far as comnumpy can build it."""
-    alphabet = get_alphabet("QAM", ORDER)
+    constellation = Constellation("QAM", ORDER)
+    alphabet = constellation.alphabet
     demultiplexer = WDMDemultiplexer(GRID, fs=FS)
     matched_filter = SRRCFilter(ROLL_OFF, SAMPLES_PER_SYMBOL,
                                 N_h=N_TAPS_HALF, method="fft")

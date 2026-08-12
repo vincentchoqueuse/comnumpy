@@ -127,6 +127,10 @@ class MaximumLikelihoodDetector(Processor):
     # internal state (declared for slots, D40a)
     S: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def get_nb_candidates(self) -> int:
         H = _required_channel(self.H, type(self).__name__)
         _, N_t = H.shape
@@ -326,6 +330,10 @@ class SphereDecoder(Processor):
                                     default_factory=lambda: None)
     nodes_: float = field(init=False, repr=False, default=0.0)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def _triangularize(self) -> tuple[np.ndarray, np.ndarray]:
         """The thin QR of the channel, with the guards it needs."""
         H = _required_channel(self.H, type(self).__name__)
@@ -474,6 +482,10 @@ class LinearDetector(Processor):
     sigma2: Optional[float] = field(default=None, kw_only=True)
     name: str = field(default="ZF Detector", kw_only=True)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def linear_estimator(self, Y: np.ndarray) -> np.ndarray:
         r"""
         Perform Zero Forcing or MMSE linear equalization
@@ -579,6 +591,7 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     name: str = field(default="OSIC Detector", kw_only=True)
 
     def __post_init__(self):
+        self.alphabet = np.asarray(self.alphabet)
         if self.osic_type == "sinr":
             self.method = "mmse"
         elif self.osic_type in ("colnorm", "snr"):
@@ -740,6 +753,10 @@ class ApproximateMessagePassingDetector(Processor):
     N_it: int = field(default=100, kw_only=True)
     name: str = field(default="AMP Detector", kw_only=True)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def fit(self, y: np.ndarray) -> np.ndarray:
         # see Algorithm 2
         block = type(self).__name__
@@ -869,6 +886,10 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
     N_it: int = field(default=100, kw_only=True)
     type: Literal["H", "pinv", "MMSE"] = field(default="MMSE", kw_only=True)
     name: str = field(default="OAMP Detector", kw_only=True)
+
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
 
     def get_W(self, vt_2: float = 0.0) -> np.ndarray:
         block = type(self).__name__

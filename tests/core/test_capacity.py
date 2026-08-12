@@ -402,3 +402,68 @@ class TestWaterfilling(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAShapedBitInterleavedInput(unittest.TestCase):
+    """`bicm_capacity` with a law: the ceiling moves with the entropy.
+
+    The uniform case is `log2 M` bits, one per bit of the label. Under a
+    shaped law each labelling bit is biased, so it carries `H(B_i) < 1`,
+    and the achievable rate is measured down from the sum of those --
+    which is the quantity a PAS chain is actually paid in.
+    """
+
+    def setUp(self):
+        self.alphabet = get_alphabet("QAM", 16)
+        self.snr = np.array([1.0, 10.0, 100.0])
+
+    def test_an_explicit_uniform_law_changes_nothing(self):
+        np.testing.assert_allclose(
+            bicm_capacity(self.alphabet, self.snr),
+            bicm_capacity(self.alphabet, self.snr,
+                          px=np.full(self.alphabet.size, 1 / self.alphabet.size)))
+
+    def test_it_stays_below_the_mutual_information(self):
+        """Bit-wise demapping cannot beat the symbol-wise bound.
+
+        Swept rather than spot-checked, because the first implementation
+        passed at one law and one SNR and failed elsewhere: it measured
+        the rate down from the sum of the per-bit entropies, which
+        exceeds H(X) as soon as the labelling bits are dependent -- and a
+        shaped law makes them dependent. The violation was 0.002 bit,
+        small enough to read as noise and wrong all the same.
+        """
+        for order in (16, 64):
+            alphabet = get_alphabet("QAM", order)
+            for lam in (0.0, 0.2, 0.6, 1.2, 2.5):
+                law = maxwell_boltzmann(alphabet, lam=lam)
+                scaled = alphabet / np.sqrt(float(law @ np.abs(alphabet) ** 2))
+                with self.subTest(order=order, lam=lam):
+                    gmi = bicm_capacity(scaled, self.snr, px=law)
+                    mi = constellation_capacity(scaled, self.snr, px=law)
+                    self.assertTrue(np.all(gmi <= mi + 1e-9),
+                                    f"GMI - MI = {np.max(gmi - mi):+.2e}")
+
+    def test_the_ceiling_is_the_source_entropy(self):
+        """At high SNR every bit gets through, so the rate is H(X)."""
+        law = maxwell_boltzmann(self.alphabet, lam=0.8)
+        scaled = self.alphabet / np.sqrt(float(law @ np.abs(self.alphabet) ** 2))
+        self.assertAlmostEqual(float(bicm_capacity(scaled, 1e7, px=law)),
+                               distribution_entropy(law), places=3)
+
+    def test_at_high_snr_it_reaches_the_entropy(self):
+        law = maxwell_boltzmann(self.alphabet, lam=0.5)
+        reached = float(bicm_capacity(self.alphabet, 1e6, px=law))
+        self.assertAlmostEqual(reached, distribution_entropy(law), places=2)
+
+    def test_a_law_with_zeros_is_the_smaller_constellation(self):
+        law = np.zeros(16)
+        law[:4] = 0.25
+        reduced = bicm_capacity(self.alphabet, self.snr, px=law)
+        self.assertTrue(np.all(np.isfinite(reduced)))
+        self.assertLessEqual(float(reduced[-1]), 2.0 + 1e-9)
+
+    def test_it_refuses_a_law_that_is_not_one(self):
+        for bad in (np.full(16, 0.5), np.full(8, 1 / 8), -np.ones(16) / 16):
+            with self.assertRaises(ValueError):
+                bicm_capacity(self.alphabet, 10.0, px=bad)

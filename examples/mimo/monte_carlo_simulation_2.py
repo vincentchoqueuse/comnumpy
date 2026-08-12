@@ -5,7 +5,7 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ber
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.detectors import OrderedSuccessiveInterferenceCancellationDetector
@@ -17,15 +17,14 @@ from comnumpy.mimo.detectors import OrderedSuccessiveInterferenceCancellationDet
 N_test = 5000  # increase the value for smoothing the ber
 N = 100
 N_r, N_t = 4, 4
-M = 16
-alphabet = get_alphabet("QAM", M)
-M = len(alphabet)
+constellation = Constellation("QAM", 16)
+M = constellation.order
 
 H = rayleigh_channel(N_r=N_r, N_t=N_t)
 
 # construct chain
-chain = Sequential([SymbolGenerator(M, name="data_tx"),
-                    SymbolMapper(alphabet),
+chain = Sequential([SymbolGenerator(constellation.order, name="data_tx"),
+                    SymbolMapper(constellation),
                     FlatMIMOChannel(H, name="channel"),
                     AWGN(sigma2=0, name="noise"),
                     ], taps=["data_tx"])
@@ -56,7 +55,7 @@ for index_snr, snr_dB in enumerate(snr_dB_list):
         # test detector
         for index, detector_name in enumerate(detector_names):
             # create detector
-            detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet=alphabet, osic_type=detector_name, H=H, sigma2=sigma2)
+            detector = OrderedSuccessiveInterferenceCancellationDetector(alphabet=constellation, osic_type=detector_name, H=H, sigma2=sigma2)
             # perform detection
             S_est = detector(Y)
             # evaluate metrics

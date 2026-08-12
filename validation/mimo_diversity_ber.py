@@ -33,7 +33,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser_rayleigh_psk
 from comnumpy.core.processors import Amplifier
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
 from comnumpy.mimo.detectors import LinearDetector
@@ -42,7 +42,7 @@ from comnumpy.mimo.utils import rayleigh_channel
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
 ORDER = 4
-ALPHABET = get_alphabet("PSK", ORDER)
+ALPHABET = Constellation("PSK", ORDER)
 SNR_DB_RANGE = np.array([6.0, 12.0, 18.0])
 # more draws where the error rate is lower: the deep fades that dominate
 # the variance become rarer exactly where the curve is being read

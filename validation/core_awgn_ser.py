@@ -10,8 +10,7 @@ import numpy as np
 
 from comnumpy import (AWGN, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, compute_ser,
-                      get_alphabet)
-from comnumpy.core.metrics import compute_metric_awgn_theo
+                      Constellation)
 from comnumpy.sweep import sweep
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
@@ -21,12 +20,12 @@ SNR_DB_RANGE = np.arange(0, 16, 1)
 
 
 def simulate(order, seed):
-    alphabet = get_alphabet("QAM", order)
+    constellation = Constellation("QAM", order)
     chain = Sequential([
         SymbolGenerator(order, name="tx"),
-        SymbolMapper(alphabet),
+        SymbolMapper(constellation),
         AWGN(snr_dB=0, name="noise"),
-        SymbolDemapper(alphabet),
+        SymbolDemapper(constellation),
     ])
     results = sweep(chain, "noise.snr_dB", SNR_DB_RANGE,
                     {"ser": compute_ser}, N_SYMBOLS,
@@ -39,10 +38,8 @@ def main():
     _, ax = plt.subplots()
 
     for order, seed, marker in ((4, 10, "o"), (16, 20, "s")):
-        k = np.log2(order)
-        snr_per_bit = 10 ** (SNR_DB_RANGE / 10) / k
-        ser_theo = np.array([compute_metric_awgn_theo("QAM", order, g)
-                             for g in snr_per_bit])
+        constellation = Constellation("QAM", order)
+        ser_theo = constellation.metrics(SNR_DB_RANGE, per="symbol")["ser"]
         ser_sim = simulate(order, seed)
 
         # compare where the theoretical SER is measurable with N_SYMBOLS
