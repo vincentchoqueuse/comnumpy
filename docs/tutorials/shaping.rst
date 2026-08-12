@@ -63,7 +63,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 1-18
+   :lines: 1-17
 
 Define Parameters
 """""""""""""""""
@@ -87,7 +87,7 @@ size.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 20-45
+   :lines: 19-44
 
 
 Two ways to shape a constellation
@@ -100,11 +100,11 @@ probabilistic shaping keeps the odd-integer grid and bends the law instead.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 73-84
+   :lines: 72-83
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 92-120
+   :lines: 91-119
 
 .. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
@@ -219,7 +219,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 48-71
+   :lines: 47-70
 
 .. warning::
 
@@ -237,7 +237,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 87-90
+   :lines: 86-89
 
 .. code::
 
@@ -249,7 +249,7 @@ having.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 92-120
+   :lines: 91-119
 
 The measurement uses the chain the rest of the page reuses -- a source, a
 mapper, a channel -- with the transmitted symbols tapped so every estimator
@@ -257,7 +257,7 @@ has its reference:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 122-151
+   :lines: 121-150
 
 .. mermaid:: mermaid/shaping_study.mmd
 
@@ -268,7 +268,7 @@ it was asked for.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 154-171
+   :lines: 153-170
 
 .. image:: img/probabilistic_shaping_fig2.png
    :width: 100%
@@ -276,7 +276,7 @@ it was asked for.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 173-180
+   :lines: 172-179
 
 .. code::
 
@@ -342,11 +342,11 @@ silently be against the wrong law:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 186-211
+   :lines: 185-210
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 213-227
+   :lines: 212-226
 
 .. code::
 
@@ -372,44 +372,19 @@ result Kschischang and Pasupathy proved, and the reason the rest of this
 module never mentions Blahut-Arimoto again -- one line of closed form buys
 99.5 % of an iterative solver.
 
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 229-239
+Drawn on top of each other the two laws are one curve:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 241-260
+   :lines: 228-243
 
 .. image:: img/probabilistic_shaping_fig3.png
-   :width: 100%
+   :width: 70%
    :align: center
 
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 262-271
-
-.. code::
-
-   At 6 dB, on the uniform law's own budget, 6 of the 16 points hold less
-   than 1e-6 of the mass and the entropy is down to 2.731 bit -- while
-   Maxwell-Boltzmann at that budget is the uniform law itself, at H = 4.000.
-   Both numbers keep falling as the tolerance is tightened, and that is the
-   point: the maximizer's limit sits on the *boundary* of the simplex, so
-   the iteration only ever approaches it. No Maxwell-Boltzmann law goes
-   there at all -- at lambda = 0.5 the outermost point still keeps 1.1e-49.
-
-The right-hand panel is the one worth staring at. Same constellation, same
-budget, a noisier channel -- and the optimal law **abandons points**: two
-the receiver cannot tell apart are worth less than one used twice as often,
-so it thins the constellation and spends the freed energy separating what is
-left. No Maxwell-Boltzmann law can do that.
-
-Note what is *not* claimed. Both numbers are quoted at a stated tolerance
-and both keep moving as it tightens, because the answer lives on the
-boundary of the simplex and an alternating maximization only approaches a
-boundary asymptotically -- which is why ``blahut_arimoto`` reports how far
-from the maximum it may still be rather than returning a half-converged law
-in silence.
+So the closed form is what the rest of this page uses, and
+``blahut_arimoto`` is there to keep it honest rather than to be called in
+anger.
 
 What the law is worth
 """"""""""""""""""""""
@@ -421,7 +396,7 @@ idealization a real matcher approaches.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 278-281
+   :lines: 250-253
 
 .. code::
 
@@ -434,7 +409,7 @@ the half bit given up.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 283-300
+   :lines: 255-272
 
 .. image:: img/probabilistic_shaping_fig4.png
    :width: 100%
@@ -458,7 +433,7 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 302-328
+   :lines: 274-300
 
 .. image:: img/probabilistic_shaping_fig5.png
    :width: 100%
@@ -466,7 +441,7 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 330-334
+   :lines: 302-306
 
 .. code::
 
@@ -516,7 +491,7 @@ energy and gains exactly one bit per symbol (Böcherer, Steiner and Schulte,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 341-343
+   :lines: 313-315
 
 **CCDM** fixes the composition. Every output block holds exactly :math:`n_i`
 copies of amplitude :math:`i`, and there are
@@ -535,43 +510,34 @@ rate:
    R_{\mathrm{loss}} = H\!\left(\frac{n_i}{n}\right) - \frac{k}{n}
    \;\xrightarrow[n \to \infty]{}\; 0
 
-**ESS** fixes an energy budget instead (Gültekin *et al.*, 2020): the code
-is every block with :math:`\sum_j e_{s_j} \leq E_{\max}`, counted by a
-recursion over the remaining budget and unranked as for CCDM.
-
-The comparison between them is not a benchmark, it is an inclusion. Every
-CCDM block costs exactly :math:`E = \sum_i n_i e_i`, so given
-:math:`E_{\max} = E` the sphere **contains every CCDM block** and the ones
-that spend less besides. It carries at least as many bits at the same
-energy, always.
+It is not the only construction -- :class:`~comnumpy.core.shaping.SphereShaper`
+implements enumerative sphere shaping, which fixes an energy budget instead
+of a composition and is the better choice at short blocklengths (Gültekin
+*et al.*, 2020) -- but one matcher is enough to see what a matcher is, so
+the rest of this page uses CCDM.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 348-359
+   :lines: 317-324
 
 .. code::
 
-   n =   16   composition (5, 4, 3, 2, 1, 1, 0, 0)   rate 1.8125 vs 2.1875 bit/amplitude
-   n =   32   composition (9, 8, 6, 4, 3, 1, 1, 0)   rate 2.0938 vs 2.3750 bit/amplitude
-   n =   64   composition (18, 16, 12, 8, 5, 3, 1, 1)   rate 2.2656 vs 2.4688 bit/amplitude
-   n =  128   composition (36, 32, 25, 17, 10, 5, 2, 1)   rate 2.3281 vs 2.4453 bit/amplitude
+   n =   16   composition (5, 4, 3, 2, 1, 1, 0, 0)   rate 1.8125 bit/amplitude
+   n =   32   composition (9, 8, 6, 4, 3, 1, 1, 0)   rate 2.0938 bit/amplitude
+   n =   64   composition (18, 16, 12, 8, 5, 3, 1, 1)   rate 2.2656 bit/amplitude
+   n =  128   composition (36, 32, 25, 17, 10, 5, 2, 1)   rate 2.3281 bit/amplitude
+   n =  256   composition (72, 63, 49, 34, 20, 11, 5, 2)   rate 2.4141 bit/amplitude
 
-At :math:`n = 16` the sphere carries 21 % more bits than the constant
-composition; by :math:`n = 128` both are closing on the entropy of the law,
-2.5 bit/amplitude. That is the whole reason ESS exists: CCDM needs thousands
-of symbols to be efficient, ESS is already good at a few dozen, which is the
-regime of a short packet. What ESS gives up is the exact per-block
-distribution -- it reproduces the law only on average.
-
-Note also the two zeros in the composition at :math:`n = 16`: rounding a law
-onto sixteen slots simply cannot represent an amplitude of probability
-below :math:`1/32`, so the two outermost points are dropped. A finite block
-loses rate twice -- once quantizing the law, once taking the floor of
-:math:`\log_2 N`.
+The rate climbs towards the entropy of the law, 2.5 bit/amplitude, and never
+reaches it: **a short block is expensive**. Note the two zeros in the
+composition at :math:`n = 16` -- rounding a law onto sixteen slots cannot
+represent an amplitude of probability below :math:`1/32`, so the two
+outermost points are simply dropped. A finite block loses rate twice, once
+quantizing the law and once taking the floor of :math:`\log_2 N`.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 361-373
+   :lines: 326-338
 
 .. image:: img/probabilistic_shaping_fig6.png
    :width: 100%
@@ -585,7 +551,7 @@ backwards:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 375-392
+   :lines: 340-357
 
 .. mermaid:: mermaid/shaping_pas.mmd
 
@@ -608,7 +574,7 @@ exact big-integer arithmetic done one symbol at a time.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 394-406
+   :lines: 359-371
 
 .. image:: img/probabilistic_shaping_fig7.png
    :width: 100%
@@ -631,7 +597,7 @@ back, and the dematcher says so rather than returning silent nonsense.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 408-412
+   :lines: 373-377
 
 .. code::
 
@@ -671,11 +637,11 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 419-432
+   :lines: 384-397
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 435-457
+   :lines: 400-422
 
 .. code::
 
@@ -688,7 +654,7 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 459-483
+   :lines: 424-448
 
 .. image:: img/probabilistic_shaping_fig8.png
    :width: 100%
@@ -696,7 +662,7 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 485-489
+   :lines: 450-454
 
 .. code::
 
@@ -751,7 +717,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 496-504
+   :lines: 461-469
 
 .. code::
 
@@ -759,7 +725,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 506-514
+   :lines: 471-479
 
 .. image:: img/probabilistic_shaping_fig8.png
    :width: 70%
@@ -779,7 +745,7 @@ small constellation has nothing to redistribute.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 516-533
+   :lines: 481-498
 
 .. code::
 
@@ -805,7 +771,7 @@ same time, and why nobody bothers on QPSK.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 535-538
+   :lines: 500-503
 
 
 Conclusion
@@ -828,9 +794,8 @@ You have learned how to:
 - Draw from a law with ``SymbolGenerator(distribution=...)`` and watch the
   histogram converge.
 - Build the law from uniform bits with
-  :class:`~comnumpy.core.shaping.ConstantCompositionMatcher` or
-  :class:`~comnumpy.core.shaping.SphereShaper`, assemble a PAS transmitter,
-  and place the FEC decoder where it belongs.
+  :class:`~comnumpy.core.shaping.ConstantCompositionMatcher`, assemble a PAS
+  transmitter, and place the FEC decoder where it belongs.
 - Turn one fixed code rate into a continuum of information rates, and read
   the entropy the matcher must be set to for each of them.
 - Carry all of it to a square QAM, and say why the format has to be
@@ -874,7 +839,7 @@ References
 - Y. C. Gültekin, W. J. van Houtum, A. G. C. Koonen and F. M. J. Willems,
   "Enumerative sphere shaping for wireless communications with short
   packets", *IEEE Trans. Wireless Commun.*, vol. 19, no. 2, pp. 1098-1112,
-  2020.
+  2020 -- the other matcher, :class:`~comnumpy.core.shaping.SphereShaper`.
 - J. Cho and P. J. Winzer, "Probabilistic constellation shaping for optical
   fiber communications", *J. Lightwave Technol.*, vol. 37, no. 6,
   pp. 1590-1607, 2019 -- the review this page follows for its framing: the

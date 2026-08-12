@@ -12,9 +12,8 @@ from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.shaping import (AmplitudeDemapper, AmplitudeMapper,
                                    ConstantCompositionMatcher,
                                    DistributionDematcher, DistributionMatcher,
-                                   SphereShaper, blahut_arimoto,
-                                   distribution_entropy, maxwell_boltzmann,
-                                   shaping_gain_dB)
+                                   blahut_arimoto, distribution_entropy,
+                                   maxwell_boltzmann, shaping_gain_dB)
 from comnumpy.core.utils import get_alphabet
 
 img_dir = "../../docs/tutorials/img/"
@@ -229,17 +228,8 @@ for budget in BUDGETS:
 SHOWN_BUDGET = 45.0
 best = blahut_arimoto(PAM16, sigma2=sigma2, energy=SHOWN_BUDGET)
 closed = matched_maxwell_boltzmann(SHOWN_BUDGET)
-# The same budget as the uniform law, on a channel noisy enough that the
-# answer stops looking like a bell curve. The tolerance is loosened for
-# this one call: the root-find runs a dozen alternating maximizations and
-# each converges slowly here, so the default would report its remaining
-# bound a dozen times over -- 1e-4 nat is 1.4e-4 bit, far below anything
-# the figure shows.
-starved = blahut_arimoto(PAM16, sigma2=energy_of(UNIFORM) / 10 ** 0.6,
-                         energy=energy_of(UNIFORM), tol=1e-4)
 
-_, (ax_pair, ax_low) = plt.subplots(ncols=2, figsize=(11, 4.2),
-                                    layout="constrained")
+_, ax_pair = plt.subplots(figsize=(7, 4.2), layout="constrained")
 ax_pair.stem(PAM16[order], best[order], basefmt=" ", linefmt="C0-",
              markerfmt="C0o", label="Blahut-Arimoto, the true maximizer")
 ax_pair.plot(PAM16[order], closed[order], "C1^--",
@@ -250,25 +240,7 @@ ax_pair.set_title(f"At {OPERATING_SNR_dB:.0f} dB, budget "
                   f"{SHOWN_BUDGET:.0f}: the same curve")
 ax_pair.legend(fontsize=9)
 ax_pair.grid(True, alpha=0.4)
-
-ax_low.stem(PAM16[order], starved[order], basefmt=" ", linefmt="C3-",
-            markerfmt="C3o")
-ax_low.set_xlabel("16-PAM constellation point")
-ax_low.set_ylabel("$P_X(a)$")
-ax_low.set_title("At 6 dB, same budget: points dropped")
-ax_low.grid(True, alpha=0.4)
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig3.png")
-
-print(f"\nAt 6 dB, on the uniform law's own budget, {int(np.sum(starved < 1e-6))} "
-      f"of the 16 points hold less than 1e-6 of the mass and the entropy is "
-      f"down to {distribution_entropy(starved):.3f} bit -- while "
-      f"Maxwell-Boltzmann at that budget is the uniform law itself, at "
-      f"H = {distribution_entropy(matched_maxwell_boltzmann(energy_of(UNIFORM))):.3f}.")
-print("Both numbers keep falling as the tolerance is tightened, and that is "
-      "the point: the maximizer's limit sits on the *boundary* of the "
-      "simplex, so the iteration only ever approaches it. No "
-      "Maxwell-Boltzmann law goes there at all -- at lambda = 0.5 the "
-      f"outermost point still keeps {np.min(maxwell_boltzmann(PAM16, lam=0.5)):.1e}.")
 
 
 # ===========================================================================
@@ -342,25 +314,17 @@ amplitude_law = 2 * TARGET[PAM16 > 0][np.argsort(PAM16[PAM16 > 0])]
 print(f"\nthe eight amplitudes carry {distribution_entropy(amplitude_law):.3f} "
       f"bit each, the sign the remaining one")
 
-# The sphere's table is O(n * E_max) and the outer amplitude of 16-PAM
-# costs 225 on its own, so doubling the block roughly multiplies the
-# construction by ten: n = 128 already takes seconds, n = 512 minutes.
-lengths = [16, 32, 64, 128]
-rates = {"CCDM (constant composition)": [], "ESS (sphere, same energy)": []}
+lengths = [16, 32, 64, 128, 256]
+rates = []
 for n in lengths:
     ccdm = ConstantCompositionMatcher(AMPLITUDES, distribution=amplitude_law,
                                       length=n)
-    same_rate = SphereShaper(AMPLITUDES, length=n, n_bits=ccdm.n_bits)
-    budget = int(np.dot(ccdm.composition, same_rate.energies))
-    same_energy = SphereShaper(AMPLITUDES, length=n, max_energy=budget)
-    rates["CCDM (constant composition)"].append(ccdm.rate)
-    rates["ESS (sphere, same energy)"].append(same_energy.rate)
+    rates.append(ccdm.rate)
     print(f"n = {n:4d}   composition {ccdm.composition}   "
-          f"rate {ccdm.rate:.4f} vs {same_energy.rate:.4f} bit/amplitude")
+          f"rate {ccdm.rate:.4f} bit/amplitude")
 
 _, ax_loss = plt.subplots(figsize=(7, 4.2), layout="constrained")
-for label, values in rates.items():
-    ax_loss.semilogx(lengths, values, "o-", base=2, label=label)
+ax_loss.semilogx(lengths, rates, "o-", base=2, label="CCDM")
 ax_loss.axhline(distribution_entropy(amplitude_law), color="k",
                 linestyle="--",
                 label=f"$H(P)$ = {distribution_entropy(amplitude_law):.3f}, "
@@ -371,6 +335,7 @@ ax_loss.set_title("Rate loss is what a finite block costs")
 ax_loss.legend(fontsize=9)
 ax_loss.grid(True, which="both", alpha=0.4)
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig6.png")
+
 
 n_block = 64
 shaper = ConstantCompositionMatcher(AMPLITUDES, distribution=amplitude_law,
