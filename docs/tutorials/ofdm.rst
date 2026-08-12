@@ -143,7 +143,7 @@ Results
 
 .. code::
 
-   single carrier: SER 0.0117, 4014 ms
+   single carrier: SER 0.0117, 1829 ms
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -199,7 +199,7 @@ Results
 
 .. code::
 
-   OFDM          : SER 0.0406, 1.15 ms (3483 times faster)
+   OFDM          : SER 0.0406, 1.20 ms (1525 times faster)
 
 .. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
@@ -207,7 +207,7 @@ Results
    :alt: OFDM constellation after one-tap equalization
 
 The two numbers point in opposite directions: three and a half times as many
-errors, in three thousandths of the time.
+errors, in a thousandth of the time.
 
 
 Monte Carlo Evaluation
@@ -268,10 +268,10 @@ block length grows:
 .. code::
 
         N   single carrier      OFDM     ratio
-      128           7.7 ms    0.65 ms       12
-      256          41.7 ms    0.85 ms       49
-      512         192.8 ms    0.84 ms      229
-     1024        1531.7 ms    2.07 ms      740
+      128           8.5 ms    1.01 ms        8
+      256          28.4 ms    0.82 ms       35
+      512         139.1 ms    0.84 ms      166
+     1024         901.0 ms    0.88 ms     1018
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%
@@ -280,8 +280,10 @@ block length grows:
 
 The single-carrier receiver grows with the block length; the OFDM one does
 not move, since its work per symbol is one FFT and one division whatever the
-block size. At :math:`N = 1024` the ratio is already **740**, and it widens
-with every doubling. A 20 MHz LTE carrier equalizes
+block size. At :math:`N = 1024` the ratio is already three orders of
+magnitude, and it widens with every doubling. (Run times are what they
+are: these were measured on one machine, and the ratio is the robust
+number, not the milliseconds.) A 20 MHz LTE carrier equalizes
 1200 subcarriers every 70 µs; no version of that pseudo-inverts a matrix.
 
 

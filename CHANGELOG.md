@@ -151,6 +151,17 @@ as the low-level builder the class is built on.
 `SpaceTimeCode` was already the object on the coding side (registry,
 verified orthogonality, rate); it gains the matching `info()`.
 
+Every script under `examples/` and `validation/` is migrated. What that
+removed, in twenty-one places, is this line:
+
+```python
+snr_per_bit = 10 ** (snr_dB / 10) / np.log2(M)      # before
+constellation.metrics(snr_dB, per="symbol")          # after
+```
+
+`AWGN(snr_dB=)` is a symbol SNR and the closed forms are quoted against
+`Eb/N0`; the factor `k` now lives where `k` is known.
+
 ### Changed — the closed-form performance front-ends return a dictionary
 
 `compute_metric_awgn_theo` and `compute_metric_rayleigh_theo` took a
