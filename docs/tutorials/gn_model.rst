@@ -344,6 +344,29 @@ points is what the Kerr effect costs, and the gap only opens past the
 optimum -- which is exactly the regime an operator has to avoid, and exactly
 the one the closed form was built to describe.
 
+.. note::
+
+   **These numbers belong to this link.** :doc:`optical_fiber_nonlinearity`
+   propagates a different one -- ten spans instead of five, a 5 dB noise
+   figure instead of 6, and a single polarization -- and measures a peak of
+   17.4 dB near :math:`-1.5` dBm. Nothing disagrees; the closed form
+   evaluated there predicts 18.8 dB at :math:`-1.35` dBm, and that page
+   plots it. Three changes take one to the other:
+
+   .. code::
+
+      5 spans, NF 6 dB, dual polarization      optimum +1.74 dBm   peak 20.86 dB
+      10 spans                                 optimum +1.74 dBm   peak 17.85 dB
+      10 spans, NF 5 dB                        optimum +1.41 dBm   peak 18.52 dB
+      10 spans, NF 5 dB, single polarization   optimum -1.35 dBm   peak 18.77 dB
+
+   Doubling the spans doubles the ASE *and* the interference, so it costs
+   3.0 dB of SNR and moves the optimum not at all. The polarization is the
+   line worth reading twice: dropping to one halves the ASE, which looks
+   like a 3 dB gift, but the scalar equation makes 5.3 dB more interference
+   than the Manakov one. The two nearly cancel in the peak -- 0.25 dB --
+   and what actually moves is the **optimum, down by 2.8 dB**.
+
 
 What the model cannot see
 ^^^^^^^^^^^^^^^^^^^^^^^^^
