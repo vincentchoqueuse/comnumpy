@@ -422,9 +422,15 @@ def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     labels = np.arange(order)
     bit_value = ((labels[:, None] >> np.arange(n_bits - 1, -1, -1)) & 1)
 
-    # H(B_i) under px: one bit of a shaped constellation no longer carries
-    # a full bit, and the sum of these is the ceiling the rate is measured
-    # down from -- n_bits only when px is uniform.
+    # The ceiling is H(X), not the sum of the per-bit entropies. Those two
+    # agree only when the labelling bits are independent, which a uniform
+    # law makes them and a shaped one does not: sum_i I(B_i; Y) then
+    # counts twice what the bits share, and comes out *above* I(X; Y),
+    # which no achievable rate may be. Measuring down from H(X) subtracts
+    # that redundancy exactly once, and is the rate PAS is paid.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        terms = np.where(weight > 0, weight * np.log2(weight), 0.0)
+    source_entropy = float(-np.sum(terms))
     bit_entropy = np.zeros(n_bits)
     for bit in range(n_bits):
         one = float(np.sum(weight[bit_value[:, bit] == 1]))
@@ -443,7 +449,7 @@ def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     out = np.zeros(snr.size)
     for index, s2 in enumerate(sigma2):
         noise = np.sqrt(s2 / 2) * unit_noise
-        capacity = float(np.sum(bit_entropy))
+        capacity = source_entropy
         for start in range(0, noise.size, _QUAD_CHUNK):
             block = noise[start:start + _QUAD_CHUNK]
             weight_block = w2[start:start + _QUAD_CHUNK]

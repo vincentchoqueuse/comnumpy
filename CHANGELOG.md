@@ -49,11 +49,21 @@ one release; there is no compatibility layer.
 `constellation_capacity` already took a law; its bit-interleaved
 counterpart did not, so the rate a *shaped* BICM chain can reach --
 which is the quantity probabilistic amplitude shaping is paid in -- had
-no way to be computed. It does now, and the ceiling moves with the law:
-not `log2 M` but the sum of the per-bit entropies, since a bit of a
-shaped label no longer carries a full bit. A law with exact zeros
-reduces to the smaller constellation instead of returning NaN, and an
-explicit uniform law reproduces the previous result exactly.
+no way to be computed. It does now, returning
+`H(X) - sum_i H(B_i | Y)`.
+
+The ceiling is `H(X)`, not the sum of the per-bit entropies. Those agree
+only when the labelling bits are independent, which a uniform law makes
+them and a shaped one does not, so `sum_i I(B_i; Y)` counts twice what
+the bits share and comes out *above* `I(X; Y)` -- which no achievable
+rate may be. The first implementation here did exactly that and
+overstated the rate by 0.002 bit, small enough to read as quadrature
+noise; the test now sweeps two constellations, five laws and three SNRs
+against the mutual information rather than spot-checking one.
+
+A law with exact zeros reduces to the smaller constellation instead of
+returning NaN, and an explicit uniform law reproduces the previous
+result to the last digit.
 
 ### Added — `compute_papr_ccdf_theo`, and a `reduction` on `compute_papr`
 
