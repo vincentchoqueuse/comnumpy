@@ -675,6 +675,9 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float,
     if lam is not None:
         return solve(float(lam))
 
+    # internal invariant: the exclusivity check above rejected the case
+    # where both are None, so energy is set on this branch
+    assert energy is not None
     target = float(energy)
     # The reachable range. The lower end is the energy of the cheapest
     # points; the upper end is what the *unconstrained* maximizer spends,
