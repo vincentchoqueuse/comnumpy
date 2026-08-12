@@ -1,356 +1,336 @@
 OFDM Tutorial
 =============
 
-Until now the channel added noise and nothing else. A radio signal, though,
-usually arrives *several times*: once by the direct path and again by every
-reflection, each with its own delay and attenuation. The receiver then sees
-each symbol on top of the tails of the previous ones -- inter-symbol
-interference -- and something has to undo it.
+A radio signal usually arrives several times: once by the direct path, and
+again by every reflection, each with its own delay and attenuation. Each
+symbol then lands on top of the tails of the previous ones -- **inter-symbol
+interference (ISI)** -- and the receiver has to undo it.
 
-This tutorial compares the two answers on the same channel: invert it as one
-big matrix (**single carrier**), or split the band into subcarriers narrow
-enough that each sees a *flat* channel and one division suffices (**OFDM**).
+There are two classical ways of doing this, and this tutorial applies both to
+the same channel: invert the channel as one large matrix (**single carrier**),
+or split the band into subcarriers narrow enough that each one sees a flat
+channel (**OFDM**).
 
 .. note::
 
    **Before you start.** :doc:`awgn` introduced the chain, ``seed``,
-   ``set_params`` and ``plot_error_rate``; they are used here without being
+   ``sweep`` and ``plot_error_rate``; they are used here without being
    re-explained. What is new is the channel: it is no longer a single
    coefficient.
 
 **What you'll learn:**
 
-- How to define and simulate a frequency-selective channel.
-- How to evaluate performance using the Symbol Error Rate (SER) and the runtime.
-- What OFDM actually buys against single-carrier equalization -- and what it costs.
+- How to define a multipath channel, and how to ask it what it is.
+- How single-carrier equalization and OFDM differ, in error rate and in cost.
+- Why wideband receivers are built the second way.
 
-This tutorial is suitable for engineers and students interested in digital communications,
-combining practical examples with theoretical insights.
-
-
-Introduction
-^^^^^^^^^^^^
-
-Import Libraries
-""""""""""""""""
-
-We start by importing the necessary libraries:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 1-14
-
-Simulation Parameters
-"""""""""""""""""""""
-
-Next, we define the parameters of the communication chain,
-including the modulation order and the channel impulse response for a frequency-selective channel:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 18-28
-
-The channel is not invented for the occasion: **EPA** is the 3GPP Extended
-Pedestrian A profile, one of the standardized tables the library ships in its
-catalogue, and :class:`~comnumpy.core.channels.TappedDelayLineChannel` draws a
-realization of it. Sampled at 7.68 MHz it resolves into 4 taps -- one per
-echo the receiver can tell apart at that rate.
-
-Getting the tap vector out of it is done the way an engineer would: **sound
-the channel with an impulse** and keep the response. That is what ``h`` is,
-and the equalizers below need it because this tutorial assumes the channel is
-known.
-
-The draw is seeded because the whole comparison below is about *one*
-realization. This one has a frequency response spanning a factor of **57**
-between its strongest and its weakest subcarrier: that notch is what
-"frequency selective" means, and it is what the two receivers will disagree
-about.
-
-.. note::
-
-   :doc:`multipath` is where the catalogue is properly introduced -- where
-   these delays and powers come from, what a delay spread is, and how it
-   sizes the cyclic prefix used below. For now it is enough that the channel
-   is a real one rather than a hand-written array.
+This tutorial is suitable for engineers and students interested in digital
+communications, combining practical examples with theoretical insights.
 
 
-Frequency-Selective Channel
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Channel Model
+^^^^^^^^^^^^^
 
-The input-output relation of a frequency-selective channel is:
+Two models are involved, and they describe the same channel at two levels.
+
+The **environment** is a set of echoes with random gains -- a power delay
+profile and a fading process. This is the tapped delay line model:
 
 .. math::
 
-   z[n] = \sum_{l=0}^{L-1} h[l]\,x[n-l] + b[n]
+   y[n] = \sum_{l=0}^{L-1} a_l[n]\, x[n - d_l]
 
-where :math:`h[l]` are the channel taps and :math:`b[n]` is the noise.  
-This is also called a Finite Impulse Response (FIR) channel.
+where :math:`d_l` is the delay of path :math:`l` in samples and
+:math:`a_l[n]` its random gain.
 
-Stacking :math:`N` samples into a vector form:
+Drawing from this model once freezes the gains, and what remains is a tap
+vector :math:`h[l]`, i.e. a **finite impulse response (FIR)** channel:
+
+.. math::
+
+   z[n] = \sum_{l=0}^{L-1} h[l]\, x[n-l] + b[n]
+
+where :math:`b[n]` is the noise. Stacking :math:`N` samples in vector form
+gives
 
 .. math::
 
    \mathbf{z} = \mathbf{H}\mathbf{x} + \mathbf{b}
 
-where :math:`\mathbf{H}` is a Toeplitz convolution matrix constructed from the taps.  
-This formulation highlights that **ISI (Inter-Symbol Interference)** is unavoidable in SC systems.  
+where :math:`\mathbf{H}` is the Toeplitz convolution matrix built from the
+taps. This matrix is **not diagonal**, and that is precisely what ISI is.
+Both receivers below are given :math:`h`, so this tutorial is about
+equalization, not about channel estimation.
+
+Implementation
+""""""""""""""
+
+We start with the imports and the parameters of the simulation: 16-QAM,
+1280 symbols, and a sampling frequency of 7.68 MHz.
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 1-30
+
+We then use **EPA**, the 3GPP Extended Pedestrian A profile, one of the
+standardized tables shipped with the library.
+:class:`~comnumpy.core.channels.TappedDelayLineChannel` draws one realization
+of it, and ``info()`` returns what the channel is:
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 36-54
+
+.. code::
+
+   kind: tapped delay line
+   standard: EPA
+   n_paths: 7
+   delays_ns: [0.0, 30.0, 70.0, 90.0, 110.0, 190.0, 410.0]
+   powers_dB: [0.0, -1.0, -2.0, -3.0, -8.0, -17.2, -20.8]
+   rms_delay_spread_ns: 43.12922598416199
+   coherence_bandwidth_Hz: 4637226.739785324
+   fs_Hz: 7680000.0
+   n_taps: 4
+   resolvable_delays_samples: [0, 1, 3]
+
+The profile has seven arrivals within 410 ns, but at :math:`f_s = 7.68` MHz
+the receiver can only distinguish **4 taps**: two echoes separated by less
+than one sample period are merged into one. ``plot()`` draws either reading
+of the same vector, the impulse response or the frequency response, on a
+linear or a decibel scale:
+
+.. image:: img/one_shot_ofdm_fig1.png
+   :width: 100%
+   :align: center
+   :alt: EPA impulse response and transfer function
+
+.. code::
+
+   |H| spans 12.4 dB across 7.68 MHz
+
+The channel varies by 12 dB between its best and its worst frequency. No
+subcarrier is annihilated, but the channel is clearly not flat, and the
+receiver has to deal with it.
+
+.. note::
+
+   :doc:`multipath` introduces the catalogue properly: where these delays
+   and powers come from, what a delay spread is, and how it sizes the cyclic
+   prefix used below.
 
 
 Single-Carrier Communication Chain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The SC chain is defined as:
-
-.. mermaid:: mermaid/ofdm_single_carrier.mmd
-
-That diagram is not drawn by hand: it is ``simple_chain.to_mermaid()``,
-exported by the script at the end of its run (decision D33c). The block
-names are the ones the code uses, and a dashed outline marks a tapped
-block -- so the picture cannot say something the chain does not.
-
-At the receiver, we apply a **Zero-Forcing (ZF) equalizer**:
+We first send 16-QAM symbols through the channel and equalize them with a
+**Zero-Forcing (ZF) equalizer**. Since :math:`\mathbf{H}` is known, the
+estimate is the least-squares solution
 
 .. math::
 
    \widehat{\mathbf{x}} = \mathbf{H}^{\dagger}\mathbf{z}
+   = \mathbf{x} + \mathbf{H}^{\dagger}\mathbf{b}
 
-where :math:`\mathbf{H}^{\dagger}` is the pseudo-inverse of :math:`\mathbf{H}`.
+where :math:`\mathbf{H}^{\dagger}` is the pseudo-inverse of
+:math:`\mathbf{H}`. The interference is removed exactly. What remains is the
+noise, amplified where the channel is weak and spread over the whole block.
+The cost is the pseudo-inverse of an :math:`(N+L-1) \times N` matrix, i.e.
+:math:`O(N^3)`.
 
 Implementation
 """"""""""""""
 
-The chain is implemented in **comnumpy** as follows:
-
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 30-37
+   :lines: 58-79
 
 Results
 """""""
 
-We evaluate the performance by computing the SER and the execution time,
-then plot the constellation before and after equalization:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 39-55
-
-For the SC chain, we obtain:
-
 .. code::
 
-   SER: 0.12109375
-   elapsed time: 1.70 s
+   single carrier: SER 0.0117, 1979 ms
 
-Twelve percent of the symbols are wrong, and it took more than a second of
-computation for 1280 symbols. Both numbers matter. The error rate is the
-notch: zero forcing inverts the channel, so where :math:`|H(f)|` is small it
-multiplies the noise by :math:`1/|H(f)|`, and that amplified noise is spread
-over the whole block.
-
-That notch is worth looking at rather than taking on faith, because
-everything below is a reaction to it. The same taps, as an impulse response
-and as a transfer function:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 108-137
-
-.. image:: img/one_shot_ofdm_fig3.png
+.. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
    :align: center
-   :alt: EPA impulse response and its transfer function
+   :alt: Received constellation, before and after equalization
 
-.. code::
-
-   channel: 35.0 dB peak-to-null across 7.68 MHz, 17 of 128 subcarriers more
-   than 10 dB down; 1/tau_rms = 23.2 MHz against 60.0 kHz of subcarrier spacing
-
-**35 dB between the best and the worst frequency.** That is the whole
-problem in one number: a single-carrier receiver has to undo all of it at
-once, and the 17 subcarriers sitting more than 10 dB down are where zero
-forcing amplifies noise instead of removing distortion.
-
-The last comparison is why OFDM works at all. The channel changes over
-roughly 23 MHz, while a subcarrier is 60 kHz wide -- nearly four hundred
-times narrower. Across one subcarrier :math:`H(f)` is therefore flat, so the
-frequency-selective channel becomes a few hundred *flat* channels, each
-undone by dividing by one complex number. The transform below is what turns
-one hard problem into many easy ones, and this figure is the reason it is
-allowed to. The second number is the price of doing it this way --
-the equalizer builds the :math:`(N + L - 1) \times N` convolution matrix and
-pseudo-inverts it, which costs :math:`O(N^3)`.
-
-.. image:: img/one_shot_ofdm_fig1.png
-   :width: 100%
-   :align: center
-   :alt: Constellations before and after equalization (Single Carrier)
+On the left, the constellation has disappeared: each sample is a mixture of
+four consecutive symbols, and no decision region survives this. On the right,
+the equalizer has restored the sixteen clusters. Note the second number:
+nearly two seconds for 1280 symbols.
 
 
 OFDM Communication Chain
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-In SC systems, equalization requires matrix inversion, which is computationally expensive.
-OFDM transforms the channel into a set of parallel flat-fading subchannels,
-each equalized with a **simple one-tap filter**.
-This drastically reduces computational complexity and improves performance.
-
-The OFDM chain can be visualized as:
-
-.. mermaid:: mermaid/ofdm_chain.mmd
-
-``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains, and they
-are drawn from their own ``chain`` attribute rather than described:
-
-* Transmitter (TX)
-
-.. mermaid:: mermaid/ofdm_transmitter.mmd
-
-* Receiver (RX)
-
-.. mermaid:: mermaid/ofdm_receiver.mmd
-
-The diagram above is not drawn by hand. It is what the chain says about
-itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
-script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 97-103
-
-Key blocks, under the names the diagrams show:
-
-- ``Serial2Parallel`` / ``Parallel2Serial``: reshape between the serial
-  stream and the parallel blocks OFDM works on.
-- ``IFFTProcessor`` / ``FFTProcessor``: transform between the frequency and
-  the time domain.
-- ``CyclicPrefixer`` / ``CyclicPrefixRemover``: add and remove the cyclic
-  prefix that turns the linear convolution into a circular one.
-- ``CarrierAllocator`` / ``CarrierExtractor``: place the data and pilot
-  symbols on their subcarriers, and take them back.
-- ``FrequencyDomainEqualizer``: one complex division per subcarrier.
-
-Mathematically, the received vector is:
+Rather than inverting :math:`\mathbf{H}`, OFDM **diagonalizes** it. A
+circulant matrix is diagonalized by the DFT, and a cyclic prefix -- the last
+:math:`N_{cp}` samples of each block, repeated in front of it -- is what
+turns the linear convolution of the channel into a circular one. In the
+frequency domain the channel is then one complex number per subcarrier:
 
 .. math::
 
-   \mathbf{z} = \mathbf{D}\mathbf{x} + \mathbf{n}
+   Z[k] = H[k]\, X[k] + B[k], \qquad k = 0, \dots, N_{sub}-1
 
-with :math:`\mathbf{D} = \mathrm{diag}(H[0], H[1], \dots, H[N-1])`,  
-where :math:`H[k]` is the channel frequency response.  
-Thus, OFDM reduces equalization to a **diagonal system**.
+so that equalization is a single division per subcarrier,
+:math:`\widehat{X}[k] = Z[k]/H[k]`. No matrix is inverted, and the two
+transforms cost :math:`O(N \log N)`.
+
+This requires :math:`H(f)` to be constant across one subcarrier. The channel
+tells us whether it is: its coherence bandwidth is 4.6 MHz, against a
+subcarrier spacing of :math:`7.68\,\text{MHz}/128 = 60` kHz, seventy times
+narrower. The prefix must also be longer than the channel,
+:math:`N_{cp} \geq L`: here :math:`N_{cp} = 10` for 4 taps.
 
 Implementation
 """"""""""""""
 
-The OFDM chain in **comnumpy** is implemented as:
+The OFDM chain is the single-carrier one with a transmitter block added
+before the channel and a receiver block after it:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 59-69
+   :lines: 82-105
+
+.. mermaid:: mermaid/ofdm_chain.mmd
+
+The diagram is not drawn by hand. It is what the chain says about itself --
+``ofdm_chain.to_mermaid()`` (decision D33c) -- exported by the script, so
+the block names are the ones the code uses and a dashed outline marks a
+tapped block:
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 150-153
+
+``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains:
+serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
+on one side; the same in reverse, closed by a one-tap
+``FrequencyDomainEqualizer``, on the other.
 
 Results
 """""""
 
-We compute the SER and runtime, then plot the received constellation:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 71-84
-
-For the OFDM chain, we obtain:
-
 .. code::
 
-   SER: 0.04140625
-   elapsed time: 0.0015 s
+   OFDM          : SER 0.0406, 1.11 ms (1791 times faster)
 
-Three times fewer errors, in **a thousandth** of the time: 1.5 ms against
-1.70 s for the same 1280 symbols. And the time ratio is not a constant -- the
-single-carrier equalizer grows as :math:`N^3` while OFDM grows as
-:math:`N \log N` -- so the comparison only gets more lopsided with the block
-size. That is the reason wideband receivers are built this way.
-
-Where the ranking comes from, and where it flips
-
-
-One operating point is not a conclusion, so the script runs both chains again
-over a range of noise variances:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 86-95
-
-.. code::
-
-   sigma2     single carrier      OFDM     |H| spans 57
-     0.0150           0.6242    0.1062
-     0.0080           0.4617    0.0758
-     0.0040           0.2156    0.0469
-     0.0020           0.0539    0.0305
-     0.0010           0.0023    0.0211
-     0.0005           0.0000    0.0141
-
-The ranking **crosses over**, and the reason is structural rather than
-numerical. Both receivers are zero forcing, so both amplify the noise by
-:math:`1/|H|` where the channel is weak; what differs is *where that
-amplified noise goes*.
-
-The single-carrier equalizer inverts a **linear** convolution: :math:`N + L -
-1` observations for :math:`N` unknowns, an overdetermined system whose
-least-squares solution never divides by exactly zero, and whose residual noise
-is spread over every symbol of the block. OFDM inverts a **circular** one: the
-cyclic prefix makes the system exactly determined, :math:`N` equations for
-:math:`N` unknowns, one per subcarrier -- so a subcarrier that falls in the
-notch is divided by a small number and nothing else can help it.
-
-Concentrated damage wins at low SNR and loses at high SNR. At
-:math:`\sigma^2 = 0.015` everything is marginal and spreading the enhanced
-noise over all 1280 symbols ruins them all -- six symbols in ten -- while
-OFDM only ruins the handful of subcarriers in the notch. By
-:math:`\sigma^2 = 0.001` the ranking has reversed: the spread noise has
-fallen below the decision threshold almost everywhere and the single carrier
-is down to 2 errors per thousand, while OFDM is stuck at 21, because those
-subcarriers are dead whatever the SNR. That is an **error floor**.
-
-That floor is not a defect of the model, it is the reason no real OFDM system
-is uncoded. A code spread across the subcarriers repairs exactly the carriers
-the notch killed -- and the FFT is what makes the receiver affordable in the
-first place.
-
-.. image:: img/one_shot_ofdm_fig2.png
+.. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
    :align: center
-   :alt: Constellation at OFDM receiver
+   :alt: OFDM constellation after one-tap equalization
+
+The two numbers point in opposite directions: three and a half times as many
+errors, in a thousandth of the time.
+
+
+Monte Carlo Evaluation
+^^^^^^^^^^^^^^^^^^^^^^
+
+A single operating point is not a conclusion, so we run both chains over a
+range of SNR values:
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 107-126
+
+.. code::
+
+   SNR [dB]  single carrier      OFDM
+          6          0.6273    0.5234
+          8          0.5270    0.3953
+         10          0.4297    0.2973
+         12          0.2707    0.1980
+         14          0.1512    0.1426
+         16          0.0656    0.0672
+         18          0.0152    0.0383
+         20          0.0020    0.0195
+
+.. image:: img/one_shot_ofdm_fig4.png
+   :width: 100%
+   :align: center
+   :alt: SER against SNR for both receivers
+
+The two curves **cross** near 15 dB, and the reason is structural rather than
+numerical. Both receivers are zero forcing, so both divide by :math:`|H|`;
+what differs is where the amplified noise goes.
+
+The single-carrier equalizer inverts a **linear** convolution: :math:`N+L-1`
+observations for :math:`N` unknowns, an overdetermined system whose residual
+noise is spread over every symbol of the block. OFDM inverts a **circular**
+one: exactly :math:`N` equations for :math:`N` unknowns, one per subcarrier,
+so a subcarrier that falls low is divided by a small number and nothing else
+can compensate for it.
+
+Spreading the damage is the better strategy at high SNR, and the worse one at
+low SNR. Above the crossing point, the single carrier is about 2 dB better at
+a given error rate. OFDM also spends 7 % of its channel uses on the cyclic
+prefix (10 samples per block of 128), which accounts for 0.3 dB of that gap.
+
+**Uncoded, OFDM is therefore the worse receiver.** In practice this is never
+the operating condition: because the damage is concentrated on a few
+subcarriers instead of being spread, a code applied *across* subcarriers
+repairs exactly the ones the channel put in a hole. This is why no real OFDM
+system is uncoded, and why the comparison above is its worst case.
+
+
+Computational Cost
+^^^^^^^^^^^^^^^^^^
+
+The case for OFDM is in the other column. We measure both receivers as the
+block length grows:
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 128-148
+
+.. code::
+
+        N   single carrier      OFDM     ratio
+      128           6.7 ms    0.72 ms        9
+      256          28.7 ms    0.83 ms       34
+      512         119.6 ms    0.81 ms      147
+     1024         831.8 ms    0.96 ms      868
+
+.. image:: img/one_shot_ofdm_fig5.png
+   :width: 100%
+   :align: center
+   :alt: Receiver runtime against block length
+
+The single-carrier receiver grows with the block length; the OFDM one does
+not move, since its work per symbol is one FFT and one division whatever the
+block size. At :math:`N = 1024` the ratio is already three orders of
+magnitude, and it widens with every doubling. A 20 MHz LTE carrier equalizes
+1200 subcarriers every 70 µs; no version of that pseudo-inverts a matrix.
 
 
 Conclusion
 ^^^^^^^^^^
 
-You have compared the two ways of undoing a multipath channel, on the same
-realization of it.
+This tutorial compared the two ways of undoing a multipath channel, on one
+realization of a standardized profile.
 
 You have learned how to:
 
-- Model a frequency-selective FIR channel in ``comnumpy``.
-- Simulate both SC and OFDM systems on the same channel realization.
-- Apply ZF equalization (SC) vs. one-tap equalization (OFDM).
-- Compare the two in symbol error rate *and* in computational cost, and see
-  that the second is where the difference lies.
+- Model a multipath channel, and read its properties from ``info()`` and
+  ``plot()`` instead of recomputing them.
+- Simulate both receivers on the same channel realization.
+- Apply ZF equalization (SC) and one-tap equalization (OFDM).
+- Compare them in symbol error rate **and** in computational cost.
 
 Key takeaway:
 **OFDM turns a frequency-selective channel into a set of flat subchannels, so
-equalization becomes one complex division per subcarrier instead of an**
-:math:`N \times N` **matrix inversion. That is what makes wideband receivers
-affordable; the per-subcarrier error rate it gives up is bought back by coding
-across the subcarriers.**
+that equalization becomes one complex division per subcarrier instead of a
+matrix inversion. Uncoded, it is the worse receiver; it is also the only one
+that scales, and coding across the subcarriers gives back what it gave up.**
 
-Two questions are left open, and they are the next two tutorials.
-:doc:`ofdm_papr` asks what this waveform costs at the *transmitter* -- summing
-128 subcarriers produces peaks an amplifier has to survive. And
-:doc:`multipath` asks where ``N_cp = 10`` came from: the cyclic prefix has to
-cover the channel, so its length is a property of the environment, and the
-environments are tabulated.
-
+Two questions remain open, and they are the next two tutorials.
+:doc:`ofdm_papr` asks what this waveform costs at the *transmitter*: summing
+128 subcarriers produces peaks that an amplifier must survive. And
+:doc:`multipath` asks where :math:`N_{cp} = 10` came from: the cyclic prefix
+has to cover the channel, so its length is a property of the environment, and
+the environments are tabulated.

@@ -285,9 +285,13 @@ def plot_kde(x: np.ndarray, *, bw_adjust: float = 1.0, thresh: float = 0.05,
 
 # Two detectors that are equivalent -- a sphere decoder and the maximum
 # likelihood search it accelerates -- produce the *same* curve, and one
-# hidden under the other reads as a missing simulation. Hollow markers of
-# different shapes stay legible when they are exactly superposed.
+# hidden under the other reads as a missing simulation. Different shapes
+# are not enough on their own (a triangle sits inside a diamond), so the
+# markers are hollow and grow: a later curve drawn on top of an earlier
+# one rings it instead of hiding it, whatever the order.
 _MARKERS = ("o", "s", "^", "v", "D", "P", "X", "*")
+_MARKER_SIZE = 6.0
+_MARKER_GROWTH = 1.6
 
 
 def plot_error_rate(x: np.ndarray,
@@ -310,9 +314,10 @@ def plot_error_rate(x: np.ndarray,
     was seen means the estimate ran out of samples, not that the error
     rate is zero, and a logarithmic axis has no place to put it.
 
-    Each measured curve gets its own marker shape, so that two detectors
-    which are supposed to agree -- and therefore plot on top of each
-    other -- can still be told apart.
+    Each measured curve gets its own marker shape, and a slightly larger
+    one than the curve before it, so that two detectors which are
+    supposed to agree -- and therefore plot on top of each other -- can
+    still be told apart: the later one rings the earlier one.
 
     Parameters
     ----------
@@ -387,6 +392,7 @@ def plot_error_rate(x: np.ndarray,
         style = "" if name in reference else "-"
         line, = ax.plot(abscissa[seen], values[seen], style,
                         marker=_MARKERS[index % len(_MARKERS)],
+                        markersize=_MARKER_SIZE + _MARKER_GROWTH * index,
                         fillstyle="none", label=name or "simulation")
         colors[name] = line.get_color()
     for name, values in reference.items():

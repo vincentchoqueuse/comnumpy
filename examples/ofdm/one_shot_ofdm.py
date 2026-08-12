@@ -1,137 +1,153 @@
-import numpy as np
-import matplotlib.pyplot as plt
+"""Single-carrier equalization against OFDM, on one EPA channel.
+
+Run from this directory: it writes the tutorial's figures and diagrams
+into ../../docs/tutorials/.
+"""
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from comnumpy import sweep
 from comnumpy.core import Sequential
-from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
-from comnumpy.core.channels import (AWGN, FIRChannel,
-                                    TappedDelayLineChannel)
-from comnumpy.core.fading import get_delay_profile
+from comnumpy.core.channels import AWGN, FIRChannel, TappedDelayLineChannel
 from comnumpy.core.compensators import LinearEqualizer
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.fading import get_delay_profile
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser
-from comnumpy.core.visualizers import plot_iq
-from comnumpy.ofdm.chains import OFDMTransmitter, OFDMReceiver
+from comnumpy.core.utils import get_alphabet
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
+from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
 
 img_dir = "../../docs/tutorials/img/"
+mermaid_dir = "../../docs/tutorials/mermaid/"
 
 M = 16
 N = 1280
 fs = 7.68e6
-sigma2 = 0.015
+snr_dB = 18
 alphabet = get_alphabet("QAM", M)
 
-channel_model = TappedDelayLineChannel(get_delay_profile("EPA"), fs=fs,
-                                       seed=18, name="sounder")
-h = channel_model.impulse_response()
-print(f"EPA at {fs/1e6:.2f} MHz: {len(h)} taps, delay spread "
-      f"{get_delay_profile('EPA').rms_delay_spread_ns:.0f} ns")
+# --- the channel -----------------------------------------------------
+# EPA is the 3GPP Extended Pedestrian A profile; the block draws one
+# realization of it. The channel says what it is rather than being
+# described from outside.
+channel = TappedDelayLineChannel(get_delay_profile("EPA"), fs=fs, seed=8)
+for key, value in channel.info().items():
+    print(f"{key}: {value}")
 
-simple_chain = Sequential([
+# Sounding the model with an impulse gives the realization as a tap
+# vector -- which is what both receivers below are given.
+h = channel.impulse_response()
+
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+channel.plot("impulse", ax=axes[0])
+channel.plot("frequency", scale="dB", ax=axes[1])
+axes[0].set_title("one realization of EPA")
+axes[1].set_title("what each frequency sees")
+plt.tight_layout()
+plt.savefig(f"{img_dir}/one_shot_ofdm_fig1.png")
+
+gain_dB = 20 * np.log10(np.abs(np.fft.fft(h, 128)))
+print(f"\n|H| spans {gain_dB.max() - gain_dB.min():.1f} dB across "
+      f"{fs / 1e6:.2f} MHz")
+
+# --- the problem -----------------------------------------------------
+# Send 16-QAM straight through it and look at what arrives.
+sc_chain = Sequential([
         SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet),
         FIRChannel(h),
-        AWGN(sigma2=sigma2, name="data_rx"),
+        AWGN(snr_dB=snr_dB, name="data_rx"),
         LinearEqualizer(h, method="zf", name="data_rx_eq"),
         SymbolDemapper(alphabet)
     ], taps=["data_tx", "data_rx", "data_rx_eq"])
 
-simple_chain.seed(1)
-start_time = time.time()
-s_rx = simple_chain(N)
-stop_time = time.time()
+sc_chain.seed(1)
+start = time.perf_counter()
+detected = sc_chain(N)
+sc_time = time.perf_counter() - start
+sc_ser = compute_ser(sc_chain.tap("data_tx"), detected)
+print(f"single carrier: SER {sc_ser:.4f}, {sc_time * 1e3:.0f} ms")
 
-s_tx = simple_chain.tap("data_tx")
-ser = compute_ser(s_tx, s_rx)
-elapsed_time = stop_time - start_time
-print(f"SER: {ser}")
-print(f"elapsed time: {elapsed_time} s")
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
+for index, (block, title) in enumerate(
+        [("data_rx", "received"), ("data_rx_eq", "after ZF equalization")]):
+    plot_iq(sc_chain.tap(block), reference=alphabet, title=title,
+            ax=axes[index])
+plt.tight_layout()
+plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
-for indice, processor_name in enumerate(["data_rx", "data_rx_eq"]):
-    plot_iq(simple_chain.tap(processor_name), reference=alphabet,
-            title=f"Received signal ({processor_name})", ax=axes[indice])
-    axes[indice].set_xlim([-2, 2])
-    axes[indice].set_ylim([-2, 2])
-
-plt.savefig(f"{img_dir}/one_shot_ofdm_fig1.png")
-
+# --- the other strategy ----------------------------------------------
 N_carrier = 128
 N_cp = 10
 ofdm_chain = Sequential([
         SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet),
-        OFDMTransmitter(N_carrier, N_cp),   # <- add OFDM transmitter
+        OFDMTransmitter(N_carrier, N_cp),
         FIRChannel(h),
-        AWGN(sigma2=sigma2),
-        OFDMReceiver(N_carrier, N_cp, h=h, name="data_rx"), # <- add OFDM receiver
+        AWGN(snr_dB=snr_dB, name="data_rx"),
+        OFDMReceiver(N_carrier, N_cp, h=h, name="data_rx_eq"),
         SymbolDemapper(alphabet)
-    ], taps=["data_tx", "data_rx"])
+    ], taps=["data_tx", "data_rx_eq"])
 
 ofdm_chain.seed(1)
-start_time = time.time()
-s_rx = ofdm_chain(N)
-stop_time = time.time()
+start = time.perf_counter()
+detected = ofdm_chain(N)
+ofdm_time = time.perf_counter() - start
+ofdm_ser = compute_ser(ofdm_chain.tap("data_tx"), detected)
+print(f"OFDM          : SER {ofdm_ser:.4f}, {ofdm_time * 1e3:.2f} ms "
+      f"({sc_time / ofdm_time:.0f} times faster)")
 
-s_tx = ofdm_chain.tap("data_tx")
-data_rx = ofdm_chain.tap("data_rx")
-ser = compute_ser(s_tx, s_rx)
-elapsed_time = stop_time - start_time
-print(f"SER: {ser}")
-print(f"elapsed time: {elapsed_time} s")
-
-plot_iq(data_rx, reference=alphabet, title="OFDM Chain: received data")
-plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
-
-print("sigma2     single carrier      OFDM     |H| spans "
-      f"{np.max(np.abs(np.fft.fft(h, N_carrier))) / np.min(np.abs(np.fft.fft(h, N_carrier))):.0f}")
-for variance in [0.015, 0.008, 0.004, 0.002, 0.001, 0.0005]:
-    row = []
-    for chain, block in ((simple_chain, "data_rx"), (ofdm_chain, "awgn")):
-        chain.seed(1)
-        chain.set_params(**{f"{block}.sigma2": variance})
-        detected = chain(N)
-        row.append(compute_ser(chain.tap("data_tx"), detected))
-    print(f"{variance:8.4f}   {row[0]:14.4f} {row[1]:9.4f}")
-
-mermaid_dir = "../../docs/tutorials/mermaid/"
-for diagram_name, diagram_chain in [("ofdm_single_carrier", simple_chain),
-        ("ofdm_chain", ofdm_chain),
-        ("ofdm_transmitter", ofdm_chain[2].chain),
-        ("ofdm_receiver", ofdm_chain[5].chain)]:
-    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
-        stream.write(diagram_chain.to_mermaid())
-
-plt.show()
-
-
-# --- the channel itself, which is what the subcarriers are answering to ---
-H = np.fft.fftshift(np.fft.fft(h, N_carrier))
-bins = np.fft.fftshift(np.fft.fftfreq(N_carrier, d=1 / fs)) / 1e6
-gain_dB = 20 * np.log10(np.abs(H))
-
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(11, 4))
-axes[0].stem(np.arange(len(h)) / fs * 1e9, np.abs(h), basefmt=" ")
-axes[0].set_xlabel("delay [ns]")
-axes[0].set_ylabel("|h|")
-axes[0].set_title(f"EPA impulse response, {len(h)} taps")
-axes[0].grid(True, alpha=0.4)
-
-axes[1].plot(bins, gain_dB, lw=1.2)
-axes[1].axhline(0, color="0.6", lw=0.8)
-axes[1].fill_between(bins, gain_dB, -30, where=gain_dB < -10,
-                     color="C3", alpha=0.20, label="more than 10 dB down")
-axes[1].set_xlabel("frequency [MHz]")
-axes[1].set_ylabel(r"$|H(f)|$ [dB]")
-axes[1].set_title("what each subcarrier sees")
-axes[1].set_ylim(-30, 15)
-axes[1].legend()
-axes[1].grid(True, alpha=0.4)
-plt.tight_layout()
+plot_iq(ofdm_chain.tap("data_rx_eq"), reference=alphabet,
+        title="OFDM, after one-tap equalization")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 
-deep = int(np.sum(gain_dB < -10))
-print(f"\nchannel: {gain_dB.max() - gain_dB.min():.1f} dB peak-to-null across "
-      f"{fs/1e6:.2f} MHz, {deep} of {N_carrier} subcarriers more than 10 dB "
-      f"down; 1/tau_rms = {1e3/get_delay_profile('EPA').rms_delay_spread_ns:.1f} MHz "
-      f"against {fs/N_carrier/1e3:.1f} kHz of subcarrier spacing")
+# --- error rate ------------------------------------------------------
+# One operating point is not a conclusion. Each sweep is repeated over
+# independent noise seeds because 1280 symbols only resolve down to
+# 8e-4; the channel is the same throughout, by construction.
+snr_list = np.arange(6, 22, 2)
+measured = {}
+for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
+    runs = [sweep(chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser}, N,
+                  reference="data_tx", seed=trial)["ser"]
+            for trial in range(1, 3)]
+    measured[name] = np.mean(runs, axis=0)
+
+print("\nSNR [dB]  single carrier      OFDM")
+for index, value in enumerate(snr_list):
+    print(f"{value:8d} {measured['single carrier'][index]:15.4f} "
+          f"{measured['OFDM'][index]:9.4f}")
+
+plot_error_rate(snr_list, measured, ylabel="SER",
+                title="16-QAM over one EPA realization")
+plt.savefig(f"{img_dir}/one_shot_ofdm_fig4.png")
+
+# --- what it costs ---------------------------------------------------
+lengths = [128, 256, 512, 1024]
+runtime = {"single carrier": [], "OFDM": []}
+for length in lengths:
+    for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
+        chain.seed(1)
+        start = time.perf_counter()
+        chain(length)
+        runtime[name].append((time.perf_counter() - start) * 1e3)
+
+print("\n     N   single carrier      OFDM     ratio")
+for index, length in enumerate(lengths):
+    sc_ms = runtime["single carrier"][index]
+    ofdm_ms = runtime["OFDM"][index]
+    print(f"{length:6d} {sc_ms:13.1f} ms {ofdm_ms:7.2f} ms {sc_ms/ofdm_ms:8.0f}")
+
+plot_error_rate(np.array(lengths),
+                {name: np.array(values) for name, values in runtime.items()},
+                xlabel="block length $N$", ylabel="receiver runtime [ms]",
+                xscale="log", yscale="log", title="what equalization costs")
+plt.savefig(f"{img_dir}/one_shot_ofdm_fig5.png")
+
+# The diagram is exported from the chain itself (D33c), so the picture
+# cannot say something the code does not.
+with open(f"{mermaid_dir}/ofdm_chain.mmd", "w") as stream:
+    stream.write(ofdm_chain.to_mermaid())

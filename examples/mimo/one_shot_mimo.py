@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -112,40 +114,42 @@ ax.set_ylim(1e-4, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
 
-print("\nvisited nodes per detected vector (16-QAM, 4x4)")
+# --- what the pruning is worth, in seconds ---------------------------
+# 16-QAM on four streams: 65 536 candidates per vector, which is where
+# the two detectors stop costing the same.
+print("\n16-QAM, 4x4: same decision, what it costs")
 big_alphabet = get_alphabet("QAM", 16)
 big_H = rayleigh_channel(4, 4, seed=2)
 big_decoder = SphereDecoder(big_alphabet, H=big_H, name="detector")
-big_chain = Sequential([
-    SymbolGenerator(16, name="tx"),
-    SymbolMapper(big_alphabet),
-    FlatMIMOChannel(big_H, name="channel"),
-    AWGN(sigma2=1.0, name="noise"),
-    big_decoder,
-], taps=["tx"], name="4x4 MIMO, sphere decoder")
+big_detectors = {
+    "ML": MaximumLikelihoodDetector(big_alphabet, H=big_H, name="detector"),
+    "SD": big_decoder,
+}
+elapsed = {name: [] for name in big_detectors}
+for name, detector in big_detectors.items():
+    big_chain = Sequential([
+        SymbolGenerator(16, name="tx"),
+        SymbolMapper(big_alphabet),
+        FlatMIMOChannel(big_H, name="channel"),
+        AWGN(sigma2=1.0, name="noise"),
+        detector,
+    ], taps=["tx"], name=f"4x4 MIMO, {name}")
+    for snr_dB in snr_dB_list:
+        big_chain.seed(4)
+        big_chain.set_params(**{"noise.sigma2": 4 * 10 ** (-snr_dB / 10)})
+        start = time.perf_counter()
+        detected = big_chain((4, 400))
+        elapsed[name].append((time.perf_counter() - start) * 1e3)
+        errors = compute_ser(big_chain.tap("tx"), detected)
+        nodes = (f"{big_decoder.nodes_:7.1f} nodes" if name == "SD"
+                 else f"{16 ** 4:7d} nodes")
+        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][-1]:8.1f} ms  "
+              f"{nodes}   SER {errors:.4f}")
 
-node_counts = []
-for snr_dB in snr_dB_list:
-    big_chain.seed(4)
-    big_chain.set_params(**{"noise.sigma2": 4 * 10 ** (-snr_dB / 10)})
-    detected = big_chain((4, 400))
-    errors = compute_ser(big_chain.tap("tx"), detected)
-    node_counts.append(big_decoder.nodes_)
-    print(f"  {snr_dB:2d} dB   {big_decoder.nodes_:8.1f} nodes   "
-          f"{big_decoder.nodes_ / 16 ** 4:.2e} of the exhaustive search   "
-          f"SER {errors:.4f}")
-
-fig4, ax4 = plt.subplots(figsize=(7, 4))
-ax4.semilogy(snr_dB_list, node_counts, "o-", label="sphere decoder")
-ax4.axhline(16 ** 4, color="k", linestyle="--",
-            label="exhaustive search, $|\\mathcal{M}|^{N_t}$")
-ax4.axhline(4, color="0.5", linestyle=":",
-            label="successive cancellation, $N_t$")
-ax4.set_xlabel("SNR [dB]")
-ax4.set_ylabel("nodes visited per vector")
-ax4.set_title("16-QAM, 4x4: what the pruning removes")
-ax4.legend()
-ax4.grid(True, which="both")
+ax = plot_error_rate(snr_dB_list, {name: np.array(values)
+                                   for name, values in elapsed.items()},
+                     ylabel="detection time for 400 vectors [ms]",
+                     title="16-QAM, 4x4: same decision, what it costs")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig4.png")
 
