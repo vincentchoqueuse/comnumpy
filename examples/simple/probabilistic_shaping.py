@@ -269,11 +269,6 @@ print("Both numbers keep falling as the tolerance is tightened, and that is "
       "simplex, so the iteration only ever approaches it. No "
       "Maxwell-Boltzmann law goes there at all -- at lambda = 0.5 the "
       f"outermost point still keeps {np.min(maxwell_boltzmann(PAM16, lam=0.5)):.1e}.")
-print("\nAnd a budget that does not bind is refused rather than answered:")
-try:
-    blahut_arimoto(PAM16, sigma2=sigma2, energy=3 * energy_of(UNIFORM))
-except ValueError as error:
-    print(f"  {error}")
 
 
 # ===========================================================================

@@ -16,15 +16,10 @@ naming both is the right way in:
 * **Probabilistic shaping** keeps the points on their regular grid and
   changes *how often* each one is sent.
 
-The subject spent twenty-five years going nowhere. Constellation shaping was
-worked out between the late 1980s and the early 1990s and found essentially
-one deployment, the V.34 voice-band modem of 1994. Two things kept it there:
-1.53 dB is not much next to the 10 dB that turbo and LDPC codes started
-delivering from 1993 onwards, and nobody had a practical way to build the
-shaped transmitter anyway. The unlock came in 2015 with **probabilistic
-amplitude shaping** (PAS), which is the architecture Part 5 builds, and
-probabilistic shaping went from curiosity to commercial transponders in
-about four years.
+Shaping was worked out around 1990 and then sat unused for twenty-five
+years: 1.53 dB is not much next to the 10 dB that turbo and LDPC codes began
+delivering in 1993, and nobody had a practical way to build the transmitter.
+That arrived in 2015, and it is the architecture step 2 builds.
 
 .. note::
 
@@ -33,23 +28,20 @@ about four years.
    (:doc:`../getting_started/first_simulation`) and have met mutual
    information somewhere. It sits naturally after :doc:`coding`: shaping and
    coding are the two halves of the same transmitter, which is what the PAS
-   architecture in Part 5 is about.
+   architecture of step 2 is about.
 
 **What you'll learn:**
 
-- The two ways to shape a constellation, and why the probabilistic one is
-  the one that got deployed -- measured, not asserted.
-- What a constellation actually carries over a noisy channel -- entropy,
-  mutual information, and the generalized mutual information a *real*
-  receiver is limited by.
-- Which law maximizes that rate, computed rather than asserted, and how
+- The two ways to shape a constellation, and why the probabilistic one won.
+- **Step 1, the target distribution:** what a constellation carries over a
+  noisy channel, which law carries the most at a given power budget, and how
   close the closed-form Maxwell-Boltzmann law comes to it.
-- How to draw from a law and watch the histogram converge to it.
-- Why a distribution matcher is needed at all, and what a finite block costs.
-- How one fixed FEC code rate becomes a continuum of information rates,
-  which is the benefit that sells shaping in practice.
-- How all of this carries over to a complex constellation, and why shaping
-  is deployed on 256-QAM and not on QPSK.
+- **Step 2, the distribution matcher:** how uniform bits become shaped
+  amplitudes invertibly, what a finite block costs, and how PAS puts the
+  matcher and the code together.
+- What that architecture buys: decibels, and a continuum of data rates out
+  of a single FEC code rate.
+- Why shaping is deployed on 256-QAM and not on QPSK.
 
 
 Introduction
@@ -79,29 +71,27 @@ Define Parameters
 We work on **16-PAM**, written on its natural odd-integer grid
 :math:`\{\pm 1, \pm 3, \ldots, \pm 15\}`. Shaping is a one-dimensional
 operation -- a square QAM constellation is the product of two PAM axes, so
-shaping the axis shapes the QAM, which is what Part 7 makes explicit.
+shaping the axis shapes the QAM, which the last section makes explicit.
 
 The constellation comes from :func:`~comnumpy.core.utils.get_alphabet`
 rather than from ``np.arange``, and that matters twice over. Its order is
-the **Gray labelling**, which the bit-wise rate of Part 2 depends on; and in
+the **Gray labelling**, which the bit-wise rate below depends on; and in
 that order the most significant bit is the *sign* while the three others are
-the *amplitude*, which is exactly the decomposition PAS needs in Part 5.
+the *amplitude*, which is exactly the decomposition PAS needs in step 2.
 
-What ``get_alphabet`` returns is normalized to unit average energy, which is
-the right convention for a link budget and the wrong one for reading a law
-off a figure. Dividing by the smallest amplitude puts the constellation back
-on the odd integers without touching the order, and doing it in one function
-means the same expression works for every size -- writing the scale factor
-out by hand would embed the energy of one particular constellation, which is
-a bug the day the size changes.
+``get_alphabet`` normalizes to unit average energy, which is right for a
+link budget and wrong for reading a law off a figure, so ``pam_grid``
+divides by the smallest amplitude to get back to the odd integers. Doing it
+in a function rather than by hand keeps it correct at every constellation
+size.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
    :lines: 20-45
 
 
-Part 1: two ways to shape a constellation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Two ways to shape a constellation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Before choosing a law it is worth seeing what the alternative looks like.
 Geometric shaping puts the :math:`i`-th of :math:`M` points at the
@@ -141,28 +131,53 @@ point. The probabilistic constellation retunes with the single number in the
 last column: :math:`H` falls to 2.65 bit at 6 dB and rises to 3.95 at 24 dB,
 and the grid never moves.
 
-That is the first of three reasons probabilistic shaping is the one that got
-deployed, and the other two are practical rather than informational (Cho and
-Winzer, 2019):
-
-- **one parameter.** Matching the law to a channel means turning
-  :math:`\lambda`, and Part 3 shows that one number is within a hundredth of
-  a bit of the true optimum. Matching a geometric layout means solving for
-  :math:`M` point locations, with no closed form for an arbitrary channel.
-- **the points stay on the square grid.** Every piece of coherent receiver
-  DSP -- timing, carrier recovery, equalization -- is built for square QAM
-  and keeps working unchanged. Irregular points break those algorithms.
-- **Gray labelling survives.** The bit-wise decoder of the next part needs
-  it, and a geometrically shaped constellation generally cannot be Gray
-  labelled at all.
-
-The rest of this page is therefore about the probabilistic kind, and it
-measures the two things it buys: **sensitivity**, the decibels of Part 4,
-and **rate adaptability**, the continuum of Part 6.
+Retuning by one number is also what makes the probabilistic kind practical:
+the points stay on the square grid, so coherent receiver DSP built for QAM
+keeps working, and the Gray labelling the next part depends on survives.
+Neither is true of a geometric layout. The rest of this page is therefore
+about the probabilistic kind, and measures the two things it buys --
+**sensitivity**, in step 1, and **rate adaptability**, after step 2.
 
 
-Part 2: what a constellation carries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Three objects
+^^^^^^^^^^^^^
+
+The whole subject is three things, and the rest of this page builds them in
+order.
+
+**The Maxwell-Boltzmann distribution** is the target. Every constellation
+point gets a probability falling exponentially with its energy,
+
+.. math::
+
+   P_X(a) = \frac{e^{-\lambda |a|^2}}{\sum_{a'} e^{-\lambda |a'|^2}},
+
+so inner points are sent more often than outer ones, and the single
+parameter :math:`\lambda` sets how much more. Step 1 shows why this family
+and no other, and what it costs against the true optimum.
+
+**The distribution matcher** is the block that produces it. Data arrives as
+uniform bits and has to leave as amplitudes with that distribution,
+invertibly -- an entirely combinatorial problem, and the subject of step 2.
+
+**Probabilistic amplitude shaping** is how the matcher and the error-
+correcting code are put together. The matcher shapes the *amplitudes*; a
+systematic FEC encoder produces parity bits, which are uniform, and those
+become the *signs*. Shaping and coding then sit side by side instead of
+fighting, and turning the matcher's one knob adapts the data rate without
+touching the code.
+
+
+Step 1: designing the target distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first block of the chain is a number: the probability of every
+constellation point. Getting it right means saying what *right* means,
+which is the first thing below, and then solving for it under the power
+budget the transmitter actually has.
+
+What a constellation carries
+"""""""""""""""""""""""""""""
 
 Start with the law nobody chose: the uniform one. Its entropy
 
@@ -216,10 +231,9 @@ samples.
    energy :math:`E` as :math:`\rho = s/(2E)`. Get it wrong and every curve
    on the page moves by 3 dB while still looking perfectly plausible.
 
-   Dividing by :math:`E` is not bookkeeping either. It is what makes the
-   comparison in Part 3 fair: a shaped law spends less energy, so *at equal
-   power* its constellation is wider -- and that extra width is where the
-   entire shaping gain comes from.
+   Dividing by :math:`E` is what makes the comparison below fair: a
+   shaped law spends less, so *at equal power* its constellation is wider --
+   and that width is where the shaping gain comes from.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
@@ -273,27 +287,19 @@ it was asked for.
       22   3.4329   3.4324   0.0005        3.4315         3.4309
       28   3.9755   3.9755   0.0000        3.9749         3.9749
 
-Three things to take from this table.
-
-The **markers land on the lines**: an integral over a Gaussian weight and a
-mean over 120 000 noisy samples agree to a few thousandths of a bit, which
-is the Monte-Carlo error. They share no code path, so this is a real check
-of both.
-
-The **bit-wise interface costs about 0.12 bit** at low SNR and nothing at
-all above 20 dB. With a Gray labelling the loss vanishes as soon as the
-symbol decisions become reliable, because a symbol error then almost always
-flips a single bit.
+The markers land on the lines: an integral over a Gaussian weight and a mean
+over 120 000 noisy samples agree to a few thousandths of a bit, and they
+share no code path. The **bit-wise interface costs about 0.12 bit** at low
+SNR and nothing above 20 dB -- with a Gray labelling a symbol error almost
+always flips a single bit once decisions are reliable.
 
 And the curve **saturates at 4 bit/symbol**, the entropy, however clean the
-channel gets. That ceiling is the first hint that the law matters: a
-constellation cannot carry more than its own entropy, so a law of lower
-entropy buys nothing at high SNR -- and, as the next part shows, quite a lot
-in the middle.
+channel gets. A constellation cannot carry more than its own entropy, which
+is the first hint that the law matters.
 
 
-Part 3: which law maximizes the rate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The best law at a given power budget
+"""""""""""""""""""""""""""""""""""""
 
 Now the design question, and it only has a meaning under a **constraint**.
 A transmitter has a power budget. Among all laws on this constellation
@@ -310,25 +316,12 @@ maximizer spreads outwards and spends more than the uniform law. Everything
 below is therefore indexed by the energy budget, never by the multiplier --
 comparing two laws that spend different energies compares nothing at all.
 
-The problem has no closed form. It is concave, and the classical way to
-solve it is the **Blahut-Arimoto** algorithm (Blahut, 1972; Arimoto, 1972):
-alternate between the posterior :math:`q(i \mid y)` implied by the current
-law and the law implied by that posterior,
-
-.. math::
-
-   q(i \mid y) = \frac{p_i f(y|a_i)}{\sum_j p_j f(y|a_j)},
-   \qquad
-   p_i \;\leftarrow\; \frac{e^{D_i - \lambda |a_i|^2}}
-                           {\sum_j e^{D_j - \lambda |a_j|^2}},
-   \qquad
-   D_i = \int f(y|a_i) \log q(i \mid y)\, \mathrm{d}y
-
-with :math:`\lambda` the Lagrange multiplier of the energy constraint. That
-multiplier is an internal variable: :func:`~comnumpy.core.shaping.blahut_arimoto`
-takes ``energy=`` and finds it by a root-find, because the budget is what an
-engineer actually has. The Gaussian integral is done by Gauss-Hermite
-quadrature rather than sampled, so the answer is deterministic.
+The problem is concave and has no closed form.
+:func:`~comnumpy.core.shaping.blahut_arimoto` solves it numerically, by
+alternating maximization (Blahut, 1972; Arimoto, 1972) with the Gaussian
+integral done by quadrature rather than sampled, so the answer is
+deterministic; ``energy=`` is the budget, and the Lagrange multiplier it
+implies stays inside.
 
 Against it stands the law this library uses everywhere else. Among all laws
 of a given energy, the one of maximum **entropy** is the Maxwell-Boltzmann
@@ -340,14 +333,11 @@ family
    \qquad \lambda \geq 0
 
 which :func:`~comnumpy.core.shaping.maxwell_boltzmann` computes in closed
-form. Note carefully that this answers a *different question*: maximum
-entropy at a given energy, not maximum rate over a given channel. The two
-coincide only in the limit of a Gaussian channel with a Gaussian input. How
-much the difference costs is a number, and the point of this part is to
-measure it rather than cite it (Kschischang and Pasupathy, 1993).
-
-Matching the closed form to a budget is a bisection on a formula, so it is
-free -- and it must refuse a budget it cannot meet, or the comparison would
+form. Note that this answers a *different question* -- maximum entropy at a
+given energy, not maximum rate over a given channel -- and the point of this
+part is to measure what the difference costs rather than cite it
+(Kschischang and Pasupathy, 1993). Matching the closed form to a budget is
+free, and it must refuse a budget it cannot meet, or the comparison would
 silently be against the wrong law:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
@@ -396,7 +386,7 @@ module never mentions Blahut-Arimoto again -- one line of closed form buys
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 262-276
+   :lines: 262-271
 
 .. code::
 
@@ -408,36 +398,21 @@ module never mentions Blahut-Arimoto again -- one line of closed form buys
    the iteration only ever approaches it. No Maxwell-Boltzmann law goes
    there at all -- at lambda = 0.5 the outermost point still keeps 1.1e-49.
 
-   And a budget that does not bind is refused rather than answered:
-     got energy=254.99999999999994, expected a value in
-     [0.9999999999999998, 96.62517172622793] for this alphabet and
-     sigma2=1.3471592135919461. The upper end is what the maximizer spends
-     when nothing constrains it, which on a noisy channel is more than the
-     uniform law's 84.99999999999999: asking for more than that is asking
-     for a constraint that does not bind.
-
 The right-hand panel is the one worth staring at. Same constellation, same
-power budget, a noisier channel -- and the optimal law does something no
-Maxwell-Boltzmann law can: it **abandons points**. Two points the receiver
-cannot tell apart are worth less than one point used twice as often, so the
-maximizer thins the constellation out and spends the freed energy separating
-what is left.
+budget, a noisier channel -- and the optimal law **abandons points**: two
+the receiver cannot tell apart are worth less than one used twice as often,
+so it thins the constellation and spends the freed energy separating what is
+left. No Maxwell-Boltzmann law can do that.
 
-Note what is *not* claimed there. The count and the entropy are quoted at a
-stated tolerance and both keep moving as it is tightened, because the answer
-lives on the boundary of the simplex and an alternating maximization only
-approaches a boundary asymptotically. That is also why
-:func:`~comnumpy.core.shaping.blahut_arimoto` reports the distance it may
-still be from the maximum instead of returning a half-converged law in
-silence -- Blahut's bound is a certificate, and quoting a converged "exactly
-zero" count here would be inventing precision the iteration never delivered.
+Note what is *not* claimed. Both numbers are quoted at a stated tolerance
+and both keep moving as it tightens, because the answer lives on the
+boundary of the simplex and an alternating maximization only approaches a
+boundary asymptotically -- which is why ``blahut_arimoto`` reports how far
+from the maximum it may still be rather than returning a half-converged law
+in silence.
 
-The refusal at the end is the same discipline applied to the budget. Above
-the unconstrained maximizer's own energy a budget constrains nothing, so
-asking for one is a mistake worth naming rather than answering.
-
-Part 4: drawing from the law, and what it buys
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What the law is worth
+""""""""""""""""""""""
 
 Take the Maxwell-Boltzmann law at :math:`H = 3.5` bit/symbol -- half a bit
 of backoff from the uniform 4 -- and simply *draw* from it.
@@ -446,7 +421,7 @@ idealization a real matcher approaches.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 283-286
+   :lines: 278-281
 
 .. code::
 
@@ -459,7 +434,7 @@ the half bit given up.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 288-305
+   :lines: 283-300
 
 .. image:: img/probabilistic_shaping_fig4.png
    :width: 100%
@@ -472,23 +447,18 @@ the half bit given up.
        20000        3.4958             30.043            0.0094
      2000000        3.5005             30.223            0.0011
 
-The histogram converges to the law, and the last column says how fast: the
-total variation distance falls as :math:`1/\sqrt{n}`, a factor ten for every
-hundredfold in symbols. Two hundred symbols already look like the right
-shape and are 8 % away from it; two million are a part in a thousand.
-
-Keep that number in mind for Part 5. A distribution matcher does **not**
-produce this: it maps uniform bits onto a finite set of sequences, so its
-output is neither independent nor exactly :math:`P_X` on a finite block. The
-i.i.d. draw is what a matcher is trying to imitate, which is why it is the
-right thing to use here -- it isolates what the *law* is worth from what a
-finite block costs.
+The histogram converges to the law at :math:`1/\sqrt{n}` -- a factor ten for
+every hundredfold in symbols. Keep that in mind for step 2: a matcher does
+**not** produce this, since it maps bits onto a finite set of sequences, so
+its output is neither independent nor exactly :math:`P_X` on a block. The
+i.i.d. draw is the idealization a matcher imitates, which is why it belongs
+here: it isolates what the *law* is worth from what a finite block costs.
 
 And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 307-333
+   :lines: 302-328
 
 .. image:: img/probabilistic_shaping_fig5.png
    :width: 100%
@@ -496,7 +466,7 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 335-339
+   :lines: 330-334
 
 .. code::
 
@@ -505,31 +475,30 @@ And what the law is worth is this:
    rate 2.5 bit/symbol: uniform needs 15.90 dB, shaped 14.94 dB -- +0.96 dB saved
    rate 3.0 bit/symbol: uniform needs 19.17 dB, shaped 18.12 dB -- +1.05 dB saved
 
-The gain is read **horizontally**, and that is the only reading an engineer
-can budget: at a fixed rate, how much less SNR does the shaped system need?
-Up to 1.05 dB here, growing with the rate, and short of the 1.53 dB
-:math:`10\log_{10}(\pi e/6)` that Forney and Wei (1989) showed is the
-supremum over all one-dimensional distributions. Sixteen points cannot get
-there; Part 7 shows what does.
-
-The gain also **vanishes at both ends**, which the right-hand panel makes
-plain. At low rate there is little to gain, and as the rate approaches
-4 bit/symbol the only law carrying it is the uniform one, so the shaped
-curve must come back to meet it.
+The gain is read **horizontally**, which is the only reading an engineer can
+budget: at a fixed rate, how much less SNR does the shaped system need? Up
+to 1.05 dB here, short of the 1.53 dB :math:`10\log_{10}(\pi e/6)` that
+Forney and Wei (1989) showed is the supremum over all one-dimensional
+distributions -- sixteen points cannot get there, and the last section
+shows what does. It also vanishes at both ends: at low rate there is little to gain,
+and at 4 bit/symbol the only law carrying that rate is the uniform one.
 
 
-Part 5: data is uniform, so the law has to be built
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step 2: matching the distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Why a matcher is needed at all
+"""""""""""""""""""""""""""""""
 
 Everything above assumed a source that emits symbols with probabilities
-:math:`p_i`. No such source exists. Data is compressed, encrypted, or simply
-arbitrary: it is a stream of **uniform, independent bits**, and a code
-downstream will assume exactly that. Something has to convert one into the
-other, invertibly, and that something is a **distribution matcher**.
+:math:`p_i`. No such source exists: data is compressed, encrypted or simply
+arbitrary, so it is a stream of **uniform, independent bits**, and the code
+downstream assumes exactly that. Converting one into the other, invertibly,
+is what a **distribution matcher** does.
 
-The conversion is not statistical, it is combinatorial. Both constructions
-below are *enumerative codes*: they rank and unrank a finite set of blocks
-with integer arithmetic, so ``decode(encode(bits)) == bits`` holds by
+The conversion is combinatorial, not statistical. Both constructions below
+are *enumerative codes* -- they rank and unrank a finite set of blocks with
+integer arithmetic, so ``decode(encode(bits)) == bits`` holds by
 construction rather than by tolerance.
 
 First, the split PAS is built on. The sign of a PAM symbol is equiprobable,
@@ -547,7 +516,7 @@ energy and gains exactly one bit per symbol (Böcherer, Steiner and Schulte,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 346-348
+   :lines: 341-343
 
 **CCDM** fixes the composition. Every output block holds exactly :math:`n_i`
 copies of amplitude :math:`i`, and there are
@@ -566,32 +535,19 @@ rate:
    R_{\mathrm{loss}} = H\!\left(\frac{n_i}{n}\right) - \frac{k}{n}
    \;\xrightarrow[n \to \infty]{}\; 0
 
-**ESS** fixes an energy budget instead (Gültekin *et al.*, 2020). With an
-integer energy :math:`e_i` per amplitude, the code is
-
-.. math::
-
-   \mathcal{C} = \Big\{ (s_1, \ldots, s_n) :
-   \sum_{j=1}^{n} e_{s_j} \leq E_{\max} \Big\}
-
-and counting it is a one-dimensional recursion over the remaining budget,
-
-.. math::
-
-   N_t(E) = \sum_{i} N_{t-1}\!\left(E - e_i\right), \qquad
-   N_0(E) = 1 \;\; \text{for } E \geq 0
-
-from which unranking follows as for CCDM.
+**ESS** fixes an energy budget instead (Gültekin *et al.*, 2020): the code
+is every block with :math:`\sum_j e_{s_j} \leq E_{\max}`, counted by a
+recursion over the remaining budget and unranked as for CCDM.
 
 The comparison between them is not a benchmark, it is an inclusion. Every
 CCDM block costs exactly :math:`E = \sum_i n_i e_i`, so given
-:math:`E_{\max} = E` the sphere **contains every CCDM block** and more
-besides -- the ones that spend less. It therefore carries at least as many
-bits at the same energy, always.
+:math:`E_{\max} = E` the sphere **contains every CCDM block** and the ones
+that spend less besides. It carries at least as many bits at the same
+energy, always.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 353-364
+   :lines: 348-359
 
 .. code::
 
@@ -615,21 +571,21 @@ loses rate twice -- once quantizing the law, once taking the floor of
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 366-378
+   :lines: 361-373
 
 .. image:: img/probabilistic_shaping_fig6.png
    :width: 100%
    :align: center
 
-The transmitter
-"""""""""""""""
+The PAS transmitter
+""""""""""""""""""""
 
 As a chain, PAS is six blocks, and the receiver is the transmitter read
 backwards:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 380-397
+   :lines: 375-392
 
 .. mermaid:: mermaid/shaping_pas.mmd
 
@@ -646,21 +602,19 @@ backwards:
    5    DistributionDematcher        distribution_dematcher (29000,)           int64           34.85
 
 ``summary()`` shows where the rate conversion happens -- 29 000 bits in,
-12 800 amplitudes out -- and where the time goes. The enumerative code costs
+12 800 amplitudes out -- and where the time goes: the enumerative code costs
 some hundred times the channel it feeds, because ranking and unranking are
-exact big-integer arithmetic done one symbol at a time. That is the real
-price of a matcher, and it is why hardware implementations of CCDM are a
-research topic of their own.
+exact big-integer arithmetic done one symbol at a time.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 399-411
+   :lines: 394-406
 
 .. image:: img/probabilistic_shaping_fig7.png
    :width: 100%
    :align: center
 
-Compare this histogram with the one in Part 4. Both approximate the same
+Compare this histogram with the one of step 1. Both approximate the same
 law, but for different reasons: there it was sampling error, shrinking as
 :math:`1/\sqrt{n}`; here it is the *quantization* of the law onto a
 composition of 64 slots, which does not shrink at all as more blocks are
@@ -677,7 +631,7 @@ back, and the dematcher says so rather than returning silent nonsense.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 413-417
+   :lines: 408-412
 
 .. code::
 
@@ -693,10 +647,10 @@ separately: an uncorrected error does not cost one symbol, it costs the
 whole block.
 
 
-Part 6: rate adaptation, from one code rate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What PAS buys: rate adaptation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The decibels of Part 4 are only half of what shaping is deployed for. The
+The decibels of step 1 are only half of what shaping is deployed for. The
 other half is that it makes the rate **continuously adjustable**, and that
 turns out to matter more in practice.
 
@@ -717,11 +671,11 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 424-437
+   :lines: 419-432
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 440-462
+   :lines: 435-457
 
 .. code::
 
@@ -734,7 +688,7 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 464-488
+   :lines: 459-483
 
 .. image:: img/probabilistic_shaping_fig8.png
    :width: 100%
@@ -742,7 +696,7 @@ continuous, **so is the rate, at a fixed code rate**.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 490-494
+   :lines: 485-489
 
 .. code::
 
@@ -753,34 +707,30 @@ continuous, **so is the rate, at a fixed code rate**.
       20.0 dB   H = 3.95 bit  ->  2.95 bit/symbol
       24.0 dB   H = 3.95 bit  ->  2.95 bit/symbol
 
-The left panel is the whole argument in one picture. The red steps are the
-uniform system: five rates, and between two of them the link either runs
-below what the channel would support or does not close at all. Add 2 dB of
-margin at 17 dB and nothing changes until 17.2 dB, where the rate jumps by
-0.67 bit at once. The blue line is a **single** code rate, :math:`R_c = 3/4`,
-with the matcher's entropy turned to suit -- and it tracks the channel
-continuously.
+The left panel is the argument in one picture. The red steps are the uniform
+system: five rates, and between two of them the link runs below what the
+channel supports or does not close at all -- at 17 dB nothing changes until
+17.2 dB, where the rate jumps by 0.67 bit at once. The blue line is a
+**single** code rate with the matcher's entropy turned to suit, and it
+tracks the channel continuously.
 
-The right panel is the knob that does it: :math:`H` climbing from 1 bit at
-2 dB to the full 4 at 20 dB. Above 20 dB it saturates, and so does the rate,
-at :math:`4 - 4 \times 1/4 = 3` bit/symbol -- the ceiling of this code rate
-on this constellation. Past that point a real system changes code rate or
-constellation, and the staircase reappears, one step higher.
+The right panel is the knob that does it: :math:`H` climbing from 1 bit to
+the full 4 at 20 dB, above which both it and the rate saturate, at
+:math:`4 - 4 \times 1/4 = 3` bit/symbol. Past that a real system changes
+code rate or constellation, and the staircase reappears one step higher.
 
 .. note::
 
-   This section reads the achievable rate with
-   :func:`~comnumpy.core.capacity.constellation_capacity`, the *symbol-wise*
-   rate, on both curves. A real bit-metric decoder is limited by the GMI
-   instead, and :func:`~comnumpy.core.capacity.bicm_capacity` computes it --
-   for a uniform input only, which is why it is not used here: the two
-   curves have to be read with the same instrument or the comparison means
-   nothing. The GMI is the smaller of the two, so both curves would move
-   down together; the staircase and the continuum would not change places.
+   Both curves are read with the symbol-wise rate. A real bit-metric decoder
+   is limited by the GMI, which
+   :func:`~comnumpy.core.capacity.bicm_capacity` computes for a uniform
+   input only -- and the two curves must be read with the same instrument.
+   The GMI is smaller, so both would move down together; the staircase and
+   the continuum would not change places.
 
 
-Part 7: complex constellations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Complex constellations
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Everything so far has been one-dimensional, and that was not a
 simplification. A square QAM constellation *is* the product of two
@@ -801,7 +751,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 501-509
+   :lines: 496-504
 
 .. code::
 
@@ -809,7 +759,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 511-519
+   :lines: 506-514
 
 .. image:: img/probabilistic_shaping_fig8.png
    :width: 70%
@@ -818,7 +768,7 @@ of energies -- is unchanged.
 That figure is the picture everyone has seen of probabilistic shaping: a
 square grid whose points fade towards the corners. It is worth knowing that
 it is nothing more than an outer product of the one-dimensional law of
-Part 4 with itself.
+step 1 with itself.
 
 Why high-order formats
 """"""""""""""""""""""
@@ -829,7 +779,7 @@ small constellation has nothing to redistribute.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 521-538
+   :lines: 516-533
 
 .. code::
 
@@ -855,7 +805,7 @@ same time, and why nobody bothers on QPSK.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 540-543
+   :lines: 535-538
 
 
 Conclusion
@@ -890,7 +840,7 @@ From here, you can:
 
 - Put a real code in the loop: :mod:`comnumpy.fec` provides the systematic
   encoder whose parity bits PAS spends on the signs.
-- Replace the i.i.d. source of Part 4 by the matcher itself and measure how
+- Replace the i.i.d. source of step 1 by the matcher itself and measure how
   much of the shaping gain a finite blocklength gives back.
 - Move the whole thing onto a fibre: :doc:`optical_fiber_nonlinearity` and
   :doc:`gn_model` describe a channel where the *power* is what hurts, which
@@ -927,9 +877,8 @@ References
   2020.
 - J. Cho and P. J. Winzer, "Probabilistic constellation shaping for optical
   fiber communications", *J. Lightwave Technol.*, vol. 37, no. 6,
-  pp. 1590-1607, 2019 -- the review this page follows: the geometric/
-  probabilistic split of Part 1 is its Fig. 1, the three practical reasons
-  probabilistic shaping won are its Section I, the PAS architecture of
-  Part 5 is its Fig. 5, and the rate equation of Part 6 is its eq. (5).
+  pp. 1590-1607, 2019 -- the review this page follows for its framing: the
+  geometric/probabilistic split of the introduction, and the rate equation
+  of the rate-adaptation section (its eq. (5)).
 - T. M. Cover and J. A. Thomas, *Elements of Information Theory*, 2nd ed.,
   Wiley, 2006, Chapters 2, 9 and 10.
