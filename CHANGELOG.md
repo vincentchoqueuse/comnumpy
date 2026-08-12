@@ -44,6 +44,25 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — `compute_papr_ccdf_theo`, and a `reduction` on `compute_papr`
+
+The closed-form CCDF of the PAPR lived in the tutorial that drew it,
+which is the wrong place for a *fitted* constant: the expression
+`1 - (1 - exp(-g))**(alpha * N)` is exact for `N` independent samples,
+and oversampled samples are not independent, so `alpha ~ 2.8` is an
+empirical effective count reported for an oversampling of 4 or more.
+`compute_papr_ccdf_theo(threshold, n_sub, oversampling=..., unit=...)`
+takes the oversampling rather than the fitted count, applies `alpha = 1`
+at the Nyquist rate, and logs a warning when it is asked to extrapolate
+between the two -- a domain a script cannot carry.
+
+`compute_papr` gains `reduction={"none", "mean", "max", "min"}`. `axis`
+already named the axis one waveform lies along, so an array of OFDM
+symbols gives one value per symbol; `reduction` says what to do with
+those, which removes the reshaping and the `np.atleast_1d` the examples
+had grown around it. The reduction is applied to the value in the unit
+asked for: the mean of a set of decibels, not the decibel of a mean.
+
 ### Changed — `set_params` accepts scikit-learn's separator
 
 `set_params` was borrowed from scikit-learn but not its separator, so a

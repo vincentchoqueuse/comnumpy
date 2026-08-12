@@ -45,14 +45,14 @@ are simply not seen.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 1-48
+   :lines: 1-42
 
 Let us generate four OFDM symbols and look at the instantaneous power,
 normalized by its own mean:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 51-67
+   :lines: 45-61
 
 .. image:: img/monte_carlo_ofdm_papr_fig1.png
    :width: 100%
@@ -81,7 +81,7 @@ non-zero probability.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 73-99
+   :lines: 67-93
 
 .. image:: img/monte_carlo_ofdm_papr_fig2.png
    :width: 100%
@@ -103,17 +103,18 @@ of one OFDM symbol,
    \mathrm{PAPR} = \frac{\max_n |x[n]|^2}{\mathbb{E}\left[|x[n]|^2\right]}
 
 usually quoted in decibels. :func:`~comnumpy.ofdm.metrics.compute_papr`
-reduces along the axis it is given, so one call returns one value per OFDM
-symbol:
+reduces along the axis one waveform lies on, so a block array gives one value
+per OFDM symbol without any reshaping; ``reduction`` then says what to do
+with those values, which saves reducing them by hand:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 102-106
+   :lines: 96-100
 
 .. code::
 
    PAPR of the four symbols above: 9.55 9.98 8.29 9.56 dB
-   PAPR of the whole record      : 9.98 dB
+   their average                 : 9.34 dB
 
 Note that the four values differ by more than 1.5 dB. The PAPR is itself a
 random variable, so a single number does not characterize the waveform: what
@@ -138,10 +139,16 @@ them stayed below it:
 
    \mathrm{CCDF}(\gamma) = 1 - \left(1 - e^{-\gamma}\right)^{N}
 
-Oversampled samples are not independent, but the same expression still fits
-the measurement with an **effective** number of samples :math:`\alpha N_{sc}`
-with :math:`\alpha \simeq 2.8` (van Nee and Prasad, 2000), which is the form
-used below.
+Oversampled samples are not independent -- the waveform is band limited, so
+neighbouring samples are correlated -- but the same expression still fits the
+measurement with an **effective** number of samples :math:`\alpha N_{sc}`,
+with :math:`\alpha \simeq 2.8` for an oversampling of 4 or more (van Nee and
+Prasad, 2000).
+
+That is :func:`~comnumpy.ofdm.metrics.compute_papr_ccdf_theo`, which takes
+the oversampling rather than the effective count: the fit belongs to the
+library, with its domain of validity, rather than to each script that draws
+the curve.
 
 Implementation
 """"""""""""""
@@ -150,7 +157,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 111-147
+   :lines: 105-141
 
 Results
 """""""
@@ -162,7 +169,7 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 149-152
+   :lines: 142-146
 
 .. code::
 

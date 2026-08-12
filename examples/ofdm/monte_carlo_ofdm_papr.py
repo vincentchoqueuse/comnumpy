@@ -13,7 +13,7 @@ from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import get_alphabet
-from comnumpy.ofdm.metrics import compute_papr
+from comnumpy.ofdm.metrics import compute_papr, compute_papr_ccdf_theo
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 
 img_dir = "../../docs/tutorials/img/"
@@ -22,12 +22,6 @@ N_sc = 1024
 M = 4
 os = 4                                  # oversampling, to see the peaks
 alphabet = get_alphabet("PSK", M)
-alpha = 2.8                             # van Nee and Prasad's effective count
-
-
-def ccdf_theory(threshold, n_sub):
-    """Probability that the PAPR of one OFDM symbol exceeds ``threshold``."""
-    return 1 - (1 - np.exp(-threshold)) ** (alpha * n_sub)
 
 
 def get_transmitter(n_sub, oversampling=os, name="ofdm"):
@@ -101,27 +95,26 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig2.png")
 # --- the metric -------------------------------------------------------
 papr_dB = compute_papr(blocks, unit="dB", axis=-1)
 print("PAPR of the four symbols above: "
-      + " ".join(f"{value:.2f}" for value in np.atleast_1d(papr_dB)) + " dB")
-print(f"PAPR of the whole record      : "
-      f"{compute_papr(signal, unit='dB'):.2f} dB")
+      + " ".join(f"{value:.2f}" for value in papr_dB) + " dB")
+print(f"their average                 : "
+      f"{compute_papr(blocks, unit='dB', axis=-1, reduction='mean'):.2f} dB")
 
 # --- the distribution -------------------------------------------------
 # The CCDF is estimated over many symbols, in batches, because 20 000
 # OFDM symbols at 4096 samples do not have to exist at the same time.
 threshold_dB = np.arange(4, 14, 0.1)
-gamma = 10 ** (threshold_dB / 10)
 n_batches, batch = 20, 1000
 measured, reference = {}, {}
 for n_sub in (256, 1024):
     transmitter = get_transmitter(n_sub)
     transmitter.seed(1)
     values = np.concatenate([
-        np.atleast_1d(compute_papr(transmitter(batch * n_sub), unit="dB",
-                                   axis=-1))
+        compute_papr(transmitter(batch * n_sub), unit="dB", axis=-1)
         for _ in range(n_batches)])
     sorted_dB, ccdf = compute_ccdf(values)
     measured[f"$N_{{sc}}$ = {n_sub}"] = (sorted_dB, ccdf)
-    reference[f"$N_{{sc}}$ = {n_sub}"] = ccdf_theory(gamma, n_sub)
+    reference[f"$N_{{sc}}$ = {n_sub}"] = compute_papr_ccdf_theo(
+        threshold_dB, n_sub, oversampling=os, unit="dB")
 
 # Markers are placed on a logarithmic grid of the ordinate: spacing them
 # evenly in index would crowd the top of the curve and leave the tail --
@@ -147,6 +140,7 @@ plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig3.png")
 
 for n_sub in (256, 1024):
-    solved = brentq(lambda g, n=n_sub: ccdf_theory(g, n) - 1e-3, 1, 100)
+    solved = brentq(lambda t, n=n_sub: compute_papr_ccdf_theo(
+        t, n, oversampling=os, unit="dB") - 1e-3, 0, 20)
     print(f"N_sc = {n_sub:4d}: PAPR exceeded once in a thousand symbols above "
-          f"{10 * np.log10(solved):.2f} dB")
+          f"{solved:.2f} dB")

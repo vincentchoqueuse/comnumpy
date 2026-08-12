@@ -1,9 +1,21 @@
+import logging
+
 import numpy as np
 
-__all__ = ["compute_papr"]
+__all__ = ["compute_papr", "compute_papr_ccdf_theo"]
+
+logger = logging.getLogger(__name__)
+
+# Oversampled samples are correlated, so the PAPR of an oversampled
+# waveform is not that of alpha*N independent ones -- but the same
+# expression fits the measurement with an *effective* count, and 2.8 is
+# the value van Nee and Prasad report for an oversampling of 4 or more.
+_ALPHA_OVERSAMPLED = 2.8
 
 
-def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = None) -> "np.ndarray | float":
+def compute_papr(x_data: object, unit: str = "natural",
+                 axis: "int | None" = None,
+                 reduction: str = "none") -> "np.ndarray | float":
     r"""
     Compute the Peak-to-Average Power Ratio (PAPR) of the input signal.
 
@@ -27,7 +39,10 @@ def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = Non
 
     Axes: *declared axis* -- the peak :math:`x_{max}` and the mean power
     :math:`P_x` are reduced along ``axis`` (default ``None``: over the
-    whole array).
+    whole array). ``axis`` names the axis *one waveform* lies along, so
+    an array of OFDM symbols ``(T, F)`` gives ``T`` values with
+    ``axis=-1``; ``reduction`` then says what to do with those, which
+    saves the caller a second call to reduce them by hand.
 
     Parameters
     ----------
@@ -37,18 +52,27 @@ def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = Non
         The unit for PAPR calculation. It can be either "natural" for natural units or
         "dB" for logarithmic units. Default is "natural".
     axis : int or None, optional
-        The axis along which to compute the PAPR. If None, the PAPR is computed over the
-        entire array. Default is None.
+        The axis one waveform lies along. If None, the PAPR is computed
+        over the entire array. Default is None.
+    reduction : {"none", "mean", "max", "min"}, optional
+        What to do with the several PAPR values an array of waveforms
+        produces. ``"none"`` (default) returns them all; the others
+        reduce them to a scalar, **in the unit asked for** -- the mean of
+        a set of decibel values is not the decibel of their mean, and
+        this returns the first.
 
     Returns
     -------
     float or np.ndarray
-        The computed PAPR value(s). If axis is specified, returns an array of PAPR values.
+        The computed PAPR value(s). With ``axis`` given and
+        ``reduction="none"``, one value per waveform.
 
     Raises
     ------
     TypeError
         If `x_data` is not a NumPy array.
+    ValueError
+        If `reduction` is not one of the values above.
     NotImplementedError
         If the specified unit is not supported.
 
@@ -68,9 +92,22 @@ def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = Non
     >>> data_2d = np.array([[1, 2], [3, 4]])
     >>> print(np.round(compute_papr(data_2d, unit="natural", axis=0), 4))
     [1.3416 1.2649]
+
+    One value per OFDM symbol, or their average, without reshaping
+    anything:
+
+    >>> blocks = np.array([[1, 2, 3, 4], [1, 1, 1, 4]])
+    >>> print(np.round(compute_papr(blocks, unit="dB", axis=-1), 3))
+    [3.291 5.274]
+    >>> print(round(float(compute_papr(blocks, unit="dB", axis=-1,
+    ...                                reduction="mean")), 3))
+    4.282
     """
     if not isinstance(x_data, np.ndarray):
         raise TypeError("Input x_data must be a NumPy array.")
+    if reduction not in ("none", "mean", "max", "min"):
+        raise ValueError(
+            f"reduction is 'none', 'mean', 'max' or 'min', got {reduction!r}.")
 
     x_abs_max = np.max(np.abs(x_data), axis=axis)
     P_moy = np.mean(np.abs(x_data)**2, axis=axis)
@@ -82,4 +119,105 @@ def compute_papr(x_data: object, unit: str = "natural", axis: "int | None" = Non
     else:
         raise NotImplementedError(f"PAPR with unit '{unit}' is not currently implemented")
 
+    if reduction != "none":
+        papr = getattr(np, reduction)(papr)
     return papr
+
+
+def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
+                           oversampling: int = 1,
+                           unit: str = "natural") -> "np.ndarray | float":
+    r"""
+    Probability that the PAPR of one OFDM symbol exceeds a threshold.
+
+    Signal Model
+    ------------
+    After the IDFT each time sample is a sum of :math:`N_{sub}`
+    independent terms, so for :math:`N_{sub}` large the central limit
+    theorem makes it a circular complex Gaussian and its normalized power
+    :math:`\gamma` exponential. If the :math:`N` samples of a symbol were
+    independent, the peak would exceed :math:`\gamma` unless all of them
+    stayed below it:
+
+    .. math::
+
+        \mathrm{CCDF}(\gamma) = \Pr\left\{\mathrm{PAPR} > \gamma\right\}
+        = 1 - \left(1 - e^{-\gamma}\right)^{\alpha N_{sub}}
+
+    Oversampled samples are *not* independent -- the waveform is band
+    limited, so neighbouring samples are correlated -- but the same
+    expression still fits the measurement with an **effective** count
+    :math:`\alpha N_{sub}`. This function uses :math:`\alpha = 1` at the
+    Nyquist rate and :math:`\alpha = 2.8` for an oversampled waveform,
+    the value van Nee and Prasad report for an oversampling of 4 or more.
+
+    Axes: *element-wise* -- the result has the shape of ``threshold``.
+
+    Parameters
+    ----------
+    threshold : np.ndarray or float
+        PAPR threshold :math:`\gamma`, in the unit given by ``unit``.
+    n_sub : int
+        Number :math:`N_{sub}` of modulated subcarriers.
+    oversampling : int, optional
+        Oversampling factor of the waveform the PAPR is measured on.
+        Default 1, i.e. Nyquist-rate sampling.
+    unit : {"natural", "dB"}, optional
+        Unit of ``threshold``, with the convention of
+        :func:`compute_papr`: ``"natural"`` is the amplitude ratio,
+        ``"dB"`` the power ratio in decibels. Default ``"natural"``.
+
+    Returns
+    -------
+    np.ndarray or float
+        The probability of exceeding each threshold.
+
+    Raises
+    ------
+    ValueError
+        If ``n_sub`` or ``oversampling`` is not positive, or if ``unit``
+        is not one of the values above.
+
+    References
+    ----------
+    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
+    Artech House, 2000, Chapter 6 (the :math:`\alpha = 2.8` fit);
+    S. H. Han and J. H. Lee, "An overview of peak-to-average power ratio
+    reduction techniques for multicarrier transmission", IEEE Wireless
+    Communications 12(2), 2005.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> print(round(float(compute_papr_ccdf_theo(8.0, 256, unit="dB")), 4))
+    0.3725
+    >>> print(np.round(compute_papr_ccdf_theo(
+    ...     np.array([8.0, 11.0]), 256, oversampling=4, unit="dB"), 4))
+    [0.7288 0.0024]
+    """
+    if n_sub <= 0:
+        raise ValueError(f"n_sub must be positive, got {n_sub}")
+    if oversampling <= 0:
+        raise ValueError(f"oversampling must be positive, got {oversampling}")
+    if unit == "natural":
+        gamma = np.asarray(threshold, dtype=float) ** 2
+    elif unit == "dB":
+        gamma = 10 ** (np.asarray(threshold, dtype=float) / 10)
+    else:
+        raise ValueError(f"unit is 'natural' or 'dB', got {unit!r}")
+
+    if oversampling == 1:
+        alpha = 1.0
+    else:
+        alpha = _ALPHA_OVERSAMPLED
+        if oversampling < 4:
+            # the fit is reported for an oversampling of 4 or more; below
+            # that the samples are less correlated than it assumes, so
+            # say so (D11) rather than return a number that looks exact
+            logger.warning(
+                "the effective-sample fit alpha = %.1f is reported for an "
+                "oversampling of 4 or more, and this call uses %d: the "
+                "returned CCDF is an extrapolation.",
+                _ALPHA_OVERSAMPLED, oversampling)
+
+    return 1 - (1 - np.exp(-gamma)) ** (alpha * n_sub)
