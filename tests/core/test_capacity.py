@@ -12,6 +12,8 @@ from comnumpy.core.capacity import (_noise_quadrature, awgn_capacity,
                                     bicm_capacity, constellation_capacity,
                                     mimo_ergodic_capacity, outage_capacity,
                                     rayleigh_ergodic_capacity, waterfilling)
+from comnumpy.core.information import compute_mi
+from comnumpy.core.shaping import distribution_entropy, maxwell_boltzmann
 from comnumpy.core.utils import get_alphabet
 
 SNR = np.array([0.01, 0.1, 1.0, 10.0, 100.0, 1000.0])
@@ -81,6 +83,97 @@ class TestConstellationCapacity(unittest.TestCase):
                 self.assertLess(error, 1.5 * promised,
                                 f"{mod}-{order}: {error:.2e} against a "
                                 f"documented {promised:.1e}")
+
+
+class TestANonUniformInput(unittest.TestCase):
+    """``px=``: the same integral, with the input law put back in.
+
+    Shaping makes :math:`P_X` non-uniform, and then the :math:`1/M`
+    factors of the classical expression are no longer constants to pull
+    out of the sum. These tests pin the three things that must hold: the
+    uniform law reproduces the default exactly, the rate saturates at
+    the *entropy* rather than at :math:`\\log_2 M`, and the quadrature
+    agrees with the Monte-Carlo estimator that reads the same quantity
+    off samples.
+    """
+
+    PAM16 = np.real(get_alphabet("PAM", 16))
+
+    def test_a_uniform_px_is_the_default(self):
+        for snr in SNR:
+            with self.subTest(snr=snr):
+                self.assertAlmostEqual(
+                    float(constellation_capacity(self.PAM16, snr,
+                                                 px=np.full(16, 1 / 16))),
+                    float(constellation_capacity(self.PAM16, snr)),
+                    places=12)
+
+    def test_it_saturates_at_the_entropy_not_at_log2_M(self):
+        law = maxwell_boltzmann(self.PAM16, entropy=3.2)
+        self.assertAlmostEqual(
+            float(constellation_capacity(self.PAM16, 1e9, px=law)),
+            distribution_entropy(law), places=6)
+
+    def test_it_agrees_with_the_estimator_read_off_samples(self):
+        """Quadrature against Monte-Carlo, which share no code path."""
+        law = maxwell_boltzmann(self.PAM16, entropy=3.2)
+        energy = float(np.sum(law * self.PAM16 ** 2))
+        rng = np.random.default_rng(4)
+        for snr_dB in (8.0, 14.0, 20.0):
+            sigma2 = energy / 10 ** (snr_dB / 10)
+            with self.subTest(snr_dB=snr_dB):
+                symbols = rng.choice(16, size=400000, p=law)
+                received = (self.PAM16[symbols]
+                            + np.sqrt(sigma2) * rng.normal(size=400000))
+                # a real channel of variance sigma2 is the complex
+                # convention's rho = 1 / (2 sigma2), on both sides
+                measured = compute_mi(received, symbols, self.PAM16,
+                                      snr=1 / (2 * sigma2), px=law)
+                exact = float(constellation_capacity(
+                    self.PAM16, 1 / (2 * sigma2), px=law))
+                self.assertAlmostEqual(measured, exact, delta=0.01)
+
+    def test_a_strongly_shaped_law_does_not_underflow_to_nan(self):
+        """The regression the ``px`` path introduced.
+
+        With a uniform input the ``j = i`` term of the inner sum is
+        ``exp(0) = 1``, so it can never underflow. Weighted by the input
+        law that term becomes :math:`P_X(x_i)`, which a strongly shaped
+        law drives to zero -- and then every term of the sum underflows
+        at once, ``log2`` returns ``-inf``, and the outer ``0 * (-inf)``
+        turns the whole rate into a silent NaN. The log-sum-exp shift is
+        what keeps a term equal to one in every sum.
+        """
+        for entropy in (1.0, 1.02, 1.5, 2.5, 3.5):
+            law = maxwell_boltzmann(self.PAM16, entropy=entropy)
+            energy = float(law @ self.PAM16 ** 2)
+            for snr_dB in (2.0, 10.0, 20.0, 30.0):
+                with self.subTest(entropy=entropy, snr_dB=snr_dB):
+                    rate = float(constellation_capacity(
+                        self.PAM16, 10 ** (snr_dB / 10) / (2 * energy),
+                        px=law))
+                    self.assertTrue(np.isfinite(rate), rate)
+                    self.assertGreaterEqual(rate, 0.0)
+                    self.assertLessEqual(rate, entropy + 1e-9)
+
+    def test_a_law_with_exact_zeros_is_the_smaller_constellation(self):
+        """Points that are never sent must not change the answer."""
+        law = np.zeros(16)
+        law[[6, 7, 8, 9]] = 0.25
+        kept = self.PAM16[[6, 7, 8, 9]]
+        for snr in (1.0, 10.0, 100.0):
+            with self.subTest(snr=snr):
+                self.assertAlmostEqual(
+                    float(constellation_capacity(self.PAM16, snr, px=law)),
+                    float(constellation_capacity(kept, snr)), places=9)
+
+    def test_the_refusals(self):
+        for bad in (np.full(8, 1 / 8),            # wrong length
+                    np.full(16, 1 / 8),           # does not sum to one
+                    np.concatenate([[-0.1, 0.2], np.full(14, 0.9 / 14)])):
+            with self.subTest(px=bad[:3]):
+                with self.assertRaises(ValueError):
+                    constellation_capacity(self.PAM16, 10.0, px=bad)
 
 
 class TestBicmCapacity(unittest.TestCase):

@@ -154,6 +154,7 @@ def awgn_capacity(snr: np.ndarray | float) -> np.ndarray:
 
 
 def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
+                           px: Optional[np.ndarray] = None,
                            n_nodes: int = _GH_NODES,
                            method: str = "gauss-hermite") -> np.ndarray:
     r"""Mutual information of a discrete constellation over AWGN.
@@ -161,8 +162,8 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     Signal Model
     ------------
     A real system does not transmit a Gaussian: it transmits one of
-    :math:`M` constellation points, equiprobably. The achievable rate is
-    then the mutual information
+    :math:`M` constellation points, equiprobably by default. The
+    achievable rate is then the mutual information
 
     .. math::
 
@@ -177,6 +178,21 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     ceiling a coded system using that constellation can approach --
     not the Shannon capacity, which assumes a Gaussian input.
 
+    Probabilistic shaping makes the input non-uniform, and then the
+    :math:`1/M` factors are no longer constants to pull out of the sum:
+
+    .. math::
+
+        I(X; Y) = - \sum_{m} P_X(x_m) \;
+        \mathbb{E}_{b}\left[ \log_2 \sum_{m'} P_X(x_{m'})
+        \exp\left(-\frac{|x_m - x_{m'} + b|^2 - |b|^2}{\sigma^2}\right)
+        \right]
+
+    which is the same expression with ``px`` in both places and reduces
+    to the one above when it is uniform. Passing ``px`` is how the rate
+    of a shaped constellation is read exactly rather than estimated from
+    samples with :func:`~comnumpy.core.information.compute_mi`.
+
     The expectation is a two-dimensional integral against a Gaussian
     weight, evaluated by quadrature -- no random draws. Which rule does
     it is left open by ``method``; see :func:`_noise_quadrature` for what
@@ -189,6 +205,12 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
         :func:`~comnumpy.core.utils.get_alphabet`).
     snr : float or np.ndarray
         Signal-to-noise ratio :math:`\rho = 1/\sigma^2`, linear.
+    px : np.ndarray, optional, keyword-only
+        Input distribution :math:`P_X`, of length :math:`M`. Default
+        (None) is uniform. Note that the SNR is still read from the
+        alphabet's own scale, so a shaped input of lower energy is
+        compared at *lower* power unless the alphabet is rescaled --
+        see :func:`~comnumpy.core.shaping.maxwell_boltzmann`.
     n_nodes : int, optional, keyword-only
         Quadrature nodes per noise dimension, so the cost grows as
         :math:`n^2`. Default 40.
@@ -202,12 +224,15 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     -------
     np.ndarray
         Mutual information in bits per channel use, in
-        :math:`[0, \log_2 M]`.
+        :math:`[0, \log_2 M]` -- at most :math:`H(P_X)` when ``px`` is
+        given.
 
     Raises
     ------
     ValueError
-        If ``method`` is not one of the two rules above.
+        If ``method`` is not one of the two rules above, or if ``px``
+        does not have one non-negative probability per constellation
+        point.
 
     References
     ----------
@@ -229,9 +254,28 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     >>> simpson = constellation_capacity(qam16, 10.0, method="simpson")
     >>> print(np.round([float(gauss), float(simpson)], 3))
     [3.164 3.164]
+
+    A non-uniform input carries less than :math:`\log_2 M` however clean
+    the channel, because it is its entropy that saturates:
+
+    >>> law = np.array([0.4, 0.1, 0.1, 0.4])
+    >>> print(round(float(constellation_capacity(
+    ...     get_alphabet("PSK", 4), 1e6, px=law)), 4))
+    1.7219
     """
     alphabet = np.asarray(alphabet, dtype=complex).ravel()
     order = alphabet.size
+    if px is None:
+        weight = np.full(order, 1.0 / order)
+    else:
+        weight = np.asarray(px, dtype=float).ravel()
+        if weight.size != order or np.any(weight < 0) or not np.isclose(
+                float(np.sum(weight)), 1.0, atol=1e-9):
+            raise ValueError(
+                f"px must hold one non-negative probability per "
+                f"constellation point and sum to one, got {weight.size} "
+                f"values summing to {float(np.sum(weight))} for an "
+                f"alphabet of {order} points.")
     scalar_input = np.ndim(snr) == 0
     snr = np.atleast_1d(np.asarray(snr, dtype=float))
     sigma2 = 1.0 / snr
@@ -243,6 +287,8 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     unit_noise = (grid_r + 1j * grid_i).ravel()     # unit variance per dim
     w2 = w2.ravel()
 
+    with np.errstate(divide="ignore"):
+        log_weight = np.log(weight)      # -inf on a point that is never sent
     diff = alphabet[:, None] - alphabet[None, :]    # (M, M)
     diff2 = np.abs(diff) ** 2
     diff_re, diff_im = np.real(diff), np.imag(diff)
@@ -258,9 +304,23 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
             arg = -(diff2[:, :, None] + 2 * (
                 diff_re[:, :, None] * np.real(block)
                 + diff_im[:, :, None] * np.imag(block))) / s2
-            inner = np.log2(np.sum(np.exp(arg), axis=1))      # (M, q)
-            total += float(np.mean(inner @ w2[start:start + _QUAD_CHUNK]))
-        out[index] = np.log2(order) - total
+            # The inner sum is weighted by P_X, the outer one too: with a
+            # uniform input both weights are 1/M and the two log2(M) they
+            # produce collapse into the closed form written above.
+            #
+            # The shift is not optional once P_X is inside. With a uniform
+            # input the j = i term of the sum is exp(0) = 1, so the sum can
+            # never underflow; weighted, that term is P_X(x_i), which a
+            # strongly shaped law drives to zero -- and then every term of
+            # the sum can underflow at once, log2 returns -inf, and the
+            # outer 0 * (-inf) makes the whole rate NaN. Shifting by the
+            # largest exponent keeps a term equal to one in every sum.
+            shifted = log_weight[None, :, None] + arg
+            top = np.max(shifted, axis=1)                     # (M, q)
+            inner = (top + np.log(np.sum(np.exp(shifted - top[:, None, :]),
+                                         axis=1))) / np.log(2)
+            total += float(weight @ (inner @ w2[start:start + _QUAD_CHUNK]))
+        out[index] = -total
     return out[0] if scalar_input else out
 
 
