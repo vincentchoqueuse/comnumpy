@@ -758,10 +758,16 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
         <span class="c1"># declared by every concrete class; annotating it here would</span>
         <span class="c1"># make it a field of the mixin and reorder theirs</span>
-        <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+        <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+        <span class="c1"># None means &quot;the chain supplies it&quot;: a reference produced</span>
+        <span class="c1"># upstream does not exist yet when the block is built, and</span>
+        <span class="c1"># demanding a placeholder array only to overwrite it before the</span>
+        <span class="c1"># first call is a lie about what the block was configured with.</span>
+        <span class="c1"># The error moves to the call, where the value is really missing.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DataAidedMixin.validate_paths">
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.validate_paths">[docs]</a>
@@ -836,12 +842,26 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``reference=...``; when it is produced by the chain itself, the</span>
 <span class="sd">        edge is declared with ``Sequential(wiring={&quot;block.reference&quot;:</span>
 <span class="sd">        &quot;source&quot;})`` so that each Monte-Carlo run uses its own reference.</span>
+<span class="sd">        Until one of the two has happened, ``reference`` is ``None`` and</span>
+<span class="sd">        this raises.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        np.ndarray</span>
 <span class="sd">            The reference signal array.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotFittedError</span>
+<span class="sd">            If no reference was given and none was wired in.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2"> and was &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;given no reference to fit against. Pass reference= if the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;sequence is known in advance, or declare the edge with &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Sequential(wiring=</span><span class="se">{{</span><span class="s2">&#39;&lt;block_id&gt;.reference&#39;: &#39;&lt;source_id&gt;&#39;</span><span class="se">}}</span><span class="s2">) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;if the chain produces it.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span></div>
 </div>
 
@@ -1520,6 +1540,10 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
     <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># accept anything array-like, a Constellation included</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">y_est</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
@@ -1691,9 +1715,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    reference : np.ndarray</span>
+<span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
-<span class="sd">        the chain itself, declare the edge with</span>
+<span class="sd">        the chain itself, leave it unset and declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;data_aided_fir.reference&quot;: &quot;source&quot;})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    should_fit : bool, optional, keyword-only</span>
@@ -1734,7 +1758,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [1.  0.5 0.  0. ]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_fir&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
@@ -1803,9 +1827,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    reference : np.ndarray</span>
+<span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
-<span class="sd">        the chain itself, declare the edge with</span>
+<span class="sd">        the chain itself, leave it unset and declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;data_aided_phase.reference&quot;: &quot;source&quot;})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    shared : bool, optional, keyword-only</span>
@@ -1842,7 +1866,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [ 0.707107+0.707107j  0.707107-0.707107j -0.707107+0.707107j</span>
 <span class="sd">     -0.707107-0.707107j]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_phase&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a). A scalar when</span>
@@ -1918,9 +1942,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    reference : np.ndarray</span>
+<span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
-<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        itself, leave it unset and declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;complex_gain_compensator.reference&quot;:</span>
 <span class="sd">        &quot;source&quot;})`` instead of freezing an array.</span>
 <span class="sd">    shared : bool, optional, keyword-only</span>
@@ -1971,7 +1995,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y, 6))</span>
 <span class="sd">    [ 1.+1.j  1.-1.j -1.+1.j -1.-1.j]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">extractor</span><span class="p">:</span> <span class="n">DataExtractor</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DataExtractor</span><span class="p">(</span><span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -2061,9 +2085,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    reference : np.ndarray</span>
+<span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
-<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        itself, leave it unset and declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    scale_correction : bool, optional</span>
@@ -2117,7 +2141,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(np.round(DataAidedSimpleSynchronizer(d)(0.5 * x), 6))   # 6 dB attenuation</span>
 <span class="sd">    [ 1. -1.  1.  1.  1. -1.]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">signal_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -2257,9 +2281,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    reference : np.ndarray</span>
+<span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
-<span class="sd">        itself, declare the edge with</span>
+<span class="sd">        itself, leave it unset and declare the edge with</span>
 <span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    scale_correction : bool, optional</span>
@@ -2318,7 +2342,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(synchronizer.delay_, synchronizer.delay_ / synchronizer.up_factor, y.shape)</span>
 <span class="sd">    6 3.0 (4,)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">up_factor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

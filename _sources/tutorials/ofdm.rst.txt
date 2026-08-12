@@ -70,7 +70,7 @@ We start with the imports and the parameters of the simulation: 16-QAM,
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 1-30
+   :lines: 1-28
 
 We then use **EPA**, the 3GPP Extended Pedestrian A profile, one of the
 standardized tables shipped with the library.
@@ -79,7 +79,7 @@ of it, and ``info()`` returns what the channel is:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 36-54
+   :lines: 29-52
 
 .. code::
 
@@ -113,13 +113,6 @@ The channel varies by 12 dB between its best and its worst frequency. No
 subcarrier is annihilated, but the channel is clearly not flat, and the
 receiver has to deal with it.
 
-.. note::
-
-   :doc:`multipath` introduces the catalogue properly: where these delays
-   and powers come from, what a delay spread is, and how it sizes the cyclic
-   prefix used below.
-
-
 Single-Carrier Communication Chain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -143,14 +136,14 @@ Implementation
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 58-79
+   :lines: 53-76
 
 Results
 """""""
 
 .. code::
 
-   single carrier: SER 0.0117, 1908 ms
+   single carrier: SER 0.0117, 1829 ms
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -194,18 +187,7 @@ before the channel and a receiver block after it:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 82-105
-
-.. mermaid:: mermaid/ofdm_chain.mmd
-
-The diagram is not drawn by hand. It is what the chain says about itself --
-``ofdm_chain.to_mermaid()`` (decision D33c) -- exported by the script, so
-the block names are the ones the code uses and a dashed outline marks a
-tapped block:
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 150-153
+   :lines: 77-100
 
 ``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains:
 serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
@@ -217,7 +199,7 @@ Results
 
 .. code::
 
-   OFDM          : SER 0.0406, 1.24 ms (1539 times faster)
+   OFDM          : SER 0.0406, 1.20 ms (1525 times faster)
 
 .. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
@@ -236,7 +218,7 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 107-126
+   :lines: 101-121
 
 .. code::
 
@@ -255,71 +237,16 @@ range of SNR values:
    :align: center
    :alt: SER against SNR for both receivers
 
-The two curves **cross** near 15 dB. That deserves an explanation, because
-the OFDM receiver is not the weaker one -- it is in fact the *optimal* one.
+The two curves **cross** near 15 dB: above it, uncoded OFDM makes *more*
+errors than the single carrier.
 
-Why the one-tap equalizer is already maximum likelihood
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-The DFT is unitary and the cyclic prefix makes the channel circulant, so the
-transformation to the frequency domain loses nothing and leaves the noise
-white. The maximum-likelihood decision over the whole block therefore
-*factorizes* into independent per-subcarrier decisions, and on subcarrier
-:math:`k`
-
-.. math::
-
-   \left|Z_k - H_k X_k\right|^2 = \left|H_k\right|^2
-   \left|\frac{Z_k}{H_k} - X_k\right|^2
-
-Dividing by :math:`H_k` and taking the nearest constellation point is
-therefore exactly :math:`\arg\min_X |Z_k - H_k X|^2`. OFDM's one-tap
-equalizer **is** the maximum-likelihood detector. Single-carrier zero forcing
-is not -- the ML receiver there would be a Viterbi search over the ISI
-trellis, which would beat both.
-
-So the crossing is not "ML against ZF". It is about *which channel* each
-receiver is optimal for.
-
-.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
-   :language: python
-   :lines: 155-175
-
-.. code::
-
-   per-symbol SNR at a nominal 18 dB
-     OFDM  :   8.6 to  21.0 dB
-     SC-ZF :  15.1 to  16.8 dB
-     arithmetic mean of |H|^2 1.809, harmonic mean 0.931
-
-There is the answer. OFDM gives symbol :math:`k` the gain of **one
-frequency**: a subcarrier in a dip sits 8.6 dB down and nothing can help it,
-because the transform that made equalization trivial also removed every
-other frequency's contribution to that symbol. The single-carrier equalizer
-inverts a **linear** convolution -- :math:`N+L-1` observations for :math:`N`
-unknowns -- and spreads the enhanced noise over the whole block, so every
-symbol gets the *same* gain, the harmonic mean of :math:`|H|^2`.
-
-The harmonic mean (0.93) is well below the arithmetic one (1.81), so the
-single carrier is worse on average. But an error rate is not an average of
-SNRs: it is dominated by the *worst* symbols, and OFDM's worst are far worse.
-Narrow-and-mediocre beats wide-and-sometimes-terrible as soon as the SNR is
-high enough for the tail to dominate, which is what the crossing at 15 dB is.
-
-This is the classical argument for single-carrier frequency-domain
-equalization over OFDM (Falconer *et al.*, 2002), and it is why the LTE
-uplink uses DFT-spread OFDM: the extra transform spreads each symbol back
-over the band, recovering the frequency diversity that plain OFDM gives up.
-OFDM also spends 7 % of its channel uses on the cyclic prefix (10 samples per
-block of 128), which accounts for 0.3 dB of the gap.
-
-.. note::
-
-   The cyclic prefix is not the explanation, and it is worth checking rather
-   than assuming: the channel has :math:`L = 4` taps so it needs
-   :math:`N_{cp} \geq 3`, and with the :math:`N_{cp} = 10` used here the
-   noiseless symbol error rate is exactly zero. An insufficient prefix would
-   show up there first.
+The reason is where each receiver puts the damage. OFDM gives subcarrier
+:math:`k` the gain of one frequency, so a subcarrier that falls in a dip is
+lost and nothing in the block can help it. The single-carrier equalizer
+inverts a linear convolution and spreads the enhanced noise over the whole
+block, so every symbol gets the same, mediocre, gain. An error rate is
+dominated by the worst symbols, and OFDM's worst are far worse -- which is
+what the crossing is.
 
 **Uncoded, OFDM is therefore the worse receiver.** In practice this is never
 the operating condition: because the damage is concentrated on a few
@@ -336,15 +263,15 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 128-148
+   :lines: 122-146
 
 .. code::
 
         N   single carrier      OFDM     ratio
-      128           7.3 ms    0.63 ms       12
-      256          31.6 ms    0.78 ms       40
-      512         156.0 ms    1.38 ms      113
-     1024        1052.3 ms    0.92 ms     1145
+      128           8.5 ms    1.01 ms        8
+      256          28.4 ms    0.82 ms       35
+      512         139.1 ms    0.84 ms      166
+     1024         901.0 ms    0.88 ms     1018
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%
@@ -354,7 +281,9 @@ block length grows:
 The single-carrier receiver grows with the block length; the OFDM one does
 not move, since its work per symbol is one FFT and one division whatever the
 block size. At :math:`N = 1024` the ratio is already three orders of
-magnitude, and it widens with every doubling. A 20 MHz LTE carrier equalizes
+magnitude, and it widens with every doubling. (Run times are what they
+are: these were measured on one machine, and the ratio is the robust
+number, not the milliseconds.) A 20 MHz LTE carrier equalizes
 1200 subcarriers every 70 µs; no version of that pseudo-inverts a matrix.
 
 
@@ -378,12 +307,9 @@ that equalization becomes one complex division per subcarrier instead of a
 matrix inversion. Uncoded, it is the worse receiver; it is also the only one
 that scales, and coding across the subcarriers gives back what it gave up.**
 
-Two questions remain open, and they are the next two tutorials.
-:doc:`ofdm_papr` asks what this waveform costs at the *transmitter*: summing
-128 subcarriers produces peaks that an amplifier must survive. And
-:doc:`multipath` asks where :math:`N_{cp} = 10` came from: the cyclic prefix
-has to cover the channel, so its length is a property of the environment, and
-the environments are tabulated.
+One question remains open, and it is the next tutorial. :doc:`ofdm_papr`
+asks what this waveform costs at the *transmitter*: summing 128 subcarriers
+produces peaks that an amplifier must survive.
 
 References
 ^^^^^^^^^^

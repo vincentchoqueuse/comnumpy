@@ -780,7 +780,7 @@ Profiling measures the computational cost of each processor, helping you identif
                                     <span class="n">TappedDelayLineChannel</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_delay_profile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serial2Parallel</span><span class="p">,</span> <span class="n">Parallel2Serial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constellation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_chain_profiling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CarrierAllocator</span><span class="p">,</span> <span class="n">FFTProcessor</span><span class="p">,</span> <span class="n">IFFTProcessor</span><span class="p">,</span> <span class="n">CyclicPrefixer</span><span class="p">,</span> <span class="n">CyclicPrefixRemover</span><span class="p">,</span> <span class="n">CarrierExtractor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrequencyDomainEqualizer</span>
@@ -791,14 +791,13 @@ Profiling measures the computational cost of each processor, helping you identif
 <section id="define-parameters">
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
 <p>Next, we define the communication and channel parameters:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
-<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>          <span class="c1"># Modulation order</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="n">fs</span> <span class="o">=</span> <span class="mf">5e6</span>        <span class="c1"># Sample rate the channel is resolved at</span>
 <span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>       <span class="c1"># Cyclic prefix length</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>      <span class="c1"># Number of symbols</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Noise variance</span>
 
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>  <span class="c1"># Get alphabet for QAM modulation</span>
+<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 <span class="n">allocation</span> <span class="o">=</span> <span class="n">get_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ac-40&quot;</span><span class="p">)</span>  <span class="c1"># 128 subcarriers, from the catalog</span>
 
 <span class="n">N_carriers</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_fft</span>
@@ -820,8 +819,8 @@ Profiling measures the computational cost of each processor, helping you identif
 <p>We build a complete OFDM chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
 This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic prefix handling, channel effects, equalization, and demapping.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
     <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_carrier_data</span><span class="p">),</span>
     <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">allocation</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="n">pilots</span><span class="p">),</span>
     <span class="n">IFFTProcessor</span><span class="p">(),</span>
@@ -835,7 +834,7 @@ This chain includes mapping, carrier allocation, IFFT/FFT processing, cyclic pre
     <span class="n">FrequencyDomainEqualizer</span><span class="p">(</span><span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">),</span>
     <span class="n">CarrierExtractor</span><span class="p">(</span><span class="n">allocation</span><span class="p">),</span>
     <span class="n">Parallel2Serial</span><span class="p">(),</span>
-    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">)</span>
 <span class="p">])</span>
 </pre></div>
 </div>

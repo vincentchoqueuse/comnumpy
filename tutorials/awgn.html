@@ -42,6 +42,7 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 
@@ -693,7 +694,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Monte Carlo Simulation over AWGN Channel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
@@ -806,22 +806,22 @@ uses for every error rate.</p></li>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constellation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_metric_awgn_theo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
 </pre></div>
 </div>
 </section>
 <section id="define-parameters">
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
-<p>Next, we set the simulation parameters: modulation order, number of transmitted symbols,
-and the SNR range to sweep.</p>
+<p>Next, we set the simulation parameters: the number of transmitted symbols,
+the constellation, and the SNR range to sweep. The constellation is one
+object – it carries the alphabet the mapper needs, its order, and the
+closed form we compare against below.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
-<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1000000</span>
-<span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 <span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -837,10 +837,10 @@ and symbol demapping.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="c1"># create chain</span>
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
     <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
-    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
     <span class="p">])</span>
 </pre></div>
 </div>
@@ -917,8 +917,14 @@ at every point:</p>
 <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
                 <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ser_array</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loop  :&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">by_hand</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sweep :&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]))</span>
+<span class="n">loop_line</span> <span class="o">=</span> <span class="s2">&quot;loop  :&quot;</span>
+<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">by_hand</span><span class="p">:</span>
+    <span class="n">loop_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loop_line</span><span class="p">)</span>
+<span class="n">sweep_line</span> <span class="o">=</span> <span class="s2">&quot;sweep :&quot;</span>
+<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
+    <span class="n">sweep_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sweep_line</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span>  <span class="p">:</span> <span class="mf">7.406e-01</span> <span class="mf">3.535e-01</span> <span class="mf">7.237e-03</span>
@@ -936,10 +942,12 @@ parameter that varies has changed.</p>
 </section>
 <section id="theoretical-ser">
 <h3>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h3>
-<p>For comparison, we also compute the theoretical SER curve for QAM modulation over AWGN.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># compute theoretical SER metric</span>
-<span class="n">snr_per_bit</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<span class="n">ser_theo_array</span> <span class="o">=</span> <span class="n">compute_metric_awgn_theo</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">snr_per_bit</span><span class="p">,</span> <span class="s2">&quot;ser&quot;</span><span class="p">)</span>
+<p>For comparison, we ask the constellation for its own closed form. It
+knows its family and its order, so the theory cannot describe a
+modulation other than the one the chain transmits; <code class="docutils literal notranslate"><span class="pre">per=&quot;symbol&quot;</span></code> says
+that the swept SNR is the symbol SNR <code class="docutils literal notranslate"><span class="pre">AWGN(snr_dB=)</span></code> takes, and the
+conversion to <span class="math notranslate nohighlight">\(E_b/N_0\)</span> happens inside.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ser_theo_array</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 </section>
@@ -952,9 +960,10 @@ grid on both decades. A measurement and the theory it is being compared with
 share a colour, so a pair reads as one statement.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot_error_rate draws the measurements as markers and the closed form</span>
 <span class="c1"># as a line of the same colour: the figure every sweep ends with</span>
-<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
-                <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">ser_theo_array</span><span class="p">},</span>
-                <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">modulation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">constellation</span><span class="o">.</span><span class="n">family</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
+                <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_theo_array</span><span class="p">},</span>
+                <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 </pre></div>
 </div>

@@ -610,6 +610,21 @@ Retrieve with <a class="reference internal" href="#comnumpy.core.generics.Sequen
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.elapsed_">
+<span class="sig-name descname"><span class="pre">elapsed_</span></span><a class="headerlink" href="#comnumpy.core.generics.Sequential.elapsed_" title="Link to this definition">#</a></dt>
+<dd><p>Wall time of the last pass, in seconds (data-dependent, hence the
+trailing underscore, decision D23). Every call records it, so
+“how long does this chain take” needs no stopwatch around the
+call site; <a class="reference internal" href="#comnumpy.core.generics.Sequential.profile_execution_time" title="comnumpy.core.generics.Sequential.profile_execution_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">profile_execution_time()</span></code></a> breaks the same number
+down block by block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.wiring">
 <span class="sig-name descname"><span class="pre">wiring</span></span><a class="headerlink" href="#comnumpy.core.generics.Sequential.wiring" title="Link to this definition">#</a></dt>
 <dd><p>Extra data edges, as <code class="docutils literal notranslate"><span class="pre">{&quot;block_id.param&quot;:</span> <span class="pre">&quot;source_block_id&quot;}</span></code>.
@@ -635,6 +650,8 @@ declarative and never hold a reference to another block.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;generator&quot;</span><span class="p">))</span>
 <span class="go">[0 0 3 1 3]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span><span class="o">.</span><span class="n">elapsed_</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -766,7 +783,28 @@ every edge the chain actually has.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.profile_execution_time">
 <span class="sig-name descname"><span class="pre">profile_execution_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.profile_execution_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.profile_execution_time" title="Link to this definition">#</a></dt>
-<dd><p>Start profiling</p>
+<dd><p>Time each block over one pass, keyed by block id.</p>
+<p>The pass is the ordinary one: taps are recorded and the data
+edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so a chain that profiles is
+the chain that runs. The keys are the ids of <a class="reference internal" href="#comnumpy.core.generics.Sequential.block_ids" title="comnumpy.core.generics.Sequential.block_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">block_ids()</span></code></a>,
+so two blocks sharing a name still get one entry each.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>np.ndarray</em>) – Input signal, or the requested size when the chain starts
+with a source block.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict</em> – Seconds spent in each block, in chain order.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">10</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">profile_execution_time</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
+<span class="go">[&#39;generator&#39;, &#39;awgn&#39;]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -864,6 +902,7 @@ every edge the chain actually has.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.name"><code class="docutils literal notranslate"><span class="pre">Sequential.name</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.callbacks"><code class="docutils literal notranslate"><span class="pre">Sequential.callbacks</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.taps"><code class="docutils literal notranslate"><span class="pre">Sequential.taps</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.elapsed_"><code class="docutils literal notranslate"><span class="pre">Sequential.elapsed_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.wiring"><code class="docutils literal notranslate"><span class="pre">Sequential.wiring</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.block_ids"><code class="docutils literal notranslate"><span class="pre">Sequential.block_ids()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.get_module_by_id"><code class="docutils literal notranslate"><span class="pre">Sequential.get_module_by_id()</span></code></a></li>

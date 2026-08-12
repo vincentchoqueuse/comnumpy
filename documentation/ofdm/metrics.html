@@ -471,7 +471,7 @@
 <span id="metrics"></span><h1>Metrics<a class="headerlink" href="#module-comnumpy.ofdm.metrics" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.ofdm.metrics.compute_papr">
-<span class="sig-name descname"><span class="pre">compute_papr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'natural'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/ofdm/metrics.html#compute_papr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.ofdm.metrics.compute_papr" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">compute_papr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'natural'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'none'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/ofdm/metrics.html#compute_papr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.ofdm.metrics.compute_papr" title="Link to this definition">#</a></dt>
 <dd><p>Compute the Peak-to-Average Power Ratio (PAPR) of the input signal.</p>
 <section id="signal-model">
 <h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
@@ -490,7 +490,10 @@ power <span class="math notranslate nohighlight">\(P_x = \mathbb{E}\left[|x[n]|^
 \[\mathrm{PAPR_{dB}} = 10 \log_{10} \left( \frac{x_{max}^2}{P_x} \right)\]</div>
 <p>Axes: <em>declared axis</em> – the peak <span class="math notranslate nohighlight">\(x_{max}\)</span> and the mean power
 <span class="math notranslate nohighlight">\(P_x\)</span> are reduced along <code class="docutils literal notranslate"><span class="pre">axis</span></code> (default <code class="docutils literal notranslate"><span class="pre">None</span></code>: over the
-whole array).</p>
+whole array). <code class="docutils literal notranslate"><span class="pre">axis</span></code> names the axis <em>one waveform</em> lies along, so
+an array of OFDM symbols <code class="docutils literal notranslate"><span class="pre">(T,</span> <span class="pre">F)</span></code> gives <code class="docutils literal notranslate"><span class="pre">T</span></code> values with
+<code class="docutils literal notranslate"><span class="pre">axis=-1</span></code>; <code class="docutils literal notranslate"><span class="pre">reduction</span></code> then says what to do with those, which
+saves the caller a second call to reduce them by hand.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param x_data<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Input signal <span class="math notranslate nohighlight">\(x[n]\)</span> for which the PAPR needs to be calculated.</p>
@@ -506,20 +509,34 @@ whole array).</p>
 <dd class="field-even"><p>{“natural”, “dB”}, optional</p>
 </dd>
 <dt class="field-odd">param axis<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The axis along which to compute the PAPR. If None, the PAPR is computed over the
-entire array. Default is None.</p>
+<dd class="field-odd"><p>The axis one waveform lies along. If None, the PAPR is computed
+over the entire array. Default is None.</p>
 </dd>
 <dt class="field-even">type axis<span class="colon">:</span></dt>
 <dd class="field-even"><p>int or None, optional</p>
 </dd>
+<dt class="field-odd">param reduction<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What to do with the several PAPR values an array of waveforms
+produces. <code class="docutils literal notranslate"><span class="pre">&quot;none&quot;</span></code> (default) returns them all; the others
+reduce them to a scalar, <strong>in the unit asked for</strong> – the mean of
+a set of decibel values is not the decibel of their mean, and
+this returns the first.</p>
+</dd>
+<dt class="field-even">type reduction<span class="colon">:</span></dt>
+<dd class="field-even"><p>{“none”, “mean”, “max”, “min”}, optional</p>
+</dd>
 <dt class="field-odd">returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>float or np.ndarray</em> – The computed PAPR value(s). If axis is specified, returns an array of PAPR values.</p>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – The computed PAPR value(s). With <code class="docutils literal notranslate"><span class="pre">axis</span></code> given and
+<code class="docutils literal notranslate"><span class="pre">reduction=&quot;none&quot;</span></code>, one value per waveform.</p>
 </dd>
 <dt class="field-even">raises TypeError<span class="colon">:</span></dt>
 <dd class="field-even"><p>If <cite>x_data</cite> is not a NumPy array.</p>
 </dd>
-<dt class="field-odd">raises NotImplementedError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the specified unit is not supported.</p>
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <cite>reduction</cite> is not one of the values above.</p>
+</dd>
+<dt class="field-even">raises NotImplementedError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If the specified unit is not supported.</p>
 </dd>
 </dl>
 <p class="rubric">References</p>
@@ -535,6 +552,123 @@ Artech House, 2000, Chapter 6.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">data_2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">compute_papr</span><span class="p">(</span><span class="n">data_2d</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;natural&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
 <span class="go">[1.3416 1.2649]</span>
+</pre></div>
+</div>
+<p>One value per OFDM symbol, or their average, without reshaping
+anything:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">compute_papr</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="go">[3.291 5.274]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">compute_papr</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span>                               <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="go">4.282</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.ofdm.metrics.compute_papr_ccdf_theo">
+<span class="sig-name descname"><span class="pre">compute_papr_ccdf_theo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_sub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'natural'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'effective'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/ofdm/metrics.html#compute_papr_ccdf_theo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.ofdm.metrics.compute_papr_ccdf_theo" title="Link to this definition">#</a></dt>
+<dd><p>Probability that the PAPR of one OFDM symbol exceeds a threshold.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>After the IDFT each time sample is a sum of <span class="math notranslate nohighlight">\(N_{sub}\)</span>
+independent terms, so for <span class="math notranslate nohighlight">\(N_{sub}\)</span> large the central limit
+theorem makes it a circular complex Gaussian and its normalized power
+<span class="math notranslate nohighlight">\(\gamma\)</span> exponential. If the <span class="math notranslate nohighlight">\(N\)</span> samples of a symbol were
+independent, the peak would exceed <span class="math notranslate nohighlight">\(\gamma\)</span> unless all of them
+stayed below it:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{CCDF}(\gamma) = \Pr\left\{\mathrm{PAPR} &gt; \gamma\right\}
+= 1 - \left(1 - e^{-\gamma}\right)^{\alpha N_{sub}}\]</div>
+<p>Oversampled samples are <em>not</em> independent – the waveform is band
+limited, so neighbouring samples are correlated – and there are two
+usual ways to account for it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">method=&quot;effective&quot;</span></code> keeps the expression and replaces the count by
+an <strong>effective</strong> one <span class="math notranslate nohighlight">\(\alpha N_{sub}\)</span>, with <span class="math notranslate nohighlight">\(\alpha = 1\)</span>
+at the Nyquist rate and <span class="math notranslate nohighlight">\(\alpha = 2.8\)</span> for an oversampled
+waveform, the value van Nee and Prasad report for an oversampling of
+4 or more.</p>
+<p><code class="docutils literal notranslate"><span class="pre">method=&quot;level_crossing&quot;</span></code> replaces the fitted constant by a term
+derived from how often a Gaussian process crosses a level, which
+makes the effective count grow with the threshold:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sub}
+\sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)\]</div>
+<p>That form has no fitted constant, but it comes with two conditions.
+It describes the peak of the <strong>continuous-time</strong> waveform, which any
+finite oversampling underestimates, so it reads high on sampled data
+and approaches the measurement as the oversampling grows. And it is
+a <em>large-threshold</em> approximation: near the top of the curve, where
+the probability approaches one, it is not even ordered against the
+other model. <code class="docutils literal notranslate"><span class="pre">oversampling</span></code> is not used by it.</p>
+<p>Axes: <em>element-wise</em> – the result has the shape of <code class="docutils literal notranslate"><span class="pre">threshold</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param threshold<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PAPR threshold <span class="math notranslate nohighlight">\(\gamma\)</span>, in the unit given by <code class="docutils literal notranslate"><span class="pre">unit</span></code>.</p>
+</dd>
+<dt class="field-even">type threshold<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or float</p>
+</dd>
+<dt class="field-odd">param n_sub<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number <span class="math notranslate nohighlight">\(N_{sub}\)</span> of modulated subcarriers.</p>
+</dd>
+<dt class="field-even">type n_sub<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param oversampling<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Oversampling factor of the waveform the PAPR is measured on.
+Default 1, i.e. Nyquist-rate sampling.</p>
+</dd>
+<dt class="field-even">type oversampling<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param unit<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Unit of <code class="docutils literal notranslate"><span class="pre">threshold</span></code>, with the convention of
+<a class="reference internal" href="#comnumpy.ofdm.metrics.compute_papr" title="comnumpy.ofdm.metrics.compute_papr"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_papr()</span></code></a>: <code class="docutils literal notranslate"><span class="pre">&quot;natural&quot;</span></code> is the amplitude ratio,
+<code class="docutils literal notranslate"><span class="pre">&quot;dB&quot;</span></code> the power ratio in decibels. Default <code class="docutils literal notranslate"><span class="pre">&quot;natural&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type unit<span class="colon">:</span></dt>
+<dd class="field-even"><p>{“natural”, “dB”}, optional</p>
+</dd>
+<dt class="field-odd">param method<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Which of the two models above. Default <code class="docutils literal notranslate"><span class="pre">&quot;effective&quot;</span></code>, the one
+that matches a sampled waveform; <code class="docutils literal notranslate"><span class="pre">&quot;level_crossing&quot;</span></code> is the
+continuous-time approximation and ignores <code class="docutils literal notranslate"><span class="pre">oversampling</span></code>.</p>
+</dd>
+<dt class="field-even">type method<span class="colon">:</span></dt>
+<dd class="field-even"><p>{“effective”, “level_crossing”}, optional</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray or float</em> – The probability of exceeding each threshold.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">n_sub</span></code> or <code class="docutils literal notranslate"><span class="pre">oversampling</span></code> is not positive, or if <code class="docutils literal notranslate"><span class="pre">unit</span></code>
+    or <code class="docutils literal notranslate"><span class="pre">method</span></code> is not one of the values above.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>R. van Nee, R. Prasad, <em>OFDM for Wireless Multimedia Communications</em>,
+Artech House, 2000, Chapter 6 (the <span class="math notranslate nohighlight">\(\alpha = 2.8\)</span> fit);
+H. Ochiai and H. Imai, “On the distribution of the peak-to-average
+power ratio in OFDM signals”, IEEE Trans. Commun. 49(2), 2001 (the
+level-crossing form); S. H. Han and J. H. Lee, “An overview of
+peak-to-average power ratio reduction techniques for multicarrier
+transmission”, IEEE Wireless Communications 12(2), 2005.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">compute_papr_ccdf_theo</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">0.3725</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">compute_papr_ccdf_theo</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">]),</span> <span class="mi">256</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">[0.7288 0.0024]</span>
+</pre></div>
+</div>
+<p>The continuous-time form reads higher, as it should:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">compute_papr_ccdf_theo</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="mf">11.0</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;level_crossing&quot;</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">0.0032</span>
 </pre></div>
 </div>
 </section>
@@ -590,6 +724,7 @@ Artech House, 2000, Chapter 6.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.metrics.compute_papr"><code class="docutils literal notranslate"><span class="pre">compute_papr()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.ofdm.metrics.compute_papr_ccdf_theo"><code class="docutils literal notranslate"><span class="pre">compute_papr_ccdf_theo()</span></code></a></li>
 </ul>
   </nav></div>
 

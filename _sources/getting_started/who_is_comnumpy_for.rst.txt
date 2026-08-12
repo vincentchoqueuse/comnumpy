@@ -49,7 +49,8 @@ pays for someone who actually crosses domains. Three things are.
 PyTorch's ``nn.Module`` / ``nn.Sequential``, and the consequences are
 the ones that matter in daily research work. A chain can be::
 
-    chain = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(alphabet),
+    qam = Constellation("QAM", 16)
+    chain = Sequential([SymbolGenerator(qam.order, name="tx"), SymbolMapper(qam),
                         AWGN(snr_dB=15, name="noise")], taps=["tx"])
 
     chain.seed(42)                            # every stochastic block, reproducibly

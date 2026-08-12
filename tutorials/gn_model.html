@@ -694,7 +694,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="awgn.html">Monte Carlo Simulation over AWGN Channel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm.html">OFDM Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ofdm_papr.html">PAPR in OFDM Communication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multipath.html">Multipath Fading Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mimo.html">MIMO Chain Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
@@ -832,7 +831,7 @@ largest one. Everything below follows from that single expression.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_effective_snr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Amplifier</span><span class="p">,</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Upsampler</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constellation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.dbp</span><span class="w"> </span><span class="kn">import</span> <span class="n">DBP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.fiber</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.gn_model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">gn_model_nli_power</span><span class="p">,</span> <span class="n">gn_model_snr</span><span class="p">,</span>
@@ -1077,7 +1076,7 @@ the single most useful thing the GN model has to say.</p>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The whole link, from symbols to equalized symbols, as one chain.&quot;&quot;&quot;</span>
     <span class="n">source</span> <span class="o">=</span> <span class="p">([</span><span class="n">GaussianGenerator</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span>
               <span class="p">[</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;source&quot;</span><span class="p">),</span>
-               <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">)])</span>
+               <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">)])</span>
     <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="o">*</span><span class="n">source</span><span class="p">,</span>
         <span class="n">Upsampler</span><span class="p">(</span><span class="n">OS</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">OS</span><span class="p">)),</span>

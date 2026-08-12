@@ -469,12 +469,269 @@
                   
   <section id="module-comnumpy.core.utils">
 <span id="utilities"></span><h1>Utilities<a class="headerlink" href="#module-comnumpy.core.utils" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Constellation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#Constellation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.Constellation" title="Link to this definition">#</a></dt>
+<dd><p>A modulation alphabet, and everything that is a property of it.</p>
+<section id="signal-model">
+<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<p>The alphabet <a class="reference internal" href="#comnumpy.core.utils.get_alphabet" title="comnumpy.core.utils.get_alphabet"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_alphabet()</span></code></a> returns, plus the facts that always
+travel with it. A memoryless modulation is a set
+<span class="math notranslate nohighlight">\(\mathcal{A} = \{a_0, \ldots, a_{M-1}\}\)</span>, and everything a
+study asks of it – how many bits it carries, what its average energy
+is, how close its nearest neighbours are, what error rate it reaches
+at a given SNR, what rate it can carry – is determined by the family
+and the order <span class="math notranslate nohighlight">\(M\)</span>. Passing those two around separately is how a
+page ends up drawing the closed form of a 16-QAM under the
+measurement of a 64-QAM, which nothing checks.</p>
+<p>The object is a drop-in for the array it wraps: <code class="docutils literal notranslate"><span class="pre">np.asarray</span></code>
+returns the alphabet, so every block and every function that takes
+one keeps working.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param family<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modulation family: <code class="docutils literal notranslate"><span class="pre">&quot;PAM&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;PSK&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;QAM&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type family<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+<dt class="field-odd">param order<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modulation order <span class="math notranslate nohighlight">\(M\)</span>.</p>
+</dd>
+<dt class="field-even">type order<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param labelling<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Bit-to-symbol mapping, <code class="docutils literal notranslate"><span class="pre">&quot;gray&quot;</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">&quot;binary&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type labelling<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param norm<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Rescale to unit average symbol energy. Default True, which is the
+convention the rest of the library assumes.</p>
+</dd>
+<dt class="field-even">type norm<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool, optional, keyword-only</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.alphabet">
+<span class="sig-name descname"><span class="pre">alphabet</span></span><a class="headerlink" href="#comnumpy.core.utils.Constellation.alphabet" title="Link to this definition">#</a></dt>
+<dd><p>The symbols <span class="math notranslate nohighlight">\(a_m\)</span>, in labelling order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.bits_per_symbol">
+<span class="sig-name descname"><span class="pre">bits_per_symbol</span></span><a class="headerlink" href="#comnumpy.core.utils.Constellation.bits_per_symbol" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(k = \log_2 M\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.energy">
+<span class="sig-name descname"><span class="pre">energy</span></span><a class="headerlink" href="#comnumpy.core.utils.Constellation.energy" title="Link to this definition">#</a></dt>
+<dd><p>Average symbol energy <span class="math notranslate nohighlight">\(E_s\)</span>, over an equiprobable input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.min_distance">
+<span class="sig-name descname"><span class="pre">min_distance</span></span><a class="headerlink" href="#comnumpy.core.utils.Constellation.min_distance" title="Link to this definition">#</a></dt>
+<dd><p>Smallest distance between two symbols, which sets the high-SNR
+error rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If the family, the order or the labelling is unknown. The check
+    is <a class="reference internal" href="#comnumpy.core.utils.get_alphabet" title="comnumpy.core.utils.get_alphabet"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_alphabet()</span></code></a>’s, made once here instead of at every
+    call site.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>J. G. Proakis, M. Salehi, <em>Digital Communications</em>, 5th ed.,
+McGraw-Hill, 2008, Chapter 4.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qam</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qam</span><span class="o">.</span><span class="n">bits_per_symbol</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">qam</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">qam</span><span class="o">.</span><span class="n">min_distance</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="go">(4, 1.0, 0.6325)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qam</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>            <span class="c1"># a drop-in for the array</span>
+<span class="go">(16,)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qam</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)[</span><span class="s1">&#39;ser&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>      <span class="c1"># at Eb/N0 = 10 dB</span>
+<span class="go">7.0043e-03</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#Constellation.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.Constellation.info" title="Link to this definition">#</a></dt>
+<dd><p>What the constellation is, as a dictionary ready to print.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>dict</em> – <code class="docutils literal notranslate"><span class="pre">family</span></code>, <code class="docutils literal notranslate"><span class="pre">order</span></code>, <code class="docutils literal notranslate"><span class="pre">labelling</span></code>, <code class="docutils literal notranslate"><span class="pre">bits_per_symbol</span></code>,
+<code class="docutils literal notranslate"><span class="pre">energy</span></code>, <code class="docutils literal notranslate"><span class="pre">min_distance</span></code>, and <code class="docutils literal notranslate"><span class="pre">papr_dB</span></code> – the last
+being the peak-to-average power ratio of the <em>constellation</em>,
+a lower bound on what the shaped waveform will show.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()[</span><span class="s2">&quot;papr_dB&quot;</span><span class="p">])</span>
+<span class="go">0.0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#Constellation.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.Constellation.plot" title="Link to this definition">#</a></dt>
+<dd><p>Draw the constellation diagram (decision D25).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Axis to draw on. If None, a new figure and axis are created.</p></li>
+<li><p><strong>**kwargs</strong> – Forwarded to <a class="reference internal" href="#comnumpy.core.utils.plot_alphabet" title="comnumpy.core.utils.plot_alphabet"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_alphabet()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>matplotlib.axes.Axes</em> – The axis containing the plot.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span><span class="o">.</span><span class="n">get_title</span><span class="p">()</span>
+<span class="go">&#39;16-QAM&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.utils.Constellation.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snr_dB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">per</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bit'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'awgn'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diversity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('ser',</span> <span class="pre">'ber')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">px</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#Constellation.metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.Constellation.metrics" title="Link to this definition">#</a></dt>
+<dd><p>What this constellation is worth at a given SNR.</p>
+<section id="id1">
+<h3>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>A front-end to the four quantities a page draws against a
+measurement, all of them functions of the same family, order and
+SNR:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;ser&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;ber&quot;</span></code>, the closed-form error rates of
+<a class="reference internal" href="metrics.html#comnumpy.core.metrics.compute_metric_awgn_theo" title="comnumpy.core.metrics.compute_metric_awgn_theo"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_metric_awgn_theo()</span></code></a> or
+<a class="reference internal" href="metrics.html#comnumpy.core.metrics.compute_metric_rayleigh_theo" title="comnumpy.core.metrics.compute_metric_rayleigh_theo"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_metric_rayleigh_theo()</span></code></a>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;mi&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;gmi&quot;</span></code>, the mutual information and the
+bit-interleaved rate of
+<a class="reference internal" href="capacity.html#comnumpy.core.capacity.constellation_capacity" title="comnumpy.core.capacity.constellation_capacity"><code class="xref py py-func docutils literal notranslate"><span class="pre">constellation_capacity()</span></code></a> and
+<a class="reference internal" href="capacity.html#comnumpy.core.capacity.bicm_capacity" title="comnumpy.core.capacity.bicm_capacity"><code class="xref py py-func docutils literal notranslate"><span class="pre">bicm_capacity()</span></code></a>.</p></li>
+</ul>
+<p>The two families are parameterized differently by convention: the
+error rates against <span class="math notranslate nohighlight">\(E_b/N_0\)</span>, the rates against the SNR
+per symbol, which is <span class="math notranslate nohighlight">\(k\)</span> times larger. The object knows
+<span class="math notranslate nohighlight">\(k\)</span>, so <code class="docutils literal notranslate"><span class="pre">per=</span></code> says which of the two is being passed and
+the conversion happens here rather than at the call site – get
+it wrong and the curve moves by <span class="math notranslate nohighlight">\(10\log_{10} k\)</span> dB, with
+nothing to signal it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;mi&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;gmi&quot;</span></code> are quadratures over <span class="math notranslate nohighlight">\(M^2\)</span> points,
+not closed forms, so they are not in the default and cost seconds
+rather than microseconds on a large constellation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param snr_dB<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Signal-to-noise ratio in dB – the quantity a chain is swept
+over.</p>
+</dd>
+<dt class="field-even">type snr_dB<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param per<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">&quot;bit&quot;</span></code> (default) if <code class="docutils literal notranslate"><span class="pre">snr_dB</span></code> is <span class="math notranslate nohighlight">\(E_b/N_0\)</span>,
+<code class="docutils literal notranslate"><span class="pre">&quot;symbol&quot;</span></code> if it is <span class="math notranslate nohighlight">\(E_s/N_0\)</span>.</p>
+</dd>
+<dt class="field-even">type per<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param channel<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">&quot;awgn&quot;</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">&quot;rayleigh&quot;</span></code>, for the error rates.
+The rates below are AWGN only.</p>
+</dd>
+<dt class="field-even">type channel<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param diversity<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of combined branches, for <code class="docutils literal notranslate"><span class="pre">channel=&quot;rayleigh&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type diversity<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param metrics<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Which quantities to return, among <code class="docutils literal notranslate"><span class="pre">&quot;ser&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ber&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;mi&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;gmi&quot;</span></code>. Default <code class="docutils literal notranslate"><span class="pre">(&quot;ser&quot;,</span> <span class="pre">&quot;ber&quot;)</span></code>.</p>
+</dd>
+<dt class="field-even">type metrics<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param px<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Symbol distribution, for a shaped input. The constellation is
+rescaled to unit energy <em>under this law</em> before the rates are
+computed – a shaped input compared as it stands is simply a
+quieter one. Not available for the error rates, whose closed
+forms assume an equiprobable input.</p>
+</dd>
+<dt class="field-even">type px<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>dict of str to float or np.ndarray</em> – One entry per requested metric, in the order requested, each
+with the shape of <code class="docutils literal notranslate"><span class="pre">snr_dB</span></code>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">per</span></code>, <code class="docutils literal notranslate"><span class="pre">channel</span></code> or a metric name is unknown, if a rate
+    is asked of a fading channel, or if <code class="docutils literal notranslate"><span class="pre">px</span></code> is given together
+    with an error rate.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>J. G. Proakis, M. Salehi, <em>Digital Communications</em>, 5th ed.,
+McGraw-Hill, 2008, Section 4.3; G. Ungerboeck, “Channel coding
+with multilevel/phase signals”, IEEE Trans. Inf. Theory 28(1),
+1982 (the rate a constellation carries).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qpsk</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">theory</span> <span class="o">=</span> <span class="n">qpsk</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array2string</span><span class="p">(</span><span class="n">theory</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">],</span> <span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">))</span>
+<span class="go">[0.012423 0.000191]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rate</span> <span class="o">=</span> <span class="n">qpsk</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;mi&quot;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">rate</span><span class="p">[</span><span class="s2">&quot;mi&quot;</span><span class="p">]),</span> <span class="mi">3</span><span class="p">))</span>
+<span class="go">2.0</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.core.utils.get_alphabet">
 <span class="sig-name descname"><span class="pre">get_alphabet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modulation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#get_alphabet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.get_alphabet" title="Link to this definition">#</a></dt>
 <dd><p>Return the symbol alphabet of a memoryless modulation of order <span class="math notranslate nohighlight">\(M\)</span>.</p>
-<section id="signal-model">
-<h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>A memoryless modulation is described by its alphabet
 <span class="math notranslate nohighlight">\(\mathcal{A} = \{a_0, \ldots, a_{M-1}\}\)</span>: the mapper turns the
 symbol index <span class="math notranslate nohighlight">\(s[n] \in \{0, \ldots, M-1\}\)</span> into the transmitted
@@ -590,8 +847,8 @@ typically returned by <a class="reference internal" href="#comnumpy.core.utils.g
 <dt class="sig sig-object py" id="comnumpy.core.utils.sym_2_bin">
 <span class="sig-name descname"><span class="pre">sym_2_bin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#sym_2_bin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.sym_2_bin" title="Link to this definition">#</a></dt>
 <dd><p>Expand symbol indices into their binary representation, MSB first.</p>
-<section id="id1">
-<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>Each symbol index <span class="math notranslate nohighlight">\(s[n] \in \{0, \ldots, M-1\}\)</span> is written in
 base 2 on <span class="math notranslate nohighlight">\(k\)</span> bits (<span class="math notranslate nohighlight">\(k =\)</span> <code class="docutils literal notranslate"><span class="pre">width</span></code>, with
 <span class="math notranslate nohighlight">\(M \leq 2^k\)</span>):</p>
@@ -642,8 +899,8 @@ more than <code class="docutils literal notranslate"><span class="pre">width</sp
 <dt class="sig sig-object py" id="comnumpy.core.utils.hard_projector">
 <span class="sig-name descname"><span class="pre">hard_projector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#hard_projector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.hard_projector" title="Link to this definition">#</a></dt>
 <dd><p>Project symbols onto the nearest constellation point (hard decision).</p>
-<section id="id2">
-<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>Given an equalized observation <span class="math notranslate nohighlight">\(z[n]\)</span> and the alphabet
 <span class="math notranslate nohighlight">\(\mathcal{A} = \{a_0, \ldots, a_{M-1}\}\)</span>, the decision is the
 minimum-distance (nearest-neighbour) rule</p>
@@ -703,8 +960,8 @@ channel).</p>
 <dt class="sig sig-object py" id="comnumpy.core.utils.soft_projector">
 <span class="sig-name descname"><span class="pre">soft_projector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#soft_projector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.soft_projector" title="Link to this definition">#</a></dt>
 <dd><p>Compute the soft (MMSE) symbol estimate under a Gaussian noise model.</p>
-<section id="id3">
-<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>For the scalar observation <span class="math notranslate nohighlight">\(z[n] = x[n] + b[n]\)</span> with
 <span class="math notranslate nohighlight">\(b[n] \sim \mathcal{CN}(0, \sigma^2)\)</span> and equiprobable symbols
 drawn from <span class="math notranslate nohighlight">\(\mathcal{A} = \{a_0, \ldots, a_{M-1}\}\)</span>, the MMSE
@@ -790,8 +1047,8 @@ function and its variance kernel).</p></li>
 <dt class="sig sig-object py" id="comnumpy.core.utils.esn0_to_snr_dB">
 <span class="sig-name descname"><span class="pre">esn0_to_snr_dB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">esn0_dB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#esn0_to_snr_dB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.esn0_to_snr_dB" title="Link to this definition">#</a></dt>
 <dd><p>Convert a symbol-energy-to-noise ratio <span class="math notranslate nohighlight">\(E_s/N_0\)</span> (dB) into the SNR (dB) expected by <code class="docutils literal notranslate"><span class="pre">AWGN</span></code>.</p>
-<section id="id4">
-<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>Three quantities must not be confused. <span class="math notranslate nohighlight">\(E_s\)</span> is the energy of
 one constellation symbol, <span class="math notranslate nohighlight">\(E_b\)</span> the energy of one information
 bit and <span class="math notranslate nohighlight">\(N_0\)</span> the noise power spectral density; the SNR of
@@ -851,8 +1108,8 @@ energy-per-bit normalizations).</p>
 <dt class="sig sig-object py" id="comnumpy.core.utils.ebn0_to_snr_dB">
 <span class="sig-name descname"><span class="pre">ebn0_to_snr_dB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ebn0_dB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits_per_symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#ebn0_to_snr_dB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.ebn0_to_snr_dB" title="Link to this definition">#</a></dt>
 <dd><p>Convert a bit-energy-to-noise ratio <span class="math notranslate nohighlight">\(E_b/N_0\)</span> (dB) into the SNR (dB) expected by <code class="docutils literal notranslate"><span class="pre">AWGN</span></code>.</p>
-<section id="id5">
-<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>One constellation symbol carries <span class="math notranslate nohighlight">\(k = \log_2(M)\)</span> channel bits,
 of which <span class="math notranslate nohighlight">\(kR\)</span> are information bits when a code of rate
 <span class="math notranslate nohighlight">\(R\)</span> is used. The energy budget of a symbol is therefore shared
@@ -931,8 +1188,8 @@ energy-per-bit normalizations).</p>
 <dt class="sig sig-object py" id="comnumpy.core.utils.zf_estimator">
 <span class="sig-name descname"><span class="pre">zf_estimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#zf_estimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.zf_estimator" title="Link to this definition">#</a></dt>
 <dd><p>Perform Zero Forcing (ZF) linear equalization using the channel matrix pseudoinverse.</p>
-<section id="id6">
-<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>For the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],
@@ -999,8 +1256,8 @@ McGraw-Hill, 2008, Chapter 9 (linear equalization).</p></li>
 <dt class="sig sig-object py" id="comnumpy.core.utils.mmse_estimator">
 <span class="sig-name descname"><span class="pre">mmse_estimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/utils.html#mmse_estimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.utils.mmse_estimator" title="Link to this definition">#</a></dt>
 <dd><p>Perform Minimum Mean Square Error (MMSE) linear equalization.</p>
-<section id="id7">
-<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <p>For the flat MIMO observation model</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n],
@@ -1124,6 +1381,16 @@ McGraw-Hill, 2008, Chapter 9 (MMSE linear equalization).</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation"><code class="docutils literal notranslate"><span class="pre">Constellation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.alphabet"><code class="docutils literal notranslate"><span class="pre">Constellation.alphabet</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.bits_per_symbol"><code class="docutils literal notranslate"><span class="pre">Constellation.bits_per_symbol</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.energy"><code class="docutils literal notranslate"><span class="pre">Constellation.energy</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.min_distance"><code class="docutils literal notranslate"><span class="pre">Constellation.min_distance</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.info"><code class="docutils literal notranslate"><span class="pre">Constellation.info()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.plot"><code class="docutils literal notranslate"><span class="pre">Constellation.plot()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.Constellation.metrics"><code class="docutils literal notranslate"><span class="pre">Constellation.metrics()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.get_alphabet"><code class="docutils literal notranslate"><span class="pre">get_alphabet()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.plot_alphabet"><code class="docutils literal notranslate"><span class="pre">plot_alphabet()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.utils.sym_2_bin"><code class="docutils literal notranslate"><span class="pre">sym_2_bin()</span></code></a></li>
