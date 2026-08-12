@@ -65,11 +65,16 @@ SLOW = {
         "split-step fibre and six receivers over eight launch powers -- "
         "120 s measured 2026-08-12, which is the timeout itself",
     "optical/one_shot_NLI.py":
-        "split-step fibre propagation over 25 spans at 500 steps each, "
-        "then span-by-span analysis and DBP -- 50 s measured 2026-08-12",
+        "the whole chain re-run at six span counts, then once more for "
+        "the profile and once for the receiver comparison -- 76 spans of "
+        "split-step propagation, 73 s measured 2026-08-12",
     "simple/one_shot_srrc_awgn.py":
         "16 001-tap SRRC filter at oversampling 8 -- 113 s wall / 316 s "
         "CPU measured 2026-08-09",
+    "simple/probabilistic_shaping.py":
+        "a scalar optimization of lambda at fourteen SNRs, each iteration "
+        "a 40-node Gauss-Hermite quadrature over a 64-QAM -- 230 s wall / "
+        "299 s CPU measured 2026-08-12",
 }
 
 # Examples that are broken right now. Kept visible as expected failures

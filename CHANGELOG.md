@@ -112,6 +112,23 @@ strings. The split is unambiguous because `block_ids` collapses every
 run of non-alphanumerics into a single underscore, so no block id can
 contain a double one; a test pins that.
 
+### Changed — a wired reference no longer needs a placeholder array
+
+`DataAidedMixin` advertised `Sequential(wiring={"comp.reference":
+"source"})` as the way to give a data-aided estimator a reference the
+chain produces itself, but the constructor still demanded an array — so
+building the block meant passing a dummy that the first pass overwrote.
+`reference` now defaults to `None` on the five `DataAided*` blocks, and
+`get_reference()` raises `NotFittedError` at call time if nothing was
+passed and nothing was wired. The error moves from "you gave me no
+placeholder" to "no reference reached me", which is the real failure.
+
+`Sequential.profile_execution_time` ran a *different* pass from
+`forward`: it walked `module_list` directly, so taps were not recorded
+and wiring was not fed, and profiling a wired chain raised. It now
+shares the edge plan with `forward` and keys its result by block id
+(`block_ids()`), so two blocks with the same name get one entry each.
+
 ### Documentation — the tutorials on one plan
 
 The OFDM, MIMO, Alamouti and PAPR tutorials are rewritten on a single
@@ -138,6 +155,21 @@ Substantive changes rather than reorganisation:
 - **The Alamouti tutorial starts from the fading law**, with the
   histogram of `|h|^2` against its exponential density, since diversity
   is an answer to that law and not to the average channel.
+- **The shaping tutorial follows the argument instead of the API.** It
+  now runs capacity → the gap a uniform QAM leaves → Maxwell-Boltzmann →
+  distribution matching → PAS and the GMI. The matcher's output is
+  measured and laid over the law it targets, which is where the
+  quantization of a constant composition becomes visible.
+- **The back-propagation tutorial is written around one chain.**
+  `get_full_chain(n_spans)` builds transmitter, link and receiver
+  together, with the data-aided phase correction wired to the
+  transmitter (`wiring={"phase.reference": "signal_tx"}`) instead of a
+  hand-rolled `np.angle` on the side; the degradation figure is that
+  chain called at six span counts. `profile_execution_time` then shows
+  the split-step propagation to be 99.9 % of the run, which is why the
+  receiver comparison splits the chain in two -- `get_channel` once,
+  `get_receiver` per strategy. The forward propagation drops from 500 to
+  200 steps per span (same effective SNR to three decimals).
 
 ### Added (milestones 2-5)
 
