@@ -80,7 +80,7 @@ The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-86
+   :lines: 1-89
 
 Two things in that chain are worth naming.
 
@@ -102,20 +102,75 @@ Degradation, span by span
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Call that chain once per span count, seeded identically each time, and the
-only thing that changes is the distance travelled:
+only thing that changes is the distance travelled. Each count is run twice:
+the second pass switches the fibre's Kerr term off through the chain, which
+leaves the amplifier noise alone and gives every other number something to
+be read against.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 89-111
+   :lines: 92-128
 
 .. code::
 
-    1 spans: SNR 22.47 dB, SER 0.0000, phase   -1.2 deg,   0.7 s
-    5 spans: SNR 21.15 dB, SER 0.0000, phase   -7.0 deg,   2.6 s
-   10 spans: SNR 18.89 dB, SER 0.0016, phase  -14.8 deg,   5.0 s
-   15 spans: SNR 17.22 dB, SER 0.0039, phase  -22.9 deg,   7.7 s
-   20 spans: SNR 15.78 dB, SER 0.0156, phase  -31.0 deg,  10.4 s
-   25 spans: SNR 14.61 dB, SER 0.0322, phase  -39.3 deg,  12.4 s
+   spans   measured   ASE only   the fibre      SER     phase     time
+       1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    1.1 s
+       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    4.0 s
+      10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    7.4 s
+      15    18.55 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg   14.2 s
+      20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg   14.9 s
+      25    15.30 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg   18.5 s
+
+The third column is the subject of this tutorial. It is the price of the
+Kerr effect, measured rather than argued: **1.02 dB after one span, 8.39 dB
+after twenty-five**. Nothing else in the chain changed between the two
+passes -- same symbols, same amplifiers, same noise realization -- so the
+difference is the nonlinearity and only the nonlinearity.
+
+The two accumulations are of different kinds, and separating them is the
+point. Over the link the amplifiers alone cost 13.4 dB, which is just
+twenty-five of them instead of one. The fibre costs 8.4 dB *on top of
+that*, and unlike the noise it is deterministic: it was produced by an
+equation the receiver knows.
+
+That reference is worth two checks before any of it is believed, and both
+are cheap enough to leave in the script:
+
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
+   :language: python
+   :lines: 130-155
+
+.. code::
+
+   distortion floor of the chain, no noise and no fibre: 46.3 dB
+
+   spans   ASE only   P / P_ASE      gap
+       1    37.11 dB    37.64 dB    -0.53 dB
+       5    30.65 dB    30.65 dB    +0.00 dB
+      10    27.68 dB    27.64 dB    +0.04 dB
+      15    25.94 dB    25.88 dB    +0.06 dB
+      20    24.72 dB    24.63 dB    +0.09 dB
+      25    23.70 dB    23.66 dB    +0.04 dB
+
+The first number is the chain talking to itself: noise off, fibre off, so
+what comes out is the transmitter and the receiver measured against each
+other. **46.3 dB** is twenty-three decibels clear of the worst row in the
+table, which is what licenses reading that table as a measurement of the
+fibre. A chain whose own filters cost 23 dB would produce a curve of the
+same shape and none of it would be physics -- pulse shaping, resampling and
+matched filtering are invisible when they are right and indistinguishable
+from a fibre when they are wrong.
+
+The second compares the amplifier noise with a closed form that owes the
+simulation nothing: :math:`P/P_{\mathrm{ASE}}`, built from the noise figure
+and the span loss alone. From five spans on it agrees within **0.09 dB**.
+The one-span row is 0.53 dB low, and that is the distortion floor showing
+through -- at 37 dB the chain's own 46.3 dB is no longer negligible, and
+two noises that close add. The check reports it rather than hiding it.
+
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
+   :language: python
+   :lines: 157-159
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -129,7 +184,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 113-127
+   :lines: 161-181
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -141,12 +196,13 @@ three distances:
    :align: center
    :alt: Effective SNR against the number of spans
 
-**Nearly 8 dB lost over the link**, and the loss is not the amplifier noise
-alone. Two things accumulate span after span: the ASE, which adds one
-amplifier's worth of noise each time, and the nonlinear interference, which
-the dispersion converts into a scatter no linear filter can undo. The
+**Nearly 21 dB lost over the link**, and the two curves say how it was
+lost. They start 1 dB apart and end 8.4 dB apart: the amplifier noise sets
+the slope, the fibre bends the measured curve away from it. The
 constellations show the difference in kind -- after one span the clusters
-are tight, after twenty-five they are smeared.
+are tight, after twenty-five they are smeared, and the smearing is not
+noise but a deterministic scatter the dispersion has spread over hundreds
+of neighbouring symbols.
 
 The phase column measures a third effect, and it is the one the compensator
 absorbs: self-phase modulation rotates the constellation by 1.2 degrees per
@@ -160,26 +216,25 @@ block on the way through:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 129-134
+   :lines: 183-188
 
 .. code::
 
    block                    time
    data_tx                     0.1 ms
    signal_tx                   0.0 ms
-   upsampler                   0.2 ms
-   srrcfilter                  2.0 ms
-   signal_amplifier            0.1 ms
-   link                    12749.8 ms
-   bwfilter                    1.1 ms
-   rx_field                    0.1 ms
-   dbp                        10.8 ms
-   srrcfilter_2                0.9 ms
+   upsampler                   0.3 ms
+   srrcfilter                  2.6 ms
+   signal_amplifier            0.2 ms
+   link                    17961.4 ms
+   rx_field                    1.7 ms
+   dbp                        13.5 ms
+   srrcfilter_2                0.7 ms
    downsampler                 0.0 ms
    signal_amplifier_2          0.0 ms
-   phase                       0.1 ms
+   phase                       0.2 ms
 
-Thirteen blocks, and one of them is **99.9 %** of the run. The split-step
+Twelve blocks, and one of them is **99.9 %** of the run. The split-step
 propagation is 25 spans of 200 steps, each an FFT pair and a pointwise
 rotation; everything else is a handful of milliseconds. Keep that ratio in
 mind -- it is what the Monte-Carlo section below has to work around.
@@ -213,12 +268,12 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 136-157
+   :lines: 190-211
 
 .. code::
 
-   dispersion compensation   SNR=14.61 dB  receiver    10.8 ms
-   digital back-propagation  SNR=19.50 dB  SER=0.0003  receiver  1970.9 ms  residual phase=-1.0 deg
+   dispersion compensation   SNR=15.30 dB  receiver    13.5 ms
+   digital back-propagation  SNR=23.48 dB  SER=0.0000  receiver  3037.2 ms  residual phase=-0.1 deg
 
 .. image:: img/one_shot_nli_fig4.png
    :width: 100%
@@ -229,14 +284,21 @@ The residual phase names the culprit. Dispersion compensation undoes the
 dispersion and the loss and leaves a **39 degree** rotation of the whole
 constellation: that is self-phase modulation, the Kerr effect turning
 average power into phase. Removing that rotation is not enough either --
-the remaining scatter still costs 3.2 % of the symbols, because the
+the remaining scatter still costs 2.4 % of the symbols, because the
 nonlinearity acts *along* the fibre, interleaved with the dispersion, and
 not as one rotation at the end.
 
 Back-propagation inverts that interleaving. The residual rotation falls to
-one degree, the effective SNR rises by **4.9 dB**, and the symbol error
-rate drops by two orders of magnitude -- from the 3.2 % of the 25-span row
-above to 0.03 %.
+a tenth of a degree, the effective SNR rises by **8.2 dB**, and no symbol
+in the run is decided wrongly -- 512 symbols cannot resolve an error rate
+below :math:`2 \times 10^{-3}`, so what the last column says is that the
+error rate has left the range this run can measure. The Monte-Carlo section
+below is where that question is answered properly.
+
+Read against the reference of the first table, the two receivers are 8.4 dB
+and 0.2 dB from a link with no nonlinearity in it. Back-propagation has
+recovered essentially all of what the fibre took, and what remains is the
+amplifier noise, which no receiver removes.
 
 
 What it costs
@@ -245,8 +307,8 @@ What it costs
 The last column of the table is the reason DBP is not simply switched on
 everywhere. Dispersion compensation is one FFT pair for the whole link; DBP at
 :math:`\mathrm{StPS}` steps per span is :math:`N_{sp} \times \mathrm{StPS}`
-FFT pairs plus as many pointwise phase rotations. Here that is 11 ms against
-1971 ms -- **180 times** -- for 4.9 dB.
+FFT pairs plus as many pointwise phase rotations. Here that is 13.5 ms
+against 3037 ms -- **225 times** -- for 8.2 dB.
 
 That ratio is what the literature on low-complexity back-propagation exists to
 improve, and it is also why the useful question is not "DBP or not" but *how
@@ -287,12 +349,12 @@ That is the prediction the sweep below has to land on.
 .. code::
 
    launch power [dBm]     -6.0   -4.5   -3.0   -1.5    0.0    1.5    3.0    4.5
-   amplifier noise only       15.2   16.3   17.4   18.4   19.4   20.0   20.7   21.3
-   dispersion compensation    15.1   16.2   17.0   17.4   17.1   15.9   14.0   11.4
-   DBP, 1 step/span           15.1   16.2   17.1   17.7   17.8   16.9   15.3   12.9
-   DBP, 2 steps/span          15.1   16.3   17.3   18.1   18.6   18.4   17.6   15.8
-   DBP, 4 steps/span          15.1   16.3   17.3   18.3   19.2   19.6   19.9   19.4
-   DBP, 50 steps/span         15.1   16.3   17.4   18.4   19.2   19.7   20.1   20.1
+   amplifier noise only       15.9   17.4   18.8   20.3   21.9   23.3   24.8   26.4
+   dispersion compensation    15.8   17.1   18.2   18.8   18.4   16.9   14.6   11.7
+   DBP, 1 step/span           15.8   17.2   18.4   19.3   19.3   18.1   16.1   13.3
+   DBP, 2 steps/span          15.9   17.3   18.7   19.9   20.6   20.5   19.2   16.9
+   DBP, 4 steps/span          15.9   17.4   18.8   20.3   21.7   23.0   23.8   23.8
+   DBP, 50 steps/span         15.9   17.4   18.8   20.3   21.8   23.2   24.6   25.9
 
 .. image:: img/nli_simulation_fig1.png
    :width: 100%
@@ -302,27 +364,54 @@ That is the prediction the sweep below has to land on.
 This is the figure the whole subject is about. Every curve rises at low power,
 where the amplifier noise dominates and turning the laser up helps; every
 curve except the reference then turns over, where the nonlinear interference
-grows faster than the signal. The maximum of each curve is the operating point
-of that receiver, and back-propagation **moves it to the right**:
+grows faster than the signal. The reference does not turn over because it has
+nothing to turn it over: it is the same link with the Kerr term switched off,
+and it climbs as :math:`P/P_{\mathrm{ASE}}` forever -- 15.9 dB at
+:math:`-6` dBm against the 15.88 dB the noise budget predicts, 26.4 dB at
++4.5 dBm against 26.38 dB. A reference that bent would be a reference with a
+defect in it.
+
+The maximum of each of the others is the operating point of that receiver,
+and back-propagation **moves it to the right**:
 
 .. code::
 
    receiver                  best SNR   at power    total time
-   amplifier noise only      21.26 dB    4.5 dBm       0.6 s
-   dispersion compensation   17.39 dB   -1.5 dBm       0.6 s
-   DBP, 1 step/span          17.77 dB    0.0 dBm       1.3 s
-   DBP, 2 steps/span         18.62 dB    0.0 dBm       2.4 s
-   DBP, 4 steps/span         19.87 dB    3.0 dBm       4.8 s
-   DBP, 50 steps/span        20.15 dB    3.0 dBm      55.7 s
+   amplifier noise only      26.35 dB    4.5 dBm       0.8 s
+   dispersion compensation   18.78 dB   -1.5 dBm       0.7 s
+   DBP, 1 step/span          19.28 dB    0.0 dBm       1.7 s
+   DBP, 2 steps/span         20.64 dB    0.0 dBm       3.4 s
+   DBP, 4 steps/span         23.81 dB    3.0 dBm       6.5 s
+   DBP, 50 steps/span        25.94 dB    4.5 dBm      76.8 s
 
-Read the last two columns together. Going from one step per span to four buys
-**2.1 dB**; going from four to fifty buys **0.3 dB more** and costs twelve
-times the computation. The returns collapse because the step-size error falls
-with the number of steps while the ASE noise does not: at fifty steps the
-receiver is still 1.1 dB from the noise-only bound, and no number of steps
-will close that last gap.
+Start with the second row, because it is the one the closed form claims to
+predict:
 
-Against dispersion compensation alone, four steps per span are worth 2.5 dB
+.. code::
+
+   GN model 18.77 dB at -1.35 dBm, dispersion compensation 18.78 dB at -1.5 dBm
+
+**0.01 dB.** The Gaussian-noise model of the previous tutorial ran in
+microseconds and knew nothing of this chain -- not the pulse shaping, not the
+split-step integration, not the matched filter. It described the receiver
+that leaves the nonlinearity in place, which is exactly the receiver its
+assumption is written for, and it landed on it. That agreement is what
+licenses the rest of the table: the simulation is measuring the fibre, not
+its own numerics.
+
+The closed form has nothing to say about the rows below, and cannot have.
+It counts the nonlinear interference as noise; a back-propagating receiver
+removes part of it, and a model that calls something noise cannot describe
+undoing it.
+
+Read the last two columns of those rows together. Going from one step per
+span to four buys **4.5 dB**; going from four to fifty buys **2.1 dB more**
+and costs twelve times the computation. The returns collapse because the
+step-size error falls with the number of steps while the ASE noise does not:
+at fifty steps the receiver is 0.41 dB from the noise-only bound, and no
+number of steps will close that last gap.
+
+Against dispersion compensation alone, four steps per span are worth 5.0 dB
 of effective SNR **and** 4.5 dB of launch power, which is the number a link
 budget actually spends.
 

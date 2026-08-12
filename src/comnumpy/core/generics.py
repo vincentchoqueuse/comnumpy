@@ -194,6 +194,69 @@ class Sequential():
     # wall time of the last pass (D23: data-dependent, hence the underscore)
     elapsed_: float = field(init=False, repr=False, default=0.0)
 
+    def __post_init__(self) -> None:
+        self._check_resampling_filters()
+
+    def _check_resampling_filters(self) -> None:
+        r"""Warn when a rate change carries its anti-alias filter by hand.
+
+        A decimation by :math:`L` needs the band limited to :math:`1/L`
+        of the Nyquist frequency beforehand, and an interpolation by
+        :math:`L` needs the images removed at the same cutoff
+        afterwards. :class:`~comnumpy.core.processors.Downsampler` and
+        :class:`~comnumpy.core.processors.Upsampler` build that filter
+        themselves from ``L`` when ``use_filter=True``.
+
+        Writing the pair out instead states the cutoff twice -- once as
+        ``L``, once as the filter's ``wn`` -- and nothing then keeps the
+        two in step. That is the defect D41 exists to prevent, and it is
+        silent: a cutoff below the signal removes part of it, which
+        looks exactly like a channel impairment and puts a floor under
+        every curve measured through the chain.
+
+        This warns rather than raises. A brick-wall filter next to a
+        rate change is not always the anti-alias filter -- selecting one
+        channel out of a multiplex before decimating is a legitimate
+        pair of filters doing two jobs -- so the chain says what it sees
+        and computes anyway.
+        """
+        from comnumpy.core.filters import BWFilter
+        from comnumpy.core.processors import Downsampler, Upsampler
+
+        pairs = zip(self.module_list, self.module_list[1:], strict=False)
+        for first, second in pairs:
+            if isinstance(first, BWFilter) and isinstance(second, Downsampler):
+                mask, resampler, side, kind = first, second, "before", "aliasing"
+            elif isinstance(first, Upsampler) and isinstance(second, BWFilter):
+                mask, resampler, side, kind = second, first, "after", "imaging"
+            else:
+                continue
+            if resampler.use_filter or resampler.L <= 0:
+                continue        # two filters, deliberately, or nothing to check
+            expected = 1.0 / resampler.L
+            name = type(resampler).__name__
+            if abs(mask.wn - expected) > 1e-9 * max(expected, 1.0):
+                too_narrow = mask.wn < expected
+                logger.warning(
+                    "a BWFilter of cutoff %g sits %s %s(L=%d), whose anti-%s "
+                    "filter has cutoff 1/L = %g. If it is meant to be that "
+                    "filter, its cutoff is wrong and the chain is %s. Write "
+                    "%s(%d, use_filter=True), which derives the cutoff from L "
+                    "and cannot disagree with it (D41).",
+                    mask.wn, side, name, resampler.L, kind, expected,
+                    "throwing signal away, which reads as a channel "
+                    "impairment and floors every curve measured through it"
+                    if too_narrow else
+                    "passing a band the rate change cannot carry, which folds "
+                    "back onto the signal",
+                    name, resampler.L)
+            else:
+                logger.warning(
+                    "BWFilter(%g) %s %s(L=%d) is exactly the filter "
+                    "%s(%d, use_filter=True) builds. Prefer the argument: "
+                    "the cutoff is then written once, and cannot drift away "
+                    "from the rate change it belongs to (D41).",
+                    mask.wn, side, name, resampler.L, name, resampler.L)
 
     def block_ids(self) -> List[str]:
         """

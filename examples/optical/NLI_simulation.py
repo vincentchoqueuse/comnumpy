@@ -27,7 +27,7 @@ from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
-N_s = 2**11               # 2048 symbols per point: the SER floor is 5e-4
+N_s = 2**11               # 2048 per trial, 4 trials: SER floor 1.2e-4
 oversampling_sim = 6
 oversampling_dsp = 2
 NF_dB = 5
