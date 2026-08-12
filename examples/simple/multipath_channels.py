@@ -95,7 +95,7 @@ for N_cp in (longest + 8, longest // 4):
     errors = []
     for snr_dB in snr_dB_list:
         link.seed(11)                     # same channel draw at every SNR
-        link.set_params(**{"noise.snr_dB": float(snr_dB)})
+        link.set_params(noise__snr_dB=float(snr_dB))
         y = link(N)
         fading = link["fading"]
         taps = np.zeros(int(fading.delays_[-1]) + 1, dtype=complex)

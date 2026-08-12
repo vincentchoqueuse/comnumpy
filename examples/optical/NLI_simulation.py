@@ -90,10 +90,10 @@ for index, dBm in enumerate(dBm_list):
         launched = amp * transmitter(symbols)
 
         fibre.seed(trial)
-        fibre.set_params(**{"link.use_only_linear": True})
+        fibre.set_params(link__use_only_linear=True)
         linear = fibre(launched)
         fibre.seed(trial)
-        fibre.set_params(**{"link.use_only_linear": False})
+        fibre.set_params(link__use_only_linear=False)
         nonlinear = fibre(launched)
 
         for name, config in receivers.items():

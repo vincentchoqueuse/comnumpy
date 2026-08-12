@@ -117,7 +117,7 @@ def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed=0):
     rng = np.random.default_rng(seed)
     channels = [rayleigh_channel(n_rx, n_tx, rng=rng)
                 for _ in range(n_channels)]
-    chain.set_params(**{"noise.sigma2": 10 ** (-snr_dB / 10)})
+    chain.set_params(noise__sigma2=10 ** (-snr_dB / 10))
     results = sweep(chain, ("channel.H", "detector.H"),
                     [(H, H) for H in channels],
                     {"ser": compute_ser}, stimulus=stimulus,

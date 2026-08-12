@@ -155,7 +155,7 @@ def measure(chain, powers_W, seed=3):
 chain = link_chain()
 chain.summary(STIMULUS)
 
-chain.set_params(**{"fibre.use_only_linear": True})
+chain.set_params(fibre__use_only_linear=True)
 measured_ase_W = dbm_to_watt(-measure(chain, [dbm_to_watt(0.0)])[0])
 gap_dB = watt_to_dbm(measured_ase_W) - watt_to_dbm(ase_W)
 print(f"\nP_ASE  predicted {watt_to_dbm(ase_W):+.2f} dBm   "
@@ -163,7 +163,7 @@ print(f"\nP_ASE  predicted {watt_to_dbm(ase_W):+.2f} dBm   "
       f"gap {gap_dB:+.2f} dB")
 assert abs(gap_dB) < 0.3, gap_dB
 
-chain.set_params(**{"fibre.use_only_linear": False})
+chain.set_params(fibre__use_only_linear=False)
 powers_dBm = np.arange(-8.0, 5.1, 1.0)
 measured_snr_dB = measure(chain, dbm_to_watt(powers_dBm))
 predicted_snr_dB = 10 * np.log10(gn_model_snr(ase_W, eta, fine_powers))
@@ -199,7 +199,7 @@ print("stimulus     nonlinear SNR   above the model")
 for order, label in ((4, "QPSK"), (16, "16QAM"), (64, "64QAM"),
                      (256, "256QAM"), (None, "Gaussian")):
     noiseless = link_chain(order)
-    noiseless.set_params(**{"fibre.noise_scaling": 0.0})
+    noiseless.set_params(fibre__noise_scaling=0.0)
     value = measure(noiseless, [1e-3])[0]
     print(f"{label:12s} {value:10.2f} dB   {value - nli_only_dB:+10.2f} dB")
 
