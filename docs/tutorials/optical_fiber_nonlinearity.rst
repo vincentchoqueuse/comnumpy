@@ -92,7 +92,7 @@ is *declared* rather than passed by hand:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 91-109
+   :lines: 91-119
 
 ``wiring={"phase.reference": "signal_tx"}`` tells the chain to feed the
 compensator the output of the ``signal_tx`` block before it runs. The
@@ -108,7 +108,7 @@ only thing that changes is the distance travelled:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 112-145
+   :lines: 122-155
 
 .. code::
 
@@ -146,7 +146,7 @@ The last column is the one to keep for what follows:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 147-153
+   :lines: 157-163
 
 .. code::
 
@@ -205,11 +205,12 @@ once, and each receiver is applied to the field it produced:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 155-166
+   :lines: 165-176
 
-The reference is no longer wired -- it is passed to ``get_receiver``, which
-is what the argument is for. Same blocks, same order, assembled in two
-pieces instead of one.
+``get_unprocessed_chain`` is the same transmitter and the same channel as
+``get_full_chain``, minus the receiver; the reference is no longer wired
+but passed to ``get_receiver``, which is what the argument is for. Same
+blocks, same order, assembled in two pieces instead of one.
 
 .. image:: img/one_shot_nli_fig3.png
    :width: 100%
@@ -226,7 +227,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 168-191
+   :lines: 178-200
 
 .. code::
 

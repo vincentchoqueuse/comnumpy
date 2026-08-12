@@ -88,6 +88,16 @@ def get_receiver(n_spans, *, steps=1, linear_only=True, reference=None):
         ]
 
 
+def get_unprocessed_chain(n_spans):
+    """Everything up to the receiver: the field as it comes off the link.
+
+    The same transmitter and the same channel as the full chain, cut
+    where the physics ends and the DSP begins.
+    """
+    return Sequential(get_transmitter() + get_channel(n_spans),
+                      taps=["data_tx", "signal_tx"])
+
+
 def get_full_chain(n_spans, **kwargs):
     """Transmitter, link and receiver, as one chain.
 
@@ -157,8 +167,7 @@ for block_id, elapsed in profile.items():
 # above would re-run the split-step propagation once per receiver, and
 # the table just said what that costs. The link is run once instead, and
 # the receivers are applied to the field it produced.
-unprocessed = Sequential(get_transmitter() + get_channel(N_span),
-                         taps=["data_tx", "signal_tx"])
+unprocessed = get_unprocessed_chain(N_span)
 unprocessed.seed(0)
 y_rx = unprocessed(N)
 s_tx, x_tx = unprocessed.tap("data_tx"), unprocessed.tap("signal_tx")
