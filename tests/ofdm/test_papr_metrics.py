@@ -101,9 +101,51 @@ class TestTheClosedFormCCDF(unittest.TestCase):
 
     def test_it_refuses_impossible_arguments(self):
         for kwargs in ({"n_sub": 0}, {"n_sub": 256, "oversampling": 0},
-                       {"n_sub": 256, "unit": "watt"}):
+                       {"n_sub": 256, "unit": "watt"},
+                       {"n_sub": 256, "method": "guess"}):
             with self.assertRaises(ValueError):
                 compute_papr_ccdf_theo(10.0, **kwargs)
+
+
+class TestTheLevelCrossingForm(unittest.TestCase):
+    """The other model: no fitted constant, but a continuous-time one.
+
+    Its effective count grows with the threshold instead of being a
+    fitted multiple of N, which is what makes it an approximation rather
+    than a fit. It describes the peak of the *continuous* waveform, and
+    a sampled one can only be below that -- so it must read high.
+    """
+
+    def test_it_is_a_probability_and_it_decreases(self):
+        thresholds = np.arange(4.0, 14.0, 0.5)
+        ccdf = compute_papr_ccdf_theo(thresholds, 256, unit="dB",
+                                      method="level_crossing")
+        self.assertTrue(np.all((ccdf >= 0) & (ccdf <= 1)))
+        self.assertTrue(np.all(np.diff(ccdf) <= 0))
+
+    def test_it_sits_above_the_sampled_models_in_the_tail(self):
+        """Only in the tail: it is a large-threshold approximation.
+
+        Below about 9 dB for 256 subcarriers it crosses under the
+        effective-count model, both being near one there, so the
+        ordering is asserted where the approximation is meant to hold.
+        """
+        for threshold in (10.0, 12.0, 14.0):
+            continuous = compute_papr_ccdf_theo(threshold, 256, unit="dB",
+                                                method="level_crossing")
+            sampled = compute_papr_ccdf_theo(threshold, 256, oversampling=4,
+                                             unit="dB")
+            nyquist = compute_papr_ccdf_theo(threshold, 256, unit="dB")
+            self.assertGreater(continuous, sampled)
+            self.assertGreater(sampled, nyquist)
+
+    def test_it_ignores_the_oversampling(self):
+        """There is no sampling in it: that is the point."""
+        self.assertEqual(
+            float(compute_papr_ccdf_theo(10.0, 256, unit="dB",
+                                         method="level_crossing")),
+            float(compute_papr_ccdf_theo(10.0, 256, oversampling=8, unit="dB",
+                                         method="level_crossing")))
 
 
 if __name__ == "__main__":

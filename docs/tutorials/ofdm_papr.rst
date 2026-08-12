@@ -150,6 +150,21 @@ the oversampling rather than the effective count: the fit belongs to the
 library, with its domain of validity, rather than to each script that draws
 the curve.
 
+The fitted constant can be avoided. Counting how often a Gaussian process
+crosses a level gives an effective count that grows with the threshold
+instead,
+
+.. math::
+
+   \mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sc}
+   \sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)
+
+which the same function returns with ``method="level_crossing"``. It has no
+fitted constant, but it describes the peak of the **continuous-time**
+waveform, which a sampled one can only underestimate -- so it reads high on
+sampled data, and it is a large-threshold approximation. The two are
+compared against the measurement at the end of this page.
+
 Implementation
 """"""""""""""
 
@@ -175,6 +190,27 @@ Results
 
    N_sc =  256: PAPR exceeded once in a thousand symbols above 11.30 dB
    N_sc = 1024: PAPR exceeded once in a thousand symbols above 11.72 dB
+
+Which of the two models to believe is a question the measurement answers:
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 148-162
+
+.. code::
+
+   N_sc  level  threshold   effective   level crossing
+     256  1e-02    10.43 dB     1.2e-02         1.4e-02
+     256  1e-03    11.28 dB     1.1e-03         1.4e-03
+    1024  1e-02    11.00 dB     9.6e-03         1.2e-02
+    1024  1e-03    11.69 dB     1.1e-03         1.6e-03
+
+The effective-count model is within 20 % of the measurement, the
+level-crossing one 20 to 60 % above it -- consistently above, which is the
+direction it must err in, since it is the continuous-time waveform that is
+being modelled and the simulation only sees four samples per Nyquist
+interval. Take the first to size an amplifier from sampled data, and the
+second when the question is the analogue waveform itself.
 
 The measured points sit on the closed form over the whole range. As expected,
 the probability of a large PAPR grows with the number of subcarriers -- but

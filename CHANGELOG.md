@@ -56,6 +56,16 @@ takes the oversampling rather than the fitted count, applies `alpha = 1`
 at the Nyquist rate, and logs a warning when it is asked to extrapolate
 between the two -- a domain a script cannot carry.
 
+It also carries the other model of the same quantity, under
+`method="level_crossing"`: counting how often a Gaussian process crosses
+a level makes the effective count grow with the threshold instead of
+being fitted. That form has no constant to fit, but it describes the
+*continuous-time* waveform, so it reads 20-60 % above a measurement at
+oversampling 4 where the fitted one is within 20 %, and it is a
+large-threshold approximation -- below about 9 dB at 256 subcarriers it
+is not even ordered against the other. Both statements are measured on
+the page that draws them.
+
 `compute_papr` gains `reduction={"none", "mean", "max", "min"}`. `axis`
 already named the axis one waveform lies along, so an array of OFDM
 symbols gives one value per symbol; `reduction` says what to do with

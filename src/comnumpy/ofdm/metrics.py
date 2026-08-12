@@ -126,7 +126,8 @@ def compute_papr(x_data: object, unit: str = "natural",
 
 def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
                            oversampling: int = 1,
-                           unit: str = "natural") -> "np.ndarray | float":
+                           unit: str = "natural",
+                           method: str = "effective") -> "np.ndarray | float":
     r"""
     Probability that the PAPR of one OFDM symbol exceeds a threshold.
 
@@ -145,11 +146,31 @@ def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
         = 1 - \left(1 - e^{-\gamma}\right)^{\alpha N_{sub}}
 
     Oversampled samples are *not* independent -- the waveform is band
-    limited, so neighbouring samples are correlated -- but the same
-    expression still fits the measurement with an **effective** count
-    :math:`\alpha N_{sub}`. This function uses :math:`\alpha = 1` at the
-    Nyquist rate and :math:`\alpha = 2.8` for an oversampled waveform,
-    the value van Nee and Prasad report for an oversampling of 4 or more.
+    limited, so neighbouring samples are correlated -- and there are two
+    usual ways to account for it.
+
+    ``method="effective"`` keeps the expression and replaces the count by
+    an **effective** one :math:`\alpha N_{sub}`, with :math:`\alpha = 1`
+    at the Nyquist rate and :math:`\alpha = 2.8` for an oversampled
+    waveform, the value van Nee and Prasad report for an oversampling of
+    4 or more.
+
+    ``method="level_crossing"`` replaces the fitted constant by a term
+    derived from how often a Gaussian process crosses a level, which
+    makes the effective count grow with the threshold:
+
+    .. math::
+
+        \mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sub}
+        \sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)
+
+    That form has no fitted constant, but it comes with two conditions.
+    It describes the peak of the **continuous-time** waveform, which any
+    finite oversampling underestimates, so it reads high on sampled data
+    and approaches the measurement as the oversampling grows. And it is
+    a *large-threshold* approximation: near the top of the curve, where
+    the probability approaches one, it is not even ordered against the
+    other model. ``oversampling`` is not used by it.
 
     Axes: *element-wise* -- the result has the shape of ``threshold``.
 
@@ -166,6 +187,10 @@ def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
         Unit of ``threshold``, with the convention of
         :func:`compute_papr`: ``"natural"`` is the amplitude ratio,
         ``"dB"`` the power ratio in decibels. Default ``"natural"``.
+    method : {"effective", "level_crossing"}, optional
+        Which of the two models above. Default ``"effective"``, the one
+        that matches a sampled waveform; ``"level_crossing"`` is the
+        continuous-time approximation and ignores ``oversampling``.
 
     Returns
     -------
@@ -176,15 +201,17 @@ def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
     ------
     ValueError
         If ``n_sub`` or ``oversampling`` is not positive, or if ``unit``
-        is not one of the values above.
+        or ``method`` is not one of the values above.
 
     References
     ----------
     R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,
     Artech House, 2000, Chapter 6 (the :math:`\alpha = 2.8` fit);
-    S. H. Han and J. H. Lee, "An overview of peak-to-average power ratio
-    reduction techniques for multicarrier transmission", IEEE Wireless
-    Communications 12(2), 2005.
+    H. Ochiai and H. Imai, "On the distribution of the peak-to-average
+    power ratio in OFDM signals", IEEE Trans. Commun. 49(2), 2001 (the
+    level-crossing form); S. H. Han and J. H. Lee, "An overview of
+    peak-to-average power ratio reduction techniques for multicarrier
+    transmission", IEEE Wireless Communications 12(2), 2005.
 
     Examples
     --------
@@ -194,17 +221,30 @@ def compute_papr_ccdf_theo(threshold: "np.ndarray | float", n_sub: int,
     >>> print(np.round(compute_papr_ccdf_theo(
     ...     np.array([8.0, 11.0]), 256, oversampling=4, unit="dB"), 4))
     [0.7288 0.0024]
+
+    The continuous-time form reads higher, as it should:
+
+    >>> print(np.round(compute_papr_ccdf_theo(
+    ...     11.0, 256, unit="dB", method="level_crossing"), 4))
+    0.0032
     """
     if n_sub <= 0:
         raise ValueError(f"n_sub must be positive, got {n_sub}")
     if oversampling <= 0:
         raise ValueError(f"oversampling must be positive, got {oversampling}")
+    if method not in ("effective", "level_crossing"):
+        raise ValueError(
+            f"method is 'effective' or 'level_crossing', got {method!r}")
     if unit == "natural":
         gamma = np.asarray(threshold, dtype=float) ** 2
     elif unit == "dB":
         gamma = 10 ** (np.asarray(threshold, dtype=float) / 10)
     else:
         raise ValueError(f"unit is 'natural' or 'dB', got {unit!r}")
+
+    if method == "level_crossing":
+        return 1 - np.exp(-n_sub * np.sqrt(np.pi / 3)
+                          * np.sqrt(gamma) * np.exp(-gamma))
 
     if oversampling == 1:
         alpha = 1.0

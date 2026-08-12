@@ -144,3 +144,19 @@ for n_sub in (256, 1024):
         t, n, oversampling=os, unit="dB") - 1e-3, 0, 20)
     print(f"N_sc = {n_sub:4d}: PAPR exceeded once in a thousand symbols above "
           f"{solved:.2f} dB")
+
+# --- the two models, against the measurement -------------------------
+# "effective" replaces the sample count by a fitted multiple of N_sc;
+# "level_crossing" replaces the fitted constant by a term that grows
+# with the threshold, at the price of describing the *continuous*
+# waveform, whose peak a sampled one can only underestimate.
+print("\nCCDF models against the measurement")
+print("N_sc  level  threshold   effective   level crossing")
+for name, (sorted_dB, ccdf) in measured.items():
+    n_sub = int(name.split("= ")[1].rstrip("$"))
+    for level in (1e-2, 1e-3):
+        index = int(np.clip(ccdf.size * (1 - level), 0, ccdf.size - 1))
+        at = sorted_dB[index]
+        print(f"{n_sub:5d} {ccdf[index]:6.0e} {at:8.2f} dB "
+              f"{compute_papr_ccdf_theo(at, n_sub, oversampling=os, unit='dB'):11.1e}"
+              f"{compute_papr_ccdf_theo(at, n_sub, unit='dB', method='level_crossing'):16.1e}")
