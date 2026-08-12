@@ -201,10 +201,83 @@ FFT pairs plus as many pointwise phase rotations. Here that is 10 ms against
 2101 ms -- **210 times** -- for 4.9 dB.
 
 That ratio is what the literature on low-complexity back-propagation exists to
-improve, and it is also why the useful figure is not "DBP or not" but *how
-many steps*: :file:`examples/optical/NLI_simulation.py` sweeps the launch
-power with one curve per step count, reproducing the comparison of Häger and
-Pfister, and shows that most of the gain arrives with the first few steps.
+improve, and it is also why the useful question is not "DBP or not" but *how
+many steps*.
+
+
+Monte Carlo Evaluation
+^^^^^^^^^^^^^^^^^^^^^^
+
+We therefore sweep the launch power, with one receiver per step count, on the
+second link of Häger and Pfister: ten spans of 100 km, 16-QAM at 32 GBd. The
+reference curve is the same link with its nonlinearity switched off, i.e. what
+the amplifier noise alone would allow.
+
+.. literalinclude:: ../../examples/optical/NLI_simulation.py
+   :language: python
+   :lines: 1-78
+
+.. literalinclude:: ../../examples/optical/NLI_simulation.py
+   :language: python
+   :lines: 80-132
+
+.. code::
+
+   launch power [dBm]   -6.0   -4.5   -3.0   -1.5    0.0    1.5    3.0    4.5
+   amplifier noise only     15.3   16.4   17.6   18.6   19.3   20.1   21.1   21.2
+   dispersion compensation  15.2   16.2   17.1   17.6   17.2   16.3   14.0   11.2
+   DBP, 1 step/span         15.2   16.3   17.3   17.9   17.8   17.2   15.4   12.7
+   DBP, 2 steps/span        15.2   16.3   17.4   18.3   18.6   18.5   17.8   15.8
+   DBP, 4 steps/span        15.2   16.4   17.5   18.5   19.1   19.6   20.2   19.3
+   DBP, 50 steps/span       15.2   16.4   17.6   18.5   19.2   19.7   20.5   19.9
+
+.. image:: img/nli_simulation_fig1.png
+   :width: 100%
+   :align: center
+   :alt: Effective SNR against launch power, one curve per step count
+
+This is the figure the whole subject is about. Every curve rises at low power,
+where the amplifier noise dominates and turning the laser up helps; every
+curve except the reference then turns over, where the nonlinear interference
+grows faster than the signal. The maximum of each curve is the operating point
+of that receiver, and back-propagation **moves it to the right**:
+
+.. code::
+
+   receiver                  best SNR   at power    total time
+   amplifier noise only      21.18 dB    4.5 dBm       0.1 s
+   dispersion compensation   17.61 dB   -1.5 dBm       0.1 s
+   DBP, 1 step/span          17.93 dB   -1.5 dBm       0.2 s
+   DBP, 2 steps/span         18.56 dB    0.0 dBm       0.4 s
+   DBP, 4 steps/span         20.21 dB    3.0 dBm       0.8 s
+   DBP, 50 steps/span        20.53 dB    3.0 dBm       8.7 s
+
+Read the last two columns together. Going from one step per span to four buys
+**2.3 dB**; going from four to fifty buys **0.3 dB more** and costs eleven
+times the computation. The returns collapse because the step-size error falls
+with the number of steps while the ASE noise does not: at fifty steps the
+receiver is still 0.65 dB from the noise-only bound, and no number of steps
+will close that last gap.
+
+Against dispersion compensation alone, four steps per span are worth 2.6 dB
+of effective SNR **and** 4.5 dB of launch power, which is the number a link
+budget actually spends.
+
+.. image:: img/nli_simulation_fig2.png
+   :width: 100%
+   :align: center
+   :alt: The same sweep, in symbol error rate
+
+The error rate says the same thing in the units a link is specified in, and
+adds the shape the SNR curve hides: a bathtub, whose left wall is the
+amplifier noise and whose right wall is the nonlinearity. Back-propagation
+does not move the left wall -- it cannot -- and pushes the right one out.
+
+The flat bottom at :math:`1.2 \times 10^{-4}` is the estimator, not the link:
+8192 symbols per point cannot resolve fewer than one error, so the two
+best receivers are floor-limited from 0 dBm on. That is why the comparison
+above is made in effective SNR, which uses every symbol rather than only the
+wrong ones.
 
 
 Conclusion
