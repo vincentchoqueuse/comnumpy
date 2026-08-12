@@ -31,7 +31,7 @@ chain.taps = ["tx"]
 by_hand = []
 for snr_dB in snr_dB_list[::8]:
     chain.seed(1)
-    chain.set_params(**{"awgn_channel.snr_dB": snr_dB})
+    chain.set_params(awgn_channel__snr_dB=snr_dB)
     detected = chain(N)                  # run first: the tap is filled by it
     by_hand.append(compute_ser(chain.tap("tx"), detected))
 

@@ -91,7 +91,7 @@ study = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(PAM16), noise],
 
 def measure(law, snr_dB_list, n_symbols=120000, seed=7):
     """MI and GMI read off samples rather than integrated."""
-    study.set_params(**{"tx.distribution": law})
+    study.set_params(tx__distribution=law)
 
     def symbolwise(symbols, received):
         return compute_mi(received, symbols, PAM16,
@@ -326,7 +326,7 @@ ax_emit.legend(fontsize=9)
 ax_emit.grid(True, alpha=0.4)
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig6.png")
 
-link.set_params(**{"channel.snr_dB": 20.0})
+link.set_params(channel__snr_dB=20.0)
 try:
     link(n_blocks * shaper.n_bits)
 except ValueError as error:

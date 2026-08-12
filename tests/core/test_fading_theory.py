@@ -155,12 +155,12 @@ class TestAgainstTheLibrarysOwnChains(unittest.TestCase):
     def simulate(self, chain, n_rx, n_tx, snr_dB, stimulus, seed=0):
         rng = np.random.default_rng(seed)
         chain.seed(seed)
-        chain.set_params(**{"noise.sigma2": 10 ** (-snr_dB / 10)})
+        chain.set_params(noise__sigma2=10 ** (-snr_dB / 10))
         errors = total = 0
         for _ in range(self.N_CHANNELS):
             realization = rayleigh_channel(n_rx, n_tx, rng=rng)
-            chain.set_params(**{"channel.H": realization,
-                                "detector.H": realization})
+            chain.set_params(channel__H=realization,
+                             detector__H=realization)
             detected = chain(stimulus)
             errors += int(np.sum(chain.tap("tx") != detected))
             total += detected.size

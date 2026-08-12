@@ -136,7 +136,7 @@ for name, detector in big_detectors.items():
     ], taps=["tx"], name=f"4x4 MIMO, {name}")
     for snr_dB in snr_dB_list:
         big_chain.seed(4)
-        big_chain.set_params(**{"noise.sigma2": 4 * 10 ** (-snr_dB / 10)})
+        big_chain.set_params(noise__sigma2=4 * 10 ** (-snr_dB / 10))
         start = time.perf_counter()
         detected = big_chain((4, 400))
         elapsed[name].append((time.perf_counter() - start) * 1e3)
