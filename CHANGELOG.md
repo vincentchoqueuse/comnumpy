@@ -44,6 +44,17 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — `bicm_capacity(px=...)`
+
+`constellation_capacity` already took a law; its bit-interleaved
+counterpart did not, so the rate a *shaped* BICM chain can reach --
+which is the quantity probabilistic amplitude shaping is paid in -- had
+no way to be computed. It does now, and the ceiling moves with the law:
+not `log2 M` but the sum of the per-bit entropies, since a bit of a
+shaped label no longer carries a full bit. A law with exact zeros
+reduces to the smaller constellation instead of returning NaN, and an
+explicit uniform law reproduces the previous result exactly.
+
 ### Added — `compute_papr_ccdf_theo`, and a `reduction` on `compute_papr`
 
 The closed-form CCDF of the PAPR lived in the tutorial that drew it,

@@ -402,3 +402,47 @@ class TestWaterfilling(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAShapedBitInterleavedInput(unittest.TestCase):
+    """`bicm_capacity` with a law: the ceiling moves with the entropy.
+
+    The uniform case is `log2 M` bits, one per bit of the label. Under a
+    shaped law each labelling bit is biased, so it carries `H(B_i) < 1`,
+    and the achievable rate is measured down from the sum of those --
+    which is the quantity a PAS chain is actually paid in.
+    """
+
+    def setUp(self):
+        self.alphabet = get_alphabet("QAM", 16)
+        self.snr = np.array([1.0, 10.0, 100.0])
+
+    def test_an_explicit_uniform_law_changes_nothing(self):
+        np.testing.assert_allclose(
+            bicm_capacity(self.alphabet, self.snr),
+            bicm_capacity(self.alphabet, self.snr,
+                          px=np.full(self.alphabet.size, 1 / self.alphabet.size)))
+
+    def test_it_stays_below_the_mutual_information(self):
+        """Bit-wise demapping cannot beat the symbol-wise bound."""
+        law = maxwell_boltzmann(self.alphabet, lam=0.5)
+        gmi = bicm_capacity(self.alphabet, self.snr, px=law)
+        mi = constellation_capacity(self.alphabet, self.snr, px=law)
+        self.assertTrue(np.all(gmi <= mi + 1e-9))
+
+    def test_at_high_snr_it_reaches_the_entropy(self):
+        law = maxwell_boltzmann(self.alphabet, lam=0.5)
+        reached = float(bicm_capacity(self.alphabet, 1e6, px=law))
+        self.assertAlmostEqual(reached, distribution_entropy(law), places=2)
+
+    def test_a_law_with_zeros_is_the_smaller_constellation(self):
+        law = np.zeros(16)
+        law[:4] = 0.25
+        reduced = bicm_capacity(self.alphabet, self.snr, px=law)
+        self.assertTrue(np.all(np.isfinite(reduced)))
+        self.assertLessEqual(float(reduced[-1]), 2.0 + 1e-9)
+
+    def test_it_refuses_a_law_that_is_not_one(self):
+        for bad in (np.full(16, 0.5), np.full(8, 1 / 8), -np.ones(16) / 16):
+            with self.assertRaises(ValueError):
+                bicm_capacity(self.alphabet, 10.0, px=bad)

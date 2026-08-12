@@ -325,6 +325,7 @@ def constellation_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
 
 
 def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
+                  px: Optional[np.ndarray] = None,
                   n_nodes: int = _GH_NODES,
                   method: str = "gauss-hermite") -> np.ndarray:
     r"""BICM capacity: the bound a bit-interleaved coded system chases.
@@ -386,6 +387,15 @@ def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     [0.8993 3.1636]
     >>> print(np.round(constellation_capacity(qam16, snr), 4))  # the ceiling above it
     [0.9897 3.1639]
+
+    A shaped input is passed the same way as to
+    :func:`constellation_capacity`, and the ceiling moves with it: the
+    sum of the per-bit entropies, not :math:`\log_2 M`.
+
+    >>> from comnumpy.core.shaping import maxwell_boltzmann
+    >>> law = maxwell_boltzmann(qam16, lam=0.5)
+    >>> print(np.round(bicm_capacity(qam16, snr, px=law), 4))
+    [0.7928 3.0653]
     """
     alphabet = np.asarray(alphabet, dtype=complex).ravel()
     order = alphabet.size
@@ -394,12 +404,33 @@ def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
         raise ValueError(
             f"BICM capacity needs a power-of-two constellation, got "
             f"{order} points -- the labelling maps {n_bits} bits.")
+    if px is None:
+        weight = np.full(order, 1.0 / order)
+    else:
+        weight = np.asarray(px, dtype=float).ravel()
+        if weight.size != order or np.any(weight < 0) or not np.isclose(
+                float(np.sum(weight)), 1.0, atol=1e-9):
+            raise ValueError(
+                f"px must hold one non-negative probability per "
+                f"constellation point and sum to one, got {weight.size} "
+                f"values summing to {float(np.sum(weight))} for an "
+                f"alphabet of {order} points.")
     scalar_input = np.ndim(snr) == 0
     snr = np.atleast_1d(np.asarray(snr, dtype=float))
     sigma2 = 1.0 / snr
 
     labels = np.arange(order)
     bit_value = ((labels[:, None] >> np.arange(n_bits - 1, -1, -1)) & 1)
+
+    # H(B_i) under px: one bit of a shaped constellation no longer carries
+    # a full bit, and the sum of these is the ceiling the rate is measured
+    # down from -- n_bits only when px is uniform.
+    bit_entropy = np.zeros(n_bits)
+    for bit in range(n_bits):
+        one = float(np.sum(weight[bit_value[:, bit] == 1]))
+        if 0.0 < one < 1.0:
+            bit_entropy[bit] = -(one * np.log2(one)
+                                 + (1 - one) * np.log2(1 - one))
 
     nodes, weights = _noise_quadrature(method, n_nodes)
     grid_r, grid_i = np.meshgrid(nodes, nodes, indexing="ij")
@@ -412,19 +443,29 @@ def bicm_capacity(alphabet: np.ndarray, snr: np.ndarray | float, *,
     out = np.zeros(snr.size)
     for index, s2 in enumerate(sigma2):
         noise = np.sqrt(s2 / 2) * unit_noise
-        capacity = float(n_bits)
+        capacity = float(np.sum(bit_entropy))
         for start in range(0, noise.size, _QUAD_CHUNK):
             block = noise[start:start + _QUAD_CHUNK]
             weight_block = w2[start:start + _QUAD_CHUNK]
             arg = -(diff2[:, :, None] + 2 * (
                 diff_re[:, :, None] * np.real(block)
                 + diff_im[:, :, None] * np.imag(block))) / s2
-            likelihood = np.exp(arg)                # (M, M', q)
-            total = np.sum(likelihood, axis=1)      # (M, q)
+            # a point that is never sent contributes to no sum, and the
+            # ratio below is invariant to the common factor f(y|x_m), so
+            # the weights go in exactly where the probabilities do
+            likelihood = weight[None, :, None] * np.exp(arg)   # (M, M', q)
+            total = np.sum(likelihood, axis=1)                 # (M, q)
             for bit in range(n_bits):
+                if bit_entropy[bit] == 0.0:
+                    continue            # that bit is constant: it carries nothing
                 same = bit_value[:, bit][None, :] == bit_value[:, bit][:, None]
                 partial = np.sum(likelihood * same[:, :, None], axis=1)
-                capacity -= float(np.mean(np.log2(total / partial) @ weight_block))
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    term = np.log2(total / partial)
+                # rows of probability zero are never transmitted; their
+                # ratio can be 0/0 and must not poison the average
+                term = np.where(weight[:, None] > 0, np.nan_to_num(term), 0.0)
+                capacity -= float(weight @ (term @ weight_block))
         out[index] = capacity
     return out[0] if scalar_input else out
 
