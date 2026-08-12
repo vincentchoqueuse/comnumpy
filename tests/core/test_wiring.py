@@ -15,6 +15,7 @@ from comnumpy import (AWGN, Sequential, SymbolDemapper, SymbolGenerator,
                       SymbolMapper, compute_ser, get_alphabet)
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.processors import Amplifier
+from comnumpy.exceptions import NotFittedError
 
 PHASE = 0.4
 
@@ -94,6 +95,35 @@ class TestWiring(unittest.TestCase):
         model = self.build().graph()
         self.assertEqual(model["data_edges"], [])
         self.assertEqual(model["taps"], [])
+
+    def test_reference_may_be_left_to_the_chain(self):
+        """A wired block is built without one: there is nothing to pass yet."""
+        alphabet = get_alphabet("QAM", 16)
+        chain = Sequential([
+            SymbolGenerator(16, name="tx"),
+            SymbolMapper(alphabet, name="ref"),
+            Amplifier(np.exp(1j * PHASE)),
+            DataAidedPhaseCompensator(name="comp"),
+        ], wiring={"comp.reference": "ref"})
+        self.assertIsNone(chain["comp"].reference)
+        chain.seed(3)(500)
+        self.assertAlmostEqual(chain["comp"].theta_, -PHASE, places=6)
+
+    def test_missing_reference_raises_at_the_call(self):
+        """Unwired and unset: the failure names both ways of fixing it."""
+        comp = DataAidedPhaseCompensator(name="comp")
+        with self.assertRaises(NotFittedError) as ctx:
+            comp(np.ones(4, dtype=complex))
+        self.assertIn("reference=", str(ctx.exception))
+        self.assertIn("wiring", str(ctx.exception))
+
+    def test_profiling_runs_the_same_pass(self):
+        """Profiling must feed the wiring too, or it profiles nothing."""
+        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"}).seed(7)
+        profile = chain.profile_execution_time(200)
+        self.assertEqual(list(profile), chain.block_ids())
+        np.testing.assert_array_equal(chain["comp"].reference,
+                                      chain.tapped_["ref"])
 
     def test_unknown_ids_and_malformed_keys_rejected(self):
         for wiring in ({"comp.reference": "nope"},

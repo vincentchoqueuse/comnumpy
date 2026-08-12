@@ -460,18 +460,48 @@ class Sequential():
             module.set_debug(debug)
 
     def profile_execution_time(self, X: np.ndarray) -> Dict[str, float]:
+        """Time each block over one pass, keyed by block id.
+
+        The pass is the ordinary one: taps are recorded and the data
+        edges declared in ``wiring`` are fed, so a chain that profiles is
+        the chain that runs. The keys are the ids of :meth:`block_ids`,
+        so two blocks sharing a name still get one entry each.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input signal, or the requested size when the chain starts
+            with a source block.
+
+        Returns
+        -------
+        dict
+            Seconds spent in each block, in chain order.
+
+        Examples
+        --------
+        >>> from comnumpy.core.generators import SymbolGenerator
+        >>> from comnumpy.core.channels import AWGN
+        >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)])
+        >>> print(list(chain.profile_execution_time(8)))
+        ['generator', 'awgn']
         """
-        Start profiling
-        """
+        ids, recorded, feeds = self._resolve_edges()
+        if ids is None:
+            ids = self.block_ids()
+
         Y = X
         time_elapsed: Dict[str, float] = {}
 
-        for processor in self.module_list:
+        for index, processor in enumerate(self.module_list):
+            for param, source in feeds.get(index, ()):
+                setattr(processor, param, self.tapped_[source])
             start_time = time.time()
             Y = processor(Y)
             stop_time = time.time()
-            key = getattr(processor, "name", type(processor).__name__)
-            time_elapsed[key] = stop_time - start_time
+            if ids[index] in recorded:
+                self.tapped_[ids[index]] = Y
+            time_elapsed[ids[index]] = stop_time - start_time
 
         return time_elapsed
 
