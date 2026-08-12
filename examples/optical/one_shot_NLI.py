@@ -3,8 +3,6 @@
 Run from this directory: it writes the tutorial's figures into
 ../../docs/tutorials/img/.
 """
-import time
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -43,40 +41,32 @@ oversampling_ratio = oversampling_sim // oversampling_dsp
 amp = np.sqrt(dbm_to_watt(dBm))
 
 
-# --- the three pieces of the chain -----------------------------------
-def get_transmitter():
-    """Random symbols to a launched optical field."""
-    return [
+# --- the chain --------------------------------------------------------
+def get_full_chain(n_spans, *, steps=1, linear_only=True):
+    """The whole link, from the symbols to the decisions.
+
+    Transmitter, ``n_spans`` of fibre and amplifier, and the receiver
+    that undoes them. The two strategies of this tutorial are one
+    argument apart: ``linear_only=True`` undoes the dispersion alone, in
+    one step per span, ``linear_only=False`` undoes the nonlinearity too,
+    in ``steps``.
+
+    The last block is a data-aided phase correction, and the reference it
+    needs is the transmitted symbol sequence -- which the chain produces
+    itself, so the edge is declared with ``wiring`` instead of being
+    passed by hand. What comes out of the chain is therefore ready to be
+    compared with what went in, at any number of spans.
+    """
+    return Sequential([
         SymbolGenerator(M, name="data_tx"),
         SymbolMapper(alphabet, name="signal_tx"),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
         Amplifier(amp),
-        ]
-
-
-def get_channel(n_spans):
-    """``n_spans`` of fibre and amplifier, then the receiver front end."""
-    return [
         FiberLink(N_spans=n_spans, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, name="link"),
         BWFilter(1 / oversampling_sim),
-        Downsampler(oversampling_ratio),
-        ]
-
-
-def get_receiver(n_spans, *, steps=1, linear_only=True, reference=None):
-    """Back-propagation, matched filter, and a data-aided phase correction.
-
-    The two strategies of this tutorial are one argument apart:
-    ``linear_only=True`` undoes the dispersion alone, in one step per
-    span; ``linear_only=False`` undoes the nonlinearity too, in ``steps``.
-
-    ``reference`` is the transmitted symbol sequence the phase estimate
-    is fitted against. Inside a full chain it is left unset and wired
-    from the transmitter instead.
-    """
-    return [
+        Downsampler(oversampling_ratio, name="rx_field"),
         DBP(n_spans, L_span=L_span, StPS=steps, step_type="linear",
             use_only_linear=linear_only, fs=fs / oversampling_ratio,
             name="dbp"),
@@ -84,59 +74,43 @@ def get_receiver(n_spans, *, steps=1, linear_only=True, reference=None):
                    scale=1 / np.sqrt(oversampling_dsp)),
         Downsampler(oversampling_dsp),
         Amplifier(1 / amp),
-        DataAidedPhaseCompensator(reference, name="phase"),
-        ]
+        DataAidedPhaseCompensator(name="phase"),
+        ], taps=["data_tx", "signal_tx", "rx_field", "phase"],
+        wiring={"phase.reference": "signal_tx"})
 
 
-def get_unprocessed_chain(n_spans):
-    """Everything up to the receiver: the field as it comes off the link.
-
-    The same transmitter and the same channel as the full chain, cut
-    where the physics ends and the DSP begins.
-    """
-    return Sequential(get_transmitter() + get_channel(n_spans),
-                      taps=["data_tx", "signal_tx"])
-
-
-def get_full_chain(n_spans, **kwargs):
-    """Transmitter, link and receiver, as one chain.
-
-    The phase compensator needs the transmitted symbols and the chain
-    produces them itself, so the edge is declared with ``wiring`` rather
-    than threaded through by hand: the estimate is then fitted against
-    *this* run's data, whatever the chain is seeded with.
-    """
-    return Sequential(get_transmitter() + get_channel(n_spans)
-                      + get_receiver(n_spans, **kwargs),
-                      taps=["data_tx", "signal_tx"],
-                      wiring={"phase.reference": "signal_tx"})
-
-
-def score(reference, estimate, symbols):
-    """Effective SNR in dB and symbol error rate of an estimate."""
+def score(chain):
+    """Effective SNR in dB and symbol error rate of a finished run."""
+    estimate = chain.tap("phase")
     detected, _ = hard_projector(estimate, alphabet)
-    return (10 * np.log10(compute_effective_snr(reference, estimate)),
-            compute_ser(symbols, detected))
+    return (10 * np.log10(compute_effective_snr(chain.tap("signal_tx"),
+                                                estimate)),
+            compute_ser(chain.tap("data_tx"), detected))
 
 
 # --- 1. what the link does to the signal ------------------------------
 # One call per span count, and the same seed each time: the transmitted
 # symbols and the amplifier noise are identical, so the only thing that
-# changes along the curve is the distance travelled.
+# changes along the curve is the distance travelled. Every chain records
+# the wall time of its last pass in `elapsed_`, so the run is also the
+# measurement.
 spans = (1, 5, 10, 15, 20, 25)
-estimates, snr_per_span = {}, {}
+estimates = {}
+snr_per_span = {}
 for n_spans in spans:
-    chain = get_full_chain(n_spans)
-    chain.seed(0)
-    start = time.perf_counter()
+    chain = get_full_chain(n_spans).seed(0)
     estimates[n_spans] = chain(N)
-    elapsed = time.perf_counter() - start
-    snr, ser = score(chain.tap("signal_tx"), estimates[n_spans],
-                     chain.tap("data_tx"))
+    snr, ser = score(chain)
     snr_per_span[n_spans] = snr
     print(f"{n_spans:2d} spans: SNR {snr:5.2f} dB, SER {ser:.4f}, "
           f"phase {np.rad2deg(chain['phase'].theta_):+6.1f} deg, "
-          f"{elapsed:5.1f} s")
+          f"{chain.elapsed_:5.1f} s")
+
+# `chain` is the 25-span one the loop ended on, and its taps still hold
+# that run: the field the receiver saw, before any of the DSP.
+plot_iq(chain.tap("rx_field"),
+        title=f"received field ({dBm} dBm, {N_span} spans)")
+plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
 for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
@@ -144,7 +118,7 @@ for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
     ax.set_title(f"after {n_spans} span{'s' if n_spans > 1 else ''}, "
                  f"SNR {snr_per_span[n_spans]:.1f} dB")
 plt.tight_layout()
-plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
+plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
 ax = plot_error_rate(np.array(spans),
                      {"dispersion compensation only":
@@ -152,49 +126,34 @@ ax = plot_error_rate(np.array(spans),
                      xlabel="spans travelled", ylabel="effective SNR [dB]",
                      yscale="linear", title=f"{dBm} dBm launch power")
 plt.tight_layout()
-plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
+plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
 
-# Where that time goes. The chain has thirteen blocks and one of them
-# is the whole cost, so the run time above is the propagation and
-# nothing else.
-print("\nblock                    time")
+# Where that time goes. `profile_execution_time` runs the chain and times
+# each block on the way through, so the same pass answers the question.
 profile = get_full_chain(N_span).seed(0).profile_execution_time(N)
+print("\nblock                    time")
 for block_id, elapsed in profile.items():
     print(f"{block_id:22s} {1e3 * elapsed:8.1f} ms")
 
-# --- 2. splitting the chain -------------------------------------------
-# Comparing receivers over the same channel realization with the chain
-# above would re-run the split-step propagation once per receiver, and
-# the table just said what that costs. The link is run once instead, and
-# the receivers are applied to the field it produced.
-unprocessed = get_unprocessed_chain(N_span)
-unprocessed.seed(0)
-y_rx = unprocessed(N)
-s_tx, x_tx = unprocessed.tap("data_tx"), unprocessed.tap("signal_tx")
-
-plot_iq(y_rx, title=f"received field ({dBm} dBm, {N_span} spans)")
-plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
-
-results = {}
-for label, linear_only, steps in (("dispersion compensation", True, 1),
-                                  ("digital back-propagation", False,
-                                   StPS_DBP)):
-    receiver = Sequential(get_receiver(N_span, steps=steps,
-                                       linear_only=linear_only,
-                                       reference=x_tx))
-    start = time.perf_counter()
-    estimate = receiver(y_rx)
-    elapsed = 1e3 * (time.perf_counter() - start)
-    snr, ser = score(x_tx, estimate, s_tx)
-    results[label] = (estimate, snr, ser)
-    print(f"{label:26s} SNR={snr:5.2f} dB  SER={ser:.4f}  "
-          f"residual phase={np.rad2deg(receiver['phase'].theta_):+6.1f} deg  "
-          f"{elapsed:.0f} ms")
+# --- 2. undoing the nonlinearity too ----------------------------------
+# The same chain with the nonlinear term switched back on in the
+# receiver. Everything else -- the seed, the link, the phase correction
+# -- is unchanged, so the comparison is over the same realization.
+back_propagated = get_full_chain(N_span, steps=StPS_DBP,
+                                 linear_only=False).seed(0)
+profile_dbp = back_propagated.profile_execution_time(N)
+snr_dbp, ser_dbp = score(back_propagated)
+print(f"\ndispersion compensation   SNR={snr_per_span[N_span]:5.2f} dB  "
+      f"receiver {1e3 * profile['dbp']:7.1f} ms")
+print(f"digital back-propagation  SNR={snr_dbp:5.2f} dB  "
+      f"receiver {1e3 * profile_dbp['dbp']:7.1f} ms  "
+      f"residual phase={np.rad2deg(back_propagated['phase'].theta_):+.1f} deg")
 
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-for ax, (label, (estimate, snr, ser)) in zip(axes, results.items(),
-                                             strict=True):
-    plot_iq(estimate, reference=alphabet, ax=ax)
-    ax.set_title(f"{label}\nSNR {snr:.2f} dB, SER {ser:.3f}")
+plot_iq(estimates[N_span], reference=alphabet, ax=axes[0])
+axes[0].set_title(f"dispersion compensation\n"
+                  f"SNR {snr_per_span[N_span]:.2f} dB")
+plot_iq(back_propagated.tap("phase"), reference=alphabet, ax=axes[1])
+axes[1].set_title(f"digital back-propagation\nSNR {snr_dbp:.2f} dB")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig4.png")

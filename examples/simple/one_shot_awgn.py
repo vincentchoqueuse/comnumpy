@@ -29,7 +29,7 @@ data_tx = chain.tap("tx")
 ser = compute_ser(data_tx, y)
 
 snr_per_bit = (10**(snr_dB/10))/np.log2(M)
-ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
+ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit)["ser"]
 
 print(f"SER (simu)= {ser}")
 print(f"SER (theo)= {ser_theo}")

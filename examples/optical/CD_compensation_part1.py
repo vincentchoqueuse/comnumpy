@@ -94,7 +94,7 @@ for k in k_vect:
         snr_per_bit = 10 ** (SNR_bitdB/10)
 
         # compute theoretical ber
-        ber_list[index_SNR, 0] = compute_metric_awgn_theo(type, M, snr_per_bit, "bin")
+        ber_list[index_SNR, 0] = compute_metric_awgn_theo(type, M, snr_per_bit)["ber"]
 
         # perform MC simulations
         N0 = epsilon_b/snr_per_bit  # snr_bit = epsilon_b/N0 = (epsilon_s/log2(order))/N0

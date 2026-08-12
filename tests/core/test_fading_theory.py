@@ -109,7 +109,8 @@ class TestDiversityOrder(unittest.TestCase):
                 with self.subTest(diversity=diversity,
                                   modulation=f"{family}-{order}"):
                     values = compute_metric_rayleigh_theo(
-                        family, order, 10 ** (high / 10), diversity=diversity)
+                        family, order, 10 ** (high / 10),
+                        diversity=diversity)["ser"]
                     self.assertAlmostEqual(self.slope(values, high),
                                            -diversity, delta=0.02)
 

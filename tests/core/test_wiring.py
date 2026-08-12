@@ -125,6 +125,23 @@ class TestWiring(unittest.TestCase):
         np.testing.assert_array_equal(chain["comp"].reference,
                                       chain.tapped_["ref"])
 
+    def test_every_pass_records_its_own_wall_time(self):
+        """`elapsed_` spares the caller a stopwatch around the call."""
+        chain = self.build().seed(7)
+        self.assertEqual(chain.elapsed_, 0.0)      # nothing has run yet
+        chain(200)
+        short = chain.elapsed_
+        self.assertGreater(short, 0.0)
+        chain(200_000)
+        self.assertGreater(chain.elapsed_, short)
+
+    def test_profiling_agrees_with_the_wall_time(self):
+        """The two answers to "how long" must be the same answer."""
+        chain = self.build().seed(7)
+        profile = chain.profile_execution_time(2000)
+        self.assertAlmostEqual(chain.elapsed_, sum(profile.values()),
+                               places=6)
+
     def test_unknown_ids_and_malformed_keys_rejected(self):
         for wiring in ({"comp.reference": "nope"},
                        {"nope.reference": "ref"},

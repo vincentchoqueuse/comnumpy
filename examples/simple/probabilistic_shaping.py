@@ -30,8 +30,9 @@ print(f"AWGN capacity at 20 dB: {awgn_capacity(100.0):.2f} bit/symbol")
 
 # --- 2. what a uniform QAM reaches -----------------------------------
 orders = (4, 16, 64, 256)
-uniform = {order: constellation_capacity(get_alphabet("QAM", order), snr)
-           for order in orders}
+uniform = {}
+for order in orders:
+    uniform[order] = constellation_capacity(get_alphabet("QAM", order), snr)
 
 fig, ax = plt.subplots(figsize=(7, 4.8))
 ax.plot(snr_dB, capacity, "k", lw=2, label="AWGN capacity")
@@ -46,10 +47,15 @@ ax.grid(True, alpha=0.4)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig1.png")
 
-print("\nSNR   capacity" + "".join(f"  {order:>3d}-QAM" for order in orders))
+header = "\nSNR   capacity"
+for order in orders:
+    header += f"  {order:>3d}-QAM"
+print(header)
 for index in range(0, len(snr_dB), 4):
-    print(f"{snr_dB[index]:3d} dB {capacity[index]:8.2f}"
-          + "".join(f" {uniform[order][index]:9.2f}" for order in orders))
+    line = f"{snr_dB[index]:3d} dB {capacity[index]:8.2f}"
+    for order in orders:
+        line += f" {uniform[order][index]:9.2f}"
+    print(line)
 
 # --- 3. shaping the 64-QAM -------------------------------------------
 # The Maxwell-Boltzmann law is the maximum-entropy law at a given energy.
@@ -69,15 +75,17 @@ def shaped_rate(lam, value):
 # lambda is unbounded above -- at low SNR the best law collapses onto the
 # innermost points, i.e. onto a smaller constellation -- so the entropy of
 # the winning law is reported beside it, which is the readable quantity.
-best_lam = np.array([
-    minimize_scalar(lambda lam, v=value: -shaped_rate(lam, v),
-                    bounds=(0.0, 12.0), method="bounded",
-                    options={"xatol": 1e-4}).x
-    for value in snr])
-best_entropy = np.array([distribution_entropy(maxwell_boltzmann(qam64, lam=lam))
-                         for lam in best_lam])
-shaped = np.array([shaped_rate(lam, value)
-                   for lam, value in zip(best_lam, snr, strict=True)])
+best_lam = np.zeros(snr.size)
+best_entropy = np.zeros(snr.size)
+shaped = np.zeros(snr.size)
+for index, value in enumerate(snr):
+    search = minimize_scalar(lambda lam, v=value: -shaped_rate(lam, v),
+                             bounds=(0.0, 12.0), method="bounded",
+                             options={"xatol": 1e-4})
+    best_lam[index] = search.x
+    best_entropy[index] = distribution_entropy(
+        maxwell_boltzmann(qam64, lam=search.x))
+    shaped[index] = shaped_rate(search.x, value)
 
 fig, ax = plt.subplots(figsize=(7, 4.8))
 ax.plot(snr_dB, capacity, "k", lw=2, label="AWGN capacity")
@@ -128,7 +136,10 @@ for n in (16, 64, 256, 1024):
     matcher = ConstantCompositionMatcher(amplitudes, distribution=amplitude_law,
                                          length=n)
     entropy = distribution_entropy(amplitude_law)
-    print(f"{n:4d}   {str(tuple(int(c) for c in matcher.composition)):36s} "
+    counts = []
+    for count in matcher.composition:
+        counts.append(int(count))
+    print(f"{n:4d}   {str(tuple(counts)):36s} "
           f"{matcher.rate:6.3f} {entropy:8.3f} {matcher.rate_loss:10.3f}")
 
 # --- 5. where it goes in a chain -------------------------------------
@@ -151,7 +162,9 @@ with open(f"{mermaid_dir}/shaping_pas.mmd", "w") as stream:
 # the measured frequencies are compared against.
 pam8 = np.sort(np.real(get_alphabet("PAM", 8)))
 symbols = chain(200 * matcher.n_bits)
-measured = np.array([np.mean(np.isclose(symbols, level)) for level in pam8])
+measured = np.zeros(pam8.size)
+for index, level in enumerate(pam8):
+    measured[index] = np.mean(np.isclose(symbols, level))
 signed_law = maxwell_boltzmann(pam8, lam=lam)
 
 fig, ax = plt.subplots(figsize=(7, 3.8))
@@ -161,7 +174,10 @@ ax.plot(pam8, signed_law, "C1s--", label="Maxwell-Boltzmann, "
         f"$\\lambda$ = {lam:.2f}")
 ax.axhline(1 / pam8.size, color="0.5", lw=1, ls=":", label="uniform")
 ax.set_xticks(pam8)
-ax.set_xticklabels([f"{value:.2f}" for value in pam8])
+labels = []
+for value in pam8:
+    labels.append(f"{value:.2f}")
+ax.set_xticklabels(labels)
 ax.set_xlabel("8-PAM symbol")
 ax.set_ylabel("probability")
 ax.set_title("what comes out of the matcher, against the law it targets")

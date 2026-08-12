@@ -235,6 +235,3 @@ Key takeaway:
 either an amplifier backoff or a PAPR reduction technique.** The library
 ships several of the latter, in
 ``examples/ofdm/one_shot_ofdm_papr_reduction.py``.
-
-Next, :doc:`multipath` goes back to the channel and settles the number the
-OFDM tutorial took for granted: how long the cyclic prefix has to be.

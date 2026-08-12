@@ -154,6 +154,12 @@ class Sequential():
         dictionary store per tapped block (a reference is kept, no copy
         -- blocks allocate fresh outputs, so the reference stays valid).
         Retrieve with :meth:`tap`.
+    elapsed_ : float
+        Wall time of the last pass, in seconds (data-dependent, hence the
+        trailing underscore, decision D23). Every call records it, so
+        "how long does this chain take" needs no stopwatch around the
+        call site; :meth:`profile_execution_time` breaks the same number
+        down block by block.
     wiring : dict, optional, keyword-only
         Extra data edges, as ``{"block_id.param": "source_block_id"}``.
         Before a target block runs, the chain assigns it the signal
@@ -173,6 +179,8 @@ class Sequential():
     >>> y = chain.seed(1)(5)
     >>> print(chain.tap("generator"))
     [0 0 3 1 3]
+    >>> chain.elapsed_ > 0
+    True
     """
     module_list: List[Processor]
     debug: bool = False
@@ -183,6 +191,8 @@ class Sequential():
     wiring: Optional[Dict[str, str]] = field(default=None, kw_only=True)
     # signals recorded at the declared taps (references, not copies)
     tapped_: Dict[str, Any] = field(init=False, repr=False, default_factory=dict)
+    # wall time of the last pass (D23: data-dependent, hence the underscore)
+    elapsed_: float = field(init=False, repr=False, default=0.0)
 
 
     def block_ids(self) -> List[str]:
@@ -503,6 +513,7 @@ class Sequential():
                 self.tapped_[ids[index]] = Y
             time_elapsed[ids[index]] = stop_time - start_time
 
+        self.elapsed_ = sum(time_elapsed.values())
         return time_elapsed
 
     def _resolve_edges(self) -> _EdgePlan:
@@ -551,6 +562,7 @@ class Sequential():
         ids, recorded, feeds = self._resolve_edges()
 
         Y = X
+        start = time.perf_counter()
         for index, processor in enumerate(self.module_list):
             # feed declared data edges before the block runs (wiring)
             for param, source in feeds.get(index, ()):
@@ -569,6 +581,7 @@ class Sequential():
             key = getattr(processor, 'name', None)
             if key is not None and key in callbacks:
                 callbacks[key](Y)
+        self.elapsed_ = time.perf_counter() - start
         return Y
 
     def tap(self, block_id: str) -> Any:

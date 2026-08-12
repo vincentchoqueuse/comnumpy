@@ -72,59 +72,71 @@ Implementation
 """"""""""""""
 
 We reproduce the setup of Häger and Pfister: 25 spans of 80 km, 16-QAM at
-10.7 GBd, root-raised-cosine pulses, and 200 split steps per span, which
-is enough that the propagation itself is not in question -- 500 steps give
-the same effective SNR to three decimals.
+10.7 GBd, root-raised-cosine pulses, and 200 split steps per span, which is
+enough that the propagation itself is not in question -- 500 steps give the
+same effective SNR to three decimals.
 
-The chain is written as three functions, one per piece, so that the number
-of spans is an argument and nothing else changes:
+The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
    :lines: 1-88
 
+Two things in that chain are worth naming.
+
 The receiver ends with a **data-aided phase correction**. It belongs there:
 the nonlinearity turns average power into phase, so what comes out of the
-back-propagation carries a rotation of the whole constellation, and a real
-receiver removes it with a carrier recovery. Its reference is the
-transmitted symbol sequence, which the chain produces itself -- so the edge
-is *declared* rather than passed by hand:
+back-propagation carries a rotation of the whole constellation, which a real
+receiver removes with a carrier recovery. Its reference is the transmitted
+symbol sequence, which the chain produces itself, so the edge is *declared*
+-- ``wiring={"phase.reference": "signal_tx"}`` feeds the compensator the
+output of the ``signal_tx`` block before it runs, on every pass.
 
-.. literalinclude:: ../../examples/optical/one_shot_NLI.py
-   :language: python
-   :lines: 91-119
-
-``wiring={"phase.reference": "signal_tx"}`` tells the chain to feed the
-compensator the output of the ``signal_tx`` block before it runs. The
-whole system is then one object: symbols in, decisions out, at any number
-of spans.
+And ``taps`` names the four signals the figures need. ``rx_field`` is the
+field as it comes off the fibre, before any of the DSP; ``phase`` is the
+final estimate. Reading them costs nothing and keeps the module list a
+description of the system rather than of the plotting.
 
 
 Degradation, span by span
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Run that chain once per span count, seeded identically each time, and the
+Call that chain once per span count, seeded identically each time, and the
 only thing that changes is the distance travelled:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 122-155
+   :lines: 91-113
 
 .. code::
 
-    1 spans: SNR 22.47 dB, SER 0.0000, phase   -1.2 deg,   0.5 s
-    5 spans: SNR 21.15 dB, SER 0.0000, phase   -7.0 deg,   2.7 s
-   10 spans: SNR 18.89 dB, SER 0.0016, phase  -14.8 deg,   5.2 s
-   15 spans: SNR 17.22 dB, SER 0.0039, phase  -22.9 deg,   7.9 s
-   20 spans: SNR 15.78 dB, SER 0.0156, phase  -31.0 deg,  11.1 s
-   25 spans: SNR 14.61 dB, SER 0.0322, phase  -39.3 deg,  13.3 s
+    1 spans: SNR 22.47 dB, SER 0.0000, phase   -1.2 deg,   0.9 s
+    5 spans: SNR 21.15 dB, SER 0.0000, phase   -7.0 deg,   2.8 s
+   10 spans: SNR 18.89 dB, SER 0.0016, phase  -14.8 deg,   5.4 s
+   15 spans: SNR 17.22 dB, SER 0.0039, phase  -22.9 deg,   8.0 s
+   20 spans: SNR 15.78 dB, SER 0.0156, phase  -31.0 deg,  10.2 s
+   25 spans: SNR 14.61 dB, SER 0.0322, phase  -39.3 deg,  12.5 s
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
    :align: center
-   :alt: Constellations after 1, 10 and 25 spans
+   :alt: Received field at the end of the link
+
+That is the field the receiver is handed. Nothing is recognizable: the
+dispersion has spread each symbol over hundreds of neighbours, so the field
+looks Gaussian whatever was transmitted. What the chain makes of it, at
+three distances:
+
+.. literalinclude:: ../../examples/optical/one_shot_NLI.py
+   :language: python
+   :lines: 115-129
 
 .. image:: img/one_shot_nli_fig2.png
+   :width: 100%
+   :align: center
+   :alt: Constellations after 1, 10 and 25 spans
+
+.. image:: img/one_shot_nli_fig3.png
    :width: 100%
    :align: center
    :alt: Effective SNR against the number of spans
@@ -136,39 +148,41 @@ the dispersion converts into a scatter no linear filter can undo. The
 constellations show the difference in kind -- after one span the clusters
 are tight, after twenty-five they are smeared.
 
-The phase column measures the third effect, and it is the one the
-compensator absorbs: self-phase modulation rotates the constellation by
-1.2 degrees per span, 39 degrees over the link. Without the correction the
-error rate would be dominated by that rotation rather than by the noise,
-which is why the compensator sits in the chain and not in a comment.
+The phase column measures a third effect, and it is the one the compensator
+absorbs: self-phase modulation rotates the constellation by 1.2 degrees per
+span, 39 degrees over the link. Left in, that rotation would dominate the
+error rate, which is why the compensator sits in the chain and not in a
+comment.
 
-The last column is the one to keep for what follows:
+The last column is the one to keep. It grows with the number of spans, and
+``profile_execution_time`` says why -- it runs the chain and times each
+block on the way through:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 157-163
+   :lines: 131-136
 
 .. code::
 
    block                    time
-   data_tx                     0.0 ms
+   data_tx                     0.1 ms
    signal_tx                   0.0 ms
    upsampler                   0.2 ms
-   srrcfilter                  2.1 ms
+   srrcfilter                  2.2 ms
    signal_amplifier            0.2 ms
-   link                    14441.5 ms
-   bwfilter                    1.2 ms
-   downsampler                 0.2 ms
-   dbp                        10.4 ms
-   srrcfilter_2                0.7 ms
-   downsampler_2               0.0 ms
+   link                    12630.4 ms
+   bwfilter                    1.1 ms
+   rx_field                    0.1 ms
+   dbp                         8.9 ms
+   srrcfilter_2                0.6 ms
+   downsampler                 0.0 ms
    signal_amplifier_2          0.0 ms
    phase                       0.1 ms
 
-Thirteen blocks, and one of them is **99.9 %** of the run time. The
-split-step propagation is 25 spans of 200 steps, each an FFT pair and a
-pointwise rotation; everything else in the chain is a handful of
-milliseconds.
+Thirteen blocks, and one of them is **99.9 %** of the run. The split-step
+propagation is 25 spans of 200 steps, each an FFT pair and a pointwise
+rotation; everything else is a handful of milliseconds. Keep that ratio in
+mind -- it is what the Monte-Carlo section below has to work around.
 
 
 Digital Back-Propagation
@@ -191,48 +205,20 @@ ASE noise, which was added *along* the link and is amplified rather than
 removed by the backward pass.
 
 Dispersion compensation alone is the same algorithm with the nonlinear term
-switched off -- one step per span instead of :math:`\mathrm{StPS}` -- so
-the two strategies differ by one argument of ``get_receiver``.
-
-Splitting the chain
-"""""""""""""""""""
-
-Comparing the two over the same channel realization with ``get_full_chain``
-would propagate the field twice, and the profile above says what that
-costs: 14 seconds of split-step for 10 milliseconds of receiver. So the
-chain is cut where the physics ends and the DSP begins -- the link is run
-once, and each receiver is applied to the field it produced:
-
-.. literalinclude:: ../../examples/optical/one_shot_NLI.py
-   :language: python
-   :lines: 165-176
-
-``get_unprocessed_chain`` is the same transmitter and the same channel as
-``get_full_chain``, minus the receiver; the reference is no longer wired
-but passed to ``get_receiver``, which is what the argument is for. Same
-blocks, same order, assembled in two pieces instead of one.
-
-.. image:: img/one_shot_nli_fig3.png
-   :width: 100%
-   :align: center
-   :alt: Received field at the end of the link
-
-That is what the split exposes: the field the receiver actually gets. At the
-output of the fibre nothing is recognizable, because the dispersion has
-spread each symbol over hundreds of neighbours and the field looks Gaussian
-whatever was transmitted.
+switched off -- one step per span instead of :math:`\mathrm{StPS}` -- so the
+two strategies are one argument of ``get_full_chain`` apart.
 
 Results
 """""""
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 178-200
+   :lines: 138-159
 
 .. code::
 
-   dispersion compensation    SNR=14.61 dB  SER=0.0322  residual phase= -39.3 deg    10 ms
-   digital back-propagation   SNR=19.50 dB  SER=0.0003  residual phase=  -1.0 deg  2060 ms
+   dispersion compensation   SNR=14.61 dB  receiver     8.9 ms
+   digital back-propagation  SNR=19.50 dB  receiver  2001.8 ms  residual phase=-1.0 deg
 
 .. image:: img/one_shot_nli_fig4.png
    :width: 100%
@@ -276,21 +262,21 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-78
+   :lines: 1-81
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 80-132
+   :lines: 84-159
 
 .. code::
 
-   launch power [dBm]   -6.0   -4.5   -3.0   -1.5    0.0    1.5    3.0    4.5
-   amplifier noise only     15.3   16.4   17.6   18.6   19.3   20.1   21.1   21.2
-   dispersion compensation  15.2   16.2   17.1   17.6   17.2   16.3   14.0   11.2
-   DBP, 1 step/span         15.2   16.3   17.3   17.9   17.8   17.2   15.4   12.7
-   DBP, 2 steps/span        15.2   16.3   17.4   18.3   18.6   18.5   17.8   15.8
-   DBP, 4 steps/span        15.2   16.4   17.5   18.5   19.1   19.6   20.2   19.3
-   DBP, 50 steps/span       15.2   16.4   17.6   18.5   19.2   19.7   20.5   19.9
+   launch power [dBm]     -6.0   -4.5   -3.0   -1.5    0.0    1.5    3.0    4.5
+   amplifier noise only       15.2   16.3   17.4   18.4   19.4   20.0   20.7   21.3
+   dispersion compensation    15.1   16.2   17.0   17.4   17.1   15.9   14.0   11.4
+   DBP, 1 step/span           15.1   16.2   17.1   17.7   17.8   16.9   15.3   12.9
+   DBP, 2 steps/span          15.1   16.3   17.3   18.1   18.6   18.4   17.6   15.8
+   DBP, 4 steps/span          15.1   16.3   17.3   18.3   19.2   19.6   19.9   19.4
+   DBP, 50 steps/span         15.1   16.3   17.4   18.4   19.2   19.7   20.1   20.1
 
 .. image:: img/nli_simulation_fig1.png
    :width: 100%
@@ -306,21 +292,21 @@ of that receiver, and back-propagation **moves it to the right**:
 .. code::
 
    receiver                  best SNR   at power    total time
-   amplifier noise only      21.18 dB    4.5 dBm       0.1 s
-   dispersion compensation   17.61 dB   -1.5 dBm       0.1 s
-   DBP, 1 step/span          17.93 dB   -1.5 dBm       0.2 s
-   DBP, 2 steps/span         18.56 dB    0.0 dBm       0.4 s
-   DBP, 4 steps/span         20.21 dB    3.0 dBm       0.8 s
-   DBP, 50 steps/span        20.53 dB    3.0 dBm       8.7 s
+   amplifier noise only      21.26 dB    4.5 dBm       0.6 s
+   dispersion compensation   17.39 dB   -1.5 dBm       0.6 s
+   DBP, 1 step/span          17.77 dB    0.0 dBm       1.3 s
+   DBP, 2 steps/span         18.62 dB    0.0 dBm       2.4 s
+   DBP, 4 steps/span         19.87 dB    3.0 dBm       4.8 s
+   DBP, 50 steps/span        20.15 dB    3.0 dBm      55.7 s
 
 Read the last two columns together. Going from one step per span to four buys
-**2.3 dB**; going from four to fifty buys **0.3 dB more** and costs eleven
+**2.1 dB**; going from four to fifty buys **0.3 dB more** and costs twelve
 times the computation. The returns collapse because the step-size error falls
 with the number of steps while the ASE noise does not: at fifty steps the
-receiver is still 0.65 dB from the noise-only bound, and no number of steps
+receiver is still 1.1 dB from the noise-only bound, and no number of steps
 will close that last gap.
 
-Against dispersion compensation alone, four steps per span are worth 2.6 dB
+Against dispersion compensation alone, four steps per span are worth 2.5 dB
 of effective SNR **and** 4.5 dB of launch power, which is the number a link
 budget actually spends.
 

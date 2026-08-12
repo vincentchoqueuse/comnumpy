@@ -112,6 +112,33 @@ strings. The split is unambiguous because `block_ids` collapses every
 run of non-alphanumerics into a single underscore, so no block id can
 contain a double one; a test pins that.
 
+### Changed — the closed-form performance front-ends return a dictionary
+
+`compute_metric_awgn_theo` and `compute_metric_rayleigh_theo` took a
+`type="ser"` / `"bin"` string and returned one number, so a figure that
+wants both curves called them twice and a string was the only thing
+saying which was which. They now return a dict:
+
+| Before (0.91) | After (1.0.0) |
+|---|---|
+| `compute_metric_awgn_theo("QAM", 16, g, "ser")` | `compute_metric_awgn_theo("QAM", 16, g)["ser"]` |
+| `compute_metric_awgn_theo("QAM", 16, g, "bin")` | `compute_metric_awgn_theo("QAM", 16, g)["ber"]` |
+| `compute_metric_rayleigh_theo("PSK", 4, g, "bin", diversity=2)` | `compute_metric_rayleigh_theo("PSK", 4, g, diversity=2)["ber"]` |
+
+`"bin"` is spelled `"ber"`, next to `"ser"`. The AWGN one also takes
+`metrics=` and can add `"mi"` and `"gmi"` — the mutual information and
+the bit-interleaved rate of the same constellation at the same SNR — for
+a page that draws rates rather than error rates. Those two are quadrature,
+not closed forms, so they are opt-in.
+
+### Added — `Sequential.elapsed_`
+
+Every pass records its own wall time, so "how long does this chain take"
+no longer needs a stopwatch around the call site — which is what the
+tutorials were doing, four times over.
+`profile_execution_time` breaks the same number down block by block, and
+the two now agree by construction.
+
 ### Changed — a wired reference no longer needs a placeholder array
 
 `DataAidedMixin` advertised `Sequential(wiring={"comp.reference":
@@ -164,12 +191,22 @@ Substantive changes rather than reorganisation:
   `get_full_chain(n_spans)` builds transmitter, link and receiver
   together, with the data-aided phase correction wired to the
   transmitter (`wiring={"phase.reference": "signal_tx"}`) instead of a
-  hand-rolled `np.angle` on the side; the degradation figure is that
-  chain called at six span counts. `profile_execution_time` then shows
-  the split-step propagation to be 99.9 % of the run, which is why the
-  receiver comparison splits the chain in two -- `get_channel` once,
-  `get_receiver` per strategy. The forward propagation drops from 500 to
+  hand-rolled `np.angle` on the side. Every figure of the one-shot page
+  comes from that one chain, called at six span counts;
+  `profile_execution_time` shows the split-step propagation to be 99.9 %
+  of the run. The chain is cut in two only in the Monte-Carlo example,
+  where six receivers share one propagation — `get_unprocessed_chain`
+  once, `get_receiver` per strategy — and the page says why, with the
+  profile that justifies it. The forward propagation drops from 500 to
   200 steps per span (same effective SNR to three decimals).
+- **Removed the multipath tutorial**, its example and its figures, and
+  the OFDM page's maximum-likelihood digression and self-drawn chain
+  diagram.
+- **No comprehensions in the tutorial scripts.** A list, dict or
+  generator expression reads as one dense line to someone learning the
+  library; the loop is written out instead. Applied to the pages
+  rewritten here, and recorded in `.claude/skills/comnumpy-tutorial`
+  along with the rest of the house plan.
 
 ### Added (milestones 2-5)
 

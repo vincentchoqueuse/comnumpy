@@ -55,7 +55,7 @@ plt.title("error distribution")
 
 # theoretical metrics
 snr_per_bit = (1/sigma2) / np.log2(M)
-ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
+ser_theo = compute_metric_awgn_theo(modulation, M, snr_per_bit)["ser"]
 
 # print metric and plot
 print(f"exp: SER={ser_exp}")

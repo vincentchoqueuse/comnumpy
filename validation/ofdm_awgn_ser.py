@@ -67,8 +67,7 @@ def main():
     occupied = alloc.N_data + alloc.N_pilots
     k = np.log2(M)
     snr_data = 10 ** (SNR_DB_RANGE / 10) * alloc.N_fft / occupied
-    ser_theo = np.array([compute_metric_awgn_theo("QAM", M, g / k)
-                         for g in snr_data])
+    ser_theo = compute_metric_awgn_theo("QAM", M, snr_data / k)["ser"]
 
     mask = ser_theo > 50 / N_SYMBOLS
     rel_err = np.abs(ser_sim[mask] - ser_theo[mask]) / ser_theo[mask]

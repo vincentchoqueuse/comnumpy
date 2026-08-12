@@ -41,8 +41,7 @@ def main():
     for order, seed, marker in ((4, 10, "o"), (16, 20, "s")):
         k = np.log2(order)
         snr_per_bit = 10 ** (SNR_DB_RANGE / 10) / k
-        ser_theo = np.array([compute_metric_awgn_theo("QAM", order, g)
-                             for g in snr_per_bit])
+        ser_theo = compute_metric_awgn_theo("QAM", order, snr_per_bit)["ser"]
         ser_sim = simulate(order, seed)
 
         # compare where the theoretical SER is measurable with N_SYMBOLS

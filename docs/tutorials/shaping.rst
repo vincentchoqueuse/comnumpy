@@ -59,7 +59,7 @@ then the mutual information :math:`I(X;Y)` of that discrete input, which
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 31-52
+   :lines: 31-58
 
 .. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
@@ -117,7 +117,7 @@ transmit power**, which is the only comparison that means anything.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 54-107
+   :lines: 60-115
 
 .. image:: img/probabilistic_shaping_fig2.png
    :width: 100%
@@ -156,7 +156,7 @@ that lives there:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 110-121
+   :lines: 117-128
 
 .. code::
 
@@ -189,7 +189,7 @@ the rate is :math:`k/n`. As :math:`n` grows, :math:`k/n \to H(X)`; at finite
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 123-133
+   :lines: 130-143
 
 .. code::
 
@@ -218,7 +218,7 @@ compose instead of fighting.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 135-147
+   :lines: 145-157
 
 .. mermaid:: mermaid/shaping_pas.mmd
 
@@ -235,7 +235,7 @@ which is the Maxwell-Boltzmann law on the full constellation at the same
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 149-175
+   :lines: 159-187
 
 .. image:: img/probabilistic_shaping_fig3.png
    :width: 100%
@@ -263,7 +263,7 @@ the generalized mutual information,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 177-185
+   :lines: 189-201
 
 .. code::
 

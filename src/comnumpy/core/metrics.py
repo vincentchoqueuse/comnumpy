@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 import numpy as np
 
@@ -193,27 +193,32 @@ def compute_ser_awgn_qam(order: int, snr_per_bit: np.ndarray | float
 
 
 def compute_metric_awgn_theo(modulation: str, order: int,
-                             snr_per_bit: np.ndarray | float,
-                             type: str = "ser") -> np.ndarray | float:
-    r"""
-    Compute the theoretical error rate of a given modulation over an AWGN channel.
+                             snr_per_bit: np.ndarray | float, *,
+                             metrics: Sequence[str] = ("ser", "ber"),
+                             ) -> dict[str, np.ndarray | float]:
+    r"""Theoretical performance of a modulation over an AWGN channel.
 
     Signal Model
     ------------
     Front-end to the closed-form expressions of
     :func:`compute_ser_awgn_psk` and :func:`compute_ser_awgn_qam`, both
     parameterized by the signal-to-noise ratio **per bit**
-    :math:`\gamma_b = E_b / N_0`. With ``type="bin"`` the symbol error
-    rate is converted into a bit error rate through the usual Gray-mapping
-    approximation, in which a symbol error corrupts a single bit out of
-    :math:`k = \log_2 M`:
+    :math:`\gamma_b = E_b / N_0`. The bit error rate follows through the
+    usual Gray-mapping approximation, in which a symbol error corrupts a
+    single bit out of :math:`k = \log_2 M`:
 
     .. math::
 
         P_b \simeq \frac{P_s}{k}
 
-    This conversion is an upper-SNR approximation, not an identity: it is
-    accurate when :math:`P_s \ll 1` and the constellation is Gray-mapped.
+    which is accurate when :math:`P_s \ll 1` and the constellation is
+    Gray-mapped, not an identity.
+
+    A figure usually wants several of these curves at once, so the
+    return value is a dictionary: one call, one entry per metric, ready
+    to hand to :func:`~comnumpy.core.visualizers.plot_error_rate`.
+
+    Axes: *element-wise*.
 
     Parameters
     ----------
@@ -222,16 +227,27 @@ def compute_metric_awgn_theo(modulation: str, order: int,
     order : int
         Modulation order :math:`M` (4, 16, 64, ...).
     snr_per_bit : float or np.ndarray
-        Signal-to-noise ratio per bit :math:`\gamma_b = E_b / N_0` in linear scale.
-    type : str, optional
-        Error metric: ``"ser"`` for the symbol error rate :math:`P_s`, or
-        ``"bin"`` for the bit error rate :math:`P_b = P_s / k`.
-        Default is ``"ser"``.
+        Signal-to-noise ratio per bit :math:`\gamma_b = E_b / N_0`, linear.
+    metrics : sequence of str, optional, keyword-only
+        Which quantities to return, among ``"ser"``, ``"ber"``, ``"mi"``
+        and ``"gmi"``. Default ``("ser", "ber")`` -- the two closed
+        forms. ``"mi"`` and ``"gmi"`` are the mutual information and the
+        bit-interleaved (generalized) mutual information of the same
+        constellation at the same SNR, from
+        :func:`~comnumpy.core.capacity.constellation_capacity` and
+        :func:`~comnumpy.core.capacity.bicm_capacity`; they are computed
+        by quadrature rather than in closed form, and cost accordingly.
 
     Returns
     -------
-    float or np.ndarray
-        Theoretical error rate value(s), with the same shape as ``snr_per_bit``.
+    dict of str to float or np.ndarray
+        One entry per requested metric, each with the shape of
+        ``snr_per_bit``.
+
+    Raises
+    ------
+    ValueError
+        If the modulation or one of the metric names is unknown.
 
     References
     ----------
@@ -241,29 +257,51 @@ def compute_metric_awgn_theo(modulation: str, order: int,
 
     Examples
     --------
-    >>> print(f"{compute_metric_awgn_theo('QAM', 16, 10.0):.4e}")
-    7.0043e-03
-    >>> print(f"{compute_metric_awgn_theo('QAM', 16, 10.0, type='bin'):.4e}")
-    1.7511e-03
-    >>> print(f"{compute_metric_awgn_theo('PSK', 8, 10.0):.4e}")
+    >>> theory = compute_metric_awgn_theo("QAM", 16, 10.0)
+    >>> print(f"{theory['ser']:.4e}, {theory['ber']:.4e}")
+    7.0043e-03, 1.7511e-03
+    >>> print(f"{compute_metric_awgn_theo('PSK', 8, 10.0)['ser']:.4e}")
     3.0342e-03
+    >>> rates = compute_metric_awgn_theo("QAM", 4, 10.0, metrics=("mi", "gmi"))
+    >>> print(f"{rates['mi']:.3f}, {rates['gmi']:.3f}")
+    2.000, 2.000
     """
-    if modulation == "PSK":
-        value = compute_ser_awgn_psk(order, snr_per_bit)
-
-    elif modulation == "QAM":
-        value = compute_ser_awgn_qam(order, snr_per_bit)
-    else:
+    unknown = [name for name in metrics
+               if name not in ("ser", "ber", "mi", "gmi")]
+    if unknown:
+        raise ValueError(
+            f"compute_metric_awgn_theo: unknown metric(s) {unknown}; "
+            f"expected any of 'ser', 'ber', 'mi', 'gmi'.")
+    if modulation not in ("PSK", "QAM"):
         raise ValueError(
             f"compute_metric_awgn_theo: unknown modulation "
             f"{modulation!r}; expected 'PSK' or 'QAM' -- these are the two "
             f"families with a closed-form SER implemented here.")
 
-    if type == "bin":
-        k = int(np.log2(order))
-        value = value/k
+    bits = int(np.log2(order))
+    out: dict[str, np.ndarray | float] = {}
+    if "ser" in metrics or "ber" in metrics:
+        if modulation == "PSK":
+            ser = compute_ser_awgn_psk(order, snr_per_bit)
+        else:
+            ser = compute_ser_awgn_qam(order, snr_per_bit)
+        if "ser" in metrics:
+            out["ser"] = ser
+        if "ber" in metrics:
+            out["ber"] = ser / bits
+    if "mi" in metrics or "gmi" in metrics:
+        # the closed forms take E_b/N_0; the information-theoretic ones
+        # take the SNR per symbol, which is k times larger
+        from .capacity import bicm_capacity, constellation_capacity
+        from .utils import get_alphabet
+        alphabet = get_alphabet(modulation, order)
+        snr_per_symbol = np.asarray(snr_per_bit) * bits
+        if "mi" in metrics:
+            out["mi"] = constellation_capacity(alphabet, snr_per_symbol)
+        if "gmi" in metrics:
+            out["gmi"] = bicm_capacity(alphabet, snr_per_symbol)
+    return {name: out[name] for name in metrics}
 
-    return value
 
 def _craig_average(gain: float, limit: float,
                    snr_per_symbol: np.ndarray | float,
@@ -473,18 +511,17 @@ def compute_ser_rayleigh_qam(order: int, snr_per_bit: np.ndarray | float, *,
 
 
 def compute_metric_rayleigh_theo(modulation: str, order: int,
-                                 snr_per_bit: np.ndarray | float,
-                                 type: str = "ser", *,
-                                 diversity: int = 1) -> np.ndarray | float:
+                                 snr_per_bit: np.ndarray | float, *,
+                                 diversity: int = 1
+                                 ) -> dict[str, np.ndarray | float]:
     r"""Theoretical error rate over Rayleigh fading, PSK or QAM.
 
     Signal Model
     ------------
     Front-end to :func:`compute_ser_rayleigh_psk` and
     :func:`compute_ser_rayleigh_qam`, the fading counterpart of
-    :func:`compute_metric_awgn_theo` and parameterized the same way. With
-    ``type="bin"`` the symbol error rate is converted to a bit error
-    rate through the Gray-mapping approximation
+    :func:`compute_metric_awgn_theo` and parameterized the same way. The
+    bit error rate follows through the Gray-mapping approximation
     :math:`P_b \simeq P_s / k`, which is an upper-SNR statement here
     exactly as it is over AWGN.
 
@@ -498,20 +535,21 @@ def compute_metric_rayleigh_theo(modulation: str, order: int,
         Modulation order :math:`M`.
     snr_per_bit : float or np.ndarray
         Average SNR per bit per branch, linear.
-    type : str, optional
-        ``"ser"`` or ``"bin"``. Default ``"ser"``.
     diversity : int, optional, keyword-only
         Number of combined branches :math:`L`. Default 1.
 
     Returns
     -------
-    float or np.ndarray
-        Error rate.
+    dict of str to float or np.ndarray
+        ``{"ser": ..., "ber": ...}``, each with the shape of
+        ``snr_per_bit`` -- the same shape of answer
+        :func:`compute_metric_awgn_theo` returns, so the two can be drawn
+        on one figure without unpacking rules that differ.
 
     Raises
     ------
     ValueError
-        If the modulation or the metric type is unknown.
+        If the modulation is unknown.
 
     References
     ----------
@@ -520,9 +558,8 @@ def compute_metric_rayleigh_theo(modulation: str, order: int,
     Examples
     --------
     >>> snr = 10 ** (np.array([10.0, 20.0]) / 10)
-    >>> ser = compute_metric_rayleigh_theo("PSK", 4, snr, diversity=2)
-    >>> ber = compute_metric_rayleigh_theo("PSK", 4, snr, "bin", diversity=2)
-    >>> bool(np.allclose(ber, ser / 2))
+    >>> theory = compute_metric_rayleigh_theo("PSK", 4, snr, diversity=2)
+    >>> bool(np.allclose(theory["ber"], theory["ser"] / 2))
     True
     """
     match modulation:
@@ -536,14 +573,7 @@ def compute_metric_rayleigh_theo(modulation: str, order: int,
             raise ValueError(
                 f"unknown modulation {modulation!r}, expected 'PSK' or "
                 f"'QAM' -- these are the families the closed forms cover.")
-    match type:
-        case "ser":
-            return value
-        case "bin":
-            return value / np.log2(order)
-        case _:
-            raise ValueError(
-                f"unknown metric type {type!r}, expected 'ser' or 'bin'.")
+    return {"ser": value, "ber": value / np.log2(order)}
 
 
 def compute_ser(X_target: np.ndarray, X_detected: np.ndarray,

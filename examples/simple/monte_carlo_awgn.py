@@ -45,7 +45,7 @@ print("sweep :", " ".join(f"{value:.3e}" for value in ser_array[::8]))
 
 # compute theoretical SER metric
 snr_per_bit = (10**(snr_dB_list/10))/np.log2(M)
-ser_theo_array = compute_metric_awgn_theo(modulation, M, snr_per_bit, "ser")
+ser_theo_array = compute_metric_awgn_theo(modulation, M, snr_per_bit)["ser"]
 
 # plot_error_rate draws the measurements as markers and the closed form
 # as a line of the same colour: the figure every sweep ends with
