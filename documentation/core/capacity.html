@@ -514,13 +514,13 @@ Information Theory</em>, 2nd ed., Wiley, 2006, Chapter 9.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.core.capacity.constellation_capacity">
-<span class="sig-name descname"><span class="pre">constellation_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gauss-hermite'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/capacity.html#constellation_capacity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.capacity.constellation_capacity" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">constellation_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">px</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gauss-hermite'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/capacity.html#constellation_capacity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.capacity.constellation_capacity" title="Link to this definition">#</a></dt>
 <dd><p>Mutual information of a discrete constellation over AWGN.</p>
 <section id="id1">
 <h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>A real system does not transmit a Gaussian: it transmits one of
-<span class="math notranslate nohighlight">\(M\)</span> constellation points, equiprobably. The achievable rate is
-then the mutual information</p>
+<span class="math notranslate nohighlight">\(M\)</span> constellation points, equiprobably by default. The
+achievable rate is then the mutual information</p>
 <div class="math notranslate nohighlight">
 \[I(X; Y) = \log_2 M - \frac{1}{M} \sum_{m=1}^{M}
 \mathbb{E}_{b}\left[ \log_2 \sum_{m'=1}^{M}
@@ -531,6 +531,17 @@ then the mutual information</p>
 saturates at <span class="math notranslate nohighlight">\(\log_2 M\)</span> however high the SNR, and it is the
 ceiling a coded system using that constellation can approach –
 not the Shannon capacity, which assumes a Gaussian input.</p>
+<p>Probabilistic shaping makes the input non-uniform, and then the
+<span class="math notranslate nohighlight">\(1/M\)</span> factors are no longer constants to pull out of the sum:</p>
+<div class="math notranslate nohighlight">
+\[I(X; Y) = - \sum_{m} P_X(x_m) \;
+\mathbb{E}_{b}\left[ \log_2 \sum_{m'} P_X(x_{m'})
+\exp\left(-\frac{|x_m - x_{m'} + b|^2 - |b|^2}{\sigma^2}\right)
+\right]\]</div>
+<p>which is the same expression with <code class="docutils literal notranslate"><span class="pre">px</span></code> in both places and reduces
+to the one above when it is uniform. Passing <code class="docutils literal notranslate"><span class="pre">px</span></code> is how the rate
+of a shaped constellation is read exactly rather than estimated from
+samples with <a class="reference internal" href="information.html#comnumpy.core.information.compute_mi" title="comnumpy.core.information.compute_mi"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_mi()</span></code></a>.</p>
 <p>The expectation is a two-dimensional integral against a Gaussian
 weight, evaluated by quadrature – no random draws. Which rule does
 it is left open by <code class="docutils literal notranslate"><span class="pre">method</span></code>; see <code class="xref py py-func docutils literal notranslate"><span class="pre">_noise_quadrature()</span></code> for what
@@ -548,6 +559,16 @@ separates them.</p>
 </dd>
 <dt class="field-even">type snr<span class="colon">:</span></dt>
 <dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param px<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Input distribution <span class="math notranslate nohighlight">\(P_X\)</span>, of length <span class="math notranslate nohighlight">\(M\)</span>. Default
+(None) is uniform. Note that the SNR is still read from the
+alphabet’s own scale, so a shaped input of lower energy is
+compared at <em>lower</em> power unless the alphabet is rescaled –
+see <a class="reference internal" href="shaping.html#comnumpy.core.shaping.maxwell_boltzmann" title="comnumpy.core.shaping.maxwell_boltzmann"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a>.</p>
+</dd>
+<dt class="field-even">type px<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param n_nodes<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Quadrature nodes per noise dimension, so the cost grows as
@@ -567,10 +588,13 @@ there to be able to check the first without leaving the library.</p>
 </dd>
 <dt class="field-odd">returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>np.ndarray</em> – Mutual information in bits per channel use, in
-<span class="math notranslate nohighlight">\([0, \log_2 M]\)</span>.</p>
+<span class="math notranslate nohighlight">\([0, \log_2 M]\)</span> – at most <span class="math notranslate nohighlight">\(H(P_X)\)</span> when <code class="docutils literal notranslate"><span class="pre">px</span></code> is
+given.</p>
 </dd>
 <dt class="field-even">raises ValueError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">method</span></code> is not one of the two rules above.</p>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">method</span></code> is not one of the two rules above, or if <code class="docutils literal notranslate"><span class="pre">px</span></code>
+    does not have one non-negative probability per constellation
+    point.</p>
 </dd>
 </dl>
 <p class="rubric">References</p>
@@ -590,6 +614,14 @@ keeping it – it checks the default rule without leaving the library:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">simpson</span> <span class="o">=</span> <span class="n">constellation_capacity</span><span class="p">(</span><span class="n">qam16</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;simpson&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">gauss</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">simpson</span><span class="p">)],</span> <span class="mi">3</span><span class="p">))</span>
 <span class="go">[3.164 3.164]</span>
+</pre></div>
+</div>
+<p>A non-uniform input carries less than <span class="math notranslate nohighlight">\(\log_2 M\)</span> however clean
+the channel, because it is its entropy that saturates:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">law</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">constellation_capacity</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="n">law</span><span class="p">)),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">1.7219</span>
 </pre></div>
 </div>
 </section>

@@ -610,11 +610,171 @@ pp. 913-929, 1993; Böcherer, Steiner, Schulte, IEEE Trans. Commun.
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.core.shaping.blahut_arimoto">
+<span class="sig-name descname"><span class="pre">blahut_arimoto</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#blahut_arimoto"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.blahut_arimoto" title="Link to this definition">#</a></dt>
+<dd><p>The distribution that maximizes the mutual information, computed.</p>
+<section id="id1">
+<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="#comnumpy.core.shaping.maxwell_boltzmann" title="comnumpy.core.shaping.maxwell_boltzmann"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a> answers “which distribution has the largest
+<em>entropy</em> at a given energy?”, and has a closed form. The question an
+engineer actually cares about is a different one – “which
+distribution carries the most <em>bits over this channel</em> at a given
+energy?” – and it has no closed form at all:</p>
+<div class="math notranslate nohighlight">
+\[\max_{P_X} \; I(X;Y)
+\quad \text{subject to} \quad \sum_i p_i \left|a_i\right|^2
+\leq E\]</div>
+<p>over the real AWGN channel <span class="math notranslate nohighlight">\(Y = X + Z\)</span>,
+<span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \sigma^2)\)</span>, with <span class="math notranslate nohighlight">\(X\)</span> drawn from
+the fixed constellation. The problem is concave in <span class="math notranslate nohighlight">\(P_X\)</span>, and
+the Blahut-Arimoto algorithm solves it by alternating maximization:
+with the Lagrange multiplier <span class="math notranslate nohighlight">\(\lambda\)</span> of the energy
+constraint,</p>
+<div class="math notranslate nohighlight">
+\[q(i \mid y) = \frac{p_i \, f(y \mid a_i)}
+                   {\sum_j p_j \, f(y \mid a_j)},
+\qquad
+p_i \;\leftarrow\; \frac{e^{D_i - \lambda |a_i|^2}}
+                        {\sum_j e^{D_j - \lambda |a_j|^2}},\]</div>
+<p>where <span class="math notranslate nohighlight">\(D_i = \int f(y \mid a_i) \log q(i \mid y)\,\mathrm{d}y\)</span>
+is evaluated by Gauss-Hermite quadrature: the substitution
+<span class="math notranslate nohighlight">\(y = a_i + \sqrt{2}\,\sigma t\)</span> turns the Gaussian integral into
+the quadrature’s own weight function exactly, so <span class="math notranslate nohighlight">\(D_i\)</span> is a
+weighted sum over <code class="docutils literal notranslate"><span class="pre">n_nodes</span></code> points and nothing is sampled.</p>
+<p><span class="math notranslate nohighlight">\(\lambda\)</span> plays the same role as in the Maxwell-Boltzmann
+family and is measured in the same units, nats per unit energy, so
+the two can be compared directly – and should be, because the
+result is the reference this module’s closed form is judged against:
+Maxwell-Boltzmann is <em>not</em> the maximizer of the mutual information,
+only of the entropy, and how little that costs is a number worth
+measuring rather than assuming (Kschischang and Pasupathy, 1993).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The energy constraint is what makes the answer bell-shaped. Left
+unconstrained (<code class="docutils literal notranslate"><span class="pre">lam=0</span></code>) the maximizer may spend <strong>more</strong> energy
+than the uniform distribution, pushing mass onto the outer points
+to separate them further – at low SNR it does exactly that. A
+distribution that concentrates on the inner points is the answer
+to a constrained problem, never to an unconstrained one.</p>
+</div>
+<p>Axes: <em>element-wise</em> – the alphabet is a 1-D array of constellation
+points, and the result is a distribution over it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param alphabet<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Constellation points <span class="math notranslate nohighlight">\(a_i\)</span>, <strong>real</strong> (a complex alphabet
+with a zero imaginary part is accepted). A square QAM is the
+product of two independent PAM axes; pass one of them.</p>
+</dd>
+<dt class="field-even">type alphabet<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param sigma2<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Noise variance <span class="math notranslate nohighlight">\(\sigma^2\)</span> of the real AWGN channel,
+positive. Only the ratio of the alphabet’s energy to
+<span class="math notranslate nohighlight">\(\sigma^2\)</span> matters, so this is where the SNR enters.</p>
+</dd>
+<dt class="field-even">type sigma2<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param lam<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The Lagrange multiplier <span class="math notranslate nohighlight">\(\lambda\)</span> itself, non-negative.
+Useful when the multiplier is the object of interest; note that
+the energy it lands on is an output, not a choice.</p>
+</dd>
+<dt class="field-even">type lam<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param energy<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Average energy budget <span class="math notranslate nohighlight">\(\sum_i p_i a_i^2\)</span> the answer must
+spend, reached by a root-find on <span class="math notranslate nohighlight">\(\lambda\)</span>. This is the
+parameterization with an operational meaning – a transmitter
+has a power budget, not a Lagrange multiplier – and the one to
+use when comparing against <a class="reference internal" href="#comnumpy.core.shaping.maxwell_boltzmann" title="comnumpy.core.shaping.maxwell_boltzmann"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a>, which only
+makes sense at equal energy. Exactly one of <code class="docutils literal notranslate"><span class="pre">lam</span></code> and
+<code class="docutils literal notranslate"><span class="pre">energy</span></code> must be given (D41).</p>
+</dd>
+<dt class="field-even">type energy<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param n_nodes<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Gauss-Hermite nodes for <span class="math notranslate nohighlight">\(D_i\)</span>. Default 40. Measured on
+16-PAM at 10 dB against a 200-node reference, the largest
+probability moves by 3.3e-7 at 20 nodes, 7.7e-10 at 40 and
+3.2e-13 at 80; a cleaner channel converges faster still, so 40
+is well inside what the result is read to.</p>
+</dd>
+<dt class="field-even">type n_nodes<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param tol<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Stop when Blahut’s bound puts the objective within this many
+nats of its maximum. Default 1e-9.</p>
+</dd>
+<dt class="field-even">type tol<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param max_iter<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Iteration ceiling. Default 5000. Reaching it is not silent: the
+remaining bound is logged, so the answer always comes with the
+distance it may still be from the maximum.</p>
+</dd>
+<dt class="field-even">type max_iter<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – The maximizing distribution <span class="math notranslate nohighlight">\(p_i\)</span>, same length as
+<code class="docutils literal notranslate"><span class="pre">alphabet</span></code>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If both or neither parameterization is given, if <code class="docutils literal notranslate"><span class="pre">sigma2</span></code> is
+    not positive, if <code class="docutils literal notranslate"><span class="pre">lam</span></code> is negative, if the alphabet is
+    complex, or if <code class="docutils literal notranslate"><span class="pre">energy</span></code> is outside the range the constraint
+    can reach.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>R. E. Blahut, “Computation of channel capacity and rate-distortion
+functions”, IEEE Trans. Inf. Theory, vol. 18, no. 4, pp. 460-473,
+July 1972; S. Arimoto, “An algorithm for computing the capacity of
+arbitrary discrete memoryless channels”, IEEE Trans. Inf. Theory,
+vol. 18, no. 1, pp. 14-20, Jan. 1972; F. R. Kschischang,
+S. Pasupathy, “Optimal nonuniform signaling for Gaussian channels”,
+IEEE Trans. Inf. Theory, vol. 39, no. 3, pp. 913-929, May 1993
+(that Maxwell-Boltzmann is within a hundredth of a bit of this).</p>
+<p class="rubric">Examples</p>
+<p>The uniform distribution is optimal when the constraint is loose and
+the channel is clean – a 4-PAM at 20 dB has nothing to gain:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pam4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">clean</span> <span class="o">=</span> <span class="n">blahut_arimoto</span><span class="p">(</span><span class="n">pam4</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mi">100</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">clean</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">[0.25 0.25 0.25 0.25]</span>
+</pre></div>
+</div>
+<p>Impose a budget and the answer becomes the bell shape shaping is
+named after. The uniform law spends 5 on this alphabet, so asking
+for 3 is asking for 2.2 dB less power:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">best</span> <span class="o">=</span> <span class="n">blahut_arimoto</span><span class="p">(</span><span class="n">pam4</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mi">100</span><span class="p">,</span> <span class="n">energy</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">[0.125 0.375 0.375 0.125]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">best</span> <span class="o">*</span> <span class="n">pam4</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)),</span> <span class="mi">6</span><span class="p">))</span>
+<span class="go">3.0</span>
+</pre></div>
+</div>
+<p>At that energy the closed form is the same law, which is the whole
+reason the closed form is used everywhere else:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">maxwell_boltzmann</span><span class="p">(</span><span class="n">pam4</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">0.1373</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">[0.125 0.375 0.375 0.125]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="comnumpy.core.shaping.distribution_entropy">
 <span class="sig-name descname"><span class="pre">distribution_entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#distribution_entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.distribution_entropy" title="Link to this definition">#</a></dt>
 <dd><p>Entropy of a symbol distribution, in bits.</p>
-<section id="id1">
-<h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="math notranslate nohighlight">
 \[H(P) = -\sum_{i} p_i \log_2 p_i\]</div>
 <p>It is the number of bits a symbol of that distribution carries, hence
@@ -653,8 +813,8 @@ Wiley, 2006, Section 2.1.</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.composition_from_distribution">
 <span class="sig-name descname"><span class="pre">composition_from_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#composition_from_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.composition_from_distribution" title="Link to this definition">#</a></dt>
 <dd><p>Round a distribution to an integer composition of a block.</p>
-<section id="id2">
-<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>A constant-composition matcher emits blocks holding exactly
 <span class="math notranslate nohighlight">\(n_i\)</span> copies of symbol <span class="math notranslate nohighlight">\(i\)</span>, so it needs integers, not
 probabilities. The composition closest to <span class="math notranslate nohighlight">\(n p_i\)</span> under the
@@ -703,8 +863,8 @@ Section IV (choice of the composition).</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.shaping_gain_dB">
 <span class="sig-name descname"><span class="pre">shaping_gain_dB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#shaping_gain_dB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.shaping_gain_dB" title="Link to this definition">#</a></dt>
 <dd><p>Energy saved by a shaped distribution, at equal rate.</p>
-<section id="id3">
-<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>Shaping is only worth something if it lowers the energy <em>without</em>
 lowering the rate, so the comparison has to be made at equal entropy.
 On a one-dimensional grid of spacing <span class="math notranslate nohighlight">\(\Delta\)</span>, a source of
@@ -767,8 +927,8 @@ ultimate gain).</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.ConstantCompositionMatcher">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConstantCompositionMatcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">composition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#ConstantCompositionMatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.ConstantCompositionMatcher" title="Link to this definition">#</a></dt>
 <dd><p>Constant composition distribution matching (CCDM).</p>
-<section id="id4">
-<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>The matcher is an enumerative code on the permutations of a fixed
 multiset. Given a composition <span class="math notranslate nohighlight">\((n_1, \ldots, n_M)\)</span> with
 <span class="math notranslate nohighlight">\(\sum_i n_i = n\)</span>, the set of output blocks is every sequence
@@ -901,8 +1061,8 @@ Jan. 2016.</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.SphereShaper">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SphereShaper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#SphereShaper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.SphereShaper" title="Link to this definition">#</a></dt>
 <dd><p>Enumerative sphere shaping (ESS).</p>
-<section id="id5">
-<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>Instead of forcing every block to have the same composition, ESS
 keeps every block inside an energy sphere: with an integer energy
 <span class="math notranslate nohighlight">\(e_i\)</span> attached to each amplitude, the code is</p>
@@ -1042,8 +1202,8 @@ pp. 1098-1112, Feb. 2020.</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.DistributionMatcher">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DistributionMatcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shaper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#comnumpy.core.shaping.ConstantCompositionMatcher" title="comnumpy.core.shaping.ConstantCompositionMatcher"><span class="pre">ConstantCompositionMatcher</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#comnumpy.core.shaping.SphereShaper" title="comnumpy.core.shaping.SphereShaper"><span class="pre">SphereShaper</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'distribution</span> <span class="pre">matcher'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#DistributionMatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.DistributionMatcher" title="Link to this definition">#</a></dt>
 <dd><p>Shape a bit stream into symbol indices, block by block.</p>
-<section id="id6">
-<h2>Signal Model<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>The chain-level wrapper of <a class="reference internal" href="#comnumpy.core.shaping.ConstantCompositionMatcher" title="comnumpy.core.shaping.ConstantCompositionMatcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantCompositionMatcher</span></code></a> and
 <a class="reference internal" href="#comnumpy.core.shaping.SphereShaper" title="comnumpy.core.shaping.SphereShaper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SphereShaper</span></code></a>: it cuts the input into blocks of <span class="math notranslate nohighlight">\(k\)</span>
 bits, maps each one onto <span class="math notranslate nohighlight">\(n\)</span> symbol indices, and concatenates.
@@ -1089,8 +1249,8 @@ and leading axes are carried through unchanged.</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.DistributionDematcher">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DistributionDematcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shaper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#comnumpy.core.shaping.ConstantCompositionMatcher" title="comnumpy.core.shaping.ConstantCompositionMatcher"><span class="pre">ConstantCompositionMatcher</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#comnumpy.core.shaping.SphereShaper" title="comnumpy.core.shaping.SphereShaper"><span class="pre">SphereShaper</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'distribution</span> <span class="pre">dematcher'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#DistributionDematcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.DistributionDematcher" title="Link to this definition">#</a></dt>
 <dd><p>Read the bit stream back off shaped symbol indices.</p>
-<section id="id7">
-<h2>Signal Model<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>The exact inverse of <a class="reference internal" href="#comnumpy.core.shaping.DistributionMatcher" title="comnumpy.core.shaping.DistributionMatcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistributionMatcher</span></code></a>: blocks of
 <span class="math notranslate nohighlight">\(n\)</span> indices become blocks of <span class="math notranslate nohighlight">\(k\)</span> bits. Since the
 enumerative code is a bijection onto its block set, this is an
@@ -1133,8 +1293,8 @@ other, which is the honest answer after a detection mistake.</p>
 <dt class="sig sig-object py" id="comnumpy.core.shaping.AmplitudeMapper">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AmplitudeMapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'amplitude</span> <span class="pre">mapper'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#AmplitudeMapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.AmplitudeMapper" title="Link to this definition">#</a></dt>
 <dd><p>Amplitude indices to signed PAM symbols: the sign of PAS.</p>
-<section id="id8">
-<h2>Signal Model<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <p>A distribution matcher emits amplitudes; a PAM constellation is
 signed. The missing half is one bit per symbol,</p>
 <div class="math notranslate nohighlight">
@@ -1197,8 +1357,8 @@ Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015, Section IV
 <dt class="sig sig-object py" id="comnumpy.core.shaping.AmplitudeDemapper">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AmplitudeDemapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'amplitude</span> <span class="pre">demapper'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/shaping.html#AmplitudeDemapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.shaping.AmplitudeDemapper" title="Link to this definition">#</a></dt>
 <dd><p>Signed PAM samples back to amplitude indices.</p>
-<section id="id9">
-<h2>Signal Model<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>Signal Model<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <p>The inverse of <a class="reference internal" href="#comnumpy.core.shaping.AmplitudeMapper" title="comnumpy.core.shaping.AmplitudeMapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeMapper</span></code></a> on the half that carries the
 shaped data:</p>
 <div class="math notranslate nohighlight">
@@ -1290,6 +1450,7 @@ decoder instead.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.maxwell_boltzmann"><code class="docutils literal notranslate"><span class="pre">maxwell_boltzmann()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.blahut_arimoto"><code class="docutils literal notranslate"><span class="pre">blahut_arimoto()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.distribution_entropy"><code class="docutils literal notranslate"><span class="pre">distribution_entropy()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.composition_from_distribution"><code class="docutils literal notranslate"><span class="pre">composition_from_distribution()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.shaping.shaping_gain_dB"><code class="docutils literal notranslate"><span class="pre">shaping_gain_dB()</span></code></a></li>

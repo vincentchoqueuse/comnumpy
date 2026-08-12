@@ -804,6 +804,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -813,8 +814,11 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;maxwell_boltzmann&quot;</span><span class="p">,</span> <span class="s2">&quot;distribution_entropy&quot;</span><span class="p">,</span> <span class="s2">&quot;composition_from_distribution&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maxwell_boltzmann&quot;</span><span class="p">,</span> <span class="s2">&quot;blahut_arimoto&quot;</span><span class="p">,</span> <span class="s2">&quot;distribution_entropy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;composition_from_distribution&quot;</span><span class="p">,</span>
     <span class="s2">&quot;shaping_gain_dB&quot;</span><span class="p">,</span> <span class="s2">&quot;ConstantCompositionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;SphereShaper&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DistributionMatcher&quot;</span><span class="p">,</span> <span class="s2">&quot;DistributionDematcher&quot;</span><span class="p">,</span>
     <span class="s2">&quot;AmplitudeMapper&quot;</span><span class="p">,</span> <span class="s2">&quot;AmplitudeDemapper&quot;</span><span class="p">,</span>
@@ -1172,6 +1176,301 @@ window.runMermaid = runMermaid;</script>
     <span class="n">uniform_energy</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">entropy</span> <span class="o">*</span> <span class="n">spacing</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">12</span>
     <span class="n">shaped_energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">points</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">uniform_energy</span> <span class="o">/</span> <span class="n">shaped_energy</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="blahut_arimoto">
+<a class="viewcode-back" href="../../../documentation/core/shaping.html#comnumpy.core.shaping.blahut_arimoto">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">blahut_arimoto</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                   <span class="n">lam</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">energy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-9</span><span class="p">,</span>
+                   <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The distribution that maximizes the mutual information, computed.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    :func:`maxwell_boltzmann` answers &quot;which distribution has the largest</span>
+<span class="sd">    *entropy* at a given energy?&quot;, and has a closed form. The question an</span>
+<span class="sd">    engineer actually cares about is a different one -- &quot;which</span>
+<span class="sd">    distribution carries the most *bits over this channel* at a given</span>
+<span class="sd">    energy?&quot; -- and it has no closed form at all:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \max_{P_X} \; I(X;Y)</span>
+<span class="sd">        \quad \text{subject to} \quad \sum_i p_i \left|a_i\right|^2</span>
+<span class="sd">        \leq E</span>
+
+<span class="sd">    over the real AWGN channel :math:`Y = X + Z`,</span>
+<span class="sd">    :math:`Z \sim \mathcal{N}(0, \sigma^2)`, with :math:`X` drawn from</span>
+<span class="sd">    the fixed constellation. The problem is concave in :math:`P_X`, and</span>
+<span class="sd">    the Blahut-Arimoto algorithm solves it by alternating maximization:</span>
+<span class="sd">    with the Lagrange multiplier :math:`\lambda` of the energy</span>
+<span class="sd">    constraint,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        q(i \mid y) = \frac{p_i \, f(y \mid a_i)}</span>
+<span class="sd">                           {\sum_j p_j \, f(y \mid a_j)},</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        p_i \;\leftarrow\; \frac{e^{D_i - \lambda |a_i|^2}}</span>
+<span class="sd">                                {\sum_j e^{D_j - \lambda |a_j|^2}},</span>
+
+<span class="sd">    where :math:`D_i = \int f(y \mid a_i) \log q(i \mid y)\,\mathrm{d}y`</span>
+<span class="sd">    is evaluated by Gauss-Hermite quadrature: the substitution</span>
+<span class="sd">    :math:`y = a_i + \sqrt{2}\,\sigma t` turns the Gaussian integral into</span>
+<span class="sd">    the quadrature&#39;s own weight function exactly, so :math:`D_i` is a</span>
+<span class="sd">    weighted sum over ``n_nodes`` points and nothing is sampled.</span>
+
+<span class="sd">    :math:`\lambda` plays the same role as in the Maxwell-Boltzmann</span>
+<span class="sd">    family and is measured in the same units, nats per unit energy, so</span>
+<span class="sd">    the two can be compared directly -- and should be, because the</span>
+<span class="sd">    result is the reference this module&#39;s closed form is judged against:</span>
+<span class="sd">    Maxwell-Boltzmann is *not* the maximizer of the mutual information,</span>
+<span class="sd">    only of the entropy, and how little that costs is a number worth</span>
+<span class="sd">    measuring rather than assuming (Kschischang and Pasupathy, 1993).</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">       The energy constraint is what makes the answer bell-shaped. Left</span>
+<span class="sd">       unconstrained (``lam=0``) the maximizer may spend **more** energy</span>
+<span class="sd">       than the uniform distribution, pushing mass onto the outer points</span>
+<span class="sd">       to separate them further -- at low SNR it does exactly that. A</span>
+<span class="sd">       distribution that concentrates on the inner points is the answer</span>
+<span class="sd">       to a constrained problem, never to an unconstrained one.</span>
+
+<span class="sd">    Axes: *element-wise* -- the alphabet is a 1-D array of constellation</span>
+<span class="sd">    points, and the result is a distribution over it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray</span>
+<span class="sd">        Constellation points :math:`a_i`, **real** (a complex alphabet</span>
+<span class="sd">        with a zero imaginary part is accepted). A square QAM is the</span>
+<span class="sd">        product of two independent PAM axes; pass one of them.</span>
+<span class="sd">    sigma2 : float</span>
+<span class="sd">        Noise variance :math:`\sigma^2` of the real AWGN channel,</span>
+<span class="sd">        positive. Only the ratio of the alphabet&#39;s energy to</span>
+<span class="sd">        :math:`\sigma^2` matters, so this is where the SNR enters.</span>
+<span class="sd">    lam : float, optional, keyword-only</span>
+<span class="sd">        The Lagrange multiplier :math:`\lambda` itself, non-negative.</span>
+<span class="sd">        Useful when the multiplier is the object of interest; note that</span>
+<span class="sd">        the energy it lands on is an output, not a choice.</span>
+<span class="sd">    energy : float, optional, keyword-only</span>
+<span class="sd">        Average energy budget :math:`\sum_i p_i a_i^2` the answer must</span>
+<span class="sd">        spend, reached by a root-find on :math:`\lambda`. This is the</span>
+<span class="sd">        parameterization with an operational meaning -- a transmitter</span>
+<span class="sd">        has a power budget, not a Lagrange multiplier -- and the one to</span>
+<span class="sd">        use when comparing against :func:`maxwell_boltzmann`, which only</span>
+<span class="sd">        makes sense at equal energy. Exactly one of ``lam`` and</span>
+<span class="sd">        ``energy`` must be given (D41).</span>
+<span class="sd">    n_nodes : int, optional, keyword-only</span>
+<span class="sd">        Gauss-Hermite nodes for :math:`D_i`. Default 40. Measured on</span>
+<span class="sd">        16-PAM at 10 dB against a 200-node reference, the largest</span>
+<span class="sd">        probability moves by 3.3e-7 at 20 nodes, 7.7e-10 at 40 and</span>
+<span class="sd">        3.2e-13 at 80; a cleaner channel converges faster still, so 40</span>
+<span class="sd">        is well inside what the result is read to.</span>
+<span class="sd">    tol : float, optional, keyword-only</span>
+<span class="sd">        Stop when Blahut&#39;s bound puts the objective within this many</span>
+<span class="sd">        nats of its maximum. Default 1e-9.</span>
+<span class="sd">    max_iter : int, optional, keyword-only</span>
+<span class="sd">        Iteration ceiling. Default 5000. Reaching it is not silent: the</span>
+<span class="sd">        remaining bound is logged, so the answer always comes with the</span>
+<span class="sd">        distance it may still be from the maximum.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        The maximizing distribution :math:`p_i`, same length as</span>
+<span class="sd">        ``alphabet``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If both or neither parameterization is given, if ``sigma2`` is</span>
+<span class="sd">        not positive, if ``lam`` is negative, if the alphabet is</span>
+<span class="sd">        complex, or if ``energy`` is outside the range the constraint</span>
+<span class="sd">        can reach.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R. E. Blahut, &quot;Computation of channel capacity and rate-distortion</span>
+<span class="sd">    functions&quot;, IEEE Trans. Inf. Theory, vol. 18, no. 4, pp. 460-473,</span>
+<span class="sd">    July 1972; S. Arimoto, &quot;An algorithm for computing the capacity of</span>
+<span class="sd">    arbitrary discrete memoryless channels&quot;, IEEE Trans. Inf. Theory,</span>
+<span class="sd">    vol. 18, no. 1, pp. 14-20, Jan. 1972; F. R. Kschischang,</span>
+<span class="sd">    S. Pasupathy, &quot;Optimal nonuniform signaling for Gaussian channels&quot;,</span>
+<span class="sd">    IEEE Trans. Inf. Theory, vol. 39, no. 3, pp. 913-929, May 1993</span>
+<span class="sd">    (that Maxwell-Boltzmann is within a hundredth of a bit of this).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    The uniform distribution is optimal when the constraint is loose and</span>
+<span class="sd">    the channel is clean -- a 4-PAM at 20 dB has nothing to gain:</span>
+
+<span class="sd">    &gt;&gt;&gt; pam4 = np.array([-3.0, -1.0, 1.0, 3.0])</span>
+<span class="sd">    &gt;&gt;&gt; clean = blahut_arimoto(pam4, sigma2=5.0 / 100, lam=0.0)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(clean, 4))</span>
+<span class="sd">    [0.25 0.25 0.25 0.25]</span>
+
+<span class="sd">    Impose a budget and the answer becomes the bell shape shaping is</span>
+<span class="sd">    named after. The uniform law spends 5 on this alphabet, so asking</span>
+<span class="sd">    for 3 is asking for 2.2 dB less power:</span>
+
+<span class="sd">    &gt;&gt;&gt; best = blahut_arimoto(pam4, sigma2=5.0 / 100, energy=3.0)</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(best, 4))</span>
+<span class="sd">    [0.125 0.375 0.375 0.125]</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(np.sum(best * pam4 ** 2)), 6))</span>
+<span class="sd">    3.0</span>
+
+<span class="sd">    At that energy the closed form is the same law, which is the whole</span>
+<span class="sd">    reason the closed form is used everywhere else:</span>
+
+<span class="sd">    &gt;&gt;&gt; print(np.round(maxwell_boltzmann(pam4, lam=0.1373), 4))</span>
+<span class="sd">    [0.125 0.375 0.375 0.125]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;blahut_arimoto integrates over a real observation, got a &quot;</span>
+            <span class="s2">&quot;complex alphabet. A square QAM constellation is the product &quot;</span>
+            <span class="s2">&quot;of two independent PAM axes, each shaped on its own: pass &quot;</span>
+            <span class="s2">&quot;np.unique(np.real(alphabet)).&quot;</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sigma2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;the noise variance is positive, got sigma2=</span><span class="si">{</span><span class="n">sigma2</span><span class="si">}</span><span class="s2">. A &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;noiseless channel makes every distribution carry its own &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;entropy, so the maximizer is the uniform one.&quot;</span><span class="p">)</span>
+    <span class="n">exclusive</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;blahut_arimoto takes exactly one of lam= and energy=, got &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;lam=</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2"> and energy=</span><span class="si">{</span><span class="n">energy</span><span class="si">}</span><span class="s2">. Pass energy= for the power &quot;</span>
+        <span class="s2">&quot;budget the transmitter actually has -- that is the parameter &quot;</span>
+        <span class="s2">&quot;with an operational meaning -- and lam= only when the &quot;</span>
+        <span class="s2">&quot;multiplier itself is what you want (D41).&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lam</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">energy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">exclusive</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lam</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lam</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;the Lagrange multiplier of an energy constraint is &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;non-negative, got lam=</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">. A negative value would pay &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;the input to be expensive.&quot;</span><span class="p">)</span>
+
+    <span class="n">nodes</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">hermite</span><span class="o">.</span><span class="n">hermgauss</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
+    <span class="n">observation</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sigma2</span><span class="p">)</span> <span class="o">*</span> <span class="n">nodes</span>
+    <span class="c1"># (M, K, M): squared distance from every node to every alphabet point.</span>
+    <span class="c1"># Node k of the integral attached to point i sits at</span>
+    <span class="c1"># y = a_i + sqrt(2) sigma t_k, so the *self* term of that integral is</span>
+    <span class="c1"># exactly t_k^2 and only the cross terms depend on the alphabet.</span>
+    <span class="n">exponent</span> <span class="o">=</span> <span class="p">(</span><span class="n">observation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma2</span><span class="p">)</span>
+    <span class="n">self_exponent</span> <span class="o">=</span> <span class="n">nodes</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">quadrature</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">energies</span> <span class="o">=</span> <span class="n">points</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="n">multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alternating maximization at a fixed multiplier.</span>
+
+<span class="sd">        Always from the uniform law, never from a previous answer: a</span>
+<span class="sd">        zero probability is an *absorbing* state of the iteration, since</span>
+<span class="sd">        it makes its own posterior zero, so a warm start from a converged</span>
+<span class="sd">        answer at a larger multiplier would be stuck there for good.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">points</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="n">log_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span>
+            <span class="n">shifted</span> <span class="o">=</span> <span class="n">log_p</span> <span class="o">-</span> <span class="n">exponent</span>
+            <span class="n">largest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">shifted</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">evidence</span> <span class="o">=</span> <span class="n">largest</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">shifted</span> <span class="o">-</span> <span class="n">largest</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="c1"># log q(i | y) on the grid of the i-th integral</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="n">log_p</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">self_exponent</span> <span class="o">-</span> <span class="n">evidence</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="n">posterior</span> <span class="o">@</span> <span class="n">quadrature</span> <span class="o">-</span> <span class="n">multiplier</span> <span class="o">*</span> <span class="n">energies</span>
+            <span class="c1"># Blahut&#39;s stopping rule. The per-point divergence is</span>
+            <span class="c1"># D&#39;_i = D_i - log p_i -- the Kullback-Leibler distance from</span>
+            <span class="c1"># f(.|a_i) to the current output law -- and the objective is</span>
+            <span class="c1"># bracketed by its mean and its maximum:</span>
+            <span class="c1">#   sum_i p_i (D&#39;_i - lam E_i) &lt;= max &lt;= max_i (D&#39;_i - lam E_i)</span>
+            <span class="c1"># so the difference is a *certificate*: the answer is within</span>
+            <span class="c1"># it of the maximum, in nats. Waiting for the probabilities</span>
+            <span class="c1"># to settle instead is far stricter and much slower, because</span>
+            <span class="c1"># the law can creep towards a zero long after the rate has</span>
+            <span class="c1"># stopped moving.</span>
+            <span class="n">divergence</span> <span class="o">=</span> <span class="n">gain</span> <span class="o">-</span> <span class="n">log_p</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">divergence</span><span class="p">)</span> <span class="o">-</span> <span class="n">p</span> <span class="o">@</span> <span class="n">divergence</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">gain</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">))</span>
+            <span class="n">p</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">remaining</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;blahut_arimoto stopped at max_iter=</span><span class="si">%d</span><span class="s2"> with </span><span class="si">%.2e</span><span class="s2"> nat &quot;</span>
+                <span class="s2">&quot;still to gain (asked for </span><span class="si">%.0e</span><span class="s2">). The alternating &quot;</span>
+                <span class="s2">&quot;maximization converges slowly when the answer puts an &quot;</span>
+                <span class="s2">&quot;exact zero on some constellation point, which is what &quot;</span>
+                <span class="s2">&quot;it does at low SNR: the returned law is within that &quot;</span>
+                <span class="s2">&quot;bound of the maximum, so read it as such or raise &quot;</span>
+                <span class="s2">&quot;max_iter.&quot;</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span>
+
+    <span class="k">if</span> <span class="n">lam</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solve</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">lam</span><span class="p">))</span>
+
+    <span class="c1"># internal invariant: the exclusivity check above rejected the case</span>
+    <span class="c1"># where both are None, so energy is set on this branch</span>
+    <span class="k">assert</span> <span class="n">energy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span>
+    <span class="c1"># The reachable range. The lower end is the energy of the cheapest</span>
+    <span class="c1"># points; the upper end is what the *unconstrained* maximizer spends,</span>
+    <span class="c1"># and it can sit above the uniform law&#39;s energy -- see the warning</span>
+    <span class="c1"># above -- so it has to be computed rather than assumed.</span>
+    <span class="n">ceiling</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">solve</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span> <span class="o">@</span> <span class="n">energies</span><span class="p">)</span>
+    <span class="n">floor</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">energies</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">floor</span> <span class="o">&lt;=</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;got energy=</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">, expected a value in &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">floor</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ceiling</span><span class="si">}</span><span class="s2">] for this alphabet and sigma2=</span><span class="si">{</span><span class="n">sigma2</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;The upper end is what the maximizer spends when nothing &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;constrains it, which on a noisy channel is more than the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;uniform law&#39;s </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">energies</span><span class="p">))</span><span class="si">}</span><span class="s2">: asking for more &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;than that is asking for a constraint that does not bind.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="o">&gt;=</span> <span class="n">ceiling</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-12</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">solve</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># The energy is strictly decreasing in the multiplier, so this is a</span>
+    <span class="c1"># root-find. Every evaluation is a full alternating maximization, so</span>
+    <span class="c1"># the method matters: the Illinois variant of regula falsi converges</span>
+    <span class="c1"># superlinearly and lands in about a dozen solves, where a plain</span>
+    <span class="c1"># bisection to the same accuracy takes sixty.</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">energies</span><span class="p">))</span>
+    <span class="k">while</span> <span class="nb">float</span><span class="p">(</span><span class="n">solve</span><span class="p">(</span><span class="n">high</span><span class="p">)</span> <span class="o">@</span> <span class="n">energies</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">target</span><span class="p">:</span>
+        <span class="n">high</span> <span class="o">*=</span> <span class="mf">4.0</span>
+        <span class="k">if</span> <span class="n">high</span> <span class="o">&gt;</span> <span class="n">_LAMBDA_MAX</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;no multiplier below </span><span class="si">{</span><span class="n">_LAMBDA_MAX</span><span class="si">}</span><span class="s2"> brings the energy &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;down to </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> on this alphabet.&quot;</span><span class="p">)</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">f_low</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ceiling</span> <span class="o">-</span> <span class="n">target</span>
+    <span class="n">f_high</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">solve</span><span class="p">(</span><span class="n">high</span><span class="p">)</span> <span class="o">@</span> <span class="n">energies</span><span class="p">)</span> <span class="o">-</span> <span class="n">target</span>
+    <span class="n">atol</span> <span class="o">=</span> <span class="mf">1e-10</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">side</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">guess</span> <span class="o">=</span> <span class="n">high</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_BISECTION_STEPS</span><span class="p">):</span>
+        <span class="n">guess</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span> <span class="o">*</span> <span class="n">f_high</span> <span class="o">-</span> <span class="n">high</span> <span class="o">*</span> <span class="n">f_low</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">f_high</span> <span class="o">-</span> <span class="n">f_low</span><span class="p">)</span>
+        <span class="n">f_guess</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">solve</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span> <span class="o">@</span> <span class="n">energies</span><span class="p">)</span> <span class="o">-</span> <span class="n">target</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">f_guess</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">atol</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="n">f_guess</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>                      <span class="c1"># still spending too much</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">f_low</span> <span class="o">=</span> <span class="n">guess</span><span class="p">,</span> <span class="n">f_guess</span>
+            <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">f_high</span> <span class="o">*=</span> <span class="mf">0.5</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">high</span><span class="p">,</span> <span class="n">f_high</span> <span class="o">=</span> <span class="n">guess</span><span class="p">,</span> <span class="n">f_guess</span>
+            <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">f_low</span> <span class="o">*=</span> <span class="mf">0.5</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">solve</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span></div>
 
 
 

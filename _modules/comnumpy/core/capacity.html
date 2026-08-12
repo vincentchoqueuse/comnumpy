@@ -887,6 +887,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="constellation_capacity">
 <a class="viewcode-back" href="../../../documentation/core/capacity.html#comnumpy.core.capacity.constellation_capacity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">constellation_capacity</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                           <span class="n">px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                            <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_GH_NODES</span><span class="p">,</span>
                            <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gauss-hermite&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mutual information of a discrete constellation over AWGN.</span>
@@ -894,8 +895,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
 <span class="sd">    A real system does not transmit a Gaussian: it transmits one of</span>
-<span class="sd">    :math:`M` constellation points, equiprobably. The achievable rate is</span>
-<span class="sd">    then the mutual information</span>
+<span class="sd">    :math:`M` constellation points, equiprobably by default. The</span>
+<span class="sd">    achievable rate is then the mutual information</span>
 
 <span class="sd">    .. math::</span>
 
@@ -910,6 +911,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ceiling a coded system using that constellation can approach --</span>
 <span class="sd">    not the Shannon capacity, which assumes a Gaussian input.</span>
 
+<span class="sd">    Probabilistic shaping makes the input non-uniform, and then the</span>
+<span class="sd">    :math:`1/M` factors are no longer constants to pull out of the sum:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        I(X; Y) = - \sum_{m} P_X(x_m) \;</span>
+<span class="sd">        \mathbb{E}_{b}\left[ \log_2 \sum_{m&#39;} P_X(x_{m&#39;})</span>
+<span class="sd">        \exp\left(-\frac{|x_m - x_{m&#39;} + b|^2 - |b|^2}{\sigma^2}\right)</span>
+<span class="sd">        \right]</span>
+
+<span class="sd">    which is the same expression with ``px`` in both places and reduces</span>
+<span class="sd">    to the one above when it is uniform. Passing ``px`` is how the rate</span>
+<span class="sd">    of a shaped constellation is read exactly rather than estimated from</span>
+<span class="sd">    samples with :func:`~comnumpy.core.information.compute_mi`.</span>
+
 <span class="sd">    The expectation is a two-dimensional integral against a Gaussian</span>
 <span class="sd">    weight, evaluated by quadrature -- no random draws. Which rule does</span>
 <span class="sd">    it is left open by ``method``; see :func:`_noise_quadrature` for what</span>
@@ -922,6 +938,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        :func:`~comnumpy.core.utils.get_alphabet`).</span>
 <span class="sd">    snr : float or np.ndarray</span>
 <span class="sd">        Signal-to-noise ratio :math:`\rho = 1/\sigma^2`, linear.</span>
+<span class="sd">    px : np.ndarray, optional, keyword-only</span>
+<span class="sd">        Input distribution :math:`P_X`, of length :math:`M`. Default</span>
+<span class="sd">        (None) is uniform. Note that the SNR is still read from the</span>
+<span class="sd">        alphabet&#39;s own scale, so a shaped input of lower energy is</span>
+<span class="sd">        compared at *lower* power unless the alphabet is rescaled --</span>
+<span class="sd">        see :func:`~comnumpy.core.shaping.maxwell_boltzmann`.</span>
 <span class="sd">    n_nodes : int, optional, keyword-only</span>
 <span class="sd">        Quadrature nodes per noise dimension, so the cost grows as</span>
 <span class="sd">        :math:`n^2`. Default 40.</span>
@@ -935,12 +957,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    -------</span>
 <span class="sd">    np.ndarray</span>
 <span class="sd">        Mutual information in bits per channel use, in</span>
-<span class="sd">        :math:`[0, \log_2 M]`.</span>
+<span class="sd">        :math:`[0, \log_2 M]` -- at most :math:`H(P_X)` when ``px`` is</span>
+<span class="sd">        given.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If ``method`` is not one of the two rules above.</span>
+<span class="sd">        If ``method`` is not one of the two rules above, or if ``px``</span>
+<span class="sd">        does not have one non-negative probability per constellation</span>
+<span class="sd">        point.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -962,9 +987,28 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; simpson = constellation_capacity(qam16, 10.0, method=&quot;simpson&quot;)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round([float(gauss), float(simpson)], 3))</span>
 <span class="sd">    [3.164 3.164]</span>
+
+<span class="sd">    A non-uniform input carries less than :math:`\log_2 M` however clean</span>
+<span class="sd">    the channel, because it is its entropy that saturates:</span>
+
+<span class="sd">    &gt;&gt;&gt; law = np.array([0.4, 0.1, 0.1, 0.4])</span>
+<span class="sd">    &gt;&gt;&gt; print(round(float(constellation_capacity(</span>
+<span class="sd">    ...     get_alphabet(&quot;PSK&quot;, 4), 1e6, px=law)), 4))</span>
+<span class="sd">    1.7219</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">alphabet</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">if</span> <span class="n">px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">order</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">weight</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">order</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">weight</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weight</span><span class="p">)),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;px must hold one non-negative probability per &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;constellation point and sum to one, got </span><span class="si">{</span><span class="n">weight</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;values summing to </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weight</span><span class="p">))</span><span class="si">}</span><span class="s2"> for an &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;alphabet of </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> points.&quot;</span><span class="p">)</span>
     <span class="n">scalar_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">snr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
     <span class="n">snr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
     <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span>
@@ -976,6 +1020,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">unit_noise</span> <span class="o">=</span> <span class="p">(</span><span class="n">grid_r</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">grid_i</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>     <span class="c1"># unit variance per dim</span>
     <span class="n">w2</span> <span class="o">=</span> <span class="n">w2</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
 
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+        <span class="n">log_weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>      <span class="c1"># -inf on a point that is never sent</span>
     <span class="n">diff</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">alphabet</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>    <span class="c1"># (M, M)</span>
     <span class="n">diff2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">diff_re</span><span class="p">,</span> <span class="n">diff_im</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">diff</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
@@ -991,9 +1037,23 @@ window.runMermaid = runMermaid;</script>
             <span class="n">arg</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">diff2</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span>
                 <span class="n">diff_re</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
                 <span class="o">+</span> <span class="n">diff_im</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">block</span><span class="p">)))</span> <span class="o">/</span> <span class="n">s2</span>
-            <span class="n">inner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">arg</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>      <span class="c1"># (M, q)</span>
-            <span class="n">total</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">inner</span> <span class="o">@</span> <span class="n">w2</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">_QUAD_CHUNK</span><span class="p">]))</span>
-        <span class="n">out</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-</span> <span class="n">total</span>
+            <span class="c1"># The inner sum is weighted by P_X, the outer one too: with a</span>
+            <span class="c1"># uniform input both weights are 1/M and the two log2(M) they</span>
+            <span class="c1"># produce collapse into the closed form written above.</span>
+            <span class="c1">#</span>
+            <span class="c1"># The shift is not optional once P_X is inside. With a uniform</span>
+            <span class="c1"># input the j = i term of the sum is exp(0) = 1, so the sum can</span>
+            <span class="c1"># never underflow; weighted, that term is P_X(x_i), which a</span>
+            <span class="c1"># strongly shaped law drives to zero -- and then every term of</span>
+            <span class="c1"># the sum can underflow at once, log2 returns -inf, and the</span>
+            <span class="c1"># outer 0 * (-inf) makes the whole rate NaN. Shifting by the</span>
+            <span class="c1"># largest exponent keeps a term equal to one in every sum.</span>
+            <span class="n">shifted</span> <span class="o">=</span> <span class="n">log_weight</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">arg</span>
+            <span class="n">top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">shifted</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                     <span class="c1"># (M, q)</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="p">(</span><span class="n">top</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">shifted</span> <span class="o">-</span> <span class="n">top</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]),</span>
+                                         <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weight</span> <span class="o">@</span> <span class="p">(</span><span class="n">inner</span> <span class="o">@</span> <span class="n">w2</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">_QUAD_CHUNK</span><span class="p">]))</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">total</span>
     <span class="k">return</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">scalar_input</span> <span class="k">else</span> <span class="n">out</span></div>
 
 
