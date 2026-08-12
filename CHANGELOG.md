@@ -162,6 +162,22 @@ constellation.metrics(snr_dB, per="symbol")          # after
 `AWGN(snr_dB=)` is a symbol SNR and the closed forms are quoted against
 `Eb/N0`; the factor `k` now lives where `k` is known.
 
+### Documentation — the getting-started page argues for the object
+
+`first_simulation.rst` used to open on a `Sequential` chain, which asks
+the reader to accept the library's shape before seeing what it is for.
+It now writes the simulation twice: first in twenty lines of plain
+NumPy, then as a chain, and it names what the first version leaves to
+the reader — the energy normalization, the symbol-versus-bit SNR
+convention, the decision rule, and the modulation described a second
+time inside the closed form, with its order appearing three times in a
+formula that has to be right.
+
+The point is made by `constellation.info()` rather than asserted: every
+field it prints (`energy`, `bits_per_symbol`, `min_distance`, `papr_dB`)
+is one of the quantities the by-hand version carried implicitly. The
+constellation also draws itself beside what the channel did to it.
+
 ### Changed — the closed-form performance front-ends return a dictionary
 
 `compute_metric_awgn_theo` and `compute_metric_rayleigh_theo` took a
