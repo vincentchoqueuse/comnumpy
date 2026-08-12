@@ -8,7 +8,7 @@ import numpy as np
 
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
-from comnumpy.core.filters import BWFilter, SRRCFilter
+from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
@@ -64,8 +64,7 @@ def get_full_chain(n_spans, *, steps=1, linear_only=True):
         Amplifier(amp),
         FiberLink(N_spans=n_spans, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, name="link"),
-        BWFilter(1 / oversampling_sim),
-        Downsampler(oversampling_ratio, name="rx_field"),
+        Downsampler(oversampling_ratio, use_filter=True, name="rx_field"),
         DBP(n_spans, L_span=L_span, StPS=steps, step_type="linear",
             use_only_linear=linear_only, fs=fs / oversampling_ratio,
             name="dbp"),
