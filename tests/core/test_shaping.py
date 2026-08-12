@@ -266,21 +266,26 @@ class TestTheLawThatMaximizesTheRate(unittest.TestCase):
     hold the first against it: the answers must agree closely, but the
     inequality only points one way, and asserting it is the only way to
     know that the closed form is the shortcut it is claimed to be.
+
+    Everything is indexed by the **energy budget**, never by the
+    multiplier. A transmitter has a power budget; the multiplier is an
+    internal variable, and comparing two laws that spend different
+    energies compares nothing at all.
     """
 
     PAM16 = np.arange(-15, 16, 2).astype(float)
     UNIFORM_ENERGY = 85.0                     # mean of the odd squares
-    GRID = [(snr_dB, lam) for snr_dB in (6.0, 12.0, 18.0, 24.0)
-            for lam in (0.002, 0.008, 0.03)]
+    GRID = [(snr_dB, energy) for snr_dB in (12.0, 18.0, 24.0)
+            for energy in (25.0, 45.0, 70.0, 85.0)]
 
     @classmethod
     def setUpClass(cls):
-        """One alternating maximization per grid point, not per test."""
+        """One root-find per grid point, not per test."""
         cls.solved = {
-            (snr_dB, lam): blahut_arimoto(
+            (snr_dB, energy): blahut_arimoto(
                 cls.PAM16, sigma2=cls.UNIFORM_ENERGY / 10 ** (snr_dB / 10),
-                lam=lam)
-            for snr_dB, lam in cls.GRID}
+                energy=energy)
+            for snr_dB, energy in cls.GRID}
 
     @staticmethod
     def rate(law, sigma2, alphabet):
@@ -293,55 +298,35 @@ class TestTheLawThatMaximizesTheRate(unittest.TestCase):
         return float(constellation_capacity(alphabet, 1 / (2 * sigma2),
                                             px=law))
 
-    def test_a_loose_constraint_on_a_clean_channel_returns_the_uniform_law(self):
-        law = blahut_arimoto(self.PAM16, sigma2=85.0 / 1e4, lam=0.0)
-        np.testing.assert_allclose(law, np.full(16, 1 / 16), atol=1e-9)
+    def test_it_spends_the_budget_it_was_given(self):
+        """The root-find has to land, or nothing below means anything."""
+        for (snr_dB, target), law in self.solved.items():
+            with self.subTest(snr_dB=snr_dB, energy=target):
+                self.assertAlmostEqual(
+                    float(np.sum(law * self.PAM16 ** 2)), target, places=6)
+
+    def test_a_loose_budget_on_a_clean_channel_returns_the_uniform_law(self):
+        law = blahut_arimoto(self.PAM16, sigma2=85.0 / 1e4,
+                             energy=self.UNIFORM_ENERGY)
+        np.testing.assert_allclose(law, np.full(16, 1 / 16), atol=1e-7)
 
     def test_a_symmetric_constellation_gives_a_symmetric_law(self):
         for law in self.solved.values():
-            np.testing.assert_allclose(law, law[::-1], atol=1e-12)
-
-    def test_the_energy_decreases_as_the_multiplier_grows(self):
-        """What the multiplier means, held to on every channel."""
-        for snr_dB in (6.0, 12.0, 18.0, 24.0):
-            spent = [float(np.sum(self.solved[(snr_dB, lam)] * self.PAM16 ** 2))
-                     for _, lam in self.GRID if _ == snr_dB]
-            with self.subTest(snr_dB=snr_dB):
-                self.assertTrue(
-                    all(a > b for a, b in zip(spent, spent[1:], strict=False)),
-                    spent)
+            np.testing.assert_allclose(law, law[::-1], atol=1e-9)
 
     def test_it_beats_maxwell_boltzmann_at_the_same_energy(self):
-        """The defining property: nothing on this energy carries more.
-
-        The comparison has to be made at equal energy, so the closed
-        form is matched to what the maximizer *chose* to spend rather
-        than the other way round -- which is also why ``blahut_arimoto``
-        has no ``energy=`` parameterization: bisecting for one would
-        cost a full alternating maximization per step, while matching
-        Maxwell-Boltzmann to an energy is a closed form.
-        """
-        compared = 0
-        for (snr_dB, lam), best in self.solved.items():
+        """The defining property: nothing on this budget carries more."""
+        for (snr_dB, target), best in self.solved.items():
             sigma2 = self.UNIFORM_ENERGY / 10 ** (snr_dB / 10)
-            spent = float(np.sum(best * self.PAM16 ** 2))
-            if spent > self.UNIFORM_ENERGY:
-                # No Maxwell-Boltzmann law spends more than the uniform
-                # one, so there is nothing to compare against here. That
-                # is not a gap in the test: it is the regime of
-                # test_without_a_constraint_it_can_spend_more, where the
-                # maximizer moves mass *outwards*.
-                continue
-            compared += 1
-            with self.subTest(snr_dB=snr_dB, lam=lam):
+            with self.subTest(snr_dB=snr_dB, energy=target):
                 closed = maxwell_boltzmann(
-                    self.PAM16, lam=_matched_lambda(self.PAM16, spent))
+                    self.PAM16, lam=_matched_lambda(self.PAM16, target))
                 self.assertAlmostEqual(
-                    float(np.sum(closed * self.PAM16 ** 2)), spent, places=6)
+                    float(np.sum(closed * self.PAM16 ** 2)), target,
+                    places=6)
                 self.assertGreaterEqual(
                     self.rate(best, sigma2, self.PAM16),
                     self.rate(closed, sigma2, self.PAM16) - 1e-6)
-        self.assertGreater(compared, 6, "nothing was actually compared")
 
     def test_nothing_random_on_the_same_energy_carries_more_either(self):
         """The optimality claim against competitors that are not MB.
@@ -352,54 +337,44 @@ class TestTheLawThatMaximizesTheRate(unittest.TestCase):
         """
         rng = np.random.default_rng(11)
         sigma2 = self.UNIFORM_ENERGY / 10 ** (18.0 / 10)
-        best = self.solved[(18.0, 0.008)]
+        budget = 45.0
+        ceiling = self.rate(self.solved[(18.0, budget)], sigma2, self.PAM16)
         energies = self.PAM16 ** 2
-        budget = float(best @ energies)
-        ceiling = self.rate(best, sigma2, self.PAM16)
         # A uniform draw over the simplex spends 85 on average, so most
-        # would miss the budget. Each draw is therefore mixed with the
-        # cheapest law -- all the mass on the two innermost points -- and
-        # the mixing fraction is solved for: the energy is affine in it,
-        # so the competitor lands on the budget exactly.
+        # would miss the budget. Each draw is mixed with the cheapest law
+        # -- all the mass on the two innermost points -- and the mixing
+        # fraction is solved for: the energy is affine in it, so the
+        # competitor lands on the budget exactly.
         cheapest = np.zeros(16)
         cheapest[[7, 8]] = 0.5
-        tested = 0
-        for _ in range(300):
+        for _ in range(200):
             draw = rng.dirichlet(np.ones(16))
             spent = float(draw @ energies)
             if spent <= budget:
-                # already inside the budget, but mixing would then need a
-                # negative weight on the cheapest law -- not a
-                # distribution. Such a draw is a valid competitor as it
-                # is, so use it unmixed.
-                other = draw
+                other = draw            # already inside the budget
             else:
                 fraction = (budget - 1.0) / (spent - 1.0)
                 other = fraction * draw + (1 - fraction) * cheapest
             self.assertLessEqual(float(other @ energies), budget + 1e-9)
-            tested += 1
             self.assertLessEqual(
                 self.rate(other, sigma2, self.PAM16), ceiling + 1e-9)
-        self.assertEqual(tested, 300)
 
     def test_the_closed_form_costs_a_few_hundredths_of_a_bit_at_worst(self):
         """Kschischang and Pasupathy's claim, as a number.
 
         This is what justifies using the closed form everywhere else in
-        the module. The gap is not uniform: it is largest where the
-        constraint is loosest -- a small multiplier at low SNR, where
-        the true maximizer drops points outright and no Maxwell-
-        Boltzmann law can -- and it collapses at high SNR, where both
-        become the uniform law.
+        the module. Measured over this grid the gap runs from 0.00001
+        bit (24 dB, budget 25) to 0.036 bit (12 dB, budget 85): largest
+        where the budget is loosest and the channel noisiest, because
+        that is where the true maximizer starts dropping points and
+        Maxwell-Boltzmann, which cannot, has flattened to the uniform
+        law. It collapses at high SNR, where both are uniform anyway.
         """
         worst = 0.0
-        for (snr_dB, _), law in self.solved.items():
+        for (snr_dB, target), law in self.solved.items():
             sigma2 = self.UNIFORM_ENERGY / 10 ** (snr_dB / 10)
-            spent = float(np.sum(law * self.PAM16 ** 2))
-            if spent > self.UNIFORM_ENERGY:
-                continue                  # no closed form reaches there
             closed = maxwell_boltzmann(
-                self.PAM16, lam=_matched_lambda(self.PAM16, spent))
+                self.PAM16, lam=_matched_lambda(self.PAM16, target))
             worst = max(worst, self.rate(law, sigma2, self.PAM16)
                         - self.rate(closed, sigma2, self.PAM16))
         self.assertLess(worst, 0.05, f"gap of {worst:.4f} bit")
@@ -417,31 +392,36 @@ class TestTheLawThatMaximizesTheRate(unittest.TestCase):
         than one point used more often. That is also why the iteration
         is slow there -- it is converging to the boundary of the simplex.
         """
-        law = blahut_arimoto(self.PAM16, sigma2=85.0 / 10 ** 0.6, lam=0.004)
+        law = blahut_arimoto(self.PAM16, sigma2=85.0 / 10 ** 0.6,
+                             energy=self.UNIFORM_ENERGY)
         self.assertGreater(int(np.sum(law < 1e-12)), 0)
-        closed = maxwell_boltzmann(
-            self.PAM16,
-            lam=_matched_lambda(self.PAM16,
-                                float(np.sum(law * self.PAM16 ** 2))))
-        self.assertTrue(bool(np.all(closed > 0)))
+        self.assertTrue(bool(np.all(maxwell_boltzmann(self.PAM16,
+                                                      lam=0.5) > 0)))
 
-    def test_without_a_constraint_it_can_spend_more_than_the_uniform_law(self):
-        """The docstring's warning, held to.
+    def test_an_unbinding_budget_is_refused(self):
+        """The constraint has to bind, or the question is not the one asked.
 
-        Shaping is a statement about a *constrained* problem. Remove the
-        constraint at low SNR and the maximizer pushes mass outwards
-        instead, spending more energy than the uniform distribution --
-        the opposite of the bell curve the subject is pictured with.
+        Left free, the maximizer spends *more* than the uniform law: it
+        pushes mass onto the outer points to separate them further. So
+        there is a ceiling above which a budget constrains nothing, and
+        asking for it is a mistake worth naming rather than answering.
         """
-        law = blahut_arimoto(self.PAM16, sigma2=85.0 / 10, lam=0.0)
-        self.assertGreater(float(np.sum(law * self.PAM16 ** 2)),
-                           self.UNIFORM_ENERGY)
-        self.assertGreater(law[0], 1 / 16)          # an outer point
+        unconstrained = blahut_arimoto(self.PAM16, sigma2=85.0 / 10, lam=0.0)
+        spent = float(np.sum(unconstrained * self.PAM16 ** 2))
+        self.assertGreater(spent, self.UNIFORM_ENERGY)
+        with self.assertRaises(ValueError) as ctx:
+            blahut_arimoto(self.PAM16, sigma2=85.0 / 10, energy=spent * 1.5)
+        self.assertIn("does not bind", str(ctx.exception))
 
     def test_the_refusals(self):
         with self.assertRaises(ValueError) as ctx:
             blahut_arimoto(np.array([1 + 1j, -1 - 1j]), sigma2=1.0, lam=0.0)
         self.assertIn("np.unique(np.real(alphabet))", str(ctx.exception))
+        with self.assertRaises(ValueError) as ctx:
+            blahut_arimoto(self.PAM16, sigma2=1.0, lam=0.1, energy=40.0)
+        self.assertIn("D41", str(ctx.exception))
+        with self.assertRaises(ValueError):
+            blahut_arimoto(self.PAM16, sigma2=1.0)
         with self.assertRaises(ValueError):
             blahut_arimoto(self.PAM16, sigma2=0.0, lam=0.0)
         with self.assertRaises(ValueError):

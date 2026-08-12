@@ -18,12 +18,25 @@ from comnumpy.core.utils import get_alphabet
 
 img_dir = "../../docs/tutorials/img/"
 
-# 16-PAM on the odd-integer grid, in the library's own label order: the
-# most significant bit carries the sign and the three others the
-# amplitude, which is exactly the labelling PAS is built on.
-PAM16 = np.real(get_alphabet("PAM", 16)) * np.sqrt(85.0)
+def pam_grid(order):
+    """A PAM constellation on the odd integers, in the library's order.
+
+    ``get_alphabet`` returns the constellation of unit average energy,
+    which is the right normalization for a link budget and the wrong one
+    for reading a shaping law off a figure. Dividing by the smallest
+    amplitude puts it back on the odd integers without touching the
+    order -- and the order is what carries the **Gray labelling**, which
+    the bit-wise rate of Part 1 depends on. In that order the most
+    significant bit is the sign and the rest the amplitude, which is
+    exactly the split PAS is built on.
+    """
+    alphabet = np.real(get_alphabet("PAM", order))
+    return alphabet / np.min(np.abs(alphabet))
+
+
+PAM16 = pam_grid(16)
 UNIFORM = np.full(16, 1 / 16)
-AMPLITUDES = np.arange(1, 16, 2).astype(float)      # the eight |a| values
+AMPLITUDES = np.unique(np.abs(PAM16))               # the eight |a| values
 ULTIMATE_GAIN_dB = 10 * np.log10(np.pi * np.e / 6)
 
 
@@ -138,7 +151,7 @@ def matched_maxwell_boltzmann(energy):
     spends, at lambda = 0, so a bisection asked for more would run to
     lambda = 0 and hand back the uniform law as if it had succeeded.
     """
-    if energy > energy_of(UNIFORM):
+    if energy > energy_of(UNIFORM) * (1 + 1e-9):
         raise ValueError(
             f"no Maxwell-Boltzmann law on this constellation spends "
             f"{energy:.2f}: the family tops out at the uniform law's "
@@ -155,30 +168,31 @@ def matched_maxwell_boltzmann(energy):
 
 OPERATING_SNR_dB = 18.0
 sigma2 = energy_of(UNIFORM) / 10 ** (OPERATING_SNR_dB / 10)
+BUDGETS = (energy_of(UNIFORM), 70.0, 45.0, 25.0)
 print(f"\nAt {OPERATING_SNR_dB:.0f} dB on the uniform law, sigma^2 = "
-      f"{sigma2:.3f}\n")
-print("  lambda   energy   H(P)   MI(best)   MI(Maxwell-Boltzmann)     gap")
-for lam in (0.0, 0.002, 0.006, 0.02, 0.06):
-    best = blahut_arimoto(PAM16, sigma2=sigma2, lam=lam)
-    spent = energy_of(best)
+      f"{sigma2:.3f}. The uniform law spends {energy_of(UNIFORM):.0f}.\n")
+print("  budget   backoff   H(best)  H(MB)   MI(best)   MI(MB)      gap")
+for budget in BUDGETS:
+    best = blahut_arimoto(PAM16, sigma2=sigma2, energy=budget)
+    closed = matched_maxwell_boltzmann(budget)
     rho = 1 / (2 * sigma2)
     best_rate = float(constellation_capacity(PAM16, rho, px=best))
-    if spent > energy_of(UNIFORM):
-        # No Maxwell-Boltzmann law spends more than the uniform one, so
-        # there is nothing to compare against -- see the warning below.
-        print(f"  {lam:6.3f} {spent:8.2f} {distribution_entropy(best):6.3f} "
-              f"{best_rate:10.4f}       (no MB law spends that much)")
-        continue
-    closed = matched_maxwell_boltzmann(spent)
     closed_rate = float(constellation_capacity(PAM16, rho, px=closed))
-    print(f"  {lam:6.3f} {spent:8.2f} {distribution_entropy(best):6.3f} "
-          f"{best_rate:10.4f} {closed_rate:20.4f} {best_rate - closed_rate:8.4f}")
+    print(f"{budget:8.0f} {10 * np.log10(energy_of(UNIFORM) / budget):7.2f} dB "
+          f"{distribution_entropy(best):8.3f} {distribution_entropy(closed):6.3f} "
+          f"{best_rate:10.4f} {closed_rate:8.4f} {best_rate - closed_rate:8.4f}")
 
-SHOWN_LAMBDA = 0.006
-best = blahut_arimoto(PAM16, sigma2=sigma2, lam=SHOWN_LAMBDA)
-closed = matched_maxwell_boltzmann(energy_of(best))
+SHOWN_BUDGET = 45.0
+best = blahut_arimoto(PAM16, sigma2=sigma2, energy=SHOWN_BUDGET)
+closed = matched_maxwell_boltzmann(SHOWN_BUDGET)
+# The same budget as the uniform law, on a channel noisy enough that the
+# answer stops looking like a bell curve. The tolerance is loosened for
+# this one call: the root-find runs a dozen alternating maximizations and
+# each converges slowly here, so the default would report its remaining
+# bound a dozen times over -- 1e-4 nat is 1.4e-4 bit, far below anything
+# the figure shows.
 starved = blahut_arimoto(PAM16, sigma2=energy_of(UNIFORM) / 10 ** 0.6,
-                         lam=0.004)
+                         energy=energy_of(UNIFORM), tol=1e-4)
 
 _, (ax_pair, ax_low) = plt.subplots(ncols=2, figsize=(11, 4.2),
                                     layout="constrained")
@@ -188,8 +202,8 @@ ax_pair.plot(PAM16[order], closed[order], "C1^--",
              label="Maxwell-Boltzmann, same energy")
 ax_pair.set_xlabel("16-PAM constellation point")
 ax_pair.set_ylabel("$P_X(a)$")
-ax_pair.set_title(f"At {OPERATING_SNR_dB:.0f} dB, energy "
-                  f"{energy_of(best):.0f}: the same curve")
+ax_pair.set_title(f"At {OPERATING_SNR_dB:.0f} dB, budget "
+                  f"{SHOWN_BUDGET:.0f}: the same curve")
 ax_pair.legend(fontsize=9)
 ax_pair.grid(True, alpha=0.4)
 
@@ -197,18 +211,23 @@ ax_low.stem(PAM16[order], starved[order], basefmt=" ", linefmt="C3-",
             markerfmt="C3o")
 ax_low.set_xlabel("16-PAM constellation point")
 ax_low.set_ylabel("$P_X(a)$")
-ax_low.set_title("At 6 dB: points dropped outright")
+ax_low.set_title("At 6 dB, same budget: points dropped")
 ax_low.grid(True, alpha=0.4)
 plt.savefig(f"{img_dir}/probabilistic_shaping_fig2.png")
 
-print(f"\nAt 6 dB the maximizer sets {int(np.sum(starved < 1e-9))} of the 16 "
-      f"probabilities to exactly zero, and spends {energy_of(starved):.1f} "
-      f"doing it -- more than the uniform {energy_of(UNIFORM):.0f}.")
-print(f"No Maxwell-Boltzmann law does either. At lambda = 0.5 the outermost "
-      f"point still keeps {np.min(maxwell_boltzmann(PAM16, lam=0.5)):.1e}, "
-      f"and asking the family for that energy is refused outright:")
+print(f"\nAt 6 dB, on the uniform law's own budget, {int(np.sum(starved < 1e-6))} "
+      f"of the 16 points hold less than 1e-6 of the mass and the entropy is "
+      f"down to {distribution_entropy(starved):.3f} bit -- while "
+      f"Maxwell-Boltzmann at that budget is the uniform law itself, at "
+      f"H = {distribution_entropy(matched_maxwell_boltzmann(energy_of(UNIFORM))):.3f}.")
+print("Both numbers keep falling as the tolerance is tightened, and that is "
+      "the point: the maximizer's limit sits on the *boundary* of the "
+      "simplex, so the iteration only ever approaches it. No "
+      "Maxwell-Boltzmann law goes there at all -- at lambda = 0.5 the "
+      f"outermost point still keeps {np.min(maxwell_boltzmann(PAM16, lam=0.5)):.1e}.")
+print("\nAnd a budget that does not bind is refused rather than answered:")
 try:
-    matched_maxwell_boltzmann(energy_of(starved))
+    blahut_arimoto(PAM16, sigma2=sigma2, energy=3 * energy_of(UNIFORM))
 except ValueError as error:
     print(f"  {error}")
 
@@ -381,7 +400,7 @@ plt.savefig(f"{img_dir}/probabilistic_shaping_fig7.png")
 wide_axis = np.linspace(0.0, 34.0, 69)
 print("\n   M   best SNR saved   at rate   still short of 1.53 dB")
 for order_pam in (4, 8, 16, 32, 64):
-    grid = np.arange(-(order_pam - 1), order_pam, 2).astype(float)
+    grid = pam_grid(order_pam)
     flat = np.full(order_pam, 1 / order_pam)
     law = maxwell_boltzmann(grid, entropy=0.75 * np.log2(order_pam))
 

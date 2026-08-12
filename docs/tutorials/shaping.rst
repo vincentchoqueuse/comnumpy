@@ -68,9 +68,17 @@ the **Gray labelling**, which the bit-wise rate of Part 1 depends on; and in
 that order the most significant bit is the *sign* while the three others are
 the *amplitude*, which is exactly the decomposition PAS needs in Part 4.
 
+What ``get_alphabet`` returns is normalized to unit average energy, which is
+the right convention for a link budget and the wrong one for reading a law
+off a figure. Dividing by the smallest amplitude puts the constellation back
+on the odd integers without touching the order, and doing it in one function
+means the same expression works for every size -- writing the scale factor
+out by hand would embed the energy of one particular constellation, which is
+a bug the day the size changes.
+
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 19-27
+   :lines: 19-40
 
 
 Part 1: what a constellation carries
@@ -116,7 +124,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 34-56
+   :lines: 47-69
 
 .. warning::
 
@@ -135,7 +143,7 @@ samples.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 59-62
+   :lines: 72-75
 
 .. code::
 
@@ -147,7 +155,7 @@ having.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 64-73
+   :lines: 77-86
 
 The measurement uses the chain the rest of the page reuses -- a source, a
 mapper, a channel -- with the transmitted symbols tapped so every estimator
@@ -155,7 +163,7 @@ has its reference:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 75-94
+   :lines: 88-107
 
 .. mermaid:: mermaid/shaping_study.mmd
 
@@ -166,7 +174,7 @@ it was asked for.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 97-114
+   :lines: 110-127
 
 .. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
@@ -174,7 +182,7 @@ it was asked for.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 116-122
+   :lines: 129-135
 
 .. code::
 
@@ -207,15 +215,22 @@ in the middle.
 Part 2: which law maximizes the rate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now the design question. Among all laws on this constellation spending at
-most a given energy, which one carries the most bits?
+Now the design question, and it only has a meaning under a **constraint**.
+A transmitter has a power budget. Among all laws on this constellation
+spending at most a given energy, which one carries the most bits?
 
 .. math::
 
    \max_{P_X} \; I(X;Y)
    \quad \text{subject to} \quad \sum_i p_i |a_i|^2 \leq E
 
-This has no closed form. It is a concave program, and the classical way to
+Drop the constraint and the question stops being interesting: with energy
+free, the best thing to do with the outer points is to *use* them, so the
+maximizer spreads outwards and spends more than the uniform law. Everything
+below is therefore indexed by the energy budget, never by the multiplier --
+comparing two laws that spend different energies compares nothing at all.
+
+The problem has no closed form. It is concave, and the classical way to
 solve it is the **Blahut-Arimoto** algorithm (Blahut, 1972; Arimoto, 1972):
 alternate between the posterior :math:`q(i \mid y)` implied by the current
 law and the law implied by that posterior,
@@ -229,14 +244,15 @@ law and the law implied by that posterior,
    \qquad
    D_i = \int f(y|a_i) \log q(i \mid y)\, \mathrm{d}y
 
-with :math:`\lambda` the Lagrange multiplier of the energy constraint. This
-is :func:`~comnumpy.core.shaping.blahut_arimoto`, and the Gaussian integral
-is done by Gauss-Hermite quadrature rather than sampled, so the answer is
-deterministic.
+with :math:`\lambda` the Lagrange multiplier of the energy constraint. That
+multiplier is an internal variable: :func:`~comnumpy.core.shaping.blahut_arimoto`
+takes ``energy=`` and finds it by a root-find, because the budget is what an
+engineer actually has. The Gaussian integral is done by Gauss-Hermite
+quadrature rather than sampled, so the answer is deterministic.
 
-Against it stands the law this library actually uses everywhere else. Among
-all laws of a given energy, the one of maximum **entropy** is the
-Maxwell-Boltzmann family
+Against it stands the law this library uses everywhere else. Among all laws
+of a given energy, the one of maximum **entropy** is the Maxwell-Boltzmann
+family
 
 .. math::
 
@@ -244,61 +260,55 @@ Maxwell-Boltzmann family
    \qquad \lambda \geq 0
 
 which :func:`~comnumpy.core.shaping.maxwell_boltzmann` computes in closed
-form. Note carefully that this is the answer to a *different question*:
-maximum entropy at a given energy, not maximum rate over a given channel.
-The two coincide only in the limit of a Gaussian channel with a Gaussian
-input. How much the difference costs is a number, and the point of this part
-is to measure it rather than cite it (Kschischang and Pasupathy, 1993).
+form. Note carefully that this answers a *different question*: maximum
+entropy at a given energy, not maximum rate over a given channel. The two
+coincide only in the limit of a Gaussian channel with a Gaussian input. How
+much the difference costs is a number, and the point of this part is to
+measure it rather than cite it (Kschischang and Pasupathy, 1993).
 
-Comparing them means comparing at equal energy, and it is the closed form
-that gets matched -- bisecting :func:`~comnumpy.core.shaping.blahut_arimoto`
-for a target energy would cost a full alternating maximization per step,
-while matching Maxwell-Boltzmann to an energy costs nothing:
-
-.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
-   :language: python
-   :lines: 129-153
+Matching the closed form to a budget is a bisection on a formula, so it is
+free -- and it must refuse a budget it cannot meet, or the comparison would
+silently be against the wrong law:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 156-175
+   :lines: 142-166
+
+.. literalinclude:: ../../examples/simple/probabilistic_shaping.py
+   :language: python
+   :lines: 169-183
 
 .. code::
 
-   At 18 dB on the uniform law, sigma^2 = 1.347
+   At 18 dB on the uniform law, sigma^2 = 1.347. The uniform law spends 85.
 
-     lambda   energy   H(P)   MI(best)   MI(Maxwell-Boltzmann)     gap
-      0.000    96.63  3.918     2.8475       (no MB law spends that much)
-      0.002    82.63  3.956     2.8277               2.8148   0.0129
-      0.006    59.80  3.895     2.6995               2.6941   0.0053
-      0.020    23.52  3.323     2.1025               2.1024   0.0001
-      0.060     6.99  2.449     1.3145               1.3145   0.0000
+     budget   backoff   H(best)  H(MB)   MI(best)   MI(MB)      gap
+         85    0.00 dB    3.953  4.000     2.8340   2.8200   0.0139
+         70    0.84 dB    3.943  3.970     2.7730   2.7647   0.0083
+         45    2.76 dB    3.755  3.762     2.5347   2.5326   0.0021
+         25    5.31 dB    3.367  3.367     2.1440   2.1439   0.0001
 
-**The closed form is worth using.** At every energy where the comparison is
-defined the gap is at most 0.013 bit, and it collapses to nothing as the
-constraint tightens. That is the result Kschischang and Pasupathy proved and
-the reason the rest of this module never mentions Blahut-Arimoto again: one
-line of closed form buys 99.5 % of an iterative solver.
+Read the first row first, because it is the one that justifies the whole
+subject. The budget there is the uniform law's own energy, so
+Maxwell-Boltzmann at that budget *is* the uniform law -- and it is beaten.
+**At exactly the same power, the uniform 16-PAM is not the best law**: its
+entropy is the full 4 bit but it carries 2.8200, where a law of entropy
+3.953 carries 2.8340. Spending entropy to buy rate is the whole idea, and
+it already pays at zero backoff.
 
-.. warning::
-
-   **Look at the first row.** With :math:`\lambda = 0` -- no energy
-   constraint at all -- the maximizer spends **96.63**, more than the
-   uniform law's 85. It pushes mass *outwards*, because with energy free the
-   best thing to do with the outer points is to use them more, not less.
-
-   Probabilistic shaping is a statement about a *constrained* problem. The
-   bell curve everyone pictures is the answer to "most bits for this much
-   energy", never to "most bits". Remove the constraint and the answer
-   inverts.
+Then read down the last column. **The closed form is worth using**: the gap
+is at most 0.014 bit and it collapses as the budget tightens. That is the
+result Kschischang and Pasupathy proved, and the reason the rest of this
+module never mentions Blahut-Arimoto again -- one line of closed form buys
+99.5 % of an iterative solver.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 177-181
+   :lines: 185-195
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 183-202
+   :lines: 197-216
 
 .. image:: img/probabilistic_shaping_fig2.png
    :width: 100%
@@ -306,40 +316,45 @@ line of closed form buys 99.5 % of an iterative solver.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 204-213
+   :lines: 218-232
 
 .. code::
 
-   At 6 dB the maximizer sets 6 of the 16 probabilities to exactly zero, and
-   spends 86.4 doing it -- more than the uniform 85.
-   No Maxwell-Boltzmann law does either. At lambda = 0.5 the outermost point
-   still keeps 1.1e-49, and asking the family for that energy is refused
-   outright:
-     no Maxwell-Boltzmann law on this constellation spends 86.35: the family
-     tops out at the uniform law's 85.00, at lambda = 0.
+   At 6 dB, on the uniform law's own budget, 6 of the 16 points hold less
+   than 1e-6 of the mass and the entropy is down to 2.731 bit -- while
+   Maxwell-Boltzmann at that budget is the uniform law itself, at H = 4.000.
+   Both numbers keep falling as the tolerance is tightened, and that is the
+   point: the maximizer's limit sits on the *boundary* of the simplex, so
+   the iteration only ever approaches it. No Maxwell-Boltzmann law goes
+   there at all -- at lambda = 0.5 the outermost point still keeps 1.1e-49.
 
-The right-hand panel is the one worth staring at. On a noisy enough channel
-the optimal law does something no Maxwell-Boltzmann law can: it **switches
-points off entirely**. Two points the receiver cannot tell apart are worth
-less than one point used twice as often, so the maximizer thins the
-constellation out and spends the freed energy separating what is left --
-which is why it ends up above the uniform energy, not below it.
-Maxwell-Boltzmann gives every point a strictly positive probability whatever
-:math:`\lambda` does: at :math:`\lambda = 0.5` the outermost point is down to
-:math:`10^{-49}`, which is negligible but is not zero.
+   And a budget that does not bind is refused rather than answered:
+     got energy=254.99999999999994, expected a value in
+     [0.9999999999999998, 96.62517172622793] for this alphabet and
+     sigma2=1.3471592135919461. The upper end is what the maximizer spends
+     when nothing constrains it, which on a noisy channel is more than the
+     uniform law's 84.99999999999999: asking for more than that is asking
+     for a constraint that does not bind.
 
-The refusal in that output is deliberate. The family spends *at most* what
-the uniform law spends, so a bisection asked for more would run to
-:math:`\lambda = 0` and return the uniform law as though it had succeeded --
-the comparison would then silently be against the wrong thing. Writing the
-guard is what turned that paragraph from a plausible sentence into a
-measured one.
+The right-hand panel is the one worth staring at. Same constellation, same
+power budget, a noisier channel -- and the optimal law does something no
+Maxwell-Boltzmann law can: it **abandons points**. Two points the receiver
+cannot tell apart are worth less than one point used twice as often, so the
+maximizer thins the constellation out and spends the freed energy separating
+what is left.
 
-It is also why the iteration is slow there -- it is converging to the
-boundary of the simplex -- and why ``blahut_arimoto`` logs the distance it
-may still be from the maximum instead of returning a half-converged answer
-in silence.
+Note what is *not* claimed there. The count and the entropy are quoted at a
+stated tolerance and both keep moving as it is tightened, because the answer
+lives on the boundary of the simplex and an alternating maximization only
+approaches a boundary asymptotically. That is also why
+:func:`~comnumpy.core.shaping.blahut_arimoto` reports the distance it may
+still be from the maximum instead of returning a half-converged law in
+silence -- Blahut's bound is a certificate, and quoting a converged "exactly
+zero" count here would be inventing precision the iteration never delivered.
 
+The refusal at the end is the same discipline applied to the budget. Above
+the unconstrained maximizer's own energy a budget constrains nothing, so
+asking for one is a mistake worth naming rather than answering.
 
 Part 3: drawing from the law, and what it buys
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -351,7 +366,7 @@ idealization a real matcher approaches.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 220-223
+   :lines: 239-242
 
 .. code::
 
@@ -364,7 +379,7 @@ the half bit given up.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 225-242
+   :lines: 244-261
 
 .. image:: img/probabilistic_shaping_fig3.png
    :width: 100%
@@ -393,7 +408,7 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 244-270
+   :lines: 263-289
 
 .. image:: img/probabilistic_shaping_fig4.png
    :width: 100%
@@ -401,7 +416,7 @@ And what the law is worth is this:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 272-276
+   :lines: 291-295
 
 .. code::
 
@@ -452,7 +467,7 @@ energy and gains exactly one bit per symbol (Böcherer, Steiner and Schulte,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 283-285
+   :lines: 302-304
 
 **CCDM** fixes the composition. Every output block holds exactly :math:`n_i`
 copies of amplitude :math:`i`, and there are
@@ -496,7 +511,7 @@ bits at the same energy, always.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 290-301
+   :lines: 309-320
 
 .. code::
 
@@ -520,7 +535,7 @@ loses rate twice -- once quantizing the law, once taking the floor of
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 303-315
+   :lines: 322-334
 
 .. image:: img/probabilistic_shaping_fig5.png
    :width: 100%
@@ -534,7 +549,7 @@ backwards:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 317-334
+   :lines: 336-353
 
 .. mermaid:: mermaid/shaping_pas.mmd
 
@@ -559,7 +574,7 @@ research topic of their own.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 336-348
+   :lines: 355-367
 
 .. image:: img/probabilistic_shaping_fig6.png
    :width: 100%
@@ -582,7 +597,7 @@ back, and the dematcher says so rather than returning silent nonsense.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 350-354
+   :lines: 369-373
 
 .. code::
 
@@ -620,7 +635,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 361-369
+   :lines: 380-388
 
 .. code::
 
@@ -628,7 +643,7 @@ of energies -- is unchanged.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 371-379
+   :lines: 390-398
 
 .. image:: img/probabilistic_shaping_fig7.png
    :width: 70%
@@ -648,7 +663,7 @@ small constellation has nothing to redistribute.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 381-398
+   :lines: 400-417
 
 .. code::
 
@@ -674,7 +689,7 @@ same time, and why nobody bothers on QPSK.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 400-403
+   :lines: 419-422
 
 
 Conclusion

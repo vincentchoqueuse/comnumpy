@@ -439,7 +439,9 @@ def shaping_gain_dB(alphabet: np.ndarray,
     return float(10 * np.log10(uniform_energy / shaped_energy))
 
 
-def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
+def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float,
+                   lam: Optional[float] = None,
+                   energy: Optional[float] = None,
                    n_nodes: int = 40, tol: float = 1e-9,
                    max_iter: int = 5000) -> np.ndarray:
     r"""The distribution that maximizes the mutual information, computed.
@@ -509,13 +511,18 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
         Noise variance :math:`\sigma^2` of the real AWGN channel,
         positive. Only the ratio of the alphabet's energy to
         :math:`\sigma^2` matters, so this is where the SNR enters.
-    lam : float, keyword-only
-        The Lagrange multiplier :math:`\lambda`, non-negative. There is
-        no ``energy=`` parameterization here: reaching a target energy
-        would mean a bisection with a full alternating maximization at
-        every step. Solve at a multiplier, read the energy off the
-        answer, and hand *that* to
-        :func:`maxwell_boltzmann`, whose own bisection is a closed form.
+    lam : float, optional, keyword-only
+        The Lagrange multiplier :math:`\lambda` itself, non-negative.
+        Useful when the multiplier is the object of interest; note that
+        the energy it lands on is an output, not a choice.
+    energy : float, optional, keyword-only
+        Average energy budget :math:`\sum_i p_i a_i^2` the answer must
+        spend, reached by a root-find on :math:`\lambda`. This is the
+        parameterization with an operational meaning -- a transmitter
+        has a power budget, not a Lagrange multiplier -- and the one to
+        use when comparing against :func:`maxwell_boltzmann`, which only
+        makes sense at equal energy. Exactly one of ``lam`` and
+        ``energy`` must be given (D41).
     n_nodes : int, optional, keyword-only
         Gauss-Hermite nodes for :math:`D_i`. Default 40. Measured on
         16-PAM at 10 dB against a 200-node reference, the largest
@@ -539,8 +546,10 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
     Raises
     ------
     ValueError
-        If ``sigma2`` is not positive, if ``lam`` is negative, or if the
-        alphabet is complex.
+        If both or neither parameterization is given, if ``sigma2`` is
+        not positive, if ``lam`` is negative, if the alphabet is
+        complex, or if ``energy`` is outside the range the constraint
+        can reach.
 
     References
     ----------
@@ -563,14 +572,19 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
     >>> print(np.round(clean, 4))
     [0.25 0.25 0.25 0.25]
 
-    Charge for energy and the answer becomes the bell shape shaping is
-    named after -- and lands on the closed form of the same energy:
+    Impose a budget and the answer becomes the bell shape shaping is
+    named after. The uniform law spends 5 on this alphabet, so asking
+    for 3 is asking for 2.2 dB less power:
 
-    >>> best = blahut_arimoto(pam4, sigma2=5.0 / 100, lam=0.1373)
+    >>> best = blahut_arimoto(pam4, sigma2=5.0 / 100, energy=3.0)
     >>> print(np.round(best, 4))
     [0.125 0.375 0.375 0.125]
-    >>> print(round(float(np.sum(best * pam4 ** 2)), 3))
+    >>> print(round(float(np.sum(best * pam4 ** 2)), 6))
     3.0
+
+    At that energy the closed form is the same law, which is the whole
+    reason the closed form is used everywhere else:
+
     >>> print(np.round(maxwell_boltzmann(pam4, lam=0.1373), 4))
     [0.125 0.375 0.375 0.125]
     """
@@ -587,7 +601,15 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
             f"the noise variance is positive, got sigma2={sigma2}. A "
             f"noiseless channel makes every distribution carry its own "
             f"entropy, so the maximizer is the uniform one.")
-    if lam < 0:
+    exclusive = (
+        "blahut_arimoto takes exactly one of lam= and energy=, got "
+        f"lam={lam} and energy={energy}. Pass energy= for the power "
+        "budget the transmitter actually has -- that is the parameter "
+        "with an operational meaning -- and lam= only when the "
+        "multiplier itself is what you want (D41).")
+    if (lam is None) == (energy is None):
+        raise ValueError(exclusive)
+    if lam is not None and lam < 0:
         raise ValueError(
             f"the Lagrange multiplier of an energy constraint is "
             f"non-negative, got lam={lam}. A negative value would pay "
@@ -604,41 +626,106 @@ def blahut_arimoto(alphabet: np.ndarray, *, sigma2: float, lam: float,
     quadrature = weights / np.sqrt(np.pi)
     energies = points ** 2
 
-    p = np.full(points.size, 1.0 / points.size)
-    remaining = np.inf
-    for _ in range(max_iter):
-        log_p = np.log(np.maximum(p, 1e-300))
-        shifted = log_p - exponent
-        largest = np.max(shifted, axis=-1)
-        evidence = largest + np.log(np.sum(
-            np.exp(shifted - largest[..., None]), axis=-1))
-        # log q(i | y) on the grid of the i-th integral
-        posterior = log_p[:, None] - self_exponent - evidence
-        gain = posterior @ quadrature - lam * energies
-        # Blahut's stopping rule. The per-point divergence is
-        # D'_i = D_i - log p_i -- the Kullback-Leibler distance from
-        # f(.|a_i) to the current output law -- and the objective is
-        # bracketed by its mean and its maximum:
-        #     sum_i p_i (D'_i - lam E_i)  <=  max  <=  max_i (D'_i - lam E_i)
-        # so the difference is a *certificate*: the answer is within it
-        # of the maximum, in nats. Waiting for the probabilities to
-        # settle instead is far stricter and much slower, because the law
-        # can creep towards a zero long after the rate has stopped moving.
-        divergence = gain - log_p
-        remaining = float(np.max(divergence) - p @ divergence)
-        p = np.exp(gain - np.max(gain))
-        p /= np.sum(p)
-        if remaining < tol:
+    def solve(multiplier: float) -> np.ndarray:
+        """Alternating maximization at a fixed multiplier.
+
+        Always from the uniform law, never from a previous answer: a
+        zero probability is an *absorbing* state of the iteration, since
+        it makes its own posterior zero, so a warm start from a converged
+        answer at a larger multiplier would be stuck there for good.
+        """
+        p = np.full(points.size, 1.0 / points.size)
+        remaining = np.inf
+        for _ in range(max_iter):
+            log_p = np.log(np.maximum(p, 1e-300))
+            shifted = log_p - exponent
+            largest = np.max(shifted, axis=-1)
+            evidence = largest + np.log(np.sum(
+                np.exp(shifted - largest[..., None]), axis=-1))
+            # log q(i | y) on the grid of the i-th integral
+            posterior = log_p[:, None] - self_exponent - evidence
+            gain = posterior @ quadrature - multiplier * energies
+            # Blahut's stopping rule. The per-point divergence is
+            # D'_i = D_i - log p_i -- the Kullback-Leibler distance from
+            # f(.|a_i) to the current output law -- and the objective is
+            # bracketed by its mean and its maximum:
+            #   sum_i p_i (D'_i - lam E_i) <= max <= max_i (D'_i - lam E_i)
+            # so the difference is a *certificate*: the answer is within
+            # it of the maximum, in nats. Waiting for the probabilities
+            # to settle instead is far stricter and much slower, because
+            # the law can creep towards a zero long after the rate has
+            # stopped moving.
+            divergence = gain - log_p
+            remaining = float(np.max(divergence) - p @ divergence)
+            p = np.exp(gain - np.max(gain))
+            p /= np.sum(p)
+            if remaining < tol:
+                break
+        else:
+            logger.warning(
+                "blahut_arimoto stopped at max_iter=%d with %.2e nat "
+                "still to gain (asked for %.0e). The alternating "
+                "maximization converges slowly when the answer puts an "
+                "exact zero on some constellation point, which is what "
+                "it does at low SNR: the returned law is within that "
+                "bound of the maximum, so read it as such or raise "
+                "max_iter.", max_iter, remaining, tol)
+        return p
+
+    if lam is not None:
+        return solve(float(lam))
+
+    target = float(energy)
+    # The reachable range. The lower end is the energy of the cheapest
+    # points; the upper end is what the *unconstrained* maximizer spends,
+    # and it can sit above the uniform law's energy -- see the warning
+    # above -- so it has to be computed rather than assumed.
+    ceiling = float(solve(0.0) @ energies)
+    floor = float(np.min(energies))
+    if not floor <= target <= ceiling:
+        raise ValueError(
+            f"got energy={target}, expected a value in "
+            f"[{floor}, {ceiling}] for this alphabet and sigma2={sigma2}. "
+            f"The upper end is what the maximizer spends when nothing "
+            f"constrains it, which on a noisy channel is more than the "
+            f"uniform law's {float(np.mean(energies))}: asking for more "
+            f"than that is asking for a constraint that does not bind.")
+    if target >= ceiling * (1 - 1e-12):
+        return solve(0.0)
+
+    # The energy is strictly decreasing in the multiplier, so this is a
+    # root-find. Every evaluation is a full alternating maximization, so
+    # the method matters: the Illinois variant of regula falsi converges
+    # superlinearly and lands in about a dozen solves, where a plain
+    # bisection to the same accuracy takes sixty.
+    high = 1.0 / float(np.ptp(energies))
+    while float(solve(high) @ energies) > target:
+        high *= 4.0
+        if high > _LAMBDA_MAX:
+            raise ValueError(
+                f"no multiplier below {_LAMBDA_MAX} brings the energy "
+                f"down to {target} on this alphabet.")
+    low, f_low = 0.0, ceiling - target
+    f_high = float(solve(high) @ energies) - target
+    atol = 1e-10 * max(target, 1.0)
+    side = 0
+    guess = high
+    for _ in range(_BISECTION_STEPS):
+        guess = (low * f_high - high * f_low) / (f_high - f_low)
+        f_guess = float(solve(guess) @ energies) - target
+        if abs(f_guess) < atol:
             break
-    else:
-        logger.warning(
-            "blahut_arimoto stopped at max_iter=%d with %.2e nat still "
-            "to gain (asked for %.0e). The alternating maximization "
-            "converges slowly when the answer puts an exact zero on some "
-            "constellation point, which is what it does at low SNR: the "
-            "returned law is within that bound of the maximum, so read "
-            "it as such or raise max_iter.", max_iter, remaining, tol)
-    return p
+        if f_guess > 0:                      # still spending too much
+            low, f_low = guess, f_guess
+            if side == 1:
+                f_high *= 0.5
+            side = 1
+        else:
+            high, f_high = guess, f_guess
+            if side == -1:
+                f_low *= 0.5
+            side = -1
+    return solve(guess)
 
 
 @dataclass(slots=True)
