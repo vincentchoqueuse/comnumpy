@@ -80,7 +80,7 @@ The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-88
+   :lines: 1-87
 
 Two things in that chain are worth naming.
 
@@ -106,7 +106,7 @@ only thing that changes is the distance travelled:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 91-113
+   :lines: 90-112
 
 .. code::
 
@@ -129,7 +129,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 115-129
+   :lines: 114-128
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -160,7 +160,7 @@ block on the way through:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 131-136
+   :lines: 130-135
 
 .. code::
 
@@ -213,7 +213,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 138-159
+   :lines: 137-158
 
 .. code::
 
@@ -263,11 +263,11 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-81
+   :lines: 1-80
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 84-159
+   :lines: 83-159
 
 .. code::
 

@@ -15,17 +15,16 @@ from comnumpy.core.fading import get_delay_profile
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
 
 img_dir = "../../docs/tutorials/img/"
 
-M = 16
 N = 1280
 fs = 7.68e6
 snr_dB = 18
-alphabet = get_alphabet("QAM", M)
+constellation = Constellation("QAM", 16)
 
 # --- the channel -----------------------------------------------------
 # EPA is the 3GPP Extended Pedestrian A profile; the block draws one
@@ -54,12 +53,12 @@ print(f"\n|H| spans {gain_dB.max() - gain_dB.min():.1f} dB across "
 # --- the problem -----------------------------------------------------
 # Send 16-QAM straight through it and look at what arrives.
 sc_chain = Sequential([
-        SymbolGenerator(M, name="data_tx"),
-        SymbolMapper(alphabet),
+        SymbolGenerator(constellation.order, name="data_tx"),
+        SymbolMapper(constellation),
         FIRChannel(h),
         AWGN(snr_dB=snr_dB, name="data_rx"),
         LinearEqualizer(h, method="zf", name="data_rx_eq"),
-        SymbolDemapper(alphabet)
+        SymbolDemapper(constellation)
     ], taps=["data_tx", "data_rx", "data_rx_eq"])
 
 sc_chain.seed(1)
@@ -68,9 +67,9 @@ sc_ser = compute_ser(sc_chain.tap("data_tx"), detected)
 print(f"single carrier: SER {sc_ser:.4f}, {sc_chain.elapsed_ * 1e3:.0f} ms")
 
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-plot_iq(sc_chain.tap("data_rx"), reference=alphabet, title="received",
+plot_iq(sc_chain.tap("data_rx"), reference=constellation, title="received",
         ax=axes[0])
-plot_iq(sc_chain.tap("data_rx_eq"), reference=alphabet,
+plot_iq(sc_chain.tap("data_rx_eq"), reference=constellation,
         title="after ZF equalization", ax=axes[1])
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
@@ -79,13 +78,13 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 N_carrier = 128
 N_cp = 10
 ofdm_chain = Sequential([
-        SymbolGenerator(M, name="data_tx"),
-        SymbolMapper(alphabet),
+        SymbolGenerator(constellation.order, name="data_tx"),
+        SymbolMapper(constellation),
         OFDMTransmitter(N_carrier, N_cp),
         FIRChannel(h),
         AWGN(snr_dB=snr_dB, name="data_rx"),
         OFDMReceiver(N_carrier, N_cp, h=h, name="data_rx_eq"),
-        SymbolDemapper(alphabet)
+        SymbolDemapper(constellation)
     ], taps=["data_tx", "data_rx_eq"])
 
 ofdm_chain.seed(1)
@@ -95,7 +94,7 @@ speedup = sc_chain.elapsed_ / ofdm_chain.elapsed_
 print(f"OFDM          : SER {ofdm_ser:.4f}, {ofdm_chain.elapsed_ * 1e3:.2f} ms "
       f"({speedup:.0f} times faster)")
 
-plot_iq(ofdm_chain.tap("data_rx_eq"), reference=alphabet,
+plot_iq(ofdm_chain.tap("data_rx_eq"), reference=constellation,
         title="OFDM, after one-tap equalization")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 

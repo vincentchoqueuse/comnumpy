@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from comnumpy.core import (SRRCFilter, Sequential, SymbolGenerator,
-                           SymbolMapper, Upsampler, get_alphabet)
+                           SymbolMapper, Upsampler)
+from comnumpy.core.utils import Constellation
 from comnumpy.optical import WDMDemultiplexer, WDMGrid, WDMMultiplexer
 
 N_CHANNELS = 5
@@ -37,7 +38,7 @@ print(f"\ncomposite rate {fs / 1e9:.4g} GHz "
 # --- transmitter: the channel axis is created once, and never mentioned again
 transmitter = Sequential([
     SymbolGenerator(16, seed=0, name="symbols"),
-    SymbolMapper(get_alphabet("QAM", 16)),
+    SymbolMapper(Constellation("QAM", 16)),
     Upsampler(OVERSAMPLING),
     SRRCFilter(ROLL_OFF, OVERSAMPLING, N_h=10),
 ], name="per-channel transmitter")

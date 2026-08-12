@@ -40,7 +40,7 @@ We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 1-8
+   :lines: 1-7
 
 Define Parameters
 """""""""""""""""
@@ -50,7 +50,7 @@ the number of transmitted symbols, and the signal-to-noise ratio (SNR):
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 12-18
+   :lines: 10-17
 
 
 AWGN Communication Chain
@@ -80,7 +80,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 19-24
+   :lines: 18-23
 
 
 Four processors, and each one is worth a sentence -- these four come back in
@@ -116,7 +116,7 @@ detected symbol indices:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 26-26
+   :lines: 25-25
 
 Evaluate Performance
 """"""""""""""""""""
@@ -132,7 +132,7 @@ but it does mean the order of the two lines matters.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 28-35
+   :lines: 27-35
 
 which prints:
 

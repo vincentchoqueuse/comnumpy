@@ -14,7 +14,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.shaping import (AmplitudeMapper, ConstantCompositionMatcher,
                                    DistributionMatcher, distribution_entropy,
                                    maxwell_boltzmann)
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 
 img_dir = "../../docs/tutorials/img/"
 mermaid_dir = "../../docs/tutorials/mermaid/"
@@ -32,7 +32,8 @@ print(f"AWGN capacity at 20 dB: {awgn_capacity(100.0):.2f} bit/symbol")
 orders = (4, 16, 64, 256)
 uniform = {}
 for order in orders:
-    uniform[order] = constellation_capacity(get_alphabet("QAM", order), snr)
+    uniform[order] = Constellation("QAM", order).metrics(
+        snr_dB, per="symbol", metrics=("mi",))["mi"]
 
 fig, ax = plt.subplots(figsize=(7, 4.8))
 ax.plot(snr_dB, capacity, "k", lw=2, label="AWGN capacity")
@@ -62,7 +63,7 @@ for index in range(0, len(snr_dB), 4):
 # Shaping lowers the average energy, so the constellation is rescaled
 # back to unit power: the comparison below is at equal transmit power,
 # which is the only comparison that means anything.
-qam64 = get_alphabet("QAM", 64)
+qam64 = np.asarray(Constellation("QAM", 64))
 
 
 def shaped_rate(lam, value):
@@ -122,7 +123,8 @@ print(f"\nto carry {target:.0f} bit/symbol: uniform {snr_uniform:.2f} dB, "
 middle = int(np.argmin(np.abs(snr_dB - 18)))
 lam = float(best_lam[middle])
 law = maxwell_boltzmann(qam64, lam=lam)
-amplitudes = np.unique(np.abs(np.real(get_alphabet("PAM", 8))))
+pam8 = np.sort(np.real(np.asarray(Constellation("PAM", 8))))
+amplitudes = np.unique(np.abs(pam8))
 amplitude_law = maxwell_boltzmann(amplitudes, lam=lam)
 print(f"\nat {snr_dB[middle]} dB: lambda = {lam:.3f}, "
       f"H(amplitudes) = {distribution_entropy(amplitude_law):.3f} bits")
@@ -160,7 +162,6 @@ with open(f"{mermaid_dir}/shaping_pas.mmd", "w") as stream:
 # signed 8-PAM is P(+/- a_i) = P_A(a_i) / 2, which is Maxwell-Boltzmann
 # on the full constellation at the same lambda -- the theoretical curve
 # the measured frequencies are compared against.
-pam8 = np.sort(np.real(get_alphabet("PAM", 8)))
 symbols = chain(200 * matcher.n_bits)
 measured = np.zeros(pam8.size)
 for index, level in enumerate(pam8):

@@ -655,6 +655,8 @@ def hard_projector(z: np.ndarray,
     >>> print(np.round(x, 4))
     [ 0.7071+0.7071j -0.7071-0.7071j]
     """
+    # accept anything array-like, a Constellation included
+    alphabet = np.asarray(alphabet)
     error = np.abs(z[..., np.newaxis] - alphabet)**2
     index = np.argmin(error, axis=-1)
     s = index.astype(int)
@@ -743,7 +745,8 @@ def soft_projector(z: np.ndarray, alphabet: np.ndarray, sigma2: float,
     >>> print(np.round(soft_projector(z, alphabet, 100.0), 4))
     [ 0.009+0.011j -0.002-0.008j]
     """
-    alphabet = alphabet.reshape(1, -1)
+    # accept anything array-like, a Constellation included
+    alphabet = np.asarray(alphabet).reshape(1, -1)
     z = z.reshape(-1, 1)
 
     term1 = np.exp(-(1 / np.real(sigma2)) * np.abs(alphabet - z) ** 2)

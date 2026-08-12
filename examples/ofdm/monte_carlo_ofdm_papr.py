@@ -12,16 +12,15 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.core.processors import Serial2Parallel
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.ofdm.metrics import compute_papr, compute_papr_ccdf_theo
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 
 img_dir = "../../docs/tutorials/img/"
 
 N_sc = 1024
-M = 4
 os = 4                                  # oversampling, to see the peaks
-alphabet = get_alphabet("PSK", M)
+constellation = Constellation("PSK", 4)
 
 
 def get_transmitter(n_sub, oversampling=os, name="ofdm"):
@@ -34,8 +33,8 @@ def get_transmitter(n_sub, oversampling=os, name="ofdm"):
     carrier_type = np.zeros(oversampling * n_sub)
     carrier_type[:n_sub] = 1
     return Sequential([
-        SymbolGenerator(M, name="tx"),
-        SymbolMapper(alphabet),
+        SymbolGenerator(constellation.order, name="tx"),
+        SymbolMapper(constellation),
         Serial2Parallel(n_sub, name="s2p"),
         CarrierAllocator(carrier_type=carrier_type, name="carrier_allocator"),
         IFFTProcessor(),

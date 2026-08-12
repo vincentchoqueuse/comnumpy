@@ -14,7 +14,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import get_alphabet, hard_projector
+from comnumpy.core.utils import Constellation, hard_projector
 from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.links import FiberLink
@@ -22,8 +22,7 @@ from comnumpy.optical.utils import dbm_to_watt
 
 img_dir = "../../docs/tutorials/img/"
 
-M = 16
-alphabet = get_alphabet("QAM", M)
+constellation = Constellation("QAM", 16)
 N_s = 2**11               # 8192 symbols per point: the SER floor is 1e-4
 oversampling_sim = 6
 oversampling_dsp = 2
@@ -50,8 +49,8 @@ oversampling_ratio = oversampling_sim // oversampling_dsp
 def get_unprocessed_chain():
     """Symbols to the field the receiver sees, launch power included."""
     return Sequential([
-        SymbolGenerator(M, name="data_tx"),
-        SymbolMapper(alphabet, name="signal_tx"),
+        SymbolGenerator(constellation.order, name="data_tx"),
+        SymbolMapper(constellation, name="signal_tx"),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
         Amplifier(1.0, name="launch"),
@@ -121,7 +120,7 @@ for index, dBm in enumerate(dBm_list):
             bound = name == "amplifier noise only"
             estimate = receiver(fields[bound])
             elapsed[name] += receiver.elapsed_
-            detected, _ = hard_projector(estimate, alphabet)
+            detected, _ = hard_projector(estimate, constellation)
             snr[name][index] += compute_effective_snr(symbols, estimate) / N_trial
             ser[name][index] += compute_ser(reference, detected) / N_trial
 
@@ -147,7 +146,8 @@ for name, values in snr_dB.items():
 
 ax = plot_error_rate(dBm_list, snr_dB, xlabel="launch power [dBm]",
                      ylabel="effective SNR [dB]", yscale="linear",
-                     title=f"{N_span} x {L_span} km, {M}-QAM at "
+                     title=f"{N_span} x {L_span} km, {constellation.order}-"
+                           f"{constellation.family} at "
                            f"{R_s / 1e9:.0f} GBd")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/nli_simulation_fig1.png")

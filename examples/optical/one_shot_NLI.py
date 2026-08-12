@@ -13,7 +13,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import get_alphabet, hard_projector
+from comnumpy.core.utils import Constellation, hard_projector
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.links import FiberLink
@@ -21,8 +21,7 @@ from comnumpy.optical.utils import dbm_to_watt
 
 img_dir = "../../docs/tutorials/img/"
 
-M = 16
-alphabet = get_alphabet("QAM", M)
+constellation = Constellation("QAM", 16)
 N_s = 2**9                    # symbols per run
 oversampling_sim = 6          # samples per symbol in the channel
 oversampling_dsp = 2          # samples per symbol in the receiver
@@ -58,8 +57,8 @@ def get_full_chain(n_spans, *, steps=1, linear_only=True):
     compared with what went in, at any number of spans.
     """
     return Sequential([
-        SymbolGenerator(M, name="data_tx"),
-        SymbolMapper(alphabet, name="signal_tx"),
+        SymbolGenerator(constellation.order, name="data_tx"),
+        SymbolMapper(constellation, name="signal_tx"),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
         Amplifier(amp),
@@ -82,7 +81,7 @@ def get_full_chain(n_spans, *, steps=1, linear_only=True):
 def score(chain):
     """Effective SNR in dB and symbol error rate of a finished run."""
     estimate = chain.tap("phase")
-    detected, _ = hard_projector(estimate, alphabet)
+    detected, _ = hard_projector(estimate, constellation)
     return (10 * np.log10(compute_effective_snr(chain.tap("signal_tx"),
                                                 estimate)),
             compute_ser(chain.tap("data_tx"), detected))
@@ -114,7 +113,7 @@ plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
 for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
-    plot_iq(estimates[n_spans], reference=alphabet, ax=ax)
+    plot_iq(estimates[n_spans], reference=constellation, ax=ax)
     ax.set_title(f"after {n_spans} span{'s' if n_spans > 1 else ''}, "
                  f"SNR {snr_per_span[n_spans]:.1f} dB")
 plt.tight_layout()
@@ -150,10 +149,10 @@ print(f"digital back-propagation  SNR={snr_dbp:5.2f} dB  SER={ser_dbp:.4f}  "
       f"residual phase={np.rad2deg(back_propagated['phase'].theta_):+.1f} deg")
 
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-plot_iq(estimates[N_span], reference=alphabet, ax=axes[0])
+plot_iq(estimates[N_span], reference=constellation, ax=axes[0])
 axes[0].set_title(f"dispersion compensation\n"
                   f"SNR {snr_per_span[N_span]:.2f} dB")
-plot_iq(back_propagated.tap("phase"), reference=alphabet, ax=axes[1])
+plot_iq(back_propagated.tap("phase"), reference=constellation, ax=axes[1])
 axes[1].set_title(f"digital back-propagation\nSNR {snr_dbp:.2f} dB")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig4.png")

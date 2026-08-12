@@ -60,7 +60,7 @@ and the SNR range to sweep.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 13-18
+   :lines: 13-16
 
 
 AWGN Communication Chain
@@ -75,7 +75,7 @@ and symbol demapping.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 19-26
+   :lines: 17-24
 
 The processors are:
 
@@ -104,7 +104,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 62-68
+   :lines: 63-69
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -116,7 +116,7 @@ against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 28-36
+   :lines: 26-34
 
 Three chain services appear there, and they are the ones every study is made
 of.
@@ -135,7 +135,7 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 38-50
+   :lines: 36-48
 
 .. code::
 
@@ -160,7 +160,7 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 52-54
+   :lines: 54-54
 
 
 Results and Visualization
@@ -174,7 +174,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 56-61
+   :lines: 56-62
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%

@@ -70,7 +70,7 @@ We start with the imports and the parameters of the simulation: 16-QAM,
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 1-29
+   :lines: 1-28
 
 We then use **EPA**, the 3GPP Extended Pedestrian A profile, one of the
 standardized tables shipped with the library.
@@ -79,7 +79,7 @@ of it, and ``info()`` returns what the channel is:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 30-53
+   :lines: 29-52
 
 .. code::
 
@@ -136,7 +136,7 @@ Implementation
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 54-77
+   :lines: 53-76
 
 Results
 """""""
@@ -187,7 +187,7 @@ before the channel and a receiver block after it:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 78-101
+   :lines: 77-100
 
 ``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains:
 serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
@@ -218,7 +218,7 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 102-122
+   :lines: 101-121
 
 .. code::
 
@@ -263,7 +263,7 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 123-147
+   :lines: 122-146
 
 .. code::
 

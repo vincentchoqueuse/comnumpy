@@ -8,7 +8,7 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
@@ -20,8 +20,7 @@ img_dir = "../../docs/tutorials/img/"
 
 N = 1000
 N_r, N_t = 3, 2
-M = 4
-alphabet = get_alphabet("PSK", M)
+constellation = Constellation("PSK", 4)
 sigma2 = 0.1
 H = rayleigh_channel(N_r, N_t, seed=0)
 
@@ -34,8 +33,8 @@ def link(detector):
     chains that differ by that block alone.
     """
     return Sequential([
-        SymbolGenerator(M, name="tx"),
-        SymbolMapper(alphabet),
+        SymbolGenerator(constellation.order, name="tx"),
+        SymbolMapper(constellation),
         FlatMIMOChannel(H, name="channel"),
         AWGN(sigma2=sigma2, name="noise"),
         detector,
@@ -43,13 +42,14 @@ def link(detector):
 
 
 detectors = {
-    "ZF": LinearDetector(alphabet, H=H, method="zf", name="detector"),
-    "MMSE": LinearDetector(alphabet, H=H, sigma2=sigma2, method="mmse",
+    "ZF": LinearDetector(constellation, H=H, method="zf", name="detector"),
+    "MMSE": LinearDetector(constellation, H=H, sigma2=sigma2, method="mmse",
                            name="detector"),
     "OSIC": OrderedSuccessiveInterferenceCancellationDetector(
-        alphabet, osic_type="sinr", H=H, sigma2=sigma2, name="detector"),
-    "ML": MaximumLikelihoodDetector(alphabet, H=H, name="detector"),
-    "SD": SphereDecoder(alphabet, H=H, name="detector"),
+        constellation, osic_type="sinr", H=H, sigma2=sigma2,
+        name="detector"),
+    "ML": MaximumLikelihoodDetector(constellation, H=H, name="detector"),
+    "SD": SphereDecoder(constellation, H=H, name="detector"),
 }
 chains = {}
 for name, detector in detectors.items():
@@ -73,7 +73,7 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
-    plot_iq(Z[index, :], reference=alphabet, ax=axes2[index])
+    plot_iq(Z[index, :], reference=constellation, ax=axes2[index])
     axes2[index].set_title(f"Estimated signal (stream {index + 1})")
     axes2[index].set_aspect("equal", adjustable="box")
     axes2[index].set_xlim([-2, 2])
@@ -119,7 +119,8 @@ for name, values in curves.items():
     print(line)
 
 ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
-                     title=f"{N_r}x{N_t} MIMO, {M}-PSK, "
+                     title=f"{N_r}x{N_t} MIMO, {constellation.order}-"
+                           f"{constellation.family}, "
                            f"{n_channels} channel draws per point")
 ax.set_ylim(1e-4, 1)
 plt.tight_layout()
@@ -129,11 +130,11 @@ plt.savefig(f"{img_dir}/monte_carlo_mimo_fig3.png")
 # 16-QAM on four streams: 65 536 candidates per vector, which is where
 # the two detectors stop costing the same.
 print("\n16-QAM, 4x4: same decision, what it costs")
-big_alphabet = get_alphabet("QAM", 16)
+big_constellation = Constellation("QAM", 16)
 big_H = rayleigh_channel(4, 4, seed=2)
-big_decoder = SphereDecoder(big_alphabet, H=big_H, name="detector")
+big_decoder = SphereDecoder(big_constellation, H=big_H, name="detector")
 big_detectors = {
-    "ML": MaximumLikelihoodDetector(big_alphabet, H=big_H, name="detector"),
+    "ML": MaximumLikelihoodDetector(big_constellation, H=big_H, name="detector"),
     "SD": big_decoder,
 }
 elapsed = {}
@@ -141,8 +142,8 @@ for name in big_detectors:
     elapsed[name] = []
 for name, detector in big_detectors.items():
     big_chain = Sequential([
-        SymbolGenerator(16, name="tx"),
-        SymbolMapper(big_alphabet),
+        SymbolGenerator(big_constellation.order, name="tx"),
+        SymbolMapper(big_constellation),
         FlatMIMOChannel(big_H, name="channel"),
         AWGN(sigma2=1.0, name="noise"),
         detector,

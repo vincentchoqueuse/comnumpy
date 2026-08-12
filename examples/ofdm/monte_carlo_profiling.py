@@ -7,19 +7,18 @@ from comnumpy.core.channels import (AWGN, FIRChannel,
                                     TappedDelayLineChannel)
 from comnumpy.core.fading import get_delay_profile
 from comnumpy.core.processors import Serial2Parallel, Parallel2Serial
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 from comnumpy.ofdm.allocation import get_allocation
 
 
-M = 16
 fs = 5e6
 N_cp = 10
 N = 100000
 sigma2 = 0.01
-alphabet = get_alphabet("QAM", M)
+constellation = Constellation("QAM", 16)
 allocation = get_allocation("802.11ac-40")   # 128 subcarriers
 
 N_carriers = allocation.N_fft
@@ -32,8 +31,8 @@ h = channel_model.impulse_response()
 pilots = 10*np.ones(N_carrier_pilots)
 
 chain = Sequential([
-        SymbolGenerator(M, name="data_tx"),
-        SymbolMapper(alphabet, name="mapper_tx"),
+        SymbolGenerator(constellation.order, name="data_tx"),
+        SymbolMapper(constellation, name="mapper_tx"),
         Serial2Parallel(N_carrier_data),
         CarrierAllocator(carrier_type=allocation, pilots=pilots, name="carrier_allocator_tx"),
         IFFTProcessor(),
@@ -47,7 +46,7 @@ chain = Sequential([
         FrequencyDomainEqualizer(h=h),
         CarrierExtractor(allocation, name="data_rx"),
         Parallel2Serial(),
-        SymbolDemapper(alphabet)
+        SymbolDemapper(constellation)
     ])
 
 plot_chain_profiling(chain, input=N)

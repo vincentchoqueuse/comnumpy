@@ -5,9 +5,9 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.processors import Upsampler, Downsampler
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.channels import AWGN
-from comnumpy.core.metrics import compute_ber, compute_metric_awgn_theo
+from comnumpy.core.metrics import compute_ber
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.optical.compensators import ChromaticDispersionFIRCompensator, ChromaticDispersionLSFIRCompensator
 from comnumpy.optical.channels import ChromaticDispersion
@@ -45,7 +45,7 @@ plt.figure()
 # create your chain and compensator list
 chain = Sequential([
             SymbolGenerator(M=4, name="generator"),
-            SymbolMapper(get_alphabet(type, 2**k_vect[0]), name="mapper"),
+            SymbolMapper(Constellation(type, 2 ** k_vect[0]), name="mapper"),
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             ChromaticDispersion(z, fs=fs),
@@ -56,14 +56,14 @@ full_compensator1 = Sequential([
             ChromaticDispersionFIRCompensator(z, fs=fs),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             Downsampler(oversampling, phase=total_delay),
-            SymbolDemapper(get_alphabet(type, 2**k_vect[0]), name="demapper")
+            SymbolDemapper(Constellation(type, 2 ** k_vect[0]), name="demapper")
             ])
 
 full_compensator2 = Sequential([
             ChromaticDispersionLSFIRCompensator(z, N_filter, fs=fs, w_vect=[-np.pi, np.pi]),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             Downsampler(oversampling, phase=total_delay),
-            SymbolDemapper(get_alphabet(type, 2**k_vect[0]), name="demapper")
+            SymbolDemapper(Constellation(type, 2 ** k_vect[0]), name="demapper")
             ])
 
 compensator_list = [full_compensator1, full_compensator2]
@@ -73,17 +73,15 @@ ber_list_names = ["theoretical", "Savory", "LS"]
 SNR_vect = range(10, 31, 1)
 
 for k in k_vect:
-    M = 2**k
-    print("Modulation: {}{}".format(type, M))
-    alphabet = get_alphabet(type, M)
-    epsilon_s = np.sum(np.abs(alphabet)**2)/len(alphabet)
-    epsilon_b = epsilon_s/k
+    constellation = Constellation(type, 2 ** k)
+    print("Modulation: {}{}".format(type, constellation.order))
+    epsilon_b = constellation.energy / k
 
     # update chain and compensator parameters
-    chain["generator"].M = M
-    chain["mapper"].alphabet = alphabet
-    full_compensator1["demapper"].alphabet = alphabet
-    full_compensator2["demapper"].alphabet = alphabet
+    chain["generator"].M = constellation.order
+    chain["mapper"].alphabet = constellation
+    full_compensator1["demapper"].alphabet = constellation
+    full_compensator2["demapper"].alphabet = constellation
 
     # perform simulation
     ber_theo = []
@@ -94,7 +92,7 @@ for k in k_vect:
         snr_per_bit = 10 ** (SNR_bitdB/10)
 
         # compute theoretical ber
-        ber_list[index_SNR, 0] = compute_metric_awgn_theo(type, M, snr_per_bit)["ber"]
+        ber_list[index_SNR, 0] = constellation.metrics(SNR_bitdB)["ber"]
 
         # perform MC simulations
         N0 = epsilon_b/snr_per_bit  # snr_bit = epsilon_b/N0 = (epsilon_s/log2(order))/N0
@@ -112,7 +110,8 @@ for k in k_vect:
     # plot curves
     color_list = ["k-", "r-", "b-"]
     for index in range(3):
-        name = "{} ({}{})".format(ber_list_names[index], type, M)
+        name = "{} ({}{})".format(ber_list_names[index], type,
+                                  constellation.order)
         plt.semilogy(SNR_vect, ber_list[:, index], color_list[index], label=name)
 
 

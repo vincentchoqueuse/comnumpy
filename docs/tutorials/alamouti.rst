@@ -180,7 +180,7 @@ what comes back, so one function builds them all:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 58-88
+   :lines: 58-89
 
 The scaling by :math:`1/\sqrt{N_t}` matters for the comparison that follows.
 Two antennas each transmitting :math:`|s|^2` would spend twice the power of a
@@ -199,7 +199,7 @@ One-shot simulation
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 91-104
+   :lines: 92-105
 
 .. code::
 
@@ -241,7 +241,7 @@ inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 109-159
+   :lines: 110-160
 
 The three curves are three readings of one closed form,
 :func:`~comnumpy.core.metrics.compute_ser_rayleigh_psk`: :math:`L` branches
@@ -260,7 +260,7 @@ the simulation is what confronts them:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 161-200
+   :lines: 162-201
 
 .. code::
 
