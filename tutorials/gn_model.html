@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The Gaussian Noise Model &#8212; comnumpy  documentation</title>
+    <title>Nonlinear Performance and the Gaussian Noise Model &#8212; comnumpy  documentation</title>
   
   
   
@@ -403,8 +403,8 @@ window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Documentation" href="../documentation/index.html" />
-    <link rel="prev" title="Optical Fiber Link Simulation Tutorial" href="optical_fiber_nonlinearity.html" />
+    <link rel="next" title="Digital Back-Propagation" href="optical_fiber_nonlinearity.html" />
+    <link rel="prev" title="Probabilistic Shaping" href="shaping.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -699,8 +699,8 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">The Gaussian Noise Model</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
 </nav></div>
@@ -744,7 +744,7 @@ window.runMermaid = runMermaid;</script>
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The Gaussian Noise Model</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Nonlinear Performance and the Gaussian Noise Model</span></li>
   </ul>
 </nav>
 </div>
@@ -761,8 +761,8 @@ window.runMermaid = runMermaid;</script>
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="the-gaussian-noise-model">
-<h1>The Gaussian Noise Model<a class="headerlink" href="#the-gaussian-noise-model" title="Link to this heading">#</a></h1>
+  <section id="nonlinear-performance-and-the-gaussian-noise-model">
+<h1>Nonlinear Performance and the Gaussian Noise Model<a class="headerlink" href="#nonlinear-performance-and-the-gaussian-noise-model" title="Link to this heading">#</a></h1>
 <p>In this tutorial we answer the question every optical link designer has to
 answer – <strong>how much power should I launch?</strong> – twice, in that order. First
 with closed-form expressions that take microseconds and propagate nothing at
@@ -773,12 +773,11 @@ be stated before it is checked; otherwise the check is a curve fit with extra
 steps.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Before you start.</strong> <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Optical Fiber Link Simulation Tutorial</span></a> propagated a
-signal through fibre with the split-step method and undid the damage with
-digital back-propagation. This tutorial keeps the same propagation and
-asks a different question: not <em>how do I repair the nonlinearity</em>, but
-<em>how much of it will there be</em>, and what launch power minimizes the total
-damage.</p>
+<p><strong>Before you start.</strong> This is the first of two tutorials on the optical
+fibre, and the only channel of the series that is <em>nonlinear</em>. It asks
+how much damage the nonlinearity does and what launch power minimizes
+it; <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Digital Back-Propagation</span></a> then asks how to repair that
+damage rather than budget for it.</p>
 </div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
@@ -1163,7 +1162,7 @@ form. At 0 dBm launch the measured SNR <em>is</em> <span class="math notranslate
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">link_chain</span><span class="p">()</span>
 <span class="n">chain</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">STIMULUS</span><span class="p">)</span>
 
-<span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.use_only_linear&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">fibre__use_only_linear</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">measured_ase_W</span> <span class="o">=</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="o">-</span><span class="n">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">[</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)])[</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">gap_dB</span> <span class="o">=</span> <span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">measured_ase_W</span><span class="p">)</span> <span class="o">-</span> <span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">P_ASE  predicted </span><span class="si">{</span><span class="n">watt_to_dbm</span><span class="p">(</span><span class="n">ase_W</span><span class="p">)</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> dBm   &quot;</span>
@@ -1192,7 +1191,7 @@ mis-calibrated for a reason having nothing to do with the fibre.</p>
 <section id="the-expensive-way">
 <h3>The expensive way<a class="headerlink" href="#the-expensive-way" title="Link to this heading">#</a></h3>
 <p>Now the nonlinear term, at fourteen launch powers.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">fibre__use_only_linear</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">powers_dBm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">5.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="n">measured_snr_dB</span> <span class="o">=</span> <span class="n">measure</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="n">powers_dBm</span><span class="p">))</span>
 <span class="n">predicted_snr_dB</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">gn_model_snr</span><span class="p">(</span><span class="n">ase_W</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">fine_powers</span><span class="p">))</span>
@@ -1251,7 +1250,7 @@ modulation formats are not, and the model is blind to the difference.</p>
 <span class="k">for</span> <span class="n">order</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;QPSK&quot;</span><span class="p">),</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s2">&quot;16QAM&quot;</span><span class="p">),</span> <span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="s2">&quot;64QAM&quot;</span><span class="p">),</span>
                      <span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="s2">&quot;256QAM&quot;</span><span class="p">),</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">)):</span>
     <span class="n">noiseless</span> <span class="o">=</span> <span class="n">link_chain</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
-    <span class="n">noiseless</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;fibre.noise_scaling&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+    <span class="n">noiseless</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">fibre__noise_scaling</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">measure</span><span class="p">(</span><span class="n">noiseless</span><span class="p">,</span> <span class="p">[</span><span class="mf">1e-3</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">10.2f</span><span class="si">}</span><span class="s2"> dB   </span><span class="si">{</span><span class="n">value</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">nli_only_dB</span><span class="si">:</span><span class="s2">+10.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
 </pre></div>
@@ -1296,6 +1295,10 @@ channel bandwidth at least a quarter of the spacing. Calling
 logs a warning naming the one that was crossed. It still returns a number:
 the model stays defined there and is often still usable, but silence would be
 a guarantee the paper does not give.</p>
+<p>Everything above <strong>budgets</strong> for the nonlinearity: it says how much there
+will be and picks the launch power that minimizes it. <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Digital Back-Propagation</span></a>
+asks the other question – whether the receiver can undo it instead, and by
+how many decibels.</p>
 </section>
 </section>
 
@@ -1310,20 +1313,20 @@ a guarantee the paper does not give.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="optical_fiber_nonlinearity.html"
+       href="shaping.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Optical Fiber Link Simulation Tutorial</p>
+        <p class="prev-next-title">Probabilistic Shaping</p>
       </div>
     </a>
     <a class="right-next"
-       href="../documentation/index.html"
+       href="optical_fiber_nonlinearity.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Documentation</p>
+        <p class="prev-next-title">Digital Back-Propagation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

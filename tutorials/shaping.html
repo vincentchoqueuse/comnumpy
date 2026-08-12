@@ -403,7 +403,7 @@ window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Optical Fiber Link Simulation Tutorial" href="optical_fiber_nonlinearity.html" />
+    <link rel="next" title="Nonlinear Performance and the Gaussian Noise Model" href="gn_model.html" />
     <link rel="prev" title="Channel Coding" href="coding.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -699,8 +699,8 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gn_model.html">The Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
 </nav></div>
@@ -1005,7 +1005,7 @@ has its reference:</p>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="n">law</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">n_symbols</span><span class="o">=</span><span class="mi">120000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;MI and GMI read off samples rather than integrated.&quot;&quot;&quot;</span>
-    <span class="n">study</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;tx.distribution&quot;</span><span class="p">:</span> <span class="n">law</span><span class="p">})</span>
+    <span class="n">study</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">tx__distribution</span><span class="o">=</span><span class="n">law</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">symbolwise</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">received</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">compute_mi</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">PAM16</span><span class="p">,</span>
@@ -1479,7 +1479,7 @@ this histogram converge to the composition, not to <span class="math notranslate
 the SNR and a symbol error takes the received block <strong>outside</strong> the code: it
 is no longer a permutation of the composition, so there is no index to read
 back, and the dematcher says so rather than returning silent nonsense.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;channel.snr_dB&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">})</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">link</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">channel__snr_dB</span><span class="o">=</span><span class="mf">20.0</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">link</span><span class="p">(</span><span class="n">n_blocks</span> <span class="o">*</span> <span class="n">shaper</span><span class="o">.</span><span class="n">n_bits</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
@@ -1757,8 +1757,8 @@ high-order for any of it to pay.</p></li>
 encoder whose parity bits PAS spends on the signs.</p></li>
 <li><p>Replace the i.i.d. source of step 1 by the matcher itself and measure how
 much of the shaping gain a finite blocklength gives back.</p></li>
-<li><p>Move the whole thing onto a fibre: <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Optical Fiber Link Simulation Tutorial</span></a> and
-<a class="reference internal" href="gn_model.html"><span class="doc">The Gaussian Noise Model</span></a> describe a channel where the <em>power</em> is what hurts, which
+<li><p>Move the whole thing onto a fibre: <a class="reference internal" href="optical_fiber_nonlinearity.html"><span class="doc">Digital Back-Propagation</span></a> and
+<a class="reference internal" href="gn_model.html"><span class="doc">Nonlinear Performance and the Gaussian Noise Model</span></a> describe a channel where the <em>power</em> is what hurts, which
 is exactly what shaping reduces.</p></li>
 </ul>
 <section id="references">
@@ -1822,11 +1822,11 @@ Wiley, 2006, Chapters 2, 9 and 10.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="optical_fiber_nonlinearity.html"
+       href="gn_model.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Optical Fiber Link Simulation Tutorial</p>
+        <p class="prev-next-title">Nonlinear Performance and the Gaussian Noise Model</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

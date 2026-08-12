@@ -150,7 +150,7 @@ Results
 
 .. code::
 
-   single carrier: SER 0.0117, 1979 ms
+   single carrier: SER 0.0117, 1908 ms
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -217,7 +217,7 @@ Results
 
 .. code::
 
-   OFDM          : SER 0.0406, 1.11 ms (1791 times faster)
+   OFDM          : SER 0.0406, 1.24 ms (1539 times faster)
 
 .. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
@@ -255,21 +255,71 @@ range of SNR values:
    :align: center
    :alt: SER against SNR for both receivers
 
-The two curves **cross** near 15 dB, and the reason is structural rather than
-numerical. Both receivers are zero forcing, so both divide by :math:`|H|`;
-what differs is where the amplified noise goes.
+The two curves **cross** near 15 dB. That deserves an explanation, because
+the OFDM receiver is not the weaker one -- it is in fact the *optimal* one.
 
-The single-carrier equalizer inverts a **linear** convolution: :math:`N+L-1`
-observations for :math:`N` unknowns, an overdetermined system whose residual
-noise is spread over every symbol of the block. OFDM inverts a **circular**
-one: exactly :math:`N` equations for :math:`N` unknowns, one per subcarrier,
-so a subcarrier that falls low is divided by a small number and nothing else
-can compensate for it.
+Why the one-tap equalizer is already maximum likelihood
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Spreading the damage is the better strategy at high SNR, and the worse one at
-low SNR. Above the crossing point, the single carrier is about 2 dB better at
-a given error rate. OFDM also spends 7 % of its channel uses on the cyclic
-prefix (10 samples per block of 128), which accounts for 0.3 dB of that gap.
+The DFT is unitary and the cyclic prefix makes the channel circulant, so the
+transformation to the frequency domain loses nothing and leaves the noise
+white. The maximum-likelihood decision over the whole block therefore
+*factorizes* into independent per-subcarrier decisions, and on subcarrier
+:math:`k`
+
+.. math::
+
+   \left|Z_k - H_k X_k\right|^2 = \left|H_k\right|^2
+   \left|\frac{Z_k}{H_k} - X_k\right|^2
+
+Dividing by :math:`H_k` and taking the nearest constellation point is
+therefore exactly :math:`\arg\min_X |Z_k - H_k X|^2`. OFDM's one-tap
+equalizer **is** the maximum-likelihood detector. Single-carrier zero forcing
+is not -- the ML receiver there would be a Viterbi search over the ISI
+trellis, which would beat both.
+
+So the crossing is not "ML against ZF". It is about *which channel* each
+receiver is optimal for.
+
+.. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
+   :language: python
+   :lines: 155-175
+
+.. code::
+
+   per-symbol SNR at a nominal 18 dB
+     OFDM  :   8.6 to  21.0 dB
+     SC-ZF :  15.1 to  16.8 dB
+     arithmetic mean of |H|^2 1.809, harmonic mean 0.931
+
+There is the answer. OFDM gives symbol :math:`k` the gain of **one
+frequency**: a subcarrier in a dip sits 8.6 dB down and nothing can help it,
+because the transform that made equalization trivial also removed every
+other frequency's contribution to that symbol. The single-carrier equalizer
+inverts a **linear** convolution -- :math:`N+L-1` observations for :math:`N`
+unknowns -- and spreads the enhanced noise over the whole block, so every
+symbol gets the *same* gain, the harmonic mean of :math:`|H|^2`.
+
+The harmonic mean (0.93) is well below the arithmetic one (1.81), so the
+single carrier is worse on average. But an error rate is not an average of
+SNRs: it is dominated by the *worst* symbols, and OFDM's worst are far worse.
+Narrow-and-mediocre beats wide-and-sometimes-terrible as soon as the SNR is
+high enough for the tail to dominate, which is what the crossing at 15 dB is.
+
+This is the classical argument for single-carrier frequency-domain
+equalization over OFDM (Falconer *et al.*, 2002), and it is why the LTE
+uplink uses DFT-spread OFDM: the extra transform spreads each symbol back
+over the band, recovering the frequency diversity that plain OFDM gives up.
+OFDM also spends 7 % of its channel uses on the cyclic prefix (10 samples per
+block of 128), which accounts for 0.3 dB of the gap.
+
+.. note::
+
+   The cyclic prefix is not the explanation, and it is worth checking rather
+   than assuming: the channel has :math:`L = 4` taps so it needs
+   :math:`N_{cp} \geq 3`, and with the :math:`N_{cp} = 10` used here the
+   noiseless symbol error rate is exactly zero. An insufficient prefix would
+   show up there first.
 
 **Uncoded, OFDM is therefore the worse receiver.** In practice this is never
 the operating condition: because the damage is concentrated on a few
@@ -291,10 +341,10 @@ block length grows:
 .. code::
 
         N   single carrier      OFDM     ratio
-      128           6.7 ms    0.72 ms        9
-      256          28.7 ms    0.83 ms       34
-      512         119.6 ms    0.81 ms      147
-     1024         831.8 ms    0.96 ms      868
+      128           7.3 ms    0.63 ms       12
+      256          31.6 ms    0.78 ms       40
+      512         156.0 ms    1.38 ms      113
+     1024        1052.3 ms    0.92 ms     1145
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%
@@ -334,3 +384,14 @@ Two questions remain open, and they are the next two tutorials.
 :doc:`multipath` asks where :math:`N_{cp} = 10` came from: the cyclic prefix
 has to cover the channel, so its length is a property of the environment, and
 the environments are tabulated.
+
+References
+^^^^^^^^^^
+
+- D. Falconer, S. L. Ariyavisitakul, A. Benyamin-Seeyar and B. Eidson,
+  "Frequency domain equalization for single-carrier broadband wireless
+  systems", *IEEE Commun. Mag.*, vol. 40, no. 4, pp. 58-66, 2002 -- the
+  comparison of this page, and the reason DFT-spread OFDM exists.
+- R. van Nee and R. Prasad, *OFDM for Wireless Multimedia Communications*,
+  Artech House, 2000, Chapter 2.
+- 3GPP TS 36.104, Annex B -- the EPA delay profile used here.

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Optical Fiber Link Simulation Tutorial &#8212; comnumpy  documentation</title>
+    <title>Digital Back-Propagation &#8212; comnumpy  documentation</title>
   
   
   
@@ -42,12 +42,13 @@
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/optical_fiber_nonlinearity';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="The Gaussian Noise Model" href="gn_model.html" />
-    <link rel="prev" title="Probabilistic Shaping" href="shaping.html" />
+    <link rel="next" title="Documentation" href="../documentation/index.html" />
+    <link rel="prev" title="Nonlinear Performance and the Gaussian Noise Model" href="gn_model.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -342,8 +343,8 @@
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Optical Fiber Link Simulation Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gn_model.html">The Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Digital Back-Propagation</a></li>
 </ul>
 </div>
 </nav></div>
@@ -387,7 +388,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Optical Fiber Link Simulation Tutorial</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Digital Back-Propagation</span></li>
   </ul>
 </nav>
 </div>
@@ -404,194 +405,539 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="optical-fiber-link-simulation-tutorial">
-<h1>Optical Fiber Link Simulation Tutorial<a class="headerlink" href="#optical-fiber-link-simulation-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial demonstrates how to simulate a nonlinear optical fiber communication system using <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p>
+  <section id="digital-back-propagation">
+<h1>Digital Back-Propagation<a class="headerlink" href="#digital-back-propagation" title="Link to this heading">#</a></h1>
+<p>The previous tutorial <em>budgeted</em> for the fibre nonlinearity: it predicted how
+much nonlinear noise a link makes and chose the launch power that minimizes
+the total. This tutorial asks the other question – whether the receiver can
+<strong>undo</strong> the nonlinearity instead, and what that is worth.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Before you start.</strong> This is the most advanced tutorial of the series
-and the only one whose channel is <em>nonlinear</em>. Everything before it –
-the chain, the taps, the error rate – is used here without comment.</p>
+<p><strong>Before you start.</strong> <a class="reference internal" href="gn_model.html"><span class="doc">Nonlinear Performance and the Gaussian Noise Model</span></a> introduced the fibre, the
+split-step propagation and the launch-power trade-off. They are used here
+without being re-explained. Everything below is single-polarization.</p>
 </div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>How to build a simulation chain with QAM modulation, pulse shaping, and fiber propagation.</p></li>
-<li><p>How to visualize received signals before and after linear and nonlinear equalization.</p></li>
-<li><p>How to apply digital back-propagation (DBP) for nonlinear compensation.</p></li>
-<li><p>How to compute the Symbol Error Rate (SER) to quantify what each stage recovers.</p></li>
+<li><p>How a signal degrades span after span, and why a linear receiver cannot
+follow it.</p></li>
+<li><p>What digital back-propagation is, in one equation.</p></li>
+<li><p>What it buys in effective SNR and in symbol error rate, and what it costs
+in computation.</p></li>
 </ul>
-<p>This tutorial is suited for engineers and students interested in optical communications and nonlinear fiber effects.</p>
-<section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<section id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
-<p>Ensure you have the following Python libraries installed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
-<span class="n">matplotlib</span>
-<span class="n">comnumpy</span>
-</pre></div>
+<p>This tutorial is suited for engineers and students interested in optical
+communications and nonlinear fiber effects.</p>
+<section id="channel-model">
+<h2>Channel Model<a class="headerlink" href="#channel-model" title="Link to this heading">#</a></h2>
+<p>Propagation along a single-mode fibre is governed by the nonlinear
+Schrödinger equation, which for one polarization reads</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial u}{\partial z} =
+\underbrace{-\frac{\alpha}{2}\, u
+- j\frac{\beta_2}{2}\frac{\partial^2 u}{\partial t^2}}_{\text{linear}}
++ \underbrace{j \gamma \left|u\right|^2 u}_{\text{nonlinear}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha\)</span> is the attenuation, <span class="math notranslate nohighlight">\(\beta_2\)</span> the group-velocity
+dispersion and <span class="math notranslate nohighlight">\(\gamma\)</span> the Kerr coefficient. The two terms are the
+whole difficulty: the linear one is diagonal in frequency, the nonlinear one
+is diagonal in time, and no basis diagonalizes both.</p>
+<p>The <strong>split-step Fourier method</strong> exploits exactly that. Over a step short
+enough, the two act almost independently, so each is applied where it is
+diagonal:</p>
+<div class="math notranslate nohighlight">
+\[u(z + \delta) \simeq
+\mathcal{F}^{-1}\!\left\{ e^{\left(-\frac{\alpha}{2}
++ j\frac{\beta_2}{2}\omega^2\right)\delta}\,
+\mathcal{F}\!\left\{ e^{j\gamma\left|u(z)\right|^2\delta}\, u(z)\right\}\right\}\]</div>
+<p>one FFT pair per step. A link is <span class="math notranslate nohighlight">\(N_{sp}\)</span> spans of that, each followed
+by an amplifier which restores the power and adds spontaneous-emission noise
+of variance <span class="math notranslate nohighlight">\(N_{ase} = (G-1)h\nu\,n_{sp}\)</span>, with
+<span class="math notranslate nohighlight">\(n_{sp} = \mathrm{NF}/\left(2(1 - 1/G)\right)\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The factor two in <span class="math notranslate nohighlight">\(n_{sp}\)</span> is the definition of the optical noise
+figure, <span class="math notranslate nohighlight">\(\mathrm{NF} = 2 n_{sp}(1 - 1/G)\)</span>, not a modelling choice.
+A fully inverted amplifier has <span class="math notranslate nohighlight">\(n_{sp} = 1\)</span> and therefore
+<span class="math notranslate nohighlight">\(\mathrm{NF} = 3\)</span> dB: that is the quantum limit of a
+phase-insensitive amplifier, and no EDFA does better.</p>
 </div>
-<p>Note that the simulation can be computationally intensive and may take some time to run depending on your machine.</p>
-</section>
-</section>
-<section id="simulation-setup">
-<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
-<section id="import-libraries">
-<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<p>First, import the necessary libraries and <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> components:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<section id="implementation">
+<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
+<p>We reproduce the setup of Häger and Pfister: 25 spans of 80 km, 16-QAM at
+10.7 GBd, root-raised-cosine pulses, and 500 split steps per span so that the
+propagation itself is not in question.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Fibre propagation span by span, and digital back-propagation.</span>
+
+<span class="sd">Run from this directory: it writes the tutorial&#39;s figures into</span>
+<span class="sd">../../docs/tutorials/img/.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">BWFilter</span><span class="p">,</span> <span class="n">SRRCFilter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_effective_snr</span><span class="p">,</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Amplifier</span><span class="p">,</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Upsampler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span><span class="p">,</span> <span class="n">hard_projector</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Upsampler</span><span class="p">,</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Amplifier</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">SRRCFilter</span><span class="p">,</span> <span class="n">BWFilter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_iq</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberLink</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span><span class="p">,</span> <span class="n">plot_iq</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.dbp</span><span class="w"> </span><span class="kn">import</span> <span class="n">DBP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberLink</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">dbm_to_watt</span>
 
-</pre></div>
-</div>
-</section>
-<section id="define-system-parameters">
-<h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
-<p>Set key parameters such as modulation order, oversampling factors, fiber link properties, and noise figure:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">modulation</span> <span class="o">=</span> <span class="s2">&quot;QAM&quot;</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="n">modulation</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
-<span class="n">N_s</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">9</span>  <span class="c1"># number of symbols</span>
-<span class="n">oversampling_sim</span> <span class="o">=</span> <span class="mi">6</span>  <span class="c1"># number of samples/symbol for simulated channel</span>
-<span class="n">oversampling_dsp</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># number of samples/symbol for dsp processing</span>
-<span class="n">NF_dB</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># noise figure in dB</span>
+<span class="n">N_s</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">9</span>                    <span class="c1"># number of symbols</span>
+<span class="n">oversampling_sim</span> <span class="o">=</span> <span class="mi">6</span>          <span class="c1"># samples per symbol in the channel</span>
+<span class="n">oversampling_dsp</span> <span class="o">=</span> <span class="mi">2</span>          <span class="c1"># samples per symbol in the receiver</span>
+<span class="n">NF_dB</span> <span class="o">=</span> <span class="mi">5</span>                     <span class="c1"># amplifier noise figure in dB</span>
 <span class="n">rolloff</span> <span class="o">=</span> <span class="mf">0.1</span>
-<span class="n">StPS</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">StPS_DBP</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">R_s</span> <span class="o">=</span> <span class="mf">10.7</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="mi">9</span><span class="p">)</span>  <span class="c1"># baud rate</span>
-<span class="n">L_span</span> <span class="o">=</span> <span class="mi">80</span>  <span class="c1"># in km</span>
+<span class="n">StPS</span> <span class="o">=</span> <span class="mi">500</span>                    <span class="c1"># split steps per span, forward</span>
+<span class="n">StPS_DBP</span> <span class="o">=</span> <span class="mi">100</span>                <span class="c1"># split steps per span, backward</span>
+<span class="n">R_s</span> <span class="o">=</span> <span class="mf">10.7e9</span>                  <span class="c1"># baud rate</span>
+<span class="n">L_span</span> <span class="o">=</span> <span class="mi">80</span>                   <span class="c1"># span length in km</span>
 <span class="n">N_span</span> <span class="o">=</span> <span class="mi">25</span>
 <span class="n">dBm</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
 
-<span class="n">N</span> <span class="o">=</span> <span class="n">N_s</span><span class="o">*</span><span class="n">oversampling_sim</span>   <span class="c1"># signal length in number of samples</span>
-<span class="n">fs</span> <span class="o">=</span> <span class="n">R_s</span><span class="o">*</span><span class="n">oversampling_sim</span>
-<span class="n">oversampling_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="o">/</span><span class="n">oversampling_dsp</span><span class="p">)</span>
-<span class="n">fs2</span> <span class="o">=</span> <span class="n">R_s</span><span class="o">*</span><span class="n">oversampling_dsp</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">N_s</span> <span class="o">*</span> <span class="n">oversampling_sim</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">R_s</span> <span class="o">*</span> <span class="n">oversampling_sim</span>
+<span class="n">oversampling_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversampling_sim</span> <span class="o">/</span> <span class="n">oversampling_dsp</span><span class="p">)</span>
 <span class="n">Po</span> <span class="o">=</span> <span class="n">dbm_to_watt</span><span class="p">(</span><span class="n">dBm</span><span class="p">)</span>
 <span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Po</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="create-communication-chain">
-<h3>Create Communication Chain<a class="headerlink" href="#create-communication-chain" title="Link to this heading">#</a></h3>
-<p>Build a processing chain consisting of symbol generation, mapping, pulse shaping (SRRC filter), amplification, fiber propagation via <code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>, and matched filtering with downsampling:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-                <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
-                <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">),</span>
-                <span class="n">Upsampler</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">)),</span>
-                <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">),</span>
-                <span class="n">Amplifier</span><span class="p">(</span><span class="n">amp</span><span class="p">),</span>
-                <span class="n">FiberLink</span><span class="p">(</span><span class="n">N_spans</span><span class="o">=</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">StPS</span><span class="p">,</span> <span class="n">NF_dB</span><span class="o">=</span><span class="n">NF_dB</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;link&quot;</span><span class="p">),</span>
-                <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">oversampling_sim</span><span class="p">),</span>
-                <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">)</span>
-                <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;signal_tx&quot;</span><span class="p">])</span>
+<p>The link is one block. Its <code class="docutils literal notranslate"><span class="pre">post_span</span></code> callback is called after each
+amplifier, which is how the degradation figure below is measured without
+running the propagation twenty-five times:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the link -------------------------------------------------------</span>
+<span class="c1"># One span is fibre plus an amplifier that puts the power back and adds</span>
+<span class="c1"># spontaneous-emission noise; the callback keeps the field at the output</span>
+<span class="c1"># of each of them, which is what the degradation figure needs.</span>
+<span class="n">per_span</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">link</span> <span class="o">=</span> <span class="n">FiberLink</span><span class="p">(</span><span class="n">N_spans</span><span class="o">=</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">StPS</span><span class="p">,</span> <span class="n">NF_dB</span><span class="o">=</span><span class="n">NF_dB</span><span class="p">,</span>
+                 <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;link&quot;</span><span class="p">,</span>
+                 <span class="n">callbacks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;post_span&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">num_span</span><span class="p">:</span> <span class="n">per_span</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)})</span>
 
-</pre></div>
-</div>
-<p>This simulates the full transmission over an optical fiber with nonlinear effects and noise.</p>
-<p>The optical channel (<code class="docutils literal notranslate"><span class="pre">FiberLink</span></code>) is modeled as a concatenation of <code class="docutils literal notranslate"><span class="pre">N_span</span></code> spans of standard single-mode fiber (SMF). Each span has a fixed length <code class="docutils literal notranslate"><span class="pre">L_span</span></code> (typically 80 km) and is followed by an Erbium-Doped Fiber Amplifier (EDFA), which compensates for fiber loss while introducing amplified spontaneous emission (ASE) noise (characterized by the noise figure <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>).</p>
-<p>Within each span, the signal undergoes chromatic dispersion and nonlinear Kerr effects, simulated using the Split-Step Fourier Method (SSFM). The interplay between dispersion and nonlinearity distorts the signal amplitude and phase, motivating the use of advanced digital signal processing techniques at the receiver.</p>
-</section>
-<section id="run-simulation-and-extract-signals">
-<h3>Run Simulation and Extract Signals<a class="headerlink" href="#run-simulation-and-extract-signals" title="Link to this heading">#</a></h3>
-<p>Execute the chain and extract the transmitted and received signals. Then, plot the received constellation diagram to inspect signal quality at the receiver.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">),</span>
+        <span class="n">Upsampler</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">)),</span>
+        <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">),</span>
+        <span class="n">Amplifier</span><span class="p">(</span><span class="n">amp</span><span class="p">),</span>
+        <span class="n">link</span><span class="p">,</span>
+        <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">oversampling_sim</span><span class="p">),</span>
+        <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">),</span>
+        <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;signal_tx&quot;</span><span class="p">])</span>
+
+<span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">y_rx</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N_span</span><span class="si">}</span><span class="s2"> spans at </span><span class="si">{</span><span class="n">StPS</span><span class="si">}</span><span class="s2"> steps per span: &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
 
 <span class="n">s_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
 <span class="n">x_tx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;signal_tx&quot;</span><span class="p">)</span>
 
-<span class="n">plot_iq</span><span class="p">(</span><span class="n">y_rx</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Received Signal (oversampling=</span><span class="si">{</span><span class="n">oversampling_dsp</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2">dBm)&quot;</span><span class="p">)</span>
+<span class="n">plot_iq</span><span class="p">(</span><span class="n">y_rx</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;received signal (</span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2"> dBm, </span><span class="si">{</span><span class="n">N_span</span><span class="si">}</span><span class="s2"> spans)&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig1.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="received-signal">
-<h2>Received Signal<a class="headerlink" href="#received-signal" title="Link to this heading">#</a></h2>
-<a class="reference internal image-reference" href="../_images/one_shot_nli_fig1.png"><img alt="../_images/one_shot_nli_fig1.png" class="align-center" src="../_images/one_shot_nli_fig1.png" style="width: 100%;" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">25</span> <span class="n">spans</span> <span class="n">at</span> <span class="mi">500</span> <span class="n">steps</span> <span class="n">per</span> <span class="n">span</span><span class="p">:</span> <span class="mf">40.6</span> <span class="n">s</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_nli_fig1.png"><img alt="Received signal at the end of the link" class="align-center" src="../_images/one_shot_nli_fig1.png" style="width: 100%;" />
 </a>
+<p>At the output of the fibre nothing is recognizable: the dispersion has spread
+each symbol over hundreds of neighbours, so the field looks Gaussian whatever
+was transmitted.</p>
 </section>
-<section id="linear-and-nonlinear-compensation">
-<h2>Linear and Nonlinear Compensation<a class="headerlink" href="#linear-and-nonlinear-compensation" title="Link to this heading">#</a></h2>
-<p>We apply two compensation strategies:</p>
-<ul class="simple">
-<li><p><strong>Linear equalization</strong>: compensates for linear impairments such as chromatic dispersion and attenuation.</p></li>
-<li><p><strong>Nonlinear equalization (DBP)</strong>: performs full Digital Back-Propagation, which mitigates nonlinear fiber effects by numerically inverting the propagation using a reversed Split-Step Fourier Method.</p></li>
-</ul>
-<p>After compensation, the received signal may exhibit a residual phase rotation. Therefore, phase correction is applied before computing the Symbol Error Rate (SER).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">num_compensator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+</section>
+<section id="degradation-span-by-span">
+<h2>Degradation, span by span<a class="headerlink" href="#degradation-span-by-span" title="Link to this heading">#</a></h2>
+<p>The receiver first has to undo the dispersion, which is a linear all-pass and
+costs one FFT pair. Applying it over exactly the spans travelled gives what a
+linear receiver would see if the link stopped there:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what the receiver does with it ----------------------------------</span>
 
-    <span class="k">if</span> <span class="n">num_compensator</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">technique_name</span> <span class="o">=</span> <span class="s2">&quot;linear equalization&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">use_only_linear</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">technique_name</span> <span class="o">=</span> <span class="s2">&quot;nonlinear equalization&quot;</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">receive</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">n_spans</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">linear_only</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Back-propagate over ``n_spans``, then filter, decide, and score.</span>
+
+<span class="sd">    The same receiver serves the two strategies of this tutorial and the</span>
+<span class="sd">    span-by-span reading below: only the number of spans it undoes and</span>
+<span class="sd">    whether it undoes the nonlinearity change.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">receiver</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-                    <span class="n">DBP</span><span class="p">(</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">StPS_DBP</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">use_only_linear</span><span class="o">=</span><span class="n">use_only_linear</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="o">/</span><span class="n">oversampling_ratio</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbp&quot;</span><span class="p">),</span>
-                    <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_dsp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">)),</span>
-                    <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">),</span>
-                    <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">amp</span><span class="p">),</span>
-            <span class="p">])</span>
+        <span class="n">DBP</span><span class="p">(</span><span class="n">n_spans</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+            <span class="n">use_only_linear</span><span class="o">=</span><span class="n">linear_only</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span> <span class="o">/</span> <span class="n">oversampling_ratio</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbp&quot;</span><span class="p">),</span>
+        <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_dsp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span>
+                   <span class="n">scale</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">)),</span>
+        <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">),</span>
+        <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">amp</span><span class="p">),</span>
+        <span class="p">])</span>
+    <span class="n">estimate</span> <span class="o">=</span> <span class="n">receiver</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+    <span class="c1"># the nonlinearity leaves a common phase rotation, and the tutorial is</span>
+    <span class="c1"># about what is left *after* an ordinary carrier recovery has removed it</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">estimate</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_tx</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">estimate</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">estimate</span><span class="p">,</span> <span class="n">theta</span>
 
-    <span class="n">x_rx</span> <span class="o">=</span> <span class="n">receiver</span><span class="p">(</span><span class="n">y_rx</span><span class="p">)</span>
 
-    <span class="n">theta_est</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x_rx</span><span class="p">)</span><span class="o">*</span><span class="n">x_tx</span><span class="p">))</span>
-    <span class="n">x_rx_phase_compensated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">theta_est</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_rx</span>
-    <span class="n">s_rx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
-    <span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;residual phase=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">theta_est</span><span class="p">)</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> deg&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="n">corrected</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effective SNR and symbol error rate of a corrected estimate.&quot;&quot;&quot;</span>
+    <span class="n">detected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">corrected</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">compute_effective_snr</span><span class="p">(</span><span class="n">x_tx</span><span class="p">,</span> <span class="n">corrected</span><span class="p">)),</span>
+            <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">detected</span><span class="p">))</span>
 
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_iq</span><span class="p">(</span><span class="n">x_rx</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;before phase correction&quot;</span><span class="p">,</span>
-                 <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">technique_name</span><span class="si">}</span><span class="s2"> (SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-    <span class="n">plot_iq</span><span class="p">(</span><span class="n">x_rx_phase_compensated</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;after phase correction&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig</span><span class="si">{</span><span class="n">num_compensator</span><span class="o">+</span><span class="mi">2</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+
+<span class="c1"># --- degradation, span by span ---------------------------------------</span>
+<span class="c1"># Each recorded field is undone with dispersion compensation alone, over</span>
+<span class="c1"># exactly the spans it has travelled: the curve is therefore what a</span>
+<span class="c1"># linear receiver would see if the link stopped there.</span>
+<span class="n">spans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_span</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">snr_per_span</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">per_span</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">reduced</span> <span class="o">=</span> <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">)(</span><span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">oversampling_sim</span><span class="p">)(</span><span class="n">field</span><span class="p">))</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">receive</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">linear_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">snr_per_span</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">(</span><span class="n">corrected</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_span</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">N_span</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">reduced</span> <span class="o">=</span> <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">)(</span>
+        <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">oversampling_sim</span><span class="p">)(</span><span class="n">per_span</span><span class="p">[</span><span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">receive</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">linear_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plot_iq</span><span class="p">(</span><span class="n">corrected</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;after </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> span</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">, &quot;</span>
+                 <span class="sa">f</span><span class="s2">&quot;SNR </span><span class="si">{</span><span class="n">snr_per_span</span><span class="p">[</span><span class="n">index</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig2.png&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">spans</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;dispersion compensation only&quot;</span><span class="p">:</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">snr_per_span</span><span class="p">)},</span>
+                     <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;spans travelled&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;effective SNR [dB]&quot;</span><span class="p">,</span>
+                     <span class="n">yscale</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dBm</span><span class="si">}</span><span class="s2"> dBm launch power&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig3.png&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">span   effective SNR&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">snr_per_span</span><span class="p">[</span><span class="n">index</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">14.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linear</span> <span class="n">equalization</span>      <span class="n">SER</span><span class="o">=</span><span class="mf">0.0361</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=-</span><span class="mf">38.8</span> <span class="n">deg</span>
-<span class="n">nonlinear</span> <span class="n">equalization</span>   <span class="n">SER</span><span class="o">=</span><span class="mf">0.0000</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=-</span><span class="mf">0.9</span> <span class="n">deg</span>
+<a class="reference internal image-reference" href="../_images/one_shot_nli_fig2.png"><img alt="Constellations after 1, 12 and 25 spans" class="align-center" src="../_images/one_shot_nli_fig2.png" style="width: 100%;" />
+</a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">span</span>   <span class="n">effective</span> <span class="n">SNR</span>
+   <span class="mi">1</span>          <span class="mf">22.47</span> <span class="n">dB</span>
+   <span class="mi">5</span>          <span class="mf">21.15</span> <span class="n">dB</span>
+  <span class="mi">10</span>          <span class="mf">18.89</span> <span class="n">dB</span>
+  <span class="mi">15</span>          <span class="mf">17.22</span> <span class="n">dB</span>
+  <span class="mi">20</span>          <span class="mf">15.78</span> <span class="n">dB</span>
+  <span class="mi">25</span>          <span class="mf">14.61</span> <span class="n">dB</span>
 </pre></div>
 </div>
-<p>The residual phase is the reading that names the culprit. Linear equalization
-undoes the dispersion and the loss, and leaves a <strong>38.8 degree</strong> rotation of
-the whole constellation: that is self-phase modulation, the Kerr effect
-turning average power into phase, which no linear filter can undo. Correcting
-that rotation is not enough either – the remaining scatter still costs 3.6 %
-of the symbols, because the nonlinearity acts <em>along</em> the fibre, interleaved
-with the dispersion, and not as one rotation at the end.</p>
-<p>Digital back-propagation inverts that interleaving: it propagates the received
-signal back through the same split-step model with the signs of the dispersion
-and the nonlinearity reversed. The residual rotation falls to a degree and not
-a single symbol error is left.</p>
-<a class="reference internal image-reference" href="../_images/one_shot_nli_fig2.png"><img alt="../_images/one_shot_nli_fig2.png" class="align-center" src="../_images/one_shot_nli_fig2.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="../_images/one_shot_nli_fig3.png"><img alt="Effective SNR against the number of spans" class="align-center" src="../_images/one_shot_nli_fig3.png" style="width: 100%;" />
 </a>
-<a class="reference internal image-reference" href="../_images/one_shot_nli_fig3.png"><img alt="../_images/one_shot_nli_fig3.png" class="align-center" src="../_images/one_shot_nli_fig3.png" style="width: 100%;" />
+<p><strong>Nearly 8 dB lost over the link</strong>, and the loss is not the amplifier noise
+alone. Two things accumulate span after span: the ASE, which adds one
+amplifier’s worth of noise each time, and the nonlinear interference, which
+the dispersion converts into a scatter that no linear filter can undo. The
+constellations show the difference in kind – after one span the clusters are
+tight and merely rotated, after twenty-five they are rotated <em>and</em> smeared.</p>
+</section>
+<section id="id1">
+<h2>Digital Back-Propagation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>The nonlinear Schrödinger equation is deterministic and invertible. In the
+absence of noise, propagating the received field back through the same
+equation with the signs reversed,</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial u}{\partial z} =
+\frac{\alpha}{2}\, u + j\frac{\beta_2}{2}\frac{\partial^2 u}{\partial t^2}
+- j \gamma \left|u\right|^2 u\]</div>
+<p>returns exactly what was transmitted. That is <strong>digital back-propagation</strong>:
+the same split-step method the channel was simulated with, run backwards. Its
+only approximation is the step size, and its only genuine limit is the ASE
+noise, which was added <em>along</em> the link and is amplified rather than removed
+by the backward pass.</p>
+<p>Dispersion compensation alone is the same algorithm with the nonlinear term
+switched off – one step per span instead of <span class="math notranslate nohighlight">\(\mathrm{StPS}\)</span> – so the
+two strategies of this tutorial differ by one argument.</p>
+<section id="results">
+<h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the two strategies ----------------------------------------------</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">linear_only</span><span class="p">,</span> <span class="n">steps</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;dispersion compensation&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s2">&quot;digital back-propagation&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span>
+                                   <span class="n">StPS_DBP</span><span class="p">)):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">raw</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">receive</span><span class="p">(</span><span class="n">y_rx</span><span class="p">,</span> <span class="n">N_span</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">linear_only</span><span class="o">=</span><span class="n">linear_only</span><span class="p">)</span>
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e3</span>
+    <span class="n">snr</span><span class="p">,</span> <span class="n">ser</span> <span class="o">=</span> <span class="n">score</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">ser</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">26s</span><span class="si">}</span><span class="s2"> SNR=</span><span class="si">{</span><span class="n">snr</span><span class="si">:</span><span class="s2">5.2f</span><span class="si">}</span><span class="s2"> dB  SER=</span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;residual phase=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="si">:</span><span class="s2">+6.1f</span><span class="si">}</span><span class="s2"> deg  </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">corrected</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">ser</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+                                                   <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">plot_iq</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;before phase correction&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">plot_iq</span><span class="p">(</span><span class="n">corrected</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;after phase correction&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">SNR </span><span class="si">{</span><span class="n">snr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB, SER </span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_nli_fig4.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dispersion</span> <span class="n">compensation</span>    <span class="n">SNR</span><span class="o">=</span><span class="mf">14.61</span> <span class="n">dB</span>  <span class="n">SER</span><span class="o">=</span><span class="mf">0.0322</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=</span> <span class="o">-</span><span class="mf">39.3</span> <span class="n">deg</span>    <span class="mi">10</span> <span class="n">ms</span>
+<span class="n">digital</span> <span class="n">back</span><span class="o">-</span><span class="n">propagation</span>   <span class="n">SNR</span><span class="o">=</span><span class="mf">19.50</span> <span class="n">dB</span>  <span class="n">SER</span><span class="o">=</span><span class="mf">0.0003</span>  <span class="n">residual</span> <span class="n">phase</span><span class="o">=</span>  <span class="o">-</span><span class="mf">1.0</span> <span class="n">deg</span>  <span class="mi">2101</span> <span class="n">ms</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_nli_fig4.png"><img alt="Constellations after linear compensation and after DBP" class="align-center" src="../_images/one_shot_nli_fig4.png" style="width: 100%;" />
 </a>
+<p>The residual phase names the culprit. Dispersion compensation undoes the
+dispersion and the loss and leaves a <strong>39 degree</strong> rotation of the whole
+constellation: that is self-phase modulation, the Kerr effect turning average
+power into phase. Removing that rotation is not enough either – the
+remaining scatter still costs 3.2 % of the symbols, because the nonlinearity
+acts <em>along</em> the fibre, interleaved with the dispersion, and not as one
+rotation at the end.</p>
+<p>Back-propagation inverts that interleaving. The residual rotation falls to one
+degree, the effective SNR rises by <strong>4.9 dB</strong>, and the symbol error rate drops
+by two orders of magnitude.</p>
+</section>
+</section>
+<section id="what-it-costs">
+<h2>What it costs<a class="headerlink" href="#what-it-costs" title="Link to this heading">#</a></h2>
+<p>The last column of the table is the reason DBP is not simply switched on
+everywhere. Dispersion compensation is one FFT pair for the whole link; DBP at
+<span class="math notranslate nohighlight">\(\mathrm{StPS}\)</span> steps per span is <span class="math notranslate nohighlight">\(N_{sp} \times \mathrm{StPS}\)</span>
+FFT pairs plus as many pointwise phase rotations. Here that is 10 ms against
+2101 ms – <strong>210 times</strong> – for 4.9 dB.</p>
+<p>That ratio is what the literature on low-complexity back-propagation exists to
+improve, and it is also why the useful question is not “DBP or not” but <em>how
+many steps</em>.</p>
+</section>
+<section id="monte-carlo-evaluation">
+<h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
+<p>We therefore sweep the launch power, with one receiver per step count, on the
+second link of Häger and Pfister: ten spans of 100 km, 16-QAM at 32 GBd. The
+reference curve is the same link with its nonlinearity switched off, i.e. what
+the amplifier noise alone would allow.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;What back-propagation is worth, as a function of the number of steps.</span>
+
+<span class="sd">The launch-power sweep of Hager and Pfister (arXiv:2010.14258), with one</span>
+<span class="sd">curve per step count. Run from this directory: it writes the tutorial&#39;s</span>
+<span class="sd">figures into ../../docs/tutorials/img/.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">BWFilter</span><span class="p">,</span> <span class="n">SRRCFilter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_effective_snr</span><span class="p">,</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Upsampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span><span class="p">,</span> <span class="n">hard_projector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.dbp</span><span class="w"> </span><span class="kn">import</span> <span class="n">DBP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiberLink</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.optical.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">dbm_to_watt</span>
+
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="n">N_s</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">11</span>               <span class="c1"># 8192 symbols per point: the SER floor is 1e-4</span>
+<span class="n">oversampling_sim</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">oversampling_dsp</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">NF_dB</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">rolloff</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">StPS</span> <span class="o">=</span> <span class="mi">200</span>                    <span class="c1"># forward propagation, the reference</span>
+<span class="n">R_s</span> <span class="o">=</span> <span class="mf">32e9</span>
+<span class="n">L_span</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">N_span</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">dBm_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="n">N_trial</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">R_s</span> <span class="o">*</span> <span class="n">oversampling_sim</span>
+<span class="n">oversampling_ratio</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversampling_sim</span> <span class="o">/</span> <span class="n">oversampling_dsp</span><span class="p">)</span>
+
+<span class="n">source</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)],</span>
+                    <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">])</span>
+<span class="n">transmitter</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">Upsampler</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_sim</span><span class="p">)),</span>
+        <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_sim</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">),</span>
+        <span class="p">])</span>
+<span class="n">fibre</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">FiberLink</span><span class="p">(</span><span class="n">N_spans</span><span class="o">=</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">StPS</span><span class="p">,</span> <span class="n">NF_dB</span><span class="o">=</span><span class="n">NF_dB</span><span class="p">,</span>
+                  <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;link&quot;</span><span class="p">),</span>
+        <span class="n">BWFilter</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">oversampling_sim</span><span class="p">),</span>
+        <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_ratio</span><span class="p">),</span>
+        <span class="p">])</span>
+
+<span class="c1"># Every receiver is the same chain with one argument changed. &quot;amplifier</span>
+<span class="c1"># noise only&quot; back-propagates a link whose nonlinearity was switched off,</span>
+<span class="c1"># which is the bound the others are trying to reach.</span>
+<span class="n">receivers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;amplifier noise only&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="s2">&quot;dispersion compensation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="s2">&quot;DBP, 1 step/span&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="s2">&quot;DBP, 2 steps/span&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="s2">&quot;DBP, 4 steps/span&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="s2">&quot;DBP, 50 steps/span&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;StPS&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;use_only_linear&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_receiver</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">linear_only</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">DBP</span><span class="p">(</span><span class="n">N_span</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">L_span</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+            <span class="n">fs</span><span class="o">=</span><span class="n">fs</span> <span class="o">/</span> <span class="n">oversampling_ratio</span><span class="p">,</span> <span class="n">use_only_linear</span><span class="o">=</span><span class="n">linear_only</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbp&quot;</span><span class="p">),</span>
+        <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">rolloff</span><span class="p">,</span> <span class="n">oversampling_dsp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span>
+                   <span class="n">scale</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">)),</span>
+        <span class="n">Downsampler</span><span class="p">(</span><span class="n">oversampling_dsp</span><span class="p">),</span>
+        <span class="p">])</span>
+
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dBm_list</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">receivers</span><span class="p">}</span>
+<span class="n">ser</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dBm_list</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">receivers</span><span class="p">}</span>
+<span class="n">elapsed</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">receivers</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">dBm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dBm_list</span><span class="p">):</span>
+    <span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="n">dBm</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_trial</span><span class="p">):</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">index</span> <span class="o">*</span> <span class="n">N_trial</span> <span class="o">+</span> <span class="n">trial</span><span class="p">)</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="n">source</span><span class="p">(</span><span class="n">N_s</span><span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span>
+        <span class="n">launched</span> <span class="o">=</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">transmitter</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
+
+        <span class="n">fibre</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span>
+        <span class="n">fibre</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">link__use_only_linear</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="n">fibre</span><span class="p">(</span><span class="n">launched</span><span class="p">)</span>
+        <span class="n">fibre</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span>
+        <span class="n">fibre</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">link__use_only_linear</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">nonlinear</span> <span class="o">=</span> <span class="n">fibre</span><span class="p">(</span><span class="n">launched</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">receivers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">linear</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;amplifier noise only&quot;</span> <span class="k">else</span> <span class="n">nonlinear</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+            <span class="n">estimate</span> <span class="o">=</span> <span class="n">get_receiver</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;StPS&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;use_only_linear&quot;</span><span class="p">])(</span><span class="n">field</span><span class="p">)</span>
+            <span class="n">elapsed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">estimate</span><span class="p">)</span> <span class="o">*</span> <span class="n">symbols</span><span class="p">))</span>
+            <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">estimate</span>
+            <span class="n">detected</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hard_projector</span><span class="p">(</span><span class="n">corrected</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">)</span>
+            <span class="n">snr</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">+=</span> <span class="n">compute_effective_snr</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span> <span class="n">corrected</span><span class="p">)</span> <span class="o">/</span> <span class="n">N_trial</span>
+            <span class="n">ser</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">+=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">detected</span><span class="p">)</span> <span class="o">/</span> <span class="n">N_trial</span>
+
+<span class="n">snr_dB</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">snr</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;launch power [dBm]  &quot;</span> <span class="o">+</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dBm_list</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">snr_dB</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">receiver                  best SNR   at power    total time&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">snr_dB</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> dB </span><span class="si">{</span><span class="n">dBm_list</span><span class="p">[</span><span class="n">best</span><span class="p">]</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2"> dBm &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">elapsed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">9.1f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">dBm_list</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;launch power [dBm]&quot;</span><span class="p">,</span>
+                     <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;effective SNR [dB]&quot;</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N_span</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">L_span</span><span class="si">}</span><span class="s2"> km, </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-QAM at &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">R_s</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GBd&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/nli_simulation_fig1.png&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">dBm_list</span><span class="p">,</span> <span class="n">ser</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;launch power [dBm]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;the same sweep, in symbol error rate&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">launch</span> <span class="n">power</span> <span class="p">[</span><span class="n">dBm</span><span class="p">]</span>   <span class="o">-</span><span class="mf">6.0</span>   <span class="o">-</span><span class="mf">4.5</span>   <span class="o">-</span><span class="mf">3.0</span>   <span class="o">-</span><span class="mf">1.5</span>    <span class="mf">0.0</span>    <span class="mf">1.5</span>    <span class="mf">3.0</span>    <span class="mf">4.5</span>
+<span class="n">amplifier</span> <span class="n">noise</span> <span class="n">only</span>     <span class="mf">15.3</span>   <span class="mf">16.4</span>   <span class="mf">17.6</span>   <span class="mf">18.6</span>   <span class="mf">19.3</span>   <span class="mf">20.1</span>   <span class="mf">21.1</span>   <span class="mf">21.2</span>
+<span class="n">dispersion</span> <span class="n">compensation</span>  <span class="mf">15.2</span>   <span class="mf">16.2</span>   <span class="mf">17.1</span>   <span class="mf">17.6</span>   <span class="mf">17.2</span>   <span class="mf">16.3</span>   <span class="mf">14.0</span>   <span class="mf">11.2</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">1</span> <span class="n">step</span><span class="o">/</span><span class="n">span</span>         <span class="mf">15.2</span>   <span class="mf">16.3</span>   <span class="mf">17.3</span>   <span class="mf">17.9</span>   <span class="mf">17.8</span>   <span class="mf">17.2</span>   <span class="mf">15.4</span>   <span class="mf">12.7</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">2</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>        <span class="mf">15.2</span>   <span class="mf">16.3</span>   <span class="mf">17.4</span>   <span class="mf">18.3</span>   <span class="mf">18.6</span>   <span class="mf">18.5</span>   <span class="mf">17.8</span>   <span class="mf">15.8</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">4</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>        <span class="mf">15.2</span>   <span class="mf">16.4</span>   <span class="mf">17.5</span>   <span class="mf">18.5</span>   <span class="mf">19.1</span>   <span class="mf">19.6</span>   <span class="mf">20.2</span>   <span class="mf">19.3</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">50</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>       <span class="mf">15.2</span>   <span class="mf">16.4</span>   <span class="mf">17.6</span>   <span class="mf">18.5</span>   <span class="mf">19.2</span>   <span class="mf">19.7</span>   <span class="mf">20.5</span>   <span class="mf">19.9</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/nli_simulation_fig1.png"><img alt="Effective SNR against launch power, one curve per step count" class="align-center" src="../_images/nli_simulation_fig1.png" style="width: 100%;" />
+</a>
+<p>This is the figure the whole subject is about. Every curve rises at low power,
+where the amplifier noise dominates and turning the laser up helps; every
+curve except the reference then turns over, where the nonlinear interference
+grows faster than the signal. The maximum of each curve is the operating point
+of that receiver, and back-propagation <strong>moves it to the right</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">receiver</span>                  <span class="n">best</span> <span class="n">SNR</span>   <span class="n">at</span> <span class="n">power</span>    <span class="n">total</span> <span class="n">time</span>
+<span class="n">amplifier</span> <span class="n">noise</span> <span class="n">only</span>      <span class="mf">21.18</span> <span class="n">dB</span>    <span class="mf">4.5</span> <span class="n">dBm</span>       <span class="mf">0.1</span> <span class="n">s</span>
+<span class="n">dispersion</span> <span class="n">compensation</span>   <span class="mf">17.61</span> <span class="n">dB</span>   <span class="o">-</span><span class="mf">1.5</span> <span class="n">dBm</span>       <span class="mf">0.1</span> <span class="n">s</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">1</span> <span class="n">step</span><span class="o">/</span><span class="n">span</span>          <span class="mf">17.93</span> <span class="n">dB</span>   <span class="o">-</span><span class="mf">1.5</span> <span class="n">dBm</span>       <span class="mf">0.2</span> <span class="n">s</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">2</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>         <span class="mf">18.56</span> <span class="n">dB</span>    <span class="mf">0.0</span> <span class="n">dBm</span>       <span class="mf">0.4</span> <span class="n">s</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">4</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>         <span class="mf">20.21</span> <span class="n">dB</span>    <span class="mf">3.0</span> <span class="n">dBm</span>       <span class="mf">0.8</span> <span class="n">s</span>
+<span class="n">DBP</span><span class="p">,</span> <span class="mi">50</span> <span class="n">steps</span><span class="o">/</span><span class="n">span</span>        <span class="mf">20.53</span> <span class="n">dB</span>    <span class="mf">3.0</span> <span class="n">dBm</span>       <span class="mf">8.7</span> <span class="n">s</span>
+</pre></div>
+</div>
+<p>Read the last two columns together. Going from one step per span to four buys
+<strong>2.3 dB</strong>; going from four to fifty buys <strong>0.3 dB more</strong> and costs eleven
+times the computation. The returns collapse because the step-size error falls
+with the number of steps while the ASE noise does not: at fifty steps the
+receiver is still 0.65 dB from the noise-only bound, and no number of steps
+will close that last gap.</p>
+<p>Against dispersion compensation alone, four steps per span are worth 2.6 dB
+of effective SNR <strong>and</strong> 4.5 dB of launch power, which is the number a link
+budget actually spends.</p>
+<a class="reference internal image-reference" href="../_images/nli_simulation_fig2.png"><img alt="The same sweep, in symbol error rate" class="align-center" src="../_images/nli_simulation_fig2.png" style="width: 100%;" />
+</a>
+<p>The error rate says the same thing in the units a link is specified in, and
+adds the shape the SNR curve hides: a bathtub, whose left wall is the
+amplifier noise and whose right wall is the nonlinearity. Back-propagation
+does not move the left wall – it cannot – and pushes the right one out.</p>
+<p>The flat bottom at <span class="math notranslate nohighlight">\(1.2 \times 10^{-4}\)</span> is the estimator, not the link:
+8192 symbols per point cannot resolve fewer than one error, so the two
+best receivers are floor-limited from 0 dBm on. That is why the comparison
+above is made in effective SNR, which uses every symbol rather than only the
+wrong ones.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>This tutorial showed how to:</p>
+<p>This tutorial highlighted:</p>
 <ul class="simple">
-<li><p>Model an optical fiber communication system with nonlinear effects.</p></li>
-<li><p>Use SRRC filtering and oversampling to shape signals.</p></li>
-<li><p>Simulate fiber propagation with noise and nonlinearities.</p></li>
-<li><p>Apply linear and nonlinear compensation techniques (DBP).</p></li>
-<li><p>Quantify performance improvements via SER metrics.</p></li>
+<li><p>How to propagate a signal through a nonlinear fibre with the split-step
+method, and how to watch it degrade span by span with a callback.</p></li>
+<li><p>Why the damage is of two kinds, and why only one of them is linear.</p></li>
+<li><p>What digital back-propagation is, and that it is the channel model run
+backwards.</p></li>
+<li><p>What it buys – 4.9 dB and two decades of error rate – and what it costs.</p></li>
 </ul>
-<p>This simulation illustrates how <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> can be used to study advanced fiber-optic communication design and compensation techniques.</p>
+<p>Key takeaway:
+<strong>The fibre nonlinearity is deterministic, so it can be inverted; what cannot
+be inverted is the amplifier noise that was added along the way. Digital
+back-propagation buys back most of the nonlinear penalty, at a computational
+cost proportional to the number of steps it takes.</strong></p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>C. Häger and H. D. Pfister, “Physics-based deep learning for fiber-optic
+communication systems”, <em>IEEE J. Sel. Areas Commun.</em>, vol. 39, no. 1,
+pp. 280-294, 2021 (arXiv:2010.14258) – the link parameters, the noise
+model and the step-count comparison used here.</p></li>
+<li><p>E. Ip and J. M. Kahn, “Compensation of dispersion and nonlinear impairments
+using digital backpropagation”, <em>J. Lightwave Technol.</em>, vol. 26, no. 20,
+pp. 3416-3425, 2008.</p></li>
+<li><p>G. P. Agrawal, <em>Nonlinear Fiber Optics</em>, 5th ed., Academic Press, 2013,
+Chapter 2 – the split-step method and its step-size error.</p></li>
+</ul>
 </section>
 </section>
 
@@ -606,20 +952,20 @@ a single symbol error is left.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="shaping.html"
+       href="gn_model.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Probabilistic Shaping</p>
+        <p class="prev-next-title">Nonlinear Performance and the Gaussian Noise Model</p>
       </div>
     </a>
     <a class="right-next"
-       href="gn_model.html"
+       href="../documentation/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">The Gaussian Noise Model</p>
+        <p class="prev-next-title">Documentation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -642,20 +988,19 @@ a single symbol error is left.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-model">Channel Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">Define System Parameters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-communication-chain">Create Communication Chain</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-simulation-and-extract-signals">Run Simulation and Extract Signals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#degradation-span-by-span">Degradation, span by span</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Digital Back-Propagation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#received-signal">Received Signal</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-and-nonlinear-compensation">Linear and Nonlinear Compensation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-it-costs">What it costs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

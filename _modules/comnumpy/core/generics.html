@@ -1009,14 +1009,36 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_split_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split ``&quot;block.field&quot;`` or ``&quot;block__field&quot;`` (decision D34).</span>
+
+<span class="sd">        The dotted form is the addressing used everywhere a parameter is</span>
+<span class="sd">        held in a variable -- :func:`~comnumpy.sweep.sweep` builds those</span>
+<span class="sd">        strings. A dot is not a valid character in a keyword argument,</span>
+<span class="sd">        though, so writing one by hand costs a ``**{...}`` wrapper. The</span>
+<span class="sd">        double underscore is the same address spelled as an identifier,</span>
+<span class="sd">        which is scikit-learn&#39;s convention for the same method and is</span>
+<span class="sd">        accepted here for that reason.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>                    <span class="c1"># type: ignore[return-value]</span>
+        <span class="c1"># The first double underscore is the separator, unambiguously:</span>
+        <span class="c1"># `block_ids` collapses every run of non-alphanumerics into a</span>
+        <span class="c1"># single underscore, so no block id can contain one (checked in</span>
+        <span class="c1"># tests/core/test_set_params.py).</span>
+        <span class="n">block_id</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">field_name</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">block_id</span><span class="p">,</span> <span class="n">field_name</span>
+
 <div class="viewcode-block" id="Sequential.set_params">
 <a class="viewcode-back" href="../../../documentation/core/generics.html#comnumpy.core.generics.Sequential.set_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Sequential&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reconfigure blocks after construction (decision D34).</span>
 
-<span class="sd">        Parameters are addressed with the dotted notation</span>
-<span class="sd">        ``&quot;&lt;block_id&gt;.&lt;field&gt;&quot;`` where ``&lt;block_id&gt;`` comes from</span>
+<span class="sd">        Parameters are addressed by block and field, written either</span>
+<span class="sd">        ``&quot;&lt;block_id&gt;.&lt;field&gt;&quot;`` or ``&lt;block_id&gt;__&lt;field&gt;`` -- the second</span>
+<span class="sd">        is the same address as a plain keyword argument, so it needs no</span>
+<span class="sd">        ``**{...}`` around it. ``&lt;block_id&gt;`` comes from</span>
 <span class="sd">        :meth:`block_ids`. After all assignments, the parametric</span>
 <span class="sd">        precomputation of each touched block (``__post_init__``) is</span>
 <span class="sd">        re-run, so the block state stays consistent.</span>
@@ -1025,17 +1047,24 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        --------</span>
 <span class="sd">        &gt;&gt;&gt; from comnumpy.core.channels import AWGN</span>
 <span class="sd">        &gt;&gt;&gt; chain = Sequential([AWGN(sigma2=0.1)])</span>
-<span class="sd">        &gt;&gt;&gt; _ = chain.set_params(**{&quot;awgn.sigma2&quot;: 0.01})</span>
+<span class="sd">        &gt;&gt;&gt; _ = chain.set_params(awgn__sigma2=0.01)</span>
 <span class="sd">        &gt;&gt;&gt; chain[0].sigma2</span>
 <span class="sd">        0.01</span>
+
+<span class="sd">        The dotted form is the one to use when the address is computed:</span>
+
+<span class="sd">        &gt;&gt;&gt; _ = chain.set_params(**{&quot;awgn.sigma2&quot;: 0.02})</span>
+<span class="sd">        &gt;&gt;&gt; chain[0].sigma2</span>
+<span class="sd">        0.02</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">touched</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Processor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">dotted</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">block_id</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">field_name</span> <span class="o">=</span> <span class="n">dotted</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+            <span class="n">block_id</span><span class="p">,</span> <span class="n">field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_parameter</span><span class="p">(</span><span class="n">dotted</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">field_name</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;parameter </span><span class="si">{</span><span class="n">dotted</span><span class="si">!r}</span><span class="s2"> is not in the dotted form &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;&lt;block_id&gt;.&lt;field&gt;&#39; (block ids: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ids</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">&quot;parameter </span><span class="si">{</span><span class="n">dotted</span><span class="si">!r}</span><span class="s2"> does not name a block and a &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;field, as &#39;&lt;block_id&gt;.&lt;field&gt;&#39; or &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;&lt;block_id&gt;__&lt;field&gt;&#39; (block ids: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ids</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
             <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_module_by_id</span><span class="p">(</span><span class="n">block_id</span><span class="p">)</span>
             <span class="n">field_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">}</span>
             <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">:</span>

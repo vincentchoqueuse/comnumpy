@@ -699,8 +699,8 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="alamouti.html">Alamouti Space-Time Coding Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Optical Fiber Link Simulation Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gn_model.html">The Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
 </nav></div>
@@ -943,7 +943,7 @@ The cost is the pseudo-inverse of an <span class="math notranslate nohighlight">
 </section>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">1979</span> <span class="n">ms</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">1908</span> <span class="n">ms</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Received constellation, before and after equalization" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
@@ -1035,7 +1035,7 @@ on one side; the same in reverse, closed by a one-tap
 </section>
 <section id="id3">
 <h3>Results<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.11</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">1791</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.24</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">1539</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig3.png"><img alt="OFDM constellation after one-tap equalization" class="align-center" src="../_images/one_shot_ofdm_fig3.png" style="width: 100%;" />
@@ -1083,24 +1083,86 @@ range of SNR values:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig4.png"><img alt="SER against SNR for both receivers" class="align-center" src="../_images/one_shot_ofdm_fig4.png" style="width: 100%;" />
 </a>
-<p>The two curves <strong>cross</strong> near 15 dB, and the reason is structural rather than
-numerical. Both receivers are zero forcing, so both divide by <span class="math notranslate nohighlight">\(|H|\)</span>;
-what differs is where the amplified noise goes.</p>
-<p>The single-carrier equalizer inverts a <strong>linear</strong> convolution: <span class="math notranslate nohighlight">\(N+L-1\)</span>
-observations for <span class="math notranslate nohighlight">\(N\)</span> unknowns, an overdetermined system whose residual
-noise is spread over every symbol of the block. OFDM inverts a <strong>circular</strong>
-one: exactly <span class="math notranslate nohighlight">\(N\)</span> equations for <span class="math notranslate nohighlight">\(N\)</span> unknowns, one per subcarrier,
-so a subcarrier that falls low is divided by a small number and nothing else
-can compensate for it.</p>
-<p>Spreading the damage is the better strategy at high SNR, and the worse one at
-low SNR. Above the crossing point, the single carrier is about 2 dB better at
-a given error rate. OFDM also spends 7 % of its channel uses on the cyclic
-prefix (10 samples per block of 128), which accounts for 0.3 dB of that gap.</p>
+<p>The two curves <strong>cross</strong> near 15 dB. That deserves an explanation, because
+the OFDM receiver is not the weaker one – it is in fact the <em>optimal</em> one.</p>
+<section id="why-the-one-tap-equalizer-is-already-maximum-likelihood">
+<h3>Why the one-tap equalizer is already maximum likelihood<a class="headerlink" href="#why-the-one-tap-equalizer-is-already-maximum-likelihood" title="Link to this heading">#</a></h3>
+<p>The DFT is unitary and the cyclic prefix makes the channel circulant, so the
+transformation to the frequency domain loses nothing and leaves the noise
+white. The maximum-likelihood decision over the whole block therefore
+<em>factorizes</em> into independent per-subcarrier decisions, and on subcarrier
+<span class="math notranslate nohighlight">\(k\)</span></p>
+<div class="math notranslate nohighlight">
+\[\left|Z_k - H_k X_k\right|^2 = \left|H_k\right|^2
+\left|\frac{Z_k}{H_k} - X_k\right|^2\]</div>
+<p>Dividing by <span class="math notranslate nohighlight">\(H_k\)</span> and taking the nearest constellation point is
+therefore exactly <span class="math notranslate nohighlight">\(\arg\min_X |Z_k - H_k X|^2\)</span>. OFDM’s one-tap
+equalizer <strong>is</strong> the maximum-likelihood detector. Single-carrier zero forcing
+is not – the ML receiver there would be a Viterbi search over the ISI
+trellis, which would beat both.</p>
+<p>So the crossing is not “ML against ZF”. It is about <em>which channel</em> each
+receiver is optimal for.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- where the difference comes from ---------------------------------</span>
+<span class="c1"># OFDM gives subcarrier k the gain of one frequency, so its symbols see a</span>
+<span class="c1"># spread of SNRs. Single-carrier zero forcing inverts a *linear*</span>
+<span class="c1"># convolution, which spreads the enhanced noise over the whole block, so</span>
+<span class="c1"># every symbol sees the same gain -- the harmonic mean of |H|^2.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">toeplitz</span>              <span class="c1"># noqa: E402  (local to this study)</span>
+
+<span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">N_carrier</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="n">convolution</span> <span class="o">=</span> <span class="n">toeplitz</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span>
+<span class="n">enhancement</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">convolution</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">convolution</span><span class="p">)))</span>
+<span class="c1"># AWGN(snr_dB=) measures the power at its input, i.e. after the channel</span>
+<span class="n">rho</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">gain</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">per-symbol SNR at a nominal </span><span class="si">{</span><span class="n">snr_dB</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  OFDM  : </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">rho</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gain</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2"> to &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">rho</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gain</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  SC-ZF : </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">rho</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">enhancement</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2"> to &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">rho</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">enhancement</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="si">:</span><span class="s2">5.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  arithmetic mean of |H|^2 </span><span class="si">{</span><span class="n">gain</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;harmonic mean </span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">gain</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per</span><span class="o">-</span><span class="n">symbol</span> <span class="n">SNR</span> <span class="n">at</span> <span class="n">a</span> <span class="n">nominal</span> <span class="mi">18</span> <span class="n">dB</span>
+  <span class="n">OFDM</span>  <span class="p">:</span>   <span class="mf">8.6</span> <span class="n">to</span>  <span class="mf">21.0</span> <span class="n">dB</span>
+  <span class="n">SC</span><span class="o">-</span><span class="n">ZF</span> <span class="p">:</span>  <span class="mf">15.1</span> <span class="n">to</span>  <span class="mf">16.8</span> <span class="n">dB</span>
+  <span class="n">arithmetic</span> <span class="n">mean</span> <span class="n">of</span> <span class="o">|</span><span class="n">H</span><span class="o">|^</span><span class="mi">2</span> <span class="mf">1.809</span><span class="p">,</span> <span class="n">harmonic</span> <span class="n">mean</span> <span class="mf">0.931</span>
+</pre></div>
+</div>
+<p>There is the answer. OFDM gives symbol <span class="math notranslate nohighlight">\(k\)</span> the gain of <strong>one
+frequency</strong>: a subcarrier in a dip sits 8.6 dB down and nothing can help it,
+because the transform that made equalization trivial also removed every
+other frequency’s contribution to that symbol. The single-carrier equalizer
+inverts a <strong>linear</strong> convolution – <span class="math notranslate nohighlight">\(N+L-1\)</span> observations for <span class="math notranslate nohighlight">\(N\)</span>
+unknowns – and spreads the enhanced noise over the whole block, so every
+symbol gets the <em>same</em> gain, the harmonic mean of <span class="math notranslate nohighlight">\(|H|^2\)</span>.</p>
+<p>The harmonic mean (0.93) is well below the arithmetic one (1.81), so the
+single carrier is worse on average. But an error rate is not an average of
+SNRs: it is dominated by the <em>worst</em> symbols, and OFDM’s worst are far worse.
+Narrow-and-mediocre beats wide-and-sometimes-terrible as soon as the SNR is
+high enough for the tail to dominate, which is what the crossing at 15 dB is.</p>
+<p>This is the classical argument for single-carrier frequency-domain
+equalization over OFDM (Falconer <em>et al.</em>, 2002), and it is why the LTE
+uplink uses DFT-spread OFDM: the extra transform spreads each symbol back
+over the band, recovering the frequency diversity that plain OFDM gives up.
+OFDM also spends 7 % of its channel uses on the cyclic prefix (10 samples per
+block of 128), which accounts for 0.3 dB of the gap.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The cyclic prefix is not the explanation, and it is worth checking rather
+than assuming: the channel has <span class="math notranslate nohighlight">\(L = 4\)</span> taps so it needs
+<span class="math notranslate nohighlight">\(N_{cp} \geq 3\)</span>, and with the <span class="math notranslate nohighlight">\(N_{cp} = 10\)</span> used here the
+noiseless symbol error rate is exactly zero. An insufficient prefix would
+show up there first.</p>
+</div>
 <p><strong>Uncoded, OFDM is therefore the worse receiver.</strong> In practice this is never
 the operating condition: because the damage is concentrated on a few
 subcarriers instead of being spread, a code applied <em>across</em> subcarriers
 repairs exactly the ones the channel put in a hole. This is why no real OFDM
 system is uncoded, and why the comparison above is its worst case.</p>
+</section>
 </section>
 <section id="computational-cost">
 <h2>Computational Cost<a class="headerlink" href="#computational-cost" title="Link to this heading">#</a></h2>
@@ -1130,10 +1192,10 @@ block length grows:</p>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="n">N</span>   <span class="n">single</span> <span class="n">carrier</span>      <span class="n">OFDM</span>     <span class="n">ratio</span>
- <span class="mi">128</span>           <span class="mf">6.7</span> <span class="n">ms</span>    <span class="mf">0.72</span> <span class="n">ms</span>        <span class="mi">9</span>
- <span class="mi">256</span>          <span class="mf">28.7</span> <span class="n">ms</span>    <span class="mf">0.83</span> <span class="n">ms</span>       <span class="mi">34</span>
- <span class="mi">512</span>         <span class="mf">119.6</span> <span class="n">ms</span>    <span class="mf">0.81</span> <span class="n">ms</span>      <span class="mi">147</span>
-<span class="mi">1024</span>         <span class="mf">831.8</span> <span class="n">ms</span>    <span class="mf">0.96</span> <span class="n">ms</span>      <span class="mi">868</span>
+ <span class="mi">128</span>           <span class="mf">7.3</span> <span class="n">ms</span>    <span class="mf">0.63</span> <span class="n">ms</span>       <span class="mi">12</span>
+ <span class="mi">256</span>          <span class="mf">31.6</span> <span class="n">ms</span>    <span class="mf">0.78</span> <span class="n">ms</span>       <span class="mi">40</span>
+ <span class="mi">512</span>         <span class="mf">156.0</span> <span class="n">ms</span>    <span class="mf">1.38</span> <span class="n">ms</span>      <span class="mi">113</span>
+<span class="mi">1024</span>        <span class="mf">1052.3</span> <span class="n">ms</span>    <span class="mf">0.92</span> <span class="n">ms</span>     <span class="mi">1145</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig5.png"><img alt="Receiver runtime against block length" class="align-center" src="../_images/one_shot_ofdm_fig5.png" style="width: 100%;" />
@@ -1167,6 +1229,18 @@ that scales, and coding across the subcarriers gives back what it gave up.</stro
 <a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> asks where <span class="math notranslate nohighlight">\(N_{cp} = 10\)</span> came from: the cyclic prefix
 has to cover the channel, so its length is a property of the environment, and
 the environments are tabulated.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>D. Falconer, S. L. Ariyavisitakul, A. Benyamin-Seeyar and B. Eidson,
+“Frequency domain equalization for single-carrier broadband wireless
+systems”, <em>IEEE Commun. Mag.</em>, vol. 40, no. 4, pp. 58-66, 2002 – the
+comparison of this page, and the reason DFT-spread OFDM exists.</p></li>
+<li><p>R. van Nee and R. Prasad, <em>OFDM for Wireless Multimedia Communications</em>,
+Artech House, 2000, Chapter 2.</p></li>
+<li><p>3GPP TS 36.104, Annex B – the EPA delay profile used here.</p></li>
+</ul>
 </section>
 </section>
 
@@ -1231,9 +1305,13 @@ the environments are tabulated.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Results</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-one-tap-equalizer-is-already-maximum-likelihood">Why the one-tap equalizer is already maximum likelihood</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#computational-cost">Computational Cost</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 
