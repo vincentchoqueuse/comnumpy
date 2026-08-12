@@ -51,6 +51,11 @@ class SymbolMapper(Processor):
     alphabet: np.ndarray
     name: str = field(default="Symbol Mapper", kw_only=True)
 
+    def __post_init__(self):
+        # accept anything array-like, so a Constellation (or a list) can
+        # be handed to the block the same way an ndarray is
+        self.alphabet = np.asarray(self.alphabet)
+
     def get_alphabet(self):
         return self.alphabet
 
@@ -136,6 +141,7 @@ class SymbolDemapper(Processor):
     _bits: np.ndarray = field(init=False, repr=False)
 
     def __post_init__(self):
+        self.alphabet = np.asarray(self.alphabet)
         M = len(self.alphabet)
         k = int(np.log2(M))
         if 2**k != M:

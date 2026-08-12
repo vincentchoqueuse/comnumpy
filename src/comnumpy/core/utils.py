@@ -1,4 +1,5 @@
 import pathlib
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 import numpy as np
@@ -6,9 +7,9 @@ import numpy.linalg as LA
 import numpy.typing as npt
 
 __all__ = [
-    "get_alphabet", "plot_alphabet", "sym_2_bin", "hard_projector",
-    "soft_projector", "esn0_to_snr_dB", "ebn0_to_snr_dB", "zf_estimator",
-    "mmse_estimator",
+    "Constellation", "get_alphabet", "plot_alphabet", "sym_2_bin",
+    "hard_projector", "soft_projector", "esn0_to_snr_dB", "ebn0_to_snr_dB",
+    "zf_estimator", "mmse_estimator",
 ]
 
 if TYPE_CHECKING:  # matplotlib stays out of the import path (D36)
@@ -224,6 +225,315 @@ def plot_alphabet(alphabet: np.ndarray, ax: Optional["Axes"] = None,
     ax.set_ylabel("imag part")
     ax.set_title(title)
     return ax
+
+
+@dataclass(frozen=True, slots=True)
+class Constellation:
+    r"""A modulation alphabet, and everything that is a property of it.
+
+    Signal Model
+    ------------
+    The alphabet :func:`get_alphabet` returns, plus the facts that always
+    travel with it. A memoryless modulation is a set
+    :math:`\mathcal{A} = \{a_0, \ldots, a_{M-1}\}`, and everything a
+    study asks of it -- how many bits it carries, what its average energy
+    is, how close its nearest neighbours are, what error rate it reaches
+    at a given SNR, what rate it can carry -- is determined by the family
+    and the order :math:`M`. Passing those two around separately is how a
+    page ends up drawing the closed form of a 16-QAM under the
+    measurement of a 64-QAM, which nothing checks.
+
+    The object is a drop-in for the array it wraps: ``np.asarray``
+    returns the alphabet, so every block and every function that takes
+    one keeps working.
+
+    Parameters
+    ----------
+    family : str
+        Modulation family: ``"PAM"``, ``"PSK"`` or ``"QAM"``.
+    order : int
+        Modulation order :math:`M`.
+    labelling : str, optional, keyword-only
+        Bit-to-symbol mapping, ``"gray"`` (default) or ``"binary"``.
+    norm : bool, optional, keyword-only
+        Rescale to unit average symbol energy. Default True, which is the
+        convention the rest of the library assumes.
+
+    Attributes
+    ----------
+    alphabet : np.ndarray
+        The symbols :math:`a_m`, in labelling order.
+    bits_per_symbol : int
+        :math:`k = \log_2 M`.
+    energy : float
+        Average symbol energy :math:`E_s`, over an equiprobable input.
+    min_distance : float
+        Smallest distance between two symbols, which sets the high-SNR
+        error rate.
+
+    Raises
+    ------
+    ValueError
+        If the family, the order or the labelling is unknown. The check
+        is :func:`get_alphabet`'s, made once here instead of at every
+        call site.
+
+    References
+    ----------
+    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+    McGraw-Hill, 2008, Chapter 4.
+
+    Examples
+    --------
+    >>> qam = Constellation("QAM", 16)
+    >>> qam.bits_per_symbol, round(qam.energy, 6), round(qam.min_distance, 4)
+    (4, 1.0, 0.6325)
+    >>> np.asarray(qam).shape            # a drop-in for the array
+    (16,)
+    >>> print(f"{qam.metrics(10.0)['ser']:.4e}")      # at Eb/N0 = 10 dB
+    7.0043e-03
+    """
+
+    family: str
+    order: int
+    labelling: str = field(default="gray", kw_only=True)
+    norm: bool = field(default=True, kw_only=True)
+    # derived at construction: the point of the object is that these
+    # cannot disagree with the alphabet they describe
+    alphabet: np.ndarray = field(init=False, repr=False)
+    bits_per_symbol: int = field(init=False)
+    energy: float = field(init=False, repr=False)
+    min_distance: float = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        alphabet = get_alphabet(self.family, self.order, self.labelling,
+                                self.norm)
+        distances = np.abs(alphabet[:, None] - alphabet[None, :])
+        np.fill_diagonal(distances, np.inf)
+        # frozen dataclass: the derived fields are set once, here
+        object.__setattr__(self, "alphabet", alphabet)
+        object.__setattr__(self, "bits_per_symbol", int(np.log2(self.order)))
+        object.__setattr__(self, "energy",
+                           float(np.mean(np.abs(alphabet) ** 2)))
+        object.__setattr__(self, "min_distance", float(np.min(distances)))
+
+    def __array__(self, dtype: Optional[npt.DTypeLike] = None,
+                  copy: Optional[bool] = None) -> np.ndarray:
+        """Let ``np.asarray`` see the alphabet, so blocks take the object."""
+        if dtype is None:
+            return self.alphabet.copy() if copy else self.alphabet
+        return self.alphabet.astype(dtype, copy=bool(copy))
+
+    def __len__(self) -> int:
+        return self.order
+
+    def info(self) -> dict[str, Any]:
+        """What the constellation is, as a dictionary ready to print.
+
+        Returns
+        -------
+        dict
+            ``family``, ``order``, ``labelling``, ``bits_per_symbol``,
+            ``energy``, ``min_distance``, and ``papr_dB`` -- the last
+            being the peak-to-average power ratio of the *constellation*,
+            a lower bound on what the shaped waveform will show.
+
+        Examples
+        --------
+        >>> print(Constellation("PSK", 8).info()["papr_dB"])
+        0.0
+        """
+        peak = float(np.max(np.abs(self.alphabet) ** 2))
+        return {"family": self.family,
+                "order": self.order,
+                "labelling": self.labelling,
+                "bits_per_symbol": self.bits_per_symbol,
+                "energy": self.energy,
+                "min_distance": self.min_distance,
+                "papr_dB": round(float(10 * np.log10(peak / self.energy)), 6)}
+
+    def plot(self, ax: Optional["Axes"] = None, **kwargs: Any) -> "Axes":
+        """Draw the constellation diagram (decision D25).
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes or None, optional
+            Axis to draw on. If None, a new figure and axis are created.
+        **kwargs
+            Forwarded to :func:`plot_alphabet`.
+
+        Returns
+        -------
+        matplotlib.axes.Axes
+            The axis containing the plot.
+
+        Examples
+        --------
+        >>> import matplotlib
+        >>> matplotlib.use("Agg")
+        >>> Constellation("QAM", 16).plot().get_title()
+        '16-QAM'
+        """
+        kwargs.setdefault("title", f"{self.order}-{self.family}")
+        return plot_alphabet(self.alphabet, ax=ax, **kwargs)
+
+    def metrics(self, snr_dB: npt.ArrayLike, *, per: str = "bit",
+                channel: str = "awgn", diversity: int = 1,
+                metrics: Tuple[str, ...] = ("ser", "ber"),
+                px: Optional[np.ndarray] = None,
+                ) -> "dict[str, np.ndarray | float]":
+        r"""What this constellation is worth at a given SNR.
+
+        Signal Model
+        ------------
+        A front-end to the four quantities a page draws against a
+        measurement, all of them functions of the same family, order and
+        SNR:
+
+        * ``"ser"`` and ``"ber"``, the closed-form error rates of
+          :func:`~comnumpy.core.metrics.compute_metric_awgn_theo` or
+          :func:`~comnumpy.core.metrics.compute_metric_rayleigh_theo`;
+        * ``"mi"`` and ``"gmi"``, the mutual information and the
+          bit-interleaved rate of
+          :func:`~comnumpy.core.capacity.constellation_capacity` and
+          :func:`~comnumpy.core.capacity.bicm_capacity`.
+
+        The two families are parameterized differently by convention: the
+        error rates against :math:`E_b/N_0`, the rates against the SNR
+        per symbol, which is :math:`k` times larger. The object knows
+        :math:`k`, so ``per=`` says which of the two is being passed and
+        the conversion happens here rather than at the call site -- get
+        it wrong and the curve moves by :math:`10\log_{10} k` dB, with
+        nothing to signal it.
+
+        ``"mi"`` and ``"gmi"`` are quadratures over :math:`M^2` points,
+        not closed forms, so they are not in the default and cost seconds
+        rather than microseconds on a large constellation.
+
+        Parameters
+        ----------
+        snr_dB : float or np.ndarray
+            Signal-to-noise ratio in dB -- the quantity a chain is swept
+            over.
+        per : str, optional, keyword-only
+            ``"bit"`` (default) if ``snr_dB`` is :math:`E_b/N_0`,
+            ``"symbol"`` if it is :math:`E_s/N_0`.
+        channel : str, optional, keyword-only
+            ``"awgn"`` (default) or ``"rayleigh"``, for the error rates.
+            The rates below are AWGN only.
+        diversity : int, optional, keyword-only
+            Number of combined branches, for ``channel="rayleigh"``.
+        metrics : tuple of str, optional, keyword-only
+            Which quantities to return, among ``"ser"``, ``"ber"``,
+            ``"mi"`` and ``"gmi"``. Default ``("ser", "ber")``.
+        px : np.ndarray, optional, keyword-only
+            Symbol distribution, for a shaped input. The constellation is
+            rescaled to unit energy *under this law* before the rates are
+            computed -- a shaped input compared as it stands is simply a
+            quieter one. Not available for the error rates, whose closed
+            forms assume an equiprobable input.
+
+        Returns
+        -------
+        dict of str to float or np.ndarray
+            One entry per requested metric, in the order requested, each
+            with the shape of ``snr_dB``.
+
+        Raises
+        ------
+        ValueError
+            If ``per``, ``channel`` or a metric name is unknown, if a rate
+            is asked of a fading channel, or if ``px`` is given together
+            with an error rate.
+
+        References
+        ----------
+        J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
+        McGraw-Hill, 2008, Section 4.3; G. Ungerboeck, "Channel coding
+        with multilevel/phase signals", IEEE Trans. Inf. Theory 28(1),
+        1982 (the rate a constellation carries).
+
+        Examples
+        --------
+        >>> qpsk = Constellation("PSK", 4)
+        >>> theory = qpsk.metrics(np.array([4.0, 8.0]))
+        >>> print(np.array2string(theory["ber"], precision=6))
+        [0.012423 0.000191]
+        >>> rate = qpsk.metrics(20.0, per="symbol", metrics=("mi",))
+        >>> print(round(float(rate["mi"]), 3))
+        2.0
+        """
+        # local imports: comnumpy.core.metrics imports this module
+        from .capacity import bicm_capacity, constellation_capacity
+        from .metrics import (compute_metric_awgn_theo,
+                              compute_metric_rayleigh_theo)
+
+        unknown = []
+        for name in metrics:
+            if name not in ("ser", "ber", "mi", "gmi"):
+                unknown.append(name)
+        if unknown:
+            raise ValueError(
+                f"Constellation.metrics: unknown metric(s) {unknown}; "
+                f"expected any of 'ser', 'ber', 'mi', 'gmi'.")
+        if per not in ("bit", "symbol"):
+            raise ValueError(
+                f"Constellation.metrics: per={per!r}; expected 'bit' if "
+                f"snr_dB is Eb/N0, or 'symbol' if it is Es/N0. The two "
+                f"differ by {10 * np.log10(self.bits_per_symbol):.2f} dB "
+                f"on this constellation, so the choice is not cosmetic.")
+        if channel not in ("awgn", "rayleigh"):
+            raise ValueError(
+                f"Constellation.metrics: channel={channel!r}; expected "
+                f"'awgn' or 'rayleigh'.")
+
+        linear = 10 ** (np.asarray(snr_dB, dtype=float) / 10)
+        if per == "bit":
+            per_bit = linear
+            per_symbol = linear * self.bits_per_symbol
+        else:
+            per_bit = linear / self.bits_per_symbol
+            per_symbol = linear
+
+        wants_rates = ("mi" in metrics) or ("gmi" in metrics)
+        wants_errors = ("ser" in metrics) or ("ber" in metrics)
+        if wants_rates and channel == "rayleigh":
+            raise ValueError(
+                "Constellation.metrics: 'mi' and 'gmi' are rates of the "
+                "AWGN channel; over fading they would have to be averaged "
+                "over the fading law, which this front-end does not do. "
+                "Ask for them with channel='awgn'.")
+        if wants_errors and px is not None:
+            raise ValueError(
+                "Constellation.metrics: the closed-form error rates assume "
+                "an equiprobable input, so px= cannot apply to 'ser' or "
+                "'ber'. Ask for the rates alone, or drop px.")
+
+        found: "dict[str, np.ndarray | float]" = {}
+        if wants_errors:
+            if channel == "awgn":
+                found.update(compute_metric_awgn_theo(
+                    self.family, self.order, per_bit))
+            else:
+                found.update(compute_metric_rayleigh_theo(
+                    self.family, self.order, per_bit, diversity=diversity))
+        if wants_rates:
+            alphabet = self.alphabet
+            if px is not None:
+                law = np.asarray(px, dtype=float)
+                alphabet = alphabet / np.sqrt(
+                    float(law @ np.abs(alphabet) ** 2))
+            if "mi" in metrics:
+                found["mi"] = constellation_capacity(alphabet, per_symbol,
+                                                     px=px)
+            if "gmi" in metrics:
+                found["gmi"] = bicm_capacity(alphabet, per_symbol, px=px)
+
+        ordered: "dict[str, np.ndarray | float]" = {}
+        for name in metrics:
+            ordered[name] = found[name]
+        return ordered
+
 
 
 def sym_2_bin(sym: np.ndarray, width: int = 4) -> np.ndarray:

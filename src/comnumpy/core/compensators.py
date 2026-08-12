@@ -786,6 +786,10 @@ class BlindPhaseCompensation(Processor):
     # estimated quantity (D23), declared for slots (D40a)
     theta_: Optional[Union[float, np.ndarray]] = field(init=False, repr=False, default_factory=lambda: None)
 
+    def __post_init__(self):
+        # accept anything array-like, a Constellation included
+        self.alphabet = np.asarray(self.alphabet)
+
     def cost(self, theta: float, x: np.ndarray) -> np.ndarray:
         y = x * np.exp(1j * theta)
         _, y_est = hard_projector(y, self.alphabet)

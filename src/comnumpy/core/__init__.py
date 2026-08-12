@@ -19,7 +19,8 @@ from .fading import (DopplerSpectrum, PowerDelayProfile, rayleigh_process,
 from .filters import SRRCFilter, BWFilter
 from .processors import Upsampler, Downsampler, Serial2Parallel, Parallel2Serial, Amplifier, DataExtractor
 from .metrics import compute_ser, compute_ber, compute_evm, compute_metric_awgn_theo, compute_ccdf, signal_report
-from .utils import get_alphabet, hard_projector, ebn0_to_snr_dB, esn0_to_snr_dB
+from .utils import (Constellation, get_alphabet, hard_projector,
+                    ebn0_to_snr_dB, esn0_to_snr_dB)
 from .frames import FieldRole, FrameField, FrameStructure, Framer, Deframer
 from .sequences import zadoff_chu, schmidl_cox_preamble, barker, golay_pair, m_sequence
 
@@ -43,7 +44,8 @@ __all__ = [
     "Amplifier", "DataExtractor",
     "compute_ser", "compute_ber", "compute_evm", "compute_metric_awgn_theo", "compute_ccdf",
     "signal_report",
-    "get_alphabet", "hard_projector", "ebn0_to_snr_dB", "esn0_to_snr_dB",
+    "Constellation", "get_alphabet", "hard_projector", "ebn0_to_snr_dB",
+    "esn0_to_snr_dB",
     "FieldRole", "FrameField", "FrameStructure", "Framer", "Deframer",
     "zadoff_chu", "schmidl_cox_preamble", "barker", "golay_pair", "m_sequence",
     # lazily loaded (they pull matplotlib, see D36):
