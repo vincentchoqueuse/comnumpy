@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.fading import PowerDelayProfile
 from comnumpy.exceptions import ShapeError
@@ -162,7 +162,7 @@ class FIRChannel(Processor):
         y = signal.convolve(x, self.h, mode=self.mode)
         return y
 
-    def info(self) -> dict:
+    def info(self) -> dict[str, Any]:
         """What this channel is, as a dictionary.
 
         The figures an engineer reads off a tap vector before deciding
@@ -173,7 +173,7 @@ class FIRChannel(Processor):
 
         Returns
         -------
-        dict
+        dict of str to object
 
         Examples
         --------
@@ -359,7 +359,7 @@ class TappedDelayLineChannel(Processor):
         impulse[0] = 1.0
         return self(impulse)[:length]
 
-    def info(self) -> dict:
+    def info(self) -> dict[str, Any]:
         """What this channel is, as a dictionary.
 
         Everything the profile fixes, plus what this sampling rate makes
@@ -369,7 +369,7 @@ class TappedDelayLineChannel(Processor):
 
         Returns
         -------
-        dict
+        dict of str to object
 
         Examples
         --------
