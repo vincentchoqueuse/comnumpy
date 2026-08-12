@@ -1,5 +1,5 @@
-The Gaussian Noise Model
-========================
+Nonlinear Performance and the Gaussian Noise Model
+==================================================
 
 In this tutorial we answer the question every optical link designer has to
 answer -- **how much power should I launch?** -- twice, in that order. First
@@ -13,12 +13,11 @@ steps.
 
 .. note::
 
-   **Before you start.** :doc:`optical_fiber_nonlinearity` propagated a
-   signal through fibre with the split-step method and undid the damage with
-   digital back-propagation. This tutorial keeps the same propagation and
-   asks a different question: not *how do I repair the nonlinearity*, but
-   *how much of it will there be*, and what launch power minimizes the total
-   damage.
+   **Before you start.** This is the first of two tutorials on the optical
+   fibre, and the only channel of the series that is *nonlinear*. It asks
+   how much damage the nonlinearity does and what launch power minimizes
+   it; :doc:`optical_fiber_nonlinearity` then asks how to repair that
+   damage rather than budget for it.
 
 **What you'll learn:**
 
@@ -398,3 +397,8 @@ channel bandwidth at least a quarter of the spacing. Calling
 logs a warning naming the one that was crossed. It still returns a number:
 the model stays defined there and is often still usable, but silence would be
 a guarantee the paper does not give.
+
+Everything above **budgets** for the nonlinearity: it says how much there
+will be and picks the launch power that minimizes it. :doc:`optical_fiber_nonlinearity`
+asks the other question -- whether the receiver can undo it instead, and by
+how many decibels.

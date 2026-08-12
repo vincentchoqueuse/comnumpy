@@ -50,13 +50,14 @@ and nothing is explained twice.
      - Sending some constellation points more often than others, and the
        1.53 dB it recovers.
    * - 9
-     - :doc:`optical_fiber_nonlinearity`
-     - A nonlinear channel: fibre propagation, and digital back-propagation
-       to undo it.
-   * - 10
      - :doc:`gn_model`
-     - The same fibre in closed form: how much nonlinear noise it makes, the
-       launch power that minimizes it, and a split-step run on top to check.
+     - A nonlinear channel: how much noise the fibre's nonlinearity makes,
+       in closed form, and the launch power that minimizes it -- checked
+       against a split-step simulation.
+   * - 10
+     - :doc:`optical_fiber_nonlinearity`
+     - The performance the previous tutorial predicted, improved: digital
+       back-propagation undoes the nonlinearity instead of budgeting for it.
 
 If you are looking for one specific thing rather than a course, every page is
 self-contained enough to be read alone -- it will simply point back at the
@@ -76,5 +77,5 @@ The scripts behind these pages are also available on GitHub: `https://github.com
    alamouti
    coding
    shaping
-   optical_fiber_nonlinearity
    gn_model
+   optical_fiber_nonlinearity
