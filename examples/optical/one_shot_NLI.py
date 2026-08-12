@@ -145,7 +145,7 @@ profile_dbp = back_propagated.profile_execution_time(N)
 snr_dbp, ser_dbp = score(back_propagated)
 print(f"\ndispersion compensation   SNR={snr_per_span[N_span]:5.2f} dB  "
       f"receiver {1e3 * profile['dbp']:7.1f} ms")
-print(f"digital back-propagation  SNR={snr_dbp:5.2f} dB  "
+print(f"digital back-propagation  SNR={snr_dbp:5.2f} dB  SER={ser_dbp:.4f}  "
       f"receiver {1e3 * profile_dbp['dbp']:7.1f} ms  "
       f"residual phase={np.rad2deg(back_propagated['phase'].theta_):+.1f} deg")
 

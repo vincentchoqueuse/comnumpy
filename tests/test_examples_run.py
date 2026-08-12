@@ -62,8 +62,9 @@ SLOW = {
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
         "compensator -- 227 s measured 2026-08-09",
     "optical/NLI_simulation.py":
-        "split-step fibre and six receivers over eight launch powers -- "
-        "120 s measured 2026-08-12, which is the timeout itself",
+        "eight launch powers x four trials x two fibre configurations of "
+        "split-step propagation, then six receivers on each -- 850 s wall "
+        "/ 847 s CPU measured 2026-08-12",
     "optical/one_shot_NLI.py":
         "the whole chain re-run at six span counts, then once more for "
         "the profile and once for the receiver comparison -- 76 spans of "

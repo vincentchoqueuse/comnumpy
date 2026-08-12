@@ -110,12 +110,12 @@ only thing that changes is the distance travelled:
 
 .. code::
 
-    1 spans: SNR 22.47 dB, SER 0.0000, phase   -1.2 deg,   0.9 s
-    5 spans: SNR 21.15 dB, SER 0.0000, phase   -7.0 deg,   2.8 s
-   10 spans: SNR 18.89 dB, SER 0.0016, phase  -14.8 deg,   5.4 s
-   15 spans: SNR 17.22 dB, SER 0.0039, phase  -22.9 deg,   8.0 s
-   20 spans: SNR 15.78 dB, SER 0.0156, phase  -31.0 deg,  10.2 s
-   25 spans: SNR 14.61 dB, SER 0.0322, phase  -39.3 deg,  12.5 s
+    1 spans: SNR 22.47 dB, SER 0.0000, phase   -1.2 deg,   0.7 s
+    5 spans: SNR 21.15 dB, SER 0.0000, phase   -7.0 deg,   2.6 s
+   10 spans: SNR 18.89 dB, SER 0.0016, phase  -14.8 deg,   5.0 s
+   15 spans: SNR 17.22 dB, SER 0.0039, phase  -22.9 deg,   7.7 s
+   20 spans: SNR 15.78 dB, SER 0.0156, phase  -31.0 deg,  10.4 s
+   25 spans: SNR 14.61 dB, SER 0.0322, phase  -39.3 deg,  12.4 s
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -168,13 +168,13 @@ block on the way through:
    data_tx                     0.1 ms
    signal_tx                   0.0 ms
    upsampler                   0.2 ms
-   srrcfilter                  2.2 ms
-   signal_amplifier            0.2 ms
-   link                    12630.4 ms
+   srrcfilter                  2.0 ms
+   signal_amplifier            0.1 ms
+   link                    12749.8 ms
    bwfilter                    1.1 ms
    rx_field                    0.1 ms
-   dbp                         8.9 ms
-   srrcfilter_2                0.6 ms
+   dbp                        10.8 ms
+   srrcfilter_2                0.9 ms
    downsampler                 0.0 ms
    signal_amplifier_2          0.0 ms
    phase                       0.1 ms
@@ -217,8 +217,8 @@ Results
 
 .. code::
 
-   dispersion compensation   SNR=14.61 dB  receiver     8.9 ms
-   digital back-propagation  SNR=19.50 dB  receiver  2001.8 ms  residual phase=-1.0 deg
+   dispersion compensation   SNR=14.61 dB  receiver    10.8 ms
+   digital back-propagation  SNR=19.50 dB  SER=0.0003  receiver  1970.9 ms  residual phase=-1.0 deg
 
 .. image:: img/one_shot_nli_fig4.png
    :width: 100%
@@ -235,7 +235,8 @@ not as one rotation at the end.
 
 Back-propagation inverts that interleaving. The residual rotation falls to
 one degree, the effective SNR rises by **4.9 dB**, and the symbol error
-rate drops by two orders of magnitude.
+rate drops by two orders of magnitude -- from the 3.2 % of the 25-span row
+above to 0.03 %.
 
 
 What it costs
@@ -244,8 +245,8 @@ What it costs
 The last column of the table is the reason DBP is not simply switched on
 everywhere. Dispersion compensation is one FFT pair for the whole link; DBP at
 :math:`\mathrm{StPS}` steps per span is :math:`N_{sp} \times \mathrm{StPS}`
-FFT pairs plus as many pointwise phase rotations. Here that is 10 ms against
-2060 ms -- **200 times** -- for 4.9 dB.
+FFT pairs plus as many pointwise phase rotations. Here that is 11 ms against
+1971 ms -- **180 times** -- for 4.9 dB.
 
 That ratio is what the literature on low-complexity back-propagation exists to
 improve, and it is also why the useful question is not "DBP or not" but *how
