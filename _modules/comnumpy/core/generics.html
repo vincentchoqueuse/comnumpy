@@ -939,6 +939,69 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># wall time of the last pass (D23: data-dependent, hence the underscore)</span>
     <span class="n">elapsed_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_resampling_filters</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_resampling_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Warn when a rate change carries its anti-alias filter by hand.</span>
+
+<span class="sd">        A decimation by :math:`L` needs the band limited to :math:`1/L`</span>
+<span class="sd">        of the Nyquist frequency beforehand, and an interpolation by</span>
+<span class="sd">        :math:`L` needs the images removed at the same cutoff</span>
+<span class="sd">        afterwards. :class:`~comnumpy.core.processors.Downsampler` and</span>
+<span class="sd">        :class:`~comnumpy.core.processors.Upsampler` build that filter</span>
+<span class="sd">        themselves from ``L`` when ``use_filter=True``.</span>
+
+<span class="sd">        Writing the pair out instead states the cutoff twice -- once as</span>
+<span class="sd">        ``L``, once as the filter&#39;s ``wn`` -- and nothing then keeps the</span>
+<span class="sd">        two in step. That is the defect D41 exists to prevent, and it is</span>
+<span class="sd">        silent: a cutoff below the signal removes part of it, which</span>
+<span class="sd">        looks exactly like a channel impairment and puts a floor under</span>
+<span class="sd">        every curve measured through the chain.</span>
+
+<span class="sd">        This warns rather than raises. A brick-wall filter next to a</span>
+<span class="sd">        rate change is not always the anti-alias filter -- selecting one</span>
+<span class="sd">        channel out of a multiplex before decimating is a legitimate</span>
+<span class="sd">        pair of filters doing two jobs -- so the chain says what it sees</span>
+<span class="sd">        and computes anyway.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">BWFilter</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Downsampler</span><span class="p">,</span> <span class="n">Upsampler</span>
+
+        <span class="n">pairs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">BWFilter</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">second</span><span class="p">,</span> <span class="n">Downsampler</span><span class="p">):</span>
+                <span class="n">mask</span><span class="p">,</span> <span class="n">resampler</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="s2">&quot;before&quot;</span><span class="p">,</span> <span class="s2">&quot;aliasing&quot;</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">Upsampler</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">second</span><span class="p">,</span> <span class="n">BWFilter</span><span class="p">):</span>
+                <span class="n">mask</span><span class="p">,</span> <span class="n">resampler</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">second</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="s2">&quot;after&quot;</span><span class="p">,</span> <span class="s2">&quot;imaging&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">resampler</span><span class="o">.</span><span class="n">use_filter</span> <span class="ow">or</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>        <span class="c1"># two filters, deliberately, or nothing to check</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">resampler</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">wn</span> <span class="o">-</span> <span class="n">expected</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span>
+                <span class="n">too_narrow</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">wn</span> <span class="o">&lt;</span> <span class="n">expected</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;a BWFilter of cutoff </span><span class="si">%g</span><span class="s2"> sits </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">(L=</span><span class="si">%d</span><span class="s2">), whose anti-</span><span class="si">%s</span><span class="s2"> &quot;</span>
+                    <span class="s2">&quot;filter has cutoff 1/L = </span><span class="si">%g</span><span class="s2">. If it is meant to be that &quot;</span>
+                    <span class="s2">&quot;filter, its cutoff is wrong and the chain is </span><span class="si">%s</span><span class="s2">. Write &quot;</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">(</span><span class="si">%d</span><span class="s2">, use_filter=True), which derives the cutoff from L &quot;</span>
+                    <span class="s2">&quot;and cannot disagree with it (D41).&quot;</span><span class="p">,</span>
+                    <span class="n">mask</span><span class="o">.</span><span class="n">wn</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span>
+                    <span class="s2">&quot;throwing signal away, which reads as a channel &quot;</span>
+                    <span class="s2">&quot;impairment and floors every curve measured through it&quot;</span>
+                    <span class="k">if</span> <span class="n">too_narrow</span> <span class="k">else</span>
+                    <span class="s2">&quot;passing a band the rate change cannot carry, which folds &quot;</span>
+                    <span class="s2">&quot;back onto the signal&quot;</span><span class="p">,</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;BWFilter(</span><span class="si">%g</span><span class="s2">) </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">(L=</span><span class="si">%d</span><span class="s2">) is exactly the filter &quot;</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">(</span><span class="si">%d</span><span class="s2">, use_filter=True) builds. Prefer the argument: &quot;</span>
+                    <span class="s2">&quot;the cutoff is then written once, and cannot drift away &quot;</span>
+                    <span class="s2">&quot;from the rate change it belongs to (D41).&quot;</span><span class="p">,</span>
+                    <span class="n">mask</span><span class="o">.</span><span class="n">wn</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">resampler</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Sequential.block_ids">
 <a class="viewcode-back" href="../../../documentation/core/generics.html#comnumpy.core.generics.Sequential.block_ids">[docs]</a>
