@@ -62,11 +62,11 @@ SLOW = {
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
         "compensator -- 227 s measured 2026-08-09",
     "optical/NLI_simulation.py":
-        "split-step fibre + DBP over many launch powers -- 700 s measured "
-        "2026-08-09, the slowest example by an order of magnitude",
+        "split-step fibre and six receivers over eight launch powers -- "
+        "120 s measured 2026-08-12, which is the timeout itself",
     "optical/one_shot_NLI.py":
-        "split-step fibre propagation, 3 compensators -- 64 s measured "
-        "2026-08-09",
+        "split-step fibre propagation over 25 spans at 500 steps each, "
+        "then span-by-span analysis and DBP -- 50 s measured 2026-08-12",
     "simple/one_shot_srrc_awgn.py":
         "16 001-tap SRRC filter at oversampling 8 -- 113 s wall / 316 s "
         "CPU measured 2026-08-09",

@@ -1,150 +1,133 @@
-import numpy as np
-import matplotlib.pyplot as plt
+"""What back-propagation is worth, as a function of the number of steps.
+
+The launch-power sweep of Hager and Pfister (arXiv:2010.14258), with one
+curve per step count. Run from this directory: it writes the tutorial's
+figures into ../../docs/tutorials/img/.
+"""
 import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from comnumpy.core import Sequential
-from comnumpy.core.generators import GaussianGenerator
-from comnumpy.core.processors import Upsampler, Downsampler
-from comnumpy.core.filters import SRRCFilter, BWFilter
-from comnumpy.core.metrics import compute_effective_snr
-from comnumpy.optical.links import FiberLink
+from comnumpy.core.filters import BWFilter, SRRCFilter
+from comnumpy.core.generators import SymbolGenerator
+from comnumpy.core.mappers import SymbolMapper
+from comnumpy.core.metrics import compute_effective_snr, compute_ser
+from comnumpy.core.processors import Downsampler, Upsampler
+from comnumpy.core.utils import get_alphabet, hard_projector
+from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.optical.dbp import DBP
+from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import dbm_to_watt
 
-# This script uses exactly the same setup as described by Hager (https://github.com/chaeger/LDBP/blob/fd5b6f7c3f2a3409f1c30f1725b1474a4dff9662/ldbp/ldbp.py#L431)
-# https://arxiv.org/pdf/2010.14258.pdf
-# this simulation try to reproduce the curves of the publication using classicial SSFM and DBP layers.
-#
-# Be aware: The default configuration (N_trial=10) results in an execution time of approximately 5-10 minutes.
-# parameters
+img_dir = "../../docs/tutorials/img/"
 
-system = 1
-N_s = 2**9  # number of symbols
-oversampling_sim = 6  # number of samples/symbol for simulated channel
-oversampling_dsp = 2  # number of samples/symbol for dsp processing
-NF_dB = 5  # noise figure in dB
+M = 16
+alphabet = get_alphabet("QAM", M)
+N_s = 2**11               # 8192 symbols per point: the SER floor is 1e-4
+oversampling_sim = 6
+oversampling_dsp = 2
+NF_dB = 5
 rolloff = 0.1
-StPS = 500
-export_params = True
-DEBUG = False
+StPS = 200                    # forward propagation, the reference
+R_s = 32e9
+L_span = 100
+N_span = 10
+dBm_list = np.arange(-6, 6, 1.5)
+N_trial = 4
 
-if system == 0:
-    R_s = 10.7*(10**9)  # baud rate
-    L_span = 80  # in km
-    N_span = 25
-    dBm_list = np.arange(-10, 6)
-    y_lim = [13, 25]
-    x_lim = [-10, 5]
+fs = R_s * oversampling_sim
+oversampling_ratio = int(oversampling_sim / oversampling_dsp)
 
-if system == 1:
-    R_s = 32*(10**9)  # baud rate
-    L_span = 100  # in km
-    N_span = 10
-    dBm_list = np.arange(-6, 9)
-    y_lim = [16.5, 29.5]
-    x_lim = [-6, 8]
+source = Sequential([SymbolGenerator(M, name="tx"), SymbolMapper(alphabet)],
+                    taps=["tx"])
+transmitter = Sequential([
+        Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
+        SRRCFilter(rolloff, oversampling_sim, method="fft"),
+        ])
+fibre = Sequential([
+        FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
+                  fs=fs, name="link"),
+        BWFilter(1 / oversampling_sim),
+        Downsampler(oversampling_ratio),
+        ])
 
-N = N_s*oversampling_sim   # signal length in number of samples
-fs = R_s*oversampling_sim
-oversampling_ratio = int(oversampling_sim/oversampling_dsp)
-fs2 = R_s*oversampling_dsp
-
-# create signal generator
-generator = GaussianGenerator()
-
-# reference curve (wihtout nonlinearity)
-linear_channel = Sequential([
-                Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
-                SRRCFilter(rolloff, oversampling_sim, method="fft"),
-                FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB, fs=fs, use_only_linear=True, name="link"),
-                BWFilter(1/oversampling_sim),
-                Downsampler(oversampling_ratio),
-                ])
-
-# SSFM (generate the signal output after the communication chain)
-non_linear_channel = Sequential([
-                Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
-                SRRCFilter(rolloff, oversampling_sim, method="fft"),
-                FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB, fs=fs, name="link"),
-                BWFilter(1/oversampling_sim),
-                Downsampler(oversampling_ratio),
-                ])
-
-# construct receivers
-receiver_config_list = [
-            {"name": "linear link", "StPS": 1, "use_only_linear": True, "step_type": "linear"},
-            {"name": "linear", "StPS": 1, "use_only_linear": True, "step_type": "linear"},
-            {"name": "DBP1", "StPS": 1, "use_only_linear": False, "step_type": "linear"},
-            {"name": "DBP2 (log)", "StPS": 2, "use_only_linear": False, "step_type": "logarithmic"},
-            {"name": "DBP4 (log)", "StPS": 4, "use_only_linear": False, "step_type": "logarithmic"},
-            {"name": "DBP500", "StPS": 500, "use_only_linear": False, "step_type": "linear"}
-            ]
-receiver_list = []
-for scenario_temp in receiver_config_list:
-    receiver = Sequential([
-                DBP(N_span, L_span=L_span, StPS=scenario_temp["StPS"],
-                    step_type=scenario_temp["step_type"],
-                    fs=fs/oversampling_ratio,
-                    use_only_linear=scenario_temp["use_only_linear"],
-                    name="dbp"),
-                SRRCFilter(rolloff, oversampling_dsp, method="fft", scale=1/np.sqrt(oversampling_dsp)),
-                Downsampler(oversampling_dsp),
-                ])
-    receiver_list.append(receiver)
+# Every receiver is the same chain with one argument changed. "amplifier
+# noise only" back-propagates a link whose nonlinearity was switched off,
+# which is the bound the others are trying to reach.
+receivers = {
+    "amplifier noise only": {"StPS": 1, "use_only_linear": True},
+    "dispersion compensation": {"StPS": 1, "use_only_linear": True},
+    "DBP, 1 step/span": {"StPS": 1, "use_only_linear": False},
+    "DBP, 2 steps/span": {"StPS": 2, "use_only_linear": False},
+    "DBP, 4 steps/span": {"StPS": 4, "use_only_linear": False},
+    "DBP, 50 steps/span": {"StPS": 50, "use_only_linear": False},
+}
 
 
-# perform monte carlo simulation
-N_trial = 10
-N_dBm = len(dBm_list)
+def get_receiver(steps, linear_only):
+    return Sequential([
+        DBP(N_span, L_span=L_span, StPS=steps, step_type="linear",
+            fs=fs / oversampling_ratio, use_only_linear=linear_only,
+            name="dbp"),
+        SRRCFilter(rolloff, oversampling_dsp, method="fft",
+                   scale=1 / np.sqrt(oversampling_dsp)),
+        Downsampler(oversampling_dsp),
+        ])
 
-start_time = time.time()
 
-receiver_list = receiver_list
-N_curves = len(receiver_list)
-snr_array = np.zeros((N_dBm, N_curves))
+snr = {name: np.zeros(len(dBm_list)) for name in receivers}
+ser = {name: np.zeros(len(dBm_list)) for name in receivers}
+elapsed = dict.fromkeys(receivers, 0.0)
 
-for index in range(N_dBm):
+for index, dBm in enumerate(dBm_list):
+    amp = np.sqrt(dbm_to_watt(dBm))
+    for trial in range(N_trial):
+        source.seed(index * N_trial + trial)
+        symbols = source(N_s)
+        reference = source.tap("tx")
+        launched = amp * transmitter(symbols)
 
-    dBm = dBm_list[index]
-    Po = dbm_to_watt(dBm)
-    amp = np.sqrt(Po)
+        fibre.seed(trial)
+        fibre.set_params(link__use_only_linear=True)
+        linear = fibre(launched)
+        fibre.seed(trial)
+        fibre.set_params(link__use_only_linear=False)
+        nonlinear = fibre(launched)
 
-    for _ in range(N_trial):
+        for name, config in receivers.items():
+            field = linear if name == "amplifier noise only" else nonlinear
+            start = time.perf_counter()
+            estimate = get_receiver(config["StPS"], config["use_only_linear"])(field)
+            elapsed[name] += time.perf_counter() - start
+            theta = np.angle(np.sum(np.conj(estimate) * symbols))
+            corrected = np.exp(1j * theta) / amp * estimate
+            detected, _ = hard_projector(corrected, alphabet)
+            snr[name][index] += compute_effective_snr(symbols, corrected) / N_trial
+            ser[name][index] += compute_ser(reference, detected) / N_trial
 
-        x = generator(N_s)
-        x_scaled = amp * x
+snr_dB = {name: 10 * np.log10(values) for name, values in snr.items()}
 
-        # compute channel outputs once (avoid redundant SSFM runs)
-        z_linear = linear_channel(x_scaled)
-        z_nonlinear = non_linear_channel(x_scaled)
+print("launch power [dBm]  " + "  ".join(f"{value:5.1f}" for value in dBm_list))
+for name, values in snr_dB.items():
+    print(f"{name:24s}" + "  ".join(f"{value:5.1f}" for value in values))
 
-        for indice in range(len(receiver_list)):
-            z = z_linear if indice == 0 else z_nonlinear
+print("\nreceiver                  best SNR   at power    total time")
+for name, values in snr_dB.items():
+    best = int(np.argmax(values))
+    print(f"{name:24s} {values[best]:6.2f} dB {dBm_list[best]:6.1f} dBm "
+          f"{elapsed[name]:9.1f} s")
 
-            # get receiver
-            receiver = receiver_list[indice]
+ax = plot_error_rate(dBm_list, snr_dB, xlabel="launch power [dBm]",
+                     ylabel="effective SNR [dB]", yscale="linear",
+                     title=f"{N_span} x {L_span} km, {M}-QAM at "
+                           f"{R_s / 1e9:.0f} GBd")
+plt.tight_layout()
+plt.savefig(f"{img_dir}/nli_simulation_fig1.png")
 
-            # dsp non-linear compensation + scale and phase correction
-            y = receiver(z)
-            theta_est = np.angle(np.sum(np.conj(y)*x_scaled))   # estimate phase
-            coef = (1/amp)*np.exp(1j*theta_est)                 # compute estimated phase + deterministic amplitude correction
-            x_est = coef * y                                    # compensate signal
-
-            # compute metric
-            snr = compute_effective_snr(x, x_est)
-            snr_array[index, indice] += (1/N_trial) * snr
-
-stop_time = time.time()
-delta_time = stop_time - start_time
-print(f"execution time: {delta_time}")
-
-legend_names = [config["name"] for config in receiver_config_list]
-plt.figure()
-plt.plot(dBm_list, 10*np.log10(snr_array))
-plt.ylabel("Effective SNR (dB)")
-plt.legend(legend_names)
-plt.xlabel("dBm")
-plt.ylim(y_lim)
-plt.xlim(x_lim)
-plt.grid()
-plt.show()
+ax = plot_error_rate(dBm_list, ser, xlabel="launch power [dBm]", ylabel="SER",
+                     title="the same sweep, in symbol error rate")
+ax.set_ylim(1e-4, 1)
+plt.tight_layout()
+plt.savefig(f"{img_dir}/nli_simulation_fig2.png")

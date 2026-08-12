@@ -255,12 +255,34 @@ class Sequential():
                 post_init()
         return self
 
+    def _split_parameter(self, key: str) -> tuple[str, str]:
+        """Split ``"block.field"`` or ``"block__field"`` (decision D34).
+
+        The dotted form is the addressing used everywhere a parameter is
+        held in a variable -- :func:`~comnumpy.sweep.sweep` builds those
+        strings. A dot is not a valid character in a keyword argument,
+        though, so writing one by hand costs a ``**{...}`` wrapper. The
+        double underscore is the same address spelled as an identifier,
+        which is scikit-learn's convention for the same method and is
+        accepted here for that reason.
+        """
+        if "." in key:
+            return tuple(key.split(".", 1))                    # type: ignore[return-value]
+        # The first double underscore is the separator, unambiguously:
+        # `block_ids` collapses every run of non-alphanumerics into a
+        # single underscore, so no block id can contain one (checked in
+        # tests/core/test_set_params.py).
+        block_id, _, field_name = key.partition("__")
+        return block_id, field_name
+
     def set_params(self, **params: Any) -> "Sequential":
         """
         Reconfigure blocks after construction (decision D34).
 
-        Parameters are addressed with the dotted notation
-        ``"<block_id>.<field>"`` where ``<block_id>`` comes from
+        Parameters are addressed by block and field, written either
+        ``"<block_id>.<field>"`` or ``<block_id>__<field>`` -- the second
+        is the same address as a plain keyword argument, so it needs no
+        ``**{...}`` around it. ``<block_id>`` comes from
         :meth:`block_ids`. After all assignments, the parametric
         precomputation of each touched block (``__post_init__``) is
         re-run, so the block state stays consistent.
@@ -269,17 +291,24 @@ class Sequential():
         --------
         >>> from comnumpy.core.channels import AWGN
         >>> chain = Sequential([AWGN(sigma2=0.1)])
-        >>> _ = chain.set_params(**{"awgn.sigma2": 0.01})
+        >>> _ = chain.set_params(awgn__sigma2=0.01)
         >>> chain[0].sigma2
         0.01
+
+        The dotted form is the one to use when the address is computed:
+
+        >>> _ = chain.set_params(**{"awgn.sigma2": 0.02})
+        >>> chain[0].sigma2
+        0.02
         """
         touched: List[Processor] = []
         for dotted, value in params.items():
-            block_id, _, field_name = dotted.partition(".")
+            block_id, field_name = self._split_parameter(dotted)
             if not field_name:
                 raise ValueError(
-                    f"parameter {dotted!r} is not in the dotted form "
-                    f"'<block_id>.<field>' (block ids: {self.block_ids()})")
+                    f"parameter {dotted!r} does not name a block and a "
+                    f"field, as '<block_id>.<field>' or "
+                    f"'<block_id>__<field>' (block ids: {self.block_ids()})")
             module = self.get_module_by_id(block_id)
             field_names = {f.name for f in dataclasses.fields(module) if f.init}
             if field_name not in field_names:

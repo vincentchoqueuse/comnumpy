@@ -151,3 +151,25 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig5.png")
 # cannot say something the code does not.
 with open(f"{mermaid_dir}/ofdm_chain.mmd", "w") as stream:
     stream.write(ofdm_chain.to_mermaid())
+
+# --- where the difference comes from ---------------------------------
+# OFDM gives subcarrier k the gain of one frequency, so its symbols see a
+# spread of SNRs. Single-carrier zero forcing inverts a *linear*
+# convolution, which spreads the enhanced noise over the whole block, so
+# every symbol sees the same gain -- the harmonic mean of |H|^2.
+from scipy.linalg import toeplitz              # noqa: E402  (local to this study)
+
+gain = np.abs(np.fft.fft(h, N_carrier)) ** 2
+convolution = toeplitz(np.r_[h, np.zeros(N - 1)], np.r_[h[0], np.zeros(N - 1)])
+enhancement = np.real(np.diag(
+    np.linalg.inv(convolution.conj().T @ convolution)))
+# AWGN(snr_dB=) measures the power at its input, i.e. after the channel
+rho = 10 ** (snr_dB / 10) / gain.mean()
+
+print(f"\nper-symbol SNR at a nominal {snr_dB} dB")
+print(f"  OFDM  : {10 * np.log10(rho * gain.min()):5.1f} to "
+      f"{10 * np.log10(rho * gain.max()):5.1f} dB")
+print(f"  SC-ZF : {10 * np.log10(rho / enhancement.max()):5.1f} to "
+      f"{10 * np.log10(rho / enhancement.min()):5.1f} dB")
+print(f"  arithmetic mean of |H|^2 {gain.mean():.3f}, "
+      f"harmonic mean {1 / np.mean(1 / gain):.3f}")

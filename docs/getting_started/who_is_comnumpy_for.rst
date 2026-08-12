@@ -53,7 +53,7 @@ the ones that matter in daily research work. A chain can be::
                         AWGN(snr_dB=15, name="noise")], taps=["tx"])
 
     chain.seed(42)                            # every stochastic block, reproducibly
-    chain.set_params(**{"noise.snr_dB": 12})  # reconfigured after construction
+    chain.set_params(noise__snr_dB=12)        # reconfigured after construction
     results = sweep(chain, {"noise.snr_dB": range(0, 20, 2)})
     text = to_json(chain)                     # the experiment, as a file
     print(chain.to_mermaid())                 # the experiment, as a picture

@@ -55,12 +55,12 @@ def simulate(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed):
     """Average one chain over independent quasi-static fading draws."""
     rng = np.random.default_rng(seed)
     chain.seed(seed)
-    chain.set_params(**{"noise.sigma2": 10 ** (-snr_dB / 10)})
+    chain.set_params(noise__sigma2=10 ** (-snr_dB / 10))
     errors = total = 0
     for _ in range(n_channels):
         realization = rayleigh_channel(n_rx, n_tx, rng=rng)
-        chain.set_params(**{"channel.H": realization,
-                            "detector.H": realization})
+        chain.set_params(channel__H=realization,
+                         detector__H=realization)
         detected = chain(stimulus)
         errors += int(np.sum(chain.tap("tx") != detected))
         total += detected.size

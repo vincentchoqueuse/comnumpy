@@ -44,6 +44,24 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — `set_params` accepts scikit-learn's separator
+
+`set_params` was borrowed from scikit-learn but not its separator, so a
+parameter written by hand cost a `**{...}` wrapper around a string:
+`chain.set_params(**{"fibre.use_only_linear": True})` for one boolean.
+The double underscore is the same address spelled as an identifier, so
+it can be a plain keyword argument:
+
+```python
+chain.set_params(fibre__use_only_linear=True, noise__sigma2=0.01)
+```
+
+The dotted form is unchanged and stays the one to use when the address
+is computed rather than typed -- `sweep` builds its addresses as
+strings. The split is unambiguous because `block_ids` collapses every
+run of non-alphanumerics into a single underscore, so no block id can
+contain a double one; a test pins that.
+
 ### Documentation — the tutorials on one plan
 
 The OFDM, MIMO, Alamouti and PAPR tutorials are rewritten on a single
