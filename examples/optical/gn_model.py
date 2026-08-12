@@ -120,7 +120,7 @@ def launch_gain(power_W):
     return np.sqrt(np.asarray(power_W) / 2)
 
 
-def link_chain(order=16, power_W=1e-3):
+def get_chain(order=16, power_W=1e-3):
     """The whole link, from symbols to equalized symbols, as one chain."""
     source = ([GaussianGenerator(1.0, name="tx")] if order is None else
               [SymbolGenerator(order, name="source"),
@@ -152,7 +152,7 @@ def measure(chain, powers_W, seed=3):
                  reference="tx", seed=seed)["snr_dB"]
 
 
-chain = link_chain()
+chain = get_chain()
 chain.summary(STIMULUS)
 
 chain.set_params(fibre__use_only_linear=True)
@@ -198,13 +198,13 @@ print(f"\nThe GN model predicts {nli_only_dB:.2f} dB of nonlinear SNR at "
 print("stimulus     nonlinear SNR   above the model")
 for order, label in ((4, "QPSK"), (16, "16QAM"), (64, "64QAM"),
                      (256, "256QAM"), (None, "Gaussian")):
-    noiseless = link_chain(order)
+    noiseless = get_chain(order)
     noiseless.set_params(fibre__noise_scaling=0.0)
     value = measure(noiseless, [1e-3])[0]
     print(f"{label:12s} {value:10.2f} dB   {value - nli_only_dB:+10.2f} dB")
 
 mermaid_dir = "../../docs/tutorials/mermaid/"
 with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
-    stream.write(link_chain().to_mermaid())
+    stream.write(get_chain().to_mermaid())
 
 plt.show()

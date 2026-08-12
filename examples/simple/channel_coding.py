@@ -52,7 +52,7 @@ print(row("a_d    ", spectrum.a_d))
 print(row("beta_d ", spectrum.beta_d))
 
 
-def uncoded_chain():
+def get_uncoded_chain():
     return Sequential([
         SymbolGenerator(2, name="tx"),
         SymbolMapper(BPSK),
@@ -61,7 +61,7 @@ def uncoded_chain():
     ], taps=["tx"], name="uncoded BPSK")
 
 
-def coded_chain(soft):
+def get_coded_chain(soft):
     return Sequential([
         SymbolGenerator(2, name="tx"),
         ConvolutionalEncoder((0o133, 0o171)),
@@ -73,9 +73,9 @@ def coded_chain(soft):
 
 
 curves = {}
-for label, chain, code_rate in (("uncoded", uncoded_chain(), 1.0),
-                                ("hard-decision Viterbi", coded_chain(False), rate),
-                                ("soft-decision Viterbi", coded_chain(True), rate)):
+for label, chain, code_rate in (("uncoded", get_uncoded_chain(), 1.0),
+                                ("hard-decision Viterbi", get_coded_chain(False), rate),
+                                ("soft-decision Viterbi", get_coded_chain(True), rate)):
     start = time.perf_counter()
     results = sweep(chain, "noise.snr_dB", snr_dB(ebn0_dB, code_rate),
                     {"ber": compute_ser}, n_bits, reference="tx", seed=4)
@@ -134,7 +134,7 @@ plt.tight_layout()
 plt.savefig(f"{img_dir}/channel_coding_fig2.png")
 
 mermaid_dir = "../../docs/tutorials/mermaid/"
-for diagram_name, diagram_chain in [("channel_coding", coded_chain(True))]:
+for diagram_name, diagram_chain in [("channel_coding", get_coded_chain(True))]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())
 

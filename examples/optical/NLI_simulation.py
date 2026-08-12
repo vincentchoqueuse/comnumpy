@@ -51,7 +51,7 @@ oversampling_ratio = oversampling_sim // oversampling_dsp
 # receiver would re-do 192 split-step propagations instead of 32, and
 # the propagation is where all the time goes. So the chain is cut where
 # the physics ends and the DSP begins.
-def get_unprocessed_chain():
+def get_channel():
     """Symbols to the field the receiver sees, launch power included."""
     return Sequential([
         SymbolGenerator(constellation.order, name="data_tx"),
@@ -116,7 +116,7 @@ receivers = {
     "DBP, 50 steps/span": (50, False),
 }
 
-channel = get_unprocessed_chain()
+channel = get_channel()
 snr = {}
 ser = {}
 elapsed = {}

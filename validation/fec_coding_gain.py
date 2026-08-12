@@ -25,7 +25,7 @@ CODE_RATE = 0.5
 BPSK = np.array([1.0 + 0.0j, -1.0 + 0.0j])  # bit 0 -> +1, bit 1 -> -1
 
 
-def coded_chain(soft):
+def get_coded_chain(soft):
     bpsk = BPSK
     demapper = (SymbolDemapper(bpsk, soft=True, name="demap") if soft
                 else SymbolDemapper(bpsk, name="demap"))
@@ -39,7 +39,7 @@ def coded_chain(soft):
     ])
 
 
-def uncoded_chain():
+def get_uncoded_chain():
     bpsk = BPSK
     return Sequential([
         SymbolGenerator(2, name="tx"),
@@ -54,13 +54,13 @@ def main():
     snr_coded = EBN0_DB_RANGE + 10 * np.log10(CODE_RATE)
 
     ber = {}
-    ber["uncoded"] = sweep(uncoded_chain(), "noise.snr_dB", EBN0_DB_RANGE,
+    ber["uncoded"] = sweep(get_uncoded_chain(), "noise.snr_dB", EBN0_DB_RANGE,
                            {"ber": compute_ber_bits}, N_BITS,
                            reference="tx", seed=10)["ber"]
-    ber["hard"] = sweep(coded_chain(soft=False), "noise.snr_dB", snr_coded,
+    ber["hard"] = sweep(get_coded_chain(soft=False), "noise.snr_dB", snr_coded,
                         {"ber": compute_ber_bits}, N_BITS,
                         reference="tx", seed=20)["ber"]
-    ber["soft"] = sweep(coded_chain(soft=True), "noise.snr_dB", snr_coded,
+    ber["soft"] = sweep(get_coded_chain(soft=True), "noise.snr_dB", snr_coded,
                         {"ber": compute_ber_bits}, N_BITS,
                         reference="tx", seed=30)["ber"]
 

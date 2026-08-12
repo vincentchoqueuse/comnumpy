@@ -261,7 +261,7 @@ removed by the backward pass.
 
 Dispersion compensation alone is the same algorithm with the nonlinear term
 switched off -- one step per span instead of :math:`\mathrm{StPS}` -- so the
-two strategies are one argument of ``get_full_chain`` apart.
+two strategies are one argument of ``get_chain`` apart.
 
 Results
 """""""

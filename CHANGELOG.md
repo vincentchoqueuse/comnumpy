@@ -247,6 +247,30 @@ and wiring was not fed, and profiling a wired chain raised. It now
 shares the edge plan with `forward` and keys its result by block id
 (`block_ids()`), so two blocks with the same name get one entry each.
 
+### Documentation — one name for the function that builds a chain
+
+Seven example scripts wrapped their chain in a factory, under four
+spellings for the same idea: `get_link`, `link`, `link_chain`,
+`get_full_chain`, `uncoded_chain`. A reader who learnt one had to
+re-learn it on the next page.
+
+They now follow one rule, written into the tutorial skill. A factory
+exists only when the chain is built more than once — a chain built once
+and used once stays inline, because wrapping four blocks in a function
+called once with no argument is an indirection between the reader and
+their first chain. When it exists it is `get_<thing>()`: `get_chain()`
+for the page's one chain, `get_channel()` and `get_receiver()` for the
+two halves when a page cuts one in two, `get_transmitter()` when what
+comes back is a sub-assembly rather than a chain, and
+`get_uncoded_chain()` / `get_coded_chain(soft)` when the page compares
+two chains that differ in structure rather than in a parameter.
+
+The third rule is the one that motivated the other two: what the page
+varies is a parameter of the function, never a module global read
+behind the signature's back. `get_full_chain(n_spans, steps,
+linear_only)` also read eleven module-level names, so the call site did
+not say what changed between two calls.
+
 ### Documentation — the tutorials on one plan
 
 The OFDM, MIMO, Alamouti and PAPR tutorials are rewritten on a single

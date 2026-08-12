@@ -55,7 +55,7 @@ for threshold in (0.1, 0.01):
 # --- the three links --------------------------------------------------
 
 
-def get_link(kind, H, sigma2=sigma2):
+def get_chain(kind, H, sigma2=sigma2):
     """Build the chain of one scheme, on a given channel realization.
 
     The three schemes differ by two blocks -- what is put on the
@@ -84,9 +84,9 @@ def get_link(kind, H, sigma2=sigma2):
             raise ValueError(f"unknown link {kind!r}")
 
 
-alamouti = get_link("alamouti", rayleigh_channel(1, 2, seed=42))
-siso = get_link("linear", rayleigh_channel(1, 1, seed=1))
-mrc = get_link("linear", rayleigh_channel(2, 1, seed=2))
+alamouti = get_chain("alamouti", rayleigh_channel(1, 2, seed=42))
+siso = get_chain("linear", rayleigh_channel(1, 1, seed=1))
+mrc = get_chain("linear", rayleigh_channel(2, 1, seed=2))
 
 # --- one shot ---------------------------------------------------------
 alamouti.seed(7)                        # every stochastic block, reproducibly

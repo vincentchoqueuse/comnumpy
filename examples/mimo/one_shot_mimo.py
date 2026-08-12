@@ -25,7 +25,7 @@ sigma2 = 0.1
 H = rayleigh_channel(N_r, N_t, seed=0)
 
 
-def link(detector):
+def get_chain(detector):
     """The same link, closed by one detector or another.
 
     Only the last block changes, which is the point: a detector is a
@@ -53,7 +53,7 @@ detectors = {
 }
 chains = {}
 for name, detector in detectors.items():
-    chains[name] = link(detector)
+    chains[name] = get_chain(detector)
 
 for name, chain in chains.items():
     chain.seed(0)

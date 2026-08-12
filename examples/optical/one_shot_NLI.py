@@ -44,7 +44,7 @@ amp = np.sqrt(dbm_to_watt(dBm))
 
 
 # --- the chain --------------------------------------------------------
-def get_full_chain(n_spans, *, steps=1, linear_only=True):
+def get_chain(n_spans, *, steps=1, linear_only=True):
     """The whole link, from the symbols to the decisions.
 
     Transmitter, ``n_spans`` of fibre and amplifier, and the receiver
@@ -109,7 +109,7 @@ snr_per_span = {}
 snr_ase_only = {}
 print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
-    chain = get_full_chain(n_spans).seed(0)
+    chain = get_chain(n_spans).seed(0)
     estimates[n_spans] = chain(N)
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
@@ -136,7 +136,7 @@ for n_spans in spans:
 # pulse shaping, resampling, matched filtering. It has to sit far above
 # every number in the table, or the chain is measuring its own filters
 # rather than the fibre.
-floor = get_full_chain(1).seed(0)
+floor = get_chain(1).seed(0)
 floor.set_params(link__use_only_linear=True, link__noise_scaling=0.0)
 floor(N)
 print(f"\ndistortion floor of the chain, no noise and no fibre: "
@@ -182,7 +182,7 @@ plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
 
 # Where that time goes. `profile_execution_time` runs the chain and times
 # each block on the way through, so the same pass answers the question.
-profile = get_full_chain(N_span).seed(0).profile_execution_time(N)
+profile = get_chain(N_span).seed(0).profile_execution_time(N)
 print("\nblock                    time")
 for block_id, elapsed in profile.items():
     print(f"{block_id:22s} {1e3 * elapsed:8.1f} ms")
@@ -191,7 +191,7 @@ for block_id, elapsed in profile.items():
 # The same chain with the nonlinear term switched back on in the
 # receiver. Everything else -- the seed, the link, the phase correction
 # -- is unchanged, so the comparison is over the same realization.
-back_propagated = get_full_chain(N_span, steps=StPS_DBP,
+back_propagated = get_chain(N_span, steps=StPS_DBP,
                                  linear_only=False).seed(0)
 profile_dbp = back_propagated.profile_execution_time(N)
 snr_dbp, ser_dbp = score(back_propagated)
