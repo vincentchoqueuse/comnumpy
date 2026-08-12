@@ -38,7 +38,7 @@ from comnumpy import Sequential, SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.core.processors import Serial2Parallel
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.ofdm.metrics import compute_papr
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 
@@ -67,7 +67,7 @@ def papr_dB(N, os, n_symbols, seed, chunk=500):
     carrier_type[:N] = 1        # a frequency shift leaves |x[n]| unchanged
     chain = Sequential([
         SymbolGenerator(M),
-        SymbolMapper(get_alphabet("PSK", M)),
+        SymbolMapper(Constellation("PSK", M)),
         Serial2Parallel(N),
         CarrierAllocator(carrier_type=carrier_type),
         IFFTProcessor(),

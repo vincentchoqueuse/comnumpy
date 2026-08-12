@@ -9,6 +9,7 @@ hold the object's promises: the derived facts agree with the alphabet,
 the object goes wherever the array went, and `metrics` converts between
 the two SNR conventions instead of leaving that to the caller.
 """
+import dataclasses
 import unittest
 
 import matplotlib
@@ -61,7 +62,7 @@ class TestConstruction(unittest.TestCase):
 
     def test_it_is_frozen(self):
         constellation = Constellation("PSK", 4)
-        with self.assertRaises(Exception):
+        with self.assertRaises(dataclasses.FrozenInstanceError):
             constellation.order = 8       # type: ignore[misc]
 
 

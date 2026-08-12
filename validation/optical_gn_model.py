@@ -59,7 +59,7 @@ import sys
 
 import numpy as np
 
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import gn_model_nli_power
@@ -109,8 +109,9 @@ def draw(rng, shape, fmt):
     if fmt == "gaussian":
         return (rng.standard_normal(shape)
                 + 1j * rng.standard_normal(shape)) / np.sqrt(2)
-    alphabet = get_alphabet("QAM", 4 if fmt == "QPSK" else 16)
-    return alphabet[rng.integers(0, alphabet.size, shape)]
+    constellation = Constellation("QAM", 4 if fmt == "QPSK" else 16)
+    indices = rng.integers(0, constellation.order, shape)
+    return constellation.alphabet[indices]
 
 
 def comb(rng, n_channels, n_sym, oversampling, power_W, n_pol, fmt):
