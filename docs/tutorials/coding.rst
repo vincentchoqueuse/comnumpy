@@ -106,7 +106,7 @@ a path in a **trellis**. That trellis is the object the decoder searches.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 30-41
+   :lines: 30-52
 
 .. code::
 
@@ -168,7 +168,7 @@ wrong side. The information thrown away by deciding too early is worth about
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 43-73
+   :lines: 54-86
 
 The chain, as the chain itself describes it:
 
@@ -177,8 +177,8 @@ The chain, as the chain itself describes it:
 .. code::
 
    uncoded                  7.86e-02 5.68e-02 3.79e-02 2.28e-02 1.31e-02 6.45e-03 2.80e-03 7.75e-04   (0.0 s)
-   hard-decision Viterbi    3.71e-01 2.43e-01 1.14e-01 3.15e-02 7.52e-03 9.75e-04 0.00e+00 0.00e+00   (9.3 s)
-   soft-decision Viterbi    1.40e-01 4.32e-02 3.63e-03 3.50e-04 0.00e+00 0.00e+00 0.00e+00 0.00e+00   (10.4 s)
+   hard-decision Viterbi    3.71e-01 2.43e-01 1.14e-01 3.15e-02 7.52e-03 9.75e-04 0.00e+00 0.00e+00   (8.1 s)
+   soft-decision Viterbi    1.40e-01 4.32e-02 3.63e-03 3.50e-04 0.00e+00 0.00e+00 0.00e+00 0.00e+00   (8.9 s)
 
 Three readings, and the first one is a warning.
 
@@ -224,7 +224,7 @@ closed form: no simulation, no random draw, and no floor at
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 75-82
+   :lines: 88-98
 
 .. code::
 
@@ -279,7 +279,7 @@ by construction, there is no hard-decision variant of it.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 84-107
+   :lines: 100-125
 
 .. code::
 
@@ -289,7 +289,7 @@ by construction, there is no hard-decision variant of it.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 109-122
+   :lines: 127-140
 
 .. image:: img/channel_coding_fig2.png
    :width: 100%

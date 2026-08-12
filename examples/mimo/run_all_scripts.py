@@ -2,7 +2,10 @@ import os
 import subprocess
 
 # List all Python files in the current directory
-script_files = [f for f in os.listdir('.') if f.endswith('.py') and f != 'run_all_scripts.py']
+script_files = []
+for name in os.listdir('.'):
+    if name.endswith('.py') and name != 'run_all_scripts.py':
+        script_files.append(name)
 
 # Run each script
 for script in script_files:

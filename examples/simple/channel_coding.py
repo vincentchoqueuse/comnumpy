@@ -29,16 +29,27 @@ def snr_dB(ebn0, code_rate):
 
 
 encoder = ConvolutionalEncoder((0o133, 0o171))
-print(f"generators {tuple(oct(value) for value in encoder.g)}  "
+generators = []
+for value in encoder.g:
+    generators.append(oct(value))
+print(f"generators {tuple(generators)}  "
       f"K = {encoder.K}  states = {2 ** (encoder.K - 1)}  "
       f"rate = {encoder.rate}")
 print("4 bits in ->", encoder(np.array([1, 0, 1, 1])), "(with the tail)")
 
 spectrum = distance_spectrum((0o133, 0o171), n_terms=4)
 print(f"free distance d_free = {spectrum.d_free}")
-print("d      ", " ".join(f"{d:6d}" for d in spectrum.distances[:6]))
-print("a_d    ", " ".join(f"{a:6d}" for a in spectrum.a_d[:6]))
-print("beta_d ", " ".join(f"{b:6d}" for b in spectrum.beta_d[:6]))
+def row(label, values):
+    """One line of the distance spectrum, six terms wide."""
+    line = label
+    for value in values[:6]:
+        line += f"{value:7d}"
+    return line
+
+
+print(row("d      ", spectrum.distances))
+print(row("a_d    ", spectrum.a_d))
+print(row("beta_d ", spectrum.beta_d))
 
 
 def uncoded_chain():
@@ -69,11 +80,16 @@ for label, chain, code_rate in (("uncoded", uncoded_chain(), 1.0),
     results = sweep(chain, "noise.snr_dB", snr_dB(ebn0_dB, code_rate),
                     {"ber": compute_ser}, n_bits, reference="tx", seed=4)
     curves[label] = results["ber"]
-    print(f"{label:24s} " + " ".join(f"{value:.2e}" for value in results["ber"])
-          + f"   ({time.perf_counter() - start:.1f} s)")
+    line = f"{label:24s} "
+    for value in results["ber"]:
+        line += f"{value:.2e} "
+    print(line + f"  ({time.perf_counter() - start:.1f} s)")
 
 bound = union_bound_ber(distance_spectrum((0o133, 0o171), n_terms=8), ebn0_dB)
-print("union bound              " + " ".join(f"{value:.2e}" for value in bound))
+line = "union bound              "
+for value in bound:
+    line += f"{value:.2e} "
+print(line)
 
 ax = plot_error_rate(ebn0_dB, curves, theory={"soft-decision Viterbi": bound},
                      x_theory=ebn0_dB, xlabel="Eb/N0 [dB]", ylabel="BER",
@@ -103,8 +119,10 @@ for n_iter in (5, 25):
                     {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
                     reference="tx", seed=6)
     ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), {n_iter} iterations"] = results["ber"]
-    print(f"LDPC {n_iter:2d} iterations       "
-          + " ".join(f"{value:.2e}" for value in results["ber"]))
+    line = f"LDPC {n_iter:2d} iterations       "
+    for value in results["ber"]:
+        line += f"{value:.2e} "
+    print(line)
 
 comparison = {"uncoded": curves["uncoded"],
               "soft-decision Viterbi": curves["soft-decision Viterbi"]}

@@ -94,8 +94,10 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig2.png")
 
 # --- the metric -------------------------------------------------------
 papr_dB = compute_papr(blocks, unit="dB", axis=-1)
-print("PAPR of the four symbols above: "
-      + " ".join(f"{value:.2f}" for value in papr_dB) + " dB")
+line = "PAPR of the four symbols above: "
+for value in papr_dB:
+    line += f"{value:.2f} "
+print(line + "dB")
 print(f"their average                 : "
       f"{compute_papr(blocks, unit='dB', axis=-1, reduction='mean'):.2f} dB")
 

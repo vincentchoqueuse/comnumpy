@@ -109,7 +109,7 @@ with those values, which saves reducing them by hand:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 96-100
+   :lines: 96-102
 
 .. code::
 
@@ -172,7 +172,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 105-141
+   :lines: 107-143
 
 Results
 """""""
@@ -184,7 +184,7 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 142-146
+   :lines: 144-148
 
 .. code::
 
@@ -195,7 +195,7 @@ Which of the two models to believe is a question the measurement answers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 148-162
+   :lines: 150-164
 
 .. code::
 

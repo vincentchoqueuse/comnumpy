@@ -104,7 +104,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 56-62
+   :lines: 62-68
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -135,7 +135,7 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 38-44
+   :lines: 38-50
 
 .. code::
 
@@ -160,7 +160,7 @@ For comparison, we also compute the theoretical SER curve for QAM modulation ove
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 46-48
+   :lines: 52-54
 
 
 Results and Visualization
@@ -174,7 +174,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 50-55
+   :lines: 56-61
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%

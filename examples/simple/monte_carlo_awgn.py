@@ -40,8 +40,14 @@ for snr_dB in snr_dB_list[::8]:
 results = sweep(chain, "awgn_channel.snr_dB", snr_dB_list,
                 {"ser": compute_ser}, N, reference="tx", seed=1)
 ser_array = results["ser"]
-print("loop  :", " ".join(f"{value:.3e}" for value in by_hand))
-print("sweep :", " ".join(f"{value:.3e}" for value in ser_array[::8]))
+loop_line = "loop  :"
+for value in by_hand:
+    loop_line += f" {value:.3e}"
+print(loop_line)
+sweep_line = "sweep :"
+for value in ser_array[::8]:
+    sweep_line += f" {value:.3e}"
+print(sweep_line)
 
 # compute theoretical SER metric
 snr_per_bit = (10**(snr_dB_list/10))/np.log2(M)

@@ -204,9 +204,13 @@ Substantive changes rather than reorganisation:
   diagram.
 - **No comprehensions in the tutorial scripts.** A list, dict or
   generator expression reads as one dense line to someone learning the
-  library; the loop is written out instead. Applied to the pages
-  rewritten here, and recorded in `.claude/skills/comnumpy-tutorial`
-  along with the rest of the house plan.
+  library; the loop is written out instead. Applied to every script
+  under `examples/`, and checked: each one was re-run and its printed
+  output compared with what its page quotes, which is unchanged apart
+  from run times. The rule, the plan and the register live in
+  `.claude/skills/comnumpy-tutorial`, which `.gitignore` now lets
+  through -- the rest of `.claude/` is scratch, the skills are project
+  assets and must survive a fresh checkout.
 
 ### Added (milestones 2-5)
 

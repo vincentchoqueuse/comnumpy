@@ -51,7 +51,9 @@ detectors = {
     "ML": MaximumLikelihoodDetector(alphabet, H=H, name="detector"),
     "SD": SphereDecoder(alphabet, H=H, name="detector"),
 }
-chains = {name: link(detector) for name, detector in detectors.items()}
+chains = {}
+for name, detector in detectors.items():
+    chains[name] = link(detector)
 
 for name, chain in chains.items():
     chain.seed(0)
@@ -89,23 +91,32 @@ NOISE_AWARE = {"MMSE", "OSIC"}   # the two detectors that weight by sigma2
 def average_ser(name, chain, snr_dB, seed=0):
     """Average one chain over independent Rayleigh draws at one SNR."""
     rng = np.random.default_rng(seed)
-    channels = [rayleigh_channel(N_r, N_t, rng=rng) for _ in range(n_channels)]
+    draws = []
+    for _ in range(n_channels):
+        matrix = rayleigh_channel(N_r, N_t, rng=rng)
+        draws.append((matrix, matrix))
     noise_variance = N_t * 10 ** (-snr_dB / 10)
     params = {"noise.sigma2": noise_variance}
     if name in NOISE_AWARE:
         params["detector.sigma2"] = noise_variance
     chain.set_params(**params)
-    results = sweep(chain, ("channel.H", "detector.H"),
-                    [(matrix, matrix) for matrix in channels],
+    results = sweep(chain, ("channel.H", "detector.H"), draws,
                     {"ser": compute_ser}, stimulus=(N_t, n_symbols),
                     reference="tx", seed=seed)
     return float(np.mean(results["ser"]))
 
 
-curves = {name: [average_ser(name, chain, snr_dB) for snr_dB in snr_dB_list]
-          for name, chain in chains.items()}
+curves = {}
+for name, chain in chains.items():
+    values = []
+    for snr_dB in snr_dB_list:
+        values.append(average_ser(name, chain, snr_dB))
+    curves[name] = values
 for name, values in curves.items():
-    print(f"{name:5s} " + " ".join(f"{value:.4f}" for value in values))
+    line = f"{name:5s} "
+    for value in values:
+        line += f"{value:.4f} "
+    print(line)
 
 ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
                      title=f"{N_r}x{N_t} MIMO, {M}-PSK, "
@@ -125,7 +136,9 @@ big_detectors = {
     "ML": MaximumLikelihoodDetector(big_alphabet, H=big_H, name="detector"),
     "SD": big_decoder,
 }
-elapsed = {name: [] for name in big_detectors}
+elapsed = {}
+for name in big_detectors:
+    elapsed[name] = []
 for name, detector in big_detectors.items():
     big_chain = Sequential([
         SymbolGenerator(16, name="tx"),
