@@ -8,7 +8,7 @@ import numpy as np
 
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
-from comnumpy.core.filters import BWFilter, SRRCFilter
+from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
@@ -16,8 +16,10 @@ from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
 from comnumpy.core.utils import Constellation, hard_projector
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.optical.dbp import DBP
+from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import dbm_to_watt
+from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
+                                    dbm_to_watt)
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -33,6 +35,7 @@ R_s = 10.7e9                  # baud rate
 L_span = 80                   # span length in km
 N_span = 25
 dBm = -3
+fiber = FiberSpec()           # the standard fibre, named so the budget sees it
 
 N = N_s * oversampling_sim
 fs = R_s * oversampling_sim
@@ -63,12 +66,11 @@ def get_full_chain(n_spans, *, steps=1, linear_only=True):
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
         Amplifier(amp),
         FiberLink(N_spans=n_spans, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
-                  fs=fs, name="link"),
-        BWFilter(1 / oversampling_sim),
-        Downsampler(oversampling_ratio, name="rx_field"),
+                  fs=fs, fiber=fiber, name="link"),
+        Downsampler(oversampling_ratio, use_filter=True, name="rx_field"),
         DBP(n_spans, L_span=L_span, StPS=steps, step_type="linear",
             use_only_linear=linear_only, fs=fs / oversampling_ratio,
-            name="dbp"),
+            fiber=fiber, name="dbp"),
         SRRCFilter(rolloff, oversampling_dsp, method="fft",
                    scale=1 / np.sqrt(oversampling_dsp)),
         Downsampler(oversampling_dsp),
@@ -93,21 +95,66 @@ def score(chain):
 # changes along the curve is the distance travelled. Every chain records
 # the wall time of its last pass in `elapsed_`, so the run is also the
 # measurement.
+#
+# Each span count is run twice. The second pass switches the fibre's Kerr
+# term off through the chain -- same seed, same symbols, same amplifiers,
+# so the *only* thing removed is the nonlinearity. What is left is the
+# ASE the amplifiers have piled up, and it is the reference every number
+# below is read against: a receiver cannot do better than a link with no
+# nonlinearity in it. It is also the cheapest check that the chain is
+# sound, because that reference has a closed form and the fibre does not.
 spans = (1, 5, 10, 15, 20, 25)
 estimates = {}
 snr_per_span = {}
+snr_ase_only = {}
+print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
     chain = get_full_chain(n_spans).seed(0)
     estimates[n_spans] = chain(N)
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
-    print(f"{n_spans:2d} spans: SNR {snr:5.2f} dB, SER {ser:.4f}, "
-          f"phase {np.rad2deg(chain['phase'].theta_):+6.1f} deg, "
-          f"{chain.elapsed_:5.1f} s")
+    elapsed = chain.elapsed_
+    theta_deg = np.rad2deg(chain["phase"].theta_)
+    # the field the receiver saw, before any of the DSP; the loop keeps
+    # overwriting it, so what survives it is the longest link's
+    received_field = chain.tap("rx_field")
 
-# `chain` is the 25-span one the loop ended on, and its taps still hold
-# that run: the field the receiver saw, before any of the DSP.
-plot_iq(chain.tap("rx_field"),
+    chain.seed(0).set_params(link__use_only_linear=True)
+    chain(N)
+    snr_ase_only[n_spans] = score(chain)[0]
+
+    print(f"{n_spans:5d} {snr:8.2f} dB {snr_ase_only[n_spans]:7.2f} dB "
+          f"{snr_ase_only[n_spans] - snr:8.2f} dB {ser:8.4f} "
+          f"{theta_deg:+7.1f} deg {elapsed:6.1f} s")
+
+# Two checks on that reference, both cheap, and worth running on any
+# chain before believing a decibel it produces.
+#
+# The first switches the noise off as well as the nonlinearity. What is
+# left is what the transmitter and the receiver do to a signal that
+# travelled through nothing: the distortion floor of the DSP itself --
+# pulse shaping, resampling, matched filtering. It has to sit far above
+# every number in the table, or the chain is measuring its own filters
+# rather than the fibre.
+floor = get_full_chain(1).seed(0)
+floor.set_params(link__use_only_linear=True, link__noise_scaling=0.0)
+floor(N)
+print(f"\ndistortion floor of the chain, no noise and no fibre: "
+      f"{score(floor)[0]:.1f} dB")
+
+# The second is the amplifier noise against its closed form. N spans pile
+# up N times the noise of one, in the symbol-rate bandwidth the matched
+# filter collects, and that prediction owes nothing to the simulation:
+# it comes from the noise figure and the span loss alone.
+n_ase = compute_erbium_doped_fiber_N_ase(fiber.alpha_dB, L_span, NF_dB,
+                                         nu=fiber.carrier_frequency_Hz)
+print("\nspans   ASE only   P / P_ASE      gap")
+for n_spans in spans:
+    predicted = 10 * np.log10(dbm_to_watt(dBm) / (n_spans * n_ase * R_s))
+    print(f"{n_spans:5d} {snr_ase_only[n_spans]:8.2f} dB {predicted:8.2f} dB "
+          f"{snr_ase_only[n_spans] - predicted:+8.2f} dB")
+
+plot_iq(received_field,
         title=f"received field ({dBm} dBm, {N_span} spans)")
 plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
@@ -119,9 +166,15 @@ for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
+measured = np.zeros(len(spans))
+ase_only = np.zeros(len(spans))
+for index, n_spans in enumerate(spans):
+    measured[index] = snr_per_span[n_spans]
+    ase_only[index] = snr_ase_only[n_spans]
+
 ax = plot_error_rate(np.array(spans),
-                     {"dispersion compensation only":
-                      np.array(list(snr_per_span.values()))},
+                     {"amplifier noise only": ase_only,
+                      "dispersion compensation only": measured},
                      xlabel="spans travelled", ylabel="effective SNR [dB]",
                      yscale="linear", title=f"{dBm} dBm launch power")
 plt.tight_layout()

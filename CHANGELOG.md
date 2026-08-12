@@ -44,6 +44,31 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — a chain says when a rate change carries its filter by hand
+
+`Sequential` now inspects its module list at construction and warns when
+a `BWFilter` sits immediately before a `Downsampler`, or immediately
+after an `Upsampler`, instead of the rate change building that filter
+itself with `use_filter=True`.
+
+Two optical examples had exactly that pair, with
+`BWFilter(1 / oversampling_sim)` in front of a decimation by
+`oversampling_ratio` — a different number. The mask kept ±16 GHz of a
+35.2 GHz root-raised-cosine spectrum, cutting the roll-off shoulders off
+the signal it was meant to pass, and every curve measured through the
+chain sat on a 22.9 dB distortion floor that read as a channel
+impairment. Nothing connected the two numbers because the cutoff was
+written twice, once as `L` and once as `wn`: the defect D41 exists to
+prevent, in a place D41 had not been applied.
+
+The warning names the cutoff written, the cutoff the rate change needs,
+and which way the error goes — signal removed, or band folded back. It
+also fires, more mildly, when the two agree today: a number stated twice
+is one edit from disagreeing. It warns rather than raises, because a
+brick-wall filter next to a rate change is not always the anti-alias
+filter — selecting one channel out of a multiplex before decimating is a
+legitimate pair of filters doing two jobs.
+
 ### Added — `bicm_capacity(px=...)`
 
 `constellation_capacity` already took a law; its bit-interleaved
