@@ -112,6 +112,45 @@ strings. The split is unambiguous because `block_ids` collapses every
 run of non-alphanumerics into a single underscore, so no block id can
 contain a double one; a test pins that.
 
+### Added — `Constellation`, and `SpaceTimeCode.info()`
+
+`get_alphabet("QAM", 16)` returns an array, and everything else the
+constellation determines — its bits per symbol, its average energy, its
+minimum distance, its closed-form error rate, the rate it carries — was
+asked for somewhere else, with the family and the order passed a second
+time. Nothing checked that the two agreed, so a page could draw the
+closed form of a 16-QAM under the measurement of a 64-QAM and look
+right.
+
+```python
+qam = Constellation("QAM", 16)
+qam.info()                       # family, order, k, Es, d_min, PAPR
+qam.plot()                       # the constellation diagram
+qam.metrics(snr_dB)              # {"ser": ..., "ber": ...}
+qam.metrics(snr_dB, metrics=("mi", "gmi"))          # the rates, on request
+qam.metrics(snr_dB, channel="rayleigh", diversity=2)
+```
+
+`metrics` takes dB, like every chain-level SNR in the library, and
+`per="bit"|"symbol"` says which SNR it is: the error rates are quoted
+against `Eb/N0`, the rates against the symbol SNR, `k` times larger, and
+getting that wrong shifts a curve by `10log10(k)` dB with nothing to
+signal it. The object knows `k`, so the conversion happens once, inside.
+`"mi"` and `"gmi"` are quadratures rather than closed forms, so they are
+opt-in — seconds rather than microseconds on a large constellation.
+`px=` passes a shaped law through to the rates, rescaling the
+constellation to unit energy under that law, since a shaped input
+compared as it stands is simply a quieter one.
+
+`np.asarray(constellation)` returns the alphabet, and the blocks that
+take one now coerce their field, so a `Constellation` goes wherever an
+array went: `SymbolMapper`, `SymbolDemapper`, `BlindPhaseCompensation`
+and every MIMO detector. Nothing existing changes — `get_alphabet` stays
+as the low-level builder the class is built on.
+
+`SpaceTimeCode` was already the object on the coding side (registry,
+verified orthogonality, rate); it gains the matching `info()`.
+
 ### Changed — the closed-form performance front-ends return a dictionary
 
 `compute_metric_awgn_theo` and `compute_metric_rayleigh_theo` took a
