@@ -45,14 +45,14 @@ are simply not seen.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 1-48
+   :lines: 1-41
 
 Let us generate four OFDM symbols and look at the instantaneous power,
 normalized by its own mean:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 51-67
+   :lines: 44-60
 
 .. image:: img/monte_carlo_ofdm_papr_fig1.png
    :width: 100%
@@ -81,7 +81,7 @@ non-zero probability.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 73-99
+   :lines: 66-92
 
 .. image:: img/monte_carlo_ofdm_papr_fig2.png
    :width: 100%
@@ -103,17 +103,18 @@ of one OFDM symbol,
    \mathrm{PAPR} = \frac{\max_n |x[n]|^2}{\mathbb{E}\left[|x[n]|^2\right]}
 
 usually quoted in decibels. :func:`~comnumpy.ofdm.metrics.compute_papr`
-reduces along the axis it is given, so one call returns one value per OFDM
-symbol:
+reduces along the axis one waveform lies on, so a block array gives one value
+per OFDM symbol without any reshaping; ``reduction`` then says what to do
+with those values, which saves reducing them by hand:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 102-106
+   :lines: 95-101
 
 .. code::
 
    PAPR of the four symbols above: 9.55 9.98 8.29 9.56 dB
-   PAPR of the whole record      : 9.98 dB
+   their average                 : 9.34 dB
 
 Note that the four values differ by more than 1.5 dB. The PAPR is itself a
 random variable, so a single number does not characterize the waveform: what
@@ -138,10 +139,31 @@ them stayed below it:
 
    \mathrm{CCDF}(\gamma) = 1 - \left(1 - e^{-\gamma}\right)^{N}
 
-Oversampled samples are not independent, but the same expression still fits
-the measurement with an **effective** number of samples :math:`\alpha N_{sc}`
-with :math:`\alpha \simeq 2.8` (van Nee and Prasad, 2000), which is the form
-used below.
+Oversampled samples are not independent -- the waveform is band limited, so
+neighbouring samples are correlated -- but the same expression still fits the
+measurement with an **effective** number of samples :math:`\alpha N_{sc}`,
+with :math:`\alpha \simeq 2.8` for an oversampling of 4 or more (van Nee and
+Prasad, 2000).
+
+That is :func:`~comnumpy.ofdm.metrics.compute_papr_ccdf_theo`, which takes
+the oversampling rather than the effective count: the fit belongs to the
+library, with its domain of validity, rather than to each script that draws
+the curve.
+
+The fitted constant can be avoided. Counting how often a Gaussian process
+crosses a level gives an effective count that grows with the threshold
+instead,
+
+.. math::
+
+   \mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sc}
+   \sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)
+
+which the same function returns with ``method="level_crossing"``. It has no
+fitted constant, but it describes the peak of the **continuous-time**
+waveform, which a sampled one can only underestimate -- so it reads high on
+sampled data, and it is a large-threshold approximation. The two are
+compared against the measurement at the end of this page.
 
 Implementation
 """"""""""""""
@@ -150,7 +172,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 111-147
+   :lines: 106-142
 
 Results
 """""""
@@ -162,12 +184,33 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 149-152
+   :lines: 143-147
 
 .. code::
 
    N_sc =  256: PAPR exceeded once in a thousand symbols above 11.30 dB
    N_sc = 1024: PAPR exceeded once in a thousand symbols above 11.72 dB
+
+Which of the two models to believe is a question the measurement answers:
+
+.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
+   :language: python
+   :lines: 149-163
+
+.. code::
+
+   N_sc  level  threshold   effective   level crossing
+     256  1e-02    10.43 dB     1.2e-02         1.4e-02
+     256  1e-03    11.28 dB     1.1e-03         1.4e-03
+    1024  1e-02    11.00 dB     9.6e-03         1.2e-02
+    1024  1e-03    11.69 dB     1.1e-03         1.6e-03
+
+The effective-count model is within 20 % of the measurement, the
+level-crossing one 20 to 60 % above it -- consistently above, which is the
+direction it must err in, since it is the continuous-time waveform that is
+being modelled and the simulation only sees four samples per Nyquist
+interval. Take the first to size an amplifier from sampled data, and the
+second when the question is the analogue waveform itself.
 
 The measured points sit on the closed form over the whole range. As expected,
 the probability of a large PAPR grows with the number of subcarriers -- but
@@ -192,6 +235,3 @@ Key takeaway:
 either an amplifier backoff or a PAPR reduction technique.** The library
 ships several of the latter, in
 ``examples/ofdm/one_shot_ofdm_papr_reduction.py``.
-
-Next, :doc:`multipath` goes back to the channel and settles the number the
-OFDM tutorial took for granted: how long the cyclic prefix has to be.

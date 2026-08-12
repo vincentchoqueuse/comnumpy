@@ -7,14 +7,13 @@ from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN
 from comnumpy.core.processors import Amplifier
 from comnumpy.core.compensators import BlindPhaseCompensation
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.metrics import compute_ser
 
 
 # parameters
-type, M = "QAM", 16
+constellation = Constellation("QAM", 16)
 N = 5000
-alphabet = get_alphabet(type, M)
 sigma2 = 0.01
 
 # generate random IQ imbalance
@@ -22,12 +21,12 @@ true_phase = 0.1
 amplifier_param = np.exp(1j*0.23)
 
 chain = Sequential([
-            SymbolGenerator(M, name="data_tx"),
-            SymbolMapper(alphabet),
+            SymbolGenerator(constellation.order, name="data_tx"),
+            SymbolMapper(constellation),
             Amplifier(amplifier_param),
             AWGN(sigma2=sigma2, name="awgn"),
-            BlindPhaseCompensation(alphabet, name="phase_compensation"),
-            SymbolDemapper(alphabet)
+            BlindPhaseCompensation(constellation, name="phase_compensation"),
+            SymbolDemapper(constellation)
             ], taps=["data_tx", "awgn", "phase_compensation"])
 
 # simulate communication

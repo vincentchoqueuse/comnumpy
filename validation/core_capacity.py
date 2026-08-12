@@ -44,7 +44,7 @@ from scipy.optimize import brentq
 
 from comnumpy.core.capacity import (awgn_capacity, constellation_capacity,
                                     rayleigh_ergodic_capacity, waterfilling)
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -53,7 +53,7 @@ N_MONTE_CARLO = 200_000
 ULTIMATE_SHAPING_GAIN_DB = 10 * np.log10(np.pi * np.e / 6)      # 1.5329 dB
 
 
-def monte_carlo_mutual_information(alphabet, snr, n=N_MONTE_CARLO, seed=0):
+def monte_carlo_mutual_information(constellation, snr, n=N_MONTE_CARLO, seed=0):
     r"""Estimate I(X; Y) by simulating the channel, not by quadrature.
 
     For equiprobable symbols on a complex AWGN channel,
@@ -69,6 +69,7 @@ def monte_carlo_mutual_information(alphabet, snr, n=N_MONTE_CARLO, seed=0):
     30 dB.
     """
     rng = np.random.default_rng(seed)
+    alphabet = np.asarray(constellation)
     order = len(alphabet)
     sigma2 = 1.0 / snr
     index = rng.integers(0, order, n)
@@ -91,11 +92,11 @@ def check_against_monte_carlo():
     """1. Quadrature vs simulation, on three constellations."""
     worst = 0.0
     for family, order, seed in (("PSK", 4, 1), ("QAM", 16, 2), ("QAM", 64, 3)):
-        alphabet = get_alphabet(family, order)
+        constellation = Constellation(family, order)
         for snr_dB in (0.0, 6.0, 12.0, 18.0):
             snr = 10 ** (snr_dB / 10)
-            quadrature = float(constellation_capacity(alphabet, snr))
-            simulated = monte_carlo_mutual_information(alphabet, snr, seed=seed)
+            quadrature = float(constellation_capacity(constellation, snr))
+            simulated = monte_carlo_mutual_information(constellation, snr, seed=seed)
             error = abs(quadrature - simulated)
             worst = max(worst, error)
             # 0.01 bit/symbol: measured worst case 4.8e-3 over these twelve
@@ -113,11 +114,11 @@ def check_shaping_loss():
     """2. The gap to Shannon is positive, bounded by 1.53 dB, and grows."""
     gaps = []
     for order in (16, 64, 256):
-        alphabet = get_alphabet("QAM", order)
+        constellation = Constellation("QAM", order)
         rate = 0.6 * np.log2(order)          # well below saturation
         shannon = snr_for_rate(lambda snr: float(awgn_capacity(snr)), rate)
         uniform = snr_for_rate(
-            lambda snr, a=alphabet: float(constellation_capacity(a, snr)), rate)
+            lambda snr, a=constellation: float(constellation_capacity(a, snr)), rate)
         gap_dB = 10 * np.log10(uniform / shannon)
         gaps.append(gap_dB)
         assert 0 < gap_dB < ULTIMATE_SHAPING_GAIN_DB, (
@@ -184,12 +185,12 @@ def main():
     ax.plot(SNR_DB, awgn_capacity(snr), "k-", lw=2, label="Shannon")
     for family, order, marker in (("PSK", 4, "o"), ("QAM", 16, "s"),
                                   ("QAM", 64, "^"), ("QAM", 256, "d")):
-        alphabet = get_alphabet(family, order)
-        ax.plot(SNR_DB, constellation_capacity(alphabet, snr), "-",
+        constellation = Constellation(family, order)
+        ax.plot(SNR_DB, constellation_capacity(constellation, snr), "-",
                 label=f"{family}-{order}")
         # the independent estimate, on a few points only: it is expensive
         sparse = SNR_DB[::8]
-        ax.plot(sparse, [monte_carlo_mutual_information(alphabet, 10 ** (s / 10))
+        ax.plot(sparse, [monte_carlo_mutual_information(constellation, 10 ** (s / 10))
                          for s in sparse], marker, fillstyle="none", color="0.3")
     ax.plot([], [], "ko", fillstyle="none", label="Monte-Carlo estimate")
     ax.plot(SNR_DB, rayleigh_ergodic_capacity(snr), "--", color="0.5",

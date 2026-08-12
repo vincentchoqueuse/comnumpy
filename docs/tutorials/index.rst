@@ -30,31 +30,27 @@ and nothing is explained twice.
      - What an OFDM waveform costs the amplifier, and the CCDF that measures
        it.
    * - 4
-     - :doc:`multipath`
-     - The standardized fading channels of 3GPP, the delay spread, and how
-       long the cyclic prefix of tutorial 2 actually has to be.
-   * - 5
      - :doc:`mimo`
      - Several antennas, and the five detectors that separate the streams --
        from the pseudo-inverse to the sphere decoder.
-   * - 6
+   * - 5
      - :doc:`alamouti`
      - Diversity without channel knowledge at the transmitter: space-time
        coding, measured against its closed form.
-   * - 7
+   * - 6
      - :doc:`coding`
      - Redundancy: convolutional codes and the Viterbi trellis, the union
        bound, and an LDPC waterfall.
-   * - 8
+   * - 7
      - :doc:`shaping`
      - Sending some constellation points more often than others, and the
        1.53 dB it recovers.
-   * - 9
+   * - 8
      - :doc:`gn_model`
      - A nonlinear channel: how much noise the fibre's nonlinearity makes,
        in closed form, and the launch power that minimizes it -- checked
        against a split-step simulation.
-   * - 10
+   * - 9
      - :doc:`optical_fiber_nonlinearity`
      - The performance the previous tutorial predicted, improved: digital
        back-propagation undoes the nonlinearity instead of budgeting for it.
@@ -72,7 +68,6 @@ The scripts behind these pages are also available on GitHub: `https://github.com
    awgn
    ofdm
    ofdm_papr
-   multipath
    mimo
    alamouti
    coding

@@ -7,7 +7,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.processors import Upsampler, DelayRemover
-from comnumpy.core.utils import get_alphabet, hard_projector
+from comnumpy.core.utils import Constellation, hard_projector
 from comnumpy.mimo.channels import SelectiveMIMOChannel, AWGN
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.compensators import BlindDualMIMOCompensator
@@ -49,14 +49,13 @@ class CustomBlindDualMIMOCompensator(BlindDualMIMOCompensator):
 
 
 # parameters
-type, M = "QAM", 16
+constellation = Constellation("QAM", 16)
 N_t, N_r, N_tap = 2, 2, 3
 N = 100000
 N_h = 32
 oversampling = 2
 rolloff = 0.2
 sigma2n = 1e-3
-alphabet = get_alphabet(type, M)
 commuting_steps = (20000, 90000)
 
 # generate channel
@@ -67,15 +66,15 @@ H_array = rayleigh_channel(N_r, N_t, L=N_tap, rng=rng)
 
 # create chain
 chain = Sequential([
-            SymbolGenerator(M),
-            SymbolMapper(alphabet),
+            SymbolGenerator(constellation.order),
+            SymbolMapper(constellation),
             Upsampler(oversampling),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             SelectiveMIMOChannel(H=H_array, name="channel"),
             AWGN(sigma2=sigma2n, name="noise"),
             SRRCFilter(rolloff, oversampling, N_h=N_h),
             DelayRemover(delay=N_h*4),
-            CustomBlindDualMIMOCompensator(L=9, alphabet=alphabet, mu=1e-4, oversampling=oversampling,
+            CustomBlindDualMIMOCompensator(L=9, alphabet=constellation, mu=1e-4, oversampling=oversampling,
                                            commuting_steps=commuting_steps,
                                            # the block handed to process_after_iteration:
                                            # the phase search below needs enough symbols
@@ -92,19 +91,20 @@ plot_iq(chain.tap("tail"), title="after CMA convergence")
 
 # compute CMA loss
 kernel_size = 100
-R = np.mean(np.abs(alphabet)**4) / np.mean(np.abs(alphabet)**2)
+R = (np.mean(np.abs(constellation.alphabet) ** 4)
+     / np.mean(np.abs(constellation.alphabet) ** 2))
 kernel = np.ones(kernel_size) / kernel_size
 loss_cma = np.mean((np.abs(data)**2 - R)**2, axis=0)
 loss_cma = np.convolve(loss_cma, kernel, mode='valid')
 
 # compute RDE loss
-radius_list = np.unique(np.abs(alphabet))
+radius_list = np.unique(np.abs(constellation.alphabet))
 _, radius_est = hard_projector(np.abs(data), radius_list)
 loss_rde = np.mean((radius_est**2 - np.abs(data)**2)**2, axis=0)
 loss_rde = np.convolve(loss_rde, kernel, mode='valid')
 
 # compute DD loss
-_, data_est = hard_projector(data, alphabet)
+_, data_est = hard_projector(data, constellation)
 loss_dd = np.mean(np.abs(data_est - data)**2, axis=0)
 loss_dd = np.convolve(loss_dd, kernel, mode='valid')
 

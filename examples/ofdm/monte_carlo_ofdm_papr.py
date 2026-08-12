@@ -12,22 +12,15 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.core.processors import Serial2Parallel
-from comnumpy.core.utils import get_alphabet
-from comnumpy.ofdm.metrics import compute_papr
+from comnumpy.core.utils import Constellation
+from comnumpy.ofdm.metrics import compute_papr, compute_papr_ccdf_theo
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 
 img_dir = "../../docs/tutorials/img/"
 
 N_sc = 1024
-M = 4
 os = 4                                  # oversampling, to see the peaks
-alphabet = get_alphabet("PSK", M)
-alpha = 2.8                             # van Nee and Prasad's effective count
-
-
-def ccdf_theory(threshold, n_sub):
-    """Probability that the PAPR of one OFDM symbol exceeds ``threshold``."""
-    return 1 - (1 - np.exp(-threshold)) ** (alpha * n_sub)
+constellation = Constellation("PSK", 4)
 
 
 def get_transmitter(n_sub, oversampling=os, name="ofdm"):
@@ -40,8 +33,8 @@ def get_transmitter(n_sub, oversampling=os, name="ofdm"):
     carrier_type = np.zeros(oversampling * n_sub)
     carrier_type[:n_sub] = 1
     return Sequential([
-        SymbolGenerator(M, name="tx"),
-        SymbolMapper(alphabet),
+        SymbolGenerator(constellation.order, name="tx"),
+        SymbolMapper(constellation),
         Serial2Parallel(n_sub, name="s2p"),
         CarrierAllocator(carrier_type=carrier_type, name="carrier_allocator"),
         IFFTProcessor(),
@@ -100,28 +93,29 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig2.png")
 
 # --- the metric -------------------------------------------------------
 papr_dB = compute_papr(blocks, unit="dB", axis=-1)
-print("PAPR of the four symbols above: "
-      + " ".join(f"{value:.2f}" for value in np.atleast_1d(papr_dB)) + " dB")
-print(f"PAPR of the whole record      : "
-      f"{compute_papr(signal, unit='dB'):.2f} dB")
+line = "PAPR of the four symbols above: "
+for value in papr_dB:
+    line += f"{value:.2f} "
+print(line + "dB")
+print(f"their average                 : "
+      f"{compute_papr(blocks, unit='dB', axis=-1, reduction='mean'):.2f} dB")
 
 # --- the distribution -------------------------------------------------
 # The CCDF is estimated over many symbols, in batches, because 20 000
 # OFDM symbols at 4096 samples do not have to exist at the same time.
 threshold_dB = np.arange(4, 14, 0.1)
-gamma = 10 ** (threshold_dB / 10)
 n_batches, batch = 20, 1000
 measured, reference = {}, {}
 for n_sub in (256, 1024):
     transmitter = get_transmitter(n_sub)
     transmitter.seed(1)
     values = np.concatenate([
-        np.atleast_1d(compute_papr(transmitter(batch * n_sub), unit="dB",
-                                   axis=-1))
+        compute_papr(transmitter(batch * n_sub), unit="dB", axis=-1)
         for _ in range(n_batches)])
     sorted_dB, ccdf = compute_ccdf(values)
     measured[f"$N_{{sc}}$ = {n_sub}"] = (sorted_dB, ccdf)
-    reference[f"$N_{{sc}}$ = {n_sub}"] = ccdf_theory(gamma, n_sub)
+    reference[f"$N_{{sc}}$ = {n_sub}"] = compute_papr_ccdf_theo(
+        threshold_dB, n_sub, oversampling=os, unit="dB")
 
 # Markers are placed on a logarithmic grid of the ordinate: spacing them
 # evenly in index would crowd the top of the curve and leave the tail --
@@ -147,6 +141,23 @@ plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig3.png")
 
 for n_sub in (256, 1024):
-    solved = brentq(lambda g, n=n_sub: ccdf_theory(g, n) - 1e-3, 1, 100)
+    solved = brentq(lambda t, n=n_sub: compute_papr_ccdf_theo(
+        t, n, oversampling=os, unit="dB") - 1e-3, 0, 20)
     print(f"N_sc = {n_sub:4d}: PAPR exceeded once in a thousand symbols above "
-          f"{10 * np.log10(solved):.2f} dB")
+          f"{solved:.2f} dB")
+
+# --- the two models, against the measurement -------------------------
+# "effective" replaces the sample count by a fitted multiple of N_sc;
+# "level_crossing" replaces the fitted constant by a term that grows
+# with the threshold, at the price of describing the *continuous*
+# waveform, whose peak a sampled one can only underestimate.
+print("\nCCDF models against the measurement")
+print("N_sc  level  threshold   effective   level crossing")
+for name, (sorted_dB, ccdf) in measured.items():
+    n_sub = int(name.split("= ")[1].rstrip("$"))
+    for level in (1e-2, 1e-3):
+        index = int(np.clip(ccdf.size * (1 - level), 0, ccdf.size - 1))
+        at = sorted_dB[index]
+        print(f"{n_sub:5d} {ccdf[index]:6.0e} {at:8.2f} dB "
+              f"{compute_papr_ccdf_theo(at, n_sub, oversampling=os, unit='dB'):11.1e}"
+              f"{compute_papr_ccdf_theo(at, n_sub, unit='dB', method='level_crossing'):16.1e}")

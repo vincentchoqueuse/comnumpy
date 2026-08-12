@@ -13,9 +13,9 @@ import numpy as np
 
 from comnumpy import AWGN, Sequential, SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
-from comnumpy.core.metrics import compute_metric_awgn_theo, compute_ser
+from comnumpy.core.metrics import compute_ser
 from comnumpy.core.processors import Parallel2Serial, Serial2Parallel
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.ofdm.allocation import get_allocation
 from comnumpy.ofdm.processors import (CarrierAllocator, CarrierExtractor,
                                       CyclicPrefixer, CyclicPrefixRemover,
@@ -32,10 +32,10 @@ N_CP = 16
 
 def ofdm_chain():
     alloc = get_allocation("802.11a")
-    alphabet = get_alphabet("QAM", M)
+    constellation = Constellation("QAM", M)
     return Sequential([
         SymbolGenerator(M, name="tx"),
-        SymbolMapper(alphabet),
+        SymbolMapper(constellation),
         Serial2Parallel(alloc.N_data),
         CarrierAllocator(alloc, pilots=1.0),
         IFFTProcessor(),
@@ -47,7 +47,7 @@ def ofdm_chain():
         FFTProcessor(),
         CarrierExtractor(alloc),
         Parallel2Serial(),
-        SymbolDemapper(alphabet),
+        SymbolDemapper(constellation),
     ])
 
 
@@ -65,10 +65,9 @@ def main():
     # nothing: it copies samples of identical average power.
     alloc = get_allocation("802.11a")
     occupied = alloc.N_data + alloc.N_pilots
-    k = np.log2(M)
-    snr_data = 10 ** (SNR_DB_RANGE / 10) * alloc.N_fft / occupied
-    ser_theo = np.array([compute_metric_awgn_theo("QAM", M, g / k)
-                         for g in snr_data])
+    snr_data_dB = SNR_DB_RANGE + 10 * np.log10(alloc.N_fft / occupied)
+    ser_theo = Constellation("QAM", M).metrics(snr_data_dB,
+                                               per="symbol")["ser"]
 
     mask = ser_theo > 50 / N_SYMBOLS
     rel_err = np.abs(ser_sim[mask] - ser_theo[mask]) / ser_theo[mask]

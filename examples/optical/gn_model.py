@@ -9,7 +9,7 @@ from comnumpy.core.generators import GaussianGenerator, SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
@@ -124,7 +124,7 @@ def link_chain(order=16, power_W=1e-3):
     """The whole link, from symbols to equalized symbols, as one chain."""
     source = ([GaussianGenerator(1.0, name="tx")] if order is None else
               [SymbolGenerator(order, name="source"),
-               SymbolMapper(get_alphabet("QAM", order), name="tx")])
+               SymbolMapper(Constellation("QAM", order), name="tx")])
     return Sequential([
         *source,
         Upsampler(OS, scale=np.sqrt(OS)),

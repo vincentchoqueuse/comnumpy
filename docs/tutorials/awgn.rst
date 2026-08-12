@@ -55,12 +55,14 @@ We start by importing the necessary libraries:
 Define Parameters
 """""""""""""""""
 
-Next, we set the simulation parameters: modulation order, number of transmitted symbols,
-and the SNR range to sweep.
+Next, we set the simulation parameters: the number of transmitted symbols,
+the constellation, and the SNR range to sweep. The constellation is one
+object -- it carries the alphabet the mapper needs, its order, and the
+closed form we compare against below.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 13-18
+   :lines: 13-16
 
 
 AWGN Communication Chain
@@ -75,7 +77,7 @@ and symbol demapping.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 19-26
+   :lines: 17-24
 
 The processors are:
 
@@ -104,7 +106,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 56-62
+   :lines: 63-69
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -116,7 +118,7 @@ against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 28-36
+   :lines: 26-34
 
 Three chain services appear there, and they are the ones every study is made
 of.
@@ -135,7 +137,7 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 38-44
+   :lines: 36-48
 
 .. code::
 
@@ -156,11 +158,15 @@ parameter that varies has changed.
 Theoretical SER
 """""""""""""""
 
-For comparison, we also compute the theoretical SER curve for QAM modulation over AWGN.
+For comparison, we ask the constellation for its own closed form. It
+knows its family and its order, so the theory cannot describe a
+modulation other than the one the chain transmits; ``per="symbol"`` says
+that the swept SNR is the symbol SNR ``AWGN(snr_dB=)`` takes, and the
+conversion to :math:`E_b/N_0` happens inside.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 46-48
+   :lines: 54-54
 
 
 Results and Visualization
@@ -174,7 +180,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 50-55
+   :lines: 56-62
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%

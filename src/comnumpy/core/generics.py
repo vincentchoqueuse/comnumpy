@@ -154,6 +154,12 @@ class Sequential():
         dictionary store per tapped block (a reference is kept, no copy
         -- blocks allocate fresh outputs, so the reference stays valid).
         Retrieve with :meth:`tap`.
+    elapsed_ : float
+        Wall time of the last pass, in seconds (data-dependent, hence the
+        trailing underscore, decision D23). Every call records it, so
+        "how long does this chain take" needs no stopwatch around the
+        call site; :meth:`profile_execution_time` breaks the same number
+        down block by block.
     wiring : dict, optional, keyword-only
         Extra data edges, as ``{"block_id.param": "source_block_id"}``.
         Before a target block runs, the chain assigns it the signal
@@ -173,6 +179,8 @@ class Sequential():
     >>> y = chain.seed(1)(5)
     >>> print(chain.tap("generator"))
     [0 0 3 1 3]
+    >>> chain.elapsed_ > 0
+    True
     """
     module_list: List[Processor]
     debug: bool = False
@@ -183,6 +191,8 @@ class Sequential():
     wiring: Optional[Dict[str, str]] = field(default=None, kw_only=True)
     # signals recorded at the declared taps (references, not copies)
     tapped_: Dict[str, Any] = field(init=False, repr=False, default_factory=dict)
+    # wall time of the last pass (D23: data-dependent, hence the underscore)
+    elapsed_: float = field(init=False, repr=False, default=0.0)
 
 
     def block_ids(self) -> List[str]:
@@ -460,19 +470,50 @@ class Sequential():
             module.set_debug(debug)
 
     def profile_execution_time(self, X: np.ndarray) -> Dict[str, float]:
+        """Time each block over one pass, keyed by block id.
+
+        The pass is the ordinary one: taps are recorded and the data
+        edges declared in ``wiring`` are fed, so a chain that profiles is
+        the chain that runs. The keys are the ids of :meth:`block_ids`,
+        so two blocks sharing a name still get one entry each.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input signal, or the requested size when the chain starts
+            with a source block.
+
+        Returns
+        -------
+        dict
+            Seconds spent in each block, in chain order.
+
+        Examples
+        --------
+        >>> from comnumpy.core.generators import SymbolGenerator
+        >>> from comnumpy.core.channels import AWGN
+        >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)])
+        >>> print(list(chain.profile_execution_time(8)))
+        ['generator', 'awgn']
         """
-        Start profiling
-        """
+        ids, recorded, feeds = self._resolve_edges()
+        if ids is None:
+            ids = self.block_ids()
+
         Y = X
         time_elapsed: Dict[str, float] = {}
 
-        for processor in self.module_list:
+        for index, processor in enumerate(self.module_list):
+            for param, source in feeds.get(index, ()):
+                setattr(processor, param, self.tapped_[source])
             start_time = time.time()
             Y = processor(Y)
             stop_time = time.time()
-            key = getattr(processor, "name", type(processor).__name__)
-            time_elapsed[key] = stop_time - start_time
+            if ids[index] in recorded:
+                self.tapped_[ids[index]] = Y
+            time_elapsed[ids[index]] = stop_time - start_time
 
+        self.elapsed_ = sum(time_elapsed.values())
         return time_elapsed
 
     def _resolve_edges(self) -> _EdgePlan:
@@ -521,6 +562,7 @@ class Sequential():
         ids, recorded, feeds = self._resolve_edges()
 
         Y = X
+        start = time.perf_counter()
         for index, processor in enumerate(self.module_list):
             # feed declared data edges before the block runs (wiring)
             for param, source in feeds.get(index, ()):
@@ -539,6 +581,7 @@ class Sequential():
             key = getattr(processor, 'name', None)
             if key is not None and key in callbacks:
                 callbacks[key](Y)
+        self.elapsed_ = time.perf_counter() - start
         return Y
 
     def tap(self, block_id: str) -> Any:

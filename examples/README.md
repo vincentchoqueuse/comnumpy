@@ -43,7 +43,7 @@ a validation script. Move it.
 
 | Folder | Subject |
 |---|---|
-| `simple/` | the core chain: symbol generation, mapping, AWGN, multipath fading, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, channel coding, chain profiling |
+| `simple/` | the core chain: symbol generation, mapping, AWGN, SRRC pulse shaping, phase / CFO / IQ-imbalance compensation, probabilistic shaping, channel coding, chain profiling |
 | `ofdm/` | OFDM transmitter and receiver, carrier allocation, cyclic prefix, frequency-domain equalization, PAPR statistics and PAPR reduction |
 | `mimo/` | flat and frequency-selective MIMO channels, space-time block codes, ML / linear / OSIC detectors, blind CMA equalization |
 | `optical/` | chromatic-dispersion compensation (FIR and least-squares FIR), WDM transmission, and fibre nonlinearity: split-step propagation with digital back-propagation, and the Gaussian Noise model in closed form |
@@ -68,7 +68,6 @@ in a few seconds, move it out of the `SLOW` table in that file.
 | `simple/one_shot_phase_compensation.py` | 1.9 s | yes |
 | `simple/one_shot_awgn.py` | 2.0 s | yes |
 | `simple/one_shot_cfo_iq_compensation.py` | 2.4 s | yes |
-| `simple/multipath_channels.py` | 3.3 s | yes |
 | `mimo/one_shot_CMA.py` | 5.1 s | yes |
 | `ofdm/monte_carlo_profiling.py` | 5.8 s | yes |
 | `simple/profiling_awgn_ofdm.py` | 5.9 s | yes |

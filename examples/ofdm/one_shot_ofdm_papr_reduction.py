@@ -5,7 +5,7 @@ from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.processors import Serial2Parallel
-from comnumpy.core.utils import get_alphabet
+from comnumpy.core.utils import Constellation
 from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 from comnumpy.ofdm.predistorders import IctPaprReductor
@@ -22,9 +22,7 @@ N_cp = 0
 N_sc = 128
 L = 1000
 os = 4
-type, M = "PSK", 4
-alphabet = get_alphabet(type, M)
-alphabet_generator = np.arange(M)
+constellation = Constellation("PSK", 4)
 papr_dB_threshold = np.arange(5, 11.01, 0.1)
 carrier_type = np.zeros(N_sc*os)
 carrier_type[:N_sc] = 1
@@ -32,8 +30,8 @@ N = N_sc*os*L
 
 # create chain
 chain = Sequential([
-            SymbolGenerator(M),
-            SymbolMapper(alphabet),
+            SymbolGenerator(constellation.order),
+            SymbolMapper(constellation),
             Serial2Parallel(N_sc),
             CarrierAllocator(carrier_type),
         ])
