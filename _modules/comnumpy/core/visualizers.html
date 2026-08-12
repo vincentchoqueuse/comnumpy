@@ -1026,6 +1026,17 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="c1"># Two detectors that are equivalent -- a sphere decoder and the maximum</span>
+<span class="c1"># likelihood search it accelerates -- produce the *same* curve, and one</span>
+<span class="c1"># hidden under the other reads as a missing simulation. Different shapes</span>
+<span class="c1"># are not enough on their own (a triangle sits inside a diamond), so the</span>
+<span class="c1"># markers are hollow and grow: a later curve drawn on top of an earlier</span>
+<span class="c1"># one rings it instead of hiding it, whatever the order.</span>
+<span class="n">_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+<span class="n">_MARKER_SIZE</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="n">_MARKER_GROWTH</span> <span class="o">=</span> <span class="mf">1.6</span>
+
+
 <div class="viewcode-block" id="plot_error_rate">
 <a class="viewcode-back" href="../../../documentation/core/visualizers.html#comnumpy.core.visualizers.plot_error_rate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_error_rate</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -1034,6 +1045,8 @@ window.runMermaid = runMermaid;</script>
                     <span class="n">x_theory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span>
                     <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;error rate&quot;</span><span class="p">,</span>
+                    <span class="n">xscale</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                    <span class="n">yscale</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;log&quot;</span><span class="p">,</span>
                     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot Monte-Carlo error rates, and the curves they are read against.</span>
 
@@ -1045,6 +1058,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Zeros are dropped rather than plotted. A sweep point where no error</span>
 <span class="sd">    was seen means the estimate ran out of samples, not that the error</span>
 <span class="sd">    rate is zero, and a logarithmic axis has no place to put it.</span>
+
+<span class="sd">    Each measured curve gets its own marker shape, and a slightly larger</span>
+<span class="sd">    one than the curve before it, so that two detectors which are</span>
+<span class="sd">    supposed to agree -- and therefore plot on top of each other -- can</span>
+<span class="sd">    still be told apart: the later one rings the earlier one.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1061,6 +1079,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        finer grid than the measurements. Defaults to ``x``.</span>
 <span class="sd">    xlabel, ylabel, title : str, optional, keyword-only</span>
 <span class="sd">        Axis labels and title.</span>
+<span class="sd">    xscale, yscale : {&quot;linear&quot;, &quot;log&quot;}, optional, keyword-only</span>
+<span class="sd">        Axis scales. The defaults are the ones an error-rate sweep wants,</span>
+<span class="sd">        a linear SNR in dB against a logarithmic rate; ``yscale=&quot;linear&quot;``</span>
+<span class="sd">        is for the quantities that are read on a linear axis -- a</span>
+<span class="sd">        throughput, a rate in bit/symbol, a probability close to one --</span>
+<span class="sd">        and ``xscale=&quot;log&quot;`` for a sweep over a blocklength or a number</span>
+<span class="sd">        of iterations.</span>
 <span class="sd">    ax : matplotlib.axes.Axes, optional, keyword-only</span>
 <span class="sd">        Axis to draw on; created when None (decision D25).</span>
 
@@ -1075,6 +1100,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                      theory={&quot;QPSK&quot;: 10.0 ** (-snr / 8 - 0.05)})</span>
 <span class="sd">    &gt;&gt;&gt; len(ax.lines)                      # one marker set, one curve</span>
 <span class="sd">    2</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_yscale()</span>
+<span class="sd">    &#39;log&#39;</span>
+
+<span class="sd">    A linear ordinate keeps the zeros, because there a zero is a point</span>
+<span class="sd">    and not a missing measurement:</span>
+
+<span class="sd">    &gt;&gt;&gt; ax = plot_error_rate(snr, {&quot;rate&quot;: np.array([0., 1., 2., 2., 3., 3.])},</span>
+<span class="sd">    ...                      ylabel=&quot;bit/symbol&quot;, yscale=&quot;linear&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; len(ax.lines[0].get_xdata())</span>
+<span class="sd">    6</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
@@ -1084,25 +1119,35 @@ window.runMermaid = runMermaid;</script>
     <span class="n">abscissa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">fine</span> <span class="o">=</span> <span class="n">abscissa</span> <span class="k">if</span> <span class="n">x_theory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x_theory</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
+    <span class="c1"># A zero is dropped only on a logarithmic ordinate, where it has no</span>
+    <span class="c1"># place to go and means &quot;no error was seen&quot;, i.e. the estimate ran</span>
+    <span class="c1"># out of samples. On a linear axis a zero is an ordinary value and</span>
+    <span class="c1"># removing it would silently shorten the curve.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">yscale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+
     <span class="n">colors</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
         <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">seen</span> <span class="o">=</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="n">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="c1"># A measurement that has a reference curve is drawn as markers</span>
         <span class="c1"># alone, so that the pair reads as one statement rather than as</span>
         <span class="c1"># two curves; one that has none is joined, because a scatter of</span>
         <span class="c1"># points is not a curve the eye can follow.</span>
-        <span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;o&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;o-&quot;</span>
-        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">abscissa</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">style</span><span class="p">,</span>
-                            <span class="n">fillstyle</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span>
-                            <span class="n">label</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;simulation&quot;</span><span class="p">)</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;-&quot;</span>
+        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">abscissa</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">style</span><span class="p">,</span>
+                        <span class="n">marker</span><span class="o">=</span><span class="n">_MARKERS</span><span class="p">[</span><span class="n">index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_MARKERS</span><span class="p">)],</span>
+                        <span class="n">markersize</span><span class="o">=</span><span class="n">_MARKER_SIZE</span> <span class="o">+</span> <span class="n">_MARKER_GROWTH</span> <span class="o">*</span> <span class="n">index</span><span class="p">,</span>
+                        <span class="n">fillstyle</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;simulation&quot;</span><span class="p">)</span>
         <span class="n">colors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_color</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">reference</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">seen</span> <span class="o">=</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="n">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, theory&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;theory&quot;</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">fine</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
-                    <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="n">xscale</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
@@ -1112,6 +1157,105 @@ window.runMermaid = runMermaid;</script>
         <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ax</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_channel_response</span><span class="p">(</span><span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                          <span class="n">domain</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="s2">&quot;frequency&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;impulse&quot;</span><span class="p">,</span>
+                          <span class="n">scale</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;dB&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                          <span class="n">fs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_fft</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+                          <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Draw a channel&#39;s impulse response, or the frequency response of it.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The two readings of the same tap vector :math:`h[l]`. In the delay</span>
+<span class="sd">    domain it is drawn as a stem plot, one line per resolvable path,</span>
+<span class="sd">    because a channel with four taps is four arrivals and not a curve.</span>
+<span class="sd">    In the frequency domain it is the discrete-time Fourier transform</span>
+<span class="sd">    evaluated on ``n_fft`` points,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        H(f) = \sum_{l=0}^{L-1} h[l] \, e^{-j 2 \pi f l / f_s}</span>
+
+<span class="sd">    which is what says whether the channel is flat over the signal band</span>
+<span class="sd">    or not -- and, on a decibel scale, how deep its worst fade is.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h : np.ndarray</span>
+<span class="sd">        Tap vector :math:`h[l]`, 1-D, real or complex.</span>
+<span class="sd">    domain : {&quot;impulse&quot;, &quot;frequency&quot;}, optional, keyword-only</span>
+<span class="sd">        Which of the two to draw. Default ``&quot;impulse&quot;``.</span>
+<span class="sd">    scale : {&quot;linear&quot;, &quot;dB&quot;}, optional, keyword-only</span>
+<span class="sd">        Magnitude scale. Default ``&quot;linear&quot;``. On a frequency response a</span>
+<span class="sd">        decibel scale is usually the readable one, since it turns a</span>
+<span class="sd">        deep fade into a depth one can quote.</span>
+<span class="sd">    fs : float, optional, keyword-only</span>
+<span class="sd">        Sampling frequency in Hz. Given, the abscissa is a delay in</span>
+<span class="sd">        microseconds or a frequency in MHz; otherwise it is a tap index</span>
+<span class="sd">        or a normalized frequency.</span>
+<span class="sd">    n_fft : int, optional, keyword-only</span>
+<span class="sd">        Points of the frequency grid. Default 512.</span>
+<span class="sd">    title : str, optional, keyword-only</span>
+<span class="sd">        Axis title.</span>
+<span class="sd">    ax : matplotlib.axes.Axes, optional, keyword-only</span>
+<span class="sd">        Axis to draw on; created when None (decision D25).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matplotlib.axes.Axes</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``domain`` or ``scale`` is not one of the values above.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; ax = plot_channel_response(np.array([1.0, 0.0, 0.5]))</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_xlabel()</span>
+<span class="sd">    &#39;tap index&#39;</span>
+<span class="sd">    &gt;&gt;&gt; ax = plot_channel_response(np.array([1.0, 0.0, 0.5]),</span>
+<span class="sd">    ...                            domain=&quot;frequency&quot;, scale=&quot;dB&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_ylabel()</span>
+<span class="sd">    &#39;$|H(f)|$ [dB]&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">domain</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="s2">&quot;frequency&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;domain is &#39;impulse&#39; or &#39;frequency&#39;, got </span><span class="si">{</span><span class="n">domain</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;dB&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale is &#39;linear&#39; or &#39;dB&#39;, got </span><span class="si">{</span><span class="n">scale</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="n">taps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">magnitude</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">size</span>
+        <span class="c1"># a tap that is exactly zero is a path that does not exist; -inf</span>
+        <span class="c1"># would rescale the whole axis, so it is floored well below the</span>
+        <span class="c1"># smallest thing worth reading</span>
+        <span class="k">return</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-6</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">domain</span> <span class="o">==</span> <span class="s2">&quot;impulse&quot;</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">taps</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">abscissa</span> <span class="o">=</span> <span class="n">index</span> <span class="o">/</span> <span class="n">fs</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="k">if</span> <span class="n">fs</span> <span class="k">else</span> <span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">abscissa</span><span class="p">,</span> <span class="n">magnitude</span><span class="p">(</span><span class="n">taps</span><span class="p">),</span> <span class="n">basefmt</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;delay [us]&quot;</span> <span class="k">if</span> <span class="n">fs</span> <span class="k">else</span> <span class="s2">&quot;tap index&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$|h[l]|$&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot; [dB]&quot;</span> <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;dB&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">taps</span><span class="p">,</span> <span class="n">n_fft</span><span class="p">))</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n_fft</span><span class="p">))</span>
+        <span class="n">abscissa</span> <span class="o">=</span> <span class="n">grid</span> <span class="o">*</span> <span class="n">fs</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="k">if</span> <span class="n">fs</span> <span class="k">else</span> <span class="n">grid</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">abscissa</span><span class="p">,</span> <span class="n">magnitude</span><span class="p">(</span><span class="n">response</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;frequency [MHz]&quot;</span> <span class="k">if</span> <span class="n">fs</span> <span class="k">else</span> <span class="s2">&quot;normalized frequency&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$|H(f)|$&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot; [dB]&quot;</span> <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">&quot;dB&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span>
 
 
 <div class="viewcode-block" id="plot_chain_profiling">

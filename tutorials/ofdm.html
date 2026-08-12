@@ -763,443 +763,410 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="ofdm-tutorial">
 <h1>OFDM Tutorial<a class="headerlink" href="#ofdm-tutorial" title="Link to this heading">#</a></h1>
-<p>Until now the channel added noise and nothing else. A radio signal, though,
-usually arrives <em>several times</em>: once by the direct path and again by every
-reflection, each with its own delay and attenuation. The receiver then sees
-each symbol on top of the tails of the previous ones – inter-symbol
-interference – and something has to undo it.</p>
-<p>This tutorial compares the two answers on the same channel: invert it as one
-big matrix (<strong>single carrier</strong>), or split the band into subcarriers narrow
-enough that each sees a <em>flat</em> channel and one division suffices (<strong>OFDM</strong>).</p>
+<p>A radio signal usually arrives several times: once by the direct path, and
+again by every reflection, each with its own delay and attenuation. Each
+symbol then lands on top of the tails of the previous ones – <strong>inter-symbol
+interference (ISI)</strong> – and the receiver has to undo it.</p>
+<p>There are two classical ways of doing this, and this tutorial applies both to
+the same channel: invert the channel as one large matrix (<strong>single carrier</strong>),
+or split the band into subcarriers narrow enough that each one sees a flat
+channel (<strong>OFDM</strong>).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced the chain, <code class="docutils literal notranslate"><span class="pre">seed</span></code>,
-<code class="docutils literal notranslate"><span class="pre">set_params</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>; they are used here without being
+<code class="docutils literal notranslate"><span class="pre">sweep</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>; they are used here without being
 re-explained. What is new is the channel: it is no longer a single
 coefficient.</p>
 </div>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
-<li><p>How to define and simulate a frequency-selective channel.</p></li>
-<li><p>How to evaluate performance using the Symbol Error Rate (SER) and the runtime.</p></li>
-<li><p>What OFDM actually buys against single-carrier equalization – and what it costs.</p></li>
+<li><p>How to define a multipath channel, and how to ask it what it is.</p></li>
+<li><p>How single-carrier equalization and OFDM differ, in error rate and in cost.</p></li>
+<li><p>Why wideband receivers are built the second way.</p></li>
 </ul>
-<p>This tutorial is suitable for engineers and students interested in digital communications,
-combining practical examples with theoretical insights.</p>
-<section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<section id="import-libraries">
-<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<p>We start by importing the necessary libraries:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span><span class="p">,</span>
-                                    <span class="n">TappedDelayLineChannel</span><span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_delay_profile</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEqualizer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_iq</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.chains</span><span class="w"> </span><span class="kn">import</span> <span class="n">OFDMTransmitter</span><span class="p">,</span> <span class="n">OFDMReceiver</span>
-</pre></div>
-</div>
-</section>
-<section id="simulation-parameters">
-<h3>Simulation Parameters<a class="headerlink" href="#simulation-parameters" title="Link to this heading">#</a></h3>
-<p>Next, we define the parameters of the communication chain,
-including the modulation order and the channel impulse response for a frequency-selective channel:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">1280</span>
-<span class="n">fs</span> <span class="o">=</span> <span class="mf">7.68e6</span>
-<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.015</span>
-<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
-
-<span class="n">channel_model</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;EPA&quot;</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
-                                       <span class="n">seed</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sounder&quot;</span><span class="p">)</span>
-<span class="n">h</span> <span class="o">=</span> <span class="n">channel_model</span><span class="o">.</span><span class="n">impulse_response</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EPA at </span><span class="si">{</span><span class="n">fs</span><span class="o">/</span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MHz: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2"> taps, delay spread &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s1">&#39;EPA&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ns&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The channel is not invented for the occasion: <strong>EPA</strong> is the 3GPP Extended
-Pedestrian A profile, one of the standardized tables the library ships in its
-catalogue, and <a class="reference internal" href="../documentation/core/channels.html#comnumpy.core.channels.TappedDelayLineChannel" title="comnumpy.core.channels.TappedDelayLineChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TappedDelayLineChannel</span></code></a> draws a
-realization of it. Sampled at 7.68 MHz it resolves into 4 taps – one per
-echo the receiver can tell apart at that rate.</p>
-<p>Getting the tap vector out of it is done the way an engineer would: <strong>sound
-the channel with an impulse</strong> and keep the response. That is what <code class="docutils literal notranslate"><span class="pre">h</span></code> is,
-and the equalizers below need it because this tutorial assumes the channel is
-known.</p>
-<p>The draw is seeded because the whole comparison below is about <em>one</em>
-realization. This one has a frequency response spanning a factor of <strong>57</strong>
-between its strongest and its weakest subcarrier: that notch is what
-“frequency selective” means, and it is what the two receivers will disagree
-about.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> is where the catalogue is properly introduced – where
-these delays and powers come from, what a delay spread is, and how it
-sizes the cyclic prefix used below. For now it is enough that the channel
-is a real one rather than a hand-written array.</p>
-</div>
-</section>
-</section>
-<section id="frequency-selective-channel">
-<h2>Frequency-Selective Channel<a class="headerlink" href="#frequency-selective-channel" title="Link to this heading">#</a></h2>
-<p>The input-output relation of a frequency-selective channel is:</p>
+<p>This tutorial is suitable for engineers and students interested in digital
+communications, combining practical examples with theoretical insights.</p>
+<section id="channel-model">
+<h2>Channel Model<a class="headerlink" href="#channel-model" title="Link to this heading">#</a></h2>
+<p>Two models are involved, and they describe the same channel at two levels.</p>
+<p>The <strong>environment</strong> is a set of echoes with random gains – a power delay
+profile and a fading process. This is the tapped delay line model:</p>
 <div class="math notranslate nohighlight">
-\[z[n] = \sum_{l=0}^{L-1} h[l]\,x[n-l] + b[n]\]</div>
-<p>where <span class="math notranslate nohighlight">\(h[l]\)</span> are the channel taps and <span class="math notranslate nohighlight">\(b[n]\)</span> is the noise.
-This is also called a Finite Impulse Response (FIR) channel.</p>
-<p>Stacking <span class="math notranslate nohighlight">\(N\)</span> samples into a vector form:</p>
+\[y[n] = \sum_{l=0}^{L-1} a_l[n]\, x[n - d_l]\]</div>
+<p>where <span class="math notranslate nohighlight">\(d_l\)</span> is the delay of path <span class="math notranslate nohighlight">\(l\)</span> in samples and
+<span class="math notranslate nohighlight">\(a_l[n]\)</span> its random gain.</p>
+<p>Drawing from this model once freezes the gains, and what remains is a tap
+vector <span class="math notranslate nohighlight">\(h[l]\)</span>, i.e. a <strong>finite impulse response (FIR)</strong> channel:</p>
+<div class="math notranslate nohighlight">
+\[z[n] = \sum_{l=0}^{L-1} h[l]\, x[n-l] + b[n]\]</div>
+<p>where <span class="math notranslate nohighlight">\(b[n]\)</span> is the noise. Stacking <span class="math notranslate nohighlight">\(N\)</span> samples in vector form
+gives</p>
 <div class="math notranslate nohighlight">
 \[\mathbf{z} = \mathbf{H}\mathbf{x} + \mathbf{b}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is a Toeplitz convolution matrix constructed from the taps.
-This formulation highlights that <strong>ISI (Inter-Symbol Interference)</strong> is unavoidable in SC systems.</p>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is the Toeplitz convolution matrix built from the
+taps. This matrix is <strong>not diagonal</strong>, and that is precisely what ISI is.
+Both receivers below are given <span class="math notranslate nohighlight">\(h\)</span>, so this tutorial is about
+equalization, not about channel estimation.</p>
+<section id="implementation">
+<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
+<p>We start with the imports and the parameters of the simulation: 16-QAM,
+1280 symbols, and a sampling frequency of 7.68 MHz.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Single-carrier equalization against OFDM, on one EPA channel.</span>
+
+<span class="sd">Run from this directory: it writes the tutorial&#39;s figures and diagrams</span>
+<span class="sd">into ../../docs/tutorials/.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span><span class="p">,</span> <span class="n">TappedDelayLineChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEqualizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_delay_profile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span><span class="p">,</span> <span class="n">SymbolMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span><span class="p">,</span> <span class="n">plot_iq</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.chains</span><span class="w"> </span><span class="kn">import</span> <span class="n">OFDMReceiver</span><span class="p">,</span> <span class="n">OFDMTransmitter</span>
+
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
+<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1280</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="mf">7.68e6</span>
+<span class="n">snr_dB</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We then use <strong>EPA</strong>, the 3GPP Extended Pedestrian A profile, one of the
+standardized tables shipped with the library.
+<a class="reference internal" href="../documentation/core/channels.html#comnumpy.core.channels.TappedDelayLineChannel" title="comnumpy.core.channels.TappedDelayLineChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TappedDelayLineChannel</span></code></a> draws one realization
+of it, and <code class="docutils literal notranslate"><span class="pre">info()</span></code> returns what the channel is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">channel</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;EPA&quot;</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">channel</span><span class="o">.</span><span class="n">info</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Sounding the model with an impulse gives the realization as a tap</span>
+<span class="c1"># vector -- which is what both receivers below are given.</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">impulse_response</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s2">&quot;frequency&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;one realization of EPA&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;what each frequency sees&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig1.png&quot;</span><span class="p">)</span>
+
+<span class="n">gain_dB</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">128</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">|H| spans </span><span class="si">{</span><span class="n">gain_dB</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gain_dB</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB across &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MHz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kind</span><span class="p">:</span> <span class="n">tapped</span> <span class="n">delay</span> <span class="n">line</span>
+<span class="n">standard</span><span class="p">:</span> <span class="n">EPA</span>
+<span class="n">n_paths</span><span class="p">:</span> <span class="mi">7</span>
+<span class="n">delays_ns</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">,</span> <span class="mf">190.0</span><span class="p">,</span> <span class="mf">410.0</span><span class="p">]</span>
+<span class="n">powers_dB</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">17.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">20.8</span><span class="p">]</span>
+<span class="n">rms_delay_spread_ns</span><span class="p">:</span> <span class="mf">43.12922598416199</span>
+<span class="n">coherence_bandwidth_Hz</span><span class="p">:</span> <span class="mf">4637226.739785324</span>
+<span class="n">fs_Hz</span><span class="p">:</span> <span class="mf">7680000.0</span>
+<span class="n">n_taps</span><span class="p">:</span> <span class="mi">4</span>
+<span class="n">resolvable_delays_samples</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The profile has seven arrivals within 410 ns, but at <span class="math notranslate nohighlight">\(f_s = 7.68\)</span> MHz
+the receiver can only distinguish <strong>4 taps</strong>: two echoes separated by less
+than one sample period are merged into one. <code class="docutils literal notranslate"><span class="pre">plot()</span></code> draws either reading
+of the same vector, the impulse response or the frequency response, on a
+linear or a decibel scale:</p>
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig1.png"><img alt="EPA impulse response and transfer function" class="align-center" src="../_images/one_shot_ofdm_fig1.png" style="width: 100%;" />
+</a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">|</span><span class="n">H</span><span class="o">|</span> <span class="n">spans</span> <span class="mf">12.4</span> <span class="n">dB</span> <span class="n">across</span> <span class="mf">7.68</span> <span class="n">MHz</span>
+</pre></div>
+</div>
+<p>The channel varies by 12 dB between its best and its worst frequency. No
+subcarrier is annihilated, but the channel is clearly not flat, and the
+receiver has to deal with it.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> introduces the catalogue properly: where these delays
+and powers come from, what a delay spread is, and how it sizes the cyclic
+prefix used below.</p>
+</div>
+</section>
 </section>
 <section id="single-carrier-communication-chain">
 <h2>Single-Carrier Communication Chain<a class="headerlink" href="#single-carrier-communication-chain" title="Link to this heading">#</a></h2>
-<p>The SC chain is defined as:</p>
-<pre  class="mermaid">
-        flowchart LR
-    data_tx[&quot;SymbolGenerator&quot;]
-    symbol_mapper[&quot;SymbolMapper&quot;]
-    fir[&quot;FIRChannel&quot;]
-    data_rx[&quot;AWGN&quot;]
-    data_rx_eq[&quot;LinearEqualizer&quot;]
-    symbol_demapper[&quot;SymbolDemapper&quot;]
-    data_tx --&gt; symbol_mapper
-    symbol_mapper --&gt; fir
-    fir --&gt; data_rx
-    data_rx --&gt; data_rx_eq
-    data_rx_eq --&gt; symbol_demapper
-    classDef tapped stroke-dasharray: 4 2
-    class data_tx,data_rx,data_rx_eq tapped
-    </pre><p>That diagram is not drawn by hand: it is <code class="docutils literal notranslate"><span class="pre">simple_chain.to_mermaid()</span></code>,
-exported by the script at the end of its run (decision D33c). The block
-names are the ones the code uses, and a dashed outline marks a tapped
-block – so the picture cannot say something the chain does not.</p>
-<p>At the receiver, we apply a <strong>Zero-Forcing (ZF) equalizer</strong>:</p>
+<p>We first send 16-QAM symbols through the channel and equalize them with a
+<strong>Zero-Forcing (ZF) equalizer</strong>. Since <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is known, the
+estimate is the least-squares solution</p>
 <div class="math notranslate nohighlight">
-\[\widehat{\mathbf{x}} = \mathbf{H}^{\dagger}\mathbf{z}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger}\)</span> is the pseudo-inverse of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span>.</p>
-<section id="implementation">
-<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
-<p>The chain is implemented in <strong>comnumpy</strong> as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">simple_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+\[\widehat{\mathbf{x}} = \mathbf{H}^{\dagger}\mathbf{z}
+= \mathbf{x} + \mathbf{H}^{\dagger}\mathbf{b}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger}\)</span> is the pseudo-inverse of
+<span class="math notranslate nohighlight">\(\mathbf{H}\)</span>. The interference is removed exactly. What remains is the
+noise, amplified where the channel is weak and spread over the whole block.
+The cost is the pseudo-inverse of an <span class="math notranslate nohighlight">\((N+L-1) \times N\)</span> matrix, i.e.
+<span class="math notranslate nohighlight">\(O(N^3)\)</span>.</p>
+<section id="id1">
+<h3>Implementation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sc_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
         <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
         <span class="n">FIRChannel</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
         <span class="n">LinearEqualizer</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx_eq&quot;</span><span class="p">),</span>
         <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
     <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx_eq&quot;</span><span class="p">])</span>
+
+<span class="n">sc_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">detected</span> <span class="o">=</span> <span class="n">sc_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">sc_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="n">sc_ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">sc_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;single carrier: SER </span><span class="si">{</span><span class="n">sc_ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">sc_time</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+        <span class="p">[(</span><span class="s2">&quot;data_rx&quot;</span><span class="p">,</span> <span class="s2">&quot;received&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;data_rx_eq&quot;</span><span class="p">,</span> <span class="s2">&quot;after ZF equalization&quot;</span><span class="p">)]):</span>
+    <span class="n">plot_iq</span><span class="p">(</span><span class="n">sc_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="n">block</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
-<p>We evaluate the performance by computing the SER and the execution time,
-then plot the constellation before and after equalization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">simple_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<span class="n">s_rx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-<span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">simple_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
-<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
-<span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="k">for</span> <span class="n">indice</span><span class="p">,</span> <span class="n">processor_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s2">&quot;data_rx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx_eq&quot;</span><span class="p">]):</span>
-    <span class="n">plot_iq</span><span class="p">(</span><span class="n">simple_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="n">processor_name</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Received signal (</span><span class="si">{</span><span class="n">processor_name</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">])</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">indice</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">1979</span> <span class="n">ms</span>
 </pre></div>
 </div>
-<p>For the SC chain, we obtain:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span><span class="p">:</span> <span class="mf">0.12109375</span>
-<span class="n">elapsed</span> <span class="n">time</span><span class="p">:</span> <span class="mf">1.70</span> <span class="n">s</span>
-</pre></div>
-</div>
-<p>Twelve percent of the symbols are wrong, and it took more than a second of
-computation for 1280 symbols. Both numbers matter. The error rate is the
-notch: zero forcing inverts the channel, so where <span class="math notranslate nohighlight">\(|H(f)|\)</span> is small it
-multiplies the noise by <span class="math notranslate nohighlight">\(1/|H(f)|\)</span>, and that amplified noise is spread
-over the whole block.</p>
-<p>That notch is worth looking at rather than taking on faith, because
-everything below is a reaction to it. The same taps, as an impulse response
-and as a transfer function:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the channel itself, which is what the subcarriers are answering to ---</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">N_carrier</span><span class="p">))</span>
-<span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">N_carrier</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">fs</span><span class="p">))</span> <span class="o">/</span> <span class="mf">1e6</span>
-<span class="n">gain_dB</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">))</span> <span class="o">/</span> <span class="n">fs</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="n">basefmt</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;delay [ns]&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;|h|&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EPA impulse response, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2"> taps&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
-
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">gain_dB</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.6&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">gain_dB</span><span class="p">,</span> <span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">gain_dB</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span>
-                     <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C3&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;more than 10 dB down&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;frequency [MHz]&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$|H(f)|$ [dB]&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;what each subcarrier sees&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig3.png&quot;</span><span class="p">)</span>
-
-<span class="n">deep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gain_dB</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">channel: </span><span class="si">{</span><span class="n">gain_dB</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gain_dB</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB peak-to-null across &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fs</span><span class="o">/</span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MHz, </span><span class="si">{</span><span class="n">deep</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">N_carrier</span><span class="si">}</span><span class="s2"> subcarriers more than 10 dB &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;down; 1/tau_rms = </span><span class="si">{</span><span class="mf">1e3</span><span class="o">/</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s1">&#39;EPA&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MHz &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;against </span><span class="si">{</span><span class="n">fs</span><span class="o">/</span><span class="n">N_carrier</span><span class="o">/</span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> kHz of subcarrier spacing&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig3.png"><img alt="EPA impulse response and its transfer function" class="align-center" src="../_images/one_shot_ofdm_fig3.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Received constellation, before and after equalization" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
 </a>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">channel</span><span class="p">:</span> <span class="mf">35.0</span> <span class="n">dB</span> <span class="n">peak</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">null</span> <span class="n">across</span> <span class="mf">7.68</span> <span class="n">MHz</span><span class="p">,</span> <span class="mi">17</span> <span class="n">of</span> <span class="mi">128</span> <span class="n">subcarriers</span> <span class="n">more</span>
-<span class="n">than</span> <span class="mi">10</span> <span class="n">dB</span> <span class="n">down</span><span class="p">;</span> <span class="mi">1</span><span class="o">/</span><span class="n">tau_rms</span> <span class="o">=</span> <span class="mf">23.2</span> <span class="n">MHz</span> <span class="n">against</span> <span class="mf">60.0</span> <span class="n">kHz</span> <span class="n">of</span> <span class="n">subcarrier</span> <span class="n">spacing</span>
-</pre></div>
-</div>
-<p><strong>35 dB between the best and the worst frequency.</strong> That is the whole
-problem in one number: a single-carrier receiver has to undo all of it at
-once, and the 17 subcarriers sitting more than 10 dB down are where zero
-forcing amplifies noise instead of removing distortion.</p>
-<p>The last comparison is why OFDM works at all. The channel changes over
-roughly 23 MHz, while a subcarrier is 60 kHz wide – nearly four hundred
-times narrower. Across one subcarrier <span class="math notranslate nohighlight">\(H(f)\)</span> is therefore flat, so the
-frequency-selective channel becomes a few hundred <em>flat</em> channels, each
-undone by dividing by one complex number. The transform below is what turns
-one hard problem into many easy ones, and this figure is the reason it is
-allowed to. The second number is the price of doing it this way –
-the equalizer builds the <span class="math notranslate nohighlight">\((N + L - 1) \times N\)</span> convolution matrix and
-pseudo-inverts it, which costs <span class="math notranslate nohighlight">\(O(N^3)\)</span>.</p>
-<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig1.png"><img alt="Constellations before and after equalization (Single Carrier)" class="align-center" src="../_images/one_shot_ofdm_fig1.png" style="width: 100%;" />
-</a>
+<p>On the left, the constellation has disappeared: each sample is a mixture of
+four consecutive symbols, and no decision region survives this. On the right,
+the equalizer has restored the sixteen clusters. Note the second number:
+nearly two seconds for 1280 symbols.</p>
 </section>
 </section>
 <section id="ofdm-communication-chain">
 <h2>OFDM Communication Chain<a class="headerlink" href="#ofdm-communication-chain" title="Link to this heading">#</a></h2>
-<p>In SC systems, equalization requires matrix inversion, which is computationally expensive.
-OFDM transforms the channel into a set of parallel flat-fading subchannels,
-each equalized with a <strong>simple one-tap filter</strong>.
-This drastically reduces computational complexity and improves performance.</p>
-<p>The OFDM chain can be visualized as:</p>
+<p>Rather than inverting <span class="math notranslate nohighlight">\(\mathbf{H}\)</span>, OFDM <strong>diagonalizes</strong> it. A
+circulant matrix is diagonalized by the DFT, and a cyclic prefix – the last
+<span class="math notranslate nohighlight">\(N_{cp}\)</span> samples of each block, repeated in front of it – is what
+turns the linear convolution of the channel into a circular one. In the
+frequency domain the channel is then one complex number per subcarrier:</p>
+<div class="math notranslate nohighlight">
+\[Z[k] = H[k]\, X[k] + B[k], \qquad k = 0, \dots, N_{sub}-1\]</div>
+<p>so that equalization is a single division per subcarrier,
+<span class="math notranslate nohighlight">\(\widehat{X}[k] = Z[k]/H[k]\)</span>. No matrix is inverted, and the two
+transforms cost <span class="math notranslate nohighlight">\(O(N \log N)\)</span>.</p>
+<p>This requires <span class="math notranslate nohighlight">\(H(f)\)</span> to be constant across one subcarrier. The channel
+tells us whether it is: its coherence bandwidth is 4.6 MHz, against a
+subcarrier spacing of <span class="math notranslate nohighlight">\(7.68\,\text{MHz}/128 = 60\)</span> kHz, seventy times
+narrower. The prefix must also be longer than the channel,
+<span class="math notranslate nohighlight">\(N_{cp} \geq L\)</span>: here <span class="math notranslate nohighlight">\(N_{cp} = 10\)</span> for 4 taps.</p>
+<section id="id2">
+<h3>Implementation<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>The OFDM chain is the single-carrier one with a transmitter block added
+before the channel and a receiver block after it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the other strategy ----------------------------------------------</span>
+<span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">ofdm_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+        <span class="n">OFDMTransmitter</span><span class="p">(</span><span class="n">N_carrier</span><span class="p">,</span> <span class="n">N_cp</span><span class="p">),</span>
+        <span class="n">FIRChannel</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span>
+        <span class="n">OFDMReceiver</span><span class="p">(</span><span class="n">N_carrier</span><span class="p">,</span> <span class="n">N_cp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx_eq&quot;</span><span class="p">),</span>
+        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx_eq&quot;</span><span class="p">])</span>
+
+<span class="n">ofdm_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">detected</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">ofdm_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="n">ofdm_ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OFDM          : SER </span><span class="si">{</span><span class="n">ofdm_ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ofdm_time</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ms &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">sc_time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">ofdm_time</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> times faster)&quot;</span><span class="p">)</span>
+
+<span class="n">plot_iq</span><span class="p">(</span><span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_rx_eq&quot;</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;OFDM, after one-tap equalization&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig3.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <pre  class="mermaid">
         flowchart LR
     data_tx[&quot;SymbolGenerator&quot;]
     symbol_mapper[&quot;SymbolMapper&quot;]
     ofdm_transmitter[&quot;OFDMTransmitter&quot;]
     fir[&quot;FIRChannel&quot;]
-    awgn[&quot;AWGN&quot;]
-    data_rx[&quot;OFDMReceiver&quot;]
+    data_rx[&quot;AWGN&quot;]
+    data_rx_eq[&quot;OFDMReceiver&quot;]
     symbol_demapper[&quot;SymbolDemapper&quot;]
     data_tx --&gt; symbol_mapper
     symbol_mapper --&gt; ofdm_transmitter
     ofdm_transmitter --&gt; fir
-    fir --&gt; awgn
-    awgn --&gt; data_rx
-    data_rx --&gt; symbol_demapper
+    fir --&gt; data_rx
+    data_rx --&gt; data_rx_eq
+    data_rx_eq --&gt; symbol_demapper
     classDef tapped stroke-dasharray: 4 2
-    class data_tx,data_rx tapped
-    </pre><p><code class="docutils literal notranslate"><span class="pre">OFDMTransmitter</span></code> and <code class="docutils literal notranslate"><span class="pre">OFDMReceiver</span></code> are themselves chains, and they
-are drawn from their own <code class="docutils literal notranslate"><span class="pre">chain</span></code> attribute rather than described:</p>
-<ul class="simple">
-<li><p>Transmitter (TX)</p></li>
-</ul>
-<pre  class="mermaid">
-        flowchart LR
-    s2_p[&quot;Serial2Parallel&quot;]
-    carrier_allocator_tx[&quot;CarrierAllocator&quot;]
-    ifft[&quot;IFFTProcessor&quot;]
-    cp_adder[&quot;CyclicPrefixer&quot;]
-    p2_s[&quot;Parallel2Serial&quot;]
-    s2_p --&gt; carrier_allocator_tx
-    carrier_allocator_tx --&gt; ifft
-    ifft --&gt; cp_adder
-    cp_adder --&gt; p2_s
-    </pre><ul class="simple">
-<li><p>Receiver (RX)</p></li>
-</ul>
-<pre  class="mermaid">
-        flowchart LR
-    s2_p[&quot;Serial2Parallel&quot;]
-    cp_remover[&quot;CyclicPrefixRemover&quot;]
-    fft[&quot;FFTProcessor&quot;]
-    frequency_domain_equalizer[&quot;FrequencyDomainEqualizer&quot;]
-    carrier_extractor[&quot;CarrierExtractor&quot;]
-    p2_s[&quot;Parallel2Serial&quot;]
-    s2_p --&gt; cp_remover
-    cp_remover --&gt; fft
-    fft --&gt; frequency_domain_equalizer
-    frequency_domain_equalizer --&gt; carrier_extractor
-    carrier_extractor --&gt; p2_s
-    </pre><p>The diagram above is not drawn by hand. It is what the chain says about
-itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
-script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
-<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;ofdm_single_carrier&quot;</span><span class="p">,</span> <span class="n">simple_chain</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">&quot;ofdm_chain&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">&quot;ofdm_transmitter&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">chain</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">&quot;ofdm_receiver&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">chain</span><span class="p">)]:</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
+    class data_tx,data_rx_eq tapped
+    </pre><p>The diagram is not drawn by hand. It is what the chain says about itself –
+<code class="docutils literal notranslate"><span class="pre">ofdm_chain.to_mermaid()</span></code> (decision D33c) – exported by the script, so
+the block names are the ones the code uses and a dashed outline marks a
+tapped block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The diagram is exported from the chain itself (D33c), so the picture</span>
+<span class="c1"># cannot say something the code does not.</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/ofdm_chain.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+    <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ofdm_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>Key blocks, under the names the diagrams show:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">Serial2Parallel</span></code> / <code class="docutils literal notranslate"><span class="pre">Parallel2Serial</span></code>: reshape between the serial
-stream and the parallel blocks OFDM works on.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">IFFTProcessor</span></code> / <code class="docutils literal notranslate"><span class="pre">FFTProcessor</span></code>: transform between the frequency and
-the time domain.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">CyclicPrefixer</span></code> / <code class="docutils literal notranslate"><span class="pre">CyclicPrefixRemover</span></code>: add and remove the cyclic
-prefix that turns the linear convolution into a circular one.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">CarrierAllocator</span></code> / <code class="docutils literal notranslate"><span class="pre">CarrierExtractor</span></code>: place the data and pilot
-symbols on their subcarriers, and take them back.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code>: one complex division per subcarrier.</p></li>
-</ul>
-<p>Mathematically, the received vector is:</p>
-<div class="math notranslate nohighlight">
-\[\mathbf{z} = \mathbf{D}\mathbf{x} + \mathbf{n}\]</div>
-<p>with <span class="math notranslate nohighlight">\(\mathbf{D} = \mathrm{diag}(H[0], H[1], \dots, H[N-1])\)</span>,
-where <span class="math notranslate nohighlight">\(H[k]\)</span> is the channel frequency response.
-Thus, OFDM reduces equalization to a <strong>diagonal system</strong>.</p>
-<section id="id1">
-<h3>Implementation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
-<p>The OFDM chain in <strong>comnumpy</strong> is implemented as:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N_carrier</span> <span class="o">=</span> <span class="mi">128</span>
-<span class="n">N_cp</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">ofdm_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-        <span class="n">OFDMTransmitter</span><span class="p">(</span><span class="n">N_carrier</span><span class="p">,</span> <span class="n">N_cp</span><span class="p">),</span>   <span class="c1"># &lt;- add OFDM transmitter</span>
-        <span class="n">FIRChannel</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">),</span>
-        <span class="n">OFDMReceiver</span><span class="p">(</span><span class="n">N_carrier</span><span class="p">,</span> <span class="n">N_cp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;data_rx&quot;</span><span class="p">),</span> <span class="c1"># &lt;- add OFDM receiver</span>
-        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
-    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="s2">&quot;data_rx&quot;</span><span class="p">])</span>
-</pre></div>
-</div>
+<p><code class="docutils literal notranslate"><span class="pre">OFDMTransmitter</span></code> and <code class="docutils literal notranslate"><span class="pre">OFDMReceiver</span></code> are themselves chains:
+serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
+on one side; the same in reverse, closed by a one-tap
+<code class="docutils literal notranslate"><span class="pre">FrequencyDomainEqualizer</span></code>, on the other.</p>
 </section>
-<section id="id2">
-<h3>Results<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
-<p>We compute the SER and runtime, then plot the received constellation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ofdm_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<span class="n">s_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-<span class="n">stop_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-<span class="n">s_tx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">)</span>
-<span class="n">data_rx</span> <span class="o">=</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_rx&quot;</span><span class="p">)</span>
-<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">s_tx</span><span class="p">,</span> <span class="n">s_rx</span><span class="p">)</span>
-<span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">stop_time</span> <span class="o">-</span> <span class="n">start_time</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SER: </span><span class="si">{</span><span class="n">ser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;elapsed time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
-
-<span class="n">plot_iq</span><span class="p">(</span><span class="n">data_rx</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;OFDM Chain: received data&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig2.png&quot;</span><span class="p">)</span>
+<section id="id3">
+<h3>Results<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.11</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">1791</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For the OFDM chain, we obtain:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span><span class="p">:</span> <span class="mf">0.04140625</span>
-<span class="n">elapsed</span> <span class="n">time</span><span class="p">:</span> <span class="mf">0.0015</span> <span class="n">s</span>
-</pre></div>
-</div>
-<p>Three times fewer errors, in <strong>a thousandth</strong> of the time: 1.5 ms against
-1.70 s for the same 1280 symbols. And the time ratio is not a constant – the
-single-carrier equalizer grows as <span class="math notranslate nohighlight">\(N^3\)</span> while OFDM grows as
-<span class="math notranslate nohighlight">\(N \log N\)</span> – so the comparison only gets more lopsided with the block
-size. That is the reason wideband receivers are built this way.</p>
-<p>Where the ranking comes from, and where it flips</p>
-<p>One operating point is not a conclusion, so the script runs both chains again
-over a range of noise variances:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sigma2     single carrier      OFDM     |H| spans &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">N_carrier</span><span class="p">)))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">N_carrier</span><span class="p">)))</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">variance</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.015</span><span class="p">,</span> <span class="mf">0.008</span><span class="p">,</span> <span class="mf">0.004</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.0005</span><span class="p">]:</span>
-    <span class="n">row</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">chain</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="p">((</span><span class="n">simple_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">ofdm_chain</span><span class="p">,</span> <span class="s2">&quot;awgn&quot;</span><span class="p">)):</span>
-        <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2">.sigma2&quot;</span><span class="p">:</span> <span class="n">variance</span><span class="p">})</span>
-        <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-        <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;data_tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variance</span><span class="si">:</span><span class="s2">8.4f</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">14.4f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">9.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sigma2</span>     <span class="n">single</span> <span class="n">carrier</span>      <span class="n">OFDM</span>     <span class="o">|</span><span class="n">H</span><span class="o">|</span> <span class="n">spans</span> <span class="mi">57</span>
-  <span class="mf">0.0150</span>           <span class="mf">0.6242</span>    <span class="mf">0.1062</span>
-  <span class="mf">0.0080</span>           <span class="mf">0.4617</span>    <span class="mf">0.0758</span>
-  <span class="mf">0.0040</span>           <span class="mf">0.2156</span>    <span class="mf">0.0469</span>
-  <span class="mf">0.0020</span>           <span class="mf">0.0539</span>    <span class="mf">0.0305</span>
-  <span class="mf">0.0010</span>           <span class="mf">0.0023</span>    <span class="mf">0.0211</span>
-  <span class="mf">0.0005</span>           <span class="mf">0.0000</span>    <span class="mf">0.0141</span>
-</pre></div>
-</div>
-<p>The ranking <strong>crosses over</strong>, and the reason is structural rather than
-numerical. Both receivers are zero forcing, so both amplify the noise by
-<span class="math notranslate nohighlight">\(1/|H|\)</span> where the channel is weak; what differs is <em>where that
-amplified noise goes</em>.</p>
-<p>The single-carrier equalizer inverts a <strong>linear</strong> convolution: <span class="math notranslate nohighlight">\(N + L -
-1\)</span> observations for <span class="math notranslate nohighlight">\(N\)</span> unknowns, an overdetermined system whose
-least-squares solution never divides by exactly zero, and whose residual noise
-is spread over every symbol of the block. OFDM inverts a <strong>circular</strong> one: the
-cyclic prefix makes the system exactly determined, <span class="math notranslate nohighlight">\(N\)</span> equations for
-<span class="math notranslate nohighlight">\(N\)</span> unknowns, one per subcarrier – so a subcarrier that falls in the
-notch is divided by a small number and nothing else can help it.</p>
-<p>Concentrated damage wins at low SNR and loses at high SNR. At
-<span class="math notranslate nohighlight">\(\sigma^2 = 0.015\)</span> everything is marginal and spreading the enhanced
-noise over all 1280 symbols ruins them all – six symbols in ten – while
-OFDM only ruins the handful of subcarriers in the notch. By
-<span class="math notranslate nohighlight">\(\sigma^2 = 0.001\)</span> the ranking has reversed: the spread noise has
-fallen below the decision threshold almost everywhere and the single carrier
-is down to 2 errors per thousand, while OFDM is stuck at 21, because those
-subcarriers are dead whatever the SNR. That is an <strong>error floor</strong>.</p>
-<p>That floor is not a defect of the model, it is the reason no real OFDM system
-is uncoded. A code spread across the subcarriers repairs exactly the carriers
-the notch killed – and the FFT is what makes the receiver affordable in the
-first place.</p>
-<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Constellation at OFDM receiver" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig3.png"><img alt="OFDM constellation after one-tap equalization" class="align-center" src="../_images/one_shot_ofdm_fig3.png" style="width: 100%;" />
 </a>
+<p>The two numbers point in opposite directions: three and a half times as many
+errors, in a thousandth of the time.</p>
 </section>
+</section>
+<section id="monte-carlo-evaluation">
+<h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
+<p>A single operating point is not a conclusion, so we run both chains over a
+range of SNR values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- error rate ------------------------------------------------------</span>
+<span class="c1"># One operating point is not a conclusion. Each sweep is repeated over</span>
+<span class="c1"># independent noise seeds because 1280 symbols only resolve down to</span>
+<span class="c1"># 8e-4; the channel is the same throughout, by construction.</span>
+<span class="n">snr_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
+    <span class="n">runs</span> <span class="o">=</span> <span class="p">[</span><span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span>
+                  <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+    <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">runs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SNR [dB]  single carrier      OFDM&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">snr_list</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">8d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">measured</span><span class="p">[</span><span class="s1">&#39;single carrier&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span><span class="si">:</span><span class="s2">15.4f</span><span class="si">}</span><span class="s2"> &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">measured</span><span class="p">[</span><span class="s1">&#39;OFDM&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span><span class="si">:</span><span class="s2">9.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_list</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;16-QAM over one EPA realization&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig4.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SNR</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>  <span class="n">single</span> <span class="n">carrier</span>      <span class="n">OFDM</span>
+       <span class="mi">6</span>          <span class="mf">0.6273</span>    <span class="mf">0.5234</span>
+       <span class="mi">8</span>          <span class="mf">0.5270</span>    <span class="mf">0.3953</span>
+      <span class="mi">10</span>          <span class="mf">0.4297</span>    <span class="mf">0.2973</span>
+      <span class="mi">12</span>          <span class="mf">0.2707</span>    <span class="mf">0.1980</span>
+      <span class="mi">14</span>          <span class="mf">0.1512</span>    <span class="mf">0.1426</span>
+      <span class="mi">16</span>          <span class="mf">0.0656</span>    <span class="mf">0.0672</span>
+      <span class="mi">18</span>          <span class="mf">0.0152</span>    <span class="mf">0.0383</span>
+      <span class="mi">20</span>          <span class="mf">0.0020</span>    <span class="mf">0.0195</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig4.png"><img alt="SER against SNR for both receivers" class="align-center" src="../_images/one_shot_ofdm_fig4.png" style="width: 100%;" />
+</a>
+<p>The two curves <strong>cross</strong> near 15 dB, and the reason is structural rather than
+numerical. Both receivers are zero forcing, so both divide by <span class="math notranslate nohighlight">\(|H|\)</span>;
+what differs is where the amplified noise goes.</p>
+<p>The single-carrier equalizer inverts a <strong>linear</strong> convolution: <span class="math notranslate nohighlight">\(N+L-1\)</span>
+observations for <span class="math notranslate nohighlight">\(N\)</span> unknowns, an overdetermined system whose residual
+noise is spread over every symbol of the block. OFDM inverts a <strong>circular</strong>
+one: exactly <span class="math notranslate nohighlight">\(N\)</span> equations for <span class="math notranslate nohighlight">\(N\)</span> unknowns, one per subcarrier,
+so a subcarrier that falls low is divided by a small number and nothing else
+can compensate for it.</p>
+<p>Spreading the damage is the better strategy at high SNR, and the worse one at
+low SNR. Above the crossing point, the single carrier is about 2 dB better at
+a given error rate. OFDM also spends 7 % of its channel uses on the cyclic
+prefix (10 samples per block of 128), which accounts for 0.3 dB of that gap.</p>
+<p><strong>Uncoded, OFDM is therefore the worse receiver.</strong> In practice this is never
+the operating condition: because the damage is concentrated on a few
+subcarriers instead of being spread, a code applied <em>across</em> subcarriers
+repairs exactly the ones the channel put in a hole. This is why no real OFDM
+system is uncoded, and why the comparison above is its worst case.</p>
+</section>
+<section id="computational-cost">
+<h2>Computational Cost<a class="headerlink" href="#computational-cost" title="Link to this heading">#</a></h2>
+<p>The case for OFDM is in the other column. We measure both receivers as the
+block length grows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what it costs ---------------------------------------------------</span>
+<span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]</span>
+<span class="n">runtime</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;single carrier&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;OFDM&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">length</span> <span class="ow">in</span> <span class="n">lengths</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
+        <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">chain</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+        <span class="n">runtime</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">     N   single carrier      OFDM     ratio&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">):</span>
+    <span class="n">sc_ms</span> <span class="o">=</span> <span class="n">runtime</span><span class="p">[</span><span class="s2">&quot;single carrier&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+    <span class="n">ofdm_ms</span> <span class="o">=</span> <span class="n">runtime</span><span class="p">[</span><span class="s2">&quot;OFDM&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">length</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">sc_ms</span><span class="si">:</span><span class="s2">13.1f</span><span class="si">}</span><span class="s2"> ms </span><span class="si">{</span><span class="n">ofdm_ms</span><span class="si">:</span><span class="s2">7.2f</span><span class="si">}</span><span class="s2"> ms </span><span class="si">{</span><span class="n">sc_ms</span><span class="o">/</span><span class="n">ofdm_ms</span><span class="si">:</span><span class="s2">8.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lengths</span><span class="p">),</span>
+                <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">runtime</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;block length $N$&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;receiver runtime [ms]&quot;</span><span class="p">,</span>
+                <span class="n">xscale</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;what equalization costs&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig5.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="n">N</span>   <span class="n">single</span> <span class="n">carrier</span>      <span class="n">OFDM</span>     <span class="n">ratio</span>
+ <span class="mi">128</span>           <span class="mf">6.7</span> <span class="n">ms</span>    <span class="mf">0.72</span> <span class="n">ms</span>        <span class="mi">9</span>
+ <span class="mi">256</span>          <span class="mf">28.7</span> <span class="n">ms</span>    <span class="mf">0.83</span> <span class="n">ms</span>       <span class="mi">34</span>
+ <span class="mi">512</span>         <span class="mf">119.6</span> <span class="n">ms</span>    <span class="mf">0.81</span> <span class="n">ms</span>      <span class="mi">147</span>
+<span class="mi">1024</span>         <span class="mf">831.8</span> <span class="n">ms</span>    <span class="mf">0.96</span> <span class="n">ms</span>      <span class="mi">868</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig5.png"><img alt="Receiver runtime against block length" class="align-center" src="../_images/one_shot_ofdm_fig5.png" style="width: 100%;" />
+</a>
+<p>The single-carrier receiver grows with the block length; the OFDM one does
+not move, since its work per symbol is one FFT and one division whatever the
+block size. At <span class="math notranslate nohighlight">\(N = 1024\)</span> the ratio is already three orders of
+magnitude, and it widens with every doubling. A 20 MHz LTE carrier equalizes
+1200 subcarriers every 70 µs; no version of that pseudo-inverts a matrix.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have compared the two ways of undoing a multipath channel, on the same
-realization of it.</p>
+<p>This tutorial compared the two ways of undoing a multipath channel, on one
+realization of a standardized profile.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
-<li><p>Model a frequency-selective FIR channel in <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>.</p></li>
-<li><p>Simulate both SC and OFDM systems on the same channel realization.</p></li>
-<li><p>Apply ZF equalization (SC) vs. one-tap equalization (OFDM).</p></li>
-<li><p>Compare the two in symbol error rate <em>and</em> in computational cost, and see
-that the second is where the difference lies.</p></li>
+<li><p>Model a multipath channel, and read its properties from <code class="docutils literal notranslate"><span class="pre">info()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">plot()</span></code> instead of recomputing them.</p></li>
+<li><p>Simulate both receivers on the same channel realization.</p></li>
+<li><p>Apply ZF equalization (SC) and one-tap equalization (OFDM).</p></li>
+<li><p>Compare them in symbol error rate <strong>and</strong> in computational cost.</p></li>
 </ul>
 <p>Key takeaway:
 <strong>OFDM turns a frequency-selective channel into a set of flat subchannels, so
-equalization becomes one complex division per subcarrier instead of an</strong>
-<span class="math notranslate nohighlight">\(N \times N\)</span> <strong>matrix inversion. That is what makes wideband receivers
-affordable; the per-subcarrier error rate it gives up is bought back by coding
-across the subcarriers.</strong></p>
-<p>Two questions are left open, and they are the next two tutorials.
-<a class="reference internal" href="ofdm_papr.html"><span class="doc">PAPR in OFDM Communication</span></a> asks what this waveform costs at the <em>transmitter</em> – summing
-128 subcarriers produces peaks an amplifier has to survive. And
-<a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> asks where <code class="docutils literal notranslate"><span class="pre">N_cp</span> <span class="pre">=</span> <span class="pre">10</span></code> came from: the cyclic prefix has to
-cover the channel, so its length is a property of the environment, and the
-environments are tabulated.</p>
+that equalization becomes one complex division per subcarrier instead of a
+matrix inversion. Uncoded, it is the worse receiver; it is also the only one
+that scales, and coding across the subcarriers gives back what it gave up.</strong></p>
+<p>Two questions remain open, and they are the next two tutorials.
+<a class="reference internal" href="ofdm_papr.html"><span class="doc">PAPR in OFDM Communication</span></a> asks what this waveform costs at the <em>transmitter</em>: summing
+128 subcarriers produces peaks that an amplifier must survive. And
+<a class="reference internal" href="multipath.html"><span class="doc">Multipath Fading Channels</span></a> asks where <span class="math notranslate nohighlight">\(N_{cp} = 10\)</span> came from: the cyclic prefix
+has to cover the channel, so its length is a property of the environment, and
+the environments are tabulated.</p>
 </section>
 </section>
 
@@ -1250,22 +1217,22 @@ environments are tabulated.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-parameters">Simulation Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-model">Channel Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency-selective-channel">Frequency-Selective Channel</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#single-carrier-communication-chain">Single-Carrier Communication Chain</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Implementation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ofdm-communication-chain">OFDM Communication Chain</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Implementation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Results</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Results</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#computational-cost">Computational Cost</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>

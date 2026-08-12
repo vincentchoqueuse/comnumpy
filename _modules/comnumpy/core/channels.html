@@ -728,10 +728,13 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for comnumpy.core.channels</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.fading</span><span class="w"> </span><span class="kn">import</span> <span class="n">PowerDelayProfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>                      <span class="c1"># matplotlib is never imported at</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>   <span class="c1"># module load time (decision D36)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AWGN&quot;</span><span class="p">,</span> <span class="s2">&quot;FIRChannel&quot;</span><span class="p">,</span> <span class="s2">&quot;TappedDelayLineChannel&quot;</span><span class="p">]</span>
 
@@ -890,7 +893,55 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>  <span class="c1"># local import (D36)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">y</span></div>
+        <span class="k">return</span> <span class="n">y</span>
+
+<div class="viewcode-block" id="FIRChannel.info">
+<a class="viewcode-back" href="../../../documentation/core/channels.html#comnumpy.core.channels.FIRChannel.info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;What this channel is, as a dictionary.</span>
+
+<span class="sd">        The figures an engineer reads off a tap vector before deciding</span>
+<span class="sd">        anything: how long it is, how much of the energy sits in the</span>
+<span class="sd">        first path, and how far the frequency response swings between</span>
+<span class="sd">        its best and its worst point -- the number that says whether one</span>
+<span class="sd">        equalizer tap will do.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict of str to object</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; info = FIRChannel(np.array([1.0, 0.0, 0.5])).info()</span>
+<span class="sd">        &gt;&gt;&gt; info[&quot;n_taps&quot;], round(info[&quot;peak_to_notch_dB&quot;], 2)</span>
+<span class="sd">        (3, 9.54)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">taps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">taps</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">taps</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;FIR&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">taps</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
+            <span class="s2">&quot;energy&quot;</span><span class="p">:</span> <span class="n">energy</span><span class="p">,</span>
+            <span class="s2">&quot;first_tap_fraction&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">taps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">energy</span><span class="p">),</span>
+            <span class="s2">&quot;peak_to_notch_dB&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="mf">1e-300</span><span class="p">))),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="FIRChannel.plot">
+<a class="viewcode-back" href="../../../documentation/core/channels.html#comnumpy.core.channels.FIRChannel.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="s2">&quot;frequency&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+             <span class="n">scale</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;dB&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+             <span class="n">fs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="s2">&quot;Optional[Axes]&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw the impulse response, or the frequency response of it.</span>
+
+<span class="sd">        See :func:`~comnumpy.core.visualizers.plot_channel_response`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_channel_response</span>  <span class="c1"># D36</span>
+        <span class="k">return</span> <span class="n">plot_channel_response</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
+                                     <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -1051,6 +1102,72 @@ window.runMermaid = runMermaid;</script>
         <span class="n">impulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
         <span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">impulse</span><span class="p">)[:</span><span class="n">length</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TappedDelayLineChannel.info">
+<a class="viewcode-back" href="../../../documentation/core/channels.html#comnumpy.core.channels.TappedDelayLineChannel.info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;What this channel is, as a dictionary.</span>
+
+<span class="sd">        Everything the profile fixes, plus what this sampling rate makes</span>
+<span class="sd">        of it: a delay spread in nanoseconds becomes a number of taps,</span>
+<span class="sd">        and a coherence bandwidth is what decides whether a subcarrier</span>
+<span class="sd">        sees a flat channel.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict of str to object</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from comnumpy.core.fading import get_delay_profile</span>
+<span class="sd">        &gt;&gt;&gt; info = TappedDelayLineChannel(get_delay_profile(&quot;EPA&quot;),</span>
+<span class="sd">        ...                               fs=7.68e6).info()</span>
+<span class="sd">        &gt;&gt;&gt; info[&quot;standard&quot;], info[&quot;n_paths&quot;], info[&quot;n_taps&quot;]</span>
+<span class="sd">        (&#39;EPA&#39;, 7, 4)</span>
+<span class="sd">        &gt;&gt;&gt; round(info[&quot;rms_delay_spread_ns&quot;]), round(info[&quot;fs_Hz&quot;] / 1e6, 2)</span>
+<span class="sd">        (43, 7.68)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">delays</span><span class="p">,</span> <span class="n">powers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">to_taps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;tapped delay line&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;standard&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">standard</span><span class="p">,</span>
+            <span class="s2">&quot;n_paths&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">n_taps</span><span class="p">,</span>
+            <span class="s2">&quot;delays_ns&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">delays_ns</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;powers_dB&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">powers_dB</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;rms_delay_spread_ns&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">rms_delay_spread_ns</span><span class="p">,</span>
+            <span class="s2">&quot;coherence_bandwidth_Hz&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">coherence_bandwidth_hz</span><span class="p">,</span>
+            <span class="s2">&quot;rice_k_dB&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="s2">&quot;rice_k_dB&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">&quot;fs_Hz&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span>
+            <span class="s2">&quot;f_doppler_Hz&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_doppler</span><span class="p">),</span>
+            <span class="s2">&quot;n_taps&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">delays</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;resolvable_delays_samples&quot;</span><span class="p">:</span> <span class="n">delays</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;resolvable_powers&quot;</span><span class="p">:</span> <span class="n">powers</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="TappedDelayLineChannel.plot">
+<a class="viewcode-back" href="../../../documentation/core/channels.html#comnumpy.core.channels.TappedDelayLineChannel.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="s2">&quot;frequency&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;impulse&quot;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+             <span class="n">scale</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;dB&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+             <span class="n">ax</span><span class="p">:</span> <span class="s2">&quot;Optional[Axes]&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw one realization, in delay or in frequency.</span>
+
+<span class="sd">        A fading channel has no single impulse response, so this draws</span>
+<span class="sd">        the **last one realized** if the block has been run, and a fresh</span>
+<span class="sd">        one otherwise -- which advances the generator, exactly as</span>
+<span class="sd">        :meth:`impulse_response` does.</span>
+
+<span class="sd">        See :func:`~comnumpy.core.visualizers.plot_channel_response`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_channel_response</span>  <span class="c1"># D36</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">delays_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">taps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">impulse_response</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">taps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+            <span class="n">taps</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">delays_</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">plot_channel_response</span><span class="p">(</span><span class="n">taps</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+                                     <span class="n">fs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

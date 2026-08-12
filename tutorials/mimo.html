@@ -763,7 +763,9 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="mimo-chain-tutorial">
 <h1>MIMO Chain Tutorial<a class="headerlink" href="#mimo-chain-tutorial" title="Link to this heading">#</a></h1>
-<p>This tutorial demonstrates how to simulate a MIMO (Multiple-Input Multiple-Output) communication system using the <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> library.</p>
+<p>This tutorial shows how to simulate a MIMO (Multiple-Input Multiple-Output)
+communication system with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, and how the classical detectors
+compare on it.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced <code class="docutils literal notranslate"><span class="pre">sweep</span></code>, which is used
@@ -773,29 +775,32 @@ chain is the same object; only the number of antennas changes.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul class="simple">
 <li><p>How to build a MIMO simulation chain with Rayleigh fading.</p></li>
-<li><p>How to visualize received and equalized signals.</p></li>
+<li><p>What the equalization problem looks like on the received constellations.</p></li>
 <li><p>How ZF, MMSE, OSIC, ML and sphere decoding differ, and what each one costs.</p></li>
-<li><p>How to run a Monte Carlo evaluation of the Symbol Error Rate (SER) with <code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
+<li><p>How to run a Monte Carlo evaluation of the Symbol Error Rate (SER).</p></li>
 </ul>
-<p>This tutorial is suited for engineers and students learning about MIMO systems, combining practical examples with theoretical background.</p>
-<section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<section id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
-<p>Ensure you have the following Python libraries installed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
-<span class="n">matplotlib</span>
-<span class="n">comnumpy</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="simulation-setup">
-<h2>Simulation Setup<a class="headerlink" href="#simulation-setup" title="Link to this heading">#</a></h2>
-<section id="import-libraries">
-<h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<p>We start by importing the required libraries and <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code> components:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<p>This tutorial is suited for engineers and students learning about MIMO
+systems, combining practical examples with theoretical background.</p>
+<section id="system-model">
+<h2>System Model<a class="headerlink" href="#system-model" title="Link to this heading">#</a></h2>
+<p>A MIMO link transmits <span class="math notranslate nohighlight">\(N_t\)</span> symbol streams from <span class="math notranslate nohighlight">\(N_t\)</span> antennas
+and receives them on <span class="math notranslate nohighlight">\(N_r\)</span> antennas. Over a flat-fading channel, the
+received vector at time <span class="math notranslate nohighlight">\(n\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{x}[n] \in \mathcal{M}^{N_t}\)</span> holds the transmitted
+symbols, <span class="math notranslate nohighlight">\(\mathbf{H} \in \mathbb{C}^{N_r \times N_t}\)</span> is the channel
+matrix, and <span class="math notranslate nohighlight">\(\mathbf{b}[n]\)</span> is a circular Gaussian noise of variance
+<span class="math notranslate nohighlight">\(\sigma^2\)</span> per antenna.</p>
+<p>Every receive antenna therefore observes a <strong>mixture</strong> of all the streams.
+Recovering <span class="math notranslate nohighlight">\(\mathbf{x}[n]\)</span> from <span class="math notranslate nohighlight">\(\mathbf{y}[n]\)</span> is the detection
+problem, and it is what the rest of this tutorial is about.</p>
+<section id="implementation">
+<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
+<p>We start with the imports:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
@@ -810,26 +815,23 @@ chain is the same object; only the number of antennas changes.</p>
     <span class="n">LinearDetector</span><span class="p">,</span> <span class="n">MaximumLikelihoodDetector</span><span class="p">,</span>
     <span class="n">OrderedSuccessiveInterferenceCancellationDetector</span><span class="p">,</span> <span class="n">SphereDecoder</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.mimo.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">rayleigh_channel</span>
+
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
 </pre></div>
 </div>
-</section>
-<section id="define-system-parameters">
-<h3>Define System Parameters<a class="headerlink" href="#define-system-parameters" title="Link to this heading">#</a></h3>
-<p>We define the number of transmit/receive antennas, the modulation order (PSK), and the noise variance. The channel is drawn once, with a seed: the whole first half of the tutorial is about <strong>one</strong> realization, so it must be the same one on every run.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
+<p>The channel is drawn once, with a seed: the first half of the tutorial is
+about <strong>one</strong> realization, so it must be the same one on every run. The link
+is a single <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> closed by a detector, so comparing five detectors
+means comparing five chains that differ by their last block alone:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.1</span>
 <span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="build-the-mimo-chain">
-<h3>Build the MIMO Chain<a class="headerlink" href="#build-the-mimo-chain" title="Link to this heading">#</a></h3>
-<p>The link is one <code class="docutils literal notranslate"><span class="pre">Sequential</span></code>: symbol generator, mapper, flat MIMO channel, noise, and a detector. The detector is the <strong>last block of the chain</strong>, not something applied to its output, so comparing five detectors is comparing five chains that differ by one block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">link</span><span class="p">(</span><span class="n">detector</span><span class="p">):</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">link</span><span class="p">(</span><span class="n">detector</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The same link, closed by one detector or another.</span>
 
 <span class="sd">    Only the last block changes, which is the point: a detector is a</span>
@@ -855,12 +857,13 @@ chain is the same object; only the number of antennas changes.</p>
     <span class="s2">&quot;SD&quot;</span><span class="p">:</span> <span class="n">SphereDecoder</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
 <span class="p">}</span>
 <span class="n">chains</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">link</span><span class="p">(</span><span class="n">detector</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">detector</span> <span class="ow">in</span> <span class="n">detectors</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;* detector </span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">5s</span><span class="si">}</span><span class="s2">: ser=</span><span class="si">{</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s1">&#39;tx&#39;</span><span class="p">),</span><span class="w"> </span><span class="n">detected</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This simulates a MIMO transmission over a flat-fading channel with additive Gaussian noise. The received signal is described by:</p>
-<div class="math notranslate nohighlight">
-\[\mathbf{y}[n] = \mathbf{H}\mathbf{x}[n] + \mathbf{b}[n]\]</div>
-<p>The chain, as the chain itself describes it:</p>
 <pre  class="mermaid">
         flowchart LR
     tx[&quot;SymbolGenerator&quot;]
@@ -874,43 +877,18 @@ chain is the same object; only the number of antennas changes.</p>
     noise --&gt; detector
     classDef tapped stroke-dasharray: 4 2
     class tx,noise tapped
-    </pre><p>The diagram above is not drawn by hand. It is what the chain says about
-itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
-script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig4</span><span class="p">,</span> <span class="n">ax4</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">node_counts</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;sphere decoder&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">16</span> <span class="o">**</span> <span class="mi">4</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
-            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;exhaustive search, $|</span><span class="se">\\</span><span class="s2">mathcal</span><span class="si">{M}</span><span class="s2">|^</span><span class="si">{N_t}</span><span class="s2">$&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.5&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span>
-            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;successive cancellation, $N_t$&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;nodes visited per vector&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;16-QAM, 4x4: what the pruning removes&quot;</span><span class="p">)</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">ax4</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_mimo_fig4.png&quot;</span><span class="p">)</span>
-
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
+    </pre><p>The diagram is not drawn by hand. It is what the chain says about itself –
+<code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the script, so the
+block names are the ones the code uses and a dashed outline marks a tapped
+block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
 <span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;mimo_zf&quot;</span><span class="p">,</span> <span class="n">chains</span><span class="p">[</span><span class="s2">&quot;ZF&quot;</span><span class="p">])]:</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="one-shot-simulation">
-<h2>One-Shot Simulation<a class="headerlink" href="#one-shot-simulation" title="Link to this heading">#</a></h2>
-<section id="run-the-five-chains">
-<h3>Run the five chains<a class="headerlink" href="#run-the-five-chains" title="Link to this heading">#</a></h3>
-<p>Each chain is given the same seed before running, so the five numbers below differ by the detector alone – same symbols, same noise, same channel:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">N_t</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;* detector </span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">5s</span><span class="si">}</span><span class="s2">: ser=</span><span class="si">{</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s1">&#39;tx&#39;</span><span class="p">),</span><span class="w"> </span><span class="n">detected</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Each chain is given the same seed before running, so the five numbers below
+differ by the detector alone – same symbols, same noise, same channel:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="n">detector</span> <span class="n">ZF</span>   <span class="p">:</span> <span class="n">ser</span><span class="o">=</span><span class="mf">0.0025</span>
 <span class="o">*</span> <span class="n">detector</span> <span class="n">MMSE</span> <span class="p">:</span> <span class="n">ser</span><span class="o">=</span><span class="mf">0.0025</span>
 <span class="o">*</span> <span class="n">detector</span> <span class="n">OSIC</span> <span class="p">:</span> <span class="n">ser</span><span class="o">=</span><span class="mf">0.0010</span>
@@ -919,9 +897,9 @@ outline marks a tapped block:</p>
 </pre></div>
 </div>
 </section>
-<section id="visualize-the-received-signal">
-<h3>Visualize the Received Signal<a class="headerlink" href="#visualize-the-received-signal" title="Link to this heading">#</a></h3>
-<p>Let’s inspect what each receive antenna sees, read from the <code class="docutils literal notranslate"><span class="pre">&quot;noise&quot;</span></code> tap:</p>
+<section id="received-constellations">
+<h3>Received Constellations<a class="headerlink" href="#received-constellations" title="Link to this heading">#</a></h3>
+<p>Let us look at what each receive antenna sees, read from the <code class="docutils literal notranslate"><span class="pre">&quot;noise&quot;</span></code> tap:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">chains</span><span class="p">[</span><span class="s2">&quot;ZF&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)</span>
 <span class="n">fig1</span><span class="p">,</span> <span class="n">axes1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="n">N_r</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">N_r</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_r</span><span class="p">):</span>
@@ -935,14 +913,10 @@ outline marks a tapped block:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig1.png"><img alt="../_images/monte_carlo_mimo_fig1.png" class="align-center" src="../_images/monte_carlo_mimo_fig1.png" style="width: 100%;" />
 </a>
-<p>Each antenna receives a noisy superposition of the two transmitted streams, and no constellation is visible on any of them.</p>
-</section>
-<section id="zero-forcing-equalization">
-<h3>Zero-Forcing Equalization<a class="headerlink" href="#zero-forcing-equalization" title="Link to this heading">#</a></h3>
-<p>Zero forcing separates the streams with the pseudo-inverse of the channel matrix,</p>
-<div class="math notranslate nohighlight">
-\[\mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]\]</div>
-<p>assuming perfect channel knowledge and ignoring the noise enhancement this causes. That equalization is the first step of <code class="docutils literal notranslate"><span class="pre">LinearDetector</span></code>, which then decides; <code class="docutils literal notranslate"><span class="pre">linear_estimator</span></code> is that step alone, which is what a constellation plot needs:</p>
+<p>No constellation is visible on any antenna: each one receives a noisy
+superposition of the two transmitted streams. This is the problem the
+detector has to solve.</p>
+<p>Applying the pseudo-inverse of the channel matrix separates the streams:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Z</span> <span class="o">=</span> <span class="n">detectors</span><span class="p">[</span><span class="s2">&quot;ZF&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">linear_estimator</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
 <span class="n">fig2</span><span class="p">,</span> <span class="n">axes2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="n">N_t</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">N_t</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_t</span><span class="p">):</span>
@@ -956,124 +930,107 @@ outline marks a tapped block:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig2.png"><img alt="../_images/monte_carlo_mimo_fig2.png" class="align-center" src="../_images/monte_carlo_mimo_fig2.png" style="width: 100%;" />
 </a>
-<p>The estimated points cluster around the ideal constellation points (black crosses), although residual noise remains visible – and it is <em>larger</em> than the channel noise, because inverting a badly conditioned matrix amplifies it.</p>
+<p>The estimated points now cluster around the ideal constellation points (black
+crosses), but the residual noise is <strong>larger</strong> than the channel noise:
+inverting a badly conditioned matrix amplifies it. How to avoid paying that
+price is what separates the detectors below.</p>
 </section>
 </section>
-<section id="detection-comparison">
-<h2>Detection Comparison<a class="headerlink" href="#detection-comparison" title="Link to this heading">#</a></h2>
-<p>Five detectors are compared here, and they are five answers to one question: what to do with the interference the other streams put on top of the one being read.</p>
-<section id="zero-forcing-cancel-it-exactly">
-<h3>Zero forcing: cancel it exactly<a class="headerlink" href="#zero-forcing-cancel-it-exactly" title="Link to this heading">#</a></h3>
-<p>The most direct answer is to invert the channel. With <span class="math notranslate nohighlight">\(N_r \geq N_t\)</span> the pseudo-inverse <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger} = (\mathbf{H}^H\mathbf{H})^{-1}\mathbf{H}^H\)</span> is a left inverse, so</p>
+<section id="detection-strategies">
+<h2>Detection Strategies<a class="headerlink" href="#detection-strategies" title="Link to this heading">#</a></h2>
+<p>The five detectors are five answers to one question: what to do with the
+interference that the other streams put on top of the one being read.</p>
+<section id="zero-forcing-zf">
+<h3>Zero forcing (ZF)<a class="headerlink" href="#zero-forcing-zf" title="Link to this heading">#</a></h3>
+<p>The most direct answer is to invert the channel. With <span class="math notranslate nohighlight">\(N_r \geq N_t\)</span>,
+the pseudo-inverse <span class="math notranslate nohighlight">\(\mathbf{H}^{\dagger} =
+(\mathbf{H}^H\mathbf{H})^{-1}\mathbf{H}^H\)</span> is a left inverse, so</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\widehat{\mathbf{x}}_{ZF}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
-\mathbf{z}[n] &amp;= \mathbf{H}^{\dagger}\mathbf{y}[n]
-= \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]\end{split}\]</div>
-<p>and the interference is gone – <strong>exactly</strong>, whatever the SNR. What is left is the second term, and it is the whole story of this detector. The noise on stream <span class="math notranslate nohighlight">\(i\)</span> comes out with variance</p>
-<div class="math notranslate nohighlight">
-\[\sigma_i^2 = \sigma^2 \left[\left(\mathbf{H}^H\mathbf{H}\right)^{-1}\right]_{ii}
-\;\geq\; \frac{\sigma^2}{\left\|\mathbf{h}_i\right\|^2}\]</div>
-<p>with equality only when the columns of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> are orthogonal. Two nearly parallel columns make <span class="math notranslate nohighlight">\(\mathbf{H}^H\mathbf{H}\)</span> nearly singular and that diagonal entry explodes: this is <strong>noise enhancement</strong>, and it is the price of insisting on exact cancellation. It also costs diversity – each stream spends <span class="math notranslate nohighlight">\(N_t - 1\)</span> of its <span class="math notranslate nohighlight">\(N_r\)</span> degrees of freedom cancelling the others, leaving</p>
-<div class="math notranslate nohighlight">
-\[d_{ZF} = N_r - N_t + 1\]</div>
-<p>against the <span class="math notranslate nohighlight">\(N_r\)</span> a maximum-likelihood receiver keeps. With the <span class="math notranslate nohighlight">\(3 \times 2\)</span> channel of this tutorial that is 2 against 3.</p>
+\[\mathbf{z}[n] = \mathbf{H}^{\dagger}\mathbf{y}[n]
+= \mathbf{x}[n] + \mathbf{H}^{\dagger}\mathbf{b}[n]\]</div>
+<p>and the interference is removed <strong>exactly</strong>, whatever the SNR. The price is
+the second term: the noise on stream <span class="math notranslate nohighlight">\(i\)</span> comes out with variance
+<span class="math notranslate nohighlight">\(\sigma^2 [(\mathbf{H}^H\mathbf{H})^{-1}]_{ii}\)</span>, which explodes when
+two columns of <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> are nearly parallel. This is <strong>noise
+enhancement</strong>. It also costs diversity: each stream spends <span class="math notranslate nohighlight">\(N_t-1\)</span> of
+its <span class="math notranslate nohighlight">\(N_r\)</span> degrees of freedom cancelling the others, leaving a diversity
+order of <span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span> instead of <span class="math notranslate nohighlight">\(N_r\)</span>.</p>
 </section>
-<section id="mmse-stop-insisting">
-<h3>MMSE: stop insisting<a class="headerlink" href="#mmse-stop-insisting" title="Link to this heading">#</a></h3>
-<p>If exact cancellation is what costs, then buy less of it. The MMSE receiver minimizes <span class="math notranslate nohighlight">\(\mathbb{E}\left[\|\mathbf{x} - \mathbf{W}\mathbf{y}\|^2\right]\)</span> rather than the interference alone:</p>
+<section id="minimum-mean-square-error-mmse">
+<h3>Minimum mean square error (MMSE)<a class="headerlink" href="#minimum-mean-square-error-mmse" title="Link to this heading">#</a></h3>
+<p>If exact cancellation is what costs, then buy less of it. The MMSE receiver
+minimizes <span class="math notranslate nohighlight">\(\mathbb{E}[\|\mathbf{x} - \mathbf{W}\mathbf{y}\|^2]\)</span> rather
+than the interference alone:</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\widehat{\mathbf{x}}_{MMSE}[n] &amp;= \boldsymbol \Pi_{\mathcal{M}}(\mathbf{z}[n])\\
-\mathbf{z}[n] &amp;= \left(\mathbf{H}^H\mathbf{H} + \sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]\end{split}\]</div>
-<p>The only difference is the <span class="math notranslate nohighlight">\(\sigma^2 \mathbf{I}\)</span> added before inverting, and it is exactly the regularization that keeps the inverse bounded when the channel is ill conditioned. The two limits say what it does: as <span class="math notranslate nohighlight">\(\sigma^2 \to 0\)</span> it <em>is</em> zero forcing, and as <span class="math notranslate nohighlight">\(\sigma^2 \to \infty\)</span> it becomes the matched filter <span class="math notranslate nohighlight">\(\mathbf{H}^H\)</span>, which ignores the interference entirely and just collects energy. In between it accepts a little residual interference – the estimate is biased – in exchange for much less amplified noise. That trade is worth a few tenths of a decibel here and much more on a badly conditioned channel; it does not buy diversity, which is why the MMSE and ZF curves run parallel.</p>
+\[\mathbf{z}[n] = \left(\mathbf{H}^H\mathbf{H}
++ \sigma^2 \mathbf{I}_{N_t}\right)^{-1}\mathbf{H}^H\mathbf{y}[n]\]</div>
+<p>The only difference is the <span class="math notranslate nohighlight">\(\sigma^2 \mathbf{I}\)</span> added before
+inverting, which keeps the inverse bounded when the channel is ill
+conditioned. As <span class="math notranslate nohighlight">\(\sigma^2 \to 0\)</span> it <em>is</em> zero forcing; as
+<span class="math notranslate nohighlight">\(\sigma^2 \to \infty\)</span> it becomes the matched filter
+<span class="math notranslate nohighlight">\(\mathbf{H}^H\)</span>. In between it accepts a little residual interference in
+exchange for much less amplified noise. It does not buy diversity, which is
+why the ZF and MMSE curves run parallel.</p>
 </section>
-<section id="maximum-likelihood-do-not-separate-the-streams-at-all">
-<h3>Maximum likelihood: do not separate the streams at all<a class="headerlink" href="#maximum-likelihood-do-not-separate-the-streams-at-all" title="Link to this heading">#</a></h3>
-<p>Both linear detectors treat the streams one at a time. The optimal receiver refuses that split and scores the vectors jointly:</p>
+<section id="ordered-successive-interference-cancellation-osic">
+<h3>Ordered successive interference cancellation (OSIC)<a class="headerlink" href="#ordered-successive-interference-cancellation-osic" title="Link to this heading">#</a></h3>
+<p>Detect the stream with the best post-detection SNR, subtract its contribution
+<span class="math notranslate nohighlight">\(\mathbf{h}_i \widehat{x}_i\)</span> from the observation, and repeat on a
+channel with one column fewer. The second stream is then detected with one
+interferer less, the third with two less, and so on. The last stream enjoys
+the full <span class="math notranslate nohighlight">\(N_r\)</span> diversity, the first only <span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span>, which
+is why the ordering matters and why <code class="docutils literal notranslate"><span class="pre">osic_type=&quot;sinr&quot;</span></code> sorts by
+post-detection SNR (the V-BLAST rule). The price is error propagation: a
+wrong decision is subtracted as if it were right.</p>
+</section>
+<section id="maximum-likelihood-ml">
+<h3>Maximum likelihood (ML)<a class="headerlink" href="#maximum-likelihood-ml" title="Link to this heading">#</a></h3>
+<p>Both linear detectors treat the streams one at a time. The optimal receiver
+refuses that split and scores the candidate vectors jointly:</p>
 <div class="math notranslate nohighlight">
-\[\widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2\]</div>
-<p>Nothing is inverted, so nothing is amplified, and every receive antenna contributes to every stream: the diversity order is <span class="math notranslate nohighlight">\(N_r\)</span>. The cost is that the minimum is taken over <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> vectors.</p>
+\[\widehat{\mathbf{x}}_{ML}[n] = \arg \min_{\mathbf{x}\in \mathcal{M}^{N_t}}
+\|\mathbf{y}[n] - \mathbf{H}\mathbf{x}\|^2_2\]</div>
+<p>Nothing is inverted, so nothing is amplified, and every receive antenna
+contributes to every stream: the diversity order is <span class="math notranslate nohighlight">\(N_r\)</span>. The cost is
+that the minimum is taken over <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> vectors – 16 here,
+but 65 536 for 16-QAM on four streams.</p>
 </section>
-<section id="osic-separate-them-but-in-the-right-order">
-<h3>OSIC: separate them, but in the right order<a class="headerlink" href="#osic-separate-them-but-in-the-right-order" title="Link to this heading">#</a></h3>
-<p>Between the two lies successive cancellation. Detect the stream with the best post-detection SNR, subtract its contribution <span class="math notranslate nohighlight">\(\mathbf{h}_i \widehat{x}_i\)</span> from the observation, and repeat on a channel with one column fewer – so the second stream is detected on a system with one interferer less, the third with two less, and so on. The last stream detected enjoys the full <span class="math notranslate nohighlight">\(N_r\)</span> diversity; the first only <span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span>, which is why the <em>ordering</em> matters and why <code class="docutils literal notranslate"><span class="pre">osic_type=&quot;sinr&quot;</span></code> sorts by post-detection SNR (the V-BLAST rule). The price is error propagation: a wrong decision is subtracted as if it were right, and it corrupts everything after it.</p>
-</section>
-<section id="sphere-decoding-the-same-decision-not-the-same-cost">
-<h3>Sphere decoding: the same decision, not the same cost<a class="headerlink" href="#sphere-decoding-the-same-decision-not-the-same-cost" title="Link to this heading">#</a></h3>
-<p>The ML detector is exhaustive: <span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span> candidates per symbol, 16 here and 65 536 for 16-QAM on four streams. The sphere decoder returns the <em>same</em> vector without visiting them all, and the reason is a factorization.</p>
-<p>Write the thin QR decomposition of the channel, <span class="math notranslate nohighlight">\(\mathbf{H} = \mathbf{Q}\mathbf{R}\)</span> with <span class="math notranslate nohighlight">\(\mathbf{Q}^H\mathbf{Q} = \mathbf{I}_{N_t}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{R}\)</span> upper triangular, and project the observation on <span class="math notranslate nohighlight">\(\mathbf{z} = \mathbf{Q}^H\mathbf{y}\)</span>:</p>
-<div class="math notranslate nohighlight">
-\[\left\|\mathbf{y} - \mathbf{H}\mathbf{x}\right\|^2 =
-\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2
-+ \left\|\left(\mathbf{I} - \mathbf{Q}\mathbf{Q}^H\right)\mathbf{y}\right\|^2\]</div>
-<p>The second term does not depend on <span class="math notranslate nohighlight">\(\mathbf{x}\)</span>, so minimizing the first <strong>is</strong> maximum likelihood – nothing has been approximated. And because <span class="math notranslate nohighlight">\(\mathbf{R}\)</span> is triangular, that first term is a sum whose <span class="math notranslate nohighlight">\(k\)</span>-th layer only involves the layers already decided:</p>
+<section id="sphere-decoding-sd">
+<h3>Sphere decoding (SD)<a class="headerlink" href="#sphere-decoding-sd" title="Link to this heading">#</a></h3>
+<p>The sphere decoder returns the <strong>same</strong> vector as ML without visiting every
+candidate. Writing the thin QR decomposition <span class="math notranslate nohighlight">\(\mathbf{H} =
+\mathbf{Q}\mathbf{R}\)</span> and projecting the observation on <span class="math notranslate nohighlight">\(\mathbf{z} =
+\mathbf{Q}^H\mathbf{y}\)</span>, the metric becomes a sum whose <span class="math notranslate nohighlight">\(k\)</span>-th layer
+only involves the layers already decided:</p>
 <div class="math notranslate nohighlight">
 \[\left\|\mathbf{z} - \mathbf{R}\mathbf{x}\right\|^2 =
-\sum_{k=N_t-1}^{0} \left|R_{kk}\right|^2
-\left|c_k - x_k\right|^2,
+\sum_{k=N_t-1}^{0} \left|R_{kk}\right|^2 \left|c_k - x_k\right|^2,
 \qquad
 c_k = \frac{z_k - \sum_{i&gt;k} R_{ki}\, x_i}{R_{kk}}\]</div>
-<p>Every term is non-negative, so a partial sum can only grow. The moment it exceeds the best complete metric found so far, <strong>the entire subtree below it can be discarded</strong> – it cannot contain the minimum. That is the sphere: only the lattice points inside a ball are ever visited, and the ball shrinks each time a better solution is found.</p>
-<p>One detail makes it work without tuning. Within a layer, the alphabet is enumerated by increasing <span class="math notranslate nohighlight">\(|c_k - a|\)</span> (the Schnorr-Euchner order), so the first leaf the search reaches is the successive-cancellation solution: a finite radius is available immediately, and no initial radius has to be guessed. It also means the first candidate that exceeds the bound ends the layer – everything after it is worse.</p>
-</section>
-<section id="the-five-in-one-table">
-<h3>The five in one table<a class="headerlink" href="#the-five-in-one-table" title="Link to this heading">#</a></h3>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>detector</p></th>
-<th class="head"><p>what it does</p></th>
-<th class="head"><p>cost per vector</p></th>
-<th class="head"><p>diversity order</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>ZF</p></td>
-<td><p>inverts the channel</p></td>
-<td><p><span class="math notranslate nohighlight">\(O(N_t^3)\)</span> once,
-then a product</p></td>
-<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span></p></td>
-</tr>
-<tr class="row-odd"><td><p>MMSE</p></td>
-<td><p>inverts it with <span class="math notranslate nohighlight">\(\sigma^2\)</span> added</p></td>
-<td><p>same</p></td>
-<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span></p></td>
-</tr>
-<tr class="row-even"><td><p>OSIC</p></td>
-<td><p>detects, subtracts, repeats</p></td>
-<td><p><span class="math notranslate nohighlight">\(N_t\)</span> inversions
-of shrinking size</p></td>
-<td><p><span class="math notranslate nohighlight">\(N_r - N_t + 1\)</span>
-(first stream)</p></td>
-</tr>
-<tr class="row-odd"><td><p>ML</p></td>
-<td><p>scores every vector</p></td>
-<td><p><span class="math notranslate nohighlight">\(|\mathcal{M}|^{N_t}\)</span></p></td>
-<td><p><span class="math notranslate nohighlight">\(N_r\)</span></p></td>
-</tr>
-<tr class="row-even"><td><p>SD</p></td>
-<td><p>scores the vectors inside a sphere</p></td>
-<td><p>data dependent, same
-decision as ML</p></td>
-<td><p><span class="math notranslate nohighlight">\(N_r\)</span></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>The last column is the one that orders the curves at high SNR, and the third is the one that orders the bill. Note that ZF and MMSE share a diversity order: the regularization buys array gain, not slope, which is why their curves are parallel in the figure below and never converge.</p>
+<p>Every term is non-negative, so a partial sum can only grow. As soon as it
+exceeds the best complete metric found so far, the <strong>entire subtree below it
+can be discarded</strong>: it cannot contain the minimum. Only the lattice points
+inside a shrinking ball are ever visited, and nothing is approximated, so the
+decision is exactly the ML one.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The SNR range simulated here stops at 18 dB, which is <em>not</em> the
-asymptotic regime: reading exponents off these curves would give
-1.4 and 1.6 rather than 2 and 3. Diversity orders are claims about a
-limit, so they are checked where a limit can be reached –
-<code class="docutils literal notranslate"><span class="pre">validation/mimo_zf_ml_ber.py</span></code> confirms diversity 1 for zero
-forcing and 2 for maximum likelihood on a 2x2 channel, against the
-closed forms of <a class="reference internal" href="../documentation/core/metrics.html#module-comnumpy.core.metrics" title="comnumpy.core.metrics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comnumpy.core.metrics</span></code></a> (decision D7).</p>
+<p>Diversity orders are claims about a limit, and the SNR range simulated
+below stops at 18 dB, which is not the asymptotic regime. They are
+checked where a limit can be reached: <code class="docutils literal notranslate"><span class="pre">validation/mimo_zf_ml_ber.py</span></code>
+confirms diversity 1 for zero forcing and 2 for maximum likelihood on a
+2x2 channel, against the closed forms of <a class="reference internal" href="../documentation/core/metrics.html#module-comnumpy.core.metrics" title="comnumpy.core.metrics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comnumpy.core.metrics</span></code></a>
+(decision D7).</p>
 </div>
 </section>
 </section>
 <section id="monte-carlo-evaluation">
 <h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
-<p>A single channel realization proves nothing: over fading, the error rate is an <em>average</em>, and it is dominated by the rare draws where the matrix is nearly singular. Averaging therefore means running the chain once per realization – which is a sweep whose parameter is the channel. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes several dotted parameter names at once and zips them, so one sweep point sets the matrix the signal goes through <strong>and</strong> the one the detector inverts:</p>
+<p>A single channel realization proves nothing: over fading, the error rate is
+an <em>average</em>, dominated by the rare draws where the matrix is nearly
+singular. Averaging means running the chain once per realization, which is a
+sweep whose parameter is the channel. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes
+several dotted parameter names at once and zips them, so one sweep point sets
+the matrix the signal goes through <strong>and</strong> the one the detector inverts:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">n_channels</span> <span class="o">=</span> <span class="mi">200</span>
 <span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">200</span>
@@ -1102,19 +1059,8 @@ closed forms of <a class="reference internal" href="../documentation/core/metric
           <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">5s</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">))</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ZF</span>    <span class="mf">0.3313</span> <span class="mf">0.2106</span> <span class="mf">0.1065</span> <span class="mf">0.0428</span> <span class="mf">0.0148</span> <span class="mf">0.0047</span> <span class="mf">0.0020</span>
-<span class="n">MMSE</span>  <span class="mf">0.2871</span> <span class="mf">0.1762</span> <span class="mf">0.0876</span> <span class="mf">0.0345</span> <span class="mf">0.0116</span> <span class="mf">0.0036</span> <span class="mf">0.0014</span>
-<span class="n">OSIC</span>  <span class="mf">0.2826</span> <span class="mf">0.1610</span> <span class="mf">0.0668</span> <span class="mf">0.0192</span> <span class="mf">0.0037</span> <span class="mf">0.0007</span> <span class="mf">0.0003</span>
-<span class="n">ML</span>    <span class="mf">0.2807</span> <span class="mf">0.1560</span> <span class="mf">0.0620</span> <span class="mf">0.0159</span> <span class="mf">0.0027</span> <span class="mf">0.0006</span> <span class="mf">0.0003</span>
-</pre></div>
-</div>
-<p>Note which detectors are told the noise variance and which are not: MMSE and OSIC weight by <span class="math notranslate nohighlight">\(\sigma^2\)</span>, ZF ignores the noise by construction, and ML only compares distances – so neither of the last two has that parameter at all, and <code class="docutils literal notranslate"><span class="pre">set_params</span></code> says so if you try.</p>
-<section id="plot-ser-vs-snr">
-<h3>Plot SER vs SNR<a class="headerlink" href="#plot-ser-vs-snr" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> is the library’s figure for error-rate curves: hollow markers, logarithmic ordinate, a grid on both decades. Here it carries measurements only – ZF over Rayleigh has a closed form (see the <a class="reference internal" href="alamouti.html"><span class="doc">Alamouti tutorial</span></a>), the three others do not.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
                      <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N_r</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">N_t</span><span class="si">}</span><span class="s2"> MIMO, </span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-PSK, &quot;</span>
                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channel draws per point&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -1122,65 +1068,114 @@ closed forms of <a class="reference internal" href="../documentation/core/metric
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_mimo_fig3.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ZF</span>    <span class="mf">0.3313</span> <span class="mf">0.2106</span> <span class="mf">0.1065</span> <span class="mf">0.0428</span> <span class="mf">0.0148</span> <span class="mf">0.0047</span> <span class="mf">0.0020</span>
+<span class="n">MMSE</span>  <span class="mf">0.2871</span> <span class="mf">0.1762</span> <span class="mf">0.0876</span> <span class="mf">0.0345</span> <span class="mf">0.0116</span> <span class="mf">0.0036</span> <span class="mf">0.0014</span>
+<span class="n">OSIC</span>  <span class="mf">0.2826</span> <span class="mf">0.1610</span> <span class="mf">0.0668</span> <span class="mf">0.0192</span> <span class="mf">0.0037</span> <span class="mf">0.0007</span> <span class="mf">0.0003</span>
+<span class="n">ML</span>    <span class="mf">0.2807</span> <span class="mf">0.1560</span> <span class="mf">0.0620</span> <span class="mf">0.0159</span> <span class="mf">0.0027</span> <span class="mf">0.0006</span> <span class="mf">0.0003</span>
+<span class="n">SD</span>    <span class="mf">0.2807</span> <span class="mf">0.1560</span> <span class="mf">0.0620</span> <span class="mf">0.0159</span> <span class="mf">0.0027</span> <span class="mf">0.0006</span> <span class="mf">0.0003</span>
+</pre></div>
+</div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig3.png"><img alt="../_images/monte_carlo_mimo_fig3.png" class="align-center" src="../_images/monte_carlo_mimo_fig3.png" style="width: 100%;" />
 </a>
-<p>The ordering is the textbook one and it holds at every SNR: ML is the best, OSIC follows it closely, MMSE beats ZF everywhere, and the gap widens with the SNR – at 18 dB, ML is an order of magnitude below ZF. The reason is in the slope: with <span class="math notranslate nohighlight">\(N_r = 3\)</span> receive antennas and <span class="math notranslate nohighlight">\(N_t = 2\)</span> streams, ML enjoys the full receive diversity while a linear detector spends part of it cancelling the other stream.</p>
-<p>And the sphere decoder’s row is <strong>the ML row, digit for digit</strong> – <code class="docutils literal notranslate"><span class="pre">0.2807</span> <span class="pre">0.1560</span> <span class="pre">0.0620</span> <span class="pre">0.0159</span> <span class="pre">0.0027</span> <span class="pre">0.0006</span> <span class="pre">0.0003</span></code> in both. That is the claim it has to make: a pruning that changed a single decision would not be maximum likelihood any more.</p>
+<p>The ordering is the textbook one and it holds at every SNR: ML is the best,
+OSIC follows closely, MMSE beats ZF everywhere, and the gap widens with the
+SNR – at 18 dB, ML is an order of magnitude below ZF. The reason is the
+slope: with <span class="math notranslate nohighlight">\(N_r = 3\)</span> receive antennas and <span class="math notranslate nohighlight">\(N_t = 2\)</span> streams, ML
+enjoys the full receive diversity while a linear detector spends part of it
+cancelling the other stream.</p>
+<p>The sphere decoder’s row is <strong>the ML row, digit for digit</strong>, which is the
+claim it has to make: a pruning that changed a single decision would not be
+maximum likelihood any more. The two curves therefore lie on top of each
+other in the figure, and only their markers tell them apart.</p>
+<p>Note which detectors are told the noise variance and which are not: MMSE and
+OSIC weight by <span class="math notranslate nohighlight">\(\sigma^2\)</span>, ZF ignores the noise by construction, and ML
+only compares distances – so neither of the last two has that parameter at
+all, and <code class="docutils literal notranslate"><span class="pre">set_params</span></code> says so if you try.</p>
 </section>
-<section id="what-the-pruning-removes">
-<h3>What the pruning removes<a class="headerlink" href="#what-the-pruning-removes" title="Link to this heading">#</a></h3>
-<p>The 4-PSK link above has 16 candidates, and an exhaustive search scores them in one matrix product – there the sphere decoder is <em>slower</em>, because a tree walked in Python costs more per node than a BLAS call costs per candidate. The regime it exists for is the one where that product no longer fits, so the last section moves to 16-QAM on four streams: 65 536 candidates per symbol.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">visited nodes per detected vector (16-QAM, 4x4)&quot;</span><span class="p">)</span>
+<section id="computational-cost">
+<h2>Computational Cost<a class="headerlink" href="#computational-cost" title="Link to this heading">#</a></h2>
+<p>Since ML and SD return the same decision, what separates them is their cost.
+The 4-PSK link above has only 16 candidates, where an exhaustive search is a
+single matrix product; the regime the sphere decoder exists for is the one
+where that product no longer fits. We therefore time both detectors on
+16-QAM over four streams, i.e. 65 536 candidates per vector:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what the pruning is worth, in seconds ---------------------------</span>
+<span class="c1"># 16-QAM on four streams: 65 536 candidates per vector, which is where</span>
+<span class="c1"># the two detectors stop costing the same.</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">16-QAM, 4x4: same decision, what it costs&quot;</span><span class="p">)</span>
 <span class="n">big_alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 <span class="n">big_H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">big_decoder</span> <span class="o">=</span> <span class="n">SphereDecoder</span><span class="p">(</span><span class="n">big_alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">big_H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">)</span>
-<span class="n">big_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">big_alphabet</span><span class="p">),</span>
-    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">big_H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
-    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
-    <span class="n">big_decoder</span><span class="p">,</span>
-<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;4x4 MIMO, sphere decoder&quot;</span><span class="p">)</span>
+<span class="n">big_detectors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;ML&quot;</span><span class="p">:</span> <span class="n">MaximumLikelihoodDetector</span><span class="p">(</span><span class="n">big_alphabet</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">big_H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;SD&quot;</span><span class="p">:</span> <span class="n">big_decoder</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">elapsed</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">big_detectors</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">detector</span> <span class="ow">in</span> <span class="n">big_detectors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">big_chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">big_alphabet</span><span class="p">),</span>
+        <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">big_H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+        <span class="n">detector</span><span class="p">,</span>
+    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;4x4 MIMO, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">:</span>
+        <span class="n">big_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">big_chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)})</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">detected</span> <span class="o">=</span> <span class="n">big_chain</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">400</span><span class="p">))</span>
+        <span class="n">elapsed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">big_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">big_decoder</span><span class="o">.</span><span class="n">nodes_</span><span class="si">:</span><span class="s2">7.1f</span><span class="si">}</span><span class="s2"> nodes&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;SD&quot;</span>
+                 <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">16</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s2">7d</span><span class="si">}</span><span class="s2"> nodes&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">snr_dB</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> dB </span><span class="si">{</span><span class="n">elapsed</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.1f</span><span class="si">}</span><span class="s2"> ms  &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s2">   SER </span><span class="si">{</span><span class="n">errors</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">node_counts</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">:</span>
-    <span class="n">big_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">big_chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)})</span>
-    <span class="n">detected</span> <span class="o">=</span> <span class="n">big_chain</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">400</span><span class="p">))</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">big_chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">)</span>
-    <span class="n">node_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">big_decoder</span><span class="o">.</span><span class="n">nodes_</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">snr_dB</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> dB   </span><span class="si">{</span><span class="n">big_decoder</span><span class="o">.</span><span class="n">nodes_</span><span class="si">:</span><span class="s2">8.1f</span><span class="si">}</span><span class="s2"> nodes   &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">big_decoder</span><span class="o">.</span><span class="n">nodes_</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">16</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> of the exhaustive search   &quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;SER </span><span class="si">{</span><span class="n">errors</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                                   <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">elapsed</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                     <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;detection time for 400 vectors [ms]&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;16-QAM, 4x4: same decision, what it costs&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_mimo_fig4.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">visited</span> <span class="n">nodes</span> <span class="n">per</span> <span class="n">detected</span> <span class="n">vector</span> <span class="p">(</span><span class="mi">16</span><span class="o">-</span><span class="n">QAM</span><span class="p">,</span> <span class="mi">4</span><span class="n">x4</span><span class="p">)</span>
-   <span class="mi">0</span> <span class="n">dB</span>       <span class="mf">91.8</span> <span class="n">nodes</span>   <span class="mf">1.40e-03</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
-   <span class="mi">3</span> <span class="n">dB</span>       <span class="mf">51.3</span> <span class="n">nodes</span>   <span class="mf">7.82e-04</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.7288</span>
-   <span class="mi">6</span> <span class="n">dB</span>       <span class="mf">29.8</span> <span class="n">nodes</span>   <span class="mf">4.55e-04</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.6369</span>
-   <span class="mi">9</span> <span class="n">dB</span>       <span class="mf">19.2</span> <span class="n">nodes</span>   <span class="mf">2.94e-04</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
-  <span class="mi">12</span> <span class="n">dB</span>       <span class="mf">12.8</span> <span class="n">nodes</span>   <span class="mf">1.95e-04</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.3381</span>
-  <span class="mi">15</span> <span class="n">dB</span>        <span class="mf">8.6</span> <span class="n">nodes</span>   <span class="mf">1.31e-04</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.1256</span>
-  <span class="mi">18</span> <span class="n">dB</span>        <span class="mf">5.8</span> <span class="n">nodes</span>   <span class="mf">8.78e-05</span> <span class="n">of</span> <span class="n">the</span> <span class="n">exhaustive</span> <span class="n">search</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ML</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">161.4</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
+<span class="n">ML</span>  <span class="mi">9</span> <span class="n">dB</span>    <span class="mf">132.1</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
+<span class="n">ML</span> <span class="mi">18</span> <span class="n">dB</span>    <span class="mf">118.5</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
+<span class="n">SD</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">243.1</span> <span class="n">ms</span>     <span class="mf">91.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
+<span class="n">SD</span>  <span class="mi">9</span> <span class="n">dB</span>     <span class="mf">50.5</span> <span class="n">ms</span>     <span class="mf">19.2</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
+<span class="n">SD</span> <span class="mi">18</span> <span class="n">dB</span>     <span class="mf">17.7</span> <span class="n">ms</span>      <span class="mf">5.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig4.png"><img alt="../_images/monte_carlo_mimo_fig4.png" class="align-center" src="../_images/monte_carlo_mimo_fig4.png" style="width: 100%;" />
 </a>
-<p>Read the last column against the first. At 18 dB the search visits <strong>5.8 nodes</strong> where the exhaustive one scores 65 536 candidates – and 4 of those nodes are the single path down the tree that successive cancellation would have taken, so barely two branches are ever explored. At 0 dB it visits 92, still three orders of magnitude below the exhaustive count, but sixteen times more than at 18 dB: the noisier the observation, the wider the sphere has to stay.</p>
-<p>That data dependence is the whole character of the algorithm. Its worst case <em>is</em> the exhaustive search – there is no bound to hide behind – but its expected complexity is polynomial over the range of SNRs where a link is actually operated (Hassibi and Vikalo, 2005). Which is why 64-QAM on four streams, 16.7 million candidates, is out of reach for the exhaustive detector and takes this one about 5 nodes per vector at 25 dB.</p>
-</section>
+<p>The ML cost is flat: it scores the same 65 536 candidates whatever the noise.
+The sphere decoder’s cost is <strong>data dependent</strong>, and it falls with the SNR –
+92 nodes per vector at 0 dB, 5.8 at 18 dB, where four of those nodes are the
+single path down the tree that successive cancellation would have taken. At
+18 dB it is seven times faster than ML for exactly the same decisions.</p>
+<p>At 0 dB it is <em>slower</em>, and that is worth reading rather than hiding: the
+sphere is then wide, and a tree walked in Python costs far more per node than
+a BLAS call costs per candidate. The crossing point here is near 3 dB.</p>
+<p>Its worst case <em>is</em> the exhaustive search, but its expected complexity is
+polynomial over the range of SNRs where a link is actually operated (Hassibi
+and Vikalo, 2005) – which is why 64-QAM on four streams, 16.7 million
+candidates, is out of reach for the exhaustive detector and costs this one
+about 5 nodes per vector at 25 dB.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
 <p>This tutorial highlighted:</p>
 <ul class="simple">
-<li><p>How to simulate a MIMO transmission with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, as a chain whose last block is the receiver.</p></li>
-<li><p>How ZF equalization recovers the streams from a multi-antenna mixture, and what it costs in noise.</p></li>
+<li><p>How to simulate a MIMO transmission with <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, as a chain whose
+last block is the receiver.</p></li>
+<li><p>What the equalization problem looks like, and what ZF costs in noise.</p></li>
 <li><p>How the five detectors compare, on one realization and on average.</p></li>
-<li><p>Why ML and OSIC outperform linear detection, why that difference grows with the SNR, and why a sphere decoder reaches the ML decision without paying the ML price.</p></li>
+<li><p>Why ML and OSIC outperform linear detection, why that difference grows with
+the SNR, and why a sphere decoder reaches the ML decision without paying
+the ML price.</p></li>
 </ul>
-<p>With <code class="docutils literal notranslate"><span class="pre">comnumpy</span></code>, you can rapidly prototype, test, and visualize MIMO systems for research, teaching, or self-study.</p>
-<p>Every detector here assumed the <em>receiver</em> knows the channel and the
+<p>Every detector here assumed that the <em>receiver</em> knows the channel and the
 transmitter knows nothing. <a class="reference internal" href="alamouti.html"><span class="doc">Alamouti Space-Time Coding Tutorial</span></a> asks what the transmitter can do
 anyway – and answers with a code that buys diversity without a single bit of
 feedback.</p>
@@ -1234,36 +1229,21 @@ feedback.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#system-model">System Model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#received-constellations">Received Constellations</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-setup">Simulation Setup</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#import-libraries">Import Libraries</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-system-parameters">Define System Parameters</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-the-mimo-chain">Build the MIMO Chain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-strategies">Detection Strategies</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-zf">Zero forcing (ZF)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-mean-square-error-mmse">Minimum mean square error (MMSE)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ordered-successive-interference-cancellation-osic">Ordered successive interference cancellation (OSIC)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-ml">Maximum likelihood (ML)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sphere-decoding-sd">Sphere decoding (SD)</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-simulation">One-Shot Simulation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-the-five-chains">Run the five chains</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-received-signal">Visualize the Received Signal</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-equalization">Zero-Forcing Equalization</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-comparison">Detection Comparison</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#zero-forcing-cancel-it-exactly">Zero forcing: cancel it exactly</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mmse-stop-insisting">MMSE: stop insisting</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-do-not-separate-the-streams-at-all">Maximum likelihood: do not separate the streams at all</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#osic-separate-them-but-in-the-right-order">OSIC: separate them, but in the right order</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sphere-decoding-the-same-decision-not-the-same-cost">Sphere decoding: the same decision, not the same cost</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-five-in-one-table">The five in one table</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-ser-vs-snr">Plot SER vs SNR</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-pruning-removes">What the pruning removes</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#computational-cost">Computational Cost</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
