@@ -9,6 +9,20 @@
 
 `comnumpy` provides Digital Signal Processing (DSP) algorithms for communication systems, covering MIMO, OFDM, and optical fiber simulations. It is designed for **researchers**, **engineers**, and **students** who want to simulate and analyze communication systems without implementing standard algorithms from scratch.
 
+> [!WARNING]
+> **Under active development — not yet ready for production use.**
+> The current version is `1.0.0.dev0`, on the way to a first stable
+> release. The public API is still being reshaped: blocks get renamed,
+> arguments change meaning, and conventions are still being settled, so
+> code written against today's version may not run against tomorrow's.
+> Breaking changes are recorded in [CHANGELOG.md](CHANGELOG.md), with a
+> migration table where one applies.
+>
+> If you need a stable interface right now, pin an exact version
+> (`pip install comnumpy==1.0.0.dev0`). Bug reports, and reports of
+> results you cannot reproduce, are welcome and useful — that is exactly
+> what this phase is for.
+
 ## Why comnumpy?
 
 - **Modular design** — Build custom communication chains by combining reusable `Processor` blocks with `Sequential`, inspired by PyTorch’s `nn.Module` pattern.
