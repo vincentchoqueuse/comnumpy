@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Optional, Literal, Callable, Dict
+from typing import Any, Callable, Dict, Literal, Optional
 from comnumpy._backend import fft, fftfreq, ifft  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from .devices import ErbiumDopedFiberAmplifier
@@ -298,7 +298,7 @@ class FiberLink(Processor):
         return equivalent_alpha_dB, edfa_density, raman_density
 
     def budget(self, bandwidth_Hz: float, *,
-               polarizations: int = 1) -> Dict[str, float]:
+               polarizations: int = 1) -> Dict[str, Any]:
         r"""The amplifier noise this link accumulates, in closed form.
 
         Signal Model
@@ -385,7 +385,7 @@ class FiberLink(Processor):
         power = polarizations * self.N_spans * density * bandwidth_Hz
         return {
             "ase_power_W": power,
-            "ase_power_dBm": watt_to_dbm(power) if power > 0 else -np.inf,
+            "ase_power_dBm": float(watt_to_dbm(power)) if power > 0 else -np.inf,
             "ase_density_W_per_Hz": density,
             "span_gain_dB": equivalent_alpha_dB * self.L_span,
             "n_spans": self.N_spans,
