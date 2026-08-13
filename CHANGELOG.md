@@ -45,6 +45,25 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — the batch promise is a ratchet over the catalogue
+
+A convention over 91 blocks is only worth the sweep that checks it.
+`tests/test_batch_contract.py` discovers every `Processor` subclass in
+the library and fails unless each one is declared and verified:
+`BROADCAST` (row `i` of a batch equals the block on row `i` alone --
+36 blocks checked by equality), `INDEPENDENT` (trials do not share a
+realization), `REFUSES` (the ambiguous batch raises), or `EXEMPT` with
+the reason written next to it. Like the pyright ratchet (D37), it makes
+the contract self-enforcing: a new block cannot land without saying --
+and proving -- what a batch means for it.
+
+Its first sweep caught two more silent couplings. `DCCorrector`'s
+default `axis=0` averaged *across* the batch (the default is now `-1`,
+the canonical serial layout: one offset per converter). `HardClipper`
+computed its threshold from the mean power of the whole array, so the
+weakest trial of a batch was clipped against the strongest; the power
+is now per row.
+
 ### Added — the MIMO Monte-Carlo is a stacked channel (D51b)
 
 The MIMO question the batch contract had to answer: the channel is

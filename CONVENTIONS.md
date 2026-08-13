@@ -88,7 +88,13 @@ The payoff is Monte-Carlo without a Python loop over trials:
 `monte_carlo(chain, param, values, metrics, (n_trials, N), seed=…)`
 pools each metric over `n_trials` independent frames per sweep point —
 for equal-size trials, exactly the mean of the per-trial values.
-`tests/core/test_batch_axes.py` locks one block of each family.
+`tests/core/test_batch_axes.py` locks one block of each family, and
+`tests/test_batch_contract.py` is the **ratchet over the whole
+catalogue**: it discovers every `Processor` subclass and fails unless
+each is verified batched (`BROADCAST` by row equality, `INDEPENDENT`
+by realization inequality, `REFUSES` by the raised error) or exempted
+with a written reason. A new block cannot merge without declaring what
+a batch means for it.
 
 ## Observing signals: taps, not blocks
 

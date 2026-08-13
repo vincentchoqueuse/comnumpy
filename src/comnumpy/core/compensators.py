@@ -149,10 +149,11 @@ class DCCorrector(Processor):
     local oscillator adds a constant term to the baseband signal.
 
     Axes: *declared axis* -- the mean :math:`\mu_x` is computed along
-    ``axis`` (default 0) and broadcast over the remaining axes; use
-    ``axis=-1`` for the canonical serial layout ``(..., N)``. The
-    estimand is **per path** (D49): a DC offset belongs to a converter,
-    so ``axis=-1`` on a ``(..., P, N)`` signal gives each path its own.
+    ``axis`` (default -1, the canonical serial layout ``(..., N)``) and
+    broadcast over the remaining axes. The estimand is **per path**
+    (D49): a DC offset belongs to a converter, so the default gives each
+    row of a batch its own offset -- the old default of 0 averaged
+    *across* the batch, which is the silent coupling D51 forbids.
 
     Parameters
     ----------
@@ -160,7 +161,7 @@ class DCCorrector(Processor):
         Target mean value :math:`\alpha` of the output. Default is 0.0,
         i.e. a zero-mean output.
     axis : int, optional, keyword-only
-        Axis along which :math:`\mu_x` is computed. Default is 0.
+        Axis along which :math:`\mu_x` is computed. Default is -1.
     name : str, optional, keyword-only
         Name of the corrector instance. Default is ``"mean_corrector"``.
 
@@ -179,7 +180,7 @@ class DCCorrector(Processor):
     [0. 1. 2. 5.]
     """
     value: float = 0.0
-    axis: int = field(default=0, kw_only=True)
+    axis: int = field(default=-1, kw_only=True)
     name: str = field(default="mean_corrector", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
