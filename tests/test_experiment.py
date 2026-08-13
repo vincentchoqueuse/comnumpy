@@ -143,11 +143,10 @@ class TestExperimentResult(unittest.TestCase):
         import io
         buffer = io.StringIO()
         with contextlib.redirect_stdout(buffer):
-            self.result.print(ylabel="observations")
+            self.result.print()
         text = buffer.getvalue()
         self.assertIn("seed      : 7", text)
         self.assertIn("n=100", text)
-        self.assertIn("observations", text)
         self.assertIn("snr_dB", text)
 
     def test_plot_draws_one_curve_per_quantity(self):
@@ -158,6 +157,73 @@ class TestExperimentResult(unittest.TestCase):
         self.assertEqual(len(ax.lines), 2)
         self.assertEqual(ax.get_xlabel(), "snr_dB")
         plt.close(ax.figure)
+
+
+class TestGroupedObservations(unittest.TestCase):
+    """A study over several methods observes one value per method.
+
+    Collected as a group, that structure survives to the result -- no
+    name mangling on the way in, no re-packing on the way out.
+    """
+
+    @staticmethod
+    def compare(config, seed):
+        return {"ser": {"ZF": 2.0 / config["snr_dB"],
+                        "ML": 1.0 / config["snr_dB"]},
+                "elapsed": 0.5}
+
+    def setUp(self):
+        self.result = Experiment(
+            {}, parameter="snr_dB", values=[10, 20], seed=3).run(self.compare)
+
+    def test_a_group_collects_into_a_dict_of_arrays(self):
+        np.testing.assert_allclose(self.result.data["ser"]["ML"],
+                                   [0.1, 0.05])
+        np.testing.assert_allclose(self.result.data["elapsed"], [0.5, 0.5])
+
+    def test_as_data_of_a_group_is_its_curves(self):
+        curves = self.result.as_data("ser")["curves"]
+        self.assertEqual(list(curves), ["ZF", "ML"])
+
+    def test_as_data_without_a_key_is_the_ungrouped_part(self):
+        self.assertEqual(list(self.result.as_data()["curves"]), ["elapsed"])
+
+    def test_an_unknown_key_names_the_groups_that_exist(self):
+        with self.assertRaises(ComnumpyError) as raised:
+            self.result.as_data("bler")
+        self.assertIn("ser", str(raised.exception))
+
+    def test_print_makes_one_table_per_group(self):
+        import contextlib
+        import io
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            self.result.print()
+        text = buffer.getvalue()
+        self.assertIn("ser", text)
+        self.assertIn("ZF", text)
+        self.assertIn("elapsed", text)
+
+    def test_plot_takes_the_group_name(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        ax = self.result.plot("ser", yscale="log")
+        self.assertEqual(len(ax.lines), 2)
+        self.assertEqual(ax.get_ylabel(), "ser")
+        plt.close(ax.figure)
+
+    def test_a_group_that_changes_members_is_refused(self):
+        def drifting(config, seed):
+            members = {"ZF": 0.1}
+            if config["snr_dB"] > 10:
+                members["ML"] = 0.05
+            return {"ser": members}
+
+        with self.assertRaises(ComnumpyError) as raised:
+            Experiment({}, parameter="snr_dB", values=[10, 20],
+                       seed=1).run(drifting)
+        self.assertIn("ML", str(raised.exception))
 
 
 if __name__ == "__main__":

@@ -59,9 +59,12 @@ then learns the wrong lesson -- they came to see how the library is used.
   *around* a chain -- several detectors on one frame, several receivers
   on one propagation -- write the point as a function and hand it to
   `Experiment(config, parameter=, values=, seed=)`: `simulate(config,
-  seed)` returns a dict of what it observed, `result.print()` /
-  `result.plot()` render it, and the seed is always kept. Never
-  pre-allocate `np.zeros((n_points, n_methods))` and index it by hand.
+  seed)` returns a dict of what it observed -- a number per name, or a
+  **group** `{"snr [dB]": {method: value}}` that collects into one
+  family of curves. `result.print()` prints one table per group,
+  `result.plot("snr [dB]")` draws one, and the seed is always kept.
+  Never pre-allocate `np.zeros((n_points, n_methods))` and index it by
+  hand, and never smuggle structure through prefixed key names.
 - **A swept result is one dictionary, shown two ways.**
   `data = {"x": snr_dB, "curves": {"ZF": ..., "ML": ...}}` — which is
   already the shape `monte_carlo` returns — then `print_data(data,

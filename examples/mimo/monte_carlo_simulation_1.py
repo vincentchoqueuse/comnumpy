@@ -73,15 +73,15 @@ def simulate(config, seed):
             ber = compute_ber(S_ref, detector(Y),
                               width=constellation.bits_per_symbol)
             bler[name] += float(ber > 0) / config["N_test"]
-    return bler
+    return {"BLER": bler}
 
 
 experiment = Experiment(config, parameter="snr_dB",
                         values=np.arange(0, 45, 5), seed=42)
 result = experiment.run(simulate)
-result.print(ylabel="BLER")
+result.print()
 
-ax = result.plot(ylabel="BLER", yscale="log", marker="o", fillstyle="none")
+ax = result.plot("BLER", yscale="log", marker="o", fillstyle="none")
 ax.set_xlim(0, 40)
 ax.set_ylim(1e-3, 1)
 ax.set_title("2x2 QPSK over Rayleigh fading, one draw per frame")

@@ -18,9 +18,16 @@ into a run nobody can reproduce because no seed was kept anywhere.
 point as ``simulate(config, seed)``: ``config`` is a copy of the
 experiment's configuration with the studied parameter set to the point's
 value, and ``seed`` is that point's own child seed. It returns a plain
-dictionary of numbers -- a BER, an SNR, a runtime, whatever the study
-measures -- and the experiment collects each entry into an array aligned
-with ``values``.
+dictionary of what it observed, and the experiment collects each entry
+into an array aligned with ``values``.
+
+An observation may itself be a dictionary -- one SNR per receiver, one
+BER per detector. Such a **group** is collected as a dictionary of
+arrays, so a study over several methods needs no name mangling and no
+re-packing: ``simulate`` returns ``{"snr [dB]": {"ZF": ..., "ML": ...}}``
+and ``result.data["snr [dB]"]`` is directly the curves that
+:func:`~comnumpy.data.print_data` and :func:`~comnumpy.data.plot_data`
+render. ``result.print()`` prints one table per group.
 
 The result keeps everything the run needs to be believed later: the
 parameter and its values, the configuration, the seed actually used
@@ -53,6 +60,20 @@ __all__ = ["Experiment", "ExperimentResult"]
 SaveSpec = Union[str, Sequence[str], Mapping[str, bool]]
 
 
+def _shape_of(observed: Mapping[str, Any]) -> Dict[str, Any]:
+    """The names an observation carries, one level deep.
+
+    Used to compare two points of a run: every point must observe the
+    same quantities, and inside a group the same members, or the arrays
+    cannot stay aligned.
+    """
+    shape: Dict[str, Any] = {}
+    for name in sorted(observed):
+        value = observed[name]
+        shape[name] = sorted(value) if _is_mapping(value) else None
+    return shape
+
+
 def _is_mapping(candidate: object) -> bool:
     """Runtime guard for values whose annotation already promises it.
 
@@ -78,8 +99,13 @@ class ExperimentResult:
         reproduces the same result.
     config : dict
         The experimental conditions, as passed to the experiment.
-    data : dict of str to np.ndarray
-        One array per saved quantity, aligned with ``values``.
+    data : dict
+        One entry per saved quantity, aligned with ``values``. A
+        quantity observed as a number is an array; one observed as a
+        **group** -- a mapping such as one SNR per receiver -- is a
+        dictionary of arrays, one per member, so
+        ``result.data["snr"]`` is directly the ``curves`` mapping that
+        :mod:`comnumpy.data` renders.
     elapsed_ : float
         Wall time of the whole run, in seconds.
     """
@@ -88,31 +114,55 @@ class ExperimentResult:
     values: np.ndarray
     seed: int
     config: Dict[str, Any]
-    data: Dict[str, np.ndarray]
+    data: Dict[str, Any]
     elapsed_: float
 
-    def as_data(self) -> Dict[str, Any]:
+    def _curves(self, key: Optional[str]) -> Dict[str, np.ndarray]:
+        """The curves behind ``key``: a group's members, or the scalars."""
+        if key is not None:
+            if key not in self.data or not isinstance(self.data[key], dict):
+                groups = []
+                for name, value in self.data.items():
+                    if isinstance(value, dict):
+                        groups.append(name)
+                raise ComnumpyError(
+                    f"{key!r} is not a group of this result; the groups "
+                    f"are {groups}.")
+            return self.data[key]
+        flat: Dict[str, np.ndarray] = {}
+        for name, value in self.data.items():
+            if not isinstance(value, dict):
+                flat[name] = value
+        return flat
+
+    def as_data(self, key: Optional[str] = None) -> Dict[str, Any]:
         """The result in the shape :mod:`comnumpy.data` renders.
+
+        Parameters
+        ----------
+        key : str, optional
+            Name of a group. Default None: the ungrouped quantities.
 
         Returns
         -------
         dict
-            ``{"x": values, "curves": data}`` -- ready for
+            ``{"x": values, "curves": ...}`` -- ready for
             :func:`~comnumpy.data.print_data` and
             :func:`~comnumpy.data.plot_data`.
         """
-        return {"x": self.values, "curves": self.data}
+        return {"x": self.values, "curves": dict(self._curves(key))}
 
-    def print(self, *, ylabel: Optional[str] = None,
-              transpose: bool = False) -> None:
-        """Print the experiment: conditions first, then the table.
+    def print(self, *, transpose: bool = False) -> None:
+        """Print the experiment: the conditions, then one table per group.
+
+        Ungrouped quantities share a final table. The group's name is the
+        caption of its table, which is where the unit belongs --
+        ``"effective SNR [dB]"`` as a group name captions its table.
 
         Parameters
         ----------
-        ylabel : str, optional, keyword-only
-            Caption above the table -- the unit of the collected data.
         transpose : bool, optional, keyword-only
-            Data as rows rather than columns, for long names; see
+            Members as rows rather than columns, for long names; see
             :func:`~comnumpy.data.format_data`.
         """
         from comnumpy.data import format_data  # local import (D36)
@@ -124,15 +174,25 @@ class ExperimentResult:
         print(f"seed      : {self.seed}")
         print(f"config    : {', '.join(conditions) if conditions else '-'}")
         print(f"elapsed   : {self.elapsed_:.1f} s")
-        print()
-        print(format_data(self.as_data(), xlabel=self.parameter,
-                          ylabel=ylabel, transpose=transpose))
+        for name, value in self.data.items():
+            if isinstance(value, dict):
+                print()
+                print(format_data(self.as_data(name), xlabel=self.parameter,
+                                  ylabel=name, transpose=transpose))
+        flat = self._curves(None)
+        if flat:
+            print()
+            print(format_data({"x": self.values, "curves": flat},
+                              xlabel=self.parameter, transpose=transpose))
 
-    def plot(self, **kwargs: Any) -> Any:
-        """Draw the collected data, one curve per saved quantity.
+    def plot(self, key: Optional[str] = None, **kwargs: Any) -> Any:
+        """Draw one family of curves: a group's members, or the scalars.
 
         Parameters
         ----------
+        key : str, optional
+            Name of a group; it becomes the ordinate label unless one is
+            given. Default None: the ungrouped quantities.
         **kwargs
             Forwarded to :func:`~comnumpy.data.plot_data`. The abscissa
             label defaults to the parameter's name.
@@ -144,7 +204,9 @@ class ExperimentResult:
         from comnumpy.data import plot_data  # local import (D36)
 
         kwargs.setdefault("xlabel", self.parameter)
-        return plot_data(self.as_data(), **kwargs)
+        if key is not None:
+            kwargs.setdefault("ylabel", key)
+        return plot_data(self.as_data(key), **kwargs)
 
 
 @dataclass(slots=True)
@@ -214,6 +276,18 @@ class Experiment:
     ...                    values=[0, 10, 20], seed=42).run(simulate)
     >>> bool(np.all(again.data["power"] == result.data["power"]))
     True
+
+    An observation that is itself a mapping is a **group** -- one value
+    per method -- and collects into a dictionary of arrays, ready to
+    print or plot as one family of curves:
+
+    >>> def compare(config, seed):
+    ...     return {"ser": {"ZF": 2.0 / config["snr_dB"],
+    ...                     "ML": 1.0 / config["snr_dB"]}}
+    >>> result = Experiment({}, parameter="snr_dB", values=[10, 20],
+    ...                     seed=1).run(compare)
+    >>> result.data["ser"]["ML"]
+    array([0.1 , 0.05])
     """
 
     config: Mapping[str, Any]
@@ -266,8 +340,9 @@ class Experiment:
             ``simulate(config, seed)`` -- ``config`` a copy of the
             conditions with the studied parameter set to the point's
             value, ``seed`` the point's child seed. Must return a
-            mapping of quantity name to value, the same names at every
-            point.
+            mapping of quantity name to value -- or to a mapping of
+            member name to value for a grouped quantity -- with the
+            same names at every point.
 
         Returns
         -------
@@ -298,20 +373,30 @@ class Experiment:
                     f"{self.parameter}={value}; expected a mapping of "
                     f"quantity name to value, e.g. "
                     f"{{'ser': ..., 'elapsed_time': ...}}.")
-            if rows and set(observed) != set(rows[0]):
+            if rows and _shape_of(observed) != _shape_of(rows[0]):
                 raise ComnumpyError(
-                    f"simulate returned {sorted(observed)} at "
-                    f"{self.parameter}={value} but {sorted(rows[0])} at "
+                    f"simulate returned {_shape_of(observed)} at "
+                    f"{self.parameter}={value} but {_shape_of(rows[0])} at "
                     f"the first point; every point must observe the same "
                     f"quantities, or the arrays cannot stay aligned.")
             rows.append(observed)
 
-        data: Dict[str, np.ndarray] = {}
+        data: Dict[str, Any] = {}
         for name in self._kept(list(rows[0])):
-            column = []
-            for row in rows:
-                column.append(row[name])
-            data[name] = np.asarray(column)
+            if _is_mapping(rows[0][name]):
+                members = list(rows[0][name])
+                group: Dict[str, np.ndarray] = {}
+                for member in members:
+                    column = []
+                    for row in rows:
+                        column.append(row[name][member])
+                    group[member] = np.asarray(column)
+                data[name] = group
+            else:
+                column = []
+                for row in rows:
+                    column.append(row[name])
+                data[name] = np.asarray(column)
 
         return ExperimentResult(
             parameter=self.parameter, values=values, seed=self.seed,

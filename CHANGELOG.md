@@ -76,9 +76,22 @@ is given, one is drawn and **kept** -- `result.seed` always answers, so
 an interesting accident can be re-run.
 
 `save=` narrows what is kept, as names or as `{"ser": True}` flags.
+
+An observation may itself be a mapping -- one SNR per receiver, one BER
+per detector. Such a **group** collects into a dictionary of arrays, so
+the study over several methods that motivated all of this needs no name
+mangling and no re-packing: `simulate` returns
+`{"snr [dB]": {"ZF": ..., "ML": ...}}` and `result.data["snr [dB]"]` is
+directly the curves that `print_data` and `plot_data` render. The first
+version of this module collected flat dictionaries only, and the DBP
+sweep had to smuggle its structure through prefixed keys --
+`"ser " + name` packed on one side, unpacked by loops on the other:
+storage boilerplate moved rather than removed. The groups delete it.
+
 The result renders through `comnumpy.data` -- `result.print()` is the
-conditions plus the table, `result.plot()` the same object drawn -- so
-the table a page pastes and its figure cannot come from different runs.
+conditions plus one table per group, `result.plot("snr [dB]")` one
+family of curves -- so the table a page pastes and its figure cannot
+come from different runs.
 
 Deliberately not a framework: one parameter, one callable, one
 dictionary out. Sweeping a single chain parameter with standard metrics
