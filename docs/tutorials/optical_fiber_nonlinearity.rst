@@ -190,7 +190,7 @@ two noises that close add. The check reports it rather than hiding it.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 158-165
+   :lines: 158-160
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -204,7 +204,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 167-197
+   :lines: 162-188
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -236,7 +236,7 @@ through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 199-204
+   :lines: 190-195
 
 .. code::
 
@@ -289,7 +289,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 206-232
+   :lines: 197-219
 
 .. code::
 

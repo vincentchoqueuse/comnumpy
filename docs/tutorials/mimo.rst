@@ -69,7 +69,7 @@ block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 183-186
+   :lines: 177-180
 
 Each chain is given the same seed before running, so the five numbers below
 differ by the detector alone -- same symbols, same noise, same channel:
@@ -89,7 +89,7 @@ Let us look at what each receive antenna sees, read from the ``"noise"`` tap:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 65-73
+   :lines: 65-72
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
@@ -103,7 +103,7 @@ Applying the pseudo-inverse of the channel matrix separates the streams:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 75-87
+   :lines: 74-81
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -233,7 +233,7 @@ the matrix the signal goes through **and** the one the detector inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 89-133
+   :lines: 83-127
 
 .. code::
 
@@ -276,7 +276,7 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 135-181
+   :lines: 129-175
 
 .. code::
 

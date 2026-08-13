@@ -9,7 +9,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
     LinearDetector, MaximumLikelihoodDetector,
@@ -65,25 +65,19 @@ for name, chain in chains.items():
 Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
-    axes1[index].plot(np.real(Y[index, :]), np.imag(Y[index, :]), ".")
+    plot_iq(Y[index, :], ax=axes1[index])
     axes1[index].set_title(f"Received signal (antenna {index + 1})")
     axes1[index].set_xlim([-2, 2])
     axes1[index].set_ylim([-2, 2])
-    style.apply(axes1[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
-    axes2[index].plot(np.real(Z[index, :]), np.imag(Z[index, :]), ".",
-                      label="estimated")
-    axes2[index].plot(np.real(constellation.alphabet),
-                      np.imag(constellation.alphabet), "kx",
-                      markersize=9, label="transmitted alphabet")
+    plot_iq(Z[index, :], reference=constellation, ax=axes2[index])
     axes2[index].set_title(f"Estimated signal (stream {index + 1})")
     axes2[index].set_xlim([-2, 2])
     axes2[index].set_ylim([-2, 2])
-    style.apply(axes2[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
 snr_dB_list = np.arange(0, 20, 3)

@@ -66,12 +66,17 @@ then learns the wrong lesson -- they came to see how the library is used.
 - Activate the style sheet once, at the top of the script, right after
   the imports: `style.use()`. The colours and the figure size are
   rcParams and a figure already created keeps the old ones.
-- Figures: **draw with matplotlib, decorate with `style.apply(ax, kind)`**.
-  A scatter of real against imaginary, a `semilogy` of a rate against an
-  SNR: the reader knows those calls, and hiding them behind a wrapper
-  teaches nothing. `style.apply(ax, "iq" | "error_rate" | "time" |
-  "spectrum")` fills the labels that are still empty, turns on the grid
-  and adds the legend; it never touches the data or the scales.
+- Figures: **the function when one exists, `style.apply(ax, kind)` when
+  none does.** `plot_iq` for a constellation, `plot_spectrum`,
+  `plot_error_rate` for measured curves paired with their closed forms:
+  a page that shows the same kind of figure three or seven times gains
+  nothing from spelling out `ax.plot(np.real(x), np.imag(x), ".")` each
+  time, and loses the equal aspect ratio the day someone forgets it.
+  When the figure is a one-off with no function behind it -- a runtime,
+  an effective SNR -- draw it with matplotlib and hand the axis to
+  `style.apply(ax, "iq" | "error_rate" | "time" | "spectrum")`, which
+  fills the labels still empty, turns on the grid and adds the legend;
+  it never touches the data or the scales.
   A kind names the *quantity*. A runtime in ms or an effective SNR in dB
   is none of them: give it its own labels and `ax.grid(True)`, and do not
   borrow `"error_rate"` because the axis happens to be logarithmic.

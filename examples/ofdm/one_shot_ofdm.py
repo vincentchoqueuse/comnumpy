@@ -16,7 +16,7 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
 
 style.use()
@@ -68,19 +68,10 @@ detected = sc_chain(N)
 sc_ser = compute_ser(sc_chain.tap("data_tx"), detected)
 print(f"single carrier: SER {sc_ser:.4f}, {sc_chain.elapsed_ * 1e3:.0f} ms")
 
-# An IQ plane is a scatter of the real part against the imaginary one;
-# style.apply gives it the axis labels, the grid and the equal aspect
-# ratio without which a constellation is not the constellation.
-alphabet = constellation.alphabet
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
 for ax, tap, name in [(axes[0], "data_rx", "received"),
                       (axes[1], "data_rx_eq", "after ZF equalization")]:
-    symbols = sc_chain.tap(tap)
-    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
-    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
-            label="alphabet")
-    ax.set_title(name)
-    style.apply(ax, "iq")
+    plot_iq(sc_chain.tap(tap), reference=constellation, title=name, ax=ax)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 
@@ -104,13 +95,8 @@ speedup = sc_chain.elapsed_ / ofdm_chain.elapsed_
 print(f"OFDM          : SER {ofdm_ser:.4f}, {ofdm_chain.elapsed_ * 1e3:.2f} ms "
       f"({speedup:.0f} times faster)")
 
-equalized = ofdm_chain.tap("data_rx_eq")
-fig3, ax3 = plt.subplots()
-ax3.plot(np.real(equalized), np.imag(equalized), ".", label="symbols")
-ax3.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
-         label="alphabet")
-ax3.set_title("OFDM, after one-tap equalization")
-style.apply(ax3, "iq")
+plot_iq(ofdm_chain.tap("data_rx_eq"), reference=constellation,
+        title="OFDM, after one-tap equalization")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 
 # --- error rate ------------------------------------------------------
