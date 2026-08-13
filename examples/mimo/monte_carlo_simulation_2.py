@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.metrics import compute_ber
+from comnumpy.core.metrics import ErrorCounter
 from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
@@ -35,8 +35,13 @@ detector_names = ["colnorm", "snr", "sinr"]
 # compute snr list from snr per bit in dB
 snr_dB_list = np.arange(0, 45, 5)
 
-# perform simulation
-ber_data = np.zeros((len(snr_dB_list), len(detector_names)))
+# perform simulation. One counter per (SNR, detector): it accumulates
+# errors and bits over the trials, so the rate is a ratio of totals and
+# the count that makes it credible stays available.
+counters = {}
+for index_snr in range(len(snr_dB_list)):
+    for index in range(len(detector_names)):
+        counters[index_snr, index] = ErrorCounter(width=int(np.log2(M)))
 
 for index_snr, snr_dB in enumerate(snr_dB_list):
     sigma2 = N_t*(10**(-snr_dB/10))
@@ -59,9 +64,15 @@ for index_snr, snr_dB in enumerate(snr_dB_list):
             # perform detection
             S_est = detector(Y)
             # evaluate metrics
-            ber_data[index_snr, index] += compute_ber(S_ref, S_est, width=int(np.log2(M)))
+            counters[index_snr, index].update(S_ref, S_est)
 
-    ber_data[index_snr, :] /= N_test
+ber_data = np.zeros((len(snr_dB_list), len(detector_names)))
+for (index_snr, index), counter in counters.items():
+    ber_data[index_snr, index] = counter.rate
+
+worst = min(counters.values(), key=lambda counter: counter.n_errors)
+print(f"fewest errors at any point: {worst.n_errors} over "
+      f"{worst.n_symbols * worst.width} bits")
 
 # plot figures
 for index, detector_name in enumerate(detector_names):

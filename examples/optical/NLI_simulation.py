@@ -12,7 +12,7 @@ from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
-from comnumpy.core.metrics import compute_effective_snr, compute_ser
+from comnumpy.core.metrics import ErrorCounter, compute_effective_snr
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
 from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate
@@ -118,11 +118,16 @@ receivers = {
 
 channel = get_channel()
 snr = {}
-ser = {}
+counters = {}
 elapsed = {}
 for name in receivers:
     snr[name] = np.zeros(len(dBm_list))
-    ser[name] = np.zeros(len(dBm_list))
+    # one counter per launch power: it accumulates errors and symbols
+    # over the four trials rather than averaging four rates, so the
+    # count that says whether a point means anything stays readable
+    counters[name] = []
+    for _ in dBm_list:
+        counters[name].append(ErrorCounter())
     elapsed[name] = 0.0
 
 for index, dBm in enumerate(dBm_list):
@@ -146,11 +151,17 @@ for index, dBm in enumerate(dBm_list):
             elapsed[name] += receiver.elapsed_
             estimate = receiver.tap("phase")
             snr[name][index] += compute_effective_snr(symbols, estimate) / N_trial
-            ser[name][index] += compute_ser(reference, detected) / N_trial
+            counters[name][index].update(reference, detected)
 
 snr_dB = {}
 for name, values in snr.items():
     snr_dB[name] = 10 * np.log10(values)
+
+ser = {}
+for name, points in counters.items():
+    ser[name] = np.zeros(len(points))
+    for index, counter in enumerate(points):
+        ser[name][index] = counter.rate
 
 header = "launch power [dBm]  "
 for value in dBm_list:
@@ -173,6 +184,15 @@ best = int(np.argmax(reference))
 print(f"\nGN model {10 * np.log10(best_snr):.2f} dB at "
       f"{watt_to_dbm(best_power):+.2f} dBm, dispersion compensation "
       f"{reference[best]:.2f} dB at {dBm_list[best]:+.1f} dBm")
+
+# What the error-rate figure can resolve, in counts rather than in a
+# caveat. At its own best power each receiver is where its curve bottoms
+# out, and a point that saw no error has not measured a rate: it has run
+# out of symbols. The counters kept the numbers, so the page can say so.
+print("\nreceiver                  errors at its best power")
+for name, points in counters.items():
+    counter = points[int(np.argmax(snr_dB[name]))]
+    print(f"{name:24s} {counter.n_errors:7d} over {counter.n_symbols} symbols")
 
 # The prediction, on the same axes as the measurement. It describes the
 # receiver that only undoes the dispersion -- the GN model counts the

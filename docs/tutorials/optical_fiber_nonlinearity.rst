@@ -345,7 +345,7 @@ That is the prediction the sweep below has to land on.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 107-198
+   :lines: 107-217
 
 .. code::
 
