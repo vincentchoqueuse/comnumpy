@@ -12,7 +12,7 @@ from .constants import PLANCK_CONSTANT
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     compute_erbium_doped_fiber_N_ase, apply_kerr_nonlinearity,
                     is_polarization_pair, manakov_kerr, watt_to_dbm,
-                    step_transfers, apply_frequency_response)
+                    step_transfers, apply_frequency_response, TransferKey)
 
 __all__ = ["FiberLink"]
 
@@ -215,7 +215,7 @@ class FiberLink(Processor):
     raman_sigma2_: float = field(init=False, repr=False, default=0.0)
     transfer_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     transfer_index_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
-    transfer_key_: Optional[tuple] = field(init=False, repr=False, default=None)
+    transfer_key_: Optional[TransferKey] = field(init=False, repr=False, default=None)
     rng_: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
@@ -290,10 +290,11 @@ class FiberLink(Processor):
             lengths = np.asarray(self.step_size, dtype=float) / 2
         else:
             lengths = np.asarray(self.step_size, dtype=float)
+        previous = None if self.transfer_key_ is None else (
+            self.transfer_, self.transfer_index_, self.transfer_key_)
         self.transfer_, self.transfer_index_, self.transfer_key_ = step_transfers(
             n_samples, lengths, beta2=self.beta2, fs=self.fs,
-            alpha_dB=self.fiber.alpha_dB, direction=1,
-            previous=(self.transfer_, self.transfer_index_, self.transfer_key_))
+            alpha_dB=self.fiber.alpha_dB, direction=1, previous=previous)
 
     def _ase_densities(self) -> tuple[float, float, float]:
         """One span's noise, before any bandwidth is chosen.
@@ -500,7 +501,9 @@ class FiberLink(Processor):
         y = x
         # set by prepare(), which the Processor base always runs first
         assert (self.beta2 is not None and self.step_size is not None
-                and self.edfa_gain is not None and self.edfa_N_ase is not None)
+                and self.edfa_gain is not None and self.edfa_N_ase is not None
+                and self.transfer_ is not None
+                and self.transfer_index_ is not None)
         for num_span in range(self.N_spans):
             # perform for each span
             if self.use_only_linear:

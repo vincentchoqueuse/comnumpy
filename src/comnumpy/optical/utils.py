@@ -2,13 +2,20 @@ import logging
 
 import numpy as np
 from comnumpy._backend import fft, ifft, fftfreq  # cupy-compatible (D3)
-from typing import Optional
+from typing import Optional, Tuple
 
 from comnumpy.exceptions import ShapeError
 
 from .constants import PLANCK_CONSTANT, OPTICAL_CARRIER_FREQUENCY
 
 logger = logging.getLogger(__name__)
+
+# What `step_transfers` is keyed on: the FFT length, the sampling
+# frequency, the dispersion, the attenuation, the direction, and the
+# distinct step lengths. Named because it travels: the blocks hold one
+# to know whether their table is still the right one.
+TransferKey = Tuple[int, float, float, Optional[float], int, Tuple[float, ...]]
+TransferTable = Tuple[np.ndarray, np.ndarray, TransferKey]
 
 __all__ = [
     "compute_beta2", "apply_chromatic_dispersion", "apply_kerr_nonlinearity",
@@ -217,7 +224,7 @@ def linear_step_transfer(n_samples: int, z: float, beta2: float, *,
 def step_transfers(n_samples: int, lengths: np.ndarray, *, beta2: float,
                    fs: float, alpha_dB: Optional[float] = None,
                    direction: int = 1,
-                   previous: Optional[tuple] = None) -> tuple:
+                   previous: Optional[TransferTable] = None) -> TransferTable:
     r"""Transfer functions of a split-step schedule, one per distinct length.
 
     Signal Model

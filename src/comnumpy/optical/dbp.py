@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from comnumpy.core import Processor
 from .fiber import FiberSpec
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
-                    step_transfers, apply_frequency_response,
+                    step_transfers, apply_frequency_response, TransferKey,
                     apply_kerr_nonlinearity,
                     is_polarization_pair, manakov_kerr)
 
@@ -142,7 +142,7 @@ class DBP(Processor):
     manakov_: bool = field(init=False, repr=False, default=False)
     transfer_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     transfer_index_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
-    transfer_key_: Optional[tuple] = field(init=False, repr=False, default=None)
+    transfer_key_: Optional[TransferKey] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
         self.manakov_ = is_polarization_pair(x, type(self).__name__)
@@ -175,17 +175,20 @@ class DBP(Processor):
             lengths = np.asarray(self.step_size, dtype=float) / 2
         else:
             lengths = np.asarray(self.step_size, dtype=float)
+        previous = None if self.transfer_key_ is None else (
+            self.transfer_, self.transfer_index_, self.transfer_key_)
         self.transfer_, self.transfer_index_, self.transfer_key_ = step_transfers(
             n_samples, lengths, beta2=self.beta2, fs=self.fs,
-            alpha_dB=self.fiber.alpha_dB, direction=-1,
-            previous=(self.transfer_, self.transfer_index_, self.transfer_key_))
+            alpha_dB=self.fiber.alpha_dB, direction=-1, previous=previous)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = x
 
         # set by prepare(), which the Processor base always runs first
         assert (self.gain is not None and self.beta2 is not None
-                and self.step_size is not None)
+                and self.step_size is not None
+                and self.transfer_ is not None
+                and self.transfer_index_ is not None)
         for _ in range(self.N_spans):
             y = self.gain * y  # correct for edfa gain
             if self.use_only_linear:
