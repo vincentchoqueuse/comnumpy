@@ -23,7 +23,7 @@ from comnumpy.optical.utils import dbm_to_watt, launch_amplitude
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
-N_s = 2**9                    # symbols per run
+N_s = 2**9 * 6                # symbols per run
 oversampling_sim = 6          # samples per symbol in the channel
 oversampling_dsp = 2          # samples per symbol in the receiver
 NF_dB = 5                     # amplifier noise figure in dB
@@ -36,7 +36,6 @@ N_span = 25
 dBm = -3
 fiber = FiberSpec()           # the standard fibre, named so the budget sees it
 
-N = N_s * oversampling_sim
 fs = R_s * oversampling_sim
 oversampling_ratio = oversampling_sim // oversampling_dsp
 amp = launch_amplitude(dbm_to_watt(dBm))
@@ -108,7 +107,7 @@ snr_ase_only = {}
 print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
     chain = get_chain(n_spans).seed(0)
-    chain(N)
+    chain(N_s)
     estimates[n_spans] = chain.tap("phase")
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
@@ -119,7 +118,7 @@ for n_spans in spans:
     received_field = chain.tap("rx_field")
 
     chain.seed(0).set_params(link__use_only_linear=True)
-    chain(N)
+    chain(N_s)
     snr_ase_only[n_spans] = score(chain)[0]
 
     print(f"{n_spans:5d} {snr:8.2f} dB {snr_ase_only[n_spans]:7.2f} dB "
@@ -137,7 +136,7 @@ for n_spans in spans:
 # rather than the fibre.
 floor = get_chain(1).seed(0)
 floor.set_params(link__use_only_linear=True, link__noise_scaling=0.0)
-floor(N)
+floor(N_s)
 print(f"\ndistortion floor of the chain, no noise and no fibre: "
       f"{score(floor)[0]:.1f} dB")
 
@@ -182,7 +181,7 @@ plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
 
 # Where that time goes. `profile_execution_time` runs the chain and times
 # each block on the way through, so the same pass answers the question.
-profile = get_chain(N_span).seed(0).profile_execution_time(N)
+profile = get_chain(N_span).seed(0).profile_execution_time(N_s)
 print("\nblock                    time")
 for block_id, elapsed in profile.items():
     print(f"{block_id:22s} {1e3 * elapsed:8.1f} ms")
@@ -193,7 +192,7 @@ for block_id, elapsed in profile.items():
 # -- is unchanged, so the comparison is over the same realization.
 back_propagated = get_chain(N_span, steps=StPS_DBP,
                                  linear_only=False).seed(0)
-profile_dbp = back_propagated.profile_execution_time(N)
+profile_dbp = back_propagated.profile_execution_time(N_s)
 snr_dbp, ser_dbp = score(back_propagated)
 print(f"\ndispersion compensation   SNR={snr_per_span[N_span]:5.2f} dB  "
       f"receiver {1e3 * profile['dbp']:7.1f} ms")

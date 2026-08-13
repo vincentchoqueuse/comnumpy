@@ -27,7 +27,8 @@ from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
-N_s = 2**11               # 2048 per trial, 4 trials: SER floor 1.2e-4
+N_s = 2**11 * 6           # 12288 symbols per trial; over 4 trials
+                          # the SER floor is one error in 49152, 2.0e-5
 oversampling_sim = 6
 oversampling_dsp = 2
 NF_dB = 5
@@ -140,7 +141,7 @@ for index, dBm in enumerate(dBm_list):
             channel.seed(index * N_trial + trial)
             channel.set_params(launch__gain=amp,
                                link__use_only_linear=use_only_linear)
-            fields[use_only_linear] = channel(N_s * oversampling_sim)
+            fields[use_only_linear] = channel(N_s)
         symbols, reference = channel.tap("signal_tx"), channel.tap("data_tx")
 
         for name, (steps, linear_only) in receivers.items():

@@ -14,6 +14,7 @@ per the decision's trigger.
 """
 from __future__ import annotations
 
+import logging
 import multiprocessing
 import os
 import pickle
@@ -26,6 +27,9 @@ import numpy as np
 from comnumpy.core.generics import Sequential
 
 __all__ = ["monte_carlo"]
+
+logger = logging.getLogger(__name__)
+
 
 # Every worker runs one sweep point at a time, so a BLAS that spawns one
 # thread per core inside each of them oversubscribes the machine by
@@ -183,6 +187,16 @@ def monte_carlo(chain: Sequential,
     params = [param] if isinstance(param, str) else list(param)
     if reference is not None and reference not in (chain.taps or []):
         chain.taps = (chain.taps or []) + [reference]
+    if seed is None:
+        # Not an error: a first look at a curve does not need to be
+        # reproducible. But a curve nobody can reproduce is not a result,
+        # and nothing else would ever say so -- the parallel path refuses
+        # outright, the serial one used to stay silent.
+        logger.warning(
+            "monte_carlo() ran without seed=, so every point drew freely and "
+            "this curve cannot be reproduced -- not by you, not by a reader "
+            "of the page it lands on. Pass seed= to give each point its own "
+            "child seed (decision D6/D35).")
     seeds = (np.random.SeedSequence(seed).spawn(len(values))
              if seed is not None else [None] * len(values))
 
