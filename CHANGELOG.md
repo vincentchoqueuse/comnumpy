@@ -45,6 +45,36 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Documentation — the AWGN tutorial derives its reference curve
+
+The Monte-Carlo page compared a measurement against
+`constellation.metrics(...)` and left it there, so the closed form
+arrived as a number out of an object: the reader saw *that* theory and
+simulation agree without being shown *what* the theory is. The page now
+states the expression -- the two-PAM decomposition of a square QAM, the
+`Q` argument, the reference to Proakis and Salehi section 4.3 --
+evaluates it in plain NumPy, and only then shows that the constellation
+returns the same array. The two agree to 3.3e-16, and the reason to
+prefer the method afterwards is stated: it is one line rather than five,
+and it cannot describe a modulation other than the one the chain
+transmits.
+
+It also no longer stops at one constellation. A closing section sweeps
+4-, 16-, 64- and 256-QAM at equal energy per **bit** -- the comparison
+`ebn0_to_snr_dB` exists for -- and prints what the density costs: 6.8,
+10.5, 14.8 and 19.4 dB of Eb/N0 for a BER of 1e-3. The page says where
+the Gray-mapping approximation `P_b ~ P_s / k` stops holding (the
+markers run a factor 2.2 above the curve for 256-QAM at 0 dB, and settle
+onto it below 1e-2), and where the estimator stops: 100 000 symbols
+per point cannot resolve a 4-QAM BER under 5e-6, so the axis stops
+there.
+
+Two defects surfaced while doing it. The page still named `sweep` in two
+cross-references after the rename, and the figure it displayed was
+written by no script -- `monte_carlo_awgn.py` ended on `plt.show()` and
+saved nothing, so `img/monte_carlo_awgn.png` had been orphaned since the
+last time someone regenerated it by hand.
+
 ### Added — a chain says when a rate change carries its filter by hand
 
 `Sequential` now inspects its module list at construction and warns when

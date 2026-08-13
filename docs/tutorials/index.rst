@@ -19,8 +19,9 @@ and nothing is explained twice.
    * - 1
      - :doc:`awgn`
      - A Monte Carlo study: first as an ordinary ``for`` loop, then the same
-       thing with ``monte_carlo``. Also ``seed``, ``set_params`` and
-       ``plot_error_rate``.
+       thing with ``monte_carlo``, read against a closed form written out in
+       NumPy, and ending on four QAM orders at equal energy per bit. Also
+       ``seed``, ``set_params`` and ``plot_error_rate``.
    * - 2
      - :doc:`ofdm`
      - A frequency-selective channel, and the two ways to equalize it:
