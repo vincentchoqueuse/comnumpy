@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from comnumpy import style
-from comnumpy.core import Sequential
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN
@@ -49,9 +49,5 @@ print(f"after: SER={ser_after}")
 
 for tap, name in [("awgn", "received data"),
                   ("phase_compensation", "after phase correction")]:
-    symbols = chain.tap(tap)
-    _, ax = plt.subplots()
-    ax.plot(np.real(symbols), np.imag(symbols), ".")
-    ax.set_title(name)
-    style.apply(ax, "iq")
+    plot_iq(chain.tap(tap), title=name)
 plt.show()

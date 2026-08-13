@@ -3,13 +3,13 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import monte_carlo, style
+from comnumpy import monte_carlo, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
     LinearDetector, MaximumLikelihoodDetector,
@@ -65,25 +65,19 @@ for name, chain in chains.items():
 Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
-    axes1[index].plot(np.real(Y[index, :]), np.imag(Y[index, :]), ".")
+    plot_iq(Y[index, :], ax=axes1[index])
     axes1[index].set_title(f"Received signal (antenna {index + 1})")
     axes1[index].set_xlim([-2, 2])
     axes1[index].set_ylim([-2, 2])
-    style.apply(axes1[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
-    axes2[index].plot(np.real(Z[index, :]), np.imag(Z[index, :]), ".",
-                      label="estimated")
-    axes2[index].plot(np.real(constellation.alphabet),
-                      np.imag(constellation.alphabet), "kx",
-                      markersize=9, label="transmitted alphabet")
+    plot_iq(Z[index, :], reference=constellation, ax=axes2[index])
     axes2[index].set_title(f"Estimated signal (stream {index + 1})")
     axes2[index].set_xlim([-2, 2])
     axes2[index].set_ylim([-2, 2])
-    style.apply(axes2[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
 snr_dB_list = np.arange(0, 20, 3)
@@ -112,17 +106,19 @@ def average_ser(name, chain, snr_dB, seed=0):
     return float(np.mean(results["ser"]))
 
 
+# --- metrics, pre-allocated ------------------------------------------
 curves = {}
+for name in chains:
+    curves[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, chain in chains.items():
-    values = []
-    for snr_dB in snr_dB_list:
-        values.append(average_ser(name, chain, snr_dB))
-    curves[name] = values
-for name, values in curves.items():
-    line = f"{name:5s} "
-    for value in values:
-        line += f"{value:.4f} "
-    print(line)
+    for index, snr_dB in enumerate(snr_dB_list):
+        curves[name][index] = average_ser(name, chain, snr_dB)
+
+# --- results: table and figure ---------------------------------------
+print_data({"x": snr_dB_list, "curves": curves},
+           xlabel="snr_dB", ylabel="SER")
 
 ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
                      title=f"{N_r}x{N_t} MIMO, {constellation.order}-"
@@ -143,9 +139,12 @@ big_detectors = {
     "ML": MaximumLikelihoodDetector(big_constellation, H=big_H, name="detector"),
     "SD": big_decoder,
 }
+# --- metrics, pre-allocated ------------------------------------------
 elapsed = {}
 for name in big_detectors:
-    elapsed[name] = []
+    elapsed[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, detector in big_detectors.items():
     big_chain = Sequential([
         SymbolGenerator(big_constellation.order, name="tx"),
@@ -154,16 +153,16 @@ for name, detector in big_detectors.items():
         AWGN(sigma2=1.0, name="noise"),
         detector,
     ], taps=["tx"], name=f"4x4 MIMO, {name}")
-    for snr_dB in snr_dB_list:
+    for index, snr_dB in enumerate(snr_dB_list):
         big_chain.seed(4)
         big_chain.set_params(noise__sigma2=4 * 10 ** (-snr_dB / 10))
         start = time.perf_counter()
         detected = big_chain((4, 400))
-        elapsed[name].append((time.perf_counter() - start) * 1e3)
+        elapsed[name][index] = (time.perf_counter() - start) * 1e3
         errors = compute_ser(big_chain.tap("tx"), detected)
         nodes = (f"{big_decoder.nodes_:7.1f} nodes" if name == "SD"
                  else f"{16 ** 4:7d} nodes")
-        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][-1]:8.1f} ms  "
+        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][index]:8.1f} ms  "
               f"{nodes}   SER {errors:.4f}")
 
 # A runtime is not an error rate, so it does not go through

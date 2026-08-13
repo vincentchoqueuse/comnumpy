@@ -13,7 +13,7 @@ from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser, compute_ser_rayleigh_psk
 from comnumpy.core.processors import Amplifier
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate
+from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
 from comnumpy.mimo.detectors import LinearDetector
@@ -99,15 +99,10 @@ alamouti.summary(500 * code.n_symbols)
 received = alamouti.tap("noise")[0]
 combined = alamouti.tap("detector") / power
 fig2, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-ax_left.plot(np.real(received), np.imag(received), ".")
+plot_iq(received, marker=".", ax=ax_left)
 ax_left.set_title("tap('noise'): the single receive antenna")
-style.apply(ax_left, "iq")
-ax_right.plot(np.real(combined), np.imag(combined), ".", label="combined")
-ax_right.plot(np.real(constellation.alphabet),
-              np.imag(constellation.alphabet), "kx", markersize=9,
-              label="transmitted alphabet")
+plot_iq(combined, reference=constellation, ax=ax_right)
 ax_right.set_title("tap('detector'): after Alamouti combining")
-style.apply(ax_right, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 
@@ -144,12 +139,19 @@ links = {
     "Alamouti, 2 Tx, 1 Rx": (alamouti, 1, 2, n_symbols),
     "MRC, 1 Tx, 2 Rx": (mrc, 2, 1, (1, n_symbols)),
 }
+# --- metrics, pre-allocated ------------------------------------------
 curves = {}
+for name in links:
+    curves[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, (chain, n_rx, n_tx, stimulus) in links.items():
-    values = []
-    for snr_dB, count in zip(snr_dB_list, draws, strict=True):
-        values.append(average_ser(chain, n_rx, n_tx, snr_dB, stimulus, count))
-    curves[name] = values
+    for index, (snr_dB, count) in enumerate(zip(snr_dB_list, draws,
+                                                strict=True)):
+        curves[name][index] = average_ser(chain, n_rx, n_tx, snr_dB,
+                                          stimulus, count)
+
+# --- results: figure against the closed forms ------------------------
 
 fine = np.linspace(snr_dB_list[0], snr_dB_list[-1], 100)
 per_bit = 10 ** (fine / 10) / np.log2(M)

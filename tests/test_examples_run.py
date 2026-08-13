@@ -55,11 +55,13 @@ TIMEOUT_S = 120
 # row. The old figure is not reproducible here and no change to the
 # script explains it, so rather than keep a script out of the smoke test
 # on a number nobody can obtain, it goes back in.
+#
+# `mimo/monte_carlo_simulation_1.py` left the same way on 2026-08-13:
+# listed at 32 s, measured twice at 4.4 s after its Experiment rewrite.
 SLOW = {
-    "mimo/monte_carlo_simulation_1.py":
-        "Monte-Carlo BER sweep, 4 detectors -- 32 s measured 2026-08-09",
     "mimo/monte_carlo_simulation_2.py":
-        "Monte-Carlo BER sweep, OSIC variants -- 143 s measured 2026-08-09",
+        "Monte-Carlo BER sweep, OSIC variants -- 80 s measured 2026-08-13 "
+        "after the Experiment rewrite",
     "mimo/run_all_scripts.py":
         "runner, not an example: re-executes the other mimo scripts -- "
         "~350 s by construction",
@@ -68,7 +70,8 @@ SLOW = {
         "matrix, plus a runtime sweep -- 33 s wall measured 2026-08-12",
     "optical/CD_compensation_part1.py":
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
-        "compensator -- 227 s measured 2026-08-09",
+        "compensator -- 332 s measured 2026-08-13 after the Experiment "
+        "rewrite, alongside a docs build",
     "optical/NLI_simulation.py":
         "eight launch powers x four trials x two fibre configurations of "
         "split-step propagation, then six receivers on each -- 144 s "

@@ -6,7 +6,7 @@ Run from this directory: it writes the tutorial's figures into
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy.core import Sequential
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
@@ -62,9 +62,9 @@ def get_chain(n_spans, *, steps=1, linear_only=True):
     return Sequential([
         SymbolGenerator(constellation.order, name="data_tx"),
         SymbolMapper(constellation, name="signal_tx"),
+        Amplifier(amp),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
-        Amplifier(amp),
         FiberLink(N_spans=n_spans, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, fiber=fiber, name="link"),
         Downsampler(oversampling_ratio, use_filter=True, name="rx_field"),
@@ -155,32 +155,22 @@ for n_spans in spans:
     print(f"{n_spans:5d} {snr_ase_only[n_spans]:8.2f} dB {predicted:8.2f} dB "
           f"{snr_ase_only[n_spans] - predicted:+8.2f} dB")
 
-# An IQ plane is two matplotlib calls; style.apply gives it the labels,
-# the grid and the equal aspect ratio a constellation has to be read on.
-alphabet = constellation.alphabet
-fig1, ax1 = plt.subplots()
-ax1.plot(np.real(received_field), np.imag(received_field), ".")
-ax1.set_title(f"received field ({dBm} dBm, {N_span} spans)")
-style.apply(ax1, "iq")
+plot_iq(received_field,
+        title=f"received field ({dBm} dBm, {N_span} spans)")
 plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
 for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
-    symbols = estimates[n_spans]
-    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
-    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
-            label="alphabet")
+    plot_iq(estimates[n_spans], reference=constellation, ax=ax)
     ax.set_title(f"after {n_spans} span{'s' if n_spans > 1 else ''}, "
                  f"SNR {snr_per_span[n_spans]:.1f} dB")
-    style.apply(ax, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
-measured = np.zeros(len(spans))
-ase_only = np.zeros(len(spans))
-for index, n_spans in enumerate(spans):
-    measured[index] = snr_per_span[n_spans]
-    ase_only[index] = snr_ase_only[n_spans]
+# the dicts are keyed by span count in sweep order, so their values
+# are already the curves
+measured = np.array(list(snr_per_span.values()))
+ase_only = np.array(list(snr_ase_only.values()))
 
 # An effective SNR is not an error rate: linear ordinate, two curves,
 # nothing a helper would say better than the four lines that draw it.
@@ -223,10 +213,6 @@ for ax, symbols, name in [
          f"dispersion compensation\nSNR {snr_per_span[N_span]:.2f} dB"),
         (axes[1], back_propagated.tap("phase"),
          f"digital back-propagation\nSNR {snr_dbp:.2f} dB")]:
-    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
-    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
-            label="alphabet")
-    ax.set_title(name)
-    style.apply(ax, "iq")
+    plot_iq(symbols, reference=constellation, title=name, ax=ax)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig4.png")

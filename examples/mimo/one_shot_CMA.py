@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
 from comnumpy import style
-from comnumpy.core import Sequential
+from comnumpy.core import Sequential, plot_iq
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
@@ -90,11 +90,7 @@ chain = Sequential([
 Y = chain((N_t, N))
 
 data = chain.tap("filter")  # full CMA output (before tail removal)
-symbols = chain.tap("tail")
-_, ax = plt.subplots()
-ax.plot(np.real(symbols), np.imag(symbols), ".")
-ax.set_title("after CMA convergence")
-style.apply(ax, "iq")
+plot_iq(chain.tap("tail"), title="after CMA convergence")
 
 # compute CMA loss
 kernel_size = 100

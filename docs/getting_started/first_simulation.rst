@@ -170,7 +170,7 @@ It also draws itself, next to what the channel did to it:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 89-101
+   :lines: 89-97
 
 .. image:: img/first_simulation_fig1.png
    :width: 100%
