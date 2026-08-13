@@ -120,6 +120,46 @@ idea. Blocks that need one are `DataAided*`, by opposition to the
 `Blind*` family; that is the standard pair of the field (Proakis,
 §8: *data-aided* vs *blind* estimation).
 
+## Where derived state lives, and how a parameter changes (D50)
+
+A block precomputes in two places, and the split is by *what the value
+depends on*:
+
+* **`__post_init__`** — validate, normalize, and precompute whatever
+  depends **only on the block's own parameters**: filter taps, an
+  alphabet coerced to an array, an allocation mask.
+* **`prepare(x)`** — derive whatever depends on the **signal**: its
+  length, its rate, its shape, how many paths it carries. Axis
+  validation for category-3 blocks happens here.
+
+The direction is asymmetric, which is why there are two places and not
+one. Signal-dependent state in `__post_init__` is **wrong** — the
+constructor has not seen the signal. Parameter-only state in `prepare()`
+is merely **repeated work**; `FiberLink` and `DBP` do this and it is
+negligible against the split-step cost, so "derived in `prepare()`" is
+not evidence that a value depends on the signal.
+
+**A parameter changes through `Sequential.set_params` (D34), never by
+assignment.** `set_params` re-runs `__post_init__` on every block it
+touches; a direct assignment does not, and 57 of the 67 blocks that
+derive anything derive it there:
+
+```python
+chain.set_params(downsampler__L=2)   # rebuilds the anti-alias filter
+chain["downsampler"].L = 2           # does not -- the filter stays at 1/4
+```
+
+Blocks cannot be frozen to make that assignment raise: `wiring` writes
+`reference` on a block *during* the pass, and every estimator writes its
+own `theta_`. Mutability is what separates a `Processor` from a value
+object such as `FiberSpec` or `Constellation`.
+
+**Writing a new block.** Whatever `__post_init__` computes must be
+recomputable by calling `__post_init__` again, with no side effect — that
+second call is exactly what `set_params` makes. A block that appends to a
+list, opens a file or consumes a generator there breaks `set_params` for
+everything downstream of it.
+
 ## Error messages
 
 Validation failures raise `comnumpy.ShapeError` and follow the template

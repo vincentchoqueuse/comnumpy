@@ -974,6 +974,23 @@ qui dit ce qu'un code récupérera.
 
 ---
 
+### 4.19 Où vit l'état dérivé, et comment on change un paramètre (nouveau)
+
+| # | Décision | Motif | Alternatives rejetées | Statut |
+|---|----------|-------|-----------------------|--------|
+| D50 | **Un bloc précalcule à deux endroits, et un seul chemin change un paramètre.** (a) `__post_init__` valide, normalise et précalcule ce qui ne dépend **que des paramètres du bloc** — coefficients de filtre, alphabet coercé en tableau, masque d'allocation. (b) `prepare(x)` dérive ce qui dépend du **signal** : sa longueur, son rythme, sa forme, son nombre de trajets — et c'est là que se fait la validation d'axe des blocs de catégorie 3 (D2). (c) Un paramètre se change par `Sequential.set_params` (D34), **jamais par affectation directe** sur le bloc. (d) Corollaire normatif qui rend (c) vrai : tout ce que `__post_init__` calcule doit être recalculable par un second appel à `__post_init__`, sans effet de bord — c'est exactement ce que `set_params` fait sur chaque bloc touché. | **La majorité des blocs précalcule au constructeur** : sur les 95 sous-classes de `Processor`, 50 dérivent leur état dans `__post_init__` seul, 7 dans les deux, 10 dans `prepare()` seul — soit **57 sur 67** de ceux qui dérivent quelque chose. Une affectation directe laisse donc la majorité des blocs dans un état incohérent, **en silence** : mesuré sur `Downsampler(4, use_filter=True)`, écrire `.L = 2` laisse le filtre anti-repliement à une coupure de 1/4 alors que la décimation vaut 2, et `set_params(downsampler__L=2)` le reconstruit à 1/2. Ce n'est pas un risque théorique — le défaut corrigé dans les exemples optiques était **le même couple désaccordé**, une coupure et une décimation écrites à la main au lieu d'être dérivées l'une de l'autre, et il a posé un plancher d'ISI à 22,9 dB sous toutes les courbes d'un tutoriel sans rien lever. **La direction est asymétrique**, et c'est ce qui justifie deux endroits plutôt qu'un : mettre de l'état dépendant du signal dans `__post_init__` est **faux** (le constructeur ne connaît pas le signal) ; mettre de l'état purement paramétrique dans `prepare()` est **seulement du travail répété**. `DBP` est dans ce second cas — son `prepare()` ne lit pas le signal du tout — et `FiberLink` y est pour tout sauf `manakov_`. Négligeable devant le SSFM, donc laissé tel quel, mais cela veut dire que « dérive dans `prepare()` » ne prouve pas la dépendance au signal, et la règle doit être écrite plutôt que lue dans le code. | **Geler les blocs** pour que l'affectation lève : fermé par la bibliothèque elle-même — `wiring` (D42c) écrit `reference` sur un bloc **pendant** la passe, et tout estimateur écrit son `theta_` (D23). Un `Processor` doit rester mutable, ce qui distingue sa nature de celle des objets valeur (`FiberSpec`, `Constellation`, `CarrierAllocation`), gelés à juste titre. La discipline ne peut donc pas être portée par le type. **Un `__setattr__` qui reconstruit tout seul** : rendrait `.L = 2` correct, mais fait qu'une affectation déclenche du calcul en silence, exige un drapeau de ré-entrance (`__post_init__` affecte des champs) et un second pour « construction terminée » (la dataclass affecte champ par champ), et surtout **cache la règle au lieu de l'enseigner**. **Tout dériver dans `prepare()`** : supprime l'ambiguïté, mais reconstruirait les 16 001 coefficients d'un SRRC à chaque passe, ou imposerait un cache invalidé à la main — le même problème déplacé d'un cran. **Ne rien écrire** : c'est l'état d'avant, celui qui laisse un bloc neuf dériver sans que rien ne le dise. | **Acté** |
+
+**Ce que cette décision ne fait pas.** Elle énonce l'invariant, elle ne
+le vérifie pas. Le cliquet correspondant — construire un bloc en A,
+`set_params` vers B, et exiger la même sortie qu'un bloc construit
+directement en B — reste à écrire, et c'est lui qui rendrait un
+`__post_init__` incomplet impossible à livrer. Il demande une table de
+cas par classe (on ne devine pas des paramètres valides génériquement),
+avec les blocs non couverts listés en `skip` explicite pour que
+l'omission se voie.
+
+---
+
 ### 4.15 Fibre et simulation, séparées (nouveau)
 
 | # | Décision | Motif | Alternatives rejetées | Statut |
