@@ -400,7 +400,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../toplevel/index.html">Chain services</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../toplevel/sweep.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/monte_carlo.html">Parameter sweeps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
 </ul>
 </details></li>
@@ -515,7 +515,13 @@ off the shape of the field, exactly as which pumps are on is read
 off their powers (D41). A <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">1,</span> <span class="pre">N)</span></code> field is a single
 polarization and keeps the scalar NLSE with <span class="math notranslate nohighlight">\(\gamma\)</span>.</p>
 <p>Axes: <em>declared axis</em> – a full-field signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>
-with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations.</p>
+with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations. The leading axes are a
+<strong>batch</strong>: <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> propagates <code class="docutils literal notranslate"><span class="pre">B</span></code> realizations in one call,
+which is 1.8x faster than the same <code class="docutils literal notranslate"><span class="pre">B</span></code> calls at 12288 samples and
+3.1x at 1024 – the split-step loop, the per-span amplifier and the
+parameter precomputation are paid once instead of <code class="docutils literal notranslate"><span class="pre">B</span></code> times. A
+batch of single-polarization fields is <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">1,</span> <span class="pre">N)</span></code>; <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">N)</span></code>
+reads <code class="docutils literal notranslate"><span class="pre">B</span></code> as polarizations and is refused.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_spans<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of spans in the fiber link.</p>
@@ -717,6 +723,80 @@ Technology, vol. 28, no. 4, pp. 662-701, 2010.</p></li>
 <span class="go">(128,) complex128</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.optical.links.FiberLink.budget">
+<span class="sig-name descname"><span class="pre">budget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bandwidth_Hz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">polarizations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/links.html#FiberLink.budget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.links.FiberLink.budget" title="Link to this definition">#</a></dt>
+<dd><p>The amplifier noise this link accumulates, in closed form.</p>
+<section id="id1">
+<h3>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>Each of the <span class="math notranslate nohighlight">\(N_s\)</span> spans adds one amplifier’s worth of
+spontaneous emission, and the noise a receiver sees is that
+density integrated over the bandwidth it keeps – the symbol
+rate, for a matched filter:</p>
+<div class="math notranslate nohighlight">
+\[P_{\mathrm{ASE}} = P \, N_s \, N_{\mathrm{ASE}} \, B,
+\qquad
+N_{\mathrm{ASE}} = (G - 1) h \nu \, n_{sp},
+\qquad
+n_{sp} = \frac{\mathrm{NF}/2}{1 - 1/G}\]</div>
+<p>with <span class="math notranslate nohighlight">\(P\)</span> the number of polarizations. That factor is the
+whole reason this method exists. <span class="math notranslate nohighlight">\(N_{\mathrm{ASE}}\)</span> is a
+density <strong>per polarization</strong>, and a dual-polarization link
+carries two independent copies of it; quoting a channel power
+against a single-polarization budget is a 3 dB error that looks
+exactly like a modelling disagreement. Writing the product by
+hand at each call site is how the two conventions drift apart.</p>
+<p>The result is the link’s <em>own</em> prediction: it owes nothing to a
+simulation, so it is the reference a measured effective SNR is
+checked against. <code class="docutils literal notranslate"><span class="pre">noise_scaling</span></code> is applied, so a link with
+its noise switched off budgets zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param bandwidth_Hz<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Bandwidth the receiver collects, in Hz. For a matched filter
+this is the symbol rate, not the simulated <code class="docutils literal notranslate"><span class="pre">fs</span></code>.</p>
+</dd>
+<dt class="field-even">type bandwidth_Hz<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param polarizations<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1 (default) for a single-polarization link, 2 for the
+dual-polarization link a coherent system uses – the same
+convention as
+<a class="reference internal" href="gn_model.html#comnumpy.optical.gn_model.gn_model_nli_power" title="comnumpy.optical.gn_model.gn_model_nli_power"><code class="xref py py-func docutils literal notranslate"><span class="pre">gn_model_nli_power()</span></code></a>.</p>
+</dd>
+<dt class="field-even">type polarizations<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>dict</em> – <code class="docutils literal notranslate"><span class="pre">ase_power_W</span></code> and <code class="docutils literal notranslate"><span class="pre">ase_power_dBm</span></code>, the accumulated noise;
+<code class="docutils literal notranslate"><span class="pre">ase_density_W_per_Hz</span></code>, one span’s density per
+polarization; and the inputs it was built from
+(<code class="docutils literal notranslate"><span class="pre">n_spans</span></code>, <code class="docutils literal notranslate"><span class="pre">NF_dB</span></code>, <code class="docutils literal notranslate"><span class="pre">span_gain_dB</span></code>, <code class="docutils literal notranslate"><span class="pre">bandwidth_Hz</span></code>,
+<code class="docutils literal notranslate"><span class="pre">polarizations</span></code>).</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If the bandwidth is not positive, or if <code class="docutils literal notranslate"><span class="pre">polarizations</span></code> is
+    neither 1 nor 2: a fibre carries one or two.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Ten 100 km spans with a 5 dB noise figure, one polarization,
+read in a 32 GBd matched filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">link</span> <span class="o">=</span> <span class="n">FiberLink</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">NF_dB</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">192e9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">budget</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">budget</span><span class="p">(</span><span class="mf">32e9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">budget</span><span class="p">[</span><span class="s1">&#39;ase_power_dBm&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dBm&quot;</span><span class="p">)</span>
+<span class="go">-21.88 dBm</span>
+</pre></div>
+</div>
+<p>The second polarization carries its own noise, and nothing else
+changes:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">budget</span><span class="p">(</span><span class="mf">32e9</span><span class="p">,</span><span class="w"> </span><span class="n">polarizations</span><span class="o">=</span><span class="mi">2</span><span class="p">)[</span><span class="s1">&#39;ase_power_dBm&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dBm&quot;</span><span class="p">)</span>
+<span class="go">-18.87 dBm</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 </dd></dl>
 
@@ -772,6 +852,7 @@ Technology, vol. 28, no. 4, pp. 662-701, 2010.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.links.FiberLink"><code class="docutils literal notranslate"><span class="pre">FiberLink</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.links.FiberLink.raman_step_gain_"><code class="docutils literal notranslate"><span class="pre">FiberLink.raman_step_gain_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.links.FiberLink.raman_sigma2_"><code class="docutils literal notranslate"><span class="pre">FiberLink.raman_sigma2_</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.links.FiberLink.budget"><code class="docutils literal notranslate"><span class="pre">FiberLink.budget()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -400,7 +400,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../toplevel/index.html">Chain services</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../toplevel/sweep.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/monte_carlo.html">Parameter sweeps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
 </ul>
 </details></li>
@@ -499,7 +499,13 @@ coefficient carries the <span class="math notranslate nohighlight">\(8/9\)</span
 model off the shape the same way, so a link and its compensator
 cannot end up integrating different equations.</p>
 <p>Axes: <em>declared axis</em> – a full-field signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>
-with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations.</p>
+with <code class="docutils literal notranslate"><span class="pre">P</span></code> in <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2}</span></code> polarizations. The leading axes are a
+<strong>batch</strong>: <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> propagates <code class="docutils literal notranslate"><span class="pre">B</span></code> realizations in one call,
+which is 1.8x faster than the same <code class="docutils literal notranslate"><span class="pre">B</span></code> calls at 12288 samples and
+3.1x at 1024 – the split-step loop, the per-span amplifier and the
+parameter precomputation are paid once instead of <code class="docutils literal notranslate"><span class="pre">B</span></code> times. A
+batch of single-polarization fields is <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">1,</span> <span class="pre">N)</span></code>; <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">N)</span></code>
+reads <code class="docutils literal notranslate"><span class="pre">B</span></code> as polarizations and is refused.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_spans<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of spans to back-propagate.</p>

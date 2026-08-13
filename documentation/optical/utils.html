@@ -400,7 +400,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../toplevel/index.html">Chain services</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../toplevel/sweep.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/monte_carlo.html">Parameter sweeps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
 </ul>
 </details></li>
@@ -706,6 +706,13 @@ the scalar NLSE; a <code class="docutils literal notranslate"><span class="pre">
 obeys the Manakov equation. Anything else on the antenna axis is
 refused, because a pointwise Kerr step applied row by row would
 describe parallel fibres, not one fibre carrying several signals.</p>
+<p><strong>The leading axes are a batch.</strong> Only <code class="docutils literal notranslate"><span class="pre">-2</span></code> and <code class="docutils literal notranslate"><span class="pre">-1</span></code> are read,
+so <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> propagates <code class="docutils literal notranslate"><span class="pre">B</span></code> independent realizations in one
+call and every block downstream broadcasts over them – the same
+rule the MIMO blocks follow on their antenna axis (D2). That is
+also why the polarization axis must be written even when there is
+one of them: <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">N)</span></code> is indistinguishable from <code class="docutils literal notranslate"><span class="pre">(P,</span> <span class="pre">N)</span></code>, so a
+batch of single-polarization fields is <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">1,</span> <span class="pre">N)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -832,6 +839,302 @@ amplitude.</p>
 </section>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.launch_amplitude">
+<span class="sig-name descname"><span class="pre">launch_amplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">power_W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">polarizations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#launch_amplitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.launch_amplitude" title="Link to this definition">#</a></dt>
+<dd><p>Field amplitude that launches a given optical power.</p>
+<section id="id2">
+<h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>An <a class="reference internal" href="../core/processors.html#comnumpy.core.processors.Amplifier" title="comnumpy.core.processors.Amplifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Amplifier</span></code></a> multiplies the
+<strong>field</strong>, and a power is the squared modulus of it, so a launch
+power is set through a square root:</p>
+<div class="math notranslate nohighlight">
+\[a = \sqrt{\frac{P}{P_{\mathrm{pol}}}}\]</div>
+<p>The division is the point. A dual-polarization signal carries the
+channel power split between its two polarizations, so each one is
+launched at <span class="math notranslate nohighlight">\(\sqrt{P/2}\)</span> – and that factor, written by hand
+at each call site, is the same one that makes an ASE budget or a
+nonlinear coefficient disagree by 3 dB (see
+<a class="reference internal" href="links.html#comnumpy.optical.links.FiberLink.budget" title="comnumpy.optical.links.FiberLink.budget"><code class="xref py py-meth docutils literal notranslate"><span class="pre">budget()</span></code></a>).</p>
+<p>Axes: <em>element-wise</em> – an array of powers gives an array of
+amplitudes, which is what a launch-power sweep needs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param power_W<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Channel power in watts, summed over the polarizations.</p>
+</dd>
+<dt class="field-even">type power_W<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or np.ndarray</p>
+</dd>
+<dt class="field-odd">param polarizations<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1 (default) for a single-polarization field, 2 for a
+polarization pair.</p>
+</dd>
+<dt class="field-even">type polarizations<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or np.ndarray</em> – Amplitude gain to give an <code class="docutils literal notranslate"><span class="pre">Amplifier</span></code>.</p>
+</dd>
+<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If a power is negative, or if <code class="docutils literal notranslate"><span class="pre">polarizations</span></code> is neither 1
+    nor 2.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">launch_amplitude</span><span class="p">(</span><span class="n">dbm_to_watt</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">0.031623</span>
+</pre></div>
+</div>
+<p>Two polarizations share the channel power, so each carries half of
+it – 3 dB down, which is <span class="math notranslate nohighlight">\(\sqrt{2}\)</span> in amplitude:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">single</span> <span class="o">=</span> <span class="n">launch_amplitude</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pair</span> <span class="o">=</span> <span class="n">launch_amplitude</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">single</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">pair</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">1.414214</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.linear_step_transfer">
+<span class="sig-name descname"><span class="pre">linear_step_transfer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">like</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#linear_step_transfer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.linear_step_transfer" title="Link to this definition">#</a></dt>
+<dd><p>Transfer function of one linear step of the split-step method.</p>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>The linear operator of the NLSE is diagonal in frequency, and it is
+the whole of it – attenuation and dispersion together:</p>
+<div class="math notranslate nohighlight">
+\[H[k] = e^{-\frac{\alpha}{2} z d}\,
+       e^{j \frac{\beta_2}{2} z \omega_k^2 d}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\alpha = \frac{\ln 10}{10}\alpha_{dB}\)</span>,
+<span class="math notranslate nohighlight">\(\omega_k = 2\pi f_s f[k]\)</span> over the FFT grid, and
+<span class="math notranslate nohighlight">\(d = \pm 1\)</span> the propagation direction. The two factors are
+the same operator <span class="math notranslate nohighlight">\(D\)</span>, one real and constant across the band,
+the other complex and frequency-dependent; separating them would
+make a caller carry a scalar alongside the array for nothing.</p>
+<p><strong>Why this is a function of its own.</strong> It depends only on
+<span class="math notranslate nohighlight">\((n, z, \beta_2, f_s, \alpha_{dB}, d)\)</span> – never on the
+signal – while a split-step loop applies it thousands of times.
+Building it costs 0.42 ms at 12288 samples against 0.77 ms for the
+FFT pair it serves, of which the complex exponential alone is 88 %,
+so recomputing it per step is most of the cost of propagating.
+<a class="reference internal" href="links.html#comnumpy.optical.links.FiberLink" title="comnumpy.optical.links.FiberLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code></a> builds one per distinct
+step length in <code class="docutils literal notranslate"><span class="pre">prepare</span></code> and reuses them.</p>
+<p>Axes: <em>element-wise</em> – returns a 1-D array of <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> bins,
+which broadcasts against any field shaped <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">n_samples)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param n_samples<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Length of the FFT, i.e. of the field’s last axis.</p>
+</dd>
+<dt class="field-even">type n_samples<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param z<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Step length in km.</p>
+</dd>
+<dt class="field-even">type z<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param beta2<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Group-velocity dispersion in ps^2/km.</p>
+</dd>
+<dt class="field-even">type beta2<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param fs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sampling frequency in Hz. Default 1.</p>
+</dd>
+<dt class="field-even">type fs<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param alpha_dB<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Attenuation in dB/km. Default None, a lossless step.</p>
+</dd>
+<dt class="field-even">type alpha_dB<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param direction<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1 forward, -1 backward (back-propagation). Default 1.</p>
+</dd>
+<dt class="field-even">type direction<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param like<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array whose type the FFT grid should follow, so that a cupy
+field gets a cupy transfer function (D3).</p>
+</dd>
+<dt class="field-even">type like<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Transfer function on the FFT grid, in FFT order.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>A lossless step is unit modulus – dispersion moves phase, not
+energy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">H</span> <span class="o">=</span> <span class="n">linear_step_transfer</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">21.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">100e9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">),</span> <span class="mi">12</span><span class="p">))</span>
+<span class="go">[1. 1. 1. 1. 1. 1. 1. 1.]</span>
+</pre></div>
+</div>
+<p>Backward is the conjugate of forward, which is what makes
+back-propagation exact in the absence of noise:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">back</span> <span class="o">=</span> <span class="n">linear_step_transfer</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">21.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">100e9</span><span class="p">,</span> <span class="n">direction</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">back</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">H</span><span class="p">))),</span> <span class="mi">12</span><span class="p">))</span>
+<span class="go">0.0</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.apply_frequency_response">
+<span class="sig-name descname"><span class="pre">apply_frequency_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#apply_frequency_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.apply_frequency_response" title="Link to this definition">#</a></dt>
+<dd><p>Filter a signal by a transfer function, in the frequency domain.</p>
+<section id="id4">
+<h2>Signal Model<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[y = \mathcal{F}^{-1}\left\{ H \odot \mathcal{F}\{x\} \right\}\]</div>
+<p>The multiplication is <strong>periodic</strong>: no zero padding, so the result
+is a circular convolution and <code class="docutils literal notranslate"><span class="pre">y</span></code> has the length of <code class="docutils literal notranslate"><span class="pre">x</span></code>. That is
+what a split-step wants, and what a channel mask or a Raman tilt
+wants; a filter whose impulse response must not wrap around –
+pulse shaping – pads instead, which is a different operation and
+lives in <a class="reference internal" href="../core/filters.html#module-comnumpy.core.filters" title="comnumpy.core.filters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">comnumpy.core.filters</span></code></a>.</p>
+<p>Axes: <em>declared axis</em> – filters along <code class="docutils literal notranslate"><span class="pre">axis</span></code> and broadcasts over
+the rest, so a <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> field is filtered by a length-<code class="docutils literal notranslate"><span class="pre">N</span></code>
+response without a loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param x<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Signal to filter.</p>
+</dd>
+<dt class="field-even">type x<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param H<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Transfer function on the FFT grid, broadcastable against <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
+</dd>
+<dt class="field-even">type H<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param axis<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Axis to filter along. Default -1.</p>
+</dd>
+<dt class="field-even">type axis<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em> – Filtered signal, same shape as <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">apply_frequency_response</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">))),</span> <span class="mi">12</span><span class="p">))</span>
+<span class="go">[1. 0. 0. 0.]</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="comnumpy.optical.utils.step_transfers">
+<span class="sig-name descname"><span class="pre">step_transfers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_dB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/utils.html#step_transfers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.utils.step_transfers" title="Link to this definition">#</a></dt>
+<dd><p>Transfer functions of a split-step schedule, one per distinct length.</p>
+<section id="id5">
+<h2>Signal Model<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>A split step applies <a class="reference internal" href="#comnumpy.optical.utils.linear_step_transfer" title="comnumpy.optical.utils.linear_step_transfer"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear_step_transfer()</span></code></a> once per step, and
+the operator depends only on the step length. A <strong>linear</strong> schedule
+makes every step the same length, so one transfer function serves
+all of them whatever <code class="docutils literal notranslate"><span class="pre">StPS</span></code> is; a <strong>logarithmic</strong> schedule makes
+them all different and needs <code class="docutils literal notranslate"><span class="pre">StPS</span></code>. Both cases are found the same
+way – by asking which lengths are distinct – so the propagation
+loop indexes a table and never branches on the schedule.</p>
+<p>Rebuilding costs a complex exponential per distinct length, which is
+88 % of the cost of a transfer function and 60 % of the FFT pair it
+serves, so the table is keyed on everything it depends on and
+returned unchanged when the key matches. A Monte-Carlo runs the same
+block at the same length over and over, and then it is built once
+for the whole sweep instead of once per pass.</p>
+<p>Axes: <em>element-wise</em> – the table is <code class="docutils literal notranslate"><span class="pre">(n_distinct,</span> <span class="pre">n_samples)</span></code> and
+each row broadcasts against a field shaped <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">n_samples)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param n_samples<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Length of the FFT, i.e. of the field’s last axis.</p>
+</dd>
+<dt class="field-even">type n_samples<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">param lengths<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Length of every step, in km, in the order they are applied.</p>
+</dd>
+<dt class="field-even">type lengths<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+<dt class="field-odd">param beta2<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Group-velocity dispersion in ps^2/km.</p>
+</dd>
+<dt class="field-even">type beta2<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, keyword-only</p>
+</dd>
+<dt class="field-odd">param fs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sampling frequency in Hz.</p>
+</dd>
+<dt class="field-even">type fs<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, keyword-only</p>
+</dd>
+<dt class="field-odd">param alpha_dB<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Attenuation in dB/km. Default None, a lossless step.</p>
+</dd>
+<dt class="field-even">type alpha_dB<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param direction<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1 forward, -1 for back-propagation. Default 1.</p>
+</dd>
+<dt class="field-even">type direction<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param previous<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The <code class="docutils literal notranslate"><span class="pre">(table,</span> <span class="pre">index,</span> <span class="pre">key)</span></code> returned by the last call, returned
+as is when nothing it depends on has changed.</p>
+</dd>
+<dt class="field-even">type previous<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>tuple</em> – <code class="docutils literal notranslate"><span class="pre">(table,</span> <span class="pre">index,</span> <span class="pre">key)</span></code>: the <code class="docutils literal notranslate"><span class="pre">(n_distinct,</span> <span class="pre">n_samples)</span></code>
+transfer functions, the row each step reads, and the key the
+three were built from.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>A linear schedule collapses to one row, however many steps:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">table</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">step_transfers</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">),</span> <span class="n">beta2</span><span class="o">=-</span><span class="mf">21.7</span><span class="p">,</span>
+<span class="gp">... </span>                                 <span class="n">fs</span><span class="o">=</span><span class="mf">100e9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">index</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span> <span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="go">(1, 64) [0 0 0 0] 0</span>
+</pre></div>
+</div>
+<p>A logarithmic one keeps them apart:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">table</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">step_transfers</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">]),</span>
+<span class="gp">... </span>                                 <span class="n">beta2</span><span class="o">=-</span><span class="mf">21.7</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">100e9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+<span class="go">(3, 64) [0 1 2]</span>
+</pre></div>
+</div>
+<p>Asking again with the same schedule returns the same object, which
+is what keeps a sweep from rebuilding it:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">again</span> <span class="o">=</span> <span class="n">step_transfers</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">]),</span> <span class="n">beta2</span><span class="o">=-</span><span class="mf">21.7</span><span class="p">,</span>
+<span class="gp">... </span>                       <span class="n">fs</span><span class="o">=</span><span class="mf">100e9</span><span class="p">,</span> <span class="n">previous</span><span class="o">=</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">again</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="n">table</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -893,6 +1196,10 @@ amplitude.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.manakov_kerr"><code class="docutils literal notranslate"><span class="pre">manakov_kerr()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.dbm_to_watt"><code class="docutils literal notranslate"><span class="pre">dbm_to_watt()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.watt_to_dbm"><code class="docutils literal notranslate"><span class="pre">watt_to_dbm()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.launch_amplitude"><code class="docutils literal notranslate"><span class="pre">launch_amplitude()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.linear_step_transfer"><code class="docutils literal notranslate"><span class="pre">linear_step_transfer()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.apply_frequency_response"><code class="docutils literal notranslate"><span class="pre">apply_frequency_response()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.utils.step_transfers"><code class="docutils literal notranslate"><span class="pre">step_transfers()</span></code></a></li>
 </ul>
   </nav></div>
 

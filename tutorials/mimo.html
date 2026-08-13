@@ -767,7 +767,7 @@ communication system with <code class="docutils literal notranslate"><span class
 compare on it.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced <code class="docutils literal notranslate"><span class="pre">sweep</span></code>, which is used
+<p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced <code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code>, which is used
 here to average over channel realizations rather than over noise. The
 chain is the same object; only the number of antennas changes.</p>
 </div>
@@ -802,7 +802,7 @@ problem, and it is what the rest of this tutorial is about.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
@@ -829,7 +829,7 @@ means comparing five chains that differ by their last block alone:</p>
 <span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">link</span><span class="p">(</span><span class="n">detector</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_chain</span><span class="p">(</span><span class="n">detector</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The same link, closed by one detector or another.</span>
 
 <span class="sd">    Only the last block changes, which is the point: a detector is a</span>
@@ -857,7 +857,7 @@ means comparing five chains that differ by their last block alone:</p>
 <span class="p">}</span>
 <span class="n">chains</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">detector</span> <span class="ow">in</span> <span class="n">detectors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">chains</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">link</span><span class="p">(</span><span class="n">detector</span><span class="p">)</span>
+    <span class="n">chains</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="n">detector</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1029,7 +1029,7 @@ confirms diversity 1 for zero forcing and 2 for maximum likelihood on a
 <p>A single channel realization proves nothing: over fading, the error rate is
 an <em>average</em>, dominated by the rare draws where the matrix is nearly
 singular. Averaging means running the chain once per realization, which is a
-sweep whose parameter is the channel. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes
+sweep whose parameter is the channel. <code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code> takes
 several dotted parameter names at once and zips them, so one sweep point sets
 the matrix the signal goes through <strong>and</strong> the one the detector inverts:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -1052,9 +1052,9 @@ the matrix the signal goes through <strong>and</strong> the one the detector inv
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">NOISE_AWARE</span><span class="p">:</span>
         <span class="n">params</span><span class="p">[</span><span class="s2">&quot;detector.sigma2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_variance</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
-                    <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="p">(</span><span class="n">N_t</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span>
-                    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
+                          <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="p">(</span><span class="n">N_t</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span>
+                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]))</span>
 
 

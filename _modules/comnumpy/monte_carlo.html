@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>comnumpy.sweep &#8212; comnumpy  documentation</title>
+    <title>comnumpy.monte_carlo &#8212; comnumpy  documentation</title>
   
   
   
@@ -397,7 +397,7 @@ mermaid.initialize(
 
 window.addEventListener("load", load);
 window.runMermaid = runMermaid;</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/sweep';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/comnumpy/monte_carlo';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -708,7 +708,7 @@ window.runMermaid = runMermaid;</script>
     
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.sweep</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">comnumpy.monte_carlo</span></li>
   </ul>
 </nav>
 </div>
@@ -725,7 +725,7 @@ window.runMermaid = runMermaid;</script>
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for comnumpy.sweep</h1><div class="highlight"><pre>
+  <h1>Source code for comnumpy.monte_carlo</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Parameter sweeps (decision D35).</span>
 
 <span class="sd">A Monte-Carlo sweep is a stateless ``for`` loop: reconfigure</span>
@@ -742,6 +742,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
@@ -753,7 +754,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sweep&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;monte_carlo&quot;</span><span class="p">]</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 
 <span class="c1"># Every worker runs one sweep point at a time, so a BLAS that spawns one</span>
 <span class="c1"># thread per core inside each of them oversubscribes the machine by</span>
@@ -803,17 +807,17 @@ window.runMermaid = runMermaid;</script>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 
-<div class="viewcode-block" id="sweep">
-<a class="viewcode-back" href="../../documentation/toplevel/sweep.html#comnumpy.sweep.sweep">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">:</span> <span class="n">Sequential</span><span class="p">,</span>
-          <span class="n">param</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-          <span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-          <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
-          <span class="n">stimulus</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-          <span class="o">*</span><span class="p">,</span>
-          <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-          <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-          <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<div class="viewcode-block" id="monte_carlo">
+<a class="viewcode-back" href="../../documentation/toplevel/monte_carlo.html#comnumpy.monte_carlo.monte_carlo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">:</span> <span class="n">Sequential</span><span class="p">,</span>
+                <span class="n">param</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                <span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+                <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+                <span class="n">stimulus</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">,</span>
+                <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a chain over a range of parameter values and collect metrics.</span>
 
 <span class="sd">    Parameters</span>
@@ -904,14 +908,25 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; from comnumpy import AWGN, Sequential, SymbolGenerator</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.metrics import compute_ser</span>
 <span class="sd">    &gt;&gt;&gt; chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=0, name=&quot;noise&quot;)])</span>
-<span class="sd">    &gt;&gt;&gt; out = sweep(chain, &quot;noise.snr_dB&quot;, [0, 10], {&quot;power&quot;: lambda y: float(np.mean(np.abs(y)**2))},</span>
-<span class="sd">    ...             stimulus=1000, seed=1)</span>
+<span class="sd">    &gt;&gt;&gt; out = monte_carlo(chain, &quot;noise.snr_dB&quot;, [0, 10],</span>
+<span class="sd">    ...                   {&quot;power&quot;: lambda y: float(np.mean(np.abs(y)**2))},</span>
+<span class="sd">    ...                   stimulus=1000, seed=1)</span>
 <span class="sd">    &gt;&gt;&gt; print(out[&quot;power&quot;].shape)</span>
 <span class="sd">    (2,)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reference</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="ow">or</span> <span class="p">[]):</span>
         <span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="ow">or</span> <span class="p">[])</span> <span class="o">+</span> <span class="p">[</span><span class="n">reference</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Not an error: a first look at a curve does not need to be</span>
+        <span class="c1"># reproducible. But a curve nobody can reproduce is not a result,</span>
+        <span class="c1"># and nothing else would ever say so -- the parallel path refuses</span>
+        <span class="c1"># outright, the serial one used to stay silent.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;monte_carlo() ran without seed=, so every point drew freely and &quot;</span>
+            <span class="s2">&quot;this curve cannot be reproduced -- not by you, not by a reader &quot;</span>
+            <span class="s2">&quot;of the page it lands on. Pass seed= to give each point its own &quot;</span>
+            <span class="s2">&quot;child seed (decision D6/D35).&quot;</span><span class="p">)</span>
     <span class="n">seeds</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">SeedSequence</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
              <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
 
@@ -939,7 +954,7 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The same points, on several processes. Same values, out of order.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">child</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;sweep(n_jobs=</span><span class="si">{</span><span class="n">n_jobs</span><span class="si">}</span><span class="s2">) needs seed= as well: the points are &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;monte_carlo(n_jobs=</span><span class="si">{</span><span class="n">n_jobs</span><span class="si">}</span><span class="s2">) needs seed= as well: the points are &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;then drawn from independent child seeds and the curve is the &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;same as the serial one. Without it, what a point draws would &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;depend on which worker ran it.&quot;</span><span class="p">)</span>
@@ -948,7 +963,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>            <span class="c1"># noqa: BLE001 -- re-raised</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;sweep(n_jobs=</span><span class="si">{</span><span class="n">n_jobs</span><span class="si">}</span><span class="s2">) runs the points in worker &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;monte_carlo(n_jobs=</span><span class="si">{</span><span class="n">n_jobs</span><span class="si">}</span><span class="s2">) runs the points in worker &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;processes, and the </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> cannot be sent to one: &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">. A lambda or a closure cannot be pickled -- &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;define the metric at module level, or keep n_jobs=1.&quot;</span>
@@ -981,7 +996,7 @@ window.runMermaid = runMermaid;</script>
             <span class="c1"># under a __main__ guard runs itself again inside every</span>
             <span class="c1"># worker.</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;sweep(n_jobs&gt;1) starts worker processes, and each one &quot;</span>
+                <span class="s2">&quot;monte_carlo(n_jobs&gt;1) starts worker processes, and each one &quot;</span>
                 <span class="s2">&quot;re-imports the module it was started from. If you are &quot;</span>
                 <span class="s2">&quot;calling this from a script, its body must sit under</span><span class="se">\n\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;    if __name__ == </span><span class="se">\&quot;</span><span class="s2">__main__</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\n\n</span><span class="s2">&quot;</span>

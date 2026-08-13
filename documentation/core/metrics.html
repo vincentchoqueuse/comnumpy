@@ -400,7 +400,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../toplevel/index.html">Chain services</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../toplevel/sweep.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/monte_carlo.html">Parameter sweeps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
 </ul>
 </details></li>
@@ -1389,6 +1389,130 @@ McGraw-Hill, 2008, Section 2.2 (signal energy and power).</p>
 </section>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ErrorCounter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#ErrorCounter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter" title="Link to this definition">#</a></dt>
+<dd><p>Accumulate errors over the trials of one Monte-Carlo point.</p>
+<section id="id14">
+<h2>Signal Model<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<p>A Monte-Carlo point runs the chain several times and reports one
+error rate. The rate is a ratio of <strong>totals</strong>, not a mean of ratios:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{rate} = \frac{\sum_t N_{e,t}}{\sum_t N_t}\]</div>
+<p>Averaging the per-trial rates instead gives the same answer only
+when every trial has the same length, and it throws away the number
+the point’s credibility rests on – how many errors were actually
+seen. A rate of <span class="math notranslate nohighlight">\(10^{-4}\)</span> from three errors and one from three
+hundred are different claims, and only the counts tell them apart.</p>
+<p>That is what this object is for. It does not own the loop: a
+Monte-Carlo over a fading channel, over several detectors or over a
+split-step link has a different shape each time, and that shape is
+what the reader of an example came to see. It owns the counting,
+which is the same everywhere and the part that hides mistakes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param width<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Bits per symbol. The default 1 counts <strong>symbol</strong> errors, one per
+mismatched entry. Give the constellation’s <code class="docutils literal notranslate"><span class="pre">bits_per_symbol</span></code>
+to count <strong>bit</strong> errors instead, expanded by
+<a class="reference internal" href="utils.html#comnumpy.core.utils.sym_2_bin" title="comnumpy.core.utils.sym_2_bin"><code class="xref py py-func docutils literal notranslate"><span class="pre">sym_2_bin()</span></code></a> exactly as
+<a class="reference internal" href="#comnumpy.core.metrics.compute_ber" title="comnumpy.core.metrics.compute_ber"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ber()</span></code></a> does.</p>
+</dd>
+<dt class="field-even">type width<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.n_errors">
+<span class="sig-name descname"><span class="pre">n_errors</span></span><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.n_errors" title="Link to this definition">#</a></dt>
+<dd><p>Errors accumulated so far – symbols or bits, per <code class="docutils literal notranslate"><span class="pre">width</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.n_symbols">
+<span class="sig-name descname"><span class="pre">n_symbols</span></span><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.n_symbols" title="Link to this definition">#</a></dt>
+<dd><p>Symbols compared so far.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.n_trials">
+<span class="sig-name descname"><span class="pre">n_trials</span></span><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.n_trials" title="Link to this definition">#</a></dt>
+<dd><p>Number of <a class="reference internal" href="#comnumpy.core.metrics.ErrorCounter.update" title="comnumpy.core.metrics.ErrorCounter.update"><code class="xref py py-meth docutils literal notranslate"><span class="pre">update()</span></code></a> calls.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">width</span></code> is not positive.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Three trials of a hundred symbols, one error in the second:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counter</span> <span class="o">=</span> <span class="n">ErrorCounter</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">received</span> <span class="o">=</span> <span class="n">sent</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">trial</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">received</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">... </span>    <span class="n">_</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+<span class="go">ErrorCounter(1 error / 300 symbols, rate 3.33e-03)</span>
+</pre></div>
+</div>
+<p>The counts are what makes the rate readable, and they are what an
+example should print beside it:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">n_errors</span><span class="p">,</span> <span class="n">counter</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">,</span> <span class="n">counter</span><span class="o">.</span><span class="n">n_trials</span><span class="p">)</span>
+<span class="go">1 300 3</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">width</span></code> switches to bits, on the same convention as
+<a class="reference internal" href="#comnumpy.core.metrics.compute_ber" title="comnumpy.core.metrics.compute_ber"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ber()</span></code></a>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bits</span> <span class="o">=</span> <span class="n">ErrorCounter</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">n_errors</span><span class="p">,</span> <span class="n">bits</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bits</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">4 2 0.500</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#comnumpy.core.metrics.ErrorCounter" title="comnumpy.core.metrics.ErrorCounter"><span class="pre">ErrorCounter</span></a></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#ErrorCounter.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.update" title="Link to this definition">#</a></dt>
+<dd><p>Count one trial, and return self so calls can be chained.</p>
+<p>Both arrays carry symbol <strong>indices</strong>, as <a class="reference internal" href="#comnumpy.core.metrics.compute_ser" title="comnumpy.core.metrics.compute_ser"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser()</span></code></a>
+requires: the output of a <code class="docutils literal notranslate"><span class="pre">SymbolGenerator</span></code> against that of a
+<code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>, not complex constellation points. The
+shorter of the two sets the length, which is what a chain with
+a filter delay produces.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.rate">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.rate" title="Link to this definition">#</a></dt>
+<dd><p>Errors over the units compared – symbols, or bits if <code class="docutils literal notranslate"><span class="pre">width</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="comnumpy.core.metrics.ErrorCounter.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#comnumpy.core.metrics.ErrorCounter" title="comnumpy.core.metrics.ErrorCounter"><span class="pre">ErrorCounter</span></a></span></span><a class="reference internal" href="../../_modules/comnumpy/core/metrics.html#ErrorCounter.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.metrics.ErrorCounter.reset" title="Link to this definition">#</a></dt>
+<dd><p>Forget every trial, keeping <code class="docutils literal notranslate"><span class="pre">width</span></code>. Returns self.</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -1452,6 +1576,15 @@ McGraw-Hill, 2008, Section 2.2 (signal energy and power).</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_ccdf"><code class="docutils literal notranslate"><span class="pre">compute_ccdf()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.compute_acpr"><code class="docutils literal notranslate"><span class="pre">compute_acpr()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.signal_report"><code class="docutils literal notranslate"><span class="pre">signal_report()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter"><code class="docutils literal notranslate"><span class="pre">ErrorCounter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.n_errors"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.n_errors</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.n_symbols"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.n_symbols</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.n_trials"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.n_trials</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.update"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.update()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.rate"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.rate</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.metrics.ErrorCounter.reset"><code class="docutils literal notranslate"><span class="pre">ErrorCounter.reset()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

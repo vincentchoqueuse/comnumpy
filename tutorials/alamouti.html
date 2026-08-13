@@ -806,7 +806,7 @@ probability that it is nearly zero:</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span><span class="p">,</span> <span class="n">SymbolMapper</span>
@@ -941,7 +941,7 @@ all.</p>
 <h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h2>
 <p>The three schemes differ by what is put on the antennas and what is done with
 what comes back, so one function builds them all:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_link</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_chain</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the chain of one scheme, on a given channel realization.</span>
 
 <span class="sd">    The three schemes differ by two blocks -- what is put on the</span>
@@ -970,9 +970,9 @@ what comes back, so one function builds them all:</p>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown link </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
-<span class="n">alamouti</span> <span class="o">=</span> <span class="n">get_link</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">))</span>
-<span class="n">siso</span> <span class="o">=</span> <span class="n">get_link</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">mrc</span> <span class="o">=</span> <span class="n">get_link</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">alamouti</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">))</span>
+<span class="n">siso</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">mrc</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The scaling by <span class="math notranslate nohighlight">\(1/\sqrt{N_t}\)</span> matters for the comparison that follows.
@@ -1050,14 +1050,14 @@ the equations above.</p>
 <section id="monte-carlo-evaluation">
 <h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
 <p>Averaging over fading means running the chain once per channel realization,
-which is a sweep whose parameter is the channel. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>
+which is a sweep whose parameter is the channel. <code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code>
 takes several dotted parameter names at once and zips them, so one sweep point
 sets the channel the signal goes through <strong>and</strong> the channel the detector
 inverts:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">average_ser</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Average one chain over independent quasi-static fading draws.</span>
 
-<span class="sd">    The chain is built once. ``sweep`` takes several dotted parameters</span>
+<span class="sd">    The chain is built once. ``monte_carlo`` takes several dotted parameters</span>
 <span class="sd">    at once and zips them, so one sweep point sets the channel the</span>
 <span class="sd">    signal goes through *and* the channel the detector inverts -- which</span>
 <span class="sd">    is exactly what a fading realization is.</span>
@@ -1068,9 +1068,9 @@ inverts:</p>
         <span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
         <span class="n">draws</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">H</span><span class="p">,</span> <span class="n">H</span><span class="p">))</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">noise__sigma2</span><span class="o">=</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">))</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
-                    <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="n">stimulus</span><span class="p">,</span>
-                    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
+                          <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="n">stimulus</span><span class="p">,</span>
+                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]))</span>
 
 

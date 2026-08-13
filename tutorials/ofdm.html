@@ -417,7 +417,7 @@ channel (<strong>OFDM</strong>).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Before you start.</strong> <a class="reference internal" href="awgn.html"><span class="doc">Monte Carlo Simulation over AWGN Channel</span></a> introduced the chain, <code class="docutils literal notranslate"><span class="pre">seed</span></code>,
-<code class="docutils literal notranslate"><span class="pre">sweep</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>; they are used here without being
+<code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>; they are used here without being
 re-explained. What is new is the channel: it is no longer a single
 coefficient.</p>
 </div>
@@ -463,7 +463,7 @@ equalization, not about channel estimation.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span><span class="p">,</span> <span class="n">FIRChannel</span><span class="p">,</span> <span class="n">TappedDelayLineChannel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEqualizer</span>
@@ -670,8 +670,8 @@ range of SNR values:</p>
 <span class="n">snr_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
-    <span class="n">runs</span> <span class="o">=</span> <span class="p">[</span><span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span>
-                  <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+    <span class="n">runs</span> <span class="o">=</span> <span class="p">[</span><span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span>
+                        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
     <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">runs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 

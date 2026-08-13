@@ -726,11 +726,13 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.core.metrics</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">sym_2_bin</span>  <span class="c1"># single definition (annex A.5)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFittedError</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;compute_ser_awgn_psk&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ser_awgn_qam&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_metric_awgn_theo&quot;</span><span class="p">,</span>
@@ -738,6 +740,7 @@ window.runMermaid = runMermaid;</script>
     <span class="s2">&quot;compute_metric_rayleigh_theo&quot;</span><span class="p">,</span>
     <span class="s2">&quot;compute_ser&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ber&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_evm&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_effective_snr&quot;</span><span class="p">,</span>
     <span class="s2">&quot;compute_power&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ccdf&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_acpr&quot;</span><span class="p">,</span> <span class="s2">&quot;signal_report&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ErrorCounter&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># Craig&#39;s finite-range form of the Q function turns every average over</span>
@@ -1973,6 +1976,157 @@ window.runMermaid = runMermaid;</script>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_papr</span> <span class="k">as</span> <span class="n">papr_of</span>
         <span class="n">report</span><span class="p">[</span><span class="s2">&quot;papr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">papr_of</span><span class="p">(</span><span class="n">abs_x</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">papr_unit</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">report</span></div>
+
+
+
+<div class="viewcode-block" id="ErrorCounter">
+<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.ErrorCounter">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ErrorCounter</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Accumulate errors over the trials of one Monte-Carlo point.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    A Monte-Carlo point runs the chain several times and reports one</span>
+<span class="sd">    error rate. The rate is a ratio of **totals**, not a mean of ratios:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathrm{rate} = \frac{\sum_t N_{e,t}}{\sum_t N_t}</span>
+
+<span class="sd">    Averaging the per-trial rates instead gives the same answer only</span>
+<span class="sd">    when every trial has the same length, and it throws away the number</span>
+<span class="sd">    the point&#39;s credibility rests on -- how many errors were actually</span>
+<span class="sd">    seen. A rate of :math:`10^{-4}` from three errors and one from three</span>
+<span class="sd">    hundred are different claims, and only the counts tell them apart.</span>
+
+<span class="sd">    That is what this object is for. It does not own the loop: a</span>
+<span class="sd">    Monte-Carlo over a fading channel, over several detectors or over a</span>
+<span class="sd">    split-step link has a different shape each time, and that shape is</span>
+<span class="sd">    what the reader of an example came to see. It owns the counting,</span>
+<span class="sd">    which is the same everywhere and the part that hides mistakes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    width : int, optional</span>
+<span class="sd">        Bits per symbol. The default 1 counts **symbol** errors, one per</span>
+<span class="sd">        mismatched entry. Give the constellation&#39;s ``bits_per_symbol``</span>
+<span class="sd">        to count **bit** errors instead, expanded by</span>
+<span class="sd">        :func:`~comnumpy.core.utils.sym_2_bin` exactly as</span>
+<span class="sd">        :func:`compute_ber` does.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_errors : int</span>
+<span class="sd">        Errors accumulated so far -- symbols or bits, per ``width``.</span>
+<span class="sd">    n_symbols : int</span>
+<span class="sd">        Symbols compared so far.</span>
+<span class="sd">    n_trials : int</span>
+<span class="sd">        Number of :meth:`update` calls.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``width`` is not positive.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Three trials of a hundred symbols, one error in the second:</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; counter = ErrorCounter()</span>
+<span class="sd">    &gt;&gt;&gt; sent = np.zeros(100, dtype=int)</span>
+<span class="sd">    &gt;&gt;&gt; for trial in range(3):</span>
+<span class="sd">    ...     received = sent.copy()</span>
+<span class="sd">    ...     if trial == 1:</span>
+<span class="sd">    ...         received[7] = 1</span>
+<span class="sd">    ...     _ = counter.update(sent, received)</span>
+<span class="sd">    &gt;&gt;&gt; print(counter)</span>
+<span class="sd">    ErrorCounter(1 error / 300 symbols, rate 3.33e-03)</span>
+
+<span class="sd">    The counts are what makes the rate readable, and they are what an</span>
+<span class="sd">    example should print beside it:</span>
+
+<span class="sd">    &gt;&gt;&gt; print(counter.n_errors, counter.n_symbols, counter.n_trials)</span>
+<span class="sd">    1 300 3</span>
+
+<span class="sd">    ``width`` switches to bits, on the same convention as</span>
+<span class="sd">    :func:`compute_ber`:</span>
+
+<span class="sd">    &gt;&gt;&gt; bits = ErrorCounter(width=4)</span>
+<span class="sd">    &gt;&gt;&gt; _ = bits.update(np.array([0, 0]), np.array([0, 15]))</span>
+<span class="sd">    &gt;&gt;&gt; print(bits.n_errors, bits.n_symbols, f&quot;{bits.rate:.3f}&quot;)</span>
+<span class="sd">    4 2 0.500</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">n_errors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">n_symbols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">n_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;a symbol carries at least one bit, got width=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Leave it at 1 to count symbol errors, or pass the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;constellation&#39;s bits_per_symbol to count bit errors.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ErrorCounter.update">
+<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.ErrorCounter.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">detected</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ErrorCounter&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count one trial, and return self so calls can be chained.</span>
+
+<span class="sd">        Both arrays carry symbol **indices**, as :func:`compute_ser`</span>
+<span class="sd">        requires: the output of a ``SymbolGenerator`` against that of a</span>
+<span class="sd">        ``SymbolDemapper``, not complex constellation points. The</span>
+<span class="sd">        shorter of the two sets the length, which is what a chain with</span>
+<span class="sd">        a filter delay produces.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">detected</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">estimate</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;nothing to count: one of the two sequences is empty.&quot;</span><span class="p">)</span>
+        <span class="n">target</span><span class="p">,</span> <span class="n">estimate</span> <span class="o">=</span> <span class="n">target</span><span class="p">[:</span><span class="n">length</span><span class="p">],</span> <span class="n">estimate</span><span class="p">[:</span><span class="n">length</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="n">estimate</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span>
+                <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="o">-</span> <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">estimate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_errors</span> <span class="o">+=</span> <span class="n">errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">+=</span> <span class="n">length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_trials</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Errors over the units compared -- symbols, or bits if ``width``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
+                <span class="s2">&quot;no trial has been counted yet, so there is no rate; call &quot;</span>
+                <span class="s2">&quot;update(reference, detected) at least once.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_errors</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ErrorCounter.reset">
+<a class="viewcode-back" href="../../../documentation/core/metrics.html#comnumpy.core.metrics.ErrorCounter.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ErrorCounter&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forget every trial, keeping ``width``. Returns self.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_errors</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_trials</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="s2">&quot;symbol&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;bit&quot;</span>
+        <span class="n">plural</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_errors</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;s&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;ErrorCounter(nothing counted yet)&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ErrorCounter(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_errors</span><span class="si">}</span><span class="s2"> error</span><span class="si">{</span><span class="n">plural</span><span class="si">}</span><span class="s2"> / &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_symbols</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">s, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;rate </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

@@ -767,9 +767,9 @@ needs a curve, so the chain has to be run again at every operating point –
 that repetition is what “Monte Carlo simulation” means, and there is nothing
 more to it than a loop.</p>
 <p>We will write that loop by hand first, because it is worth seeing exactly
-what a sweep is made of. Then we will replace it with <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a>,
-which does the same four things in one call, and use <em>that</em> in every tutorial
-that follows.</p>
+what a sweep is made of. Then we will replace it with
+<a class="reference internal" href="../documentation/toplevel/monte_carlo.html#comnumpy.monte_carlo.monte_carlo" title="comnumpy.monte_carlo.monte_carlo"><code class="xref py py-func docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a>, which does the same four things in
+one call, and use <em>that</em> in every tutorial that follows.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>Before you start.</strong> This tutorial follows
@@ -781,10 +781,12 @@ made of.</p>
 <ul class="simple">
 <li><p>How to reconfigure a chain between runs with <code class="docutils literal notranslate"><span class="pre">set_params</span></code>, and make each
 run reproducible with <code class="docutils literal notranslate"><span class="pre">seed</span></code>.</p></li>
-<li><p>How to write a Monte Carlo loop, and then how to replace it with <code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
-<li><p>How to compare a measured curve with the closed form it should follow.</p></li>
+<li><p>How to write a Monte Carlo loop, and then how to replace it with <code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code>.</p></li>
+<li><p>How to write the closed form a measured curve should follow, evaluate it in
+plain NumPy, and then get the same numbers from the constellation itself.</p></li>
 <li><p>How to draw the result with <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>, the figure this library
 uses for every error rate.</p></li>
+<li><p>How to compare modulation orders fairly, at equal energy per bit.</p></li>
 </ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
@@ -792,6 +794,7 @@ uses for every error rate.</p></li>
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h3>
 <p>Make sure you have the following Python libraries installed:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span>
+<span class="n">scipy</span>
 <span class="n">matplotlib</span>
 <span class="n">comnumpy</span>
 </pre></div>
@@ -802,14 +805,18 @@ uses for every error rate.</p></li>
 <p>We start by importing the necessary libraries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">erfc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constellation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constellation</span><span class="p">,</span> <span class="n">ebn0_to_snr_dB</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_ber</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
+
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -833,15 +840,26 @@ closed form we compare against below.</p>
 <h3>Define Chain<a class="headerlink" href="#define-chain" title="Link to this heading">#</a></h3>
 <p>We define the communication chain using the <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> object.
 The chain includes symbol generation, mapping, transmission over an AWGN channel,
-and symbol demapping.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="c1"># create chain</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
-    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-    <span class="p">])</span>
+and symbol demapping. It is written as a function because the last section of
+this page builds one per constellation order.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_chain</span><span class="p">(</span><span class="n">constellation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Symbols in, decided symbols out, over an AWGN channel.</span>
+
+<span class="sd">    The last section of this page runs one of these per constellation</span>
+<span class="sd">    order, so the constellation is an argument rather than a global. The</span>
+<span class="sd">    transmitter is named because a sweep has to compare against what it</span>
+<span class="sd">    produced, and the channel is named because a sweep has to reconfigure</span>
+<span class="sd">    it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
+        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+        <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">])</span>
+
+
+<span class="n">chain</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="n">constellation</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The processors are:</p>
@@ -891,7 +909,6 @@ exactly four things to do: <strong>reseed</strong> the chain so the run is repro
 against the transmitted symbols.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A Monte Carlo simulation is a stateless loop: reconfigure the chain,</span>
 <span class="c1"># run it, measure, collect. Written out, at three SNR values:</span>
-<span class="n">chain</span><span class="o">.</span><span class="n">taps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">]</span>
 <span class="n">by_hand</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -908,48 +925,107 @@ cannot debug. <code class="docutils literal notranslate"><span class="pre">set_p
 construction, with the dotted notation <code class="docutils literal notranslate"><span class="pre">&quot;awgn_channel.snr_dB&quot;</span></code>; this is why
 blocks are named. And the tap returns what the transmitter produced, so the
 metric has something to compare against – after the run, never before.</p>
-<p>Now the same thing in one call. <a class="reference internal" href="../documentation/toplevel/sweep.html#comnumpy.sweep.sweep" title="comnumpy.sweep.sweep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code></a> takes the chain,
-the dotted name of what varies, the values it takes, and the metrics to
-collect – and does the reseed, the reconfigure, the run and the measurement
+<p>Now the same thing in one call. <a class="reference internal" href="../documentation/toplevel/monte_carlo.html#comnumpy.monte_carlo.monte_carlo" title="comnumpy.monte_carlo.monte_carlo"><code class="xref py py-func docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a> takes
+the chain, the dotted name of what varies, the values it takes, and the metrics
+to collect – and does the reseed, the reconfigure, the run and the measurement
 at every point:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep (decision D35) is that loop, and nothing more: the same</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># monte_carlo (decision D35) is that loop, and nothing more: the same</span>
 <span class="c1"># reconfigure-reseed-run-collect, over every point, in one call.</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">sweep</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
-                <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
+                      <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ser_array</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
-<span class="n">loop_line</span> <span class="o">=</span> <span class="s2">&quot;loop  :&quot;</span>
+<span class="n">loop_line</span> <span class="o">=</span> <span class="s2">&quot;loop        :&quot;</span>
 <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">by_hand</span><span class="p">:</span>
     <span class="n">loop_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">loop_line</span><span class="p">)</span>
-<span class="n">sweep_line</span> <span class="o">=</span> <span class="s2">&quot;sweep :&quot;</span>
+<span class="n">sweep_line</span> <span class="o">=</span> <span class="s2">&quot;monte_carlo :&quot;</span>
 <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
     <span class="n">sweep_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sweep_line</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span>  <span class="p">:</span> <span class="mf">7.406e-01</span> <span class="mf">3.535e-01</span> <span class="mf">7.237e-03</span>
-<span class="n">sweep</span> <span class="p">:</span> <span class="mf">7.410e-01</span> <span class="mf">3.533e-01</span> <span class="mf">7.117e-03</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span>        <span class="p">:</span> <span class="mf">7.406e-01</span> <span class="mf">3.535e-01</span> <span class="mf">7.237e-03</span>
+<span class="n">monte_carlo</span> <span class="p">:</span> <span class="mf">7.410e-01</span> <span class="mf">3.533e-01</span> <span class="mf">7.117e-03</span>
 </pre></div>
 </div>
 <p>The two are the same computation. They do not print the same digits because
-<code class="docutils literal notranslate"><span class="pre">sweep</span></code> gives each point its own child seed rather than reseeding every
+<code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code> gives each point its own child seed rather than reseeding every
 point to the same value, so the noise realizations differ; the gap is the
 Monte Carlo error of a million symbols, not a difference of method.</p>
-<p><strong>From here on, the other tutorials use</strong> <code class="docutils literal notranslate"><span class="pre">sweep</span></code> <strong>without rewriting the
+<p><strong>From here on, the other tutorials use</strong> <code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code> <strong>without rewriting the
 loop.</strong> When you see it sweeping a channel matrix rather than an SNR (in
 <a class="reference internal" href="mimo.html"><span class="doc">MIMO Chain Tutorial</span></a> and <a class="reference internal" href="alamouti.html"><span class="doc">Alamouti Space-Time Coding Tutorial</span></a>), it is still these four steps – only the
 parameter that varies has changed.</p>
 </section>
+</section>
 <section id="theoretical-ser">
-<h3>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h3>
-<p>For comparison, we ask the constellation for its own closed form. It
-knows its family and its order, so the theory cannot describe a
-modulation other than the one the chain transmits; <code class="docutils literal notranslate"><span class="pre">per=&quot;symbol&quot;</span></code> says
-that the swept SNR is the symbol SNR <code class="docutils literal notranslate"><span class="pre">AWGN(snr_dB=)</span></code> takes, and the
-conversion to <span class="math notranslate nohighlight">\(E_b/N_0\)</span> happens inside.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ser_theo_array</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<h2>Theoretical SER<a class="headerlink" href="#theoretical-ser" title="Link to this heading">#</a></h2>
+<p>A measured curve is worth little on its own. What makes it a result is the
+curve it is supposed to lie on.</p>
+<section id="the-closed-form">
+<h3>The closed form<a class="headerlink" href="#the-closed-form" title="Link to this heading">#</a></h3>
+<p>A square <span class="math notranslate nohighlight">\(M\)</span>-QAM constellation is the Cartesian product of two
+independent <span class="math notranslate nohighlight">\(\sqrt{M}\)</span>-PAM constellations, one on each quadrature. With
+<span class="math notranslate nohighlight">\(k = \log_2 M\)</span> bits per symbol, the signal-to-noise ratio per bit
+<span class="math notranslate nohighlight">\(\gamma_b = E_b/N_0\)</span> and the Gaussian tail function</p>
+<div class="math notranslate nohighlight">
+\[Q(x) = \frac{1}{\sqrt{2\pi}} \int_x^{\infty} e^{-t^2/2}\, dt\]</div>
+<p>the error probability of one PAM component is</p>
+<div class="math notranslate nohighlight">
+\[P_{\sqrt{M}} = 2 \left(1 - \frac{1}{\sqrt{M}}\right)
+               Q\!\left(\sqrt{\frac{3 k \gamma_b}{M-1}}\right)\]</div>
+<p>A symbol is received correctly only when <strong>both</strong> components are, so the
+symbol error probability is</p>
+<div class="math notranslate nohighlight">
+\[P_s = 1 - \left(1 - P_{\sqrt{M}}\right)^2\]</div>
+<p>This is the standard result; see Proakis and Salehi <a class="reference internal" href="#proakis2008" id="id1"><span>[Proakis2008]</span></a>, Section 4.3.
+Note which SNR parameterizes it: the expression is written against
+<span class="math notranslate nohighlight">\(\gamma_b\)</span>, the ratio per <em>bit</em>, whereas <code class="docutils literal notranslate"><span class="pre">AWGN(snr_dB=)</span></code> takes a symbol
+SNR <span class="math notranslate nohighlight">\(\gamma_s = k\gamma_b\)</span>. Getting that wrong moves the curve by
+<span class="math notranslate nohighlight">\(10\log_{10} k\)</span> dB – 6 dB for 16-QAM – with nothing to signal it.</p>
+</section>
+<section id="in-numpy-written-out">
+<h3>In NumPy, written out<a class="headerlink" href="#in-numpy-written-out" title="Link to this heading">#</a></h3>
+<p>There is no machinery in this. <code class="docutils literal notranslate"><span class="pre">scipy.special.erfc</span></code> gives <span class="math notranslate nohighlight">\(Q\)</span>, and the
+two expressions above transcribe line for line:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">qfunc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gaussian tail function, the one the textbooks write as Q.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">erfc</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+
+<span class="c1"># The closed form of Proakis, written out. A square M-QAM is two</span>
+<span class="c1"># independent sqrt(M)-PAM constellations, so a symbol is correct only</span>
+<span class="c1"># when both components are. AWGN(snr_dB=) is a symbol SNR and the</span>
+<span class="c1"># expression is parameterized by the SNR per bit, hence the division by k.</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">order</span>
+<span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">))</span>
+<span class="n">gamma_b</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_dB_list</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">k</span>
+<span class="n">P_pam</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">M</span><span class="p">))</span> <span class="o">*</span> <span class="n">qfunc</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">gamma_b</span> <span class="o">/</span> <span class="p">(</span><span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="n">ser_theo_array</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">P_pam</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
 </pre></div>
 </div>
+</section>
+<section id="from-the-constellation">
+<h3>From the constellation<a class="headerlink" href="#from-the-constellation" title="Link to this heading">#</a></h3>
+<p>The same expression is already in the library, and the constellation knows
+which one applies to it: it carries its family and its order, so the theory
+cannot end up describing a modulation other than the one the chain transmits.
+<code class="docutils literal notranslate"><span class="pre">per=&quot;symbol&quot;</span></code> says that the swept SNR is the symbol SNR, and the division
+by <span class="math notranslate nohighlight">\(k\)</span> above happens inside.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The same expression is already in the library, and the constellation</span>
+<span class="c1"># knows which one applies to it. per=&quot;symbol&quot; says that the swept SNR is</span>
+<span class="c1"># the symbol SNR, and the conversion to Eb/N0 above happens inside.</span>
+<span class="n">from_object</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ser_theo_array</span> <span class="o">-</span> <span class="n">from_object</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;largest gap between the two closed forms: </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">largest</span> <span class="n">gap</span> <span class="n">between</span> <span class="n">the</span> <span class="n">two</span> <span class="n">closed</span> <span class="n">forms</span><span class="p">:</span> <span class="mf">3.331e-16</span>
+</pre></div>
+</div>
+<p>Machine precision – they are the same formula. From here on we call the
+method, which is one line instead of five and cannot describe the wrong
+modulation.</p>
 </section>
 <section id="results-and-visualization">
 <h3>Results and Visualization<a class="headerlink" href="#results-and-visualization" title="Link to this heading">#</a></h3>
@@ -964,27 +1040,138 @@ share a colour, so a pair reads as one statement.</p>
 <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
                 <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_theo_array</span><span class="p">},</span>
                 <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_awgn.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_awgn.png"><img alt="../_images/monte_carlo_awgn.png" class="align-center" src="../_images/monte_carlo_awgn.png" style="width: 100%;" />
 </a>
+<p>The markers sit on the line over five decades. The last point, at 21 dB, is an
+SER of <span class="math notranslate nohighlight">\(10^{-6}\)</span> measured from <span class="math notranslate nohighlight">\(10^6\)</span> symbols – one error. It is
+on the curve by luck as much as by physics, and it is the point at which this
+sweep has run out of samples rather than out of accuracy.</p>
 </section>
+</section>
+<section id="comparing-modulation-orders">
+<h2>Comparing modulation orders<a class="headerlink" href="#comparing-modulation-orders" title="Link to this heading">#</a></h2>
+<p>One constellation against its own theory says the simulation is right. It does
+not say what a constellation is <em>worth</em>. For that, several orders have to be
+put on the same axes – and the choice of that axis is the whole question.</p>
+<p>At equal <span class="math notranslate nohighlight">\(E_s/N_0\)</span>, a dense constellation is unduly favoured: it spends
+the same energy per symbol while carrying more bits. The fair comparison is at
+equal energy per <strong>bit</strong>, <span class="math notranslate nohighlight">\(E_b/N_0\)</span>, which is why
+<a class="reference internal" href="../documentation/core/utils.html#comnumpy.core.utils.ebn0_to_snr_dB" title="comnumpy.core.utils.ebn0_to_snr_dB"><code class="xref py py-func docutils literal notranslate"><span class="pre">ebn0_to_snr_dB()</span></code></a> exists. The conversion needs
+<span class="math notranslate nohighlight">\(k\)</span> – chain-level knowledge the channel block does not have and should
+not guess (decision D41), so it happens at the call site:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comparing orders is only fair at equal energy per *bit*: at equal</span>
+<span class="c1"># energy per symbol a dense constellation is favoured, because it spends</span>
+<span class="c1"># the same energy on more bits. ebn0_to_snr_dB does that conversion, and</span>
+<span class="c1"># it needs k, which is chain-level knowledge the channel does not have.</span>
+<span class="n">ebn0_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">N_compare</span> <span class="o">=</span> <span class="mi">100000</span>
+<span class="n">fine_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">measured_ber</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">theory_ber</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">required_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">]:</span>
+    <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+    <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+    <span class="n">snr_dB_values</span> <span class="o">=</span> <span class="n">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="o">=</span><span class="n">bits</span><span class="p">)</span>
+    <span class="n">collected</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">get_chain</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span>
+                            <span class="n">snr_dB_values</span><span class="p">,</span>
+                            <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">compute_ber</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">bits</span><span class="p">)},</span>
+                            <span class="n">N_compare</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">order_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">-QAM&quot;</span>
+    <span class="n">measured_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">collected</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+    <span class="n">theory_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+    <span class="c1"># What the density costs, read off the closed form rather than the</span>
+    <span class="c1"># measurement: the sweep grid is 2 dB coarse and noisy at 1e-3.</span>
+    <span class="n">fine_ber</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">fine_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+    <span class="n">above_underflow</span> <span class="o">=</span> <span class="n">fine_ber</span> <span class="o">&gt;</span> <span class="mi">0</span>            <span class="c1"># the tail reaches 0 in float64</span>
+    <span class="n">required_dB</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_ber</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                  <span class="n">fine_dB_list</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">required_rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">order_label</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">required_dB</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The metric changes with the axis. Against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the natural quantity
+is the bit error rate, and <code class="docutils literal notranslate"><span class="pre">compute_ber</span></code> needs the symbol width, which
+<code class="docutils literal notranslate"><span class="pre">functools.partial</span></code> supplies once per order.</p>
+<p>The reference curve is no longer exact here, and the figure shows it. The BER
+of the closed form is the Gray-mapping approximation
+<span class="math notranslate nohighlight">\(P_b \simeq P_s / k\)</span>, which assumes a symbol error corrupts exactly one
+bit out of <span class="math notranslate nohighlight">\(k\)</span> – true when the wrong decision is a nearest neighbour,
+false when the noise is large enough to reach further. So the markers sit
+<strong>above</strong> the line at the left of the figure, by 17 % for 16-QAM and by a
+factor 2.2 for 256-QAM at 0 dB, and settle onto it as the error rate falls:
+below <span class="math notranslate nohighlight">\(10^{-2}\)</span> the two agree to within a few percent for every order.
+This is an approximation behaving as documented, not a simulation
+disagreeing with theory.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">order</span>  <span class="n">bits</span><span class="o">/</span><span class="n">symbol</span>   <span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="n">at</span> <span class="n">BER</span><span class="o">=</span><span class="mf">1e-3</span>
+  <span class="mi">4</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">2</span>              <span class="mf">6.8</span> <span class="n">dB</span>
+ <span class="mi">16</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">4</span>             <span class="mf">10.5</span> <span class="n">dB</span>
+ <span class="mi">64</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">6</span>             <span class="mf">14.8</span> <span class="n">dB</span>
+<span class="mi">256</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">8</span>             <span class="mf">19.4</span> <span class="n">dB</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;order&#39;</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;bits/symbol&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Eb/N0 at BER=1e-3&#39;</span><span class="si">:</span><span class="s2">&gt;19s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">order_label</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">ebn0_dB</span> <span class="ow">in</span> <span class="n">required_rows</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order_label</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bits</span><span class="si">:</span><span class="s2">&gt;12d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ebn0_dB</span><span class="si">:</span><span class="s2">&gt;16.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>
+                     <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;$E_b/N_0$ [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
+                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Square QAM at equal energy per bit&quot;</span><span class="p">)</span>
+<span class="c1"># The closed forms run down to 1e-12; the measurements cannot follow them</span>
+<span class="c1"># past a few 1e-6, so the axis stops where the simulation stops speaking.</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_awgn_orders.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/monte_carlo_awgn_orders.png"><img alt="../_images/monte_carlo_awgn_orders.png" class="align-center" src="../_images/monte_carlo_awgn_orders.png" style="width: 100%;" />
+</a>
+<p>Going from 2 to 8 bits per symbol costs <strong>12.6 dB</strong> of energy per bit at
+<span class="math notranslate nohighlight">\(10^{-3}\)</span>, spent in three roughly equal steps – 3.7, 4.3 then 4.6 dB
+per doubling of <span class="math notranslate nohighlight">\(k\)</span>, the price rising slowly with the order. That is
+what the rest of
+a communication system is built to negotiate: coding buys some of it back
+(<a class="reference internal" href="coding.html"><span class="doc">Channel Coding</span></a>), shaping buys a little more (<a class="reference internal" href="shaping.html"><span class="doc">Probabilistic Shaping</span></a>), and a channel
+that is not simply AWGN changes the terms entirely (<a class="reference internal" href="ofdm.html"><span class="doc">OFDM Tutorial</span></a>).</p>
+<p>The measured curves stop where the estimator does. Each point here is 100 000
+symbols, so a 4-QAM run has 200 000 bits and cannot resolve a BER below about
+<span class="math notranslate nohighlight">\(5 \times 10^{-6}\)</span>; <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> drops the points where no error
+was seen rather than drawing them at zero, and the axis stops at
+<span class="math notranslate nohighlight">\(10^{-6}\)</span> for the same reason. Reading a curve past its own floor is the
+most common way to publish a wrong figure.</p>
 </section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>You have turned one run into a curve, and you have seen that <code class="docutils literal notranslate"><span class="pre">sweep</span></code> is not
-a new concept but the loop you already wrote, packaged.</p>
+<p>You have turned one run into a curve, checked it against a closed form you
+wrote yourself, and used it to price four modulation orders against each
+other.</p>
 <p>You have learned how to:</p>
 <ul class="simple">
 <li><p>Reconfigure and reseed a chain between runs.</p></li>
 <li><p>Collect a metric over a range of parameter values, by hand and with
-<code class="docutils literal notranslate"><span class="pre">sweep</span></code>.</p></li>
-<li><p>Read a measured curve against a closed form.</p></li>
+<code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code>.</p></li>
+<li><p>Write a theoretical error rate in NumPy, and get the same numbers from the
+constellation.</p></li>
+<li><p>Read a measured curve against a closed form, and know where it stops being
+readable.</p></li>
+<li><p>Compare modulations at equal energy per bit.</p></li>
 </ul>
 <p>From here, <a class="reference internal" href="ofdm.html"><span class="doc">OFDM Tutorial</span></a> keeps the chain and changes the channel: instead of one
 noise term, the signal arrives several times, and the receiver has to undo
 that. Two ways of doing so, at very different prices.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="proakis2008" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Proakis2008</a><span class="fn-bracket">]</span></span>
+<p>J. G. Proakis and M. Salehi, <em>Digital Communications</em>,
+5th ed., McGraw-Hill, 2008. Section 4.3, symbol and bit error
+probabilities for PAM, PSK and QAM over the AWGN channel.</p>
+</div>
+</div>
 </section>
 </section>
 
@@ -1044,11 +1231,18 @@ that. Two ways of doing so, at very different prices.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#awgn-communication-chain">AWGN Communication Chain</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#define-chain">Define Chain</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-simulation">Monte Carlo Simulation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#theoretical-ser">Theoretical SER</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theoretical-ser">Theoretical SER</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-closed-form">The closed form</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#in-numpy-written-out">In NumPy, written out</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-the-constellation">From the constellation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#results-and-visualization">Results and Visualization</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-modulation-orders">Comparing modulation orders</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 
