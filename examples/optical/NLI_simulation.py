@@ -11,28 +11,29 @@ from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper
-from comnumpy.core.metrics import compute_effective_snr, compute_ser
+from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
+from comnumpy.core.metrics import ErrorCounter, compute_effective_snr
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import Constellation, hard_projector
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
-                                    dbm_to_watt, watt_to_dbm)
+from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
+                                    watt_to_dbm)
 
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
-N_s = 2**11               # 2048 per trial, 4 trials: SER floor 1.2e-4
+N_s = 2**11 * 6           # 12288 symbols per trial; over 4 trials
+                          # the SER floor is one error in 49152, 2.0e-5
 oversampling_sim = 6
 oversampling_dsp = 2
 NF_dB = 5
 rolloff = 0.1
-StPS = 200                    # forward propagation, the reference
+StPS = 50                 # forward: converged, see the tutorial
 R_s = 32e9
 L_span = 100
 N_span = 10
@@ -51,7 +52,7 @@ oversampling_ratio = oversampling_sim // oversampling_dsp
 # receiver would re-do 192 split-step propagations instead of 32, and
 # the propagation is where all the time goes. So the chain is cut where
 # the physics ends and the DSP begins.
-def get_unprocessed_chain():
+def get_channel():
     """Symbols to the field the receiver sees, launch power included."""
     return Sequential([
         SymbolGenerator(constellation.order, name="data_tx"),
@@ -81,7 +82,8 @@ def get_receiver(steps, linear_only, *, gain, reference):
         Downsampler(oversampling_dsp),
         Amplifier(gain),
         DataAidedPhaseCompensator(reference, name="phase"),
-        ])
+        SymbolDemapper(constellation, name="data_rx"),
+        ], taps=["phase"])
 
 
 # --- what the closed form expects of this link -------------------------
@@ -91,8 +93,7 @@ def get_receiver(steps, linear_only, *, gain, reference):
 # and it is *single*-polarization, so the scalar NLSE applies and the
 # weights are the ones of `polarizations=1` -- 5.3 dB more interference
 # at equal power. The ASE is over one polarization for the same reason.
-ase_W = N_span * compute_erbium_doped_fiber_N_ase(
-    fiber.alpha_dB, L_span, NF_dB, nu=fiber.carrier_frequency_Hz) * R_s
+ase_W = get_channel()["link"].budget(R_s)["ase_power_W"]
 eta = gn_model_nli_power(fiber, span_length_km=L_span, n_spans=N_span,
                          powers_W=np.array([1e-3]),
                          frequencies_Hz=np.array([fiber.carrier_frequency_Hz]),
@@ -116,17 +117,22 @@ receivers = {
     "DBP, 50 steps/span": (50, False),
 }
 
-channel = get_unprocessed_chain()
+channel = get_channel()
 snr = {}
-ser = {}
+counters = {}
 elapsed = {}
 for name in receivers:
     snr[name] = np.zeros(len(dBm_list))
-    ser[name] = np.zeros(len(dBm_list))
+    # one counter per launch power: it accumulates errors and symbols
+    # over the four trials rather than averaging four rates, so the
+    # count that says whether a point means anything stays readable
+    counters[name] = []
+    for _ in dBm_list:
+        counters[name].append(ErrorCounter())
     elapsed[name] = 0.0
 
 for index, dBm in enumerate(dBm_list):
-    amp = np.sqrt(dbm_to_watt(dBm))
+    amp = launch_amplitude(dbm_to_watt(dBm))
     for trial in range(N_trial):
         # the two fields differ only by the fibre's nonlinearity, and
         # the same seed gives them the same symbols and the same noise
@@ -135,22 +141,28 @@ for index, dBm in enumerate(dBm_list):
             channel.seed(index * N_trial + trial)
             channel.set_params(launch__gain=amp,
                                link__use_only_linear=use_only_linear)
-            fields[use_only_linear] = channel(N_s * oversampling_sim)
+            fields[use_only_linear] = channel(N_s)
         symbols, reference = channel.tap("signal_tx"), channel.tap("data_tx")
 
         for name, (steps, linear_only) in receivers.items():
             receiver = get_receiver(steps, linear_only, gain=1 / amp,
                                     reference=symbols)
             bound = name == "amplifier noise only"
-            estimate = receiver(fields[bound])
+            detected = receiver(fields[bound])
             elapsed[name] += receiver.elapsed_
-            detected, _ = hard_projector(estimate, constellation)
+            estimate = receiver.tap("phase")
             snr[name][index] += compute_effective_snr(symbols, estimate) / N_trial
-            ser[name][index] += compute_ser(reference, detected) / N_trial
+            counters[name][index].update(reference, detected)
 
 snr_dB = {}
 for name, values in snr.items():
     snr_dB[name] = 10 * np.log10(values)
+
+ser = {}
+for name, points in counters.items():
+    ser[name] = np.zeros(len(points))
+    for index, counter in enumerate(points):
+        ser[name][index] = counter.rate
 
 header = "launch power [dBm]  "
 for value in dBm_list:
@@ -173,6 +185,15 @@ best = int(np.argmax(reference))
 print(f"\nGN model {10 * np.log10(best_snr):.2f} dB at "
       f"{watt_to_dbm(best_power):+.2f} dBm, dispersion compensation "
       f"{reference[best]:.2f} dB at {dBm_list[best]:+.1f} dBm")
+
+# What the error-rate figure can resolve, in counts rather than in a
+# caveat. At its own best power each receiver is where its curve bottoms
+# out, and a point that saw no error has not measured a rate: it has run
+# out of symbols. The counters kept the numbers, so the page can say so.
+print("\nreceiver                  errors at its best power")
+for name, points in counters.items():
+    counter = points[int(np.argmax(snr_dB[name]))]
+    print(f"{name:24s} {counter.n_errors:7d} over {counter.n_symbols} symbols")
 
 # The prediction, on the same axes as the measurement. It describes the
 # receiver that only undoes the dispersion -- the GN model counts the

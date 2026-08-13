@@ -71,16 +71,36 @@ of variance :math:`N_{ase} = (G-1)h\nu\,n_{sp}`, with
 Implementation
 """"""""""""""
 
-We reproduce the setup of Häger and Pfister: 25 spans of 80 km, 16-QAM at
-10.7 GBd, root-raised-cosine pulses, and 200 split steps per span, which is
-enough that the propagation itself is not in question -- 500 steps give the
-same effective SNR to three decimals.
+We follow the setup of Häger and Pfister: 25 spans of 80 km, 16-QAM at
+10.7 GBd, root-raised-cosine pulses, and 50 split steps per span. Their own
+reproduction, with a Gaussian stimulus and the paper's 500 steps, is in
+``validation/optical_dbp_hager.py``; this page carries a constellation so
+it can also show an error rate.
+
+Fifty steps is not a guess. The step-size error is worst where the
+nonlinearity is strongest, so it is measured there -- at the highest launch
+power of the sweep on the next page -- by refining until the answer stops
+moving:
+
+.. code::
+
+   StPS = 200   SNR = 11.758 dB   +0.000 dB   38.0 s
+   StPS = 100   SNR = 11.759 dB   +0.001 dB   19.3 s
+   StPS =  50   SNR = 11.763 dB   +0.005 dB    9.4 s
+   StPS =  25   SNR = 11.776 dB   +0.018 dB    5.0 s
+   StPS =  12   SNR = 11.845 dB   +0.087 dB    2.5 s
+
+Fifty steps sit **0.005 dB** from the converged answer and cost a quarter of
+what two hundred cost. Every number this page reports is quoted to a
+hundredth of a decibel at best, so the discretization is two orders of
+magnitude below what is claimed from it -- which is the only sense in which
+a step count is ever "enough".
 
 The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-89
+   :lines: 1-88
 
 Two things in that chain are worth naming.
 
@@ -109,17 +129,17 @@ be read against.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 92-128
+   :lines: 91-127
 
 .. code::
 
    spans   measured   ASE only   the fibre      SER     phase     time
-       1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    1.1 s
-       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    4.0 s
-      10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    7.4 s
-      15    18.55 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg   14.2 s
-      20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg   14.9 s
-      25    15.30 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg   18.5 s
+       1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    0.1 s
+       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    0.4 s
+      10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    0.7 s
+      15    18.56 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg    1.0 s
+      20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg    1.4 s
+      25    15.31 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg    1.7 s
 
 The third column is the subject of this tutorial. It is the price of the
 Kerr effect, measured rather than argued: **1.02 dB after one span, 8.39 dB
@@ -138,7 +158,7 @@ are cheap enough to leave in the script:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 130-155
+   :lines: 129-154
 
 .. code::
 
@@ -170,7 +190,7 @@ two noises that close add. The check reports it rather than hiding it.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 157-159
+   :lines: 156-158
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -184,7 +204,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 161-181
+   :lines: 160-180
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -210,31 +230,32 @@ span, 39 degrees over the link. Left in, that rotation would dominate the
 error rate, which is why the compensator sits in the chain and not in a
 comment.
 
-The last column is the one to keep. It grows with the number of spans, and
-``profile_execution_time`` says why -- it runs the chain and times each
-block on the way through:
+The last column is the one to keep, and it is not the receiver's:
+``profile_execution_time`` runs the chain and times each block on the way
+through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 183-188
+   :lines: 182-187
 
 .. code::
 
    block                    time
    data_tx                     0.1 ms
    signal_tx                   0.0 ms
-   upsampler                   0.3 ms
-   srrcfilter                  2.6 ms
-   signal_amplifier            0.2 ms
-   link                    17961.4 ms
-   rx_field                    1.7 ms
-   dbp                        13.5 ms
-   srrcfilter_2                0.7 ms
+   upsampler                   0.2 ms
+   srrcfilter                  1.9 ms
+   signal_amplifier            0.1 ms
+   link                     1721.7 ms
+   rx_field                    0.9 ms
+   dbp                         3.9 ms
+   srrcfilter_2                0.5 ms
    downsampler                 0.0 ms
    signal_amplifier_2          0.0 ms
-   phase                       0.2 ms
+   phase                       0.1 ms
+   data_rx                     0.4 ms
 
-Twelve blocks, and one of them is **99.9 %** of the run. The split-step
+Thirteen blocks, and one of them is **99.5 %** of the run. The split-step
 propagation is 25 spans of 200 steps, each an FFT pair and a pointwise
 rotation; everything else is a handful of milliseconds. Keep that ratio in
 mind -- it is what the Monte-Carlo section below has to work around.
@@ -261,19 +282,19 @@ removed by the backward pass.
 
 Dispersion compensation alone is the same algorithm with the nonlinear term
 switched off -- one step per span instead of :math:`\mathrm{StPS}` -- so the
-two strategies are one argument of ``get_full_chain`` apart.
+two strategies are one argument of ``get_chain`` apart.
 
 Results
 """""""
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 190-211
+   :lines: 189-210
 
 .. code::
 
-   dispersion compensation   SNR=15.30 dB  receiver    13.5 ms
-   digital back-propagation  SNR=23.48 dB  SER=0.0000  receiver  3037.2 ms  residual phase=-0.1 deg
+   dispersion compensation   SNR=15.31 dB  receiver     3.9 ms
+   digital back-propagation  SNR=23.48 dB  SER=0.0000  receiver  1045.1 ms  residual phase=-0.1 deg
 
 .. image:: img/one_shot_nli_fig4.png
    :width: 100%
@@ -307,8 +328,8 @@ What it costs
 The last column of the table is the reason DBP is not simply switched on
 everywhere. Dispersion compensation is one FFT pair for the whole link; DBP at
 :math:`\mathrm{StPS}` steps per span is :math:`N_{sp} \times \mathrm{StPS}`
-FFT pairs plus as many pointwise phase rotations. Here that is 13.5 ms
-against 3037 ms -- **225 times** -- for 8.2 dB.
+FFT pairs plus as many pointwise phase rotations. Here that is 3.9 ms
+against 1045 ms -- **268 times** -- for 8.2 dB.
 
 That ratio is what the literature on low-complexity back-propagation exists to
 improve, and it is also why the useful question is not "DBP or not" but *how
@@ -325,7 +346,7 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-84
+   :lines: 1-86
 
 Before propagating anything, the closed form of :doc:`gn_model` says where
 the optimum should fall. It describes this link with two changes from the
@@ -334,7 +355,7 @@ instead of two, which is what ``polarizations=1`` is for:
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 87-104
+   :lines: 89-105
 
 .. code::
 
@@ -344,7 +365,7 @@ That is the prediction the sweep below has to land on.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 107-198
+   :lines: 108-219
 
 .. code::
 
@@ -377,12 +398,12 @@ and back-propagation **moves it to the right**:
 .. code::
 
    receiver                  best SNR   at power    total time
-   amplifier noise only      26.35 dB    4.5 dBm       0.8 s
-   dispersion compensation   18.78 dB   -1.5 dBm       0.7 s
-   DBP, 1 step/span          19.28 dB    0.0 dBm       1.7 s
-   DBP, 2 steps/span         20.64 dB    0.0 dBm       3.4 s
-   DBP, 4 steps/span         23.81 dB    3.0 dBm       6.5 s
-   DBP, 50 steps/span        25.94 dB    4.5 dBm      76.8 s
+   amplifier noise only      26.35 dB    4.5 dBm       0.4 s
+   dispersion compensation   18.78 dB   -1.5 dBm       0.4 s
+   DBP, 1 step/span          19.28 dB    0.0 dBm       0.7 s
+   DBP, 2 steps/span         20.64 dB    0.0 dBm       1.4 s
+   DBP, 4 steps/span         23.82 dB    3.0 dBm       2.6 s
+   DBP, 50 steps/span        25.94 dB    4.5 dBm      30.7 s
 
 Start with the second row, because it is the one the closed form claims to
 predict:
@@ -425,11 +446,25 @@ adds the shape the SNR curve hides: a bathtub, whose left wall is the
 amplifier noise and whose right wall is the nonlinearity. Back-propagation
 does not move the left wall -- it cannot -- and pushes the right one out.
 
-The flat bottom at :math:`1.2 \times 10^{-4}` is the estimator, not the link:
-8192 symbols per point cannot resolve fewer than one error, so the two
-best receivers are floor-limited from 0 dBm on. That is why the comparison
-above is made in effective SNR, which uses every symbol rather than only the
-wrong ones.
+The bottom of the figure is the estimator, not the link, and the counters
+say so in errors rather than in a caveat:
+
+.. code::
+
+   receiver                  errors at its best power
+   amplifier noise only           0 over 49152 symbols
+   dispersion compensation       15 over 49152 symbols
+   DBP, 1 step/span               5 over 49152 symbols
+   DBP, 2 steps/span              0 over 49152 symbols
+   DBP, 4 steps/span              0 over 49152 symbols
+   DBP, 50 steps/span             0 over 49152 symbols
+
+Four receivers of six saw **no error at all** at their own best power.
+Those points are not measurements of an error rate; they are the
+statement that it is below one in 49152, i.e. :math:`2 \times 10^{-5}`.
+That is why the comparison above is made in effective SNR, which uses
+every symbol rather than only the wrong ones -- and why a curve that
+stops has to say how many errors it stopped on.
 
 
 Conclusion

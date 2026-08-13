@@ -14,6 +14,7 @@ per the decision's trigger.
 """
 from __future__ import annotations
 
+import logging
 import multiprocessing
 import os
 import pickle
@@ -25,7 +26,10 @@ import numpy as np
 
 from comnumpy.core.generics import Sequential
 
-__all__ = ["sweep"]
+__all__ = ["monte_carlo"]
+
+logger = logging.getLogger(__name__)
+
 
 # Every worker runs one sweep point at a time, so a BLAS that spawns one
 # thread per core inside each of them oversubscribes the machine by
@@ -75,15 +79,15 @@ def _evaluate(chain: Sequential, params: list[str], point: Any,
             for name, metric in metrics.items()}
 
 
-def sweep(chain: Sequential,
-          param: str | Sequence[str],
-          values: Sequence[Any],
-          metrics: Mapping[str, Callable[..., Any]],
-          stimulus: Any,
-          *,
-          reference: Optional[str] = None,
-          seed: Optional[int] = None,
-          n_jobs: int = 1) -> dict[str, np.ndarray]:
+def monte_carlo(chain: Sequential,
+                param: str | Sequence[str],
+                values: Sequence[Any],
+                metrics: Mapping[str, Callable[..., Any]],
+                stimulus: Any,
+                *,
+                reference: Optional[str] = None,
+                seed: Optional[int] = None,
+                n_jobs: int = 1) -> dict[str, np.ndarray]:
     """Run a chain over a range of parameter values and collect metrics.
 
     Parameters
@@ -174,14 +178,25 @@ def sweep(chain: Sequential,
     >>> from comnumpy import AWGN, Sequential, SymbolGenerator
     >>> from comnumpy.core.metrics import compute_ser
     >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=0, name="noise")])
-    >>> out = sweep(chain, "noise.snr_dB", [0, 10], {"power": lambda y: float(np.mean(np.abs(y)**2))},
-    ...             stimulus=1000, seed=1)
+    >>> out = monte_carlo(chain, "noise.snr_dB", [0, 10],
+    ...                   {"power": lambda y: float(np.mean(np.abs(y)**2))},
+    ...                   stimulus=1000, seed=1)
     >>> print(out["power"].shape)
     (2,)
     """
     params = [param] if isinstance(param, str) else list(param)
     if reference is not None and reference not in (chain.taps or []):
         chain.taps = (chain.taps or []) + [reference]
+    if seed is None:
+        # Not an error: a first look at a curve does not need to be
+        # reproducible. But a curve nobody can reproduce is not a result,
+        # and nothing else would ever say so -- the parallel path refuses
+        # outright, the serial one used to stay silent.
+        logger.warning(
+            "monte_carlo() ran without seed=, so every point drew freely and "
+            "this curve cannot be reproduced -- not by you, not by a reader "
+            "of the page it lands on. Pass seed= to give each point its own "
+            "child seed (decision D6/D35).")
     seeds = (np.random.SeedSequence(seed).spawn(len(values))
              if seed is not None else [None] * len(values))
 
@@ -208,7 +223,7 @@ def _sweep_parallel(chain: Sequential, params: list[str],
     """The same points, on several processes. Same values, out of order."""
     if any(child is None for child in children):
         raise ValueError(
-            f"sweep(n_jobs={n_jobs}) needs seed= as well: the points are "
+            f"monte_carlo(n_jobs={n_jobs}) needs seed= as well: the points are "
             f"then drawn from independent child seeds and the curve is the "
             f"same as the serial one. Without it, what a point draws would "
             f"depend on which worker ran it.")
@@ -217,7 +232,7 @@ def _sweep_parallel(chain: Sequential, params: list[str],
             pickle.dumps(payload)
         except Exception as error:            # noqa: BLE001 -- re-raised
             raise ValueError(
-                f"sweep(n_jobs={n_jobs}) runs the points in worker "
+                f"monte_carlo(n_jobs={n_jobs}) runs the points in worker "
                 f"processes, and the {label} cannot be sent to one: "
                 f"{error}. A lambda or a closure cannot be pickled -- "
                 f"define the metric at module level, or keep n_jobs=1."
@@ -250,7 +265,7 @@ def _sweep_parallel(chain: Sequential, params: list[str],
             # under a __main__ guard runs itself again inside every
             # worker.
             raise RuntimeError(
-                "sweep(n_jobs>1) starts worker processes, and each one "
+                "monte_carlo(n_jobs>1) starts worker processes, and each one "
                 "re-imports the module it was started from. If you are "
                 "calling this from a script, its body must sit under\n\n"
                 "    if __name__ == \"__main__\":\n\n"

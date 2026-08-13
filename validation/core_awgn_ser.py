@@ -11,7 +11,7 @@ import numpy as np
 from comnumpy import (AWGN, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, compute_ser,
                       Constellation)
-from comnumpy.sweep import sweep
+from comnumpy.monte_carlo import monte_carlo
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -27,9 +27,9 @@ def simulate(order, seed):
         AWGN(snr_dB=0, name="noise"),
         SymbolDemapper(constellation),
     ])
-    results = sweep(chain, "noise.snr_dB", SNR_DB_RANGE,
-                    {"ser": compute_ser}, N_SYMBOLS,
-                    reference="tx", seed=seed)
+    results = monte_carlo(chain, "noise.snr_dB", SNR_DB_RANGE,
+                          {"ser": compute_ser}, N_SYMBOLS,
+                          reference="tx", seed=seed)
     return results["ser"]
 
 

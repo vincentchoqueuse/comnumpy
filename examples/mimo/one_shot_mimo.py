@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
@@ -25,7 +25,7 @@ sigma2 = 0.1
 H = rayleigh_channel(N_r, N_t, seed=0)
 
 
-def link(detector):
+def get_chain(detector):
     """The same link, closed by one detector or another.
 
     Only the last block changes, which is the point: a detector is a
@@ -53,7 +53,7 @@ detectors = {
 }
 chains = {}
 for name, detector in detectors.items():
-    chains[name] = link(detector)
+    chains[name] = get_chain(detector)
 
 for name, chain in chains.items():
     chain.seed(0)
@@ -100,9 +100,9 @@ def average_ser(name, chain, snr_dB, seed=0):
     if name in NOISE_AWARE:
         params["detector.sigma2"] = noise_variance
     chain.set_params(**params)
-    results = sweep(chain, ("channel.H", "detector.H"), draws,
-                    {"ser": compute_ser}, stimulus=(N_t, n_symbols),
-                    reference="tx", seed=seed)
+    results = monte_carlo(chain, ("channel.H", "detector.H"), draws,
+                          {"ser": compute_ser}, stimulus=(N_t, n_symbols),
+                          reference="tx", seed=seed)
     return float(np.mean(results["ser"]))
 
 

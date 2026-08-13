@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedComplexGainCompensator
 from comnumpy.core.filters import SRRCFilter
@@ -15,8 +15,8 @@ from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
-                                    dbm_to_watt, watt_to_dbm)
+from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
+                                    watt_to_dbm)
 from comnumpy.optical.wdm import WDMGrid
 
 img_dir = "../../docs/tutorials/img/"
@@ -59,13 +59,13 @@ def comb_eta(n_channels):
 def analytic_ase(n_spans=N_SPANS, bandwidth_Hz=BAUD):
     """Amplifier noise in the channel, over both polarizations.
 
-    ``compute_erbium_doped_fiber_N_ase`` returns the one-sided spectral
-    density of a single amplifier **per polarization**; the factor two
-    is the second polarization, which carries its own independent noise
-    and is the term the channel-power convention makes easy to forget.
+    The link budgets its own noise. ``polarizations=2`` is the term the
+    channel-power convention makes easy to forget: the spectral density
+    of an amplifier is **per polarization**, and a coherent link carries
+    two independent copies of it.
     """
-    density = compute_erbium_doped_fiber_N_ase(SMF.alpha_dB, SPAN_KM, NF_dB)
-    return 2 * n_spans * density * bandwidth_Hz
+    link = FiberLink(n_spans, L_span=SPAN_KM, fs=FS, fiber=SMF, NF_dB=NF_dB)
+    return link.budget(bandwidth_Hz, polarizations=2)["ase_power_W"]
 
 
 grid = comb(9)
@@ -115,12 +115,7 @@ plt.savefig(f"{img_dir}/gn_model_fig2.png")
 #  Part 2 -- the simulation, which is here to disagree
 # ===========================================================================
 
-def launch_gain(power_W):
-    """Amplifier gain for a channel power split over two polarizations."""
-    return np.sqrt(np.asarray(power_W) / 2)
-
-
-def link_chain(order=16, power_W=1e-3):
+def get_chain(order=16, power_W=1e-3):
     """The whole link, from symbols to equalized symbols, as one chain."""
     source = ([GaussianGenerator(1.0, name="tx")] if order is None else
               [SymbolGenerator(order, name="source"),
@@ -129,7 +124,7 @@ def link_chain(order=16, power_W=1e-3):
         *source,
         Upsampler(OS, scale=np.sqrt(OS)),
         SRRCFilter(ROLLOFF, OS, N_h=40, method="fft"),
-        Amplifier(launch_gain(power_W), name="launch"),
+        Amplifier(launch_amplitude(power_W, polarizations=2), name="launch"),
         FiberLink(N_SPANS, L_span=SPAN_KM, StPS=40, fs=FS, fiber=SMF,
                   NF_dB=NF_dB, name="fibre"),
         DBP(N_SPANS, L_span=SPAN_KM, StPS=1, fs=FS, fiber=SMF,
@@ -147,12 +142,13 @@ def effective_snr_dB(sent, received):
 
 
 def measure(chain, powers_W, seed=3):
-    return sweep(chain, "launch.gain", launch_gain(powers_W),
-                 {"snr_dB": effective_snr_dB}, STIMULUS,
-                 reference="tx", seed=seed)["snr_dB"]
+    return monte_carlo(chain, "launch.gain",
+                       launch_amplitude(powers_W, polarizations=2),
+                       {"snr_dB": effective_snr_dB}, STIMULUS,
+                       reference="tx", seed=seed)["snr_dB"]
 
 
-chain = link_chain()
+chain = get_chain()
 chain.summary(STIMULUS)
 
 chain.set_params(fibre__use_only_linear=True)
@@ -198,13 +194,13 @@ print(f"\nThe GN model predicts {nli_only_dB:.2f} dB of nonlinear SNR at "
 print("stimulus     nonlinear SNR   above the model")
 for order, label in ((4, "QPSK"), (16, "16QAM"), (64, "64QAM"),
                      (256, "256QAM"), (None, "Gaussian")):
-    noiseless = link_chain(order)
+    noiseless = get_chain(order)
     noiseless.set_params(fibre__noise_scaling=0.0)
     value = measure(noiseless, [1e-3])[0]
     print(f"{label:12s} {value:10.2f} dB   {value - nli_only_dB:+10.2f} dB")
 
 mermaid_dir = "../../docs/tutorials/mermaid/"
 with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
-    stream.write(link_chain().to_mermaid())
+    stream.write(get_chain().to_mermaid())
 
 plt.show()

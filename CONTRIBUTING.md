@@ -39,6 +39,21 @@ Run the tests to make sure everything works:
 make test
 ```
 
+### Type checking against the right NumPy
+
+`pyright` is a blocking check, and its verdict depends on which NumPy is
+installed: the 1.26 stubs require `ndarray` to carry type arguments, the
+2.x stubs do not. CI lints against the newest NumPy, so an environment
+pinned to the oldest supported one reports hundreds of errors that are
+not real -- and, worse, can stay silent on one that is.
+
+Keep a second environment for the check:
+
+```bash
+python -m venv .venv-lint && .venv-lint/bin/pip install -e .
+pyright --pythonpath .venv-lint/bin/python
+```
+
 ## Guidelines
 
 - **Code style**: Follow PEP 8 formatting. Run `make lint` to check.

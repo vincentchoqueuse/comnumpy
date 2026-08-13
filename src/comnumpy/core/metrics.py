@@ -1,8 +1,10 @@
+from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
 import numpy as np
 
 from comnumpy.core.utils import sym_2_bin  # single definition (annex A.5)
+from comnumpy.exceptions import NotFittedError
 
 __all__ = [
     "compute_ser_awgn_psk", "compute_ser_awgn_qam", "compute_metric_awgn_theo",
@@ -10,6 +12,7 @@ __all__ = [
     "compute_metric_rayleigh_theo",
     "compute_ser", "compute_ber", "compute_evm", "compute_effective_snr",
     "compute_power", "compute_ccdf", "compute_acpr", "signal_report",
+    "ErrorCounter",
 ]
 
 # Craig's finite-range form of the Q function turns every average over
@@ -1204,3 +1207,145 @@ def signal_report(x: np.ndarray, compute_papr: bool = False,
         from comnumpy.ofdm.metrics import compute_papr as papr_of
         report["papr"] = float(papr_of(abs_x, unit=papr_unit))
     return report
+
+
+@dataclass(slots=True)
+class ErrorCounter:
+    r"""Accumulate errors over the trials of one Monte-Carlo point.
+
+    Signal Model
+    ------------
+    A Monte-Carlo point runs the chain several times and reports one
+    error rate. The rate is a ratio of **totals**, not a mean of ratios:
+
+    .. math::
+
+        \mathrm{rate} = \frac{\sum_t N_{e,t}}{\sum_t N_t}
+
+    Averaging the per-trial rates instead gives the same answer only
+    when every trial has the same length, and it throws away the number
+    the point's credibility rests on -- how many errors were actually
+    seen. A rate of :math:`10^{-4}` from three errors and one from three
+    hundred are different claims, and only the counts tell them apart.
+
+    That is what this object is for. It does not own the loop: a
+    Monte-Carlo over a fading channel, over several detectors or over a
+    split-step link has a different shape each time, and that shape is
+    what the reader of an example came to see. It owns the counting,
+    which is the same everywhere and the part that hides mistakes.
+
+    Parameters
+    ----------
+    width : int, optional
+        Bits per symbol. The default 1 counts **symbol** errors, one per
+        mismatched entry. Give the constellation's ``bits_per_symbol``
+        to count **bit** errors instead, expanded by
+        :func:`~comnumpy.core.utils.sym_2_bin` exactly as
+        :func:`compute_ber` does.
+
+    Attributes
+    ----------
+    n_errors : int
+        Errors accumulated so far -- symbols or bits, per ``width``.
+    n_symbols : int
+        Symbols compared so far.
+    n_trials : int
+        Number of :meth:`update` calls.
+
+    Raises
+    ------
+    ValueError
+        If ``width`` is not positive.
+
+    Examples
+    --------
+    Three trials of a hundred symbols, one error in the second:
+
+    >>> import numpy as np
+    >>> counter = ErrorCounter()
+    >>> sent = np.zeros(100, dtype=int)
+    >>> for trial in range(3):
+    ...     received = sent.copy()
+    ...     if trial == 1:
+    ...         received[7] = 1
+    ...     _ = counter.update(sent, received)
+    >>> print(counter)
+    ErrorCounter(1 error / 300 symbols, rate 3.33e-03)
+
+    The counts are what makes the rate readable, and they are what an
+    example should print beside it:
+
+    >>> print(counter.n_errors, counter.n_symbols, counter.n_trials)
+    1 300 3
+
+    ``width`` switches to bits, on the same convention as
+    :func:`compute_ber`:
+
+    >>> bits = ErrorCounter(width=4)
+    >>> _ = bits.update(np.array([0, 0]), np.array([0, 15]))
+    >>> print(bits.n_errors, bits.n_symbols, f"{bits.rate:.3f}")
+    4 2 0.500
+    """
+    width: int = 1
+    n_errors: int = field(init=False, default=0)
+    n_symbols: int = field(init=False, default=0)
+    n_trials: int = field(init=False, default=0)
+
+    def __post_init__(self) -> None:
+        if self.width < 1:
+            raise ValueError(
+                f"a symbol carries at least one bit, got width={self.width}. "
+                f"Leave it at 1 to count symbol errors, or pass the "
+                f"constellation's bits_per_symbol to count bit errors.")
+
+    def update(self, reference: np.ndarray,
+               detected: np.ndarray) -> "ErrorCounter":
+        """Count one trial, and return self so calls can be chained.
+
+        Both arrays carry symbol **indices**, as :func:`compute_ser`
+        requires: the output of a ``SymbolGenerator`` against that of a
+        ``SymbolDemapper``, not complex constellation points. The
+        shorter of the two sets the length, which is what a chain with
+        a filter delay produces.
+        """
+        target = np.asarray(reference).ravel()
+        estimate = np.asarray(detected).ravel()
+        length = min(target.size, estimate.size)
+        if length == 0:
+            raise ValueError(
+                "nothing to count: one of the two sequences is empty.")
+        target, estimate = target[:length], estimate[:length]
+        if self.width == 1:
+            errors = int(np.count_nonzero(target - estimate))
+        else:
+            errors = int(np.count_nonzero(
+                sym_2_bin(target, self.width) - sym_2_bin(estimate, self.width)))
+        self.n_errors += errors
+        self.n_symbols += length
+        self.n_trials += 1
+        return self
+
+    @property
+    def rate(self) -> float:
+        """Errors over the units compared -- symbols, or bits if ``width``."""
+        if self.n_symbols == 0:
+            raise NotFittedError(
+                "no trial has been counted yet, so there is no rate; call "
+                "update(reference, detected) at least once.")
+        return self.n_errors / (self.n_symbols * self.width)
+
+    def reset(self) -> "ErrorCounter":
+        """Forget every trial, keeping ``width``. Returns self."""
+        self.n_errors = 0
+        self.n_symbols = 0
+        self.n_trials = 0
+        return self
+
+    def __str__(self) -> str:
+        unit = "symbol" if self.width == 1 else "bit"
+        plural = "" if self.n_errors == 1 else "s"
+        if self.n_symbols == 0:
+            return "ErrorCounter(nothing counted yet)"
+        return (f"ErrorCounter({self.n_errors} error{plural} / "
+                f"{self.n_symbols * self.width} {unit}s, "
+                f"rate {self.rate:.2e})")

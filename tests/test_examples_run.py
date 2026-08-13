@@ -63,12 +63,12 @@ SLOW = {
         "compensator -- 227 s measured 2026-08-09",
     "optical/NLI_simulation.py":
         "eight launch powers x four trials x two fibre configurations of "
-        "split-step propagation, then six receivers on each -- ~1400 s "
-        "measured 2026-08-12",
+        "split-step propagation, then six receivers on each -- 144 s "
+        "measured 2026-08-13 at StPS=50, with the step transfer cached",
     "optical/one_shot_NLI.py":
         "the whole chain re-run at six span counts, each once nonlinear and "
         "once linear, then twice more for the profile and the receiver "
-        "comparison -- 104 s measured 2026-08-12",
+        "comparison -- 13 s measured 2026-08-13",
     "simple/one_shot_srrc_awgn.py":
         "16 001-tap SRRC filter at oversampling 8 -- 113 s wall / 316 s "
         "CPU measured 2026-08-09",

@@ -6,7 +6,7 @@ parameter written by hand cost a `**{...}` wrapper around a string --
 The double underscore is the same address spelled as an identifier, which
 is what scikit-learn uses, so it can be a plain keyword argument.
 
-The dotted form stays: `sweep` builds its addresses as strings, and a
+The dotted form stays: `monte_carlo` builds its addresses as strings, and a
 string is what you want when the address is computed rather than typed.
 """
 import unittest

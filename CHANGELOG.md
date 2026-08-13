@@ -16,6 +16,7 @@ one release; there is no compatibility layer.
 
 | Before (0.91) | After (1.0.0) |
 |---|---|
+| `sweep(chain, param, values, metrics, stimulus)` | `monte_carlo(...)`, same signature — the only bare verb of the root namespace, and a name that said nothing about the points being random draws. Every point reseeds and redraws, so `seed=` is what makes a curve reproducible; the new name says so |
 | `Serial2Parallel(N, order="F")` → shape `(N_sub, M)` | `Serial2Parallel(N)` → Block layout `(..., T, F)` = `(..., M, N_sub)`, pure C-order reshape; `order` removed |
 | `Parallel2Serial(order="F")` | `Parallel2Serial()` — C-order flatten of `(..., T, F)`; `order` removed |
 | OFDM blocks operate on axis 0 by default | OFDM blocks operate on the block content axis -1 (`FFTProcessor`/`IFFTProcessor` hardcode it; `axis` removed there) |
@@ -34,7 +35,7 @@ one release; there is no compatibility layer.
 | `Scope(scope_type="iq", ...)`, `TimeScope`, `SpectrumScope`, `IQScope`, `KDEScope`, `WelchScope` blocks | removed — functions `plot_iq`, `plot_time`, `plot_spectrum`, `plot_kde`, `plot_welch` applied to a tapped signal |
 | `ofdm.visualizers.FFTMonitor` block | `ofdm.visualizers.plot_subcarrier_amplitude(X, ax=...)` |
 | `CarrierExtractor(..., pilot_recorder=rec)` | pilot content exposed as the estimated attribute `extractor.pilots_` (D23) |
-| `TrainedBased*(target_data=recorder)` | `DataAided*(reference=…)` — the class family is renamed after the standard pair of the field (*data-aided* vs *blind*, which the `Blind*` classes already used), and the known signal an estimator compares against is a `reference`, the same word `sweep(reference=…)` uses. It takes a plain array; when the reference is produced by the chain itself, declare `wiring={"comp.reference": "source"}` |
+| `TrainedBased*(target_data=recorder)` | `DataAided*(reference=…)` — the class family is renamed after the standard pair of the field (*data-aided* vs *blind*, which the `Blind*` classes already used), and the known signal an estimator compares against is a `reference`, the same word `monte_carlo(reference=…)` uses. It takes a plain array; when the reference is produced by the chain itself, declare `wiring={"comp.reference": "source"}` |
 | `DataAidedFIRCompensator(h, reference=…)` | `DataAidedFIRCompensator(reference=…)` — `h` was only an initial value that `fit` overwrote from scratch, i.e. a purely estimated quantity; it is now `h_` and not a constructor parameter |
 | `Normalizer(gain, method, …)` (inherited from `Amplifier`) | `Normalizer(method, …)` — `gain` is no longer constructible, so `Normalizer('max')` finally means what it reads; the measured gain is `gain_` (D23) |
 | `Amplifier(gain, axis=…)` | `Amplifier(gain)` — `axis` implemented no defensible model (it scaled only entries at index `axis` of the *last* axis, whatever axis was asked); use `WeightAmplifier` for a per-branch gain |
@@ -43,6 +44,36 @@ one release; there is no compatibility layer.
 | `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
+
+### Documentation — the AWGN tutorial derives its reference curve
+
+The Monte-Carlo page compared a measurement against
+`constellation.metrics(...)` and left it there, so the closed form
+arrived as a number out of an object: the reader saw *that* theory and
+simulation agree without being shown *what* the theory is. The page now
+states the expression -- the two-PAM decomposition of a square QAM, the
+`Q` argument, the reference to Proakis and Salehi section 4.3 --
+evaluates it in plain NumPy, and only then shows that the constellation
+returns the same array. The two agree to 3.3e-16, and the reason to
+prefer the method afterwards is stated: it is one line rather than five,
+and it cannot describe a modulation other than the one the chain
+transmits.
+
+It also no longer stops at one constellation. A closing section sweeps
+4-, 16-, 64- and 256-QAM at equal energy per **bit** -- the comparison
+`ebn0_to_snr_dB` exists for -- and prints what the density costs: 6.8,
+10.5, 14.8 and 19.4 dB of Eb/N0 for a BER of 1e-3. The page says where
+the Gray-mapping approximation `P_b ~ P_s / k` stops holding (the
+markers run a factor 2.2 above the curve for 256-QAM at 0 dB, and settle
+onto it below 1e-2), and where the estimator stops: 100 000 symbols
+per point cannot resolve a 4-QAM BER under 5e-6, so the axis stops
+there.
+
+Two defects surfaced while doing it. The page still named `sweep` in two
+cross-references after the rename, and the figure it displayed was
+written by no script -- `monte_carlo_awgn.py` ended on `plt.show()` and
+saved nothing, so `img/monte_carlo_awgn.png` had been orphaned since the
+last time someone regenerated it by hand.
 
 ### Added — a chain says when a rate change carries its filter by hand
 
@@ -246,6 +277,30 @@ placeholder" to "no reference reached me", which is the real failure.
 and wiring was not fed, and profiling a wired chain raised. It now
 shares the edge plan with `forward` and keys its result by block id
 (`block_ids()`), so two blocks with the same name get one entry each.
+
+### Documentation — one name for the function that builds a chain
+
+Seven example scripts wrapped their chain in a factory, under four
+spellings for the same idea: `get_link`, `link`, `link_chain`,
+`get_full_chain`, `uncoded_chain`. A reader who learnt one had to
+re-learn it on the next page.
+
+They now follow one rule, written into the tutorial skill. A factory
+exists only when the chain is built more than once — a chain built once
+and used once stays inline, because wrapping four blocks in a function
+called once with no argument is an indirection between the reader and
+their first chain. When it exists it is `get_<thing>()`: `get_chain()`
+for the page's one chain, `get_channel()` and `get_receiver()` for the
+two halves when a page cuts one in two, `get_transmitter()` when what
+comes back is a sub-assembly rather than a chain, and
+`get_uncoded_chain()` / `get_coded_chain(soft)` when the page compares
+two chains that differ in structure rather than in a parameter.
+
+The third rule is the one that motivated the other two: what the page
+varies is a parameter of the function, never a module global read
+behind the signature's back. `get_full_chain(n_spans, steps,
+linear_only)` also read eleven module-level names, so the call site did
+not say what changed between two calls.
 
 ### Documentation — the tutorials on one plan
 
@@ -561,7 +616,7 @@ Substantive changes rather than reorganisation:
   the two overlaid on one figure (0.25 dB apart on the optimal launch
   power, 0.17 dB on the peak SNR).
 
-- `sweep(n_jobs=...)`: the points of a sweep are independent by
+- `monte_carlo(n_jobs=...)`: the points of a sweep are independent by
   construction -- each one reconfigures and reseeds the chain from
   scratch -- so they can run at once. The curve is **identical** value
   for value, not merely statistically equivalent, because every point
@@ -1224,7 +1279,7 @@ Substantive changes rather than reorganisation:
   to `cupyx.scipy.fft`. CuPy is imported only when a CuPy array is
   seen and remains a non-dependency.
 
-- `comnumpy.sweep(chain, param, values, metrics, stimulus, ...)` (D35):
+- `comnumpy.monte_carlo(chain, param, values, metrics, stimulus, ...)` (D35):
   the parameter-sweep loop shared by the validation scripts, extracted
   after the third script needed it. Dotted `set_params` addressing,
   per-point child seeds, zip semantics for multi-parameter sweeps.
@@ -1249,7 +1304,7 @@ Substantive changes rather than reorganisation:
   `comnumpy.core.metrics.signal_report(x)`, which returns the statistics
   as a dict for the caller to log, tabulate or assert on. A CI guard test
   keeps these names out of the public surface.
-- `sweep(..., reference="tx")` now names a tapped block and declares the
+- `monte_carlo(..., reference="tx")` now names a tapped block and declares the
   tap itself if needed; blocks no longer hold references to other blocks
   (`reference=` takes a plain array).
 - `Sequential(..., wiring={"comp.reference": "ref"})`: declares the

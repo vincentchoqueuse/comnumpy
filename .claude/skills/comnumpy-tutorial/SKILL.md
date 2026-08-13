@@ -54,7 +54,7 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_ccdf`, `compute_metric_awgn_theo` and
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
-- Monte-Carlo: `sweep(chain, param, values, metrics, stimulus, seed=)`.
+- Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`.
 - Figures: `plot_iq`, `plot_error_rate`, `plot_spectrum`, `plot_time`,
   `plot_channel_response`, and the channels' own `info()` / `plot()`.
 - If the library makes something awkward, that is a finding about the
@@ -63,9 +63,39 @@ then learns the wrong lesson -- they came to see how the library is used.
 
 ## Structuring the example script
 
-- One `get_*` function per assembly the page talks about, so that what
-  varies is an argument. `get_full_chain(n_spans)` beats building a chain
-  inline six times.
+### Naming the chain
+
+Three rules, and they are about where the reader looks and what the
+signature promises.
+
+1. **A function only when the chain is built more than once** -- several
+   values of a parameter, several variants, a Monte-Carlo. A chain built
+   once and used once is written inline: wrapping four blocks in a
+   function called once, with no argument, is ceremony, and it puts an
+   indirection between the reader and their first chain.
+2. **Always `get_<thing>()`**, one prefix, the noun saying what comes
+   back. Which noun follows from how the page is organized:
+
+   | the page… | names |
+   |---|---|
+   | has one chain | `get_chain(...)` |
+   | cuts one chain in two | `get_channel()` and `get_receiver()` |
+   | compares two structurally different chains | `get_uncoded_chain()`, `get_coded_chain(soft)` |
+   | builds a sub-assembly, not a whole chain | the part: `get_transmitter()` |
+
+   Two chains that differ by a block or two are **one** function with a
+   parameter, not two functions. Two chains that differ in structure --
+   four blocks against six -- are two functions, because merging them
+   would hide behind a flag exactly what the page is comparing.
+3. **What varies is a parameter, never a module global.** Constants of
+   the page (the fibre, the constellation, the roll-off) may stay
+   global; anything the page *varies* goes through the signature. A
+   function whose signature announces three arguments and silently reads
+   eleven more is a closure wearing a `def`, and the reader cannot tell
+   from the call site what changed.
+
+### The rest of the script
+
 - **Prefer one chain, transmitter to decision.** A full chain is what the
   reader will write. Cutting the chain into pieces is justified only when a
   Monte-Carlo re-runs an expensive stage that could be run once -- and then

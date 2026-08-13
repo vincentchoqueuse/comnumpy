@@ -10,26 +10,25 @@ from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper
+from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import Constellation, hard_projector
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
-                                    dbm_to_watt)
+from comnumpy.optical.utils import dbm_to_watt, launch_amplitude
 
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
-N_s = 2**9                    # symbols per run
+N_s = 2**9 * 6                # symbols per run
 oversampling_sim = 6          # samples per symbol in the channel
 oversampling_dsp = 2          # samples per symbol in the receiver
 NF_dB = 5                     # amplifier noise figure in dB
 rolloff = 0.1
-StPS = 200                    # split steps per span, forward
+StPS = 50                     # split steps per span, forward
 StPS_DBP = 100                # split steps per span, backward
 R_s = 10.7e9                  # baud rate
 L_span = 80                   # span length in km
@@ -37,14 +36,13 @@ N_span = 25
 dBm = -3
 fiber = FiberSpec()           # the standard fibre, named so the budget sees it
 
-N = N_s * oversampling_sim
 fs = R_s * oversampling_sim
 oversampling_ratio = oversampling_sim // oversampling_dsp
-amp = np.sqrt(dbm_to_watt(dBm))
+amp = launch_amplitude(dbm_to_watt(dBm))
 
 
 # --- the chain --------------------------------------------------------
-def get_full_chain(n_spans, *, steps=1, linear_only=True):
+def get_chain(n_spans, *, steps=1, linear_only=True):
     """The whole link, from the symbols to the decisions.
 
     Transmitter, ``n_spans`` of fibre and amplifier, and the receiver
@@ -76,17 +74,16 @@ def get_full_chain(n_spans, *, steps=1, linear_only=True):
         Downsampler(oversampling_dsp),
         Amplifier(1 / amp),
         DataAidedPhaseCompensator(name="phase"),
-        ], taps=["data_tx", "signal_tx", "rx_field", "phase"],
+        SymbolDemapper(constellation, name="data_rx"),
+        ], taps=["data_tx", "signal_tx", "rx_field", "phase", "data_rx"],
         wiring={"phase.reference": "signal_tx"})
 
 
 def score(chain):
     """Effective SNR in dB and symbol error rate of a finished run."""
-    estimate = chain.tap("phase")
-    detected, _ = hard_projector(estimate, constellation)
-    return (10 * np.log10(compute_effective_snr(chain.tap("signal_tx"),
-                                                estimate)),
-            compute_ser(chain.tap("data_tx"), detected))
+    return (compute_effective_snr(chain.tap("signal_tx"),
+                                  chain.tap("phase"), unit="dB"),
+            compute_ser(chain.tap("data_tx"), chain.tap("data_rx")))
 
 
 # --- 1. what the link does to the signal ------------------------------
@@ -109,8 +106,9 @@ snr_per_span = {}
 snr_ase_only = {}
 print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
-    chain = get_full_chain(n_spans).seed(0)
-    estimates[n_spans] = chain(N)
+    chain = get_chain(n_spans).seed(0)
+    chain(N_s)
+    estimates[n_spans] = chain.tap("phase")
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
     elapsed = chain.elapsed_
@@ -120,7 +118,7 @@ for n_spans in spans:
     received_field = chain.tap("rx_field")
 
     chain.seed(0).set_params(link__use_only_linear=True)
-    chain(N)
+    chain(N_s)
     snr_ase_only[n_spans] = score(chain)[0]
 
     print(f"{n_spans:5d} {snr:8.2f} dB {snr_ase_only[n_spans]:7.2f} dB "
@@ -136,21 +134,22 @@ for n_spans in spans:
 # pulse shaping, resampling, matched filtering. It has to sit far above
 # every number in the table, or the chain is measuring its own filters
 # rather than the fibre.
-floor = get_full_chain(1).seed(0)
+floor = get_chain(1).seed(0)
 floor.set_params(link__use_only_linear=True, link__noise_scaling=0.0)
-floor(N)
+floor(N_s)
 print(f"\ndistortion floor of the chain, no noise and no fibre: "
       f"{score(floor)[0]:.1f} dB")
 
-# The second is the amplifier noise against its closed form. N spans pile
-# up N times the noise of one, in the symbol-rate bandwidth the matched
-# filter collects, and that prediction owes nothing to the simulation:
-# it comes from the noise figure and the span loss alone.
-n_ase = compute_erbium_doped_fiber_N_ase(fiber.alpha_dB, L_span, NF_dB,
-                                         nu=fiber.carrier_frequency_Hz)
+# The second is the amplifier noise against its closed form. The link
+# budgets its own noise: `budget` asks it how much ASE it accumulates in
+# the bandwidth a matched filter keeps -- the symbol rate, not the
+# simulated `fs` -- and that prediction owes the simulation nothing, it
+# comes from the noise figure and the span loss alone.
 print("\nspans   ASE only   P / P_ASE      gap")
 for n_spans in spans:
-    predicted = 10 * np.log10(dbm_to_watt(dBm) / (n_spans * n_ase * R_s))
+    link = get_chain(n_spans)["link"]
+    ase_W = link.budget(R_s)["ase_power_W"]
+    predicted = 10 * np.log10(dbm_to_watt(dBm) / ase_W)
     print(f"{n_spans:5d} {snr_ase_only[n_spans]:8.2f} dB {predicted:8.2f} dB "
           f"{snr_ase_only[n_spans] - predicted:+8.2f} dB")
 
@@ -182,7 +181,7 @@ plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
 
 # Where that time goes. `profile_execution_time` runs the chain and times
 # each block on the way through, so the same pass answers the question.
-profile = get_full_chain(N_span).seed(0).profile_execution_time(N)
+profile = get_chain(N_span).seed(0).profile_execution_time(N_s)
 print("\nblock                    time")
 for block_id, elapsed in profile.items():
     print(f"{block_id:22s} {1e3 * elapsed:8.1f} ms")
@@ -191,9 +190,9 @@ for block_id, elapsed in profile.items():
 # The same chain with the nonlinear term switched back on in the
 # receiver. Everything else -- the seed, the link, the phase correction
 # -- is unchanged, so the comparison is over the same realization.
-back_propagated = get_full_chain(N_span, steps=StPS_DBP,
+back_propagated = get_chain(N_span, steps=StPS_DBP,
                                  linear_only=False).seed(0)
-profile_dbp = back_propagated.profile_execution_time(N)
+profile_dbp = back_propagated.profile_execution_time(N_s)
 snr_dbp, ser_dbp = score(back_propagated)
 print(f"\ndispersion compensation   SNR={snr_per_span[N_span]:5.2f} dB  "
       f"receiver {1e3 * profile['dbp']:7.1f} ms")

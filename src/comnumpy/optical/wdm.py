@@ -32,6 +32,8 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 
+from .utils import apply_frequency_response
+
 from comnumpy.core.generics import Processor
 from comnumpy.exceptions import ShapeError
 
@@ -652,4 +654,4 @@ class WDMDemultiplexer(Processor):
             mixed = x[..., None, :] * np.conj(phasors)
         else:
             mixed = x * np.conj(phasors)
-        return np.fft.ifft(np.fft.fft(mixed, axis=-1) * self.mask_, axis=-1)
+        return apply_frequency_response(mixed, self.mask_)

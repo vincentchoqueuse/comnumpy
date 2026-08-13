@@ -20,7 +20,7 @@ from comnumpy.ofdm.allocation import get_allocation
 from comnumpy.ofdm.processors import (CarrierAllocator, CarrierExtractor,
                                       CyclicPrefixer, CyclicPrefixRemover,
                                       FFTProcessor, IFFTProcessor)
-from comnumpy.sweep import sweep
+from comnumpy.monte_carlo import monte_carlo
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -52,9 +52,9 @@ def ofdm_chain():
 
 
 def main():
-    results = sweep(ofdm_chain(), "noise.snr_dB", SNR_DB_RANGE,
-                    {"ser": compute_ser_truncated}, N_SYMBOLS,
-                    reference="tx", seed=7)
+    results = monte_carlo(ofdm_chain(), "noise.snr_dB", SNR_DB_RANGE,
+                          {"ser": compute_ser}, N_SYMBOLS,
+                          reference="tx", seed=7)
     ser_sim = results["ser"]
 
     # The AWGN block measures the *time-domain* power. With unit-power
@@ -88,12 +88,6 @@ def main():
 
     print(f"PASS OFDM chain SER: max relative error {rel_err.max():.3f} "
           f"over {mask.sum()} SNR points")
-
-
-def compute_ser_truncated(tx, rx):
-    """SER over the transmitted length (S/P zero-padding adds trailing symbols)."""
-    n = len(tx)
-    return compute_ser(tx, rx[:n])
 
 
 if __name__ == "__main__":

@@ -44,13 +44,13 @@ sig_power = N_t
 
 for index_snr, snr_dB in enumerate(snr_dB_list):
     sigma2 = sig_power*(10**(-snr_dB/10))
-    chain["noise"].sigma2 = sigma2
+    chain.set_params(noise__sigma2=sigma2)
 
     for _ in range(N_test):
 
         # new channel realization
         H = rayleigh_channel(N_r=N_r, N_t=N_t)
-        chain["channel"].H = H
+        chain.set_params(channel__H=H)
 
         # generate data
         Y = chain((N_t, N))

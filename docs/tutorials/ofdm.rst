@@ -14,7 +14,7 @@ channel (**OFDM**).
 .. note::
 
    **Before you start.** :doc:`awgn` introduced the chain, ``seed``,
-   ``sweep`` and ``plot_error_rate``; they are used here without being
+   ``monte_carlo`` and ``plot_error_rate``; they are used here without being
    re-explained. What is new is the channel: it is no longer a single
    coefficient.
 

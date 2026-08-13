@@ -11,5 +11,5 @@ import, parameter sweeps, and the plotting style.
 
    exceptions
    serialization
-   sweep
+   monte_carlo
    style
