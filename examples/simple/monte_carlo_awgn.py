@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
 from scipy.special import erfc
-from comnumpy import monte_carlo
+from comnumpy import monte_carlo, print_data
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
@@ -10,6 +10,9 @@ from comnumpy.core.utils import Constellation, ebn0_to_snr_dB
 from comnumpy.core.channels import AWGN
 from comnumpy.core.metrics import compute_ser, compute_ber
 from comnumpy.core.visualizers import plot_error_rate
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -52,14 +55,13 @@ for snr_dB in snr_dB_list[::8]:
 results = monte_carlo(chain, "awgn_channel.snr_dB", snr_dB_list,
                       {"ser": compute_ser}, N, reference="tx", seed=1)
 ser_array = results["ser"]
-loop_line = "loop        :"
-for value in by_hand:
-    loop_line += f" {value:.3e}"
-print(loop_line)
-sweep_line = "monte_carlo :"
-for value in ser_array[::8]:
-    sweep_line += f" {value:.3e}"
-print(sweep_line)
+
+# An abscissa and one series per curve is what a sweep produces, and
+# print_data is what shows it: the same dictionary would draw the figure.
+print_data({"x": snr_dB_list[::8],
+            "curves": {"loop": np.array(by_hand),
+                       "monte_carlo": ser_array[::8]}},
+           xlabel="SNR [dB]", ylabel="SER")
 
 
 def qfunc(x):
@@ -101,7 +103,8 @@ N_compare = 100000
 fine_dB_list = np.arange(0, 25, 0.05)
 measured_ber = {}
 theory_ber = {}
-required_rows = []
+required_rows = {"bits per symbol": [],
+                 "Eb/N0 at BER=1e-3 [dB]": []}
 for order in [4, 16, 64, 256]:
     other = Constellation("QAM", order)
     bits = int(np.log2(order))
@@ -120,11 +123,12 @@ for order in [4, 16, 64, 256]:
     required_dB = float(
         np.interp(-3.0, np.log10(fine_ber[above_underflow])[::-1],
                   fine_dB_list[above_underflow][::-1]))
-    required_rows.append((order_label, bits, required_dB))
+    required_rows["bits per symbol"].append(bits)
+    required_rows["Eb/N0 at BER=1e-3 [dB]"].append(required_dB)
 
-print(f"{'order':>8s} {'bits/symbol':>12s} {'Eb/N0 at BER=1e-3':>19s}")
-for order_label, bits, ebn0_dB in required_rows:
-    print(f"{order_label:>8s} {bits:>12d} {ebn0_dB:>16.1f} dB")
+print()
+print_data({"x": [4, 16, 64, 256], "curves": required_rows},
+           xlabel="QAM order")
 
 ax = plot_error_rate(ebn0_dB_list, measured_ber, theory=theory_ber,
                      xlabel="$E_b/N_0$ [dB]", ylabel="BER",

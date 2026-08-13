@@ -12,6 +12,9 @@ from comnumpy.core.visualizers import plot_chain_profiling
 from comnumpy.ofdm.processors import CarrierAllocator, FFTProcessor, IFFTProcessor, CyclicPrefixer, CyclicPrefixRemover, CarrierExtractor
 from comnumpy.ofdm.compensators import FrequencyDomainEqualizer
 from comnumpy.ofdm.allocation import get_allocation
+from comnumpy import style
+
+style.use()
 
 
 fs = 5e6        # Sample rate the channel is resolved at

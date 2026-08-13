@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy.core import Sequential, plot_iq
+from comnumpy import style
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.channels import AWGN
@@ -9,6 +10,8 @@ from comnumpy.core.processors import Amplifier
 from comnumpy.core.compensators import BlindPhaseCompensation
 from comnumpy.core.utils import Constellation
 from comnumpy.core.metrics import compute_ser
+
+style.use()
 
 
 # parameters
@@ -44,6 +47,11 @@ ser_after = compute_ser(data_tx, y)
 # print metric and plot
 print(f"after: SER={ser_after}")
 
-plot_iq(chain.tap("awgn"), title="received data")
-plot_iq(chain.tap("phase_compensation"), title="after phase correction")
+for tap, name in [("awgn", "received data"),
+                  ("phase_compensation", "after phase correction")]:
+    symbols = chain.tap(tap)
+    _, ax = plt.subplots()
+    ax.plot(np.real(symbols), np.imag(symbols), ".")
+    ax.set_title(name)
+    style.apply(ax, "iq")
 plt.show()

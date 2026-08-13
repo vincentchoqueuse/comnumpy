@@ -11,6 +11,9 @@ from comnumpy.core.metrics import compute_ber
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.optical.compensators import ChromaticDispersionFIRCompensator, ChromaticDispersionLSFIRCompensator
 from comnumpy.optical.channels import ChromaticDispersion
+from comnumpy import style
+
+style.use()
 
 # This script reproduces the figures 3 and 4 in the paper Optimal Least-Squares FIR Digital Filters
 # for Compensation of Chromatic Dispersion in Digital Coherent Optical Receivers

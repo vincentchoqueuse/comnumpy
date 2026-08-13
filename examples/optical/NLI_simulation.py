@@ -7,6 +7,7 @@ figures into ../../docs/tutorials/img/.
 import matplotlib.pyplot as plt
 import numpy as np
 
+from comnumpy import print_data
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
@@ -23,6 +24,9 @@ from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
                                     watt_to_dbm)
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -164,15 +168,12 @@ for name, points in counters.items():
     for index, counter in enumerate(points):
         ser[name][index] = counter.rate
 
-header = "launch power [dBm]  "
-for value in dBm_list:
-    header += f"{value:7.1f}"
-print(header)
-for name, values in snr_dB.items():
-    line = f"{name:24s}"
-    for value in values:
-        line += f"{value:7.1f}"
-    print(line)
+# The sweep result, written down once. It is printed here and drawn
+# below from the same object; transposed because six receiver names as
+# column headers would make the table 160 characters wide.
+snr_data = {"x": dBm_list, "curves": snr_dB}
+print_data(snr_data, xlabel="launch power [dBm]",
+           ylabel="effective SNR [dB]", transpose=True)
 
 print("\nreceiver                  best SNR   at power    total time")
 for name, values in snr_dB.items():
@@ -200,14 +201,21 @@ for name, points in counters.items():
 # nonlinear interference as noise, so it has nothing to say about a
 # receiver that removes part of it.
 fine_powers = dbm_to_watt(np.linspace(dBm_list[0], dBm_list[-1], 200))
-ax = plot_error_rate(dBm_list, snr_dB, xlabel="launch power [dBm]",
-                     ylabel="effective SNR [dB]", yscale="linear",
-                     title=f"{N_span} x {L_span} km, {constellation.order}-"
-                           f"{constellation.family} at "
-                           f"{R_s / 1e9:.0f} GBd")
+# An effective SNR in dB is not an error rate -- a linear ordinate, six
+# receivers and one closed form -- so it is drawn here rather than routed
+# through plot_error_rate, whose name would then be describing something
+# it is not.
+fig1, ax = plt.subplots()
+for name, values in snr_dB.items():
+    ax.plot(dBm_list, values, "o-", fillstyle="none", label=name)
 ax.plot(watt_to_dbm(fine_powers),
         10 * np.log10(gn_model_snr(ase_W, eta, fine_powers)), "k:",
         label="GN model, single polarization")
+ax.set_xlabel("launch power [dBm]")
+ax.set_ylabel("effective SNR [dB]")
+ax.set_title(f"{N_span} x {L_span} km, {constellation.order}-"
+             f"{constellation.family} at {R_s / 1e9:.0f} GBd")
+ax.grid(True)
 ax.legend()
 plt.tight_layout()
 plt.savefig(f"{img_dir}/nli_simulation_fig1.png")

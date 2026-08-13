@@ -55,8 +55,34 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
 - Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`.
-- Figures: `plot_iq`, `plot_error_rate`, `plot_spectrum`, `plot_time`,
-  `plot_channel_response`, and the channels' own `info()` / `plot()`.
+- **A swept result is one dictionary, shown two ways.**
+  `data = {"x": snr_dB, "curves": {"ZF": ..., "ML": ...}}` — which is
+  already the shape `monte_carlo` returns — then `print_data(data,
+  xlabel=…, ylabel=…)` for the table the page pastes and
+  `plot_data(data, …)` for the figure. Never hand-roll an aligned
+  `print` loop with `:8.4f` widths: the table and the figure must come
+  from the same object, or they will eventually come from different
+  runs.
+- Activate the style sheet once, at the top of the script, right after
+  the imports: `style.use()`. The colours and the figure size are
+  rcParams and a figure already created keeps the old ones.
+- Figures: **draw with matplotlib, decorate with `style.apply(ax, kind)`**.
+  A scatter of real against imaginary, a `semilogy` of a rate against an
+  SNR: the reader knows those calls, and hiding them behind a wrapper
+  teaches nothing. `style.apply(ax, "iq" | "error_rate" | "time" |
+  "spectrum")` fills the labels that are still empty, turns on the grid
+  and adds the legend; it never touches the data or the scales.
+  A kind names the *quantity*. A runtime in ms or an effective SNR in dB
+  is none of them: give it its own labels and `ax.grid(True)`, and do not
+  borrow `"error_rate"` because the axis happens to be logarithmic.
+  Keep `plot_error_rate` for the case it earns: several measured curves
+  each paired with its closed form, which it draws in matching colours
+  with markers that grow so coincident curves stay legible.
+  For the quantities that need computing before drawing, use the
+  function: `plot_spectrum`, `plot_welch`, `plot_kde`,
+  `plot_channel_response`, `plot_carrier_allocation`. And an object that
+  can show itself does: `constellation.plot(ax=)`, `channel.plot()`,
+  `channel.info()`.
 - If the library makes something awkward, that is a finding about the
   library. Say so and propose the fix rather than working around it in the
   example.

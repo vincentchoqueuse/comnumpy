@@ -100,7 +100,7 @@ The whole system is one chain, and the number of spans is an argument:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 1-88
+   :lines: 1-90
 
 Two things in that chain are worth naming.
 
@@ -129,7 +129,7 @@ be read against.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 91-127
+   :lines: 93-129
 
 .. code::
 
@@ -158,7 +158,7 @@ are cheap enough to leave in the script:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 129-154
+   :lines: 131-156
 
 .. code::
 
@@ -190,7 +190,7 @@ two noises that close add. The check reports it rather than hiding it.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 156-158
+   :lines: 158-165
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -204,7 +204,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 160-180
+   :lines: 167-197
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -236,7 +236,7 @@ through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 182-187
+   :lines: 199-204
 
 .. code::
 
@@ -289,7 +289,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 189-210
+   :lines: 206-232
 
 .. code::
 
@@ -346,7 +346,7 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-86
+   :lines: 1-90
 
 Before propagating anything, the closed form of :doc:`gn_model` says where
 the optimum should fall. It describes this link with two changes from the
@@ -355,7 +355,7 @@ instead of two, which is what ``polarizations=1`` is for:
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 89-105
+   :lines: 93-109
 
 .. code::
 
@@ -365,17 +365,19 @@ That is the prediction the sweep below has to land on.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 108-219
+   :lines: 112-227
 
 .. code::
 
-   launch power [dBm]     -6.0   -4.5   -3.0   -1.5    0.0    1.5    3.0    4.5
-   amplifier noise only       15.9   17.4   18.8   20.3   21.9   23.3   24.8   26.4
-   dispersion compensation    15.8   17.1   18.2   18.8   18.4   16.9   14.6   11.7
-   DBP, 1 step/span           15.8   17.2   18.4   19.3   19.3   18.1   16.1   13.3
-   DBP, 2 steps/span          15.9   17.3   18.7   19.9   20.6   20.5   19.2   16.9
-   DBP, 4 steps/span          15.9   17.4   18.8   20.3   21.7   23.0   23.8   23.8
-   DBP, 50 steps/span         15.9   17.4   18.8   20.3   21.8   23.2   24.6   25.9
+   effective SNR [dB]
+   launch power [dBm]       -6.0  -4.5  -3.0  -1.5   0.0   1.5   3.0   4.5
+   -----------------------------------------------------------------------
+   amplifier noise only     15.9  17.4  18.8  20.3  21.9  23.3  24.8  26.4
+   dispersion compensation  15.8  17.1  18.2  18.8  18.4  16.9  14.6  11.7
+   DBP, 1 step/span         15.8  17.2  18.4  19.3  19.3  18.1  16.1  13.3
+   DBP, 2 steps/span        15.9  17.3  18.7  19.9  20.6  20.5  19.2  16.9
+   DBP, 4 steps/span        15.9  17.4  18.8  20.3  21.7  23.0  23.8  23.8
+   DBP, 50 steps/span       15.9  17.4  18.8  20.3  21.8  23.2  24.6  25.9
 
 .. image:: img/nli_simulation_fig1.png
    :width: 100%

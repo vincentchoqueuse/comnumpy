@@ -21,6 +21,9 @@ import numpy as np
 
 from comnumpy.core.metrics import compute_ser_rayleigh_psk
 from comnumpy.mimo.detectors import LinearDetector, MaximumLikelihoodDetector
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

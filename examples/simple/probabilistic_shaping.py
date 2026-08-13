@@ -15,6 +15,9 @@ from comnumpy.core.shaping import (AmplitudeMapper, ConstantCompositionMatcher,
                                    DistributionMatcher, distribution_entropy,
                                    maxwell_boltzmann)
 from comnumpy.core.utils import Constellation
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 mermaid_dir = "../../docs/tutorials/mermaid/"

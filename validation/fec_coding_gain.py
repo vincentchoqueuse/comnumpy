@@ -16,6 +16,9 @@ from comnumpy.core.metrics import compute_ber
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.fec import ConvolutionalEncoder, ViterbiDecoder
 from comnumpy.monte_carlo import monte_carlo
+from comnumpy import style
+
+style.use()
 
 # one bit per symbol: the chain carries bits, not symbol indices. Bound
 # through partial rather than a lambda, which a worker process could not

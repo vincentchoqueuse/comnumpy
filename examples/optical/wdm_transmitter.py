@@ -16,6 +16,9 @@ from comnumpy.core import (SRRCFilter, Sequential, SymbolGenerator,
                            SymbolMapper, Upsampler)
 from comnumpy.core.utils import Constellation
 from comnumpy.optical import WDMDemultiplexer, WDMGrid, WDMMultiplexer
+from comnumpy import style
+
+style.use()
 
 N_CHANNELS = 5
 N_SYMBOLS = 512

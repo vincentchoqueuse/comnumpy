@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
-from comnumpy.core import Sequential, plot_iq
+from comnumpy import style
+from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.filters import SRRCFilter
@@ -11,6 +12,8 @@ from comnumpy.core.utils import Constellation, hard_projector
 from comnumpy.mimo.channels import SelectiveMIMOChannel, AWGN
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.compensators import BlindDualMIMOCompensator
+
+style.use()
 
 
 @dataclass
@@ -87,7 +90,11 @@ chain = Sequential([
 Y = chain((N_t, N))
 
 data = chain.tap("filter")  # full CMA output (before tail removal)
-plot_iq(chain.tap("tail"), title="after CMA convergence")
+symbols = chain.tap("tail")
+_, ax = plt.subplots()
+ax.plot(np.real(symbols), np.imag(symbols), ".")
+ax.set_title("after CMA convergence")
+style.apply(ax, "iq")
 
 # compute CMA loss
 kernel_size = 100

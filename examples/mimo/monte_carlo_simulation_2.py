@@ -9,6 +9,9 @@ from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.detectors import OrderedSuccessiveInterferenceCancellationDetector
+from comnumpy import style
+
+style.use()
 
 # This script shows the performance of several OSIC MIMO detectors. It reproduces the figure 11.3 of the book [1]
 # [1] Cho, Yong Soo, et al. MIMO-OFDM wireless communications with MATLAB. John Wiley & Sons, 2010.

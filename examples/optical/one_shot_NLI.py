@@ -14,11 +14,13 @@ from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate, plot_iq
+from comnumpy import style
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import dbm_to_watt, launch_amplitude
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -153,15 +155,24 @@ for n_spans in spans:
     print(f"{n_spans:5d} {snr_ase_only[n_spans]:8.2f} dB {predicted:8.2f} dB "
           f"{snr_ase_only[n_spans] - predicted:+8.2f} dB")
 
-plot_iq(received_field,
-        title=f"received field ({dBm} dBm, {N_span} spans)")
+# An IQ plane is two matplotlib calls; style.apply gives it the labels,
+# the grid and the equal aspect ratio a constellation has to be read on.
+alphabet = constellation.alphabet
+fig1, ax1 = plt.subplots()
+ax1.plot(np.real(received_field), np.imag(received_field), ".")
+ax1.set_title(f"received field ({dBm} dBm, {N_span} spans)")
+style.apply(ax1, "iq")
 plt.savefig(f"{img_dir}/one_shot_nli_fig1.png")
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
 for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
-    plot_iq(estimates[n_spans], reference=constellation, ax=ax)
+    symbols = estimates[n_spans]
+    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
+    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
+            label="alphabet")
     ax.set_title(f"after {n_spans} span{'s' if n_spans > 1 else ''}, "
                  f"SNR {snr_per_span[n_spans]:.1f} dB")
+    style.apply(ax, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
@@ -171,11 +182,17 @@ for index, n_spans in enumerate(spans):
     measured[index] = snr_per_span[n_spans]
     ase_only[index] = snr_ase_only[n_spans]
 
-ax = plot_error_rate(np.array(spans),
-                     {"amplifier noise only": ase_only,
-                      "dispersion compensation only": measured},
-                     xlabel="spans travelled", ylabel="effective SNR [dB]",
-                     yscale="linear", title=f"{dBm} dBm launch power")
+# An effective SNR is not an error rate: linear ordinate, two curves,
+# nothing a helper would say better than the four lines that draw it.
+fig3, ax = plt.subplots()
+ax.plot(spans, ase_only, "o-", fillstyle="none", label="amplifier noise only")
+ax.plot(spans, measured, "s-", fillstyle="none",
+        label="dispersion compensation only")
+ax.set_xlabel("spans travelled")
+ax.set_ylabel("effective SNR [dB]")
+ax.set_title(f"{dBm} dBm launch power")
+ax.grid(True)
+ax.legend()
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig3.png")
 
@@ -201,10 +218,15 @@ print(f"digital back-propagation  SNR={snr_dbp:5.2f} dB  SER={ser_dbp:.4f}  "
       f"residual phase={np.rad2deg(back_propagated['phase'].theta_):+.1f} deg")
 
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-plot_iq(estimates[N_span], reference=constellation, ax=axes[0])
-axes[0].set_title(f"dispersion compensation\n"
-                  f"SNR {snr_per_span[N_span]:.2f} dB")
-plot_iq(back_propagated.tap("phase"), reference=constellation, ax=axes[1])
-axes[1].set_title(f"digital back-propagation\nSNR {snr_dbp:.2f} dB")
+for ax, symbols, name in [
+        (axes[0], estimates[N_span],
+         f"dispersion compensation\nSNR {snr_per_span[N_span]:.2f} dB"),
+        (axes[1], back_propagated.tap("phase"),
+         f"digital back-propagation\nSNR {snr_dbp:.2f} dB")]:
+    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
+    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
+            label="alphabet")
+    ax.set_title(name)
+    style.apply(ax, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig4.png")

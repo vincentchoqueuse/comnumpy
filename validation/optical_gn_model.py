@@ -65,6 +65,9 @@ from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import gn_model_nli_power
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import dbm_to_watt
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

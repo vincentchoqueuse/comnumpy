@@ -45,6 +45,127 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — the figures finally use the style sheet that ships with the package
+
+`comnumpy.mplstyle` has shipped since D27b -- Okabe-Ito, colourblind-safe,
+no information carried by colour alone -- and **nothing activated it**.
+Not one example, not one validation script, not one plotting function.
+Every figure in the documentation was matplotlib's defaults, and the
+decision was a file nobody read.
+
+`style.use()` is the one line that turns it on, called at the top of the
+42 scripts that draw, right after their imports. It has to be there and
+not in a plotting helper: colours, fonts and figure size are rcParams,
+so a figure already created keeps whatever was active when it was made.
+Explicit rather than at import time, which stays forbidden -- importing
+a library must not change the caller's matplotlib state.
+
+All 59 figures are regenerated.
+
+`savefig.dpi` drops from 300 to **150** at the same time. 300 is a
+printed-figure setting; these are read on a web page and committed to
+the repository, and it tripled every PNG for pixels no screen shows --
+28 kB to 91 kB on a measured error-rate figure, some 13 MB across
+`docs/`. At 150 the same figure is 45 kB.
+
+### Added — `print_data` / `plot_data`, one result shown two ways
+
+A sweep produces the same thing every time: an abscissa and one series
+per curve. The scripts restated it once for the table and once for the
+figure, and the table was always a hand-rolled `print` loop with
+hard-coded widths -- `f"{value:8d} {measured['single carrier'][index]:15.4f}"`
+and six more like it. Two statements of one result, which is two chances
+for them to end up describing different runs.
+
+`comnumpy.data` gives that result a shape:
+
+```python
+data = {"x": lengths, "curves": {"single carrier": sc_ms, "OFDM": ofdm_ms}}
+print_data(data, xlabel="block length N", ylabel="runtime [ms]")
+plot_data(data, xlabel="block length $N$", ylabel="runtime [ms]",
+          xscale="log", yscale="log", marker="o")
+```
+
+A plain dictionary of NumPy arrays -- no class to construct, nothing to
+import before the data exists, no pandas -- and it is already what
+`monte_carlo` returns, so a sweep result is a `curves` value as it
+stands. `unpack` is the one place the contract is checked (both keys
+present, `curves` a mapping, every series the length of `x`), so the two
+renderers cannot disagree about what a valid result is.
+
+`format_data` returns the table as a string; `print_data` prints it.
+The split exists because a page pastes that string, and because a
+formatting rule you can only observe through stdout is a rule nobody
+tests.
+
+The formatting is per **column**, not per cell: one format for a whole
+column, chosen from its own dynamic range, so the decimal points line up
+when the column is read down -- which is the only reason a table beats a
+list. An integral column keeps no decimals, a column spanning more than
+four decades goes to scientific notation (an error rate does, a runtime
+in ms does not), and a `nan` prints as `-` rather than as a word in a
+column of numbers, because a sweep point with no measurement is a hole.
+
+Deviation from the specification, deliberate: it asked for `x_label` on
+the text side and `xlabel` on the plotting side. Both are `xlabel` and
+`ylabel` here -- matplotlib's spelling, and the one `plot_error_rate`
+already uses. On the text side `ylabel` is a caption above the table,
+since a table has one column per curve and no single ordinate; the unit
+belongs there rather than repeated in every cell.
+
+### Changed — the cosmetics are a function, the drawing is matplotlib
+
+A figure of this library was drawn one of two ways, and neither was
+good. Either through a `plot_*` wrapper, which for a single curve hides
+two lines of matplotlib behind a signature to learn -- 33 `ax.plot` and
+17 `ax.semilogy` in `examples/` say what the scripts actually prefer --
+or by hand, in which case it got no house look at all. And the style
+sheet shipped since D27b was activated by **nothing**: not one script,
+not one plotting function. Every figure in the documentation was drawn
+with matplotlib's defaults.
+
+`comnumpy.style.apply(ax, kind)` is the missing half. A page draws its
+curves itself and hands the axis over for the decoration:
+
+```python
+fig, ax = plt.subplots()
+line, = ax.semilogy(snr_dB, ser, "o", fillstyle="none", label="16-QAM")
+ax.semilogy(snr_dB, ser_theory, "-", color=line.get_color())
+style.apply(ax, "error_rate")
+```
+
+It fills the labels that are still empty -- never one the caller set --
+turns the grid on, on both decades when the axis is logarithmic, and
+adds a legend when something is labelled. `"iq"` also sets an equal
+aspect ratio, because a constellation read on unequal axes is a
+different constellation. It never touches the data and never changes a
+scale: whether a curve is a `plot` or a `semilogy`, with which marker
+and in which colour, is the page's statement about its measurement and
+stays in the page's code.
+
+A kind names a **quantity**, not a plotting mode, which is what caught
+the misuse: of twelve `plot_error_rate` calls, four drew no error rate
+at all -- an effective SNR in dB twice, a runtime in ms twice. Those
+four are now written out, with `ax.grid(True)` and their own labels;
+they do not borrow `"error_rate"` because their ordinate happens to be
+logarithmic. The twenty `plot_iq` calls became the two matplotlib lines
+they always were.
+
+`plot_error_rate` keeps the case it earns -- several measured curves
+each paired with its closed form, drawn in matching colours with
+markers that grow so that two detectors which agree do not hide each
+other -- and its decoration now goes through `style.apply`, so a figure
+drawn by hand and one drawn by it cannot end up looking different.
+
+One behaviour of it turned out to be load-bearing in a way worth
+recording. It filtered zeros out before plotting; the filter is gone,
+replaced by the ordinate's `nonpositive="mask"`, and the figures are
+byte-identical. But the two are *not* interchangeable with matplotlib's
+default: `"clip"` sends a zero to some 2e5 pixels below the axis, so a
+joined curve dives off the bottom of the figure and comes back where
+there should be a gap. Anyone drawing an error rate by hand needs
+`nonpositive="mask"`, and the docstring now says so.
+
 ### Documentation — the AWGN tutorial derives its reference curve
 
 The Monte-Carlo page compared a measurement against

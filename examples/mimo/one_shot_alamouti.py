@@ -6,18 +6,20 @@ into ../../docs/tutorials/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import monte_carlo
+from comnumpy import monte_carlo, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser, compute_ser_rayleigh_psk
 from comnumpy.core.processors import Amplifier
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate, plot_iq
+from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
 from comnumpy.mimo.detectors import LinearDetector
 from comnumpy.mimo.utils import rayleigh_channel
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 mermaid_dir = "../../docs/tutorials/mermaid/"
@@ -97,10 +99,15 @@ alamouti.summary(500 * code.n_symbols)
 received = alamouti.tap("noise")[0]
 combined = alamouti.tap("detector") / power
 fig2, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-plot_iq(received, marker=".", ax=ax_left)
+ax_left.plot(np.real(received), np.imag(received), ".")
 ax_left.set_title("tap('noise'): the single receive antenna")
-plot_iq(combined, reference=constellation, ax=ax_right)
+style.apply(ax_left, "iq")
+ax_right.plot(np.real(combined), np.imag(combined), ".", label="combined")
+ax_right.plot(np.real(constellation.alphabet),
+              np.imag(constellation.alphabet), "kx", markersize=9,
+              label="transmitted alphabet")
 ax_right.set_title("tap('detector'): after Alamouti combining")
+style.apply(ax_right, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 

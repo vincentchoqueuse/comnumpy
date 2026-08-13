@@ -167,6 +167,9 @@ from comnumpy.optical import (DBP, FiberLink, WDMDemultiplexer, WDMGrid,
                               WDMMultiplexer)
 from comnumpy.optical.constants import PLANCK_CONSTANT
 from comnumpy.optical.fiber import FiberSpec
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

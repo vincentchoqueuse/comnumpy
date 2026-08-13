@@ -47,6 +47,9 @@ from scipy.special import j0
 
 from comnumpy.core.channels import TappedDelayLineChannel
 from comnumpy.core.fading import get_delay_profile, rayleigh_process
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

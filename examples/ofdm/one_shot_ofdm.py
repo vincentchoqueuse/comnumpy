@@ -7,7 +7,7 @@ into ../../docs/tutorials/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import monte_carlo
+from comnumpy import monte_carlo, plot_data, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN, FIRChannel, TappedDelayLineChannel
 from comnumpy.core.compensators import LinearEqualizer
@@ -16,8 +16,10 @@ from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate, plot_iq
+from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -66,11 +68,19 @@ detected = sc_chain(N)
 sc_ser = compute_ser(sc_chain.tap("data_tx"), detected)
 print(f"single carrier: SER {sc_ser:.4f}, {sc_chain.elapsed_ * 1e3:.0f} ms")
 
+# An IQ plane is a scatter of the real part against the imaginary one;
+# style.apply gives it the axis labels, the grid and the equal aspect
+# ratio without which a constellation is not the constellation.
+alphabet = constellation.alphabet
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-plot_iq(sc_chain.tap("data_rx"), reference=constellation, title="received",
-        ax=axes[0])
-plot_iq(sc_chain.tap("data_rx_eq"), reference=constellation,
-        title="after ZF equalization", ax=axes[1])
+for ax, tap, name in [(axes[0], "data_rx", "received"),
+                      (axes[1], "data_rx_eq", "after ZF equalization")]:
+    symbols = sc_chain.tap(tap)
+    ax.plot(np.real(symbols), np.imag(symbols), ".", label="symbols")
+    ax.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
+            label="alphabet")
+    ax.set_title(name)
+    style.apply(ax, "iq")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 
@@ -94,8 +104,13 @@ speedup = sc_chain.elapsed_ / ofdm_chain.elapsed_
 print(f"OFDM          : SER {ofdm_ser:.4f}, {ofdm_chain.elapsed_ * 1e3:.2f} ms "
       f"({speedup:.0f} times faster)")
 
-plot_iq(ofdm_chain.tap("data_rx_eq"), reference=constellation,
-        title="OFDM, after one-tap equalization")
+equalized = ofdm_chain.tap("data_rx_eq")
+fig3, ax3 = plt.subplots()
+ax3.plot(np.real(equalized), np.imag(equalized), ".", label="symbols")
+ax3.plot(np.real(alphabet), np.imag(alphabet), "kx", markersize=9,
+         label="alphabet")
+ax3.set_title("OFDM, after one-tap equalization")
+style.apply(ax3, "iq")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 
 # --- error rate ------------------------------------------------------
@@ -110,10 +125,12 @@ for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
             for trial in range(1, 3)]
     measured[name] = np.mean(runs, axis=0)
 
-print("\nSNR [dB]  single carrier      OFDM")
-for index, value in enumerate(snr_list):
-    print(f"{value:8d} {measured['single carrier'][index]:15.4f} "
-          f"{measured['OFDM'][index]:9.4f}")
+# A swept result is an abscissa and one series per curve, which is what
+# monte_carlo already returns. Written down once, it is printed and
+# plotted from the same object rather than restated for each.
+ser_data = {"x": snr_list, "curves": measured}
+print()
+print_data(ser_data, xlabel="SNR [dB]", ylabel="SER")
 
 plot_error_rate(snr_list, measured, ylabel="SER",
                 title="16-QAM over one EPA realization")
@@ -130,17 +147,28 @@ for length in lengths:
         chain(length)
         runtime[name].append(1e3 * chain.elapsed_)
 
-print("\n     N   single carrier      OFDM     ratio")
-for index, length in enumerate(lengths):
-    sc_ms = runtime["single carrier"][index]
-    ofdm_ms = runtime["OFDM"][index]
-    print(f"{length:6d} {sc_ms:13.1f} ms {ofdm_ms:7.2f} ms {sc_ms/ofdm_ms:8.0f}")
+runtime_data = {
+    "x": lengths,
+    "curves": {
+        "single carrier": np.array(runtime["single carrier"]),
+        "OFDM": np.array(runtime["OFDM"]),
+        "ratio": (np.array(runtime["single carrier"])
+                  / np.array(runtime["OFDM"])),
+    },
+}
+print()
+print_data(runtime_data, xlabel="block length N",
+           ylabel="receiver runtime [ms], and their ratio")
 
-measured_runtime = {}
-for name, values in runtime.items():
-    measured_runtime[name] = np.array(values)
-
-plot_error_rate(np.array(lengths), measured_runtime,
-                xlabel="block length $N$", ylabel="receiver runtime [ms]",
-                xscale="log", yscale="log", title="what equalization costs")
+# The same dictionary, drawn. The ratio is dimensionless and does not
+# belong on an axis in milliseconds, so the figure takes the two
+# runtimes; everything else comes from the object the table printed.
+timed = {"x": lengths, "curves": {}}
+for name, values in runtime_data["curves"].items():
+    if name != "ratio":
+        timed["curves"][name] = values
+ax5 = plot_data(timed, xlabel="block length $N$",
+                ylabel="receiver runtime [ms]",
+                xscale="log", yscale="log", marker="o", fillstyle="none")
+ax5.set_title("what equalization costs")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig5.png")

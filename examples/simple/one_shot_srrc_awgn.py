@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy.core import Sequential, plot_iq, plot_spectrum
+from comnumpy import style
+from comnumpy.core import Sequential, plot_spectrum
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
 from comnumpy.core.processors import Upsampler, Downsampler, DataExtractor
@@ -9,6 +10,8 @@ from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.utils import Constellation
 from comnumpy.core.channels import AWGN
 from comnumpy.core.metrics import compute_ser
+
+style.use()
 
 
 # parameters
@@ -41,7 +44,11 @@ ser_exp = compute_ser(data_tx, y)
 
 # plot the extracted signals
 plot_spectrum(chain.tap("awgn_channel"), title="received signal")
-plot_iq(chain.tap("extractor"), title="after SRRC+downsampling+extractor")
+symbols = chain.tap("extractor")
+_, ax = plt.subplots()
+ax.plot(np.real(symbols), np.imag(symbols), ".")
+ax.set_title("after SRRC+downsampling+extractor")
+style.apply(ax, "iq")
 
 # plot error distribution
 N_min = np.min([len(data_tx), len(y)])

@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from typing import Literal, Optional, Tuple
 from scipy.signal import welch
 from scipy.stats import gaussian_kde
+from comnumpy import style
 
 __all__ = [
     "plot_time", "plot_spectrum", "plot_welch", "plot_iq", "plot_kde",
@@ -182,6 +183,17 @@ def plot_iq(x: np.ndarray, *, marker: str = ".", title: str = "Constellation",
             ax: Optional[Axes] = None) -> Axes:
     """Scatter the in-phase and quadrature components of a signal.
 
+    For a single stream this is two matplotlib calls, and the examples of
+    this repository make them rather than call this function::
+
+        ax.plot(np.real(x), np.imag(x), ".")
+        style.apply(ax, "iq")
+
+    which is shorter, shows the reader what an IQ plane *is*, and leaves
+    the axis limits and the markers where they can be seen. What is left
+    here is the multi-stream overlay -- one labelled scatter per row of a
+    2D input -- and the reference overlay described below.
+
     Parameters
     ----------
     x : np.ndarray
@@ -310,9 +322,18 @@ def plot_error_rate(x: np.ndarray,
     colour**, a logarithmic ordinate and a grid on both decades. Fourteen
     scripts of this repository drew it by hand before this existed.
 
-    Zeros are dropped rather than plotted. A sweep point where no error
+    Zeros are masked rather than plotted. A sweep point where no error
     was seen means the estimate ran out of samples, not that the error
-    rate is zero, and a logarithmic axis has no place to put it.
+    rate is zero, and a logarithmic axis has no place to put it. This is
+    the ordinate's ``nonpositive="mask"``, and it is worth knowing when
+    drawing such a figure by hand: matplotlib's default is ``"clip"``,
+    which sends the point far below the axis instead of dropping it, so
+    a joined curve dives off the bottom of the figure and comes back.
+    On a linear ordinate a zero is an ordinary value and is kept.
+
+    The decoration -- grid, labels, legend -- is
+    :func:`comnumpy.style.apply`, so a figure drawn by hand and one drawn
+    here cannot end up looking different.
 
     Each measured curve gets its own marker shape, and a slightly larger
     one than the curve before it, so that two detectors which are
@@ -374,43 +395,35 @@ def plot_error_rate(x: np.ndarray,
     abscissa = np.asarray(x, dtype=float)
     fine = abscissa if x_theory is None else np.asarray(x_theory, dtype=float)
 
-    # A zero is dropped only on a logarithmic ordinate, where it has no
-    # place to go and means "no error was seen", i.e. the estimate ran
-    # out of samples. On a linear axis a zero is an ordinary value and
-    # removing it would silently shorten the curve.
-    def drawn(values: np.ndarray) -> np.ndarray:
-        return values > 0 if yscale == "log" else np.ones(values.shape, bool)
-
     colors = {}
     for index, (name, values) in enumerate(curves.items()):
-        values = np.asarray(values, dtype=float)
-        seen = drawn(values)
         # A measurement that has a reference curve is drawn as markers
         # alone, so that the pair reads as one statement rather than as
         # two curves; one that has none is joined, because a scatter of
         # points is not a curve the eye can follow.
-        style = "" if name in reference else "-"
-        line, = ax.plot(abscissa[seen], values[seen], style,
+        marker_only = "" if name in reference else "-"
+        line, = ax.plot(abscissa, np.asarray(values, dtype=float),
+                        marker_only,
                         marker=_MARKERS[index % len(_MARKERS)],
                         markersize=_MARKER_SIZE + _MARKER_GROWTH * index,
                         fillstyle="none", label=name or "simulation")
         colors[name] = line.get_color()
     for name, values in reference.items():
-        values = np.asarray(values, dtype=float)
-        seen = drawn(values)
         label = f"{name}, theory" if name else "theory"
-        ax.plot(fine[seen], values[seen], "-", color=colors.get(name),
-                label=label)
+        ax.plot(fine, np.asarray(values, dtype=float), "-",
+                color=colors.get(name), label=label)
     ax.set_xscale(xscale)
-    ax.set_yscale(yscale)
+    # "mask" rather than the default "clip": a rate of zero is a missing
+    # measurement and must leave a gap, not a spike to the bottom of the
+    # figure. On a linear ordinate there is nothing to mask.
+    ax.set_yscale(yscale, **({"nonpositive": "mask"} if yscale == "log"
+                             else {}))
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     if title:
         ax.set_title(title)
-    ax.grid(True, which="both")
-    if len(curves) + len(reference) > 1 or any(curves):
-        ax.legend()
-    return ax
+    return style.apply(ax, "error_rate",
+                       legend=len(curves) + len(reference) > 1 or any(curves))
 
 
 def plot_channel_response(h: np.ndarray, *,

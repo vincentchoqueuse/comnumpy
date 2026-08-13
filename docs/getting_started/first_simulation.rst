@@ -32,7 +32,7 @@ Prerequisites
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 1-21
+   :lines: 1-24
 
 
 By Hand
@@ -44,7 +44,7 @@ Gaussian; the receiver keeps the nearest point.
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 23-46
+   :lines: 26-49
 
 That works, and it is worth being able to write. But look at what had to be
 kept consistent, by you, across those twenty lines:
@@ -64,7 +64,7 @@ kept consistent, by you, across those twenty lines:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 48-56
+   :lines: 51-59
 
 None of this is hard. All of it is a place where a study drifts as it grows:
 change the modulation and four independent lines have to change together,
@@ -76,7 +76,7 @@ The Same Thing, as a Chain
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 58-79
+   :lines: 61-82
 
 .. mermaid:: mermaid/first_simulation.mmd
 
@@ -146,7 +146,7 @@ itself:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 81-84
+   :lines: 84-87
 
 .. code::
 
@@ -170,7 +170,7 @@ It also draws itself, next to what the channel did to it:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 86-96
+   :lines: 89-101
 
 .. image:: img/first_simulation_fig1.png
    :width: 100%
