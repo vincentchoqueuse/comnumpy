@@ -4,7 +4,8 @@ from typing import Literal, Optional
 from comnumpy.core import Processor
 from .fiber import FiberSpec
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
-                    apply_chromatic_dispersion, apply_kerr_nonlinearity,
+                    step_transfers, apply_frequency_response,
+                    apply_kerr_nonlinearity,
                     is_polarization_pair, manakov_kerr)
 
 __all__ = ["DBP"]
@@ -139,6 +140,9 @@ class DBP(Processor):
     beta2: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     gain: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
     manakov_: bool = field(init=False, repr=False, default=False)
+    transfer_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    transfer_index_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    transfer_key_: Optional[tuple] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
         self.manakov_ = is_polarization_pair(x, type(self).__name__)
@@ -154,12 +158,27 @@ class DBP(Processor):
         self.beta2 = self.fiber.beta2
         self.gain = 1/edfa_gain
         self.step_size = step_size[::-1]  # reverse order
+        self._build_transfer(x.shape[-1])
 
     def _apply_kerr(self, y: np.ndarray, dz: float) -> np.ndarray:
         """Backward Kerr step: scalar NLSE, or Manakov for a pair."""
         gamma, intensity = manakov_kerr(y, self.fiber.gamma, self.manakov_)
         return apply_kerr_nonlinearity(y, dz, gamma, direction=-1,
                                        intensity=intensity)
+
+    def _build_transfer(self, n_samples: int) -> None:
+        """Cache one linear-step transfer function per distinct length."""
+        assert self.step_size is not None and self.beta2 is not None
+        if self.use_only_linear:
+            lengths = np.array([self.L_span], dtype=float)
+        elif self.step_method == "symmetric":
+            lengths = np.asarray(self.step_size, dtype=float) / 2
+        else:
+            lengths = np.asarray(self.step_size, dtype=float)
+        self.transfer_, self.transfer_index_, self.transfer_key_ = step_transfers(
+            n_samples, lengths, beta2=self.beta2, fs=self.fs,
+            alpha_dB=self.fiber.alpha_dB, direction=-1,
+            previous=(self.transfer_, self.transfer_index_, self.transfer_key_))
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = x
@@ -170,17 +189,18 @@ class DBP(Processor):
         for _ in range(self.N_spans):
             y = self.gain * y  # correct for edfa gain
             if self.use_only_linear:
-                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                y = apply_frequency_response(y, self.transfer_[0])
             else:
                 for num_step in range(self.StPS):
                     dz = self.step_size[num_step]
+                    H = self.transfer_[self.transfer_index_[num_step]]
                     if self.step_method == "symmetric":
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_frequency_response(y, H)
                         y = self._apply_kerr(y, dz)
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_frequency_response(y, H)
 
                     if self.step_method == "asymetric":
-                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=-1)
+                        y = apply_frequency_response(y, H)
                         y = self._apply_kerr(y, dz)
 
         return y

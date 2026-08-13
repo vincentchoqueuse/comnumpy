@@ -3,15 +3,16 @@ import logging
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Literal, Optional
-from comnumpy._backend import fft, fftfreq, ifft  # cupy-compatible (D3)
+from comnumpy._backend import fftfreq  # cupy-compatible (D3)
 from comnumpy.core import Processor
 from .devices import ErbiumDopedFiberAmplifier
 from .fiber import FiberSpec
 from .raman import RamanSolution
 from .constants import PLANCK_CONSTANT
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
-                    compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity,
-                    is_polarization_pair, manakov_kerr, watt_to_dbm)
+                    compute_erbium_doped_fiber_N_ase, apply_kerr_nonlinearity,
+                    is_polarization_pair, manakov_kerr, watt_to_dbm,
+                    step_transfers, apply_frequency_response)
 
 __all__ = ["FiberLink"]
 
@@ -212,6 +213,9 @@ class FiberLink(Processor):
     raman_tilt_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
     manakov_: bool = field(init=False, repr=False, default=False)
     raman_sigma2_: float = field(init=False, repr=False, default=0.0)
+    transfer_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    transfer_index_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+    transfer_key_: Optional[tuple] = field(init=False, repr=False, default=None)
     rng_: Optional[np.random.Generator] = field(init=False, repr=False, default=None)
 
     def prepare(self, x: np.ndarray) -> None:
@@ -275,6 +279,21 @@ class FiberLink(Processor):
         # a density becomes a power in the simulated bandwidth; `budget`
         # multiplies the same density by the bandwidth a receiver keeps
         self.edfa_N_ase = self.fs * edfa_density
+        self._build_transfer(x.shape[-1])
+
+    def _build_transfer(self, n_samples: int) -> None:
+        """Cache one linear-step transfer function per distinct length."""
+        assert self.step_size is not None and self.beta2 is not None
+        if self.use_only_linear:
+            lengths = np.array([self.L_span], dtype=float)
+        elif self.step_method == "symmetric":
+            lengths = np.asarray(self.step_size, dtype=float) / 2
+        else:
+            lengths = np.asarray(self.step_size, dtype=float)
+        self.transfer_, self.transfer_index_, self.transfer_key_ = step_transfers(
+            n_samples, lengths, beta2=self.beta2, fs=self.fs,
+            alpha_dB=self.fiber.alpha_dB, direction=1,
+            previous=(self.transfer_, self.transfer_index_, self.transfer_key_))
 
     def _ase_densities(self) -> tuple[float, float, float]:
         """One span's noise, before any bandwidth is chosen.
@@ -412,7 +431,7 @@ class FiberLink(Processor):
                 f"describe this fibre")
         # Sampled at the *half*-step boundaries, not the step boundaries.
         # The gain belongs to the linear operator, exactly like the loss
-        # that apply_chromatic_dispersion already applies over dz/2 in
+        # that the linear step already applies over dz/2 in
         # each half; applying a whole step's gain at one point breaks the
         # symmetry of the symmetric split-step and drops it from second
         # order to first. Measured on the SPM phase of a CW field: the
@@ -474,7 +493,7 @@ class FiberLink(Processor):
             return y
         if self.raman_tilt_ is None:
             return self.raman_step_gain_[index] * y
-        return ifft(self.raman_tilt_[index] * fft(y))
+        return apply_frequency_response(y, self.raman_tilt_[index])
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # perform SSFM
@@ -485,7 +504,7 @@ class FiberLink(Processor):
         for num_span in range(self.N_spans):
             # perform for each span
             if self.use_only_linear:
-                y = apply_chromatic_dispersion(y, self.L_span, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                y = apply_frequency_response(y, self.transfer_[0])
                 if self.raman_step_gain_ is not None:
                     # no step loop here, so the whole profile applies at
                     # once -- the span must stay transparent in this mode
@@ -493,23 +512,25 @@ class FiberLink(Processor):
                     if self.raman_tilt_ is None:
                         y = float(np.prod(self.raman_step_gain_)) * y
                     else:
-                        y = ifft(np.prod(self.raman_tilt_, axis=0) * fft(y))
+                        y = apply_frequency_response(
+                            y, np.prod(self.raman_tilt_, axis=0))
             else:
                 for num_step in range(self.StPS):
                     dz = self.step_size[num_step]
                     # the two half-step Raman gains bracket the Kerr term,
                     # like the two half-step dispersion operators
+                    H = self.transfer_[self.transfer_index_[num_step]]
                     if self.step_method == "symmetric":
                         y = self._apply_raman(y, 2*num_step)
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_frequency_response(y, H)
                         y = self._apply_kerr(y, dz)
                         y = self._apply_raman(y, 2*num_step+1)
-                        y = apply_chromatic_dispersion(y, dz/2, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_frequency_response(y, H)
 
                     if self.step_method == "asymetric":
                         y = self._apply_raman(self._apply_raman(y, 2*num_step), 2*num_step+1)
                         y = self._apply_kerr(y, dz)
-                        y = apply_chromatic_dispersion(y, dz, self.beta2, alpha_dB=self.fiber.alpha_dB, fs=self.fs, direction=1)
+                        y = apply_frequency_response(y, H)
 
             # the ASE the distributed amplifier generated over this span,
             # already amplified by the gain downstream of where it was born
