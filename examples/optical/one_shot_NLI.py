@@ -62,9 +62,9 @@ def get_chain(n_spans, *, steps=1, linear_only=True):
     return Sequential([
         SymbolGenerator(constellation.order, name="data_tx"),
         SymbolMapper(constellation, name="signal_tx"),
+        Amplifier(amp),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
-        Amplifier(amp),
         FiberLink(N_spans=n_spans, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, fiber=fiber, name="link"),
         Downsampler(oversampling_ratio, use_filter=True, name="rx_field"),

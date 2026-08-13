@@ -61,9 +61,9 @@ def get_channel():
     return Sequential([
         SymbolGenerator(constellation.order, name="data_tx"),
         SymbolMapper(constellation, name="signal_tx"),
+        Amplifier(1.0, name="launch"),
         Upsampler(oversampling_sim, scale=np.sqrt(oversampling_sim)),
         SRRCFilter(rolloff, oversampling_sim, method="fft"),
-        Amplifier(1.0, name="launch"),
         FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, fiber=fiber, name="link"),
         Downsampler(oversampling_ratio, use_filter=True),

@@ -125,9 +125,9 @@ def get_chain(order=16, power_W=1e-3):
                SymbolMapper(Constellation("QAM", order), name="tx")])
     return Sequential([
         *source,
+        Amplifier(launch_amplitude(power_W, polarizations=2), name="launch"),
         Upsampler(OS, scale=np.sqrt(OS)),
         SRRCFilter(ROLLOFF, OS, N_h=40, method="fft"),
-        Amplifier(launch_amplitude(power_W, polarizations=2), name="launch"),
         FiberLink(N_SPANS, L_span=SPAN_KM, StPS=40, fs=FS, fiber=SMF,
                   NF_dB=NF_dB, name="fibre"),
         DBP(N_SPANS, L_span=SPAN_KM, StPS=1, fs=FS, fiber=SMF,
