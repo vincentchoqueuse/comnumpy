@@ -81,13 +81,14 @@ for k in k_vect:
     for compensator in compensators.values():
         compensator.set_params(demapper__alphabet=constellation)
 
-    # Storage, declared before the loop: one array per curve, full of
-    # zeros, indexed by name.
+    # --- metrics, pre-allocated --------------------------------------
+    # One array per curve, indexed by name.
     ber = {}
     for name in curve_names:
         ber[name] = np.zeros(len(snr_bit_dB_list))
 
-    # simulation loop: one child seed per SNR point (D6/D35)
+    # --- simulation loop ---------------------------------------------
+    # One child seed per SNR point (D6/D35).
     point_seeds = np.random.SeedSequence(seed).spawn(len(snr_bit_dB_list))
     for index, snr_bit_dB in enumerate(snr_bit_dB_list):
         ber["theory"][index] = constellation.metrics(snr_bit_dB)["ber"]
@@ -102,7 +103,7 @@ for k in k_vect:
             s_est = compensator(y)
             ber[name][index] = compute_ber(s_est, s[:len(s_est)], width=k)
 
-    # display, from the same dictionary the loop filled
+    # --- results: table and figure ---------------------------------------
     print_data({"x": snr_bit_dB_list, "curves": ber},
                xlabel="snr_bit_dB", ylabel=f"BER, QAM{2 ** k}")
     print()

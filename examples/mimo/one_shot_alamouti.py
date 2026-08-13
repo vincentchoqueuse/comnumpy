@@ -139,12 +139,19 @@ links = {
     "Alamouti, 2 Tx, 1 Rx": (alamouti, 1, 2, n_symbols),
     "MRC, 1 Tx, 2 Rx": (mrc, 2, 1, (1, n_symbols)),
 }
+# --- metrics, pre-allocated ------------------------------------------
 curves = {}
+for name in links:
+    curves[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, (chain, n_rx, n_tx, stimulus) in links.items():
-    values = []
-    for snr_dB, count in zip(snr_dB_list, draws, strict=True):
-        values.append(average_ser(chain, n_rx, n_tx, snr_dB, stimulus, count))
-    curves[name] = values
+    for index, (snr_dB, count) in enumerate(zip(snr_dB_list, draws,
+                                                strict=True)):
+        curves[name][index] = average_ser(chain, n_rx, n_tx, snr_dB,
+                                          stimulus, count)
+
+# --- results: figure against the closed forms ------------------------
 
 fine = np.linspace(snr_dB_list[0], snr_dB_list[-1], 100)
 per_bit = 10 ** (fine / 10) / np.log2(M)

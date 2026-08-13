@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import monte_carlo, style
+from comnumpy import monte_carlo, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
@@ -106,17 +106,19 @@ def average_ser(name, chain, snr_dB, seed=0):
     return float(np.mean(results["ser"]))
 
 
+# --- metrics, pre-allocated ------------------------------------------
 curves = {}
+for name in chains:
+    curves[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, chain in chains.items():
-    values = []
-    for snr_dB in snr_dB_list:
-        values.append(average_ser(name, chain, snr_dB))
-    curves[name] = values
-for name, values in curves.items():
-    line = f"{name:5s} "
-    for value in values:
-        line += f"{value:.4f} "
-    print(line)
+    for index, snr_dB in enumerate(snr_dB_list):
+        curves[name][index] = average_ser(name, chain, snr_dB)
+
+# --- results: table and figure ---------------------------------------
+print_data({"x": snr_dB_list, "curves": curves},
+           xlabel="snr_dB", ylabel="SER")
 
 ax = plot_error_rate(snr_dB_list, curves, ylabel="SER",
                      title=f"{N_r}x{N_t} MIMO, {constellation.order}-"
@@ -137,9 +139,12 @@ big_detectors = {
     "ML": MaximumLikelihoodDetector(big_constellation, H=big_H, name="detector"),
     "SD": big_decoder,
 }
+# --- metrics, pre-allocated ------------------------------------------
 elapsed = {}
 for name in big_detectors:
-    elapsed[name] = []
+    elapsed[name] = np.zeros(len(snr_dB_list))
+
+# --- simulation loop -------------------------------------------------
 for name, detector in big_detectors.items():
     big_chain = Sequential([
         SymbolGenerator(big_constellation.order, name="tx"),
@@ -148,16 +153,16 @@ for name, detector in big_detectors.items():
         AWGN(sigma2=1.0, name="noise"),
         detector,
     ], taps=["tx"], name=f"4x4 MIMO, {name}")
-    for snr_dB in snr_dB_list:
+    for index, snr_dB in enumerate(snr_dB_list):
         big_chain.seed(4)
         big_chain.set_params(noise__sigma2=4 * 10 ** (-snr_dB / 10))
         start = time.perf_counter()
         detected = big_chain((4, 400))
-        elapsed[name].append((time.perf_counter() - start) * 1e3)
+        elapsed[name][index] = (time.perf_counter() - start) * 1e3
         errors = compute_ser(big_chain.tap("tx"), detected)
         nodes = (f"{big_decoder.nodes_:7.1f} nodes" if name == "SD"
                  else f"{16 ** 4:7d} nodes")
-        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][-1]:8.1f} ms  "
+        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][index]:8.1f} ms  "
               f"{nodes}   SER {errors:.4f}")
 
 # A runtime is not an error rate, so it does not go through

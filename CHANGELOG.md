@@ -45,6 +45,29 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — the simulation sections read identically across the pages
+
+Every sweep in the tutorials now shows the same three markers, in the
+same order:
+
+```python
+# --- metrics, pre-allocated ---
+# --- simulation loop ---
+# --- results: tables and figures ---
+```
+
+The pass also removed what review found on the way: a list
+comprehension in `one_shot_ofdm.py` that the tutorial rules ban and
+that hid a `monte_carlo` call inside an expression; the last
+`append`-and-convert accumulations (`one_shot_ofdm`, `one_shot_mimo`,
+`one_shot_alamouti`, the by-hand loop of `monte_carlo_awgn`), replaced
+by arrays pre-allocated to zeros and filled by index; a hand-rolled
+aligned `print` loop in `one_shot_mimo` that `print_data` replaces; a
+dead five-line dict-to-array conversion in `one_shot_NLI`; and a
+`bits per symbol` column that is now `np.log2(orders).astype(int)`
+rather than a loop -- NumPy over iteration wherever the loop taught
+nothing.
+
 ### Changed — one storage convention for every simulation loop
 
 Every study in the examples was the same sentence -- run the same

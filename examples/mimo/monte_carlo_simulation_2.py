@@ -39,18 +39,19 @@ chain = Sequential([
     AWGN(sigma2=1.0, name="noise"),
     ], taps=["data_tx"])
 
-# Storage, declared before the loop: one array per ordering, full of
-# zeros, indexed by name. The error counts get one too -- they say
-# where the estimate runs out of samples, so they are part of the
-# record even though they stay out of the figure.
+# --- metrics, pre-allocated ------------------------------------------
+# One array per ordering, indexed by name. The error counts get one
+# too -- they say where the estimate runs out of samples, so they are
+# part of the record even though they stay out of the figure.
 ber = {}
 errors = {}
 for ordering in orderings:
     ber[ordering] = np.zeros(len(snr_dB_list))
     errors[ordering] = np.zeros(len(snr_dB_list))
 
-# simulation loop: one child seed per SNR point (D6/D35), so the whole
-# figure is reproduced by the master seed alone
+# --- simulation loop -------------------------------------------------
+# One child seed per SNR point (D6/D35): the whole figure is reproduced
+# by the master seed alone.
 point_seeds = np.random.SeedSequence(seed).spawn(len(snr_dB_list))
 for index, snr_dB in enumerate(snr_dB_list):
     rng = np.random.default_rng(int(point_seeds[index].generate_state(1)[0]))
@@ -81,7 +82,7 @@ for index, snr_dB in enumerate(snr_dB_list):
         ber[ordering][index] = counter.rate
         errors[ordering][index] = counter.n_errors
 
-# display, from the same dictionaries the loop filled
+# --- results: tables and figure --------------------------------------
 print_data({"x": snr_dB_list, "curves": ber}, xlabel="snr_dB", ylabel="BER")
 print()
 print_data({"x": snr_dB_list, "curves": errors},

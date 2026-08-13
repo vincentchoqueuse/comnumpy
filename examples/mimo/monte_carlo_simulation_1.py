@@ -41,15 +41,17 @@ chain = Sequential([
     AWGN(sigma2=1.0, name="noise"),
     ], taps=["data_tx"])
 
-# Storage, declared before the loop: one array per detector, full of
-# zeros, indexed by name -- a column never has to be counted to be
-# found, and the dictionary is what the table and the figure render.
+# --- metrics, pre-allocated ------------------------------------------
+# One array per detector, full of zeros, indexed by name -- a column
+# never has to be counted to be found, and the dictionary is what the
+# table and the figure render.
 bler = {}
 for name in detector_names:
     bler[name] = np.zeros(len(snr_dB_list))
 
-# simulation loop: one child seed per SNR point (D6/D35), so the whole
-# figure is reproduced by the master seed alone
+# --- simulation loop -------------------------------------------------
+# One child seed per SNR point (D6/D35): the whole figure is reproduced
+# by the master seed alone.
 point_seeds = np.random.SeedSequence(seed).spawn(len(snr_dB_list))
 for index, snr_dB in enumerate(snr_dB_list):
     rng = np.random.default_rng(int(point_seeds[index].generate_state(1)[0]))
@@ -77,7 +79,7 @@ for index, snr_dB in enumerate(snr_dB_list):
             # a frame is in error when at least one of its bits is
             bler[name][index] += float(ber > 0) / N_test
 
-# display, from the same dictionary the loop filled
+# --- results: table and figure ---------------------------------------
 data = {"x": snr_dB_list, "curves": bler}
 print_data(data, xlabel="snr_dB", ylabel="BLER")
 

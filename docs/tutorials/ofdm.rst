@@ -218,21 +218,21 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 102-124
+   :lines: 102-132
 
 .. code::
 
    SER
    SNR [dB]  single carrier    OFDM
    --------------------------------
-          6          0.6273  0.5234
-          8          0.5270  0.3953
-         10          0.4297  0.2973
-         12          0.2707  0.1980
-         14          0.1512  0.1426
-         16          0.0656  0.0672
-         18          0.0152  0.0383
-         20          0.0020  0.0195
+          6         0.62734  0.5234
+          8         0.52695  0.3953
+         10         0.42969  0.2973
+         12         0.27070  0.1980
+         14         0.15117  0.1426
+         16         0.06562  0.0672
+         18         0.01523  0.0383
+         20         0.00195  0.0195
 
 .. image:: img/one_shot_ofdm_fig4.png
    :width: 100%
@@ -265,15 +265,17 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 125-160
+   :lines: 133-169
 
 .. code::
 
-        N   single carrier      OFDM     ratio
-      128           8.5 ms    1.01 ms        8
-      256          28.4 ms    0.82 ms       35
-      512         139.1 ms    0.84 ms      166
-     1024         901.0 ms    0.88 ms     1018
+   receiver runtime [ms], and their ratio
+   block length N  single carrier   OFDM   ratio
+   ---------------------------------------------
+              128            8.74  0.613    14.2
+              256           32.64  0.644    50.7
+              512          209.35  0.999   209.5
+             1024         1685.07  1.123  1500.4
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%

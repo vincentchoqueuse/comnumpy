@@ -167,11 +167,10 @@ for ax, n_spans in zip(axes, (1, 10, 25), strict=True):
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
-measured = np.zeros(len(spans))
-ase_only = np.zeros(len(spans))
-for index, n_spans in enumerate(spans):
-    measured[index] = snr_per_span[n_spans]
-    ase_only[index] = snr_ase_only[n_spans]
+# the dicts are keyed by span count in sweep order, so their values
+# are already the curves
+measured = np.array(list(snr_per_span.values()))
+ase_only = np.array(list(snr_ase_only.values()))
 
 # An effective SNR is not an error rate: linear ordinate, two curves,
 # nothing a helper would say better than the four lines that draw it.

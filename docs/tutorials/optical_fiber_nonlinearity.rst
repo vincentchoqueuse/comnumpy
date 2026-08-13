@@ -135,9 +135,9 @@ be read against.
 
    spans   measured   ASE only   the fibre      SER     phase     time
        1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    0.1 s
-       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    0.4 s
+       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    0.3 s
       10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    0.7 s
-      15    18.56 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg    1.0 s
+      15    18.56 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg    1.1 s
       20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg    1.4 s
       25    15.31 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg    1.7 s
 
@@ -204,7 +204,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 162-188
+   :lines: 162-187
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -236,7 +236,7 @@ through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 190-195
+   :lines: 189-194
 
 .. code::
 
@@ -289,7 +289,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 197-219
+   :lines: 196-218
 
 .. code::
 
@@ -374,7 +374,7 @@ drawn afterwards reads from the same dictionaries the loop filled.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 112-240
+   :lines: 112-241
 
 .. code::
 

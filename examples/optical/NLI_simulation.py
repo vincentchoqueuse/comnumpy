@@ -123,10 +123,10 @@ receivers = {
 
 channel = get_channel()
 
-# Storage, declared before the loop: one array per (metric, receiver),
-# full of zeros, indexed by name on both levels -- a column never has to
-# be counted to be found, and each inner dictionary is exactly what
-# print_data and plot_data render.
+# --- metrics, pre-allocated ------------------------------------------
+# One array per (metric, receiver), indexed by name on both levels -- a
+# column never has to be counted to be found, and each inner dictionary
+# is exactly what print_data and plot_data render.
 snr = {}
 ser = {}
 errors = {}
@@ -137,8 +137,9 @@ for name in receivers:
     errors[name] = np.zeros(len(dBm_list))
     times[name] = np.zeros(len(dBm_list))
 
-# simulation loop: one child seed per launch power (D6/D35), so the
-# whole study is reproduced by the master seed alone
+# --- simulation loop -------------------------------------------------
+# One child seed per launch power (D6/D35): the whole study is
+# reproduced by the master seed alone.
 seed = 0
 point_seeds = np.random.SeedSequence(seed).spawn(len(dBm_list))
 for index, dBm in enumerate(dBm_list):
@@ -180,8 +181,8 @@ for index, dBm in enumerate(dBm_list):
         ser[name][index] = counter.rate
         errors[name][index] = counter.n_errors
 
-# display, from the dictionaries the loop filled; the SNR averages in
-# linear and is read in dB
+# --- results: tables and figures -------------------------------------
+# The SNR averages in linear and is read in dB.
 snr_dB = {}
 for name in receivers:
     snr_dB[name] = 10 * np.log10(snr[name])

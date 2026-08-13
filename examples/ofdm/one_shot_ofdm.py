@@ -104,16 +104,24 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 # independent noise seeds because 1280 symbols only resolve down to
 # 8e-4; the channel is the same throughout, by construction.
 snr_list = np.arange(6, 22, 2)
+n_trials = 2
+
+# --- metrics, pre-allocated ------------------------------------------
 measured = {}
+for name in ("single carrier", "OFDM"):
+    measured[name] = np.zeros(len(snr_list))
+
+# --- simulation loop -------------------------------------------------
 for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
-    runs = [monte_carlo(chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser}, N,
-                        reference="data_tx", seed=trial)["ser"]
-            for trial in range(1, 3)]
+    runs = np.zeros((n_trials, len(snr_list)))
+    for trial in range(n_trials):
+        runs[trial] = monte_carlo(chain, "data_rx.snr_dB", snr_list,
+                                  {"ser": compute_ser}, N,
+                                  reference="data_tx", seed=trial + 1)["ser"]
     measured[name] = np.mean(runs, axis=0)
 
-# A swept result is an abscissa and one series per curve, which is what
-# monte_carlo already returns. Written down once, it is printed and
-# plotted from the same object rather than restated for each.
+# --- results: table and figure ---------------------------------------
+
 ser_data = {"x": snr_list, "curves": measured}
 print()
 print_data(ser_data, xlabel="SNR [dB]", ylabel="SER")
@@ -125,35 +133,36 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig4.png")
 # --- what it costs ---------------------------------------------------
 # A chain records the wall time of its last pass in `elapsed_`, so the
 # run is also the measurement.
-lengths = [128, 256, 512, 1024]
-runtime = {"single carrier": [], "OFDM": []}
-for length in lengths:
+lengths = np.array([128, 256, 512, 1024])
+
+# --- metrics, pre-allocated ------------------------------------------
+runtime = {}
+for name in ("single carrier", "OFDM"):
+    runtime[name] = np.zeros(len(lengths))
+
+# --- simulation loop -------------------------------------------------
+for index, length in enumerate(lengths):
     for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
         chain.seed(1)
-        chain(length)
-        runtime[name].append(1e3 * chain.elapsed_)
+        chain(int(length))
+        runtime[name][index] = 1e3 * chain.elapsed_
 
-runtime_data = {
-    "x": lengths,
-    "curves": {
-        "single carrier": np.array(runtime["single carrier"]),
-        "OFDM": np.array(runtime["OFDM"]),
-        "ratio": (np.array(runtime["single carrier"])
-                  / np.array(runtime["OFDM"])),
-    },
-}
+# --- results: table and figure ---------------------------------------
+
 print()
-print_data(runtime_data, xlabel="block length N",
+print_data({"x": lengths,
+            "curves": {"single carrier": runtime["single carrier"],
+                       "OFDM": runtime["OFDM"],
+                       "ratio": (runtime["single carrier"]
+                                 / runtime["OFDM"])}},
+           xlabel="block length N",
            ylabel="receiver runtime [ms], and their ratio")
 
-# The same dictionary, drawn. The ratio is dimensionless and does not
+# The same arrays, drawn. The ratio is dimensionless and does not
 # belong on an axis in milliseconds, so the figure takes the two
-# runtimes; everything else comes from the object the table printed.
-timed = {"x": lengths, "curves": {}}
-for name, values in runtime_data["curves"].items():
-    if name != "ratio":
-        timed["curves"][name] = values
-ax5 = plot_data(timed, xlabel="block length $N$",
+# runtimes alone.
+ax5 = plot_data({"x": lengths, "curves": runtime},
+                xlabel="block length $N$",
                 ylabel="receiver runtime [ms]",
                 xscale="log", yscale="log", marker="o", fillstyle="none")
 ax5.set_title("what equalization costs")

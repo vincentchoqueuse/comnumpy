@@ -41,14 +41,16 @@ def get_chain(constellation):
 
 chain = get_chain(constellation)
 
-# A Monte Carlo simulation is a stateless loop: reconfigure the chain,
-# run it, measure, collect. Written out, at three SNR values:
-by_hand = []
-for snr_dB in snr_dB_list[::8]:
+# A Monte Carlo simulation is three parts, always in this order: the
+# metric pre-allocated, the loop that fills it, the display at the end.
+# Written out, at three SNR values:
+probed_snr_dB = snr_dB_list[::8]
+ser_by_hand = np.zeros(len(probed_snr_dB))
+for index, snr_dB in enumerate(probed_snr_dB):
     chain.seed(1)
     chain.set_params(awgn_channel__snr_dB=snr_dB)
     detected = chain(N)                  # run first: the tap is filled by it
-    by_hand.append(compute_ser(chain.tap("tx"), detected))
+    ser_by_hand[index] = compute_ser(chain.tap("tx"), detected)
 
 # monte_carlo (decision D35) is that loop, and nothing more: the same
 # reconfigure-reseed-run-collect, over every point, in one call.
@@ -58,8 +60,8 @@ ser_array = results["ser"]
 
 # An abscissa and one series per curve is what a sweep produces, and
 # print_data is what shows it: the same dictionary would draw the figure.
-print_data({"x": snr_dB_list[::8],
-            "curves": {"loop": np.array(by_hand),
+print_data({"x": probed_snr_dB,
+            "curves": {"loop": ser_by_hand,
                        "monte_carlo": ser_array[::8]}},
            xlabel="SNR [dB]", ylabel="SER")
 
@@ -101,13 +103,14 @@ plt.savefig(f"{img_dir}/monte_carlo_awgn.png")
 ebn0_dB_list = np.arange(0, 25, 2)
 N_compare = 100000
 fine_dB_list = np.arange(0, 25, 0.05)
+orders = np.array([4, 16, 64, 256])
+bits_per_symbol = np.log2(orders).astype(int)     # vectorized, not a loop
 measured_ber = {}
 theory_ber = {}
-required_rows = {"bits per symbol": [],
-                 "Eb/N0 at BER=1e-3 [dB]": []}
-for order in [4, 16, 64, 256]:
-    other = Constellation("QAM", order)
-    bits = int(np.log2(order))
+required_dB = np.zeros(len(orders))
+for index, order in enumerate(orders):
+    other = Constellation("QAM", int(order))
+    bits = int(bits_per_symbol[index])
     snr_dB_values = ebn0_to_snr_dB(ebn0_dB_list, bits_per_symbol=bits)
     collected = monte_carlo(get_chain(other), "awgn_channel.snr_dB",
                             snr_dB_values,
@@ -120,14 +123,14 @@ for order in [4, 16, 64, 256]:
     # measurement: the sweep grid is 2 dB coarse and noisy at 1e-3.
     fine_ber = other.metrics(fine_dB_list, per="bit")["ber"]
     above_underflow = fine_ber > 0            # the tail reaches 0 in float64
-    required_dB = float(
-        np.interp(-3.0, np.log10(fine_ber[above_underflow])[::-1],
-                  fine_dB_list[above_underflow][::-1]))
-    required_rows["bits per symbol"].append(bits)
-    required_rows["Eb/N0 at BER=1e-3 [dB]"].append(required_dB)
+    required_dB[index] = np.interp(
+        -3.0, np.log10(fine_ber[above_underflow])[::-1],
+        fine_dB_list[above_underflow][::-1])
 
 print()
-print_data({"x": [4, 16, 64, 256], "curves": required_rows},
+print_data({"x": orders,
+            "curves": {"bits per symbol": bits_per_symbol,
+                       "Eb/N0 at BER=1e-3 [dB]": required_dB}},
            xlabel="QAM order")
 
 ax = plot_error_rate(ebn0_dB_list, measured_ber, theory=theory_ber,
