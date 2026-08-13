@@ -18,6 +18,9 @@ import numpy as np
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import compute_beta2
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

@@ -18,6 +18,9 @@ from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
                                     watt_to_dbm)
 from comnumpy.optical.wdm import WDMGrid
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 

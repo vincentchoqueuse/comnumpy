@@ -41,6 +41,9 @@ from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import Constellation
 from comnumpy.ofdm.metrics import compute_papr
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

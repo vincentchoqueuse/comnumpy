@@ -21,6 +21,9 @@ from comnumpy.ofdm.processors import (CarrierAllocator, CarrierExtractor,
                                       CyclicPrefixer, CyclicPrefixRemover,
                                       FFTProcessor, IFFTProcessor)
 from comnumpy.monte_carlo import monte_carlo
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

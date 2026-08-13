@@ -11,6 +11,8 @@ from comnumpy.core.compensators import BlindPhaseCompensation
 from comnumpy.core.utils import Constellation
 from comnumpy.core.metrics import compute_ser
 
+style.use()
+
 
 # parameters
 constellation = Constellation("QAM", 16)

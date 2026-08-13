@@ -16,6 +16,8 @@ from comnumpy.mimo.detectors import (
     OrderedSuccessiveInterferenceCancellationDetector, SphereDecoder)
 from comnumpy.mimo.utils import rayleigh_channel
 
+style.use()
+
 img_dir = "../../docs/tutorials/img/"
 
 N = 1000

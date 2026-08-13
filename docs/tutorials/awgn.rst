@@ -52,7 +52,7 @@ We start by importing the necessary libraries:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 1-14
+   :lines: 1-17
 
 
 Define Parameters
@@ -65,7 +65,7 @@ closed form we compare against below.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 16-19
+   :lines: 19-22
 
 
 AWGN Communication Chain
@@ -81,7 +81,7 @@ this page builds one per constellation order.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 22-39
+   :lines: 25-42
 
 The processors are:
 
@@ -110,7 +110,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 137-143
+   :lines: 141-147
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -122,7 +122,7 @@ against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 41-48
+   :lines: 44-51
 
 Three chain services appear there, and they are the ones every study is made
 of.
@@ -141,12 +141,16 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 50-62
+   :lines: 53-64
 
 .. code::
 
-   loop        : 7.406e-01 3.535e-01 7.237e-03
-   monte_carlo : 7.410e-01 3.533e-01 7.117e-03
+   SER
+   SNR [dB]     loop  monte_carlo
+   ------------------------------
+          0  0.74057      0.74105
+          8  0.35345      0.35331
+         16  0.00724      0.00712
 
 The two are the same computation. They do not print the same digits because
 ``monte_carlo`` gives each point its own child seed rather than reseeding every
@@ -205,7 +209,7 @@ two expressions above transcribe line for line:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 65-78
+   :lines: 67-80
 
 From the constellation
 """"""""""""""""""""""
@@ -218,7 +222,7 @@ by :math:`k` above happens inside.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 80-85
+   :lines: 82-87
 
 .. code::
 
@@ -240,7 +244,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 87-93
+   :lines: 89-95
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%
@@ -268,7 +272,7 @@ not guess (decision D41), so it happens at the call site:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 95-123
+   :lines: 97-127
 
 The metric changes with the axis. Against :math:`E_b/N_0` the natural quantity
 is the bit error rate, and ``compute_ber`` needs the symbol width, which
@@ -287,15 +291,16 @@ disagreeing with theory.
 
 .. code::
 
-      order  bits/symbol   Eb/N0 at BER=1e-3
-      4-QAM            2              6.8 dB
-     16-QAM            4             10.5 dB
-     64-QAM            6             14.8 dB
-    256-QAM            8             19.4 dB
+   QAM order  bits per symbol  Eb/N0 at BER=1e-3 [dB]
+   --------------------------------------------------
+           4                2                    6.79
+          16                4                   10.52
+          64                6                   14.77
+         256                8                   19.38
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 125-135
+   :lines: 129-139
 
 .. image:: img/monte_carlo_awgn_orders.png
    :width: 100%

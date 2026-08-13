@@ -11,6 +11,8 @@ from comnumpy.core.utils import Constellation
 from comnumpy.core.channels import AWGN
 from comnumpy.core.metrics import compute_ser
 
+style.use()
+
 
 # parameters
 N = 10000

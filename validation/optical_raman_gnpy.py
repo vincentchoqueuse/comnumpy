@@ -64,6 +64,9 @@ import pathlib
 import numpy as np
 
 from comnumpy.optical.raman import RamanGainSpectrum, solve_raman
+from comnumpy import style
+
+style.use()
 
 SPEED_OF_LIGHT = 2.99792458e8
 DATA = pathlib.Path(__file__).parent / "data" / "gnpy"

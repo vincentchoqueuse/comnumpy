@@ -55,6 +55,17 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
 - Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`.
+- **A swept result is one dictionary, shown two ways.**
+  `data = {"x": snr_dB, "curves": {"ZF": ..., "ML": ...}}` — which is
+  already the shape `monte_carlo` returns — then `print_data(data,
+  xlabel=…, ylabel=…)` for the table the page pastes and
+  `plot_data(data, …)` for the figure. Never hand-roll an aligned
+  `print` loop with `:8.4f` widths: the table and the figure must come
+  from the same object, or they will eventually come from different
+  runs.
+- Activate the style sheet once, at the top of the script, right after
+  the imports: `style.use()`. The colours and the figure size are
+  rcParams and a figure already created keeps the old ones.
 - Figures: **draw with matplotlib, decorate with `style.apply(ax, kind)`**.
   A scatter of real against imaginary, a `semilogy` of a rate against an
   SNR: the reader knows those calls, and hiding them behind a wrapper

@@ -15,6 +15,9 @@ from comnumpy.core.processors import Serial2Parallel
 from comnumpy.core.utils import Constellation
 from comnumpy.ofdm.metrics import compute_papr, compute_papr_ccdf_theo
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 

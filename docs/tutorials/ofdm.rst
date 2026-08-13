@@ -70,7 +70,7 @@ We start with the imports and the parameters of the simulation: 16-QAM,
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 1-28
+   :lines: 1-30
 
 We then use **EPA**, the 3GPP Extended Pedestrian A profile, one of the
 standardized tables shipped with the library.
@@ -79,7 +79,7 @@ of it, and ``info()`` returns what the channel is:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 29-52
+   :lines: 31-54
 
 .. code::
 
@@ -136,7 +136,7 @@ Implementation
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 53-84
+   :lines: 55-86
 
 Results
 """""""
@@ -187,7 +187,7 @@ before the channel and a receiver block after it:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 85-113
+   :lines: 87-115
 
 ``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains:
 serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
@@ -218,19 +218,21 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 114-134
+   :lines: 116-138
 
 .. code::
 
-   SNR [dB]  single carrier      OFDM
-          6          0.6273    0.5234
-          8          0.5270    0.3953
-         10          0.4297    0.2973
-         12          0.2707    0.1980
-         14          0.1512    0.1426
-         16          0.0656    0.0672
-         18          0.0152    0.0383
-         20          0.0020    0.0195
+   SER
+   SNR [dB]  single carrier    OFDM
+   --------------------------------
+          6          0.6273  0.5234
+          8          0.5270  0.3953
+         10          0.4297  0.2973
+         12          0.2707  0.1980
+         14          0.1512  0.1426
+         16          0.0656  0.0672
+         18          0.0152  0.0383
+         20          0.0020  0.0195
 
 .. image:: img/one_shot_ofdm_fig4.png
    :width: 100%
@@ -263,7 +265,7 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 135-167
+   :lines: 139-174
 
 .. code::
 

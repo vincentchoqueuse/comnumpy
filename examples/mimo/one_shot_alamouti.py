@@ -19,6 +19,8 @@ from comnumpy.mimo.coding import SpaceTimeDecoder, SpaceTimeEncoder, get_code
 from comnumpy.mimo.detectors import LinearDetector
 from comnumpy.mimo.utils import rayleigh_channel
 
+style.use()
+
 img_dir = "../../docs/tutorials/img/"
 mermaid_dir = "../../docs/tutorials/mermaid/"
 

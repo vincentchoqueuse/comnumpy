@@ -7,7 +7,7 @@ into ../../docs/tutorials/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import monte_carlo, style
+from comnumpy import monte_carlo, plot_data, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN, FIRChannel, TappedDelayLineChannel
 from comnumpy.core.compensators import LinearEqualizer
@@ -18,6 +18,8 @@ from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.ofdm.chains import OFDMReceiver, OFDMTransmitter
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -123,10 +125,12 @@ for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
             for trial in range(1, 3)]
     measured[name] = np.mean(runs, axis=0)
 
-print("\nSNR [dB]  single carrier      OFDM")
-for index, value in enumerate(snr_list):
-    print(f"{value:8d} {measured['single carrier'][index]:15.4f} "
-          f"{measured['OFDM'][index]:9.4f}")
+# A swept result is an abscissa and one series per curve, which is what
+# monte_carlo already returns. Written down once, it is printed and
+# plotted from the same object rather than restated for each.
+ser_data = {"x": snr_list, "curves": measured}
+print()
+print_data(ser_data, xlabel="SNR [dB]", ylabel="SER")
 
 plot_error_rate(snr_list, measured, ylabel="SER",
                 title="16-QAM over one EPA realization")
@@ -143,25 +147,28 @@ for length in lengths:
         chain(length)
         runtime[name].append(1e3 * chain.elapsed_)
 
-print("\n     N   single carrier      OFDM     ratio")
-for index, length in enumerate(lengths):
-    sc_ms = runtime["single carrier"][index]
-    ofdm_ms = runtime["OFDM"][index]
-    print(f"{length:6d} {sc_ms:13.1f} ms {ofdm_ms:7.2f} ms {sc_ms/ofdm_ms:8.0f}")
+runtime_data = {
+    "x": lengths,
+    "curves": {
+        "single carrier": np.array(runtime["single carrier"]),
+        "OFDM": np.array(runtime["OFDM"]),
+        "ratio": (np.array(runtime["single carrier"])
+                  / np.array(runtime["OFDM"])),
+    },
+}
+print()
+print_data(runtime_data, xlabel="block length N",
+           ylabel="receiver runtime [ms], and their ratio")
 
-measured_runtime = {}
-for name, values in runtime.items():
-    measured_runtime[name] = np.array(values)
-
-# A runtime is not an error rate. Two log axes and a grid is the whole
-# figure, so it is written out rather than routed through a helper whose
-# name would then be describing something else.
-fig5, ax5 = plt.subplots()
-for name, values in measured_runtime.items():
-    ax5.loglog(lengths, values, "o-", fillstyle="none", label=name)
-ax5.set_xlabel("block length $N$")
-ax5.set_ylabel("receiver runtime [ms]")
+# The same dictionary, drawn. The ratio is dimensionless and does not
+# belong on an axis in milliseconds, so the figure takes the two
+# runtimes; everything else comes from the object the table printed.
+timed = {"x": lengths, "curves": {}}
+for name, values in runtime_data["curves"].items():
+    if name != "ratio":
+        timed["curves"][name] = values
+ax5 = plot_data(timed, xlabel="block length $N$",
+                ylabel="receiver runtime [ms]",
+                xscale="log", yscale="log", marker="o", fillstyle="none")
 ax5.set_title("what equalization costs")
-ax5.grid(True, which="both")
-ax5.legend()
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig5.png")

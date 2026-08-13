@@ -13,6 +13,8 @@ from comnumpy.mimo.channels import SelectiveMIMOChannel, AWGN
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.compensators import BlindDualMIMOCompensator
 
+style.use()
+
 
 @dataclass
 class CustomBlindDualMIMOCompensator(BlindDualMIMOCompensator):

@@ -14,6 +14,9 @@ from comnumpy.fec import (ConvolutionalEncoder, LDPCDecoder, LDPCEncoder,
                           ViterbiDecoder)
 from comnumpy.fec.analysis import distance_spectrum, union_bound_ber
 from comnumpy.fec.ldpc import make_gallager_parity_check
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 

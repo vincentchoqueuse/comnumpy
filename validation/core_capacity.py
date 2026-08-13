@@ -45,6 +45,9 @@ from scipy.optimize import brentq
 from comnumpy.core.capacity import (awgn_capacity, constellation_capacity,
                                     rayleigh_ergodic_capacity, waterfilling)
 from comnumpy.core.utils import Constellation
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

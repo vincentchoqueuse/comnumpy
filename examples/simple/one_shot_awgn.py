@@ -15,6 +15,8 @@ from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
 
+style.use()
+
 img_dir = "../../docs/getting_started/img/"
 mermaid_dir = "../../docs/getting_started/mermaid/"
 

@@ -2,6 +2,9 @@ import numpy as np
 from scipy import signal
 from comnumpy.optical.compensators import ChromaticDispersionFIRCompensator, ChromaticDispersionLSFIRCompensator
 import matplotlib.pyplot as plt
+from comnumpy import style
+
+style.use()
 
 
 # This script reproduces the figures 6 and 7 in the paper Optimal Least-Squares FIR Digital Filters

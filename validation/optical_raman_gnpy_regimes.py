@@ -61,6 +61,9 @@ from comnumpy.optical.raman import _coupling_matrix, solve_raman
 from optical_raman_gnpy import (CHANNEL_W, LENGTH_KM, LOSS_dB_KM,
                                 SPEED_OF_LIGHT, TEMPERATURE_K,
                                 measured_spectrum)
+from comnumpy import style
+
+style.use()
 
 DATA = pathlib.Path(__file__).parent / "data" / "gnpy"
 FIG_DIR = pathlib.Path(__file__).parent / "figures"

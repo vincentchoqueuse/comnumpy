@@ -12,6 +12,9 @@ from comnumpy import (AWGN, Sequential, SymbolDemapper,
                       SymbolGenerator, SymbolMapper, compute_ser,
                       Constellation)
 from comnumpy.monte_carlo import monte_carlo
+from comnumpy import style
+
+style.use()
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 

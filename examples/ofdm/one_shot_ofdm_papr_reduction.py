@@ -10,6 +10,9 @@ from comnumpy.core.metrics import compute_ccdf
 from comnumpy.ofdm.processors import CarrierAllocator, IFFTProcessor
 from comnumpy.ofdm.predistorders import IctPaprReductor
 from comnumpy.ofdm.metrics import compute_papr
+from comnumpy import style
+
+style.use()
 
 
 # This script reproduces the second figure of the following article :

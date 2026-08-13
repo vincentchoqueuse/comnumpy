@@ -42,7 +42,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 if TYPE_CHECKING:                                   # pragma: no cover
     from matplotlib.axes import Axes
 
-__all__ = ["PATH", "context", "apply", "KINDS"]
+__all__ = ["PATH", "context", "use", "apply", "KINDS"]
 
 PATH: pathlib.Path = pathlib.Path(__file__).parent / "comnumpy.mplstyle"
 
@@ -57,6 +57,24 @@ KINDS: Dict[str, Dict[str, str]] = {
     "time": {"xlabel": "time [s]", "ylabel": "amplitude"},
     "spectrum": {"xlabel": "freq [Hz]", "ylabel": "PSD [dB]"},
 }
+
+
+def use() -> None:
+    """Activate the style sheet for every figure created from now on.
+
+    One line at the top of a script, after the imports and before the
+    first figure -- the colours and the figure size are rcParams, so a
+    figure already created keeps the ones that were active when it was::
+
+        import comnumpy.style as style
+        style.use()
+
+    Explicit on purpose: importing this package must not change the
+    user's matplotlib state behind their back (decision D27b). Use
+    :func:`context` instead to scope the change to a block.
+    """
+    import matplotlib.pyplot as plt  # local import (D36)
+    plt.style.use(str(PATH))
 
 
 def context():

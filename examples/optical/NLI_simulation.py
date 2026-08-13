@@ -7,6 +7,7 @@ figures into ../../docs/tutorials/img/.
 import matplotlib.pyplot as plt
 import numpy as np
 
+from comnumpy import print_data
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
@@ -23,6 +24,9 @@ from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
                                     watt_to_dbm)
+from comnumpy import style
+
+style.use()
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -164,15 +168,12 @@ for name, points in counters.items():
     for index, counter in enumerate(points):
         ser[name][index] = counter.rate
 
-header = "launch power [dBm]  "
-for value in dBm_list:
-    header += f"{value:7.1f}"
-print(header)
-for name, values in snr_dB.items():
-    line = f"{name:24s}"
-    for value in values:
-        line += f"{value:7.1f}"
-    print(line)
+# The sweep result, written down once. It is printed here and drawn
+# below from the same object; transposed because six receiver names as
+# column headers would make the table 160 characters wide.
+snr_data = {"x": dBm_list, "curves": snr_dB}
+print_data(snr_data, xlabel="launch power [dBm]",
+           ylabel="effective SNR [dB]", transpose=True)
 
 print("\nreceiver                  best SNR   at power    total time")
 for name, values in snr_dB.items():

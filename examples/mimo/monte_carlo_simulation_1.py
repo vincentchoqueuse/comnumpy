@@ -9,6 +9,9 @@ from comnumpy.core.utils import Constellation
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.utils import rayleigh_channel
 from comnumpy.mimo.detectors import MaximumLikelihoodDetector, LinearDetector, OrderedSuccessiveInterferenceCancellationDetector
+from comnumpy import style
+
+style.use()
 
 # This script reproduces the figure 2 of the article [1]
 #

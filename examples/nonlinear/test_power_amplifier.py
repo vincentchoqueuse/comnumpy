@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from comnumpy.core.devices import RappAmplifier, SalehAmplifier
 from comnumpy.core.processors import Clipper
+from comnumpy import style
+
+style.use()
 
 # reproduce Figure 4.9 of: Ghannouchi, Fadhel M., Oualid Hammi, and
 # Mohamed Helaoui. "Behavioral modeling and predistortion of wideband

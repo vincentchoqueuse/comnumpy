@@ -20,6 +20,8 @@ from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
 from comnumpy.optical.utils import dbm_to_watt, launch_amplitude
 
+style.use()
+
 img_dir = "../../docs/tutorials/img/"
 
 constellation = Constellation("QAM", 16)
