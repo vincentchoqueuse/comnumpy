@@ -10,16 +10,15 @@ from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper
+from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import Constellation, hard_projector
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate, plot_iq
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
-                                    dbm_to_watt)
+from comnumpy.optical.utils import dbm_to_watt, launch_amplitude
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -40,7 +39,7 @@ fiber = FiberSpec()           # the standard fibre, named so the budget sees it
 N = N_s * oversampling_sim
 fs = R_s * oversampling_sim
 oversampling_ratio = oversampling_sim // oversampling_dsp
-amp = np.sqrt(dbm_to_watt(dBm))
+amp = launch_amplitude(dbm_to_watt(dBm))
 
 
 # --- the chain --------------------------------------------------------
@@ -76,17 +75,16 @@ def get_chain(n_spans, *, steps=1, linear_only=True):
         Downsampler(oversampling_dsp),
         Amplifier(1 / amp),
         DataAidedPhaseCompensator(name="phase"),
-        ], taps=["data_tx", "signal_tx", "rx_field", "phase"],
+        SymbolDemapper(constellation, name="data_rx"),
+        ], taps=["data_tx", "signal_tx", "rx_field", "phase", "data_rx"],
         wiring={"phase.reference": "signal_tx"})
 
 
 def score(chain):
     """Effective SNR in dB and symbol error rate of a finished run."""
-    estimate = chain.tap("phase")
-    detected, _ = hard_projector(estimate, constellation)
-    return (10 * np.log10(compute_effective_snr(chain.tap("signal_tx"),
-                                                estimate)),
-            compute_ser(chain.tap("data_tx"), detected))
+    return (compute_effective_snr(chain.tap("signal_tx"),
+                                  chain.tap("phase"), unit="dB"),
+            compute_ser(chain.tap("data_tx"), chain.tap("data_rx")))
 
 
 # --- 1. what the link does to the signal ------------------------------
@@ -110,7 +108,8 @@ snr_ase_only = {}
 print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
     chain = get_chain(n_spans).seed(0)
-    estimates[n_spans] = chain(N)
+    chain(N)
+    estimates[n_spans] = chain.tap("phase")
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
     elapsed = chain.elapsed_
@@ -142,15 +141,16 @@ floor(N)
 print(f"\ndistortion floor of the chain, no noise and no fibre: "
       f"{score(floor)[0]:.1f} dB")
 
-# The second is the amplifier noise against its closed form. N spans pile
-# up N times the noise of one, in the symbol-rate bandwidth the matched
-# filter collects, and that prediction owes nothing to the simulation:
-# it comes from the noise figure and the span loss alone.
-n_ase = compute_erbium_doped_fiber_N_ase(fiber.alpha_dB, L_span, NF_dB,
-                                         nu=fiber.carrier_frequency_Hz)
+# The second is the amplifier noise against its closed form. The link
+# budgets its own noise: `budget` asks it how much ASE it accumulates in
+# the bandwidth a matched filter keeps -- the symbol rate, not the
+# simulated `fs` -- and that prediction owes the simulation nothing, it
+# comes from the noise figure and the span loss alone.
 print("\nspans   ASE only   P / P_ASE      gap")
 for n_spans in spans:
-    predicted = 10 * np.log10(dbm_to_watt(dBm) / (n_spans * n_ase * R_s))
+    link = get_chain(n_spans)["link"]
+    ase_W = link.budget(R_s)["ase_power_W"]
+    predicted = 10 * np.log10(dbm_to_watt(dBm) / ase_W)
     print(f"{n_spans:5d} {snr_ase_only[n_spans]:8.2f} dB {predicted:8.2f} dB "
           f"{snr_ase_only[n_spans] - predicted:+8.2f} dB")
 

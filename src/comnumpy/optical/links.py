@@ -11,7 +11,7 @@ from .raman import RamanSolution
 from .constants import PLANCK_CONSTANT
 from .utils import (get_linear_step_size, get_logarithmic_step_size, compute_erbium_doped_fiber_amplifier_gain,
                     compute_erbium_doped_fiber_N_ase, apply_chromatic_dispersion, apply_kerr_nonlinearity,
-                    is_polarization_pair, manakov_kerr)
+                    is_polarization_pair, manakov_kerr, watt_to_dbm)
 
 __all__ = ["FiberLink"]
 
@@ -253,10 +253,7 @@ class FiberLink(Processor):
             # bandwidth, spread over the simulated one. Averaged over the
             # channels and added flat across the band: the gain is shaped
             # in frequency, this noise is not.
-            if self.raman.bandwidth_Hz > 0:
-                ase_W = float(np.mean(np.atleast_2d(self.raman.ase_W)[:, -1]))
-                self.raman_sigma2_ = (self.noise_scaling * ase_W
-                                      * self.fs / self.raman.bandwidth_Hz)
+            self.raman_sigma2_ = self.fs * self._ase_densities()[2]
             if residual_dB < 0:
                 logger.warning(
                     "Raman over-compensates the span: %.2f dB of on-off gain "
@@ -267,11 +264,135 @@ class FiberLink(Processor):
 
         # the EDFA makes up whatever the Raman gain did not, so a span
         # stays transparent whether or not it is Raman-pumped
-        equivalent_alpha_dB = residual_dB / self.L_span
+        equivalent_alpha_dB, edfa_density, _ = self._ase_densities()
         self.edfa_gain = compute_erbium_doped_fiber_amplifier_gain(equivalent_alpha_dB, self.L_span)
-        self.edfa_N_ase = self.noise_scaling * self.fs * compute_erbium_doped_fiber_N_ase(
+        # a density becomes a power in the simulated bandwidth; `budget`
+        # multiplies the same density by the bandwidth a receiver keeps
+        self.edfa_N_ase = self.fs * edfa_density
+
+    def _ase_densities(self) -> tuple[float, float, float]:
+        """One span's noise, before any bandwidth is chosen.
+
+        Returns the equivalent attenuation the EDFA has to make up, and
+        the one-sided ASE spectral densities of the EDFA and of the
+        distributed Raman amplifier, in W/Hz **per polarization**, both
+        already scaled by ``noise_scaling``.
+
+        It exists so that :meth:`prepare` and :meth:`budget` cannot
+        disagree: the first turns these densities into a variance over
+        ``fs``, the second into a power over the bandwidth a receiver
+        collects, and the physics is written once.
+        """
+        residual_dB = self.fiber.alpha_dB * self.L_span
+        raman_density = 0.0
+        if self.raman is not None:
+            residual_dB -= float(np.mean(np.atleast_1d(self.raman.on_off_gain_dB)))
+            if self.raman.bandwidth_Hz > 0:
+                ase_W = float(np.mean(np.atleast_2d(self.raman.ase_W)[:, -1]))
+                raman_density = (self.noise_scaling * ase_W
+                                 / self.raman.bandwidth_Hz)
+        equivalent_alpha_dB = residual_dB / self.L_span
+        edfa_density = self.noise_scaling * compute_erbium_doped_fiber_N_ase(
             equivalent_alpha_dB, self.L_span, self.NF_dB,
             h=PLANCK_CONSTANT, nu=self.fiber.carrier_frequency_Hz)
+        return equivalent_alpha_dB, edfa_density, raman_density
+
+    def budget(self, bandwidth_Hz: float, *,
+               polarizations: int = 1) -> Dict[str, float]:
+        r"""The amplifier noise this link accumulates, in closed form.
+
+        Signal Model
+        ------------
+        Each of the :math:`N_s` spans adds one amplifier's worth of
+        spontaneous emission, and the noise a receiver sees is that
+        density integrated over the bandwidth it keeps -- the symbol
+        rate, for a matched filter:
+
+        .. math::
+
+            P_{\mathrm{ASE}} = P \, N_s \, N_{\mathrm{ASE}} \, B,
+            \qquad
+            N_{\mathrm{ASE}} = (G - 1) h \nu \, n_{sp},
+            \qquad
+            n_{sp} = \frac{\mathrm{NF}/2}{1 - 1/G}
+
+        with :math:`P` the number of polarizations. That factor is the
+        whole reason this method exists. :math:`N_{\mathrm{ASE}}` is a
+        density **per polarization**, and a dual-polarization link
+        carries two independent copies of it; quoting a channel power
+        against a single-polarization budget is a 3 dB error that looks
+        exactly like a modelling disagreement. Writing the product by
+        hand at each call site is how the two conventions drift apart.
+
+        The result is the link's *own* prediction: it owes nothing to a
+        simulation, so it is the reference a measured effective SNR is
+        checked against. ``noise_scaling`` is applied, so a link with
+        its noise switched off budgets zero.
+
+        Parameters
+        ----------
+        bandwidth_Hz : float
+            Bandwidth the receiver collects, in Hz. For a matched filter
+            this is the symbol rate, not the simulated ``fs``.
+        polarizations : int, optional, keyword-only
+            1 (default) for a single-polarization link, 2 for the
+            dual-polarization link a coherent system uses -- the same
+            convention as
+            :func:`~comnumpy.optical.gn_model.gn_model_nli_power`.
+
+        Returns
+        -------
+        dict
+            ``ase_power_W`` and ``ase_power_dBm``, the accumulated noise;
+            ``ase_density_W_per_Hz``, one span's density per
+            polarization; and the inputs it was built from
+            (``n_spans``, ``NF_dB``, ``span_gain_dB``, ``bandwidth_Hz``,
+            ``polarizations``).
+
+        Raises
+        ------
+        ValueError
+            If the bandwidth is not positive, or if ``polarizations`` is
+            neither 1 nor 2: a fibre carries one or two.
+
+        Examples
+        --------
+        Ten 100 km spans with a 5 dB noise figure, one polarization,
+        read in a 32 GBd matched filter:
+
+        >>> link = FiberLink(10, L_span=100.0, NF_dB=5.0, fs=192e9)
+        >>> budget = link.budget(32e9)
+        >>> print(f"{budget['ase_power_dBm']:.2f} dBm")
+        -21.88 dBm
+
+        The second polarization carries its own noise, and nothing else
+        changes:
+
+        >>> print(f"{link.budget(32e9, polarizations=2)['ase_power_dBm']:.2f} dBm")
+        -18.87 dBm
+        """
+        if bandwidth_Hz <= 0:
+            raise ValueError(
+                f"a noise power needs a bandwidth to be quoted in, got "
+                f"bandwidth_Hz={bandwidth_Hz}. For a matched filter this "
+                f"is the symbol rate, not the simulated fs.")
+        if polarizations not in (1, 2):
+            raise ValueError(
+                f"a fibre carries one or two polarizations, got "
+                f"{polarizations}.")
+        equivalent_alpha_dB, edfa_density, raman_density = self._ase_densities()
+        density = edfa_density + raman_density
+        power = polarizations * self.N_spans * density * bandwidth_Hz
+        return {
+            "ase_power_W": power,
+            "ase_power_dBm": watt_to_dbm(power) if power > 0 else -np.inf,
+            "ase_density_W_per_Hz": density,
+            "span_gain_dB": equivalent_alpha_dB * self.L_span,
+            "n_spans": self.N_spans,
+            "NF_dB": self.NF_dB,
+            "bandwidth_Hz": bandwidth_Hz,
+            "polarizations": polarizations,
+        }
 
     def _raman_step_gain(self) -> np.ndarray:
         """Amplitude gain of each SSFM step, from the Raman profile."""

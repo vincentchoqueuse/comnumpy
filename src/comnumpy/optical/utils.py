@@ -11,7 +11,7 @@ __all__ = [
     "compute_erbium_doped_fiber_amplifier_gain",
     "compute_erbium_doped_fiber_N_ase", "get_linear_step_size",
     "get_logarithmic_step_size", "itu_grid_frequency", "is_polarization_pair",
-    "manakov_kerr", "dbm_to_watt", "watt_to_dbm",
+    "manakov_kerr", "dbm_to_watt", "watt_to_dbm", "launch_amplitude",
 ]
 
 
@@ -525,4 +525,72 @@ def watt_to_dbm(power_W: np.ndarray | float) -> np.ndarray | float:
             f"a power in dBm is a logarithm, so it needs a strictly "
             f"positive power in watts; got a minimum of {float(np.min(power))}.")
     result = 10 * np.log10(power / 1e-3)
+    return result if np.ndim(power_W) else float(result)
+
+
+def launch_amplitude(power_W: np.ndarray | float, *,
+                     polarizations: int = 1) -> np.ndarray | float:
+    r"""Field amplitude that launches a given optical power.
+
+    Signal Model
+    ------------
+    An :class:`~comnumpy.core.processors.Amplifier` multiplies the
+    **field**, and a power is the squared modulus of it, so a launch
+    power is set through a square root:
+
+    .. math::
+
+        a = \sqrt{\frac{P}{P_{\mathrm{pol}}}}
+
+    The division is the point. A dual-polarization signal carries the
+    channel power split between its two polarizations, so each one is
+    launched at :math:`\sqrt{P/2}` -- and that factor, written by hand
+    at each call site, is the same one that makes an ASE budget or a
+    nonlinear coefficient disagree by 3 dB (see
+    :meth:`~comnumpy.optical.links.FiberLink.budget`).
+
+    Axes: *element-wise* -- an array of powers gives an array of
+    amplitudes, which is what a launch-power sweep needs.
+
+    Parameters
+    ----------
+    power_W : float or np.ndarray
+        Channel power in watts, summed over the polarizations.
+    polarizations : int, optional, keyword-only
+        1 (default) for a single-polarization field, 2 for a
+        polarization pair.
+
+    Returns
+    -------
+    float or np.ndarray
+        Amplitude gain to give an ``Amplifier``.
+
+    Raises
+    ------
+    ValueError
+        If a power is negative, or if ``polarizations`` is neither 1
+        nor 2.
+
+    Examples
+    --------
+    >>> print(f"{launch_amplitude(dbm_to_watt(0.0)):.6f}")
+    0.031623
+
+    Two polarizations share the channel power, so each carries half of
+    it -- 3 dB down, which is :math:`\sqrt{2}` in amplitude:
+
+    >>> single = launch_amplitude(1e-3)
+    >>> pair = launch_amplitude(1e-3, polarizations=2)
+    >>> print(f"{single / pair:.6f}")
+    1.414214
+    """
+    if polarizations not in (1, 2):
+        raise ValueError(
+            f"a fibre carries one or two polarizations, got {polarizations}.")
+    power = np.asarray(power_W, dtype=float)
+    if np.any(power < 0):
+        raise ValueError(
+            f"a launch power is not negative; got a minimum of "
+            f"{float(np.min(power))} W.")
+    result = np.sqrt(power / polarizations)
     return result if np.ndim(power_W) else float(result)

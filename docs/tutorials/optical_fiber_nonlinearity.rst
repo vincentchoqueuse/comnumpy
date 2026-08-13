@@ -325,7 +325,7 @@ the amplifier noise alone would allow.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 1-84
+   :lines: 1-85
 
 Before propagating anything, the closed form of :doc:`gn_model` says where
 the optimum should fall. It describes this link with two changes from the
@@ -334,7 +334,7 @@ instead of two, which is what ``polarizations=1`` is for:
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 87-104
+   :lines: 88-104
 
 .. code::
 

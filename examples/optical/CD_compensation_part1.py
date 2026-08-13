@@ -78,10 +78,13 @@ for k in k_vect:
     epsilon_b = constellation.energy / k
 
     # update chain and compensator parameters
-    chain["generator"].M = constellation.order
-    chain["mapper"].alphabet = constellation
-    full_compensator1["demapper"].alphabet = constellation
-    full_compensator2["demapper"].alphabet = constellation
+    # through set_params, never by assignment (D50): SymbolMapper coerces
+    # its alphabet in __post_init__, and a direct write skips that -- the
+    # block then holds a Constellation where its forward indexes an array
+    chain.set_params(generator__M=constellation.order,
+                     mapper__alphabet=constellation)
+    full_compensator1.set_params(demapper__alphabet=constellation)
+    full_compensator2.set_params(demapper__alphabet=constellation)
 
     # perform simulation
     ber_theo = []
@@ -96,7 +99,7 @@ for k in k_vect:
 
         # perform MC simulations
         N0 = epsilon_b/snr_per_bit  # snr_bit = epsilon_b/N0 = (epsilon_s/log2(order))/N0
-        chain["noise"].sigma2 = N0  # change noise variance
+        chain.set_params(noise__sigma2=N0)
         y = chain(N)
 
         # evaluate metric

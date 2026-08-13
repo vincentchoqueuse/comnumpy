@@ -11,18 +11,18 @@ from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
 from comnumpy.core.generators import SymbolGenerator
-from comnumpy.core.mappers import SymbolMapper
+from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.core.metrics import compute_effective_snr, compute_ser
 from comnumpy.core.processors import Amplifier, Downsampler, Upsampler
-from comnumpy.core.utils import Constellation, hard_projector
+from comnumpy.core.utils import Constellation
 from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.optical.dbp import DBP
 from comnumpy.optical.fiber import FiberSpec
 from comnumpy.optical.gn_model import (gn_model_nli_power, gn_model_snr,
                                        optimal_launch_power)
 from comnumpy.optical.links import FiberLink
-from comnumpy.optical.utils import (compute_erbium_doped_fiber_N_ase,
-                                    dbm_to_watt, watt_to_dbm)
+from comnumpy.optical.utils import (dbm_to_watt, launch_amplitude,
+                                    watt_to_dbm)
 
 img_dir = "../../docs/tutorials/img/"
 
@@ -81,7 +81,8 @@ def get_receiver(steps, linear_only, *, gain, reference):
         Downsampler(oversampling_dsp),
         Amplifier(gain),
         DataAidedPhaseCompensator(reference, name="phase"),
-        ])
+        SymbolDemapper(constellation, name="data_rx"),
+        ], taps=["phase"])
 
 
 # --- what the closed form expects of this link -------------------------
@@ -91,8 +92,7 @@ def get_receiver(steps, linear_only, *, gain, reference):
 # and it is *single*-polarization, so the scalar NLSE applies and the
 # weights are the ones of `polarizations=1` -- 5.3 dB more interference
 # at equal power. The ASE is over one polarization for the same reason.
-ase_W = N_span * compute_erbium_doped_fiber_N_ase(
-    fiber.alpha_dB, L_span, NF_dB, nu=fiber.carrier_frequency_Hz) * R_s
+ase_W = get_channel()["link"].budget(R_s)["ase_power_W"]
 eta = gn_model_nli_power(fiber, span_length_km=L_span, n_spans=N_span,
                          powers_W=np.array([1e-3]),
                          frequencies_Hz=np.array([fiber.carrier_frequency_Hz]),
@@ -126,7 +126,7 @@ for name in receivers:
     elapsed[name] = 0.0
 
 for index, dBm in enumerate(dBm_list):
-    amp = np.sqrt(dbm_to_watt(dBm))
+    amp = launch_amplitude(dbm_to_watt(dBm))
     for trial in range(N_trial):
         # the two fields differ only by the fibre's nonlinearity, and
         # the same seed gives them the same symbols and the same noise
@@ -142,9 +142,9 @@ for index, dBm in enumerate(dBm_list):
             receiver = get_receiver(steps, linear_only, gain=1 / amp,
                                     reference=symbols)
             bound = name == "amplifier noise only"
-            estimate = receiver(fields[bound])
+            detected = receiver(fields[bound])
             elapsed[name] += receiver.elapsed_
-            detected, _ = hard_projector(estimate, constellation)
+            estimate = receiver.tap("phase")
             snr[name][index] += compute_effective_snr(symbols, estimate) / N_trial
             ser[name][index] += compute_ser(reference, detected) / N_trial
 

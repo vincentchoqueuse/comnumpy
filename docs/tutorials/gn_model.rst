@@ -107,27 +107,29 @@ of this page asks it several.
 the GN model's convention, and the first of three places a factor of two
 hides in this tutorial.
 
-``analytic_ase`` is the second. It calls
-:func:`~comnumpy.optical.utils.compute_erbium_doped_fiber_N_ase`, which is
-*the same function* :class:`~comnumpy.optical.links.FiberLink` uses to
-generate the noise it adds during propagation. That is deliberate: in Part 2
-this prediction is compared against a measurement through the whole chain,
-and had the prediction used a formula retyped from a textbook, the comparison
-would only be checking the transcription. Using the library's own function
-makes the comparison test the *chain* instead -- the spectral density, the
-bandwidth, the two polarizations, the matched filter.
+``analytic_ase`` is the second, and it does not compute anything: it asks
+the link. :meth:`~comnumpy.optical.links.FiberLink.budget` returns the noise
+that same block will add during propagation, integrated over the bandwidth a
+receiver keeps. That is deliberate: in Part 2 this prediction is compared
+against a measurement through the whole chain, and had the prediction used a
+formula retyped from a textbook, the comparison would only be checking the
+transcription. Asking the link makes the comparison test the *chain* instead
+-- the spectral density, the bandwidth, the two polarizations, the matched
+filter.
 
-The factor two in ``analytic_ase`` is the polarization: the function returns
-the density for one, and an amplifier emits into both, each with its own
-independent noise.
+``polarizations=2`` is where the factor lives. A spectral density is per
+polarization, and an amplifier emits into both, each with its own
+independent noise; writing that product by hand at every call site is how
+two pages end up quoting budgets 3 dB apart.
 
 .. warning::
 
    **The 3 dB that becomes 9 dB.** ``power_W`` is the power of the
    *channel*, summed over both polarizations, because that is the convention
    the GN model uses. Each polarization therefore carries half of it, which
-   is what ``launch_gain`` is for in Part 2. Give each polarization the full
-   ``power_W`` instead and you launch 3 dB more than you think; since the
+   is what ``launch_amplitude(..., polarizations=2)`` is for in Part 2. Give
+   each polarization the full ``power_W`` instead and you launch 3 dB more
+   than you think; since the
    nonlinear interference goes as the cube of the power, your simulation
    then reports **9 dB** more of it than the model predicts, and the model
    looks broken when it is not.
@@ -162,7 +164,7 @@ roll-off smearing the very guard band the figure exists to show.
 
    eta      = 1223 /W^2      (GN model, one channel)
    P_ASE    = -20.88 dBm     (5 spans, NF = 6 dB, both polarizations)
-   optimum  = +1.74 dBm      SNR = 20.86 dB
+   optimum  = +1.74 dBm     SNR = 20.86 dB
    check    : eta P^3 / (P_ASE/2) = 1.000000
 
 Two things read off the figure. The **cut** is the filled channel: the one
@@ -248,12 +250,13 @@ Everything above is a prediction. Now we propagate samples and find out.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 115-153
+   :lines: 114-149
 
 .. mermaid:: mermaid/gn_model.mmd
 
-``launch_gain`` is the factor of two of the warning above, made explicit:
-:math:`\sqrt{P/2}` per polarization for a channel power :math:`P`.
+``launch_amplitude(power_W, polarizations=2)`` is the factor of two of the
+warning above, named rather than written: :math:`\sqrt{P/2}` of field per
+polarization for a channel power :math:`P`.
 
 ``name="launch"`` and ``name="fibre"`` are what let the rest of the page
 *reconfigure* the link instead of rebuilding it: ``chain.set_params`` reaches
@@ -293,7 +296,7 @@ form. At 0 dBm launch the measured SNR *is* :math:`-P_{\mathrm{ASE}}` in dBm.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 155-165
+   :lines: 151-161
 
 .. code::
 
@@ -320,7 +323,7 @@ Now the nonlinear term, at fourteen launch powers.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 166-193
+   :lines: 162-189
 
 .. code::
 
@@ -376,7 +379,7 @@ modulation formats are not, and the model is blind to the difference.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 195-204
+   :lines: 191-200
 
 .. code::
 
@@ -401,7 +404,7 @@ decibel for 16QAM, less as the format grows.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 206-210
+   :lines: 202-206
 
 
 Going further
