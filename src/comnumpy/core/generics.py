@@ -12,6 +12,27 @@ __all__ = ["Processor", "ChainGraph", "Sequential"]
 logger = logging.getLogger(__name__)
 
 
+def render_info(obj: object) -> Optional[str]:
+    """The ``info()`` of *obj* as ``key: value`` lines, or None.
+
+    Shared by the ``__str__`` of :class:`Processor` and of
+    ``Constellation``: ``print(obj)`` shows what the object *is* when it
+    can say so, and falls back to ``repr`` when it cannot.
+    """
+    info = getattr(obj, "info", None)
+    if not callable(info):
+        return None
+    rendered = info()
+    if isinstance(rendered, str):
+        return rendered
+    if not isinstance(rendered, dict):
+        return None
+    lines = []
+    for key, value in rendered.items():
+        lines.append(f"{key}: {value}")
+    return "\n".join(lines)
+
+
 @dataclass(slots=True)
 class Processor():
     r"""
@@ -65,6 +86,22 @@ class Processor():
         Prepare the object before calling the forward method
         """
         pass
+
+    def __str__(self) -> str:
+        """``print(processor)`` shows its ``info()`` when it has one.
+
+        A block that defines ``info()`` prints one ``key: value`` line
+        per entry; a block that does not falls back to its ``repr``.
+
+        Examples
+        --------
+        >>> from comnumpy.core.channels import FIRChannel
+        >>> print(FIRChannel(np.array([1.0, 0.0, 0.5])))
+        kind: FIR
+        n_taps: 3
+        ...
+        """
+        return render_info(self) or repr(self)
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
         """

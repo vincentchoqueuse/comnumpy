@@ -36,8 +36,9 @@ class HardClipper(Processor):
     polar form.
 
     Axes: *element-wise* -- the clipping is applied pointwise; the
-    threshold :math:`T_m` is computed from the mean power of the whole
-    array.
+    threshold :math:`T_m` is computed from the mean power **along the
+    last axis**, so each row of a batch is clipped against its own
+    power -- one transmitter per trial (D51).
 
     Parameters
     ----------
@@ -70,7 +71,9 @@ class HardClipper(Processor):
         self.cr = 10 ** (self.cr_dB / 20)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        Pmoy = np.mean(np.abs(x) ** 2)
+        # per-row power: each trial of a batch clips against its own
+        # RMS, not the RMS of the whole stack (D51)
+        Pmoy = np.mean(np.abs(x) ** 2, axis=-1, keepdims=True)
         Tm = self.cr * np.sqrt(Pmoy)
         if np.iscomplexobj(x):
             y = np.where(np.abs(x) > Tm, Tm * np.exp(1j * np.angle(x)), x)

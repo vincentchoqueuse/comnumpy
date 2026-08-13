@@ -51,6 +51,51 @@ Every block belongs to exactly one category, stated in its docstring
 The former `is_mimo` attribute — a shape-guessing mechanism — is removed;
 the declared category and `prepare()` validation replace it.
 
+## Batch axes and event axes (D51)
+
+A block's category names its **event axes** — the trailing axes that
+make up *one* realization of what the block models: nothing for an
+element-wise block, `(N,)` for a filter, `(2, N)` for a polarization
+pair, `(ant, N)` for a MIMO frame. Every axis to the left of the event
+is a **batch axis**: independent trials, run in one call. The contract
+has three families:
+
+1. **Deterministic** blocks broadcast their one configuration over the
+   batch — every trial goes through the same taps, the same equalizer
+   matrix (`FIRChannel`, `SRRCFilter`, `LinearEqualizer`, the OFDM
+   chains). Row `i` of a batched call equals the block applied to row
+   `i` alone.
+2. **Stochastic** blocks draw **independently per event** — trials must
+   not share a realization. `AWGN` draws element-wise; `PhaseNoise`
+   declares its event with `per=`: `"pair"` (default — one laser per
+   `(2, N)` block, independent across the batch), `"row"`, or
+   `"signal"`. A shape the declaration cannot read one way is refused
+   with the resolutions named.
+   The exception is the block whose realization is **frozen at
+   construction** (`PMDEmulator`, `TappedDelayLineChannel`,
+   `FlatMIMOChannel`): one seeded draw *is* the configuration, so the
+   whole batch sees the same channel — ergodic noise over a fixed
+   channel. A new draw per trial is a new instance (or `set_params`),
+   and that loop stays visible.
+3. **Adaptive** blocks carry **independent state per event** — one
+   equalizer per pair, never one state smeared across trials.
+   `BlindDualMIMOCompensator` on `(..., 2, N)` adapts one butterfly per
+   pair and exposes `H_` with the batch axes in front;
+   `BlindPhaseSearchCompensator` tracks one `phase_` trajectory per
+   row.
+
+The payoff is Monte-Carlo without a Python loop over trials:
+`monte_carlo(chain, param, values, metrics, (n_trials, N), seed=…)`
+pools each metric over `n_trials` independent frames per sweep point —
+for equal-size trials, exactly the mean of the per-trial values.
+`tests/core/test_batch_axes.py` locks one block of each family, and
+`tests/test_batch_contract.py` is the **ratchet over the whole
+catalogue**: it discovers every `Processor` subclass and fails unless
+each is verified batched (`BROADCAST` by row equality, `INDEPENDENT`
+by realization inequality, `REFUSES` by the raised error) or exempted
+with a written reason. A new block cannot merge without declaring what
+a batch means for it.
+
 ## Observing signals: taps, not blocks
 
 A chain describes the communication system. Nothing else goes into

@@ -602,8 +602,11 @@ def compute_ser(X_target: np.ndarray, X_detected: np.ndarray,
 
     Axes: *declared axis* -- errors are counted along ``axis``, which must
     then hold the symbols; with ``axis=None`` (default) both arrays are
-    raveled and truncated to their common length
-    :math:`N = \min(N_{\text{target}}, N_{\text{detected}})`.
+    truncated to their common length
+    :math:`N = \min(N_{\text{target}}, N_{\text{detected}})` **along the
+    last axis**, then every element is pooled -- so a batch of frames
+    stays aligned row by row, and the pooled rate is the mean of the
+    per-row rates.
 
     Parameters
     ----------
@@ -638,11 +641,14 @@ def compute_ser(X_target: np.ndarray, X_detected: np.ndarray,
     [0.25 0.25]
     """
     if axis is None:
-        x_target = np.ravel(X_target)
-        x_detected = np.ravel(X_detected)
-        N = min(len(x_detected), len(x_target))
-        nb_errors = np.count_nonzero(x_target[:N] - x_detected[:N])
-        return nb_errors / N
+        x_target = np.asarray(X_target)
+        x_detected = np.asarray(X_detected)
+        # a length mismatch is truncated along the *last* axis before
+        # anything is pooled: raveling first would misalign every row
+        # of a batch after the first -- a silent offset, not an error
+        N = min(x_target.shape[-1], x_detected.shape[-1])
+        difference = x_target[..., :N] - x_detected[..., :N]
+        return np.count_nonzero(difference) / difference.size
     else:
         N = X_target.shape[axis]
         nb_errors = np.count_nonzero(X_target - X_detected, axis=axis)
@@ -708,8 +714,13 @@ def compute_ber(X_target: np.ndarray, X_detected: np.ndarray, width: int,
     0.25
     """
     if axis is None:
-        s_target = sym_2_bin(np.ravel(X_target), width)
-        s_detected = sym_2_bin(np.ravel(X_detected), width)
+        x_target = np.asarray(X_target)
+        x_detected = np.asarray(X_detected)
+        # truncated along the last axis before raveling, like
+        # compute_ser: a batch stays aligned row by row
+        N = min(x_target.shape[-1], x_detected.shape[-1])
+        s_target = sym_2_bin(np.ravel(x_target[..., :N]), width)
+        s_detected = sym_2_bin(np.ravel(x_detected[..., :N]), width)
         nb_errors = np.count_nonzero(s_target - s_detected)
         return nb_errors / len(s_detected)
     else:

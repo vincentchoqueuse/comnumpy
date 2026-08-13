@@ -155,7 +155,7 @@ class TestGuards(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             BlindDualMIMOCompensator(alphabet=alphabet())(np.zeros((1, 100),
                                                                    dtype=complex))
-        self.assertIn("dual polarization", str(ctx.exception))
+        self.assertIn("polarization pair", str(ctx.exception))
 
     def test_an_unknown_mode_says_which_ones_exist(self):
         equalizer = BlindDualMIMOCompensator(L=2, alphabet=alphabet())

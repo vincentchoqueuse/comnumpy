@@ -33,8 +33,7 @@ constellation = Constellation("QAM", 16)
 # realization of it. The channel says what it is rather than being
 # described from outside.
 channel = TappedDelayLineChannel(get_delay_profile("EPA"), fs=fs, seed=8)
-for key, value in channel.info().items():
-    print(f"{key}: {value}")
+print(channel)
 
 # Sounding the model with an impulse gives the realization as a tap
 # vector -- which is what both receivers below are given.
@@ -100,25 +99,22 @@ plot_iq(ofdm_chain.tap("data_rx_eq"), reference=constellation,
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 
 # --- error rate ------------------------------------------------------
-# One operating point is not a conclusion. Each sweep is repeated over
-# independent noise seeds because 1280 symbols only resolve down to
-# 8e-4; the channel is the same throughout, by construction.
+# One operating point is not a conclusion, and 1280 symbols only
+# resolve down to 8e-4. Instead of a Python loop over repeated runs,
+# the stimulus grows a leading batch axis (D51): every block broadcasts
+# over it, the noise is drawn independently per trial, and compute_ser
+# pools the n_trials frames of each sweep point -- exactly the mean of
+# the per-trial rates. The channel stays the same throughout, by
+# construction.
 snr_list = np.arange(6, 22, 2)
 n_trials = 2
 
-# --- metrics, pre-allocated ------------------------------------------
-measured = {}
-for name in ("single carrier", "OFDM"):
-    measured[name] = np.zeros(len(snr_list))
-
 # --- simulation loop -------------------------------------------------
+measured = {}
 for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
-    runs = np.zeros((n_trials, len(snr_list)))
-    for trial in range(n_trials):
-        runs[trial] = monte_carlo(chain, "data_rx.snr_dB", snr_list,
-                                  {"ser": compute_ser}, N,
-                                  reference="data_tx", seed=trial + 1)["ser"]
-    measured[name] = np.mean(runs, axis=0)
+    measured[name] = monte_carlo(chain, "data_rx.snr_dB", snr_list,
+                                 {"ser": compute_ser}, (n_trials, N),
+                                 reference="data_tx", seed=1)["ser"]
 
 # --- results: table and figure ---------------------------------------
 

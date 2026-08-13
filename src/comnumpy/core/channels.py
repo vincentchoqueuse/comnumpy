@@ -127,9 +127,9 @@ class FIRChannel(Processor):
 
        y[n] = \sum_{l=0}^{L-1} h[l] \, x[n-l]
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``
+    Axes: *axis -1* -- the convolution runs along the last axis
     (``scipy.signal.convolve`` semantics; output length depends on
-    ``mode``).
+    ``mode``); leading axes are batch, every row through the same taps.
 
     Parameters
     ----------
@@ -159,7 +159,10 @@ class FIRChannel(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         from scipy import signal  # local import (D36)
-        y = signal.convolve(x, self.h, mode=self.mode)
+        # scipy wants kernel and signal of equal rank: size-1 leading
+        # axes keep those dimensions untouched in every mode
+        h = np.reshape(self.h, (1,) * (np.ndim(x) - 1) + (-1,))
+        y = signal.convolve(x, h, mode=self.mode)
         return y
 
     def info(self) -> dict[str, Any]:

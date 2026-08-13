@@ -55,7 +55,13 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
 - Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`
-  when one chain and standard metrics cover the study. When the study
+  when one chain and standard metrics cover the study. Repeated trials
+  of **one** chain are not a Python loop: grow the stimulus a leading
+  batch axis -- `(n_trials, N)` -- and every block broadcasts over it,
+  stochastic blocks draw independently per trial, and the pooled metric
+  is exactly the mean of the per-trial rates (D51; the exception is a
+  channel whose realization is frozen at construction -- a new draw per
+  trial is a new instance, and that loop stays visible). When the study
   is *around* a chain -- several detectors on one frame, several
   receivers on one propagation -- write the loop out, on **one storage
   convention**: declare the methods and the metrics first; pre-allocate

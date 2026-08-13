@@ -146,18 +146,17 @@ itself:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 84-87
+   :lines: 84-88
 
 .. code::
 
-   constellation.info()
-     family           QAM
-     order            4
-     labelling        gray
-     bits_per_symbol  2
-     energy           1.0
-     min_distance     1.414213562373095
-     papr_dB          0.0
+   family: QAM
+   order: 4
+   labelling: gray
+   bits_per_symbol: 2
+   energy: 1.0
+   min_distance: 1.414213562373095
+   papr_dB: 0.0
 
 Every one of those was implicit in the by-hand version. ``energy`` is the
 normalization the noise variance depends on; ``bits_per_symbol`` is the
@@ -170,7 +169,7 @@ It also draws itself, next to what the channel did to it:
 
 .. literalinclude:: ../../examples/simple/one_shot_awgn.py
    :language: python
-   :lines: 89-97
+   :lines: 90-98
 
 .. image:: img/first_simulation_fig1.png
    :width: 100%

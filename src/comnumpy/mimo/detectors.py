@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 from comnumpy.core.generics import Processor
 from comnumpy.core.utils import hard_projector, soft_projector, zf_estimator, mmse_estimator
 
@@ -34,6 +34,28 @@ def _required_channel(H: Optional[np.ndarray], block: str) -> np.ndarray:
             f"construction ({block}(alphabet, H=H)) or assign "
             f"detector.H once the channel is known.")
     return np.asarray(H)
+
+
+def _detect_stacked(detect: "Callable[[np.ndarray, np.ndarray], np.ndarray]",
+                    H: np.ndarray, Y: np.ndarray) -> np.ndarray:
+    """One detection per leading index of a stacked channel (D51).
+
+    The search algorithms are per-draw by nature -- an enumeration, a
+    tree, a cancellation order all depend on the one matrix in front of
+    them -- so the batch is an explicit loop: channel ``k`` decides
+    frame ``k``, and no state leaks between draws. Convenience and
+    correctness, not a speedup.
+    """
+    from comnumpy.exceptions import ShapeError
+    if Y.ndim < 2 or Y.shape[:-2] != H.shape[:-2]:
+        raise ShapeError(
+            f"a stacked channel with leading shape {H.shape[:-2]} "
+            f"decides one frame per draw and needs observations "
+            f"(..., N_r, N) with the same leading shape, got {Y.shape}")
+    S = np.empty(H.shape[:-2] + (H.shape[-1], Y.shape[-1]), dtype=int)
+    for index in np.ndindex(*H.shape[:-2]):
+        S[index] = detect(H[index], Y[index])
+    return S
 
 
 def _required_noise_variance(sigma2: Optional[float], block: str) -> float:
@@ -87,7 +109,9 @@ class MaximumLikelihoodDetector(Processor):
         antennas or a high-order constellation.
 
     Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
-    axis -2.
+    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of
+    shape ``(K, N_r, N)``: channel k decides frame k, through an
+    internal per-draw loop -- convenience, not a speedup (D51).
 
     Parameters
     ----------
@@ -133,8 +157,7 @@ class MaximumLikelihoodDetector(Processor):
 
     def get_nb_candidates(self) -> int:
         H = _required_channel(self.H, type(self).__name__)
-        _, N_t = H.shape
-        return len(self.alphabet) ** N_t
+        return len(self.alphabet) ** H.shape[-1]
 
     def get_candidates(self, alphabet: np.ndarray,
                        N_t: int) -> tuple[np.ndarray, np.ndarray]:
@@ -155,6 +178,16 @@ class MaximumLikelihoodDetector(Processor):
 
     def forward(self, Y: np.ndarray) -> np.ndarray:
         H = _required_channel(self.H, type(self).__name__)
+        if H.ndim > 2:
+            S = _detect_stacked(self._detect, H, Y)
+            self.S = S
+            return S
+        S = self._detect(H, Y)
+        self.S = S
+        return S
+
+    def _detect(self, H: np.ndarray, Y: np.ndarray) -> np.ndarray:
+        """The exhaustive search against one channel matrix."""
         _, N_t = H.shape
         _, N = Y.shape
         alphabet = self.alphabet
@@ -187,7 +220,6 @@ class MaximumLikelihoodDetector(Processor):
                 best[better] = values[better]
             S[:, start:start + n_block] = S_candidates[:, winner]
 
-        self.S = S
         return S
 
 
@@ -253,8 +285,10 @@ class SphereDecoder(Processor):
     16.7 million.
 
     Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
-    axis -2, and returns the alphabet indices, like every other detector
-    here.
+    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of
+    shape ``(K, N_r, N)``: channel k decides frame k, through an
+    internal per-draw loop -- convenience, not a speedup (D51) -- and returns the
+    alphabet indices, like every other detector here.
 
     Parameters
     ----------
@@ -329,14 +363,16 @@ class SphereDecoder(Processor):
     S: Optional[np.ndarray] = field(init=False, repr=False,
                                     default_factory=lambda: None)
     nodes_: float = field(init=False, repr=False, default=0.0)
+    # running counters behind nodes_, declared for slots (D40a)
+    _visited: int = field(init=False, repr=False, default=0)
+    _samples: int = field(init=False, repr=False, default=0)
 
     def __post_init__(self):
         # accept anything array-like, a Constellation included
         self.alphabet = np.asarray(self.alphabet)
 
-    def _triangularize(self) -> tuple[np.ndarray, np.ndarray]:
-        """The thin QR of the channel, with the guards it needs."""
-        H = _required_channel(self.H, type(self).__name__)
+    def _triangularize(self, H: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """The thin QR of one channel matrix, with the guards it needs."""
         n_rx, n_tx = H.shape
         if n_rx < n_tx:
             raise ValueError(
@@ -391,21 +427,35 @@ class SphereDecoder(Processor):
         return best, nodes
 
     def forward(self, Y: np.ndarray) -> np.ndarray:
-        Q, R = self._triangularize()
+        H = _required_channel(self.H, type(self).__name__)
+        if H.ndim > 2:
+            # nodes_ averages over every sample of every draw: the
+            # per-draw counts accumulate through _detect below
+            self._visited, self._samples = 0, 0
+            S = _detect_stacked(self._detect, H, Y)
+            self.nodes_ = self._visited / max(1, self._samples)
+            self.S = S
+            return S
+        self._visited, self._samples = 0, 0
+        S = self._detect(H, Y)
+        self.nodes_ = self._visited / max(1, self._samples)
+        self.S = S
+        return S
+
+    def _detect(self, H: np.ndarray, Y: np.ndarray) -> np.ndarray:
+        """The tree search against one channel matrix."""
+        Q, R = self._triangularize(H)
         Z = np.matmul(np.conjugate(Q).T, Y)          # (N_t, N)
         alphabet = np.asarray(self.alphabet).ravel()
         gains = np.abs(np.diag(R)) ** 2
 
         n_samples = Y.shape[-1]
         S = np.empty((R.shape[0], n_samples), dtype=int)
-        visited = 0
         for sample in range(n_samples):
             best, nodes = self._closest(R, gains, Z[:, sample], alphabet)
             S[:, sample] = best
-            visited += nodes
-
-        self.nodes_ = visited / max(1, n_samples)
-        self.S = S
+            self._visited += nodes
+        self._samples += n_samples
         return S
 
 
@@ -439,7 +489,9 @@ class LinearDetector(Processor):
     the integer indices of the decisions in the alphabet.
 
     Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
-    axis -2.
+    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against
+    ``Y`` of shape ``(K, N_r, N)`` -- one draw per trial, decided
+    through numpy's stacked linear algebra in one call (D51).
 
     Parameters
     ----------
@@ -540,7 +592,9 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
     of the decisions in the alphabet.
 
     Axes: *declared axis* -- expects ``(ant, N)`` with antennas on
-    axis -2.
+    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of
+    shape ``(K, N_r, N)``: channel k decides frame k, through an
+    internal per-draw loop -- convenience, not a speedup (D51).
 
     Parameters
     ----------
@@ -629,8 +683,14 @@ class OrderedSuccessiveInterferenceCancellationDetector(Processor):
                 raise ValueError("osic_type must be 'sinr', 'colnorm', or 'snr'.")
 
     def forward(self, Y: np.ndarray) -> np.ndarray:
+        H = _required_channel(self.H, type(self).__name__)
+        if H.ndim > 2:
+            return _detect_stacked(self._detect, H, Y)
+        return self._detect(H, Y)
+
+    def _detect(self, H_full: np.ndarray, Y: np.ndarray) -> np.ndarray:
+        """The ordered cancellation against one channel matrix."""
         block = type(self).__name__
-        H_full = _required_channel(self.H, block)
 
         Y_temp = Y.copy()
         NT = H_full.shape[1]

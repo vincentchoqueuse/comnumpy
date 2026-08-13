@@ -45,6 +45,157 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — the batch promise is a ratchet over the catalogue
+
+A convention over 91 blocks is only worth the sweep that checks it.
+`tests/test_batch_contract.py` discovers every `Processor` subclass in
+the library and fails unless each one is declared and verified:
+`BROADCAST` (row `i` of a batch equals the block on row `i` alone --
+36 blocks checked by equality), `INDEPENDENT` (trials do not share a
+realization), `REFUSES` (the ambiguous batch raises), or `EXEMPT` with
+the reason written next to it. Like the pyright ratchet (D37), it makes
+the contract self-enforcing: a new block cannot land without saying --
+and proving -- what a batch means for it.
+
+Its first sweep caught two more silent couplings. `DCCorrector`'s
+default `axis=0` averaged *across* the batch (the default is now `-1`,
+the canonical serial layout: one offset per converter). `HardClipper`
+computed its threshold from the mean power of the whole array, so the
+weakest trial of a batch was clipped against the strongest; the power
+is now per row.
+
+### Added — the MIMO Monte-Carlo is a stacked channel (D51b)
+
+The MIMO question the batch contract had to answer: the channel is
+redrawn every frame, and every detector needs that frame's matrix.
+The answer is a **stack**. `rayleigh_channel(size=K)` returns
+`(K, N_r, N_t)` -- drawn sequentially from one generator, so draw k
+equals the k-th draw of the equivalent Python loop; `FlatMIMOChannel`
+applies channel k to frame k (numpy's `matmul` batches over leading
+axes); and a detector built with the same stack decides frame k against
+channel k. `LinearDetector` (ZF and MMSE) batches through numpy's
+*stacked linear algebra* -- `mmse_estimator` now transposes with
+`swapaxes(-1, -2)` so its normal equations batch too -- while the
+search detectors (ML, sphere, OSIC) loop per draw internally: an
+enumeration, a tree and a cancellation order each depend on the one
+matrix in front of them, so their batch is convenience and correctness,
+not a speedup, and their docstrings say so. A mismatched stack (K
+channels against K+1 frames) is refused. Locked by
+`tests/mimo/test_stacked_channel.py`.
+
+Both MIMO studies now run on the stack. `one_shot_mimo` replaces its
+zipped `monte_carlo(("channel.H", "detector.H"), ...)` sweep -- 200
+chain runs per detector per SNR -- with one batched pass (10.9 s to
+9.0 s: the sphere decoder's per-sample search dominates and does not
+vectorize). `monte_carlo_simulation_1` drops its 500-draw Python loop
+for one stacked pass per SNR point and computes the BLER directly as
+`np.mean(np.any(S_est != S_ref, axis=(-2, -1)))` -- 4.7 s to 2.5 s.
+
+### Added — batch axes are a contract, not an accident (D51)
+
+Leading axes ahead of a block's event axes are batch axes: independent
+trials, run in one call. The contract has three families, now stated in
+CONVENTIONS.md and locked by `tests/core/test_batch_axes.py`:
+deterministic blocks broadcast their one configuration (`FIRChannel`
+reshapes its kernel so scipy convolves along the last axis;
+`LinearEqualizer` applies its matrix as a column product -- both
+previously crashed on a batch); stochastic blocks draw independently
+per event (`PhaseNoise` declares its event with `per=`: `"pair"` --
+default, one laser per polarization pair, independent across trials --
+`"row"` or `"signal"`; the ambiguous shape is refused with the
+resolutions named); adaptive blocks carry independent state per event
+(`BlindDualMIMOCompensator` on `(..., 2, N)` adapts one butterfly per
+pair and exposes `H_` with the batch axes in front).
+
+A sweep of the block catalogue then held every block to the contract.
+Four more deterministic blocks crashed on a batch and now broadcast:
+`BWFilter` (its 1-D guard was already unnecessary -- the FFT mask acts
+on the last axis), `CFO` (it read `len(x)`, i.e. the *batch* size, as
+the signal length), `Delay`, and both chromatic-dispersion FIR
+compensators (the same scipy kernel-rank fix as `FIRChannel`).
+`BlindCFOCompensator` keeps its documented event -- one oscillator per
+signal or per polarization pair `(2, N)`, estimated jointly
+(`test_estimand_scope`) -- and now *refuses* a wider batch instead of
+silently smearing one scalar estimate over independent trials.
+
+What batching buys was measured, not asserted: x4.1 on the
+single-carrier chain whose block ZF equalizer rebuilds its
+pseudo-inverse per call (4 trials amortize it to one build per sweep
+point), x2.2 on the OFDM chain (16 trials), and **x0.5 -- slower --**
+on a plain AWGN chain, where Python overhead was never the cost and
+the batch only buys bigger temporaries. Batch for correctness and for
+amortizing per-call operator builds; not as a blanket speed knob.
+
+Two silent traps died on the way. `compute_ser`/`compute_ber` with
+`axis=None` used to ravel *before* truncating to the common length, so
+a batch whose rows carried a tail (an OFDM frame after a `full`
+convolution) compared misaligned rows -- SER 0.47 where the truth was
+0.02; both now truncate along the last axis first, and the pooled rate
+is exactly the mean of the per-row rates. And the OFDM tutorial's
+repeat-loop became one batched call:
+`monte_carlo(chain, param, values, metrics, (n_trials, N), seed=…)`.
+
+### Added — `print(obj)` renders `info()`
+
+Any object that defines `info()` -- a channel, a constellation -- now
+prints it: `Processor.__str__` (and `Constellation.__str__`) render the
+dictionary as one `key: value` line per entry, and fall back to `repr`
+when there is no `info()`. The tutorials' `for key, value in
+channel.info().items()` loops become `print(channel)`.
+
+### Added — the blind coherent receiver: `PMDEmulator`, BPS, and its page
+
+The expert review named the two absences that dated the optical layer:
+no polarization impairment, and no time-varying carrier recovery -- the
+`Laser` block carried a Wiener linewidth that nothing in the library
+could track. Both close here, with the tutorial that needs them.
+
+`PMDEmulator` (optical.channels) is the standard section emulator: K
+Haar-uniform Jones rotations, each followed by a DGD of tau/sqrt(K)
+applied exactly in the frequency domain -- randomly oriented sections
+add in quadrature, so the declared tau is the **RMS** DGD of the
+ensemble, whose distribution is Maxwellian with mean 0.921 tau (Poole &
+Wagner). A 300-seed test measures the DGD from the eigenvalues of the
+group-delay operator and pins both moments within 10 %. The emulator is
+unitary -- energy conserved to machine precision, tested -- seeded, and
+refuses a single polarization.
+`PhaseNoise` now draws **one** walk along the last axis and shares it
+across leading axes: the phase comes from one laser, and a polarization
+pair sees the same phi[n].
+
+`BlindPhaseSearchCompensator` (core.compensators) is Pfau's feedforward
+blind phase search: B test phases over [0, pi/2), windowed decision
+distance, per-symbol argmin, unwrapped modulo pi/2. Each row of a pair
+gets its own trajectory, exposed as `phase_` (D23). The quadrant
+ambiguity is documented as unresolved, and tested as such.
+
+The page (`optical_pdm`) runs PDM-QPSK through one laser, eight PMD
+sections and an amplifier, then undoes it blindly: CMA butterfly, BPS,
+and the three ambiguities every blind receiver leaves -- permutation,
+quadrant, equalizer delay -- resolved explicitly by known data, printed
+rather than hidden. Zero errors over 123 072 symbols, and the page says
+what that measures: transparency of the chain, not an error rate.
+
+### Added — the Gray labelling is locked by tests
+
+`compute_ber` expands indices in natural binary and its docstring
+admitted the count is only meaningful if the constellation is labelled
+accordingly. It is -- and now five tests prove it rather than the
+tutorials' tail agreement suggesting it: geometric nearest neighbours
+of every Gray QAM/PSK alphabet differ by exactly one index bit, natural
+binary labelling fails that property (so the test measures the
+labelling, not the geometry), a nearest-neighbour symbol error costs
+exactly one bit through `compute_ber`, and a seeded 16-QAM run at
+Eb/N0 = 11 dB lands within 20 % of the Gray closed form -- a labelling
+mismatch would double it.
+
+### Changed — the AWGN page drops its interpolation coda
+
+The Eb/N0-at-BER-1e-3 table was five lines of `np.interp` on a fine
+grid with an underflow guard -- machinery out of proportion with what
+it added to the figure the section already shows. The spacing of the
+waterfalls is now read off the figure in one sentence.
+
 ### Changed — the simulation sections read identically across the pages
 
 Every sweep in the tutorials now shows the same three markers, in the

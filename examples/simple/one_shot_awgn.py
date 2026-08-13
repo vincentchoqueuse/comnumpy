@@ -82,9 +82,10 @@ ser_theo = constellation.metrics(snr_dB, per="symbol")["ser"]
 print(f"chain   : SER = {ser:.4f}, theory = {ser_theo:.4f}")
 
 # --- 3. what the object knows about itself ----------------------------
-print("\nconstellation.info()")
-for key, value in constellation.info().items():
-    print(f"  {key:16s} {value}")
+# print(constellation) renders info() -- any object with an info()
+# method prints itself this way
+print()
+print(constellation)
 
 # --- 4. the figures ---------------------------------------------------
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))

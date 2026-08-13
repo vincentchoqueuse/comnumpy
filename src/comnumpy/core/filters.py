@@ -244,8 +244,8 @@ class BWFilter(Processor):
     operation is a **circular** convolution with a periodic sinc of
     length :math:`N`, not a linear one.
 
-    Axes: *axis -1* -- expects a 1D signal ``(N,)``; multi-dimensional
-    inputs are rejected.
+    Axes: *axis -1* -- the FFT mask acts on the last axis; leading
+    axes are batch.
 
     Parameters
     ----------
@@ -289,12 +289,10 @@ class BWFilter(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
-        if x.ndim > 1:
-            raise NotImplementedError("BW Filter: only 1D signals are supported.")
-
         from comnumpy._backend import fft, ifft, fftfreq  # local import (D36), cupy-compatible (D3)
 
-        NFFT = len(x)
+        # the FFT and the mask act on axis -1; leading axes are batch
+        NFFT = x.shape[-1]
         w = fftfreq(NFFT, d=1, like=x)
         # wn is normalized to Nyquist (= 1/2 cycle/sample), hence the /2
         H = (abs(w) <= self.wn / 2).astype(float)

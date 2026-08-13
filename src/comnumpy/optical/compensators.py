@@ -64,8 +64,9 @@ class ChromaticDispersionFIRCompensator(Processor):
     to s^2/km (factor :math:`10^{-24}`), :math:`z` is in km and
     :math:`f_s` in Hz, which makes :math:`K` dimensionless.
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N_x,)``
-    (``scipy.signal.convolve`` in ``"full"`` mode).
+    Axes: *axis -1* -- the convolution runs along the last axis
+    (``scipy.signal.convolve`` in ``"full"`` mode); leading axes are
+    batch, every row through the same taps.
 
     Parameters
     ----------
@@ -134,7 +135,11 @@ class ChromaticDispersionFIRCompensator(Processor):
         self.K = K
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        y = signal.convolve(x, self.h, mode='full')
+        assert self.h is not None       # set in __post_init__
+        # scipy wants kernel and signal of equal rank: size-1 leading
+        # axes make the convolution run along axis -1, batch in front
+        h = np.reshape(self.h, (1,) * (np.ndim(x) - 1) + (-1,))
+        y = signal.convolve(x, h, mode='full')
         return y
 
 
@@ -321,8 +326,9 @@ class ChromaticDispersionLSFIRCompensator(Processor):
     s^2/km, :math:`z` in km and :math:`f_s` in Hz, so that :math:`K` is
     dimensionless.
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N_x,)``
-    (``scipy.signal.convolve`` in ``"full"`` mode).
+    Axes: *axis -1* -- the convolution runs along the last axis
+    (``scipy.signal.convolve`` in ``"full"`` mode); leading axes are
+    batch, every row through the same taps.
 
     Parameters
     ----------
@@ -433,4 +439,6 @@ class ChromaticDispersionLSFIRCompensator(Processor):
         self.K = K
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return signal.convolve(x, self.h)
+        assert self.h is not None       # set in __post_init__
+        h = np.reshape(self.h, (1,) * (np.ndim(x) - 1) + (-1,))
+        return signal.convolve(x, h)
