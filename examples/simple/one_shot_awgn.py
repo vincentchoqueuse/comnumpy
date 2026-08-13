@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
 
-from comnumpy.core import Sequential, plot_iq
+from comnumpy import style
+from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
@@ -86,9 +87,11 @@ for key, value in constellation.info().items():
 # --- 4. the figures ---------------------------------------------------
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
 constellation.plot(ax=axes[0])
-plot_iq(chain.tap("awgn"), title=f"received at {snr_dB} dB", ax=axes[1])
-for ax in axes:
-    ax.grid(True)
+received = chain.tap("awgn")
+axes[1].plot(np.real(received), np.imag(received), ".")
+axes[1].set_title(f"received at {snr_dB} dB")
+style.apply(axes[1], "iq")
+axes[0].grid(True)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/first_simulation_fig1.png")
 

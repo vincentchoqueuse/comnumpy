@@ -3,13 +3,13 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import monte_carlo
+from comnumpy import monte_carlo, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
 from comnumpy.core.metrics import compute_ser
 from comnumpy.core.utils import Constellation
-from comnumpy.core.visualizers import plot_error_rate, plot_iq
+from comnumpy.core.visualizers import plot_error_rate
 from comnumpy.mimo.channels import AWGN, FlatMIMOChannel
 from comnumpy.mimo.detectors import (
     LinearDetector, MaximumLikelihoodDetector,
@@ -63,21 +63,25 @@ for name, chain in chains.items():
 Y = chains["ZF"].tap("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
-    plot_iq(Y[index, :], ax=axes1[index])
+    axes1[index].plot(np.real(Y[index, :]), np.imag(Y[index, :]), ".")
     axes1[index].set_title(f"Received signal (antenna {index + 1})")
-    axes1[index].set_aspect("equal", adjustable="box")
     axes1[index].set_xlim([-2, 2])
     axes1[index].set_ylim([-2, 2])
+    style.apply(axes1[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig1.png")
 
 Z = detectors["ZF"].linear_estimator(Y)
 fig2, axes2 = plt.subplots(nrows=1, ncols=N_t, figsize=(4 * N_t, 4))
 for index in range(N_t):
-    plot_iq(Z[index, :], reference=constellation, ax=axes2[index])
+    axes2[index].plot(np.real(Z[index, :]), np.imag(Z[index, :]), ".",
+                      label="estimated")
+    axes2[index].plot(np.real(constellation.alphabet),
+                      np.imag(constellation.alphabet), "kx",
+                      markersize=9, label="transmitted alphabet")
     axes2[index].set_title(f"Estimated signal (stream {index + 1})")
-    axes2[index].set_aspect("equal", adjustable="box")
     axes2[index].set_xlim([-2, 2])
     axes2[index].set_ylim([-2, 2])
+    style.apply(axes2[index], "iq")
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig2.png")
 
 snr_dB_list = np.arange(0, 20, 3)
@@ -160,10 +164,17 @@ for name, detector in big_detectors.items():
         print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][-1]:8.1f} ms  "
               f"{nodes}   SER {errors:.4f}")
 
-ax = plot_error_rate(snr_dB_list, {name: np.array(values)
-                                   for name, values in elapsed.items()},
-                     ylabel="detection time for 400 vectors [ms]",
-                     title="16-QAM, 4x4: same decision, what it costs")
+# A runtime is not an error rate, so it does not go through
+# plot_error_rate and there is no style kind for it either: what this
+# figure needs is a log ordinate and a grid, which is what it says.
+fig4, ax = plt.subplots()
+for name, values in elapsed.items():
+    ax.semilogy(snr_dB_list, values, "o-", fillstyle="none", label=name)
+ax.set_xlabel("SNR [dB]")
+ax.set_ylabel("detection time for 400 vectors [ms]")
+ax.set_title("16-QAM, 4x4: same decision, what it costs")
+ax.grid(True, which="both")
+ax.legend()
 plt.tight_layout()
 plt.savefig(f"{img_dir}/monte_carlo_mimo_fig4.png")
 

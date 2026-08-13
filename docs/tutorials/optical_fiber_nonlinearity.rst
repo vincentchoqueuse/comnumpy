@@ -190,7 +190,7 @@ two noises that close add. The check reports it rather than hiding it.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 156-158
+   :lines: 156-163
 
 .. image:: img/one_shot_nli_fig1.png
    :width: 100%
@@ -204,7 +204,7 @@ three distances:
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 160-180
+   :lines: 165-195
 
 .. image:: img/one_shot_nli_fig2.png
    :width: 100%
@@ -236,7 +236,7 @@ through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 182-187
+   :lines: 197-202
 
 .. code::
 
@@ -289,7 +289,7 @@ Results
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
-   :lines: 189-210
+   :lines: 204-230
 
 .. code::
 
@@ -365,7 +365,7 @@ That is the prediction the sweep below has to land on.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 108-219
+   :lines: 108-226
 
 .. code::
 

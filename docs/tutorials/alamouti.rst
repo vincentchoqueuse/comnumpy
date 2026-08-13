@@ -199,7 +199,7 @@ One-shot simulation
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 92-105
+   :lines: 92-110
 
 .. code::
 
@@ -241,7 +241,7 @@ inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 110-160
+   :lines: 115-165
 
 The three curves are three readings of one closed form,
 :func:`~comnumpy.core.metrics.compute_ser_rayleigh_psk`: :math:`L` branches
@@ -260,7 +260,7 @@ the simulation is what confronts them:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 162-201
+   :lines: 167-206
 
 .. code::
 

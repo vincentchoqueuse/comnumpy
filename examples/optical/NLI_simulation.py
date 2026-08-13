@@ -200,14 +200,21 @@ for name, points in counters.items():
 # nonlinear interference as noise, so it has nothing to say about a
 # receiver that removes part of it.
 fine_powers = dbm_to_watt(np.linspace(dBm_list[0], dBm_list[-1], 200))
-ax = plot_error_rate(dBm_list, snr_dB, xlabel="launch power [dBm]",
-                     ylabel="effective SNR [dB]", yscale="linear",
-                     title=f"{N_span} x {L_span} km, {constellation.order}-"
-                           f"{constellation.family} at "
-                           f"{R_s / 1e9:.0f} GBd")
+# An effective SNR in dB is not an error rate -- a linear ordinate, six
+# receivers and one closed form -- so it is drawn here rather than routed
+# through plot_error_rate, whose name would then be describing something
+# it is not.
+fig1, ax = plt.subplots()
+for name, values in snr_dB.items():
+    ax.plot(dBm_list, values, "o-", fillstyle="none", label=name)
 ax.plot(watt_to_dbm(fine_powers),
         10 * np.log10(gn_model_snr(ase_W, eta, fine_powers)), "k:",
         label="GN model, single polarization")
+ax.set_xlabel("launch power [dBm]")
+ax.set_ylabel("effective SNR [dB]")
+ax.set_title(f"{N_span} x {L_span} km, {constellation.order}-"
+             f"{constellation.family} at {R_s / 1e9:.0f} GBd")
+ax.grid(True)
 ax.legend()
 plt.tight_layout()
 plt.savefig(f"{img_dir}/nli_simulation_fig1.png")

@@ -45,6 +45,59 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — the cosmetics are a function, the drawing is matplotlib
+
+A figure of this library was drawn one of two ways, and neither was
+good. Either through a `plot_*` wrapper, which for a single curve hides
+two lines of matplotlib behind a signature to learn -- 33 `ax.plot` and
+17 `ax.semilogy` in `examples/` say what the scripts actually prefer --
+or by hand, in which case it got no house look at all. And the style
+sheet shipped since D27b was activated by **nothing**: not one script,
+not one plotting function. Every figure in the documentation was drawn
+with matplotlib's defaults.
+
+`comnumpy.style.apply(ax, kind)` is the missing half. A page draws its
+curves itself and hands the axis over for the decoration:
+
+```python
+fig, ax = plt.subplots()
+line, = ax.semilogy(snr_dB, ser, "o", fillstyle="none", label="16-QAM")
+ax.semilogy(snr_dB, ser_theory, "-", color=line.get_color())
+style.apply(ax, "error_rate")
+```
+
+It fills the labels that are still empty -- never one the caller set --
+turns the grid on, on both decades when the axis is logarithmic, and
+adds a legend when something is labelled. `"iq"` also sets an equal
+aspect ratio, because a constellation read on unequal axes is a
+different constellation. It never touches the data and never changes a
+scale: whether a curve is a `plot` or a `semilogy`, with which marker
+and in which colour, is the page's statement about its measurement and
+stays in the page's code.
+
+A kind names a **quantity**, not a plotting mode, which is what caught
+the misuse: of twelve `plot_error_rate` calls, four drew no error rate
+at all -- an effective SNR in dB twice, a runtime in ms twice. Those
+four are now written out, with `ax.grid(True)` and their own labels;
+they do not borrow `"error_rate"` because their ordinate happens to be
+logarithmic. The twenty `plot_iq` calls became the two matplotlib lines
+they always were.
+
+`plot_error_rate` keeps the case it earns -- several measured curves
+each paired with its closed form, drawn in matching colours with
+markers that grow so that two detectors which agree do not hide each
+other -- and its decoration now goes through `style.apply`, so a figure
+drawn by hand and one drawn by it cannot end up looking different.
+
+One behaviour of it turned out to be load-bearing in a way worth
+recording. It filtered zeros out before plotting; the filter is gone,
+replaced by the ordinate's `nonpositive="mask"`, and the figures are
+byte-identical. But the two are *not* interchangeable with matplotlib's
+default: `"clip"` sends a zero to some 2e5 pixels below the axis, so a
+joined curve dives off the bottom of the figure and comes back where
+there should be a gap. Anyone drawing an error rate by hand needs
+`nonpositive="mask"`, and the docstring now says so.
+
 ### Documentation — the AWGN tutorial derives its reference curve
 
 The Monte-Carlo page compared a measurement against

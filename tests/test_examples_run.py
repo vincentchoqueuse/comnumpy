@@ -47,6 +47,14 @@ TIMEOUT_S = 120
 # the timeout. They are skipped, not omitted: a skipped test is visible
 # in the report, a missing one is not. Re-measure before moving an entry
 # in or out.
+#
+# `simple/one_shot_srrc_awgn.py` was in this list at "113 s wall / 316 s
+# CPU measured 2026-08-09" and is not any more. Its parameters have not
+# changed since the initial commit -- same N, same oversampling, same
+# 16 001 taps -- and it measures 2.8 s wall / 3.6 s CPU today, twice in a
+# row. The old figure is not reproducible here and no change to the
+# script explains it, so rather than keep a script out of the smoke test
+# on a number nobody can obtain, it goes back in.
 SLOW = {
     "mimo/monte_carlo_simulation_1.py":
         "Monte-Carlo BER sweep, 4 detectors -- 32 s measured 2026-08-09",
@@ -69,9 +77,6 @@ SLOW = {
         "the whole chain re-run at six span counts, each once nonlinear and "
         "once linear, then twice more for the profile and the receiver "
         "comparison -- 13 s measured 2026-08-13",
-    "simple/one_shot_srrc_awgn.py":
-        "16 001-tap SRRC filter at oversampling 8 -- 113 s wall / 316 s "
-        "CPU measured 2026-08-09",
     "simple/probabilistic_shaping.py":
         "a scalar optimization of lambda at fourteen SNRs, each iteration "
         "a 40-node Gauss-Hermite quadrature over a 64-QAM -- 230 s wall / "

@@ -136,7 +136,7 @@ Implementation
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 53-76
+   :lines: 53-84
 
 Results
 """""""
@@ -187,7 +187,7 @@ before the channel and a receiver block after it:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 77-100
+   :lines: 85-113
 
 ``OFDMTransmitter`` and ``OFDMReceiver`` are themselves chains:
 serial-to-parallel conversion, subcarrier allocation, IFFT and cyclic prefix
@@ -218,7 +218,7 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 101-121
+   :lines: 114-134
 
 .. code::
 
@@ -263,7 +263,7 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 122-146
+   :lines: 135-167
 
 .. code::
 
