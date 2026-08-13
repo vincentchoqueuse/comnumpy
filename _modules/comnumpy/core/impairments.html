@@ -800,8 +800,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    where :math:`\omega_0` is the normalized carrier frequency offset in</span>
 <span class="sd">    rad/sample.</span>
 
-<span class="sd">    Axes: *axis -1* -- expects (N,); the time index :math:`n` runs along a</span>
-<span class="sd">    one-dimensional input.</span>
+<span class="sd">    Axes: *axis -1* -- the time index :math:`n` runs along the last</span>
+<span class="sd">    axis; leading axes are batch, every row sees the same offset.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -827,8 +827,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cfo_impairment&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+        <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cfo</span><span class="o">*</span><span class="n">n_vect</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span></div>
 
@@ -853,8 +852,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    keep the input length :math:`N`; otherwise the output has length</span>
 <span class="sd">    :math:`N - \tau`.</span>
 
-<span class="sd">    Axes: *axis -1* -- expects (N,); samples are dropped along a</span>
-<span class="sd">    one-dimensional input.</span>
+<span class="sd">    Axes: *axis -1* -- samples are dropped along the last axis;</span>
+<span class="sd">    leading axes are batch.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -892,10 +891,10 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 
-        <span class="n">x_delayed</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">:]</span>
+        <span class="n">x_delayed</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">:]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad_zeros</span><span class="p">:</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-            <span class="n">y</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x_delayed</span><span class="p">)]</span> <span class="o">=</span> <span class="n">x_delayed</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">x_delayed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">x_delayed</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">x_delayed</span>
 

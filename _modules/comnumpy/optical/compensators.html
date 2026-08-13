@@ -794,8 +794,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    to s^2/km (factor :math:`10^{-24}`), :math:`z` is in km and</span>
 <span class="sd">    :math:`f_s` in Hz, which makes :math:`K` dimensionless.</span>
 
-<span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N_x,)``</span>
-<span class="sd">    (``scipy.signal.convolve`` in ``&quot;full&quot;`` mode).</span>
+<span class="sd">    Axes: *axis -1* -- the convolution runs along the last axis</span>
+<span class="sd">    (``scipy.signal.convolve`` in ``&quot;full&quot;`` mode); leading axes are</span>
+<span class="sd">    batch, every row through the same taps.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -864,7 +865,11 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>       <span class="c1"># set in __post_init__</span>
+        <span class="c1"># scipy wants kernel and signal of equal rank: size-1 leading</span>
+        <span class="c1"># axes make the convolution run along axis -1, batch in front</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span></div>
 
 
@@ -1054,8 +1059,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    s^2/km, :math:`z` in km and :math:`f_s` in Hz, so that :math:`K` is</span>
 <span class="sd">    dimensionless.</span>
 
-<span class="sd">    Axes: *declared axis* -- operates on a 1D serial signal ``(N_x,)``</span>
-<span class="sd">    (``scipy.signal.convolve`` in ``&quot;full&quot;`` mode).</span>
+<span class="sd">    Axes: *axis -1* -- the convolution runs along the last axis</span>
+<span class="sd">    (``scipy.signal.convolve`` in ``&quot;full&quot;`` mode); leading axes are</span>
+<span class="sd">    batch, every row through the same taps.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1166,7 +1172,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>       <span class="c1"># set in __post_init__</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
 
 </pre></div>
 

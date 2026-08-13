@@ -729,7 +729,7 @@ window.runMermaid = runMermaid;</script>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">hard_projector</span><span class="p">,</span> <span class="n">soft_projector</span><span class="p">,</span> <span class="n">zf_estimator</span><span class="p">,</span> <span class="n">mmse_estimator</span>
 
@@ -762,6 +762,28 @@ window.runMermaid = runMermaid;</script>
             <span class="sa">f</span><span class="s2">&quot;construction (</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2">(alphabet, H=H)) or assign &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;detector.H once the channel is known.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_stacked</span><span class="p">(</span><span class="n">detect</span><span class="p">:</span> <span class="s2">&quot;Callable[[np.ndarray, np.ndarray], np.ndarray]&quot;</span><span class="p">,</span>
+                    <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One detection per leading index of a stacked channel (D51).</span>
+
+<span class="sd">    The search algorithms are per-draw by nature -- an enumeration, a</span>
+<span class="sd">    tree, a cancellation order all depend on the one matrix in front of</span>
+<span class="sd">    them -- so the batch is an explicit loop: channel ``k`` decides</span>
+<span class="sd">    frame ``k``, and no state leaks between draws. Convenience and</span>
+<span class="sd">    correctness, not a speedup.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
+    <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;a stacked channel with leading shape </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;decides one frame per draw and needs observations &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(..., N_r, N) with the same leading shape, got </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">S</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">detect</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">S</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_required_noise_variance</span><span class="p">(</span><span class="n">sigma2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">block</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -817,7 +839,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        antennas or a high-order constellation.</span>
 
 <span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
-<span class="sd">    axis -2.</span>
+<span class="sd">    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of</span>
+<span class="sd">    shape ``(K, N_r, N)``: channel k decides frame k, through an</span>
+<span class="sd">    internal per-draw loop -- convenience, not a speedup (D51).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -863,8 +887,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_nb_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span> <span class="o">**</span> <span class="n">N_t</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span> <span class="o">**</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 <div class="viewcode-block" id="MaximumLikelihoodDetector.get_candidates">
 <a class="viewcode-back" href="../../../documentation/mimo/detectors.html#comnumpy.mimo.detectors.MaximumLikelihoodDetector.get_candidates">[docs]</a>
@@ -888,6 +911,16 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">_detect_stacked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+            <span class="k">return</span> <span class="n">S</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">S</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The exhaustive search against one channel matrix.&quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">alphabet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span>
@@ -920,7 +953,6 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">best</span><span class="p">[</span><span class="n">better</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">better</span><span class="p">]</span>
             <span class="n">S</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">n_block</span><span class="p">]</span> <span class="o">=</span> <span class="n">S_candidates</span><span class="p">[:,</span> <span class="n">winner</span><span class="p">]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
         <span class="k">return</span> <span class="n">S</span></div>
 
 
@@ -989,8 +1021,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    16.7 million.</span>
 
 <span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
-<span class="sd">    axis -2, and returns the alphabet indices, like every other detector</span>
-<span class="sd">    here.</span>
+<span class="sd">    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of</span>
+<span class="sd">    shape ``(K, N_r, N)``: channel k decides frame k, through an</span>
+<span class="sd">    internal per-draw loop -- convenience, not a speedup (D51) -- and returns the</span>
+<span class="sd">    alphabet indices, like every other detector here.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1065,14 +1099,16 @@ window.runMermaid = runMermaid;</script>
     <span class="n">S</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                     <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">nodes_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="c1"># running counters behind nodes_, declared for slots (D40a)</span>
+    <span class="n">_visited</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># accept anything array-like, a Constellation included</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_triangularize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The thin QR of the channel, with the guards it needs.&quot;&quot;&quot;</span>
-        <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_triangularize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The thin QR of one channel matrix, with the guards it needs.&quot;&quot;&quot;</span>
         <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">if</span> <span class="n">n_rx</span> <span class="o">&lt;</span> <span class="n">n_tx</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -1127,21 +1163,35 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">nodes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_triangularize</span><span class="p">()</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># nodes_ averages over every sample of every draw: the</span>
+            <span class="c1"># per-draw counts accumulate through _detect below</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">_detect_stacked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+            <span class="k">return</span> <span class="n">S</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="k">return</span> <span class="n">S</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The tree search against one channel matrix.&quot;&quot;&quot;</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_triangularize</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
         <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>          <span class="c1"># (N_t, N)</span>
         <span class="n">alphabet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
         <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">R</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
 
         <span class="n">n_samples</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_samples</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">visited</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
             <span class="n">best</span><span class="p">,</span> <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closest</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">gains</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span> <span class="n">sample</span><span class="p">],</span> <span class="n">alphabet</span><span class="p">)</span>
             <span class="n">S</span><span class="p">[:,</span> <span class="n">sample</span><span class="p">]</span> <span class="o">=</span> <span class="n">best</span>
-            <span class="n">visited</span> <span class="o">+=</span> <span class="n">nodes</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="n">visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span> <span class="o">+=</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">+=</span> <span class="n">n_samples</span>
         <span class="k">return</span> <span class="n">S</span></div>
 
 
@@ -1178,7 +1228,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    the integer indices of the decisions in the alphabet.</span>
 
 <span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
-<span class="sd">    axis -2.</span>
+<span class="sd">    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against</span>
+<span class="sd">    ``Y`` of shape ``(K, N_r, N)`` -- one draw per trial, decided</span>
+<span class="sd">    through numpy&#39;s stacked linear algebra in one call (D51).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1285,7 +1337,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    of the decisions in the alphabet.</span>
 
 <span class="sd">    Axes: *declared axis* -- expects ``(ant, N)`` with antennas on</span>
-<span class="sd">    axis -2.</span>
+<span class="sd">    axis -2. ``H`` may be a stack ``(K, N_r, N_t)`` against ``Y`` of</span>
+<span class="sd">    shape ``(K, N_r, N)``: channel k decides frame k, through an</span>
+<span class="sd">    internal per-draw loop -- convenience, not a speedup (D51).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1374,8 +1428,14 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;osic_type must be &#39;sinr&#39;, &#39;colnorm&#39;, or &#39;snr&#39;.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_detect_stacked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H_full</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The ordered cancellation against one channel matrix.&quot;&quot;&quot;</span>
         <span class="n">block</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="n">H_full</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
 
         <span class="n">Y_temp</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">NT</span> <span class="o">=</span> <span class="n">H_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>

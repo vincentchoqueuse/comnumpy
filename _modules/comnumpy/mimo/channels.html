@@ -833,7 +833,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    the noiseless product).</span>
 
 <span class="sd">    Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on</span>
-<span class="sd">    axis -2, validated against :math:`N_t`.</span>
+<span class="sd">    axis -2, validated against :math:`N_t`. ``H`` may be a **stack** of</span>
+<span class="sd">    channels ``(K, N_r, N_t)``: against ``X`` of shape ``(K, N_t, N)``</span>
+<span class="sd">    channel :math:`k` is applied to frame :math:`k` -- one independent</span>
+<span class="sd">    draw per trial, the batch contract of D51 for a channel whose</span>
+<span class="sd">    realization is configured rather than drawn per call.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -865,7 +869,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># validate_input rejects a None channel</span>
-        <span class="n">validate_input</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">validate_input</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c1"># matmul batches over leading axes: a stacked H (K, N_r, N_t)</span>
+        <span class="c1"># against X (K, N_t, N) applies channel k to frame k (D51)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
 
 

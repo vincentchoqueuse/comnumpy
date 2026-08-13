@@ -729,7 +729,7 @@ window.runMermaid = runMermaid;</script>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">LA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">toeplitz</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">least_squares</span>
@@ -744,7 +744,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;DataAidedMixin&quot;</span><span class="p">,</span> <span class="s2">&quot;DCCorrector&quot;</span><span class="p">,</span> <span class="s2">&quot;Normalizer&quot;</span><span class="p">,</span> <span class="s2">&quot;BlindIQCompensator&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;BlindCFOCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;BlindPhaseCompensation&quot;</span><span class="p">,</span> <span class="s2">&quot;LinearEqualizer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BlindCFOCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;BlindPhaseCompensation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BlindPhaseSearchCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;LinearEqualizer&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DataAidedFIRCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;DataAidedPhaseCompensator&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DataAidedComplexGainCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;DataAidedSimpleSynchronizer&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DataAidedFineSynchronizer&quot;</span><span class="p">,</span>
@@ -890,10 +891,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    local oscillator adds a constant term to the baseband signal.</span>
 
 <span class="sd">    Axes: *declared axis* -- the mean :math:`\mu_x` is computed along</span>
-<span class="sd">    ``axis`` (default 0) and broadcast over the remaining axes; use</span>
-<span class="sd">    ``axis=-1`` for the canonical serial layout ``(..., N)``. The</span>
-<span class="sd">    estimand is **per path** (D49): a DC offset belongs to a converter,</span>
-<span class="sd">    so ``axis=-1`` on a ``(..., P, N)`` signal gives each path its own.</span>
+<span class="sd">    ``axis`` (default -1, the canonical serial layout ``(..., N)``) and</span>
+<span class="sd">    broadcast over the remaining axes. The estimand is **per path**</span>
+<span class="sd">    (D49): a DC offset belongs to a converter, so the default gives each</span>
+<span class="sd">    row of a batch its own offset -- the old default of 0 averaged</span>
+<span class="sd">    *across* the batch, which is the silent coupling D51 forbids.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -901,7 +903,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Target mean value :math:`\alpha` of the output. Default is 0.0,</span>
 <span class="sd">        i.e. a zero-mean output.</span>
 <span class="sd">    axis : int, optional, keyword-only</span>
-<span class="sd">        Axis along which :math:`\mu_x` is computed. Default is 0.</span>
+<span class="sd">        Axis along which :math:`\mu_x` is computed. Default is -1.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the corrector instance. Default is ``&quot;mean_corrector&quot;``.</span>
 
@@ -920,7 +922,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [0. 1. 2. 5.]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;mean_corrector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1373,6 +1375,19 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_search_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
+        <span class="c1"># the event is the polarization pair (see test_estimand_scope):</span>
+        <span class="c1"># one oscillator, ONE w0_ estimated jointly over (2, N). A wider</span>
+        <span class="c1"># leading shape is a batch of independent trials, which a single</span>
+        <span class="c1"># scalar estimate would smear silently (D51) -- refused, with</span>
+        <span class="c1"># the loop named.</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;BlindCFOCompensator estimates one CFO per signal or &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;per polarization pair (2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;-- loop over the batch, one compensator per trial.&quot;</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">x4</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">4</span>
@@ -1615,8 +1630,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :math:`\mathbb{E}[|s[n]|^2] = 1`). The two coincide when</span>
 <span class="sd">    :math:`\sigma^2 = 0`.</span>
 
-<span class="sd">    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` and</span>
-<span class="sd">    returns ``(N-L+1,)``.</span>
+<span class="sd">    Axes: *axis -1* -- expects a serial signal ``(..., N)`` and returns</span>
+<span class="sd">    ``(..., N-L+1)``; leading axes are batch (independent frames, one</span>
+<span class="sd">    equalizer matrix).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1665,12 +1681,15 @@ window.runMermaid = runMermaid;</script>
         <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
         <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_H</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
+        <span class="c1"># the estimator matrix acts on the last axis; the trailing</span>
+        <span class="c1"># length-1 axis makes matmul treat it as a column, so leading</span>
+        <span class="c1"># axes are batch (independent frames equalized in one call)</span>
         <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
             <span class="k">case</span> <span class="s2">&quot;zf&quot;</span><span class="p">:</span>
-                <span class="n">Y</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">)</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">H</span><span class="p">)</span>
             <span class="k">case</span> <span class="s2">&quot;mmse&quot;</span><span class="p">:</span>
-                <span class="n">Y</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Y</span></div>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></div>
 
 
 
@@ -2442,6 +2461,106 @@ window.runMermaid = runMermaid;</script>
             <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="BlindPhaseSearchCompensator">
+<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindPhaseSearchCompensator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlindPhaseSearchCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Feedforward carrier phase recovery by blind phase search (BPS).</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The input carries a slowly varying phase :math:`\phi[n]` -- laser</span>
+<span class="sd">    phase noise, typically -- on top of the constellation:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x[n] = s[n] \, e^{j \phi[n]} + b[n]</span>
+
+<span class="sd">    For each of :math:`B` test phases</span>
+<span class="sd">    :math:`\varphi_i = i \, \frac{\pi/2}{B}`, the input is rotated,</span>
+<span class="sd">    decided against the alphabet, and the squared decision distance is</span>
+<span class="sd">    averaged over a sliding window of :math:`2W + 1` symbols. The</span>
+<span class="sd">    estimate at each symbol is the test phase of smallest averaged</span>
+<span class="sd">    distance, then unwrapped modulo :math:`\pi/2` so the estimate can</span>
+<span class="sd">    follow the walk beyond one quadrant.</span>
+
+<span class="sd">    The :math:`\pi/2` search range is the symmetry of a square QAM (and</span>
+<span class="sd">    of QPSK): the recovered constellation is aligned up to a quadrant.</span>
+<span class="sd">    That residual **quadrant ambiguity is not resolved here** -- it is</span>
+<span class="sd">    the same ambiguity every blind phase estimator leaves, and a system</span>
+<span class="sd">    resolves it with differential encoding or a known field. The</span>
+<span class="sd">    estimated phase trajectory is exposed as ``phase_`` (D23).</span>
+
+<span class="sd">    Axes: *axis -1* -- the window slides along the last axis; leading</span>
+<span class="sd">    axes (the two rows of a polarization pair) are processed</span>
+<span class="sd">    independently, each with its own trajectory.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alphabet : np.ndarray or Constellation</span>
+<span class="sd">        The constellation the decision is made against.</span>
+<span class="sd">    n_test : int, optional, keyword-only</span>
+<span class="sd">        Number of test phases :math:`B` over :math:`[0, \pi/2)`.</span>
+<span class="sd">        Default is 32.</span>
+<span class="sd">    half_window : int, optional, keyword-only</span>
+<span class="sd">        Half-width :math:`W` of the averaging window. Default is 16.</span>
+<span class="sd">        The window trades noise rejection against tracking speed: it</span>
+<span class="sd">        must be short against the phase drift and long against the</span>
+<span class="sd">        additive noise.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name. Default ``&quot;bps&quot;``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, &quot;Hardware-Efficient Coherent Digital</span>
+<span class="sd">    Receiver Concept With Feedforward Carrier Recovery for M-QAM</span>
+<span class="sd">    Constellations,&quot; Journal of Lightwave Technology, vol. 27, no. 8,</span>
+<span class="sd">    pp. 989-999, 2009.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;PSK&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; s = alphabet[np.arange(64) % 4]</span>
+<span class="sd">    &gt;&gt;&gt; rotated = s * np.exp(1j * 0.3)</span>
+<span class="sd">    &gt;&gt;&gt; y = BlindPhaseSearchCompensator(alphabet, half_window=8)(rotated)</span>
+<span class="sd">    &gt;&gt;&gt; bool(np.max(np.abs(y - s)) &lt; np.pi / 2 / 32)   # within one grid step</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alphabet</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">n_test</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">half_window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;bps&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">phase_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The unwrapped phase trajectory of one 1D signal.&quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">))</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_test</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_test</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_test</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">phi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidates</span><span class="p">):</span>
+            <span class="n">rotated</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rotated</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">cost</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
+        <span class="c1"># unwrap modulo pi/2: a jump larger than pi/4 between neighbours</span>
+        <span class="c1"># is the estimate crossing the edge of the search range</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="n">steps</span> <span class="o">-=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">steps</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">raw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">steps</span><span class="p">)))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">trajectories</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">trajectories</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track</span><span class="p">(</span><span class="n">flat</span><span class="p">[</span><span class="n">row</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">trajectories</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_</span><span class="p">)</span></div>
 
 </pre></div>
 

@@ -69,7 +69,7 @@ block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 182-185
+   :lines: 185-188
 
 Each chain is given the same seed before running, so the five numbers below
 differ by the detector alone -- same symbols, same noise, same channel:
@@ -226,27 +226,30 @@ Monte Carlo Evaluation
 
 A single channel realization proves nothing: over fading, the error rate is
 an *average*, dominated by the rare draws where the matrix is nearly
-singular. Averaging means running the chain once per realization, which is a
-sweep whose parameter is the channel. :func:`~comnumpy.monte_carlo.sweep` takes
-several dotted parameter names at once and zips them, so one sweep point sets
-the matrix the signal goes through **and** the one the detector inverts:
+singular. Averaging means one independent draw per frame, and the draws are
+a **stack**: ``rayleigh_channel(size=n_channels)`` returns ``(200, 3, 2)``,
+the channel block propagates frame :math:`k` through matrix :math:`k`, and
+the detector -- handed the *same* stack -- decides frame :math:`k` against
+matrix :math:`k`. The chain runs once per SNR point instead of once per
+draw, and the pooled SER over equal-size frames is exactly the mean of the
+per-draw rates:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 83-129
+   :lines: 83-132
 
 .. code::
 
    SER
    snr_dB       ZF     MMSE       OSIC         ML         SD
    ---------------------------------------------------------
-        0  0.33129  0.28710  2.826e-01  2.807e-01  2.807e-01
-        3  0.21064  0.17623  1.610e-01  1.560e-01  1.560e-01
-        6  0.10650  0.08759  6.679e-02  6.196e-02  6.196e-02
-        9  0.04285  0.03451  1.920e-02  1.588e-02  1.588e-02
-       12  0.01485  0.01159  3.738e-03  2.737e-03  2.737e-03
-       15  0.00474  0.00363  7.125e-04  5.500e-04  5.500e-04
-       18  0.00203  0.00142  3.375e-04  2.625e-04  2.625e-04
+        0  0.33086  0.28510  2.822e-01  2.791e-01  2.791e-01
+        3  0.20976  0.17386  1.595e-01  1.545e-01  1.545e-01
+        6  0.10669  0.08601  6.488e-02  5.980e-02  5.980e-02
+        9  0.04389  0.03476  1.890e-02  1.584e-02  1.584e-02
+       12  0.01510  0.01174  4.163e-03  2.488e-03  2.488e-03
+       15  0.00507  0.00394  8.000e-04  3.875e-04  3.875e-04
+       18  0.00201  0.00144  1.625e-04  1.625e-04  1.625e-04
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
@@ -281,16 +284,16 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 131-180
+   :lines: 134-183
 
 .. code::
 
-     ML  0 dB    160.3 ms    65536 nodes   SER 0.7900
-     ML  9 dB    120.5 ms    65536 nodes   SER 0.5044
-     ML 18 dB    109.9 ms    65536 nodes   SER 0.0112
-     SD  0 dB    203.0 ms     91.8 nodes   SER 0.7900
-     SD  9 dB     42.0 ms     19.2 nodes   SER 0.5044
-     SD 18 dB     14.3 ms      5.8 nodes   SER 0.0112
+     ML  0 dB    142.0 ms    65536 nodes   SER 0.7900
+     ML  9 dB    123.5 ms    65536 nodes   SER 0.5044
+     ML 18 dB    140.8 ms    65536 nodes   SER 0.0112
+     SD  0 dB    197.5 ms     91.8 nodes   SER 0.7900
+     SD  9 dB     36.3 ms     19.2 nodes   SER 0.5044
+     SD 18 dB     11.8 ms      5.8 nodes   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%

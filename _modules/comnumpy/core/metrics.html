@@ -1350,8 +1350,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Axes: *declared axis* -- errors are counted along ``axis``, which must</span>
 <span class="sd">    then hold the symbols; with ``axis=None`` (default) both arrays are</span>
-<span class="sd">    raveled and truncated to their common length</span>
-<span class="sd">    :math:`N = \min(N_{\text{target}}, N_{\text{detected}})`.</span>
+<span class="sd">    truncated to their common length</span>
+<span class="sd">    :math:`N = \min(N_{\text{target}}, N_{\text{detected}})` **along the</span>
+<span class="sd">    last axis**, then every element is pooled -- so a batch of frames</span>
+<span class="sd">    stays aligned row by row, and the pooled rate is the mean of the</span>
+<span class="sd">    per-row rates.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1386,11 +1389,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [0.25 0.25]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">x_target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X_target</span><span class="p">)</span>
-        <span class="n">x_detected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X_detected</span><span class="p">)</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x_detected</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_target</span><span class="p">))</span>
-        <span class="n">nb_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">x_target</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span> <span class="o">-</span> <span class="n">x_detected</span><span class="p">[:</span><span class="n">N</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">nb_errors</span> <span class="o">/</span> <span class="n">N</span>
+        <span class="n">x_target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_target</span><span class="p">)</span>
+        <span class="n">x_detected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_detected</span><span class="p">)</span>
+        <span class="c1"># a length mismatch is truncated along the *last* axis before</span>
+        <span class="c1"># anything is pooled: raveling first would misalign every row</span>
+        <span class="c1"># of a batch after the first -- a silent offset, not an error</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">x_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_detected</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">difference</span> <span class="o">=</span> <span class="n">x_target</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span> <span class="o">-</span> <span class="n">x_detected</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">difference</span><span class="p">)</span> <span class="o">/</span> <span class="n">difference</span><span class="o">.</span><span class="n">size</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">X_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
         <span class="n">nb_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">X_target</span> <span class="o">-</span> <span class="n">X_detected</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
@@ -1459,8 +1465,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    0.25</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">s_target</span> <span class="o">=</span> <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X_target</span><span class="p">),</span> <span class="n">width</span><span class="p">)</span>
-        <span class="n">s_detected</span> <span class="o">=</span> <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">X_detected</span><span class="p">),</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">x_target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_target</span><span class="p">)</span>
+        <span class="n">x_detected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_detected</span><span class="p">)</span>
+        <span class="c1"># truncated along the last axis before raveling, like</span>
+        <span class="c1"># compute_ser: a batch stays aligned row by row</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">x_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_detected</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">s_target</span> <span class="o">=</span> <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">x_target</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]),</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">s_detected</span> <span class="o">=</span> <span class="n">sym_2_bin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">x_detected</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]),</span> <span class="n">width</span><span class="p">)</span>
         <span class="n">nb_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">s_target</span> <span class="o">-</span> <span class="n">s_detected</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">nb_errors</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_detected</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>

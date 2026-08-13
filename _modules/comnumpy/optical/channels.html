@@ -728,12 +728,13 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for comnumpy.optical.channels</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_chromatic_dispersion</span><span class="p">,</span> <span class="n">apply_kerr_nonlinearity</span><span class="p">,</span> <span class="n">compute_beta2</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">CD_COEFFICIENT</span><span class="p">,</span> <span class="n">SPEED_OF_LIGHT</span><span class="p">,</span> <span class="n">WAVELENGTH</span><span class="p">,</span> <span class="n">KERR_COEFFICIENT</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PhaseNoise&quot;</span><span class="p">,</span> <span class="s2">&quot;ChromaticDispersion&quot;</span><span class="p">,</span> <span class="s2">&quot;KerrNonLinearity&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PhaseNoise&quot;</span><span class="p">,</span> <span class="s2">&quot;ChromaticDispersion&quot;</span><span class="p">,</span> <span class="s2">&quot;KerrNonLinearity&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;PMDEmulator&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PhaseNoise">
@@ -754,14 +755,28 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    increments :math:`\delta\phi_k` (a Wiener process accumulated along</span>
 <span class="sd">    the samples). The magnitude :math:`|y[n]| = |x[n]|` is preserved.</span>
 
-<span class="sd">    Axes: *axis -1* -- expects a 1D signal (N,); the phase random walk</span>
-<span class="sd">    accumulates along the samples.</span>
+<span class="sd">    Axes: *axis -1* -- the phase random walk accumulates along the</span>
+<span class="sd">    samples. What shares one walk is declared by ``per``, which names</span>
+<span class="sd">    the *event* -- the slice of the array that sees one laser:</span>
+
+<span class="sd">    - ``&quot;pair&quot;`` (default): one walk per trailing ``(2, N)`` block --</span>
+<span class="sd">      the two rows of a polarization pair come from one laser, and</span>
+<span class="sd">      every leading axis is batch: independent draws per trial. A 2-D</span>
+<span class="sd">      or deeper input whose axis -2 is not 2 is refused, because it</span>
+<span class="sd">      cannot be read both ways: use ``&quot;row&quot;`` for independent rows or</span>
+<span class="sd">      ``&quot;signal&quot;`` for one shared walk.</span>
+<span class="sd">    - ``&quot;row&quot;``: one independent walk per 1-D row.</span>
+<span class="sd">    - ``&quot;signal&quot;``: one walk broadcast over the whole array.</span>
+
+<span class="sd">    A 1-D input sees one walk under every setting.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    sigma2 : float</span>
 <span class="sd">        Variance :math:`\sigma^2` of the per-sample phase increments, in</span>
 <span class="sd">        rad^2.</span>
+<span class="sd">    per : {&quot;pair&quot;, &quot;row&quot;, &quot;signal&quot;}, optional, keyword-only</span>
+<span class="sd">        The event that shares one laser. Default is ``&quot;pair&quot;``.</span>
 <span class="sd">    seed : int, optional, keyword-only</span>
 <span class="sd">        Local RNG seed.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
@@ -782,6 +797,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [1. 1. 1.]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">per</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;pair&quot;</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="s2">&quot;signal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;pair&quot;</span><span class="p">,</span>
+                                                  <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;phase noise&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
@@ -791,13 +808,32 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;pair&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;PhaseNoise(per=&#39;pair&#39;) expects a polarization pair &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(..., 2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- an axis -2 of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;size </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be read as a pair. Use &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;per=&#39;row&#39; for one independent laser per row, or &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;per=&#39;signal&#39; for one walk shared by the whole array.&quot;</span><span class="p">)</span>
+
 <div class="viewcode-block" id="PhaseNoise.noise_rvs">
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.PhaseNoise.noise_rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">noise_rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw the Wiener phase increment for a signal of the length of X.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw one Wiener walk per event declared by ``per``.&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># set in __post_init__</span>
-        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;signal&quot;</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;pair&quot;</span><span class="p">:</span>
+            <span class="c1"># one walk per trailing (2, N) block, broadcast over the pair</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>                            <span class="c1"># &quot;row&quot;</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">),</span>
+                                <span class="n">size</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_b</span></div>
 
 
@@ -977,6 +1013,124 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">y</span></div>
 
 
+
+
+
+<div class="viewcode-block" id="PMDEmulator">
+<a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.PMDEmulator">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PMDEmulator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Polarization rotation and first-order PMD, as a section emulator.</span>
+
+<span class="sd">    Signal Model</span>
+<span class="sd">    ------------</span>
+<span class="sd">    The fibre&#39;s random birefringence is emulated by :math:`K` sections,</span>
+<span class="sd">    each a random unitary Jones rotation followed by a differential</span>
+<span class="sd">    group delay (DGD) of :math:`\tau / \sqrt{K}` between the two</span>
+<span class="sd">    principal states, applied exactly in the frequency domain:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathbf{Y}(\omega) = \prod_{k=1}^{K}</span>
+<span class="sd">        \mathbf{D}_k(\omega) \, \mathbf{R}_k \; \mathbf{X}(\omega),</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        \mathbf{D}_k(\omega) = \mathrm{diag}\!\left(</span>
+<span class="sd">            e^{+j \omega \tau / 2\sqrt{K}}, \;</span>
+<span class="sd">            e^{-j \omega \tau / 2\sqrt{K}} \right)</span>
+
+<span class="sd">    Each :math:`\mathbf{R}_k` is drawn Haar-uniform from the seeded</span>
+<span class="sd">    local generator, so the emulator is unitary -- it conserves energy</span>
+<span class="sd">    exactly -- and reproducible. With ``n_sections=1`` and ``dgd=0`` it</span>
+<span class="sd">    reduces to one random rotation of the state of polarization, which</span>
+<span class="sd">    is the part every polarization demultiplexer must undo even before</span>
+<span class="sd">    PMD enters.</span>
+
+<span class="sd">    Randomly oriented sections add their DGDs in quadrature, hence the</span>
+<span class="sd">    :math:`1/\sqrt{K}` per section: the declared ``dgd`` is the **RMS**</span>
+<span class="sd">    DGD of the ensemble. Over section draws the DGD is Maxwellian, with</span>
+<span class="sd">    mean :math:`\sqrt{8/3\pi}\,\tau \approx 0.921\,\tau` (Poole &amp;</span>
+<span class="sd">    Wagner). With ``n_sections=1`` the DGD is deterministic and equals</span>
+<span class="sd">    :math:`\tau` exactly. The concatenation of sections also makes the</span>
+<span class="sd">    DGD frequency-dependent, which is what distinguishes PMD from a</span>
+<span class="sd">    wavelength-flat rotation.</span>
+
+<span class="sd">    Axes: *polarization pair* -- expects ``(..., 2, N)``; the Jones</span>
+<span class="sd">    matrices act on the polarization axis, the delays on the last one.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dgd : float</span>
+<span class="sd">        RMS differential group delay :math:`\tau` in seconds.</span>
+<span class="sd">    n_sections : int, optional, keyword-only</span>
+<span class="sd">        Number of concatenated sections :math:`K`. Default is 8.</span>
+<span class="sd">    fs : float, optional, keyword-only</span>
+<span class="sd">        Sampling frequency in Hz. Default is 1.0.</span>
+<span class="sd">    seed : int, optional, keyword-only</span>
+<span class="sd">        Local RNG seed for the section rotations. Same seed, same fibre.</span>
+<span class="sd">    name : str, optional, keyword-only</span>
+<span class="sd">        Block name. Default ``&quot;pmd&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the input does not carry a polarization pair ``(..., 2, N)``.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    C. D. Poole and R. E. Wagner, &quot;Phenomenological approach to</span>
+<span class="sd">    polarisation dispersion in long single-mode fibres,&quot; Electronics</span>
+<span class="sd">    Letters, vol. 22, no. 19, pp. 1029-1030, 1986.</span>
+<span class="sd">    S. J. Savory, &quot;Digital filters for coherent optical receivers,&quot;</span>
+<span class="sd">    Optics Express, vol. 16, no. 2, pp. 804-817, 2008.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; x = np.zeros((2, 8), dtype=complex); x[0] = 1.0</span>
+<span class="sd">    &gt;&gt;&gt; y = PMDEmulator(0.0, n_sections=1, seed=1)(x)</span>
+<span class="sd">    &gt;&gt;&gt; bool(np.abs(np.sum(np.abs(y) ** 2) - 8.0) &lt; 1e-9)   # unitary</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; bool(np.abs(y[1, 0]) &gt; 0)      # the rotation mixes the two rows</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dgd</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n_sections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;pmd&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rotations_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">sections</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_sections</span><span class="p">):</span>
+            <span class="c1"># Haar-uniform 2x2 unitary: QR of a complex Gaussian matrix,</span>
+            <span class="c1"># with the phase convention fixed by the R diagonal</span>
+            <span class="n">gaussian</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                        <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+            <span class="n">q</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">gaussian</span><span class="p">)</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">r</span><span class="p">))))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotations_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_polarization_pair</span>     <span class="c1"># local import (D36)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_polarization_pair</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;PMDEmulator&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;PMDEmulator expects a polarization pair (..., 2, N), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- PMD is a two-polarization &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;effect, there is nothing to delay against on one.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotations_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>   <span class="c1"># set in __post_init__</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">omega</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dgd</span>
+                       <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_sections</span><span class="p">)))</span>
+        <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rotation</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotations_</span><span class="p">:</span>
+            <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,...jn-&gt;...in&quot;</span><span class="p">,</span> <span class="n">rotation</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">)</span>
+            <span class="n">spectrum</span> <span class="o">=</span> <span class="n">spectrum</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">delay</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">delay</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 </pre></div>
 

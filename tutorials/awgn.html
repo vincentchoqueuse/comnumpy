@@ -699,6 +699,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_pdm.html">Polarization Demultiplexing: CMA and Blind Phase Search</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
@@ -1076,12 +1077,10 @@ not guess (decision D41), so it happens at the call site:</p>
 <span class="c1"># it needs k, which is chain-level knowledge the channel does not have.</span>
 <span class="n">ebn0_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">N_compare</span> <span class="o">=</span> <span class="mi">100000</span>
-<span class="n">fine_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
 <span class="n">orders</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">])</span>
 <span class="n">bits_per_symbol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>     <span class="c1"># vectorized, not a loop</span>
 <span class="n">measured_ber</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">theory_ber</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">required_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">orders</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">order</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">orders</span><span class="p">):</span>
     <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bits_per_symbol</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
@@ -1093,13 +1092,7 @@ not guess (decision D41), so it happens at the call site:</p>
     <span class="n">order_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">-QAM&quot;</span>
     <span class="n">measured_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">collected</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
     <span class="n">theory_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
-    <span class="c1"># What the density costs, read off the closed form rather than the</span>
-    <span class="c1"># measurement: the sweep grid is 2 dB coarse and noisy at 1e-3.</span>
-    <span class="n">fine_ber</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">fine_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
-    <span class="n">above_underflow</span> <span class="o">=</span> <span class="n">fine_ber</span> <span class="o">&gt;</span> <span class="mi">0</span>            <span class="c1"># the tail reaches 0 in float64</span>
-    <span class="n">required_dB</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
-        <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_ber</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-        <span class="n">fine_dB_list</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
 </pre></div>
 </div>
 <p>The metric changes with the axis. Against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the natural quantity
@@ -1115,20 +1108,7 @@ factor 2.2 for 256-QAM at 0 dB, and settle onto it as the error rate falls:
 below <span class="math notranslate nohighlight">\(10^{-2}\)</span> the two agree to within a few percent for every order.
 This is an approximation behaving as documented, not a simulation
 disagreeing with theory.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">QAM</span> <span class="n">order</span>  <span class="n">bits</span> <span class="n">per</span> <span class="n">symbol</span>  <span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="n">at</span> <span class="n">BER</span><span class="o">=</span><span class="mf">1e-3</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>
-<span class="o">--------------------------------------------------</span>
-        <span class="mi">4</span>                <span class="mi">2</span>                    <span class="mf">6.79</span>
-       <span class="mi">16</span>                <span class="mi">4</span>                   <span class="mf">10.52</span>
-       <span class="mi">64</span>                <span class="mi">6</span>                   <span class="mf">14.77</span>
-      <span class="mi">256</span>                <span class="mi">8</span>                   <span class="mf">19.38</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">()</span>
-<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">orders</span><span class="p">,</span>
-            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">:</span> <span class="n">bits_per_symbol</span><span class="p">,</span>
-                       <span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">:</span> <span class="n">required_dB</span><span class="p">}},</span>
-           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;QAM order&quot;</span><span class="p">)</span>
-
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>
                      <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;$E_b/N_0$ [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
                      <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Square QAM at equal energy per bit&quot;</span><span class="p">)</span>
@@ -1140,10 +1120,9 @@ disagreeing with theory.</p>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_awgn_orders.png"><img alt="../_images/monte_carlo_awgn_orders.png" class="align-center" src="../_images/monte_carlo_awgn_orders.png" style="width: 100%;" />
 </a>
-<p>Going from 2 to 8 bits per symbol costs <strong>12.6 dB</strong> of energy per bit at
-<span class="math notranslate nohighlight">\(10^{-3}\)</span>, spent in three roughly equal steps – 3.7, 4.3 then 4.6 dB
-per doubling of <span class="math notranslate nohighlight">\(k\)</span>, the price rising slowly with the order. That is
-what the rest of
+<p>The waterfalls are almost evenly spaced: each doubling of the bits per
+symbol shifts the curve by <strong>4 to 5 dB</strong> of energy per bit, read directly
+off the figure. That price is what the rest of
 a communication system is built to negotiate: coding buys some of it back
 (<a class="reference internal" href="coding.html"><span class="doc">Channel Coding</span></a>), shaping buys a little more (<a class="reference internal" href="shaping.html"><span class="doc">Probabilistic Shaping</span></a>), and a channel
 that is not simply AWGN changes the terms entirely (<a class="reference internal" href="ofdm.html"><span class="doc">OFDM Tutorial</span></a>).</p>

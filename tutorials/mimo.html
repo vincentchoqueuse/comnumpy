@@ -699,6 +699,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_pdm.html">Polarization Demultiplexing: CMA and Blind Phase Search</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
@@ -802,7 +803,7 @@ problem, and it is what the rest of this tutorial is about.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">print_data</span><span class="p">,</span> <span class="n">style</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_data</span><span class="p">,</span> <span class="n">style</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span>
@@ -1028,10 +1029,13 @@ confirms diversity 1 for zero forcing and 2 for maximum likelihood on a
 <h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
 <p>A single channel realization proves nothing: over fading, the error rate is
 an <em>average</em>, dominated by the rare draws where the matrix is nearly
-singular. Averaging means running the chain once per realization, which is a
-sweep whose parameter is the channel. <code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code> takes
-several dotted parameter names at once and zips them, so one sweep point sets
-the matrix the signal goes through <strong>and</strong> the one the detector inverts:</p>
+singular. Averaging means one independent draw per frame, and the draws are
+a <strong>stack</strong>: <code class="docutils literal notranslate"><span class="pre">rayleigh_channel(size=n_channels)</span></code> returns <code class="docutils literal notranslate"><span class="pre">(200,</span> <span class="pre">3,</span> <span class="pre">2)</span></code>,
+the channel block propagates frame <span class="math notranslate nohighlight">\(k\)</span> through matrix <span class="math notranslate nohighlight">\(k\)</span>, and
+the detector – handed the <em>same</em> stack – decides frame <span class="math notranslate nohighlight">\(k\)</span> against
+matrix <span class="math notranslate nohighlight">\(k\)</span>. The chain runs once per SNR point instead of once per
+draw, and the pooled SER over equal-size frames is exactly the mean of the
+per-draw rates:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">n_channels</span> <span class="o">=</span> <span class="mi">200</span>
 <span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">200</span>
@@ -1041,21 +1045,24 @@ the matrix the signal goes through <strong>and</strong> the one the detector inv
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">average_ser</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Average one chain over independent Rayleigh draws at one SNR.&quot;&quot;&quot;</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">draws</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
-        <span class="n">matrix</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
-        <span class="n">draws</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">matrix</span><span class="p">,</span> <span class="n">matrix</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Average one chain over independent Rayleigh draws at one SNR.</span>
+
+<span class="sd">    The draws are a *stack* (D51): channel k propagates frame k, the</span>
+<span class="sd">    detector holds the same stack and decides frame k against channel</span>
+<span class="sd">    k, and the chain runs once instead of once per draw. Pooled over</span>
+<span class="sd">    equal-size frames, the SER is exactly the mean of the per-draw</span>
+<span class="sd">    rates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stacked</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_channels</span><span class="p">)</span>
     <span class="n">noise_variance</span> <span class="o">=</span> <span class="n">N_t</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
-    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="n">noise_variance</span><span class="p">}</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;noise.sigma2&quot;</span><span class="p">:</span> <span class="n">noise_variance</span><span class="p">,</span>
+              <span class="s2">&quot;channel.H&quot;</span><span class="p">:</span> <span class="n">stacked</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">:</span> <span class="n">stacked</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">NOISE_AWARE</span><span class="p">:</span>
         <span class="n">params</span><span class="p">[</span><span class="s2">&quot;detector.sigma2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_variance</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
-                          <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="p">(</span><span class="n">N_t</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span>
-                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]))</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">((</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">))</span>
 
 
 <span class="c1"># --- metrics, pre-allocated ------------------------------------------</span>
@@ -1084,13 +1091,13 @@ the matrix the signal goes through <strong>and</strong> the one the detector inv
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span>
 <span class="n">snr_dB</span>       <span class="n">ZF</span>     <span class="n">MMSE</span>       <span class="n">OSIC</span>         <span class="n">ML</span>         <span class="n">SD</span>
 <span class="o">---------------------------------------------------------</span>
-     <span class="mi">0</span>  <span class="mf">0.33129</span>  <span class="mf">0.28710</span>  <span class="mf">2.826e-01</span>  <span class="mf">2.807e-01</span>  <span class="mf">2.807e-01</span>
-     <span class="mi">3</span>  <span class="mf">0.21064</span>  <span class="mf">0.17623</span>  <span class="mf">1.610e-01</span>  <span class="mf">1.560e-01</span>  <span class="mf">1.560e-01</span>
-     <span class="mi">6</span>  <span class="mf">0.10650</span>  <span class="mf">0.08759</span>  <span class="mf">6.679e-02</span>  <span class="mf">6.196e-02</span>  <span class="mf">6.196e-02</span>
-     <span class="mi">9</span>  <span class="mf">0.04285</span>  <span class="mf">0.03451</span>  <span class="mf">1.920e-02</span>  <span class="mf">1.588e-02</span>  <span class="mf">1.588e-02</span>
-    <span class="mi">12</span>  <span class="mf">0.01485</span>  <span class="mf">0.01159</span>  <span class="mf">3.738e-03</span>  <span class="mf">2.737e-03</span>  <span class="mf">2.737e-03</span>
-    <span class="mi">15</span>  <span class="mf">0.00474</span>  <span class="mf">0.00363</span>  <span class="mf">7.125e-04</span>  <span class="mf">5.500e-04</span>  <span class="mf">5.500e-04</span>
-    <span class="mi">18</span>  <span class="mf">0.00203</span>  <span class="mf">0.00142</span>  <span class="mf">3.375e-04</span>  <span class="mf">2.625e-04</span>  <span class="mf">2.625e-04</span>
+     <span class="mi">0</span>  <span class="mf">0.33086</span>  <span class="mf">0.28510</span>  <span class="mf">2.822e-01</span>  <span class="mf">2.791e-01</span>  <span class="mf">2.791e-01</span>
+     <span class="mi">3</span>  <span class="mf">0.20976</span>  <span class="mf">0.17386</span>  <span class="mf">1.595e-01</span>  <span class="mf">1.545e-01</span>  <span class="mf">1.545e-01</span>
+     <span class="mi">6</span>  <span class="mf">0.10669</span>  <span class="mf">0.08601</span>  <span class="mf">6.488e-02</span>  <span class="mf">5.980e-02</span>  <span class="mf">5.980e-02</span>
+     <span class="mi">9</span>  <span class="mf">0.04389</span>  <span class="mf">0.03476</span>  <span class="mf">1.890e-02</span>  <span class="mf">1.584e-02</span>  <span class="mf">1.584e-02</span>
+    <span class="mi">12</span>  <span class="mf">0.01510</span>  <span class="mf">0.01174</span>  <span class="mf">4.163e-03</span>  <span class="mf">2.488e-03</span>  <span class="mf">2.488e-03</span>
+    <span class="mi">15</span>  <span class="mf">0.00507</span>  <span class="mf">0.00394</span>  <span class="mf">8.000e-04</span>  <span class="mf">3.875e-04</span>  <span class="mf">3.875e-04</span>
+    <span class="mi">18</span>  <span class="mf">0.00201</span>  <span class="mf">0.00144</span>  <span class="mf">1.625e-04</span>  <span class="mf">1.625e-04</span>  <span class="mf">1.625e-04</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig3.png"><img alt="../_images/monte_carlo_mimo_fig3.png" class="align-center" src="../_images/monte_carlo_mimo_fig3.png" style="width: 100%;" />
@@ -1169,12 +1176,12 @@ where that product no longer fits. We therefore time both detectors on
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_mimo_fig4.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ML</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">160.3</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
-<span class="n">ML</span>  <span class="mi">9</span> <span class="n">dB</span>    <span class="mf">120.5</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
-<span class="n">ML</span> <span class="mi">18</span> <span class="n">dB</span>    <span class="mf">109.9</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
-<span class="n">SD</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">203.0</span> <span class="n">ms</span>     <span class="mf">91.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
-<span class="n">SD</span>  <span class="mi">9</span> <span class="n">dB</span>     <span class="mf">42.0</span> <span class="n">ms</span>     <span class="mf">19.2</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
-<span class="n">SD</span> <span class="mi">18</span> <span class="n">dB</span>     <span class="mf">14.3</span> <span class="n">ms</span>      <span class="mf">5.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ML</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">142.0</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
+<span class="n">ML</span>  <span class="mi">9</span> <span class="n">dB</span>    <span class="mf">123.5</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
+<span class="n">ML</span> <span class="mi">18</span> <span class="n">dB</span>    <span class="mf">140.8</span> <span class="n">ms</span>    <span class="mi">65536</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
+<span class="n">SD</span>  <span class="mi">0</span> <span class="n">dB</span>    <span class="mf">197.5</span> <span class="n">ms</span>     <span class="mf">91.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.7900</span>
+<span class="n">SD</span>  <span class="mi">9</span> <span class="n">dB</span>     <span class="mf">36.3</span> <span class="n">ms</span>     <span class="mf">19.2</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.5044</span>
+<span class="n">SD</span> <span class="mi">18</span> <span class="n">dB</span>     <span class="mf">11.8</span> <span class="n">ms</span>      <span class="mf">5.8</span> <span class="n">nodes</span>   <span class="n">SER</span> <span class="mf">0.0112</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_mimo_fig4.png"><img alt="../_images/monte_carlo_mimo_fig4.png" class="align-center" src="../_images/monte_carlo_mimo_fig4.png" style="width: 100%;" />

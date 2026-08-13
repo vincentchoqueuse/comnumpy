@@ -343,6 +343,7 @@
 <li class="toctree-l1"><a class="reference internal" href="coding.html">Channel Coding</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shaping.html">Probabilistic Shaping</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gn_model.html">Nonlinear Performance and the Gaussian Noise Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optical_pdm.html">Polarization Demultiplexing: CMA and Blind Phase Search</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optical_fiber_nonlinearity.html">Digital Back-Propagation</a></li>
 </ul>
 </div>
@@ -495,8 +496,7 @@ of it, and <code class="docutils literal notranslate"><span class="pre">info()</
 <span class="c1"># realization of it. The channel says what it is rather than being</span>
 <span class="c1"># described from outside.</span>
 <span class="n">channel</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;EPA&quot;</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">channel</span><span class="o">.</span><span class="n">info</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
 
 <span class="c1"># Sounding the model with an impulse gives the realization as a tap</span>
 <span class="c1"># vector -- which is what both receivers below are given.</span>
@@ -523,9 +523,12 @@ of it, and <code class="docutils literal notranslate"><span class="pre">info()</
 <span class="n">powers_dB</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">17.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">20.8</span><span class="p">]</span>
 <span class="n">rms_delay_spread_ns</span><span class="p">:</span> <span class="mf">43.12922598416199</span>
 <span class="n">coherence_bandwidth_Hz</span><span class="p">:</span> <span class="mf">4637226.739785324</span>
+<span class="n">rice_k_dB</span><span class="p">:</span> <span class="kc">None</span>
 <span class="n">fs_Hz</span><span class="p">:</span> <span class="mf">7680000.0</span>
+<span class="n">f_doppler_Hz</span><span class="p">:</span> <span class="mf">0.0</span>
 <span class="n">n_taps</span><span class="p">:</span> <span class="mi">4</span>
 <span class="n">resolvable_delays_samples</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">resolvable_powers</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5765216771059146</span><span class="p">,</span> <span class="mf">0.420805847284595</span><span class="p">,</span> <span class="mf">0.00267247560949035</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>The profile has seven arrivals within 410 ns, but at <span class="math notranslate nohighlight">\(f_s = 7.68\)</span> MHz
@@ -586,7 +589,7 @@ The cost is the pseudo-inverse of an <span class="math notranslate nohighlight">
 </section>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">1829</span> <span class="n">ms</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">3669</span> <span class="n">ms</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Received constellation, before and after equalization" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
@@ -594,7 +597,7 @@ The cost is the pseudo-inverse of an <span class="math notranslate nohighlight">
 <p>On the left, the constellation has disappeared: each sample is a mixture of
 four consecutive symbols, and no decision region survives this. On the right,
 the equalizer has restored the sixteen clusters. Note the second number:
-nearly two seconds for 1280 symbols.</p>
+more than three seconds for 1280 symbols.</p>
 </section>
 </section>
 <section id="ofdm-communication-chain">
@@ -651,7 +654,7 @@ on one side; the same in reverse, closed by a one-tap
 </section>
 <section id="id3">
 <h3>Results<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.20</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">1525</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.00</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">3670</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig3.png"><img alt="OFDM constellation after one-tap equalization" class="align-center" src="../_images/one_shot_ofdm_fig3.png" style="width: 100%;" />
@@ -665,25 +668,22 @@ errors, in a thousandth of the time.</p>
 <p>A single operating point is not a conclusion, so we run both chains over a
 range of SNR values:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- error rate ------------------------------------------------------</span>
-<span class="c1"># One operating point is not a conclusion. Each sweep is repeated over</span>
-<span class="c1"># independent noise seeds because 1280 symbols only resolve down to</span>
-<span class="c1"># 8e-4; the channel is the same throughout, by construction.</span>
+<span class="c1"># One operating point is not a conclusion, and 1280 symbols only</span>
+<span class="c1"># resolve down to 8e-4. Instead of a Python loop over repeated runs,</span>
+<span class="c1"># the stimulus grows a leading batch axis (D51): every block broadcasts</span>
+<span class="c1"># over it, the noise is drawn independently per trial, and compute_ser</span>
+<span class="c1"># pools the n_trials frames of each sweep point -- exactly the mean of</span>
+<span class="c1"># the per-trial rates. The channel stays the same throughout, by</span>
+<span class="c1"># construction.</span>
 <span class="n">snr_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">n_trials</span> <span class="o">=</span> <span class="mi">2</span>
 
-<span class="c1"># --- metrics, pre-allocated ------------------------------------------</span>
-<span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="s2">&quot;OFDM&quot;</span><span class="p">):</span>
-    <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_list</span><span class="p">))</span>
-
 <span class="c1"># --- simulation loop -------------------------------------------------</span>
+<span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
-    <span class="n">runs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">snr_list</span><span class="p">)))</span>
-    <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_trials</span><span class="p">):</span>
-        <span class="n">runs</span><span class="p">[</span><span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span>
-                                  <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span>
-                                  <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
-    <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">runs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span>
+                                 <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
+                                 <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
 
 <span class="c1"># --- results: table and figure ---------------------------------------</span>
 
@@ -700,14 +700,14 @@ range of SNR values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span>
 <span class="n">SNR</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>  <span class="n">single</span> <span class="n">carrier</span>    <span class="n">OFDM</span>
 <span class="o">--------------------------------</span>
-       <span class="mi">6</span>         <span class="mf">0.62734</span>  <span class="mf">0.5234</span>
-       <span class="mi">8</span>         <span class="mf">0.52695</span>  <span class="mf">0.3953</span>
-      <span class="mi">10</span>         <span class="mf">0.42969</span>  <span class="mf">0.2973</span>
-      <span class="mi">12</span>         <span class="mf">0.27070</span>  <span class="mf">0.1980</span>
-      <span class="mi">14</span>         <span class="mf">0.15117</span>  <span class="mf">0.1426</span>
-      <span class="mi">16</span>         <span class="mf">0.06562</span>  <span class="mf">0.0672</span>
-      <span class="mi">18</span>         <span class="mf">0.01523</span>  <span class="mf">0.0383</span>
-      <span class="mi">20</span>         <span class="mf">0.00195</span>  <span class="mf">0.0195</span>
+       <span class="mi">6</span>         <span class="mf">0.62578</span>  <span class="mf">0.5117</span>
+       <span class="mi">8</span>         <span class="mf">0.53750</span>  <span class="mf">0.3980</span>
+      <span class="mi">10</span>         <span class="mf">0.40664</span>  <span class="mf">0.3172</span>
+      <span class="mi">12</span>         <span class="mf">0.28164</span>  <span class="mf">0.1996</span>
+      <span class="mi">14</span>         <span class="mf">0.16875</span>  <span class="mf">0.1336</span>
+      <span class="mi">16</span>         <span class="mf">0.06172</span>  <span class="mf">0.0750</span>
+      <span class="mi">18</span>         <span class="mf">0.01641</span>  <span class="mf">0.0410</span>
+      <span class="mi">20</span>         <span class="mf">0.00352</span>  <span class="mf">0.0223</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig4.png"><img alt="SER against SNR for both receivers" class="align-center" src="../_images/one_shot_ofdm_fig4.png" style="width: 100%;" />
@@ -773,10 +773,10 @@ block length grows:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">receiver</span> <span class="n">runtime</span> <span class="p">[</span><span class="n">ms</span><span class="p">],</span> <span class="ow">and</span> <span class="n">their</span> <span class="n">ratio</span>
 <span class="n">block</span> <span class="n">length</span> <span class="n">N</span>  <span class="n">single</span> <span class="n">carrier</span>   <span class="n">OFDM</span>   <span class="n">ratio</span>
 <span class="o">---------------------------------------------</span>
-           <span class="mi">128</span>            <span class="mf">8.74</span>  <span class="mf">0.613</span>    <span class="mf">14.2</span>
-           <span class="mi">256</span>           <span class="mf">32.64</span>  <span class="mf">0.644</span>    <span class="mf">50.7</span>
-           <span class="mi">512</span>          <span class="mf">209.35</span>  <span class="mf">0.999</span>   <span class="mf">209.5</span>
-          <span class="mi">1024</span>         <span class="mf">1685.07</span>  <span class="mf">1.123</span>  <span class="mf">1500.4</span>
+           <span class="mi">128</span>            <span class="mf">7.34</span>  <span class="mf">0.568</span>    <span class="mf">12.9</span>
+           <span class="mi">256</span>           <span class="mf">34.91</span>  <span class="mf">0.567</span>    <span class="mf">61.6</span>
+           <span class="mi">512</span>          <span class="mf">188.09</span>  <span class="mf">0.793</span>   <span class="mf">237.1</span>
+          <span class="mi">1024</span>         <span class="mf">1377.50</span>  <span class="mf">0.862</span>  <span class="mf">1598.3</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig5.png"><img alt="Receiver runtime against block length" class="align-center" src="../_images/one_shot_ofdm_fig5.png" style="width: 100%;" />

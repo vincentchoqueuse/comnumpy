@@ -472,7 +472,7 @@
 <span id="channels"></span><h1>Channels<a class="headerlink" href="#module-comnumpy.optical.channels" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.optical.channels.PhaseNoise">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PhaseNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'phase</span> <span class="pre">noise'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/optical/channels.html#PhaseNoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.channels.PhaseNoise" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PhaseNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">per</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'pair'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'signal'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pair'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'phase</span> <span class="pre">noise'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/optical/channels.html#PhaseNoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.channels.PhaseNoise" title="Link to this definition">#</a></dt>
 <dd><p>Wiener (random-walk) phase noise channel.</p>
 <section id="signal-model">
 <h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
@@ -483,8 +483,20 @@
 <p>where <span class="math notranslate nohighlight">\(\sigma^2\)</span> is the variance of the independent phase
 increments <span class="math notranslate nohighlight">\(\delta\phi_k\)</span> (a Wiener process accumulated along
 the samples). The magnitude <span class="math notranslate nohighlight">\(|y[n]| = |x[n]|\)</span> is preserved.</p>
-<p>Axes: <em>axis -1</em> – expects a 1D signal (N,); the phase random walk
-accumulates along the samples.</p>
+<p>Axes: <em>axis -1</em> – the phase random walk accumulates along the
+samples. What shares one walk is declared by <code class="docutils literal notranslate"><span class="pre">per</span></code>, which names
+the <em>event</em> – the slice of the array that sees one laser:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;pair&quot;</span></code> (default): one walk per trailing <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N)</span></code> block –
+the two rows of a polarization pair come from one laser, and
+every leading axis is batch: independent draws per trial. A 2-D
+or deeper input whose axis -2 is not 2 is refused, because it
+cannot be read both ways: use <code class="docutils literal notranslate"><span class="pre">&quot;row&quot;</span></code> for independent rows or
+<code class="docutils literal notranslate"><span class="pre">&quot;signal&quot;</span></code> for one shared walk.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;row&quot;</span></code>: one independent walk per 1-D row.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;signal&quot;</span></code>: one walk broadcast over the whole array.</p></li>
+</ul>
+<p>A 1-D input sees one walk under every setting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param sigma2<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Variance <span class="math notranslate nohighlight">\(\sigma^2\)</span> of the per-sample phase increments, in
@@ -492,6 +504,12 @@ rad^2.</p>
 </dd>
 <dt class="field-even">type sigma2<span class="colon">:</span></dt>
 <dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param per<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The event that shares one laser. Default is <code class="docutils literal notranslate"><span class="pre">&quot;pair&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type per<span class="colon">:</span></dt>
+<dd class="field-even"><p>{“pair”, “row”, “signal”}, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param seed<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Local RNG seed.</p>
@@ -521,7 +539,7 @@ pp. 989-999, 2009.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="comnumpy.optical.channels.PhaseNoise.noise_rvs">
 <span class="sig-name descname"><span class="pre">noise_rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/comnumpy/optical/channels.html#PhaseNoise.noise_rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.channels.PhaseNoise.noise_rvs" title="Link to this definition">#</a></dt>
-<dd><p>Draw the Wiener phase increment for a signal of the length of X.</p>
+<dd><p>Draw one Wiener walk per event declared by <code class="docutils literal notranslate"><span class="pre">per</span></code>.</p>
 </dd></dl>
 
 </section>
@@ -701,6 +719,92 @@ vol. 39, no. 1, pp. 280-294, 2021.</p></li>
 </section>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="comnumpy.optical.channels.PMDEmulator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PMDEmulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dgd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_sections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pmd'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/optical/channels.html#PMDEmulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.optical.channels.PMDEmulator" title="Link to this definition">#</a></dt>
+<dd><p>Polarization rotation and first-order PMD, as a section emulator.</p>
+<section id="id3">
+<h2>Signal Model<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>The fibre’s random birefringence is emulated by <span class="math notranslate nohighlight">\(K\)</span> sections,
+each a random unitary Jones rotation followed by a differential
+group delay (DGD) of <span class="math notranslate nohighlight">\(\tau / \sqrt{K}\)</span> between the two
+principal states, applied exactly in the frequency domain:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{Y}(\omega) = \prod_{k=1}^{K}
+\mathbf{D}_k(\omega) \, \mathbf{R}_k \; \mathbf{X}(\omega),
+\qquad
+\mathbf{D}_k(\omega) = \mathrm{diag}\!\left(
+    e^{+j \omega \tau / 2\sqrt{K}}, \;
+    e^{-j \omega \tau / 2\sqrt{K}} \right)\]</div>
+<p>Each <span class="math notranslate nohighlight">\(\mathbf{R}_k\)</span> is drawn Haar-uniform from the seeded
+local generator, so the emulator is unitary – it conserves energy
+exactly – and reproducible. With <code class="docutils literal notranslate"><span class="pre">n_sections=1</span></code> and <code class="docutils literal notranslate"><span class="pre">dgd=0</span></code> it
+reduces to one random rotation of the state of polarization, which
+is the part every polarization demultiplexer must undo even before
+PMD enters.</p>
+<p>Randomly oriented sections add their DGDs in quadrature, hence the
+<span class="math notranslate nohighlight">\(1/\sqrt{K}\)</span> per section: the declared <code class="docutils literal notranslate"><span class="pre">dgd</span></code> is the <strong>RMS</strong>
+DGD of the ensemble. Over section draws the DGD is Maxwellian, with
+mean <span class="math notranslate nohighlight">\(\sqrt{8/3\pi}\,\tau \approx 0.921\,\tau\)</span> (Poole &amp;
+Wagner). With <code class="docutils literal notranslate"><span class="pre">n_sections=1</span></code> the DGD is deterministic and equals
+<span class="math notranslate nohighlight">\(\tau\)</span> exactly. The concatenation of sections also makes the
+DGD frequency-dependent, which is what distinguishes PMD from a
+wavelength-flat rotation.</p>
+<p>Axes: <em>polarization pair</em> – expects <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code>; the Jones
+matrices act on the polarization axis, the delays on the last one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param dgd<span class="colon">:</span></dt>
+<dd class="field-odd"><p>RMS differential group delay <span class="math notranslate nohighlight">\(\tau\)</span> in seconds.</p>
+</dd>
+<dt class="field-even">type dgd<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+<dt class="field-odd">param n_sections<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of concatenated sections <span class="math notranslate nohighlight">\(K\)</span>. Default is 8.</p>
+</dd>
+<dt class="field-even">type n_sections<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param fs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sampling frequency in Hz. Default is 1.0.</p>
+</dd>
+<dt class="field-even">type fs<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param seed<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Local RNG seed for the section rotations. Same seed, same fibre.</p>
+</dd>
+<dt class="field-even">type seed<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">param name<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Block name. Default <code class="docutils literal notranslate"><span class="pre">&quot;pmd&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">type name<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional, keyword-only</p>
+</dd>
+<dt class="field-odd">raises ShapeError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If the input does not carry a polarization pair <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>C. D. Poole and R. E. Wagner, “Phenomenological approach to
+polarisation dispersion in long single-mode fibres,” Electronics
+Letters, vol. 22, no. 19, pp. 1029-1030, 1986.
+S. J. Savory, “Digital filters for coherent optical receivers,”
+Optics Express, vol. 16, no. 2, pp. 804-817, 2008.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">);</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">PMDEmulator</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n_sections</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-9</span><span class="p">)</span>   <span class="c1"># unitary</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>      <span class="c1"># the rotation mixes the two rows</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
 </section>
 
 
@@ -756,6 +860,7 @@ vol. 39, no. 1, pp. 280-294, 2021.</p></li>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.channels.ChromaticDispersion"><code class="docutils literal notranslate"><span class="pre">ChromaticDispersion</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.channels.KerrNonLinearity"><code class="docutils literal notranslate"><span class="pre">KerrNonLinearity</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.optical.channels.PMDEmulator"><code class="docutils literal notranslate"><span class="pre">PMDEmulator</span></code></a></li>
 </ul>
   </nav></div>
 

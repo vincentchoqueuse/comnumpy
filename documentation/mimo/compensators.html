@@ -526,9 +526,14 @@ this (see <code class="docutils literal notranslate"><span class="pre">examples/
 three stages give 21.0, 23.9 and 23.98 dB: CMA opens the eye, RDE
 takes it to within a tenth of the floor, and DD closes what is
 left.</p>
-<p>Axes: <em>declared axis</em> – expects the dual-polarization layout
-<code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N)</span></code>, produces <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N</span> <span class="pre">//</span> <span class="pre">oversampling)</span></code> (one output sample
-per <code class="docutils literal notranslate"><span class="pre">oversampling</span></code> input samples: fractionally spaced equalizer).</p>
+<p>Axes: <em>polarization pair</em> – expects <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code>, produces
+<code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N</span> <span class="pre">//</span> <span class="pre">oversampling)</span></code> (one output sample per
+<code class="docutils literal notranslate"><span class="pre">oversampling</span></code> input samples: fractionally spaced equalizer).
+Leading axes are batch, and the butterfly is a per-pair algorithm:
+each pair gets its <strong>own</strong> equalizer state, adapted independently.
+After a batched pass <code class="docutils literal notranslate"><span class="pre">H_</span></code> carries the batch axes in front,
+<code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">2(2L+1))</span></code>, so a further <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> resumes each
+pair from its own state.</p>
 <p><strong>Delay.</strong> The centre tap of the initial equalizer sits <span class="math notranslate nohighlight">\(L\)</span>
 input samples back, so output sample <span class="math notranslate nohighlight">\(k\)</span> is aligned with
 input sample <span class="math notranslate nohighlight">\(k \cdot os - L\)</span>: the block has a group delay of

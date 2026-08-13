@@ -741,7 +741,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">L</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
                 <span class="n">scale_per_tap</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="n">rng</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                <span class="n">rng</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Draw an i.i.d. Rayleigh MIMO channel.</span>
 
@@ -800,11 +801,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Random seed used if `rng` is not provided.</span>
 <span class="sd">    rng : numpy.random.Generator, optional</span>
 <span class="sd">        Pre-initialized random number generator. If provided, `seed` is ignored.</span>
+<span class="sd">    size : int, optional</span>
+<span class="sd">        Number of independent channel draws. When given, the returned</span>
+<span class="sd">        array grows a leading axis of length ``size`` -- a **stack** of</span>
+<span class="sd">        channels, one per Monte-Carlo trial, drawn sequentially from the</span>
+<span class="sd">        same generator so draw :math:`k` equals the :math:`k`-th draw of</span>
+<span class="sd">        the equivalent Python loop. The stack is what</span>
+<span class="sd">        :class:`~comnumpy.mimo.channels.FlatMIMOChannel` and the</span>
+<span class="sd">        detectors accept as a batched ``H`` (D51).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    numpy.ndarray</span>
-<span class="sd">        Array of shape (L, N_r, N_t) containing the Rayleigh channel taps.</span>
+<span class="sd">        Array of shape (L, N_r, N_t) containing the Rayleigh channel</span>
+<span class="sd">        taps -- squeezed to (N_r, N_t) when ``L == 1``, with a leading</span>
+<span class="sd">        ``size`` axis when ``size`` is given.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -832,9 +843,22 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; H2 = rayleigh_channel(N_r=32, N_t=32, seed=1)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(np.mean(np.abs(H2)**2)), 2))  # unit average gain</span>
 <span class="sd">    1.01</span>
+<span class="sd">    &gt;&gt;&gt; stack = rayleigh_channel(N_r=2, N_t=2, seed=0, size=200)</span>
+<span class="sd">    &gt;&gt;&gt; stack.shape          # one draw per Monte-Carlo trial</span>
+<span class="sd">    (200, 2, 2)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rng</span><span class="p">:</span>
         <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># a stack of independent draws, sequential from the same rng:</span>
+        <span class="c1"># draw k equals the k-th draw of the equivalent Python loop, so</span>
+        <span class="c1"># a study moving to the batched form keeps its channels</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">draws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">scale_per_tap</span><span class="p">,</span>
+                                          <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">draws</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">scale_per_tap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">scales</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
