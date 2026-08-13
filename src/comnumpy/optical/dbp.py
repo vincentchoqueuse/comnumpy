@@ -175,8 +175,11 @@ class DBP(Processor):
             lengths = np.asarray(self.step_size, dtype=float) / 2
         else:
             lengths = np.asarray(self.step_size, dtype=float)
-        previous = None if self.transfer_key_ is None else (
-            self.transfer_, self.transfer_index_, self.transfer_key_)
+        previous = None
+        if (self.transfer_ is not None and self.transfer_index_ is not None
+                and self.transfer_key_ is not None):
+            previous = (self.transfer_, self.transfer_index_,
+                        self.transfer_key_)
         self.transfer_, self.transfer_index_, self.transfer_key_ = step_transfers(
             n_samples, lengths, beta2=self.beta2, fs=self.fs,
             alpha_dB=self.fiber.alpha_dB, direction=-1, previous=previous)
