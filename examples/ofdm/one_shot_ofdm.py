@@ -33,8 +33,7 @@ constellation = Constellation("QAM", 16)
 # realization of it. The channel says what it is rather than being
 # described from outside.
 channel = TappedDelayLineChannel(get_delay_profile("EPA"), fs=fs, seed=8)
-for key, value in channel.info().items():
-    print(f"{key}: {value}")
+print(channel)
 
 # Sounding the model with an impulse gives the realization as a tap
 # vector -- which is what both receivers below are given.

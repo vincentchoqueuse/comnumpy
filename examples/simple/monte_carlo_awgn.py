@@ -102,12 +102,10 @@ plt.savefig(f"{img_dir}/monte_carlo_awgn.png")
 # it needs k, which is chain-level knowledge the channel does not have.
 ebn0_dB_list = np.arange(0, 25, 2)
 N_compare = 100000
-fine_dB_list = np.arange(0, 25, 0.05)
 orders = np.array([4, 16, 64, 256])
 bits_per_symbol = np.log2(orders).astype(int)     # vectorized, not a loop
 measured_ber = {}
 theory_ber = {}
-required_dB = np.zeros(len(orders))
 for index, order in enumerate(orders):
     other = Constellation("QAM", int(order))
     bits = int(bits_per_symbol[index])
@@ -119,19 +117,6 @@ for index, order in enumerate(orders):
     order_label = f"{order}-QAM"
     measured_ber[order_label] = collected["ber"]
     theory_ber[order_label] = other.metrics(ebn0_dB_list, per="bit")["ber"]
-    # What the density costs, read off the closed form rather than the
-    # measurement: the sweep grid is 2 dB coarse and noisy at 1e-3.
-    fine_ber = other.metrics(fine_dB_list, per="bit")["ber"]
-    above_underflow = fine_ber > 0            # the tail reaches 0 in float64
-    required_dB[index] = np.interp(
-        -3.0, np.log10(fine_ber[above_underflow])[::-1],
-        fine_dB_list[above_underflow][::-1])
-
-print()
-print_data({"x": orders,
-            "curves": {"bits per symbol": bits_per_symbol,
-                       "Eb/N0 at BER=1e-3 [dB]": required_dB}},
-           xlabel="QAM order")
 
 ax = plot_error_rate(ebn0_dB_list, measured_ber, theory=theory_ber,
                      xlabel="$E_b/N_0$ [dB]", ylabel="BER",

@@ -5,7 +5,8 @@ from comnumpy.core import Processor
 from .utils import apply_chromatic_dispersion, apply_kerr_nonlinearity, compute_beta2
 from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT
 
-__all__ = ["PhaseNoise", "ChromaticDispersion", "KerrNonLinearity"]
+__all__ = ["PhaseNoise", "ChromaticDispersion", "KerrNonLinearity",
+           "PMDEmulator"]
 
 
 @dataclass(slots=True)
@@ -24,8 +25,10 @@ class PhaseNoise(Processor):
     increments :math:`\delta\phi_k` (a Wiener process accumulated along
     the samples). The magnitude :math:`|y[n]| = |x[n]|` is preserved.
 
-    Axes: *axis -1* -- expects a 1D signal (N,); the phase random walk
-    accumulates along the samples.
+    Axes: *axis -1* -- the phase random walk accumulates along the
+    samples. Leading axes share the **same** walk: the phase comes from
+    one laser, so the two rows of a polarization pair ``(2, N)`` see the
+    same :math:`\phi[n]`.
 
     Parameters
     ----------
@@ -64,7 +67,8 @@ class PhaseNoise(Processor):
     def noise_rvs(self, X: np.ndarray) -> np.ndarray:
         """Draw the Wiener phase increment for a signal of the length of X."""
         assert self.rng is not None      # set in __post_init__
-        noise = self.rng.normal(loc=0, scale=np.sqrt(self.sigma2), size=len(X))
+        noise = self.rng.normal(loc=0, scale=np.sqrt(self.sigma2),
+                                size=np.shape(X)[-1])
         self._b = np.cumsum(noise)
         return self._b
 
@@ -238,3 +242,118 @@ class KerrNonLinearity(Processor):
         return y
 
 
+
+
+@dataclass(slots=True)
+class PMDEmulator(Processor):
+    r"""Polarization rotation and first-order PMD, as a section emulator.
+
+    Signal Model
+    ------------
+    The fibre's random birefringence is emulated by :math:`K` sections,
+    each a random unitary Jones rotation followed by a differential
+    group delay (DGD) of :math:`\tau / \sqrt{K}` between the two
+    principal states, applied exactly in the frequency domain:
+
+    .. math::
+
+        \mathbf{Y}(\omega) = \prod_{k=1}^{K}
+        \mathbf{D}_k(\omega) \, \mathbf{R}_k \; \mathbf{X}(\omega),
+        \qquad
+        \mathbf{D}_k(\omega) = \mathrm{diag}\!\left(
+            e^{+j \omega \tau / 2\sqrt{K}}, \;
+            e^{-j \omega \tau / 2\sqrt{K}} \right)
+
+    Each :math:`\mathbf{R}_k` is drawn Haar-uniform from the seeded
+    local generator, so the emulator is unitary -- it conserves energy
+    exactly -- and reproducible. With ``n_sections=1`` and ``dgd=0`` it
+    reduces to one random rotation of the state of polarization, which
+    is the part every polarization demultiplexer must undo even before
+    PMD enters.
+
+    Randomly oriented sections add their DGDs in quadrature, hence the
+    :math:`1/\sqrt{K}` per section: the declared ``dgd`` is the **RMS**
+    DGD of the ensemble. Over section draws the DGD is Maxwellian, with
+    mean :math:`\sqrt{8/3\pi}\,\tau \approx 0.921\,\tau` (Poole &
+    Wagner). With ``n_sections=1`` the DGD is deterministic and equals
+    :math:`\tau` exactly. The concatenation of sections also makes the
+    DGD frequency-dependent, which is what distinguishes PMD from a
+    wavelength-flat rotation.
+
+    Axes: *polarization pair* -- expects ``(..., 2, N)``; the Jones
+    matrices act on the polarization axis, the delays on the last one.
+
+    Parameters
+    ----------
+    dgd : float
+        RMS differential group delay :math:`\tau` in seconds.
+    n_sections : int, optional, keyword-only
+        Number of concatenated sections :math:`K`. Default is 8.
+    fs : float, optional, keyword-only
+        Sampling frequency in Hz. Default is 1.0.
+    seed : int, optional, keyword-only
+        Local RNG seed for the section rotations. Same seed, same fibre.
+    name : str, optional, keyword-only
+        Block name. Default ``"pmd"``.
+
+    Raises
+    ------
+    ShapeError
+        If the input does not carry a polarization pair ``(..., 2, N)``.
+
+    References
+    ----------
+    C. D. Poole and R. E. Wagner, "Phenomenological approach to
+    polarisation dispersion in long single-mode fibres," Electronics
+    Letters, vol. 22, no. 19, pp. 1029-1030, 1986.
+    S. J. Savory, "Digital filters for coherent optical receivers,"
+    Optics Express, vol. 16, no. 2, pp. 804-817, 2008.
+
+    Examples
+    --------
+    >>> x = np.zeros((2, 8), dtype=complex); x[0] = 1.0
+    >>> y = PMDEmulator(0.0, n_sections=1, seed=1)(x)
+    >>> bool(np.abs(np.sum(np.abs(y) ** 2) - 8.0) < 1e-9)   # unitary
+    True
+    >>> bool(np.abs(y[1, 0]) > 0)      # the rotation mixes the two rows
+    True
+    """
+    dgd: float
+    n_sections: int = field(default=8, kw_only=True)
+    fs: float = field(default=1.0, kw_only=True)
+    seed: Optional[int] = field(default=None, kw_only=True)
+    name: str = field(default="pmd", kw_only=True)
+    rotations_: Optional[np.ndarray] = field(init=False, repr=False,
+                                             default=None)
+
+    def __post_init__(self) -> None:
+        rng = np.random.default_rng(self.seed)
+        sections = []
+        for _ in range(self.n_sections):
+            # Haar-uniform 2x2 unitary: QR of a complex Gaussian matrix,
+            # with the phase convention fixed by the R diagonal
+            gaussian = (rng.standard_normal((2, 2))
+                        + 1j * rng.standard_normal((2, 2)))
+            q, r = np.linalg.qr(gaussian)
+            sections.append(q * (np.diag(r) / np.abs(np.diag(r))))
+        self.rotations_ = np.stack(sections)
+
+    def prepare(self, x: np.ndarray) -> None:
+        from comnumpy.exceptions import ShapeError  # local import (D36)
+        from .utils import is_polarization_pair     # local import (D36)
+        if not is_polarization_pair(x, "PMDEmulator"):
+            raise ShapeError(
+                f"PMDEmulator expects a polarization pair (..., 2, N), "
+                f"got shape {x.shape} -- PMD is a two-polarization "
+                f"effect, there is nothing to delay against on one.")
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        assert self.rotations_ is not None   # set in __post_init__
+        omega = 2 * np.pi * self.fs * np.fft.fftfreq(x.shape[-1])
+        delay = np.exp(1j * omega * self.dgd
+                       / (2 * np.sqrt(self.n_sections)))
+        spectrum = np.fft.fft(x, axis=-1)
+        for rotation in self.rotations_:
+            spectrum = np.einsum("ij,...jn->...in", rotation, spectrum)
+            spectrum = spectrum * np.stack([delay, np.conj(delay)])
+        return np.fft.ifft(spectrum, axis=-1)

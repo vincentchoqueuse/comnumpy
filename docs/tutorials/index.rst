@@ -52,6 +52,11 @@ and nothing is explained twice.
        in closed form, and the launch power that minimizes it -- checked
        against a split-step simulation.
    * - 9
+     - :doc:`optical_pdm`
+     - The blind coherent receiver: a fibre that mixes the two
+       polarizations (``PMDEmulator``), the CMA butterfly that
+       unmixes them, and blind phase search against the laser.
+   * - 9
      - :doc:`optical_fiber_nonlinearity`
      - The performance the previous tutorial predicted, improved: digital
        back-propagation undoes the nonlinearity instead of budgeting for it.
@@ -74,4 +79,5 @@ The scripts behind these pages are also available on GitHub: `https://github.com
    coding
    shaping
    gn_model
+   optical_pdm
    optical_fiber_nonlinearity

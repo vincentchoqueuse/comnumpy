@@ -45,6 +45,67 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — `print(obj)` renders `info()`
+
+Any object that defines `info()` -- a channel, a constellation -- now
+prints it: `Processor.__str__` (and `Constellation.__str__`) render the
+dictionary as one `key: value` line per entry, and fall back to `repr`
+when there is no `info()`. The tutorials' `for key, value in
+channel.info().items()` loops become `print(channel)`.
+
+### Added — the blind coherent receiver: `PMDEmulator`, BPS, and its page
+
+The expert review named the two absences that dated the optical layer:
+no polarization impairment, and no time-varying carrier recovery -- the
+`Laser` block carried a Wiener linewidth that nothing in the library
+could track. Both close here, with the tutorial that needs them.
+
+`PMDEmulator` (optical.channels) is the standard section emulator: K
+Haar-uniform Jones rotations, each followed by a DGD of tau/sqrt(K)
+applied exactly in the frequency domain -- randomly oriented sections
+add in quadrature, so the declared tau is the **RMS** DGD of the
+ensemble, whose distribution is Maxwellian with mean 0.921 tau (Poole &
+Wagner). A 300-seed test measures the DGD from the eigenvalues of the
+group-delay operator and pins both moments within 10 %. The emulator is
+unitary -- energy conserved to machine precision, tested -- seeded, and
+refuses a single polarization.
+`PhaseNoise` now draws **one** walk along the last axis and shares it
+across leading axes: the phase comes from one laser, and a polarization
+pair sees the same phi[n].
+
+`BlindPhaseSearchCompensator` (core.compensators) is Pfau's feedforward
+blind phase search: B test phases over [0, pi/2), windowed decision
+distance, per-symbol argmin, unwrapped modulo pi/2. Each row of a pair
+gets its own trajectory, exposed as `phase_` (D23). The quadrant
+ambiguity is documented as unresolved, and tested as such.
+
+The page (`optical_pdm`) runs PDM-QPSK through one laser, eight PMD
+sections and an amplifier, then undoes it blindly: CMA butterfly, BPS,
+and the three ambiguities every blind receiver leaves -- permutation,
+quadrant, equalizer delay -- resolved explicitly by known data, printed
+rather than hidden. Zero errors over 123 072 symbols, and the page says
+what that measures: transparency of the chain, not an error rate.
+
+### Added — the Gray labelling is locked by tests
+
+`compute_ber` expands indices in natural binary and its docstring
+admitted the count is only meaningful if the constellation is labelled
+accordingly. It is -- and now five tests prove it rather than the
+tutorials' tail agreement suggesting it: geometric nearest neighbours
+of every Gray QAM/PSK alphabet differ by exactly one index bit, natural
+binary labelling fails that property (so the test measures the
+labelling, not the geometry), a nearest-neighbour symbol error costs
+exactly one bit through `compute_ber`, and a seeded 16-QAM run at
+Eb/N0 = 11 dB lands within 20 % of the Gray closed form -- a labelling
+mismatch would double it.
+
+### Changed — the AWGN page drops its interpolation coda
+
+The Eb/N0-at-BER-1e-3 table was five lines of `np.interp` on a fine
+grid with an underflow guard -- machinery out of proportion with what
+it added to the figure the section already shows. The spacing of the
+waterfalls is now read off the figure in one sentence.
+
 ### Changed — the simulation sections read identically across the pages
 
 Every sweep in the tutorials now shows the same three markers, in the

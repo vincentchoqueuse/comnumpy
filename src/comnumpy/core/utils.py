@@ -327,6 +327,19 @@ class Constellation:
     def __len__(self) -> int:
         return self.order
 
+    def __str__(self) -> str:
+        """``print(constellation)`` renders :meth:`info`, one line per key.
+
+        Examples
+        --------
+        >>> print(Constellation("PSK", 4))
+        family: PSK
+        order: 4
+        ...
+        """
+        from comnumpy.core.generics import render_info
+        return render_info(self) or repr(self)
+
     def info(self) -> dict[str, Any]:
         """What the constellation is, as a dictionary ready to print.
 

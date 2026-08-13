@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import Any, Literal, Optional, TYPE_CHECKING, Union
 from scipy import signal
 from scipy.linalg import toeplitz
 from scipy.optimize import least_squares
@@ -16,7 +16,8 @@ if TYPE_CHECKING:                       # matplotlib stays a local import (D36)
 
 __all__ = [
     "DataAidedMixin", "DCCorrector", "Normalizer", "BlindIQCompensator",
-    "BlindCFOCompensator", "BlindPhaseCompensation", "LinearEqualizer",
+    "BlindCFOCompensator", "BlindPhaseCompensation",
+    "BlindPhaseSearchCompensator", "LinearEqualizer",
     "DataAidedFIRCompensator", "DataAidedPhaseCompensator",
     "DataAidedComplexGainCompensator", "DataAidedSimpleSynchronizer",
     "DataAidedFineSynchronizer",
@@ -1670,3 +1671,100 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
             y = y[:self.signal_len]
 
         return y
+
+
+@dataclass(slots=True)
+class BlindPhaseSearchCompensator(Processor):
+    r"""Feedforward carrier phase recovery by blind phase search (BPS).
+
+    Signal Model
+    ------------
+    The input carries a slowly varying phase :math:`\phi[n]` -- laser
+    phase noise, typically -- on top of the constellation:
+
+    .. math::
+
+        x[n] = s[n] \, e^{j \phi[n]} + b[n]
+
+    For each of :math:`B` test phases
+    :math:`\varphi_i = i \, \frac{\pi/2}{B}`, the input is rotated,
+    decided against the alphabet, and the squared decision distance is
+    averaged over a sliding window of :math:`2W + 1` symbols. The
+    estimate at each symbol is the test phase of smallest averaged
+    distance, then unwrapped modulo :math:`\pi/2` so the estimate can
+    follow the walk beyond one quadrant.
+
+    The :math:`\pi/2` search range is the symmetry of a square QAM (and
+    of QPSK): the recovered constellation is aligned up to a quadrant.
+    That residual **quadrant ambiguity is not resolved here** -- it is
+    the same ambiguity every blind phase estimator leaves, and a system
+    resolves it with differential encoding or a known field. The
+    estimated phase trajectory is exposed as ``phase_`` (D23).
+
+    Axes: *axis -1* -- the window slides along the last axis; leading
+    axes (the two rows of a polarization pair) are processed
+    independently, each with its own trajectory.
+
+    Parameters
+    ----------
+    alphabet : np.ndarray or Constellation
+        The constellation the decision is made against.
+    n_test : int, optional, keyword-only
+        Number of test phases :math:`B` over :math:`[0, \pi/2)`.
+        Default is 32.
+    half_window : int, optional, keyword-only
+        Half-width :math:`W` of the averaging window. Default is 16.
+        The window trades noise rejection against tracking speed: it
+        must be short against the phase drift and long against the
+        additive noise.
+    name : str, optional, keyword-only
+        Block name. Default ``"bps"``.
+
+    References
+    ----------
+    T. Pfau, S. Hoffmann, R. Noe, "Hardware-Efficient Coherent Digital
+    Receiver Concept With Feedforward Carrier Recovery for M-QAM
+    Constellations," Journal of Lightwave Technology, vol. 27, no. 8,
+    pp. 989-999, 2009.
+
+    Examples
+    --------
+    >>> from comnumpy.core.utils import get_alphabet
+    >>> alphabet = get_alphabet("PSK", 4)
+    >>> s = alphabet[np.arange(64) % 4]
+    >>> rotated = s * np.exp(1j * 0.3)
+    >>> y = BlindPhaseSearchCompensator(alphabet, half_window=8)(rotated)
+    >>> bool(np.max(np.abs(y - s)) < np.pi / 2 / 32)   # within one grid step
+    True
+    """
+    alphabet: Any
+    n_test: int = field(default=32, kw_only=True)
+    half_window: int = field(default=16, kw_only=True)
+    name: str = field(default="bps", kw_only=True)
+    phase_: Optional[np.ndarray] = field(init=False, repr=False, default=None)
+
+    def _track(self, x: np.ndarray) -> np.ndarray:
+        """The unwrapped phase trajectory of one 1D signal."""
+        points = np.ravel(np.asarray(self.alphabet, dtype=complex))
+        candidates = (np.pi / 2) * np.arange(self.n_test) / self.n_test
+        window = np.ones(2 * self.half_window + 1)
+        cost = np.empty((self.n_test, x.shape[-1]))
+        for index, phi in enumerate(candidates):
+            rotated = x * np.exp(-1j * phi)
+            distance = np.min(
+                np.abs(rotated[:, None] - points[None, :]) ** 2, axis=-1)
+            cost[index] = np.convolve(distance, window, mode="same")
+        raw = candidates[np.argmin(cost, axis=0)]
+        # unwrap modulo pi/2: a jump larger than pi/4 between neighbours
+        # is the estimate crossing the edge of the search range
+        steps = np.diff(raw)
+        steps -= (np.pi / 2) * np.round(steps / (np.pi / 2))
+        return raw[0] + np.concatenate(([0.0], np.cumsum(steps)))
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        flat = np.reshape(x, (-1, x.shape[-1]))
+        trajectories = np.empty(flat.shape)
+        for row in range(flat.shape[0]):
+            trajectories[row] = self._track(flat[row])
+        self.phase_ = np.reshape(trajectories, x.shape)
+        return x * np.exp(-1j * self.phase_)

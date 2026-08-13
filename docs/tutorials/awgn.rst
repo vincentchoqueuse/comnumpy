@@ -110,7 +110,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 144-150
+   :lines: 129-135
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -272,7 +272,7 @@ not guess (decision D41), so it happens at the call site:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 99-128
+   :lines: 99-120
 
 The metric changes with the axis. Against :math:`E_b/N_0` the natural quantity
 is the bit error rate, and ``compute_ber`` needs the symbol width, which
@@ -289,27 +289,17 @@ below :math:`10^{-2}` the two agree to within a few percent for every order.
 This is an approximation behaving as documented, not a simulation
 disagreeing with theory.
 
-.. code::
-
-   QAM order  bits per symbol  Eb/N0 at BER=1e-3 [dB]
-   --------------------------------------------------
-           4                2                    6.79
-          16                4                   10.52
-          64                6                   14.77
-         256                8                   19.38
-
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 130-142
+   :lines: 120-127
 
 .. image:: img/monte_carlo_awgn_orders.png
    :width: 100%
    :align: center
 
-Going from 2 to 8 bits per symbol costs **12.6 dB** of energy per bit at
-:math:`10^{-3}`, spent in three roughly equal steps -- 3.7, 4.3 then 4.6 dB
-per doubling of :math:`k`, the price rising slowly with the order. That is
-what the rest of
+The waterfalls are almost evenly spaced: each doubling of the bits per
+symbol shifts the curve by **4 to 5 dB** of energy per bit, read directly
+off the figure. That price is what the rest of
 a communication system is built to negotiate: coding buys some of it back
 (:doc:`coding`), shaping buys a little more (:doc:`shaping`), and a channel
 that is not simply AWGN changes the terms entirely (:doc:`ofdm`).
