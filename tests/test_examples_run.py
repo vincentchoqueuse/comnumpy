@@ -70,7 +70,8 @@ SLOW = {
         "matrix, plus a runtime sweep -- 33 s wall measured 2026-08-12",
     "optical/CD_compensation_part1.py":
         "BER vs SNR for 3 modulations, 200 000 symbols through a 249-tap "
-        "compensator -- 227 s measured 2026-08-09",
+        "compensator -- 332 s measured 2026-08-13 after the Experiment "
+        "rewrite, alongside a docs build",
     "optical/NLI_simulation.py":
         "eight launch powers x four trials x two fibre configurations of "
         "split-step propagation, then six receivers on each -- 144 s "
