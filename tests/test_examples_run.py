@@ -63,8 +63,8 @@ SLOW = {
         "compensator -- 227 s measured 2026-08-09",
     "optical/NLI_simulation.py":
         "eight launch powers x four trials x two fibre configurations of "
-        "split-step propagation, then six receivers on each -- 370 s "
-        "measured 2026-08-13 at StPS=50",
+        "split-step propagation, then six receivers on each -- 203 s "
+        "measured 2026-08-13 at StPS=50, with the step transfer cached",
     "optical/one_shot_NLI.py":
         "the whole chain re-run at six span counts, each once nonlinear and "
         "once linear, then twice more for the profile and the receiver "
