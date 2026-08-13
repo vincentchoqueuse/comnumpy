@@ -7,13 +7,20 @@ decisions, which in turn beat the uncoded baseline at moderate Eb/N0
 the shared build/sweep/collect skeleton (decision D35).
 """
 import pathlib
+from functools import partial
 
 import numpy as np
 
 from comnumpy import AWGN, Sequential, SymbolGenerator
+from comnumpy.core.metrics import compute_ber
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.fec import ConvolutionalEncoder, ViterbiDecoder
 from comnumpy.monte_carlo import monte_carlo
+
+# one bit per symbol: the chain carries bits, not symbol indices. Bound
+# through partial rather than a lambda, which a worker process could not
+# unpickle if this run were parallelised.
+BER_BITS = partial(compute_ber, width=1)
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -55,13 +62,13 @@ def main():
 
     ber = {}
     ber["uncoded"] = monte_carlo(get_uncoded_chain(), "noise.snr_dB", EBN0_DB_RANGE,
-                                 {"ber": compute_ber_bits}, N_BITS,
+                                 {"ber": BER_BITS}, N_BITS,
                                  reference="tx", seed=10)["ber"]
     ber["hard"] = monte_carlo(get_coded_chain(soft=False), "noise.snr_dB", snr_coded,
-                              {"ber": compute_ber_bits}, N_BITS,
+                              {"ber": BER_BITS}, N_BITS,
                               reference="tx", seed=20)["ber"]
     ber["soft"] = monte_carlo(get_coded_chain(soft=True), "noise.snr_dB", snr_coded,
-                              {"ber": compute_ber_bits}, N_BITS,
+                              {"ber": BER_BITS}, N_BITS,
                               reference="tx", seed=30)["ber"]
 
     # Hard decisions operate 10*log10(1/R) = 3 dB below the uncoded channel
@@ -94,11 +101,6 @@ def main():
     print(f"PASS coding gain: at {EBN0_DB_RANGE[-1]} dB, uncoded "
           f"{ber['uncoded'][-1]:.2e}, hard {ber['hard'][-1]:.2e}, "
           f"soft {ber['soft'][-1]:.2e}")
-
-
-def compute_ber_bits(bits_tx, bits_rx):
-    """Bit error rate between two bit streams (decoded length = tx length)."""
-    return float(np.mean(bits_tx != bits_rx))
 
 
 if __name__ == "__main__":
