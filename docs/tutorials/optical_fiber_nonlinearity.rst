@@ -114,12 +114,12 @@ be read against.
 .. code::
 
    spans   measured   ASE only   the fibre      SER     phase     time
-       1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    1.1 s
-       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    4.0 s
-      10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    7.4 s
-      15    18.55 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg   14.2 s
-      20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg   14.9 s
-      25    15.30 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg   18.5 s
+       1    36.09 dB   37.11 dB     1.02 dB   0.0000    -1.2 deg    0.9 s
+       5    25.93 dB   30.65 dB     4.72 dB   0.0000    -7.0 deg    3.3 s
+      10    20.99 dB   27.68 dB     6.69 dB   0.0007   -14.8 deg    6.8 s
+      15    18.55 dB   25.94 dB     7.38 dB   0.0023   -22.9 deg   10.3 s
+      20    16.73 dB   24.72 dB     7.99 dB   0.0091   -31.0 deg   17.6 s
+      25    15.30 dB   23.70 dB     8.39 dB   0.0238   -39.2 deg   17.4 s
 
 The third column is the subject of this tutorial. It is the price of the
 Kerr effect, measured rather than argued: **1.02 dB after one span, 8.39 dB
@@ -210,9 +210,9 @@ span, 39 degrees over the link. Left in, that rotation would dominate the
 error rate, which is why the compensator sits in the chain and not in a
 comment.
 
-The last column is the one to keep. It grows with the number of spans, and
-``profile_execution_time`` says why -- it runs the chain and times each
-block on the way through:
+The last column is the one to keep, and it is not the receiver's:
+``profile_execution_time`` runs the chain and times each block on the way
+through, which says where it all went.
 
 .. literalinclude:: ../../examples/optical/one_shot_NLI.py
    :language: python
@@ -224,17 +224,18 @@ block on the way through:
    data_tx                     0.1 ms
    signal_tx                   0.0 ms
    upsampler                   0.3 ms
-   srrcfilter                  2.6 ms
+   srrcfilter                  2.9 ms
    signal_amplifier            0.2 ms
-   link                    17961.4 ms
+   link                    17200.7 ms
    rx_field                    1.7 ms
-   dbp                        13.5 ms
+   dbp                        12.3 ms
    srrcfilter_2                0.7 ms
    downsampler                 0.0 ms
    signal_amplifier_2          0.0 ms
-   phase                       0.2 ms
+   phase                       0.1 ms
+   data_rx                     0.7 ms
 
-Twelve blocks, and one of them is **99.9 %** of the run. The split-step
+Thirteen blocks, and one of them is **99.9 %** of the run. The split-step
 propagation is 25 spans of 200 steps, each an FFT pair and a pointwise
 rotation; everything else is a handful of milliseconds. Keep that ratio in
 mind -- it is what the Monte-Carlo section below has to work around.
@@ -272,8 +273,8 @@ Results
 
 .. code::
 
-   dispersion compensation   SNR=15.30 dB  receiver    13.5 ms
-   digital back-propagation  SNR=23.48 dB  SER=0.0000  receiver  3037.2 ms  residual phase=-0.1 deg
+   dispersion compensation   SNR=15.30 dB  receiver    12.3 ms
+   digital back-propagation  SNR=23.48 dB  SER=0.0000  receiver  2892.2 ms  residual phase=-0.1 deg
 
 .. image:: img/one_shot_nli_fig4.png
    :width: 100%
@@ -307,8 +308,8 @@ What it costs
 The last column of the table is the reason DBP is not simply switched on
 everywhere. Dispersion compensation is one FFT pair for the whole link; DBP at
 :math:`\mathrm{StPS}` steps per span is :math:`N_{sp} \times \mathrm{StPS}`
-FFT pairs plus as many pointwise phase rotations. Here that is 13.5 ms
-against 3037 ms -- **225 times** -- for 8.2 dB.
+FFT pairs plus as many pointwise phase rotations. Here that is 12.3 ms
+against 2892 ms -- **235 times** -- for 8.2 dB.
 
 That ratio is what the literature on low-complexity back-propagation exists to
 improve, and it is also why the useful question is not "DBP or not" but *how
@@ -377,12 +378,12 @@ and back-propagation **moves it to the right**:
 .. code::
 
    receiver                  best SNR   at power    total time
-   amplifier noise only      26.35 dB    4.5 dBm       0.8 s
-   dispersion compensation   18.78 dB   -1.5 dBm       0.7 s
+   amplifier noise only      26.35 dB    4.5 dBm       0.9 s
+   dispersion compensation   18.78 dB   -1.5 dBm       0.8 s
    DBP, 1 step/span          19.28 dB    0.0 dBm       1.7 s
-   DBP, 2 steps/span         20.64 dB    0.0 dBm       3.4 s
-   DBP, 4 steps/span         23.81 dB    3.0 dBm       6.5 s
-   DBP, 50 steps/span        25.94 dB    4.5 dBm      76.8 s
+   DBP, 2 steps/span         20.64 dB    0.0 dBm       3.2 s
+   DBP, 4 steps/span         23.81 dB    3.0 dBm       6.1 s
+   DBP, 50 steps/span        25.94 dB    4.5 dBm      73.2 s
 
 Start with the second row, because it is the one the closed form claims to
 predict:
