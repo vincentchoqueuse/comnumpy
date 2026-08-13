@@ -623,6 +623,19 @@ class BlindCFOCompensator(Processor):
         self.grid_search_array = np.arange(self.grid_search_tuple[0], self.grid_search_tuple[1], self.grid_search_tuple[2])
         self.history = []
 
+    def prepare(self, x: np.ndarray) -> None:
+        from comnumpy.exceptions import ShapeError  # local import (D36)
+        # the event is the polarization pair (see test_estimand_scope):
+        # one oscillator, ONE w0_ estimated jointly over (2, N). A wider
+        # leading shape is a batch of independent trials, which a single
+        # scalar estimate would smear silently (D51) -- refused, with
+        # the loop named.
+        if np.ndim(x) > 2 or (np.ndim(x) == 2 and np.shape(x)[-2] != 2):
+            raise ShapeError(
+                f"BlindCFOCompensator estimates one CFO per signal or "
+                f"per polarization pair (2, N), got shape {np.shape(x)} "
+                f"-- loop over the batch, one compensator per trial.")
+
     def loss(self, x: np.ndarray, w: float) -> float:
         N = x.shape[-1]
         x4 = x**4

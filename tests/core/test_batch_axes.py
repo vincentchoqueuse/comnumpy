@@ -52,6 +52,36 @@ class TestDeterministicBlocksBroadcast(unittest.TestCase):
                                       sigma2=0.1)(x[1])
                 np.testing.assert_allclose(y[1], row)
 
+    def test_filters_impairments_and_cd_compensators(self):
+        from comnumpy.core.filters import BWFilter, SRRCFilter
+        from comnumpy.core.impairments import CFO, Delay, IQImbalance
+        from comnumpy.core.processors import Downsampler, Upsampler
+        from comnumpy.optical.channels import ChromaticDispersion
+        from comnumpy.optical.compensators import (
+            ChromaticDispersionFIRCompensator,
+            ChromaticDispersionLSFIRCompensator)
+        blocks = (
+            ("Upsampler", lambda: Upsampler(2)),
+            ("Downsampler", lambda: Downsampler(2)),
+            ("SRRCFilter", lambda: SRRCFilter(0.25, 2, N_h=16)),
+            ("BWFilter", lambda: BWFilter(0.3)),
+            ("CFO", lambda: CFO(1e-3)),
+            ("Delay", lambda: Delay(3)),
+            ("IQImbalance", lambda: IQImbalance(1.0, 0.1)),
+            ("ChromaticDispersion",
+             lambda: ChromaticDispersion(1000, fs=32e9)),
+            ("CD FIR",
+             lambda: ChromaticDispersionFIRCompensator(1000, fs=32e9)),
+            ("CD LS FIR",
+             lambda: ChromaticDispersionLSFIRCompensator(
+                 1000, 15, fs=32e9, w_vect=[-np.pi, np.pi])),
+        )
+        for name, factory in blocks:
+            with self.subTest(block=name):
+                batched = factory()(self.x)
+                row = factory()(self.x[1])
+                np.testing.assert_allclose(batched[1], row)
+
     def test_mapper_demapper_and_ofdm_chains(self):
         constellation = Constellation("QAM", 16)
         rng = np.random.default_rng(1)
@@ -155,6 +185,14 @@ class TestAdaptiveBlocksCarryStatePerEvent(unittest.TestCase):
         compensator = BlindDualMIMOCompensator(L=2, alphabet=alphabet)
         with self.assertRaises(ShapeError):
             compensator(np.ones(64, dtype=complex))
+
+    def test_a_scalar_estimator_refuses_the_batch(self):
+        """BlindCFOCompensator optimizes ONE w0_ over the whole array:
+        on a batch that would smear a single estimate over independent
+        trials, so the batch is refused rather than misread."""
+        from comnumpy.core.compensators import BlindCFOCompensator
+        with self.assertRaises(ShapeError):
+            BlindCFOCompensator()(np.ones((3, 64), dtype=complex))
 
 
 if __name__ == "__main__":

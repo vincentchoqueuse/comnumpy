@@ -67,8 +67,8 @@ class CFO(Processor):
     where :math:`\omega_0` is the normalized carrier frequency offset in
     rad/sample.
 
-    Axes: *axis -1* -- expects (N,); the time index :math:`n` runs along a
-    one-dimensional input.
+    Axes: *axis -1* -- the time index :math:`n` runs along the last
+    axis; leading axes are batch, every row sees the same offset.
 
     Parameters
     ----------
@@ -94,8 +94,7 @@ class CFO(Processor):
     name: str = field(default="cfo_impairment", kw_only=True)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        N = len(x)
-        n_vect = np.arange(N)
+        n_vect = np.arange(x.shape[-1])
         y = x * np.exp(1j*self.cfo*n_vect)
         return y
 
@@ -117,8 +116,8 @@ class Delay(Processor):
     keep the input length :math:`N`; otherwise the output has length
     :math:`N - \tau`.
 
-    Axes: *axis -1* -- expects (N,); samples are dropped along a
-    one-dimensional input.
+    Axes: *axis -1* -- samples are dropped along the last axis;
+    leading axes are batch.
 
     Parameters
     ----------
@@ -156,10 +155,10 @@ class Delay(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
 
-        x_delayed = x[self.tau:]
+        x_delayed = x[..., self.tau:]
         if self.pad_zeros:
-            y = np.zeros(len(x))
-            y[:len(x_delayed)] = x_delayed
+            y = np.zeros(x.shape, dtype=x.dtype)
+            y[..., :x_delayed.shape[-1]] = x_delayed
         else:
             y = x_delayed
 

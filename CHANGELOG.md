@@ -61,6 +61,25 @@ resolutions named); adaptive blocks carry independent state per event
 (`BlindDualMIMOCompensator` on `(..., 2, N)` adapts one butterfly per
 pair and exposes `H_` with the batch axes in front).
 
+A sweep of the block catalogue then held every block to the contract.
+Four more deterministic blocks crashed on a batch and now broadcast:
+`BWFilter` (its 1-D guard was already unnecessary -- the FFT mask acts
+on the last axis), `CFO` (it read `len(x)`, i.e. the *batch* size, as
+the signal length), `Delay`, and both chromatic-dispersion FIR
+compensators (the same scipy kernel-rank fix as `FIRChannel`).
+`BlindCFOCompensator` keeps its documented event -- one oscillator per
+signal or per polarization pair `(2, N)`, estimated jointly
+(`test_estimand_scope`) -- and now *refuses* a wider batch instead of
+silently smearing one scalar estimate over independent trials.
+
+What batching buys was measured, not asserted: x4.1 on the
+single-carrier chain whose block ZF equalizer rebuilds its
+pseudo-inverse per call (4 trials amortize it to one build per sweep
+point), x2.2 on the OFDM chain (16 trials), and **x0.5 -- slower --**
+on a plain AWGN chain, where Python overhead was never the cost and
+the batch only buys bigger temporaries. Batch for correctness and for
+amortizing per-call operator builds; not as a blanket speed knob.
+
 Two silent traps died on the way. `compute_ser`/`compute_ber` with
 `axis=None` used to ravel *before* truncating to the common length, so
 a batch whose rows carried a tail (an OFDM frame after a `full`
