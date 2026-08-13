@@ -45,6 +45,55 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — `Experiment`, the collection loop as an object
+
+Every study in the examples was the same sentence -- *run the same
+experiment for several values of one parameter, and keep what each run
+measured* -- and every script spelled it out again: pre-allocated
+`np.zeros((n_points, n_methods))`, nested loops indexed by hand, one
+accumulator per metric divided by `N_test` at the end. The two MIMO
+detector sweeps also ran **unseeded**: the curves in the documentation
+were not reproducible by anyone, including their author.
+
+`Experiment` is that sentence as an object:
+
+```python
+experiment = Experiment(config, parameter="snr_dB",
+                        values=np.arange(0, 45, 5), seed=42)
+result = experiment.run(simulate)
+result.print(ylabel="BLER")
+result.plot(ylabel="BLER", yscale="log")
+```
+
+`simulate(config, seed)` is the experiment itself, written by the user:
+it receives a copy of the conditions with the studied parameter set and
+a per-point child seed (D6/D35, the same spawning `monte_carlo` uses),
+and returns a plain dictionary of what it observed. The experiment
+aligns each entry into an array, refuses a simulate that changes its
+observations mid-run, and hands back a result carrying the parameter,
+the values, the configuration, the seed and the wall time. When no seed
+is given, one is drawn and **kept** -- `result.seed` always answers, so
+an interesting accident can be re-run.
+
+`save=` narrows what is kept, as names or as `{"ser": True}` flags.
+The result renders through `comnumpy.data` -- `result.print()` is the
+conditions plus the table, `result.plot()` the same object drawn -- so
+the table a page pastes and its figure cannot come from different runs.
+
+Deliberately not a framework: one parameter, one callable, one
+dictionary out. Sweeping a single chain parameter with standard metrics
+stays `monte_carlo`, which is one call; `Experiment` is for the study
+*around* a chain -- several detectors on one frame, several receivers
+on one propagation -- where the collection loop was becoming the
+longest part of the script.
+
+Four studies are rewritten on it: the two MIMO detector sweeps, the
+chromatic-dispersion compensator comparison, and the launch-power sweep
+of the DBP tutorial -- each of them seeded at last, each printing its
+conditions and its table from the object it draws.
+`monte_carlo_simulation_1.py` leaves `SLOW` on the way: listed at 32 s,
+measured twice at 4.4 s.
+
 ### Changed — the figures finally use the style sheet that ships with the package
 
 `comnumpy.mplstyle` has shipped since D27b -- Okabe-Ito, colourblind-safe,

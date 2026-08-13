@@ -363,21 +363,29 @@ instead of two, which is what ``polarizations=1`` is for:
 
 That is the prediction the sweep below has to land on.
 
+The sweep itself is written as an :class:`~comnumpy.experiment.Experiment`:
+the conditions in one dictionary, the studied parameter and its values
+declared once, and ``simulate`` -- the function below -- called once per
+launch power with a copy of the conditions and that point's own seed. What
+it returns is collected into arrays aligned with the powers, and the seed
+is kept in the result, so the whole table can be reproduced from the two
+lines that declare the experiment.
+
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 112-227
+   :lines: 112-238
 
 .. code::
 
    effective SNR [dB]
    launch power [dBm]       -6.0  -4.5  -3.0  -1.5   0.0   1.5   3.0   4.5
    -----------------------------------------------------------------------
-   amplifier noise only     15.9  17.4  18.8  20.3  21.9  23.3  24.8  26.4
-   dispersion compensation  15.8  17.1  18.2  18.8  18.4  16.9  14.6  11.7
-   DBP, 1 step/span         15.8  17.2  18.4  19.3  19.3  18.1  16.1  13.3
-   DBP, 2 steps/span        15.9  17.3  18.7  19.9  20.6  20.5  19.2  16.9
-   DBP, 4 steps/span        15.9  17.4  18.8  20.3  21.7  23.0  23.8  23.8
-   DBP, 50 steps/span       15.9  17.4  18.8  20.3  21.8  23.2  24.6  25.9
+   amplifier noise only     15.9  17.4  18.9  20.4  21.9  23.4  24.9  26.4
+   dispersion compensation  15.8  17.1  18.3  18.8  18.3  16.9  14.4  11.8
+   DBP, 1 step/span         15.8  17.2  18.5  19.3  19.2  18.2  16.0  13.4
+   DBP, 2 steps/span        15.8  17.3  18.7  19.9  20.7  20.6  19.1  16.9
+   DBP, 4 steps/span        15.9  17.3  18.9  20.3  21.7  23.0  23.8  23.8
+   DBP, 50 steps/span       15.9  17.4  18.9  20.4  21.8  23.3  24.6  25.9
 
 .. image:: img/nli_simulation_fig1.png
    :width: 100%
@@ -395,26 +403,28 @@ and it climbs as :math:`P/P_{\mathrm{ASE}}` forever -- 15.9 dB at
 defect in it.
 
 The maximum of each of the others is the operating point of that receiver,
-and back-propagation **moves it to the right**:
+and back-propagation **moves it to the right** -- hesitantly at one step per
+span, whose curve is nearly flat between :math:`-1.5` and :math:`0` dBm, then
+decisively:
 
 .. code::
 
    receiver                  best SNR   at power    total time
-   amplifier noise only      26.35 dB    4.5 dBm       0.4 s
-   dispersion compensation   18.78 dB   -1.5 dBm       0.4 s
-   DBP, 1 step/span          19.28 dB    0.0 dBm       0.7 s
-   DBP, 2 steps/span         20.64 dB    0.0 dBm       1.4 s
-   DBP, 4 steps/span         23.82 dB    3.0 dBm       2.6 s
-   DBP, 50 steps/span        25.94 dB    4.5 dBm      30.7 s
+   amplifier noise only      26.37 dB    4.5 dBm       0.4 s
+   dispersion compensation   18.85 dB   -1.5 dBm       0.3 s
+   DBP, 1 step/span          19.29 dB   -1.5 dBm       0.7 s
+   DBP, 2 steps/span         20.65 dB    0.0 dBm       1.3 s
+   DBP, 4 steps/span         23.82 dB    3.0 dBm       2.5 s
+   DBP, 50 steps/span        25.91 dB    4.5 dBm      29.6 s
 
 Start with the second row, because it is the one the closed form claims to
 predict:
 
 .. code::
 
-   GN model 18.77 dB at -1.35 dBm, dispersion compensation 18.78 dB at -1.5 dBm
+   GN model 18.77 dB at -1.35 dBm, dispersion compensation 18.85 dB at -1.5 dBm
 
-**0.01 dB.** The Gaussian-noise model of the previous tutorial ran in
+**0.08 dB.** The Gaussian-noise model of the previous tutorial ran in
 microseconds and knew nothing of this chain -- not the pulse shaping, not the
 split-step integration, not the matched filter. It described the receiver
 that leaves the nonlinearity in place, which is exactly the receiver its
@@ -431,7 +441,7 @@ Read the last two columns of those rows together. Going from one step per
 span to four buys **4.5 dB**; going from four to fifty buys **2.1 dB more**
 and costs twelve times the computation. The returns collapse because the
 step-size error falls with the number of steps while the ASE noise does not:
-at fifty steps the receiver is 0.41 dB from the noise-only bound, and no
+at fifty steps the receiver is 0.46 dB from the noise-only bound, and no
 number of steps will close that last gap.
 
 Against dispersion compensation alone, four steps per span are worth 5.0 dB
@@ -455,8 +465,8 @@ say so in errors rather than in a caveat:
 
    receiver                  errors at its best power
    amplifier noise only           0 over 49152 symbols
-   dispersion compensation       15 over 49152 symbols
-   DBP, 1 step/span               5 over 49152 symbols
+   dispersion compensation        6 over 49152 symbols
+   DBP, 1 step/span               4 over 49152 symbols
    DBP, 2 steps/span              0 over 49152 symbols
    DBP, 4 steps/span              0 over 49152 symbols
    DBP, 50 steps/span             0 over 49152 symbols

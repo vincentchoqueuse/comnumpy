@@ -55,11 +55,13 @@ TIMEOUT_S = 120
 # row. The old figure is not reproducible here and no change to the
 # script explains it, so rather than keep a script out of the smoke test
 # on a number nobody can obtain, it goes back in.
+#
+# `mimo/monte_carlo_simulation_1.py` left the same way on 2026-08-13:
+# listed at 32 s, measured twice at 4.4 s after its Experiment rewrite.
 SLOW = {
-    "mimo/monte_carlo_simulation_1.py":
-        "Monte-Carlo BER sweep, 4 detectors -- 32 s measured 2026-08-09",
     "mimo/monte_carlo_simulation_2.py":
-        "Monte-Carlo BER sweep, OSIC variants -- 143 s measured 2026-08-09",
+        "Monte-Carlo BER sweep, OSIC variants -- 80 s measured 2026-08-13 "
+        "after the Experiment rewrite",
     "mimo/run_all_scripts.py":
         "runner, not an example: re-executes the other mimo scripts -- "
         "~350 s by construction",
