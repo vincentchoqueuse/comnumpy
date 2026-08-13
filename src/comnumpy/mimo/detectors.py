@@ -100,7 +100,7 @@ class MaximumLikelihoodDetector(Processor):
 
     and the detector returns the integer indices of
     :math:`\widehat{\mathbf{x}}[n]` in the alphabet
-    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S[:, n]]``).
+    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S_[:, n]]``).
 
     .. WARNING::
 
@@ -122,6 +122,12 @@ class MaximumLikelihoodDetector(Processor):
         Must be set before calling the detector.
     name : str, optional, keyword-only
         Name of the detector. Default is ``"ML Detector"``.
+
+    Attributes
+    ----------
+    S_ : np.ndarray
+        Decisions of the last call, as alphabet indices
+        (data-dependent, hence the trailing underscore, D23).
 
     Raises
     ------
@@ -148,8 +154,8 @@ class MaximumLikelihoodDetector(Processor):
     alphabet: np.ndarray
     H: Optional[np.ndarray] = field(default=None, kw_only=True)
     name: str = field(default="ML Detector", kw_only=True)
-    # internal state (declared for slots, D40a)
-    S: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
+    # estimated state (D23), declared for slots (D40a)
+    S_: Optional[np.ndarray] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         # accept anything array-like, a Constellation included
@@ -180,10 +186,10 @@ class MaximumLikelihoodDetector(Processor):
         H = _required_channel(self.H, type(self).__name__)
         if H.ndim > 2:
             S = _detect_stacked(self._detect, H, Y)
-            self.S = S
+            self.S_ = S
             return S
         S = self._detect(H, Y)
-        self.S = S
+        self.S_ = S
         return S
 
     def _detect(self, H: np.ndarray, Y: np.ndarray) -> np.ndarray:
@@ -306,6 +312,8 @@ class SphereDecoder(Processor):
         Average number of tree nodes visited per detected vector in the
         last call -- data-dependent, hence the trailing underscore (D23).
         Compare it with :math:`|\mathcal{M}|^{N_t}`.
+    S_ : np.ndarray
+        Decisions of the last call, as alphabet indices (D23).
 
     Raises
     ------
@@ -360,8 +368,8 @@ class SphereDecoder(Processor):
     H: Optional[np.ndarray] = field(default=None, kw_only=True)
     name: str = field(default="Sphere Decoder", kw_only=True)
     # internal state (declared for slots, D40a)
-    S: Optional[np.ndarray] = field(init=False, repr=False,
-                                    default_factory=lambda: None)
+    S_: Optional[np.ndarray] = field(init=False, repr=False,
+                                     default_factory=lambda: None)
     nodes_: float = field(init=False, repr=False, default=0.0)
     # running counters behind nodes_, declared for slots (D40a)
     _visited: int = field(init=False, repr=False, default=0)
@@ -434,12 +442,12 @@ class SphereDecoder(Processor):
             self._visited, self._samples = 0, 0
             S = _detect_stacked(self._detect, H, Y)
             self.nodes_ = self._visited / max(1, self._samples)
-            self.S = S
+            self.S_ = S
             return S
         self._visited, self._samples = 0, 0
         S = self._detect(H, Y)
         self.nodes_ = self._visited / max(1, self._samples)
-        self.S = S
+        self.S_ = S
         return S
 
     def _detect(self, H: np.ndarray, Y: np.ndarray) -> np.ndarray:

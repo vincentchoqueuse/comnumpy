@@ -14,20 +14,24 @@ class BlindDualMIMOCompensator(Processor):
     Signal Model
     ------------
     At each step :math:`n`, the two output polarizations are computed
-    from the estimated equalizer matrix :math:`\mathbf{H}` of size
-    :math:`2 \times 2(2L+1)`:
+    from the estimated equalizer matrix :math:`\mathbf{W}` of size
+    :math:`2 \times 2(2L+1)` -- written :math:`\mathbf{W}`, not
+    :math:`\mathbf{H}`, because everywhere else in this package
+    :math:`\mathbf{H}` is the channel; the attribute is ``H_`` for
+    historical reasons, the trailing underscore marking it as estimated
+    (D23):
 
     .. math::
 
-        y_i[n] = \mathbf{h}_i^H \tilde{\mathbf{x}}[n], \qquad
+        y_i[n] = \mathbf{w}_i^H \tilde{\mathbf{x}}[n], \qquad
         \tilde{\mathbf{x}}[n] = \begin{bmatrix}
         x_0[n] & \cdots & x_0[n-2L] & x_1[n] & \cdots & x_1[n-2L]
         \end{bmatrix}^T
 
-    where :math:`\mathbf{h}_i^T` is the :math:`i`-th row of
-    :math:`\mathbf{H}` and :math:`x_0`, :math:`x_1` are the two received
+    where :math:`\mathbf{w}_i^T` is the :math:`i`-th row of
+    :math:`\mathbf{W}` and :math:`x_0`, :math:`x_1` are the two received
     polarizations. The equalizer is updated by stochastic gradient
-    descent, :math:`\mathbf{H} \leftarrow \mathbf{H} + \mu \mathbf{g}[n]`,
+    descent, :math:`\mathbf{W} \leftarrow \mathbf{W} + \mu \mathbf{g}[n]`,
     minimizing one of the following blind losses:
 
     * Constant Modulus Algorithm (CMA):
@@ -136,8 +140,11 @@ class BlindDualMIMOCompensator(Processor):
 
     Raises
     ------
-    ValueError
-        If the input is not a dual-polarization signal of shape ``(2, N)``.
+    ShapeError
+        If the input does not carry a polarization pair ``(..., 2, N)``,
+        or if ``H_`` carries the batch shape of a previous pass and the
+        new input carries a different one -- call :meth:`initialize_H`
+        to restart from the identity equalizer.
 
     References
     ----------

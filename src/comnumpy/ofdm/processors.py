@@ -424,8 +424,8 @@ class CarrierAllocator(Processor):
         array is taken as an FFT-order mask.
     pilots : np.ndarray or scalar, optional, keyword-only
         Pilot values :math:`p[j]`, one per PILOT subcarrier of an OFDM
-        symbol (or a scalar broadcast to all of them). Default is an
-        empty array.
+        symbol (or a scalar broadcast to all of them). Default is
+        None, treated as no pilots.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"carrier allocator"``.
 

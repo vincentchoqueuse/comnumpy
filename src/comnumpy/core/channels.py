@@ -32,7 +32,11 @@ class AWGN(Processor):
     For real-valued inputs, a real Gaussian noise of variance
     :math:`\sigma^2` is applied instead of a circular complex one.
 
-    Axes: *element-wise* -- applied pointwise, shape-agnostic.
+    Axes: *element-wise* -- applied pointwise, shape-agnostic. One
+    caveat under a batch (D51): with ``snr_dB=`` the signal power is
+    measured over the **whole** input, batch rows included, so rows of
+    unequal power share one variance rather than each receiving the
+    requested SNR; ``sigma2=`` is batch-neutral.
 
     Parameters
     ----------
@@ -236,8 +240,12 @@ class TappedDelayLineChannel(Processor):
 
     .. math::
 
-        a_0[n] = \sqrt{\frac{K}{K+1}} \, e^{j \phi}
-               + \sqrt{\frac{1}{K+1}} \, g[n]
+        a_0[n] = \sqrt{\gamma_0}\left(\sqrt{\frac{K}{K+1}} \,
+        e^{j \phi} + \sqrt{\frac{1}{K+1}} \, g[n]\right)
+
+    where :math:`g[n]` is the unit-power Rayleigh process of the first
+    path, so that :math:`\mathbb{E}[|a_0[n]|^2] = \gamma_0` still
+    holds.
 
     The output keeps the input length: the delayed copies are zero-padded
     at the start, i.e. the channel is causal and the transient is kept.

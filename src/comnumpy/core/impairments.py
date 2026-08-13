@@ -119,6 +119,10 @@ class Delay(Processor):
     Axes: *axis -1* -- samples are dropped along the last axis;
     leading axes are batch.
 
+    The name is historical: the block models the receiver-side *removal*
+    of a known delay -- it advances the signal -- which is why its model
+    reads :math:`y[n] = x[n + \tau]`.
+
     Parameters
     ----------
     tau : int

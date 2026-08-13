@@ -110,11 +110,11 @@ def apply_chromatic_dispersion(x: np.ndarray, z: float, beta2: float,
     x: numpy array
         Complex signal
     z : float
-        Step length in meters (km).
+        Step length in km.
     beta2: float
         coefficient in ps**2/km
     alpha_dB: float, optional
-        gain in dB / km (defaut: None)
+        attenuation in dB/km (default: None)
     fs : float, optional
         Sampling frequency in hertz (Hz).
     direction : int, optional
@@ -455,7 +455,7 @@ def compute_erbium_doped_fiber_N_ase(alpha_dB: float, L_span: float,
 
     .. math ::
 
-        \alpha =\alpha_{dB}/10 \log_{10}(e)
+        \alpha = \frac{\alpha_{dB}}{10 \log_{10} e} = \frac{\ln 10}{10}\,\alpha_{dB}
 
     References
     ----------

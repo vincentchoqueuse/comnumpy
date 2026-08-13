@@ -130,7 +130,9 @@ class SpaceTimeCode:
         \in \mathbb{C}^{N_t \times T}
 
     and the receiver observes
-    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{B}`.
+    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{V}`,
+    with :math:`\mathbf{V}` the noise (:math:`\mathbf{B}_k` being taken
+    by the conjugate dispersion matrices above).
     The **rate** is :math:`K/T` symbols per channel use, the **diversity
     order** is the minimum rank of
     :math:`\mathbf{G}(\mathbf{s}) - \mathbf{G}(\mathbf{s}')` over
@@ -777,6 +779,9 @@ class SpaceTimeDecoder(Processor):
     ------
     ValueError
         If the code is not orthogonal, or if ``H`` was not set.
+    ShapeError
+        If the number of received samples is not a multiple of the
+        code's ``n_slots``.
 
     References
     ----------

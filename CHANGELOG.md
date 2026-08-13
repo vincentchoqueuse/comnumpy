@@ -45,6 +45,39 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — the 91 docstrings audited against their code
+
+Five parallel reviewers read every `Processor` docstring against its
+`forward()` -- equations, Axes lines, parameter lists, doctests -- and
+62 findings were fixed. Four were **code** bugs the prose exposed:
+`Resampler` resampled axis 0 (scipy's default) while promising the last
+axis; `SelectiveMIMOChannel` validated its input against `N_r` instead
+of `N_t`, rejecting every non-square channel's correct frames;
+`BlindCFOCompensator.history` stored 16 times the offset (renamed
+`history_`, D23, and fixed to store the omega_0 iterates it documents);
+and `Laser` drew its "random" initial phase from a Gaussian of std 2 pi
+instead of uniformly on [-pi, pi).
+
+The rest is the docstrings catching up with the code. Wrong equations
+straightened: `BWFilter`'s mask (off by 2 vs its own parameters),
+`AmplitudeDemapper`'s decision (on |Re y|, per quadrature lane, not
+|y|), the Rice path of `TappedDelayLineChannel` (the gamma_0 scaling
+the code applies), the ambiguous alpha_dB conversion in the optical
+helpers. Stale claims deleted: seven phantom pre-D46 parameters on
+`FiberLink` and `DBP` (now one `fiber: FiberSpec` entry), the unusable
+`norm` field of `FrequencyDomainEqualizer` (removed -- it never reached
+the FFT), 1-D-only Axes lines on blocks that broadcast (CD, Kerr,
+EDFA, BlindPhaseTracker), "multiplied" for a division, `"time"` as a
+method that never existed. The MIMO detectors' stored decisions are
+`S_` (D23), the CMA equalizer is written W -- H is the channel
+everywhere else -- and `BlindPhaseSearchCompensator` gained the
+Attributes section its `phase_` deserved. The batch registers were
+corrected on the way: `DelayRemover` and `BlindPhaseTracker` are
+verified BROADCAST, `Normalizer` moved to EXEMPT -- its gain is one
+scalar over the whole array by documented design, and its docstring now
+warns that a batch is pooled. `PtsPaprReductor` validates its (T, F)
+layout in `prepare()` instead of dying on a bare IndexError.
+
 ### Added — the batch promise is a ratchet over the catalogue
 
 A convention over 91 blocks is only worth the sweep that checks it.

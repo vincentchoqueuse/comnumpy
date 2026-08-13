@@ -35,7 +35,7 @@ class HardClipper(Processor):
     For real-valued inputs, :math:`T_m \, \mathrm{sign}(x[n])` replaces the
     polar form.
 
-    Axes: *element-wise* -- the clipping is applied pointwise; the
+    Axes: *axis -1* -- the clipping is applied pointwise, but the
     threshold :math:`T_m` is computed from the mean power **along the
     last axis**, so each row of a batch is clipped against its own
     power -- one transmitter per trial (D51).
@@ -91,7 +91,7 @@ class IctPaprReductor(Processor):
     ------------
     The frequency-domain input is iteratively transformed to the time
     domain, clipped, transformed back and filtered. Starting from
-    :math:`X^{(0)}[k] = x[k]`, each iteration :math:`i = 1, \dots, N_{it}`
+    :math:`X^{(0)}[k] = X[k]`, each iteration :math:`i = 1, \dots, N_{it}`
     computes:
 
     .. math::
@@ -107,7 +107,7 @@ class IctPaprReductor(Processor):
 
     and where:
 
-    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,
+    * :math:`X[k]` is the frequency-domain input at subcarrier :math:`k`,
     * :math:`P_s` is the mean power of the current time-domain block :math:`s^{(i)}[n]`,
     * :math:`\mathrm{PAPR_{max}}` is the target maximum PAPR in dB,
     * :math:`w` is the filtering weight applied in the frequency domain.
@@ -190,14 +190,14 @@ class PtsPaprReductor(Processor):
 
     Signal Model
     ------------
-    Each frequency-domain block :math:`x[k]` of length :math:`N` is
+    Each frequency-domain block :math:`X[k]` of length :math:`N` is
     partitioned into :math:`M` disjoint adjacent sub-blocks
-    :math:`x_m[k]` (each keeping its :math:`N/M` contiguous subcarriers
+    :math:`X_m[k]` (each keeping its :math:`N/M` contiguous subcarriers
     and zeros elsewhere). The transmitted time-domain block is the
     phase-rotated combination:
 
     .. math::
-        y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{x_m\}[n]
+        y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{X_m\}[n]
 
     where the phase factors are selected by exhaustive search over the
     phase alphabet :math:`\mathcal{B}` to minimize the PAPR:
@@ -205,24 +205,24 @@ class PtsPaprReductor(Processor):
     .. math::
         (\hat{b}_1, \dots, \hat{b}_M) =
         \arg\min_{b_m \in \mathcal{B}}
-        \mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{x_m\}\right)
+        \mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{X_m\}\right)
 
     and where:
 
-    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,
+    * :math:`X[k]` is the frequency-domain input at subcarrier :math:`k`,
     * :math:`M` is the number of sub-blocks,
     * :math:`\mathcal{B}` is the phase factor alphabet,
     * :math:`y[n]` is the time-domain output block.
 
-    Axes: *declared axis* -- expects the Block layout ``(T, F)``; one
-    phase combination is optimized per block and the IDFT runs along the
-    block content axis.
+    Axes: *declared axis* -- expects the 2-D Block layout ``(T, F)``,
+    validated in ``prepare()``; one phase combination is optimized per
+    block and the IDFT runs along the block content axis.
 
     Parameters
     ----------
-    phase_alphabet : list
-        Phase factor alphabet :math:`\mathcal{B}` used in the PTS method
-        (e.g. ``[1, -1]``).
+    phase_alphabet : list, optional
+        Phase factor alphabet :math:`\mathcal{B}` used in the PTS
+        method. Default is ``[1, -1]``.
     N_sub : int, optional, keyword-only
         Number of sub-blocks :math:`M` the OFDM signal is divided into. Default is 16.
     name : str, optional, keyword-only
@@ -258,6 +258,14 @@ class PtsPaprReductor(Processor):
             self.phase_alphabet = [1, -1]
         self.combinations = np.array(
             list(itertools.product(self.phase_alphabet, repeat=self.N_sub)))
+
+    def prepare(self, X: np.ndarray) -> None:
+        from comnumpy.exceptions import ShapeError  # local import (D36)
+        if np.ndim(X) != 2:
+            raise ShapeError(
+                f"PtsPaprReductor expects the 2-D Block layout (T, F), "
+                f"got shape {np.shape(X)} -- reshape with "
+                f"Serial2Parallel first.")
 
     def get_subblocks(self, X: np.ndarray) -> np.ndarray:
         # Adjacent partition: blocks consist of a contiguous set of subcarriers and are of equal size

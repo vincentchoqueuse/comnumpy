@@ -114,6 +114,13 @@ class SymbolDemapper(Processor):
     name : str, optional, keyword-only
         Name of the symbol demapper instance. Default is ``"Symbol Demapper"``.
 
+    Raises
+    ------
+    ValueError
+        If the alphabet size is not a power of two -- the bit table
+        behind the LLRs is built at construction, in hard mode too, so
+        the constraint applies regardless of ``soft``.
+
     References
     ----------
     J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,
