@@ -1060,8 +1060,10 @@ def mmse_estimator(Y: np.ndarray, H: np.ndarray, sigma2: float) -> np.ndarray:
     [[ 0.9151 -0.8931]
      [ 0.9868  0.9647]]
     """
-    _, N_t = H.shape
-    H_H = np.conjugate(np.transpose(H))
+    N_t = H.shape[-1]
+    # swapaxes, not transpose: a stacked H (K, N_r, N_t) keeps its batch
+    # axes in front, and solve/matmul batch over them (D51)
+    H_H = np.conjugate(np.swapaxes(H, -1, -2))
     A = np.matmul(H_H, H) + sigma2 * np.eye(N_t)
     Z_est = LA.solve(A, np.matmul(H_H, Y))
     return Z_est

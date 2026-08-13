@@ -11,7 +11,8 @@ def rayleigh_channel(N_r: int, N_t: int,
                 L: int = 1,
                 scale_per_tap: Optional[Sequence[float]] = None,
                 seed: Optional[int] = None,
-                rng: Optional[np.random.Generator] = None) -> np.ndarray:
+                rng: Optional[np.random.Generator] = None,
+                size: Optional[int] = None) -> np.ndarray:
     r"""
     Draw an i.i.d. Rayleigh MIMO channel.
 
@@ -70,11 +71,21 @@ def rayleigh_channel(N_r: int, N_t: int,
         Random seed used if `rng` is not provided.
     rng : numpy.random.Generator, optional
         Pre-initialized random number generator. If provided, `seed` is ignored.
+    size : int, optional
+        Number of independent channel draws. When given, the returned
+        array grows a leading axis of length ``size`` -- a **stack** of
+        channels, one per Monte-Carlo trial, drawn sequentially from the
+        same generator so draw :math:`k` equals the :math:`k`-th draw of
+        the equivalent Python loop. The stack is what
+        :class:`~comnumpy.mimo.channels.FlatMIMOChannel` and the
+        detectors accept as a batched ``H`` (D51).
 
     Returns
     -------
     numpy.ndarray
-        Array of shape (L, N_r, N_t) containing the Rayleigh channel taps.
+        Array of shape (L, N_r, N_t) containing the Rayleigh channel
+        taps -- squeezed to (N_r, N_t) when ``L == 1``, with a leading
+        ``size`` axis when ``size`` is given.
 
     Raises
     ------
@@ -102,9 +113,22 @@ def rayleigh_channel(N_r: int, N_t: int,
     >>> H2 = rayleigh_channel(N_r=32, N_t=32, seed=1)
     >>> print(round(float(np.mean(np.abs(H2)**2)), 2))  # unit average gain
     1.01
+    >>> stack = rayleigh_channel(N_r=2, N_t=2, seed=0, size=200)
+    >>> stack.shape          # one draw per Monte-Carlo trial
+    (200, 2, 2)
     """
     if not rng:
         rng = np.random.default_rng(seed)
+
+    if size is not None:
+        # a stack of independent draws, sequential from the same rng:
+        # draw k equals the k-th draw of the equivalent Python loop, so
+        # a study moving to the batched form keeps its channels
+        draws = []
+        for _ in range(size):
+            draws.append(rayleigh_channel(N_r, N_t, L, scale_per_tap,
+                                          rng=rng))
+        return np.stack(draws)
 
     if scale_per_tap is None:
         scales = np.ones(L, dtype=float)

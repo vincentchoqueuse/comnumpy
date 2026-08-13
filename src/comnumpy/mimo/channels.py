@@ -103,7 +103,11 @@ class FlatMIMOChannel(BaseMIMOChannel):
     the noiseless product).
 
     Axes: *declared axis* -- expects ``(..., ant, N)`` with antennas on
-    axis -2, validated against :math:`N_t`.
+    axis -2, validated against :math:`N_t`. ``H`` may be a **stack** of
+    channels ``(K, N_r, N_t)``: against ``X`` of shape ``(K, N_t, N)``
+    channel :math:`k` is applied to frame :math:`k` -- one independent
+    draw per trial, the batch contract of D51 for a channel whose
+    realization is configured rather than drawn per call.
 
     Parameters
     ----------
@@ -135,7 +139,9 @@ class FlatMIMOChannel(BaseMIMOChannel):
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         assert self.H is not None      # validate_input rejects a None channel
-        validate_input(X, self.H.shape[1])
+        validate_input(X, self.H.shape[-1])
+        # matmul batches over leading axes: a stacked H (K, N_r, N_t)
+        # against X (K, N_t, N) applies channel k to frame k (D51)
         return np.matmul(self.H, X)
 
 

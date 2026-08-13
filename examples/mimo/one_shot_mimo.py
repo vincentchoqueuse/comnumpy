@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import monte_carlo, print_data, style
+from comnumpy import print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
@@ -89,21 +89,24 @@ NOISE_AWARE = {"MMSE", "OSIC"}   # the two detectors that weight by sigma2
 
 
 def average_ser(name, chain, snr_dB, seed=0):
-    """Average one chain over independent Rayleigh draws at one SNR."""
-    rng = np.random.default_rng(seed)
-    draws = []
-    for _ in range(n_channels):
-        matrix = rayleigh_channel(N_r, N_t, rng=rng)
-        draws.append((matrix, matrix))
+    """Average one chain over independent Rayleigh draws at one SNR.
+
+    The draws are a *stack* (D51): channel k propagates frame k, the
+    detector holds the same stack and decides frame k against channel
+    k, and the chain runs once instead of once per draw. Pooled over
+    equal-size frames, the SER is exactly the mean of the per-draw
+    rates.
+    """
+    stacked = rayleigh_channel(N_r, N_t, seed=seed, size=n_channels)
     noise_variance = N_t * 10 ** (-snr_dB / 10)
-    params = {"noise.sigma2": noise_variance}
+    params = {"noise.sigma2": noise_variance,
+              "channel.H": stacked, "detector.H": stacked}
     if name in NOISE_AWARE:
         params["detector.sigma2"] = noise_variance
     chain.set_params(**params)
-    results = monte_carlo(chain, ("channel.H", "detector.H"), draws,
-                          {"ser": compute_ser}, stimulus=(N_t, n_symbols),
-                          reference="tx", seed=seed)
-    return float(np.mean(results["ser"]))
+    chain.seed(seed)
+    detected = chain((n_channels, N_t, n_symbols))
+    return float(compute_ser(chain.tap("tx"), detected))
 
 
 # --- metrics, pre-allocated ------------------------------------------

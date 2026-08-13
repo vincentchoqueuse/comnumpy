@@ -45,6 +45,33 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — the MIMO Monte-Carlo is a stacked channel (D51b)
+
+The MIMO question the batch contract had to answer: the channel is
+redrawn every frame, and every detector needs that frame's matrix.
+The answer is a **stack**. `rayleigh_channel(size=K)` returns
+`(K, N_r, N_t)` -- drawn sequentially from one generator, so draw k
+equals the k-th draw of the equivalent Python loop; `FlatMIMOChannel`
+applies channel k to frame k (numpy's `matmul` batches over leading
+axes); and a detector built with the same stack decides frame k against
+channel k. `LinearDetector` (ZF and MMSE) batches through numpy's
+*stacked linear algebra* -- `mmse_estimator` now transposes with
+`swapaxes(-1, -2)` so its normal equations batch too -- while the
+search detectors (ML, sphere, OSIC) loop per draw internally: an
+enumeration, a tree and a cancellation order each depend on the one
+matrix in front of them, so their batch is convenience and correctness,
+not a speedup, and their docstrings say so. A mismatched stack (K
+channels against K+1 frames) is refused. Locked by
+`tests/mimo/test_stacked_channel.py`.
+
+Both MIMO studies now run on the stack. `one_shot_mimo` replaces its
+zipped `monte_carlo(("channel.H", "detector.H"), ...)` sweep -- 200
+chain runs per detector per SNR -- with one batched pass (10.9 s to
+9.0 s: the sphere decoder's per-sample search dominates and does not
+vectorize). `monte_carlo_simulation_1` drops its 500-draw Python loop
+for one stacked pass per SNR point and computes the BLER directly as
+`np.mean(np.any(S_est != S_ref, axis=(-2, -1)))` -- 4.7 s to 2.5 s.
+
 ### Added — batch axes are a contract, not an accident (D51)
 
 Leading axes ahead of a block's event axes are batch axes: independent
