@@ -45,14 +45,14 @@ are simply not seen.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 1-41
+   :lines: 1-44
 
 Let us generate four OFDM symbols and look at the instantaneous power,
 normalized by its own mean:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 44-60
+   :lines: 47-63
 
 .. image:: img/monte_carlo_ofdm_papr_fig1.png
    :width: 100%
@@ -81,7 +81,7 @@ non-zero probability.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 66-92
+   :lines: 69-95
 
 .. image:: img/monte_carlo_ofdm_papr_fig2.png
    :width: 100%
@@ -109,7 +109,7 @@ with those values, which saves reducing them by hand:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 95-101
+   :lines: 98-104
 
 .. code::
 
@@ -172,7 +172,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 106-142
+   :lines: 109-145
 
 Results
 """""""
@@ -184,7 +184,7 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 143-147
+   :lines: 146-150
 
 .. code::
 
@@ -195,7 +195,7 @@ Which of the two models to believe is a question the measurement answers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 149-163
+   :lines: 152-166
 
 .. code::
 

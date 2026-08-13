@@ -728,9 +728,14 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for comnumpy.style</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Figure style (decision D27b).</span>
 
-<span class="sd">The style sheet ships with the package and is **never applied at</span>
-<span class="sd">import time** -- importing a library must not mutate the user&#39;s</span>
-<span class="sd">matplotlib state. Activate it explicitly::</span>
+<span class="sd">Two things live here, and they act at two different moments.</span>
+
+<span class="sd">:data:`PATH` and :func:`context` are the **style sheet** -- colours,</span>
+<span class="sd">fonts, line widths, figure size. Those are matplotlib rcParams, so they</span>
+<span class="sd">have to be active *before* a figure is created; they cannot be applied</span>
+<span class="sd">to a line that is already drawn. The sheet ships with the package and is</span>
+<span class="sd">**never applied at import time** -- importing a library must not mutate</span>
+<span class="sd">the user&#39;s matplotlib state::</span>
 
 <span class="sd">    import matplotlib.pyplot as plt</span>
 <span class="sd">    import comnumpy.style</span>
@@ -738,6 +743,19 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    plt.style.use(comnumpy.style.PATH)      # global, explicit</span>
 <span class="sd">    with comnumpy.style.context():          # or scoped</span>
 <span class="sd">        ...</span>
+
+<span class="sd">:func:`apply` is the **per-axis convention**: what an error-rate figure</span>
+<span class="sd">of this library looks like, what an IQ plane looks like. It runs after</span>
+<span class="sd">the drawing, on an axis the caller filled themselves::</span>
+
+<span class="sd">    fig, ax = plt.subplots()</span>
+<span class="sd">    line, = ax.semilogy(snr_dB, ser, &quot;o&quot;, fillstyle=&quot;none&quot;, label=&quot;16-QAM&quot;)</span>
+<span class="sd">    ax.semilogy(snr_dB, ser_theory, &quot;-&quot;, color=line.get_color())</span>
+<span class="sd">    style.apply(ax, &quot;error_rate&quot;)</span>
+
+<span class="sd">That is the whole point of the split: the reader sees the two matplotlib</span>
+<span class="sd">calls that draw the curves, and the library is left with the part that</span>
+<span class="sd">is a house convention rather than a plotting decision.</span>
 
 <span class="sd">Colors come from the Okabe-Ito colorblind-safe palette, and no</span>
 <span class="sd">information is carried by color alone (decision D27c): semantic tables</span>
@@ -747,10 +765,47 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;context&quot;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>                                   <span class="c1"># pragma: no cover</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="s2">&quot;apply&quot;</span><span class="p">,</span> <span class="s2">&quot;KINDS&quot;</span><span class="p">]</span>
 
 <span class="n">PATH</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;comnumpy.mplstyle&quot;</span>
+
+
+<span class="c1"># The default labels of each kind of figure. A kind is a *sentence about</span>
+<span class="c1"># the quantities*, not a plotting mode: &quot;error_rate&quot; says the ordinate is</span>
+<span class="c1"># a probability read on a logarithmic axis, which is why the grid runs on</span>
+<span class="c1"># both decades and why the abscissa is an SNR unless told otherwise.</span>
+<span class="n">KINDS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;error_rate&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span> <span class="s2">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;error rate&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;iq&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;real part&quot;</span><span class="p">,</span> <span class="s2">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;imag part&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;time [s]&quot;</span><span class="p">,</span> <span class="s2">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;amplitude&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;spectrum&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;xlabel&quot;</span><span class="p">:</span> <span class="s2">&quot;freq [Hz]&quot;</span><span class="p">,</span> <span class="s2">&quot;ylabel&quot;</span><span class="p">:</span> <span class="s2">&quot;PSD [dB]&quot;</span><span class="p">},</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="use">
+<a class="viewcode-back" href="../../documentation/toplevel/style.html#comnumpy.style.use">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">use</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Activate the style sheet for every figure created from now on.</span>
+
+<span class="sd">    One line at the top of a script, after the imports and before the</span>
+<span class="sd">    first figure -- the colours and the figure size are rcParams, so a</span>
+<span class="sd">    figure already created keeps the ones that were active when it was::</span>
+
+<span class="sd">        import comnumpy.style as style</span>
+<span class="sd">        style.use()</span>
+
+<span class="sd">    Explicit on purpose: importing this package must not change the</span>
+<span class="sd">    user&#39;s matplotlib state behind their back (decision D27b). Use</span>
+<span class="sd">    :func:`context` instead to scope the change to a block.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">PATH</span><span class="p">))</span></div>
+
 
 
 <div class="viewcode-block" id="context">
@@ -765,6 +820,116 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
     <span class="k">return</span> <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">context</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">PATH</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="apply">
+<a class="viewcode-back" href="../../documentation/toplevel/style.html#comnumpy.style.apply">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="s2">&quot;Axes&quot;</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">legend</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Give an axis the house look for one kind of figure.</span>
+
+<span class="sd">    What it does</span>
+<span class="sd">    ------------</span>
+<span class="sd">    Three things, and deliberately no more:</span>
+
+<span class="sd">    * **fills the labels that are still empty**. A label the caller has</span>
+<span class="sd">      already set is never overwritten -- ``ax.set_ylabel(&quot;BER&quot;)``</span>
+<span class="sd">      followed by ``apply(ax, &quot;error_rate&quot;)`` keeps ``&quot;BER&quot;``. The</span>
+<span class="sd">      defaults are in :data:`KINDS`;</span>
+<span class="sd">    * **turns on the grid**, on both decades when the corresponding axis</span>
+<span class="sd">      is logarithmic and on the major ticks otherwise;</span>
+<span class="sd">    * **adds a legend** when the axis carries labelled artists and does</span>
+<span class="sd">      not have one yet.</span>
+
+<span class="sd">    ``kind=&quot;iq&quot;`` additionally sets an equal aspect ratio, because a</span>
+<span class="sd">    constellation read on unequal axes is a different constellation.</span>
+
+<span class="sd">    What it does not do</span>
+<span class="sd">    -------------------</span>
+<span class="sd">    It never touches the data and never changes a scale. Whether a curve</span>
+<span class="sd">    is drawn with ``plot`` or ``semilogy``, with markers or without, in</span>
+<span class="sd">    which colour, is the caller&#39;s statement about their measurement, and</span>
+<span class="sd">    it stays visible in the caller&#39;s code. This function decorates what</span>
+<span class="sd">    is already there.</span>
+
+<span class="sd">    The colours, fonts, line widths and figure size are *not* here</span>
+<span class="sd">    either: those are rcParams, they have to be active before the figure</span>
+<span class="sd">    exists, and they come from the style sheet -- see :data:`PATH` and</span>
+<span class="sd">    :func:`context`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ax : matplotlib.axes.Axes</span>
+<span class="sd">        The axis to decorate, already drawn on.</span>
+<span class="sd">    kind : str</span>
+<span class="sd">        One of the keys of :data:`KINDS`: ``&quot;error_rate&quot;``, ``&quot;iq&quot;``,</span>
+<span class="sd">        ``&quot;time&quot;`` or ``&quot;spectrum&quot;``.</span>
+<span class="sd">    legend : bool, optional, keyword-only</span>
+<span class="sd">        Force the legend on or off. The default, ``None``, adds one when</span>
+<span class="sd">        the axis has labelled artists and none already.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matplotlib.axes.Axes</span>
+<span class="sd">        The same axis, so the call can end a chain of statements.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``kind`` is not one of :data:`KINDS`.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib</span>
+<span class="sd">    &gt;&gt;&gt; matplotlib.use(&quot;Agg&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from comnumpy import style</span>
+<span class="sd">    &gt;&gt;&gt; snr = np.arange(0, 12, 2)</span>
+<span class="sd">    &gt;&gt;&gt; _, ax = plt.subplots()</span>
+<span class="sd">    &gt;&gt;&gt; _ = ax.semilogy(snr, 10.0 ** (-snr / 8), &quot;o&quot;, label=&quot;QPSK&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; _ = style.apply(ax, &quot;error_rate&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_xlabel(), ax.get_ylabel()</span>
+<span class="sd">    (&#39;SNR [dB]&#39;, &#39;error rate&#39;)</span>
+
+<span class="sd">    A label the caller set is left alone:</span>
+
+<span class="sd">    &gt;&gt;&gt; _, ax = plt.subplots()</span>
+<span class="sd">    &gt;&gt;&gt; _ = ax.semilogy(snr, 10.0 ** (-snr / 8))</span>
+<span class="sd">    &gt;&gt;&gt; ax.set_ylabel(&quot;BER&quot;)</span>
+<span class="sd">    Text(...)</span>
+<span class="sd">    &gt;&gt;&gt; _ = style.apply(ax, &quot;error_rate&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; ax.get_ylabel()</span>
+<span class="sd">    &#39;BER&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComnumpyError</span>  <span class="c1"># local import (D36)</span>
+
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">KINDS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ComnumpyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;style.apply: unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">; expected one of &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">KINDS</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- the kind names the quantity being drawn, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;not the plotting command.&quot;</span><span class="p">)</span>
+
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">KINDS</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xlabel</span><span class="p">():</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;xlabel&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylabel</span><span class="p">():</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;ylabel&quot;</span><span class="p">])</span>
+
+    <span class="c1"># &quot;both&quot; only means something on a logarithmic axis, where the minor</span>
+    <span class="c1"># ticks are the intermediate decades a reader interpolates on.</span>
+    <span class="n">logarithmic</span> <span class="o">=</span> <span class="s2">&quot;log&quot;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xscale</span><span class="p">(),</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_yscale</span><span class="p">())</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span> <span class="k">if</span> <span class="n">logarithmic</span> <span class="k">else</span> <span class="s2">&quot;major&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;iq&quot;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">legend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">labelled</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">labelled</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_legend</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
 
 </pre></div>
 

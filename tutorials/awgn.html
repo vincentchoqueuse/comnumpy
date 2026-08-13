@@ -807,7 +807,7 @@ uses for every error rate.</p></li>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">erfc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">print_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolMapper</span><span class="p">,</span> <span class="n">SymbolDemapper</span>
@@ -815,6 +815,9 @@ uses for every error rate.</p></li>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_ser</span><span class="p">,</span> <span class="n">compute_ber</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_error_rate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">style</span>
+
+<span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
 
 <span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
 </pre></div>
@@ -934,18 +937,21 @@ at every point:</p>
 <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span>
                       <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">N</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ser_array</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
-<span class="n">loop_line</span> <span class="o">=</span> <span class="s2">&quot;loop        :&quot;</span>
-<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">by_hand</span><span class="p">:</span>
-    <span class="n">loop_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">loop_line</span><span class="p">)</span>
-<span class="n">sweep_line</span> <span class="o">=</span> <span class="s2">&quot;monte_carlo :&quot;</span>
-<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
-    <span class="n">sweep_line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sweep_line</span><span class="p">)</span>
+
+<span class="c1"># An abscissa and one series per curve is what a sweep produces, and</span>
+<span class="c1"># print_data is what shows it: the same dictionary would draw the figure.</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">],</span>
+            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;loop&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">by_hand</span><span class="p">),</span>
+                       <span class="s2">&quot;monte_carlo&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]}},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span>        <span class="p">:</span> <span class="mf">7.406e-01</span> <span class="mf">3.535e-01</span> <span class="mf">7.237e-03</span>
-<span class="n">monte_carlo</span> <span class="p">:</span> <span class="mf">7.410e-01</span> <span class="mf">3.533e-01</span> <span class="mf">7.117e-03</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span>
+<span class="n">SNR</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>     <span class="n">loop</span>  <span class="n">monte_carlo</span>
+<span class="o">------------------------------</span>
+       <span class="mi">0</span>  <span class="mf">0.74057</span>      <span class="mf">0.74105</span>
+       <span class="mi">8</span>  <span class="mf">0.35345</span>      <span class="mf">0.35331</span>
+      <span class="mi">16</span>  <span class="mf">0.00724</span>      <span class="mf">0.00712</span>
 </pre></div>
 </div>
 <p>The two are the same computation. They do not print the same digits because
@@ -1071,7 +1077,8 @@ not guess (decision D41), so it happens at the call site:</p>
 <span class="n">fine_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
 <span class="n">measured_ber</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">theory_ber</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">required_rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">required_rows</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                 <span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">:</span> <span class="p">[]}</span>
 <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">]:</span>
     <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
@@ -1090,7 +1097,8 @@ not guess (decision D41), so it happens at the call site:</p>
     <span class="n">required_dB</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_ber</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                   <span class="n">fine_dB_list</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="n">required_rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">order_label</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">required_dB</span><span class="p">))</span>
+    <span class="n">required_rows</span><span class="p">[</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+    <span class="n">required_rows</span><span class="p">[</span><span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">required_dB</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The metric changes with the axis. Against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the natural quantity
@@ -1106,16 +1114,17 @@ factor 2.2 for 256-QAM at 0 dB, and settle onto it as the error rate falls:
 below <span class="math notranslate nohighlight">\(10^{-2}\)</span> the two agree to within a few percent for every order.
 This is an approximation behaving as documented, not a simulation
 disagreeing with theory.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">order</span>  <span class="n">bits</span><span class="o">/</span><span class="n">symbol</span>   <span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="n">at</span> <span class="n">BER</span><span class="o">=</span><span class="mf">1e-3</span>
-  <span class="mi">4</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">2</span>              <span class="mf">6.8</span> <span class="n">dB</span>
- <span class="mi">16</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">4</span>             <span class="mf">10.5</span> <span class="n">dB</span>
- <span class="mi">64</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">6</span>             <span class="mf">14.8</span> <span class="n">dB</span>
-<span class="mi">256</span><span class="o">-</span><span class="n">QAM</span>            <span class="mi">8</span>             <span class="mf">19.4</span> <span class="n">dB</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">QAM</span> <span class="n">order</span>  <span class="n">bits</span> <span class="n">per</span> <span class="n">symbol</span>  <span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="n">at</span> <span class="n">BER</span><span class="o">=</span><span class="mf">1e-3</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>
+<span class="o">--------------------------------------------------</span>
+        <span class="mi">4</span>                <span class="mi">2</span>                    <span class="mf">6.79</span>
+       <span class="mi">16</span>                <span class="mi">4</span>                   <span class="mf">10.52</span>
+       <span class="mi">64</span>                <span class="mi">6</span>                   <span class="mf">14.77</span>
+      <span class="mi">256</span>                <span class="mi">8</span>                   <span class="mf">19.38</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;order&#39;</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;bits/symbol&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Eb/N0 at BER=1e-3&#39;</span><span class="si">:</span><span class="s2">&gt;19s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">order_label</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">ebn0_dB</span> <span class="ow">in</span> <span class="n">required_rows</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order_label</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bits</span><span class="si">:</span><span class="s2">&gt;12d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ebn0_dB</span><span class="si">:</span><span class="s2">&gt;16.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">()</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">required_rows</span><span class="p">},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;QAM order&quot;</span><span class="p">)</span>
 
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>
                      <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;$E_b/N_0$ [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>

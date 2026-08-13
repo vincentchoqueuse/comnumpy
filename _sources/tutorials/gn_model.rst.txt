@@ -73,7 +73,7 @@ Import Libraries
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 1-20
+   :lines: 1-23
 
 Define Parameters
 """""""""""""""""
@@ -83,7 +83,7 @@ Five 100 km spans of standard single-mode fibre, PM-16QAM at 32 GBd on a
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 22-35
+   :lines: 25-38
 
 
 Part 1: the prediction
@@ -94,7 +94,7 @@ design question, and each is a function the library already provides.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 39-69
+   :lines: 42-72
 
 Three things deserve a word.
 
@@ -153,7 +153,7 @@ roll-off smearing the very guard band the figure exists to show.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 71-86
+   :lines: 74-89
 
 .. image:: img/gn_model_fig1.png
    :width: 100 %
@@ -211,7 +211,7 @@ is not alone, but sits in the middle of a comb filling the amplifier band?
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 88-100
+   :lines: 91-103
 
 .. code::
 
@@ -237,7 +237,7 @@ the single most useful thing the GN model has to say.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 102-112
+   :lines: 105-115
 
 .. image:: img/gn_model_fig2.png
    :width: 100 %
@@ -250,7 +250,7 @@ Everything above is a prediction. Now we propagate samples and find out.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 114-149
+   :lines: 117-152
 
 .. mermaid:: mermaid/gn_model.mmd
 
@@ -296,7 +296,7 @@ form. At 0 dBm launch the measured SNR *is* :math:`-P_{\mathrm{ASE}}` in dBm.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 151-161
+   :lines: 154-164
 
 .. code::
 
@@ -323,7 +323,7 @@ Now the nonlinear term, at fourteen launch powers.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 162-189
+   :lines: 165-192
 
 .. code::
 
@@ -379,7 +379,7 @@ modulation formats are not, and the model is blind to the difference.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 191-200
+   :lines: 194-203
 
 .. code::
 
@@ -404,7 +404,7 @@ decibel for 16QAM, less as the format grows.
 
 .. literalinclude:: ../../examples/optical/gn_model.py
    :language: python
-   :lines: 202-206
+   :lines: 205-209
 
 
 Going further

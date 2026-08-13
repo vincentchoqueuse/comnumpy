@@ -745,6 +745,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">welch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_kde</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">style</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;plot_time&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_welch&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_iq&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_kde&quot;</span><span class="p">,</span>
@@ -921,6 +922,17 @@ window.runMermaid = runMermaid;</script>
             <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Scatter the in-phase and quadrature components of a signal.</span>
 
+<span class="sd">    For a single stream this is two matplotlib calls, and the examples of</span>
+<span class="sd">    this repository make them rather than call this function::</span>
+
+<span class="sd">        ax.plot(np.real(x), np.imag(x), &quot;.&quot;)</span>
+<span class="sd">        style.apply(ax, &quot;iq&quot;)</span>
+
+<span class="sd">    which is shorter, shows the reader what an IQ plane *is*, and leaves</span>
+<span class="sd">    the axis limits and the markers where they can be seen. What is left</span>
+<span class="sd">    here is the multi-stream overlay -- one labelled scatter per row of a</span>
+<span class="sd">    2D input -- and the reference overlay described below.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    x : np.ndarray</span>
@@ -1055,9 +1067,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    colour**, a logarithmic ordinate and a grid on both decades. Fourteen</span>
 <span class="sd">    scripts of this repository drew it by hand before this existed.</span>
 
-<span class="sd">    Zeros are dropped rather than plotted. A sweep point where no error</span>
+<span class="sd">    Zeros are masked rather than plotted. A sweep point where no error</span>
 <span class="sd">    was seen means the estimate ran out of samples, not that the error</span>
-<span class="sd">    rate is zero, and a logarithmic axis has no place to put it.</span>
+<span class="sd">    rate is zero, and a logarithmic axis has no place to put it. This is</span>
+<span class="sd">    the ordinate&#39;s ``nonpositive=&quot;mask&quot;``, and it is worth knowing when</span>
+<span class="sd">    drawing such a figure by hand: matplotlib&#39;s default is ``&quot;clip&quot;``,</span>
+<span class="sd">    which sends the point far below the axis instead of dropping it, so</span>
+<span class="sd">    a joined curve dives off the bottom of the figure and comes back.</span>
+<span class="sd">    On a linear ordinate a zero is an ordinary value and is kept.</span>
+
+<span class="sd">    The decoration -- grid, labels, legend -- is</span>
+<span class="sd">    :func:`comnumpy.style.apply`, so a figure drawn by hand and one drawn</span>
+<span class="sd">    here cannot end up looking different.</span>
 
 <span class="sd">    Each measured curve gets its own marker shape, and a slightly larger</span>
 <span class="sd">    one than the curve before it, so that two detectors which are</span>
@@ -1119,43 +1140,35 @@ window.runMermaid = runMermaid;</script>
     <span class="n">abscissa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">fine</span> <span class="o">=</span> <span class="n">abscissa</span> <span class="k">if</span> <span class="n">x_theory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x_theory</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
-    <span class="c1"># A zero is dropped only on a logarithmic ordinate, where it has no</span>
-    <span class="c1"># place to go and means &quot;no error was seen&quot;, i.e. the estimate ran</span>
-    <span class="c1"># out of samples. On a linear axis a zero is an ordinary value and</span>
-    <span class="c1"># removing it would silently shorten the curve.</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">yscale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
-
     <span class="n">colors</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">seen</span> <span class="o">=</span> <span class="n">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="c1"># A measurement that has a reference curve is drawn as markers</span>
         <span class="c1"># alone, so that the pair reads as one statement rather than as</span>
         <span class="c1"># two curves; one that has none is joined, because a scatter of</span>
         <span class="c1"># points is not a curve the eye can follow.</span>
-        <span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;-&quot;</span>
-        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">abscissa</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">style</span><span class="p">,</span>
+        <span class="n">marker_only</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;-&quot;</span>
+        <span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">abscissa</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                        <span class="n">marker_only</span><span class="p">,</span>
                         <span class="n">marker</span><span class="o">=</span><span class="n">_MARKERS</span><span class="p">[</span><span class="n">index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_MARKERS</span><span class="p">)],</span>
                         <span class="n">markersize</span><span class="o">=</span><span class="n">_MARKER_SIZE</span> <span class="o">+</span> <span class="n">_MARKER_GROWTH</span> <span class="o">*</span> <span class="n">index</span><span class="p">,</span>
                         <span class="n">fillstyle</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;simulation&quot;</span><span class="p">)</span>
         <span class="n">colors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_color</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">reference</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">seen</span> <span class="o">=</span> <span class="n">drawn</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, theory&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;theory&quot;</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">seen</span><span class="p">],</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
-                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="n">xscale</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">)</span>
+    <span class="c1"># &quot;mask&quot; rather than the default &quot;clip&quot;: a rate of zero is a missing</span>
+    <span class="c1"># measurement and must leave a gap, not a spike to the bottom of the</span>
+    <span class="c1"># figure. On a linear ordinate there is nothing to mask.</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s2">&quot;nonpositive&quot;</span><span class="p">:</span> <span class="s2">&quot;mask&quot;</span><span class="p">}</span> <span class="k">if</span> <span class="n">yscale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span>
+                             <span class="k">else</span> <span class="p">{}))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">curves</span><span class="p">):</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">ax</span></div>
+    <span class="k">return</span> <span class="n">style</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;error_rate&quot;</span><span class="p">,</span>
+                       <span class="n">legend</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">curves</span><span class="p">))</span></div>
 
 
 

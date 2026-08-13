@@ -53,14 +53,14 @@ We start with the imports and the parameters, QPSK over a Rayleigh channel:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 1-29
+   :lines: 1-31
 
 Let us check the law on draws from
 :func:`~comnumpy.mimo.utils.rayleigh_channel`:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 35-53
+   :lines: 37-55
 
 .. image:: img/one_shot_alamouti_fig1.png
    :width: 100%
@@ -180,7 +180,7 @@ what comes back, so one function builds them all:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 58-89
+   :lines: 60-91
 
 The scaling by :math:`1/\sqrt{N_t}` matters for the comparison that follows.
 Two antennas each transmitting :math:`|s|^2` would spend twice the power of a
@@ -199,7 +199,7 @@ One-shot simulation
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 92-105
+   :lines: 94-112
 
 .. code::
 
@@ -241,7 +241,7 @@ inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 110-160
+   :lines: 117-167
 
 The three curves are three readings of one closed form,
 :func:`~comnumpy.core.metrics.compute_ser_rayleigh_psk`: :math:`L` branches
@@ -260,7 +260,7 @@ the simulation is what confronts them:
 
 .. literalinclude:: ../../examples/mimo/one_shot_alamouti.py
    :language: python
-   :lines: 162-201
+   :lines: 169-208
 
 .. code::
 

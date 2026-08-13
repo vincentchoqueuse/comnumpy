@@ -400,6 +400,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/exceptions.html">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/serialization.html">Serialization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/monte_carlo.html">Parameter sweeps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toplevel/data.html">Data display</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../toplevel/style.html">Plot style</a></li>
 </ul>
 </details></li>
@@ -550,6 +551,16 @@ same axis with a legend; slice beforehand for anything fancier.</p>
 <dt class="sig sig-object py" id="comnumpy.core.visualizers.plot_iq">
 <span class="sig-name descname"><span class="pre">plot_iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constellation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/visualizers.html#plot_iq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.visualizers.plot_iq" title="Link to this definition">#</a></dt>
 <dd><p>Scatter the in-phase and quadrature components of a signal.</p>
+<p>For a single stream this is two matplotlib calls, and the examples of
+this repository make them rather than call this function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<span class="n">style</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;iq&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>which is shorter, shows the reader what an IQ plane <em>is</em>, and leaves
+the axis limits and the markers where they can be seen. What is left
+here is the multi-stream overlay – one labelled scatter per row of a
+2D input – and the reference overlay described below.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -615,9 +626,17 @@ Default 0.05.</p></li>
 the closed form they are supposed to reach as a line <strong>in the same
 colour</strong>, a logarithmic ordinate and a grid on both decades. Fourteen
 scripts of this repository drew it by hand before this existed.</p>
-<p>Zeros are dropped rather than plotted. A sweep point where no error
+<p>Zeros are masked rather than plotted. A sweep point where no error
 was seen means the estimate ran out of samples, not that the error
-rate is zero, and a logarithmic axis has no place to put it.</p>
+rate is zero, and a logarithmic axis has no place to put it. This is
+the ordinate’s <code class="docutils literal notranslate"><span class="pre">nonpositive=&quot;mask&quot;</span></code>, and it is worth knowing when
+drawing such a figure by hand: matplotlib’s default is <code class="docutils literal notranslate"><span class="pre">&quot;clip&quot;</span></code>,
+which sends the point far below the axis instead of dropping it, so
+a joined curve dives off the bottom of the figure and comes back.
+On a linear ordinate a zero is an ordinary value and is kept.</p>
+<p>The decoration – grid, labels, legend – is
+<a class="reference internal" href="../toplevel/style.html#comnumpy.style.apply" title="comnumpy.style.apply"><code class="xref py py-func docutils literal notranslate"><span class="pre">comnumpy.style.apply()</span></code></a>, so a figure drawn by hand and one drawn
+here cannot end up looking different.</p>
 <p>Each measured curve gets its own marker shape, and a slightly larger
 one than the curve before it, so that two detectors which are
 supposed to agree – and therefore plot on top of each other – can
