@@ -402,8 +402,8 @@ and back-propagation **moves it to the right**:
    dispersion compensation   18.78 dB   -1.5 dBm       0.8 s
    DBP, 1 step/span          19.28 dB    0.0 dBm       1.7 s
    DBP, 2 steps/span         20.64 dB    0.0 dBm       3.2 s
-   DBP, 4 steps/span         23.81 dB    3.0 dBm       6.1 s
-   DBP, 50 steps/span        25.94 dB    4.5 dBm      73.2 s
+   DBP, 4 steps/span         23.82 dB    3.0 dBm       6.2 s
+   DBP, 50 steps/span        25.94 dB    4.5 dBm      73.5 s
 
 Start with the second row, because it is the one the closed form claims to
 predict:
