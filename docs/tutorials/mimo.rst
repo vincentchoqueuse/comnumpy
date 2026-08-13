@@ -7,7 +7,7 @@ compare on it.
 
 .. note::
 
-   **Before you start.** :doc:`awgn` introduced ``sweep``, which is used
+   **Before you start.** :doc:`awgn` introduced ``monte_carlo``, which is used
    here to average over channel realizations rather than over noise. The
    chain is the same object; only the number of antennas changes.
 
@@ -227,7 +227,7 @@ Monte Carlo Evaluation
 A single channel realization proves nothing: over fading, the error rate is
 an *average*, dominated by the rare draws where the matrix is nearly
 singular. Averaging means running the chain once per realization, which is a
-sweep whose parameter is the channel. :func:`~comnumpy.sweep.sweep` takes
+sweep whose parameter is the channel. :func:`~comnumpy.monte_carlo.sweep` takes
 several dotted parameter names at once and zips them, so one sweep point sets
 the matrix the signal goes through **and** the one the detector inverts:
 

@@ -115,7 +115,7 @@ D31: a second input to a block, declared by the chain. A general DAG is
 still out of scope.
 
 **Naming.** The known signal an estimator compares against is the
-`reference` — the same word `sweep(reference=...)` uses for the same
+`reference` — the same word `monte_carlo(reference=...)` uses for the same
 idea. Blocks that need one are `DataAided*`, by opposition to the
 `Blind*` family; that is the standard pair of the field (Proakis,
 §8: *data-aided* vs *blind* estimation).

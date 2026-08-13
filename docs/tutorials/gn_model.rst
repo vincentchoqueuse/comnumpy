@@ -261,7 +261,7 @@ polarization for a channel power :math:`P`.
 ``name="launch"`` and ``name="fibre"`` are what let the rest of the page
 *reconfigure* the link instead of rebuilding it: ``chain.set_params`` reaches
 a block by its identifier and re-runs its precomputation (decision D34), and
-:func:`~comnumpy.sweep` drives ``"launch.gain"`` over a list of values the
+:func:`~comnumpy.monte_carlo` drives ``"launch.gain"`` over a list of values the
 same way. One chain, built once, answers every question below.
 
 ``taps=["tx"]`` marks the mapper output as readable from outside the chain --

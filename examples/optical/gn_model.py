@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedComplexGainCompensator
 from comnumpy.core.filters import SRRCFilter
@@ -142,10 +142,10 @@ def effective_snr_dB(sent, received):
 
 
 def measure(chain, powers_W, seed=3):
-    return sweep(chain, "launch.gain",
-                 launch_amplitude(powers_W, polarizations=2),
-                 {"snr_dB": effective_snr_dB}, STIMULUS,
-                 reference="tx", seed=seed)["snr_dB"]
+    return monte_carlo(chain, "launch.gain",
+                       launch_amplitude(powers_W, polarizations=2),
+                       {"snr_dB": effective_snr_dB}, STIMULUS,
+                       reference="tx", seed=seed)["snr_dB"]
 
 
 chain = get_chain()

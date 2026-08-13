@@ -234,7 +234,7 @@ Monte Carlo Evaluation
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Averaging over fading means running the chain once per channel realization,
-which is a sweep whose parameter is the channel. :func:`~comnumpy.sweep.sweep`
+which is a sweep whose parameter is the channel. :func:`~comnumpy.monte_carlo.sweep`
 takes several dotted parameter names at once and zips them, so one sweep point
 sets the channel the signal goes through **and** the channel the detector
 inverts:

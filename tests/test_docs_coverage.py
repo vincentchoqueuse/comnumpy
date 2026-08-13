@@ -3,7 +3,7 @@
 The documentation described 25 of the 46 modules in ``src/``. Everything
 added after the first milestone -- capacity, fading, WDM, Raman, the
 whole ``fec`` package, allocation, frames, sequences, serialization,
-sweep, the exception hierarchy -- existed with full course-material
+monte_carlo, the exception hierarchy -- existed with full course-material
 docstrings that no generated page ever showed. Sphinx does not notice:
 a module with no ``automodule`` directive is not an error, it is simply
 absent, which is the worst way for documentation to be wrong.

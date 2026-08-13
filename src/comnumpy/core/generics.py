@@ -332,7 +332,7 @@ class Sequential():
         """Split ``"block.field"`` or ``"block__field"`` (decision D34).
 
         The dotted form is the addressing used everywhere a parameter is
-        held in a variable -- :func:`~comnumpy.sweep.sweep` builds those
+        held in a variable -- :func:`~comnumpy.monte_carlo.sweep` builds those
         strings. A dot is not a valid character in a keyword argument,
         though, so writing one by hand costs a ``**{...}`` wrapper. The
         double underscore is the same address spelled as an identifier,

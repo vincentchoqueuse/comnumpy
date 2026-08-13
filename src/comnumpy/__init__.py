@@ -9,7 +9,7 @@ __version__ = "1.0.0.dev0"
 
 from .exceptions import ComnumpyError, ShapeError, NotFittedError
 from .serialization import to_json, from_json
-from .sweep import sweep
+from .monte_carlo import monte_carlo
 from .core import (
     Processor, Sequential,
     SymbolGenerator, SymbolMapper, SymbolDemapper,
@@ -23,5 +23,5 @@ __all__ = [
     "SymbolGenerator", "SymbolMapper", "SymbolDemapper",
     "AWGN", "compute_ser", "Constellation", "get_alphabet",
     "ebn0_to_snr_dB", "esn0_to_snr_dB",
-    "to_json", "from_json", "sweep",
+    "to_json", "from_json", "monte_carlo",
 ]

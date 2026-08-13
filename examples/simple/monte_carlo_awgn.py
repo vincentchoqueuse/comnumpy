@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper, SymbolDemapper
@@ -35,8 +35,8 @@ for snr_dB in snr_dB_list[::8]:
 
 # sweep (decision D35) is that loop, and nothing more: the same
 # reconfigure-reseed-run-collect, over every point, in one call.
-results = sweep(chain, "awgn_channel.snr_dB", snr_dB_list,
-                {"ser": compute_ser}, N, reference="tx", seed=1)
+results = monte_carlo(chain, "awgn_channel.snr_dB", snr_dB_list,
+                      {"ser": compute_ser}, N, reference="tx", seed=1)
 ser_array = results["ser"]
 loop_line = "loop  :"
 for value in by_hand:

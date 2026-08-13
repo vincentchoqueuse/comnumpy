@@ -181,7 +181,7 @@ The chain answers the same way:
 ``seed`` for reproducibility,
 :meth:`~comnumpy.core.generics.Sequential.set_params` to reconfigure a named
 block after construction, ``elapsed_`` for the time the last pass took, and
-:func:`~comnumpy.sweep.sweep` to run the whole thing over a range of one
+:func:`~comnumpy.monte_carlo.sweep` to run the whole thing over a range of one
 parameter. None of those exist for a script of loose arrays -- not because
 they would be hard to write, but because there is nothing to attach them to.
 

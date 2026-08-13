@@ -6,7 +6,7 @@ into ../../docs/tutorials/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
@@ -110,7 +110,7 @@ plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed=0):
     """Average one chain over independent quasi-static fading draws.
 
-    The chain is built once. ``sweep`` takes several dotted parameters
+    The chain is built once. ``monte_carlo`` takes several dotted parameters
     at once and zips them, so one sweep point sets the channel the
     signal goes through *and* the channel the detector inverts -- which
     is exactly what a fading realization is.
@@ -121,9 +121,9 @@ def average_ser(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed=0):
         H = rayleigh_channel(n_rx, n_tx, rng=rng)
         draws.append((H, H))
     chain.set_params(noise__sigma2=10 ** (-snr_dB / 10))
-    results = sweep(chain, ("channel.H", "detector.H"), draws,
-                    {"ser": compute_ser}, stimulus=stimulus,
-                    reference="tx", seed=seed)
+    results = monte_carlo(chain, ("channel.H", "detector.H"), draws,
+                          {"ser": compute_ser}, stimulus=stimulus,
+                          reference="tx", seed=seed)
     return float(np.mean(results["ser"]))
 
 

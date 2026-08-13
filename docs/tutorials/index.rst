@@ -19,7 +19,7 @@ and nothing is explained twice.
    * - 1
      - :doc:`awgn`
      - A Monte Carlo study: first as an ordinary ``for`` loop, then the same
-       thing with ``sweep``. Also ``seed``, ``set_params`` and
+       thing with ``monte_carlo``. Also ``seed``, ``set_params`` and
        ``plot_error_rate``.
    * - 2
      - :doc:`ofdm`

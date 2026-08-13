@@ -16,6 +16,7 @@ one release; there is no compatibility layer.
 
 | Before (0.91) | After (1.0.0) |
 |---|---|
+| `sweep(chain, param, values, metrics, stimulus)` | `monte_carlo(...)`, same signature — the only bare verb of the root namespace, and a name that said nothing about the points being random draws. Every point reseeds and redraws, so `seed=` is what makes a curve reproducible; the new name says so |
 | `Serial2Parallel(N, order="F")` → shape `(N_sub, M)` | `Serial2Parallel(N)` → Block layout `(..., T, F)` = `(..., M, N_sub)`, pure C-order reshape; `order` removed |
 | `Parallel2Serial(order="F")` | `Parallel2Serial()` — C-order flatten of `(..., T, F)`; `order` removed |
 | OFDM blocks operate on axis 0 by default | OFDM blocks operate on the block content axis -1 (`FFTProcessor`/`IFFTProcessor` hardcode it; `axis` removed there) |
@@ -34,7 +35,7 @@ one release; there is no compatibility layer.
 | `Scope(scope_type="iq", ...)`, `TimeScope`, `SpectrumScope`, `IQScope`, `KDEScope`, `WelchScope` blocks | removed — functions `plot_iq`, `plot_time`, `plot_spectrum`, `plot_kde`, `plot_welch` applied to a tapped signal |
 | `ofdm.visualizers.FFTMonitor` block | `ofdm.visualizers.plot_subcarrier_amplitude(X, ax=...)` |
 | `CarrierExtractor(..., pilot_recorder=rec)` | pilot content exposed as the estimated attribute `extractor.pilots_` (D23) |
-| `TrainedBased*(target_data=recorder)` | `DataAided*(reference=…)` — the class family is renamed after the standard pair of the field (*data-aided* vs *blind*, which the `Blind*` classes already used), and the known signal an estimator compares against is a `reference`, the same word `sweep(reference=…)` uses. It takes a plain array; when the reference is produced by the chain itself, declare `wiring={"comp.reference": "source"}` |
+| `TrainedBased*(target_data=recorder)` | `DataAided*(reference=…)` — the class family is renamed after the standard pair of the field (*data-aided* vs *blind*, which the `Blind*` classes already used), and the known signal an estimator compares against is a `reference`, the same word `monte_carlo(reference=…)` uses. It takes a plain array; when the reference is produced by the chain itself, declare `wiring={"comp.reference": "source"}` |
 | `DataAidedFIRCompensator(h, reference=…)` | `DataAidedFIRCompensator(reference=…)` — `h` was only an initial value that `fit` overwrote from scratch, i.e. a purely estimated quantity; it is now `h_` and not a constructor parameter |
 | `Normalizer(gain, method, …)` (inherited from `Amplifier`) | `Normalizer(method, …)` — `gain` is no longer constructible, so `Normalizer('max')` finally means what it reads; the measured gain is `gain_` (D23) |
 | `Amplifier(gain, axis=…)` | `Amplifier(gain)` — `axis` implemented no defensible model (it scaled only entries at index `axis` of the *last* axis, whatever axis was asked); use `WeightAmplifier` for a per-branch gain |
@@ -585,7 +586,7 @@ Substantive changes rather than reorganisation:
   the two overlaid on one figure (0.25 dB apart on the optimal launch
   power, 0.17 dB on the peak SNR).
 
-- `sweep(n_jobs=...)`: the points of a sweep are independent by
+- `monte_carlo(n_jobs=...)`: the points of a sweep are independent by
   construction -- each one reconfigures and reseeds the chain from
   scratch -- so they can run at once. The curve is **identical** value
   for value, not merely statistically equivalent, because every point
@@ -1248,7 +1249,7 @@ Substantive changes rather than reorganisation:
   to `cupyx.scipy.fft`. CuPy is imported only when a CuPy array is
   seen and remains a non-dependency.
 
-- `comnumpy.sweep(chain, param, values, metrics, stimulus, ...)` (D35):
+- `comnumpy.monte_carlo(chain, param, values, metrics, stimulus, ...)` (D35):
   the parameter-sweep loop shared by the validation scripts, extracted
   after the third script needed it. Dotted `set_params` addressing,
   per-point child seeds, zip semantics for multi-parameter sweeps.
@@ -1273,7 +1274,7 @@ Substantive changes rather than reorganisation:
   `comnumpy.core.metrics.signal_report(x)`, which returns the statistics
   as a dict for the caller to log, tabulate or assert on. A CI guard test
   keeps these names out of the public surface.
-- `sweep(..., reference="tx")` now names a tapped block and declares the
+- `monte_carlo(..., reference="tx")` now names a tapped block and declares the
   tap itself if needed; blocks no longer hold references to other blocks
   (`reference=` takes a plain array).
 - `Sequential(..., wiring={"comp.reference": "ref"})`: declares the

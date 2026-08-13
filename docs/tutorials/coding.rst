@@ -17,7 +17,7 @@ tutorial is plotted against :math:`E_b/N_0` rather than SNR.
 
 .. note::
 
-   **Before you start.** :doc:`awgn` introduced ``sweep`` and
+   **Before you start.** :doc:`awgn` introduced ``monte_carlo`` and
    ``plot_error_rate``, both used here without comment. Nothing else is
    assumed: the codes are built from scratch.
 
@@ -318,7 +318,7 @@ independent, so they can be run at the same time:
 
 .. code:: python
 
-   results = sweep(chain, "noise.snr_dB", snr_dB(ebn0_dB, rate),
+   results = monte_carlo(chain, "noise.snr_dB", snr_dB(ebn0_dB, rate),
                    {"ber": compute_ser}, n_bits, reference="tx", seed=4,
                    n_jobs=4)
 

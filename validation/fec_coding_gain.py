@@ -13,7 +13,7 @@ import numpy as np
 from comnumpy import AWGN, Sequential, SymbolGenerator
 from comnumpy.core.mappers import SymbolDemapper, SymbolMapper
 from comnumpy.fec import ConvolutionalEncoder, ViterbiDecoder
-from comnumpy.sweep import sweep
+from comnumpy.monte_carlo import monte_carlo
 
 FIG_DIR = pathlib.Path(__file__).parent / "figures"
 
@@ -54,15 +54,15 @@ def main():
     snr_coded = EBN0_DB_RANGE + 10 * np.log10(CODE_RATE)
 
     ber = {}
-    ber["uncoded"] = sweep(get_uncoded_chain(), "noise.snr_dB", EBN0_DB_RANGE,
-                           {"ber": compute_ber_bits}, N_BITS,
-                           reference="tx", seed=10)["ber"]
-    ber["hard"] = sweep(get_coded_chain(soft=False), "noise.snr_dB", snr_coded,
-                        {"ber": compute_ber_bits}, N_BITS,
-                        reference="tx", seed=20)["ber"]
-    ber["soft"] = sweep(get_coded_chain(soft=True), "noise.snr_dB", snr_coded,
-                        {"ber": compute_ber_bits}, N_BITS,
-                        reference="tx", seed=30)["ber"]
+    ber["uncoded"] = monte_carlo(get_uncoded_chain(), "noise.snr_dB", EBN0_DB_RANGE,
+                                 {"ber": compute_ber_bits}, N_BITS,
+                                 reference="tx", seed=10)["ber"]
+    ber["hard"] = monte_carlo(get_coded_chain(soft=False), "noise.snr_dB", snr_coded,
+                              {"ber": compute_ber_bits}, N_BITS,
+                              reference="tx", seed=20)["ber"]
+    ber["soft"] = monte_carlo(get_coded_chain(soft=True), "noise.snr_dB", snr_coded,
+                              {"ber": compute_ber_bits}, N_BITS,
+                              reference="tx", seed=30)["ber"]
 
     # Hard decisions operate 10*log10(1/R) = 3 dB below the uncoded channel
     # SNR, so the hard curve crosses the uncoded one around 3-4 dB (Proakis

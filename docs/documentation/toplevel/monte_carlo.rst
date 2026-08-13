@@ -1,5 +1,5 @@
 Parameter sweeps
 ================
 
-.. automodule:: comnumpy.sweep
+.. automodule:: comnumpy.monte_carlo
    :members:

@@ -7,7 +7,7 @@ into ../../docs/tutorials/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN, FIRChannel, TappedDelayLineChannel
 from comnumpy.core.compensators import LinearEqualizer
@@ -105,8 +105,8 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 snr_list = np.arange(6, 22, 2)
 measured = {}
 for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
-    runs = [sweep(chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser}, N,
-                  reference="data_tx", seed=trial)["ser"]
+    runs = [monte_carlo(chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser}, N,
+                        reference="data_tx", seed=trial)["ser"]
             for trial in range(1, 3)]
     measured[name] = np.mean(runs, axis=0)
 

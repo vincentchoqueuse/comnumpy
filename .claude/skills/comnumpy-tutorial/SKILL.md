@@ -54,7 +54,7 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_ccdf`, `compute_metric_awgn_theo` and
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
-- Monte-Carlo: `sweep(chain, param, values, metrics, stimulus, seed=)`.
+- Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`.
 - Figures: `plot_iq`, `plot_error_rate`, `plot_spectrum`, `plot_time`,
   `plot_channel_response`, and the channels' own `info()` / `plot()`.
 - If the library makes something awkward, that is a finding about the

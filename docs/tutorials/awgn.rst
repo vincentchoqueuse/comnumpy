@@ -7,7 +7,7 @@ that repetition is what "Monte Carlo simulation" means, and there is nothing
 more to it than a loop.
 
 We will write that loop by hand first, because it is worth seeing exactly
-what a sweep is made of. Then we will replace it with :func:`~comnumpy.sweep.sweep`,
+what a sweep is made of. Then we will replace it with :func:`~comnumpy.monte_carlo.sweep`,
 which does the same four things in one call, and use *that* in every tutorial
 that follows.
 
@@ -22,7 +22,7 @@ that follows.
 
 - How to reconfigure a chain between runs with ``set_params``, and make each
   run reproducible with ``seed``.
-- How to write a Monte Carlo loop, and then how to replace it with ``sweep``.
+- How to write a Monte Carlo loop, and then how to replace it with ``monte_carlo``.
 - How to compare a measured curve with the closed form it should follow.
 - How to draw the result with ``plot_error_rate``, the figure this library
   uses for every error rate.
@@ -130,7 +130,7 @@ construction, with the dotted notation ``"awgn_channel.snr_dB"``; this is why
 blocks are named. And the tap returns what the transmitter produced, so the
 metric has something to compare against -- after the run, never before.
 
-Now the same thing in one call. :func:`~comnumpy.sweep.sweep` takes the chain,
+Now the same thing in one call. :func:`~comnumpy.monte_carlo.sweep` takes the chain,
 the dotted name of what varies, the values it takes, and the metrics to
 collect -- and does the reseed, the reconfigure, the run and the measurement
 at every point:
@@ -145,11 +145,11 @@ at every point:
    sweep : 7.410e-01 3.533e-01 7.117e-03
 
 The two are the same computation. They do not print the same digits because
-``sweep`` gives each point its own child seed rather than reseeding every
+``monte_carlo`` gives each point its own child seed rather than reseeding every
 point to the same value, so the noise realizations differ; the gap is the
 Monte Carlo error of a million symbols, not a difference of method.
 
-**From here on, the other tutorials use** ``sweep`` **without rewriting the
+**From here on, the other tutorials use** ``monte_carlo`` **without rewriting the
 loop.** When you see it sweeping a channel matrix rather than an SNR (in
 :doc:`mimo` and :doc:`alamouti`), it is still these four steps -- only the
 parameter that varies has changed.
@@ -190,14 +190,14 @@ share a colour, so a pair reads as one statement.
 Conclusion
 ^^^^^^^^^^
 
-You have turned one run into a curve, and you have seen that ``sweep`` is not
+You have turned one run into a curve, and you have seen that ``monte_carlo`` is not
 a new concept but the loop you already wrote, packaged.
 
 You have learned how to:
 
 - Reconfigure and reseed a chain between runs.
 - Collect a metric over a range of parameter values, by hand and with
-  ``sweep``.
+  ``monte_carlo``.
 - Read a measured curve against a closed form.
 
 From here, :doc:`ofdm` keeps the chain and changes the channel: instead of one

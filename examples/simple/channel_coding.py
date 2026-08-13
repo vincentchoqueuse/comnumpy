@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import sweep
+from comnumpy import monte_carlo
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN
 from comnumpy.core.generators import SymbolGenerator
@@ -77,8 +77,8 @@ for label, chain, code_rate in (("uncoded", get_uncoded_chain(), 1.0),
                                 ("hard-decision Viterbi", get_coded_chain(False), rate),
                                 ("soft-decision Viterbi", get_coded_chain(True), rate)):
     start = time.perf_counter()
-    results = sweep(chain, "noise.snr_dB", snr_dB(ebn0_dB, code_rate),
-                    {"ber": compute_ser}, n_bits, reference="tx", seed=4)
+    results = monte_carlo(chain, "noise.snr_dB", snr_dB(ebn0_dB, code_rate),
+                          {"ber": compute_ser}, n_bits, reference="tx", seed=4)
     curves[label] = results["ber"]
     line = f"{label:24s} "
     for value in results["ber"]:
@@ -115,9 +115,9 @@ for n_iter in (5, 25):
         SymbolDemapper(BPSK, soft=True),
         LDPCDecoder(H, n_iter=n_iter),
     ], taps=["tx"], name=f"LDPC, {n_iter} iterations")
-    results = sweep(link, "noise.snr_dB", snr_dB(ebn0_dB, ldpc_encoder.rate),
-                    {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
-                    reference="tx", seed=6)
+    results = monte_carlo(link, "noise.snr_dB", snr_dB(ebn0_dB, ldpc_encoder.rate),
+                          {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
+                          reference="tx", seed=6)
     ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), {n_iter} iterations"] = results["ber"]
     line = f"LDPC {n_iter:2d} iterations       "
     for value in results["ber"]:
