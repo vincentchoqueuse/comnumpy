@@ -10,7 +10,7 @@ MATLAB. John Wiley & Sons, 2010.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import Experiment, plot_data, style
+from comnumpy import plot_data, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
@@ -23,43 +23,52 @@ from comnumpy.mimo.detectors import (
 
 style.use()
 
-config = {
-    "N": 100,         # symbols per frame
-    "N_test": 5000,   # channel draws per point; more smooths the curve
-    "N_r": 4,
-    "N_t": 4,
-}
+# parameters
+N = 100          # symbols per frame
+N_test = 5000    # channel draws per point; more smooths the curve
+N_r, N_t = 4, 4
 constellation = Constellation("QAM", 16)
+snr_dB_list = np.arange(0, 45, 5)
+seed = 42        # one master seed reproduces the whole figure
 orderings = ("colnorm", "snr", "sinr")
 
 chain = Sequential([
     SymbolGenerator(constellation.order, name="data_tx"),
     SymbolMapper(constellation),
-    FlatMIMOChannel(rayleigh_channel(N_r=4, N_t=4), name="channel"),
+    FlatMIMOChannel(rayleigh_channel(N_r=N_r, N_t=N_t), name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     ], taps=["data_tx"])
 
+# Storage, declared before the loop: one array per ordering, full of
+# zeros, indexed by name. The error counts get one too -- they say
+# where the estimate runs out of samples, so they are part of the
+# record even though they stay out of the figure.
+ber = {}
+errors = {}
+for ordering in orderings:
+    ber[ordering] = np.zeros(len(snr_dB_list))
+    errors[ordering] = np.zeros(len(snr_dB_list))
 
-def simulate(config, seed):
-    """One SNR point: N_test channel draws, the three orderings on each.
-
-    One ErrorCounter per ordering, so each BER is a ratio of error and
-    bit totals over the whole point rather than a mean of per-frame
-    rates -- and the error count that makes it credible is reported
-    alongside it.
-    """
-    rng = np.random.default_rng(seed)
-    sigma2 = config["N_t"] * 10 ** (-config["snr_dB"] / 10)
+# simulation loop: one child seed per SNR point (D6/D35), so the whole
+# figure is reproduced by the master seed alone
+point_seeds = np.random.SeedSequence(seed).spawn(len(snr_dB_list))
+for index, snr_dB in enumerate(snr_dB_list):
+    rng = np.random.default_rng(int(point_seeds[index].generate_state(1)[0]))
+    sigma2 = N_t * 10 ** (-snr_dB / 10)
     chain.set_params(noise__sigma2=sigma2)
+
+    # one ErrorCounter per ordering: each BER is a ratio of error and
+    # bit totals over the whole point, not a mean of per-frame rates
     counters = {}
     for ordering in orderings:
         counters[ordering] = ErrorCounter(
             width=constellation.bits_per_symbol)
-    for _ in range(config["N_test"]):
-        H = rayleigh_channel(N_r=config["N_r"], N_t=config["N_t"], rng=rng)
+
+    for _ in range(N_test):
+        H = rayleigh_channel(N_r=N_r, N_t=N_t, rng=rng)
         chain.seed(int(rng.integers(2 ** 31)))
         chain.set_params(channel__H=H)
-        Y = chain((config["N_t"], config["N"]))
+        Y = chain((N_t, N))
         S_ref = chain.tap("data_tx")
 
         for ordering, counter in counters.items():
@@ -68,27 +77,18 @@ def simulate(config, seed):
                 sigma2=sigma2)
             counter.update(S_ref, detector(Y))
 
-    observed = {}
     for ordering, counter in counters.items():
-        observed[ordering] = counter.rate
-    observed["fewest errors"] = min(
-        counter.n_errors for counter in counters.values())
-    return observed
+        ber[ordering][index] = counter.rate
+        errors[ordering][index] = counter.n_errors
 
+# display, from the same dictionaries the loop filled
+print_data({"x": snr_dB_list, "curves": ber}, xlabel="snr_dB", ylabel="BER")
+print()
+print_data({"x": snr_dB_list, "curves": errors},
+           xlabel="snr_dB", ylabel="errors behind each point")
 
-experiment = Experiment(config, parameter="snr_dB",
-                        values=np.arange(0, 45, 5), seed=42)
-result = experiment.run(simulate)
-result.print(ylabel="BER, and the smallest error count behind a point")
-
-# The error counts say where the estimate runs out of samples; they
-# belong in the record, not in the figure, so the plot takes only the
-# three rates.
-rates = {"x": result.values, "curves": {}}
-for ordering in orderings:
-    rates["curves"][ordering] = result.data[ordering]
-ax = plot_data(rates, xlabel="snr_dB", ylabel="BER", yscale="log",
-               marker="o", fillstyle="none")
+ax = plot_data({"x": snr_dB_list, "curves": ber}, xlabel="SNR [dB]",
+               ylabel="BER", yscale="log", marker="o", fillstyle="none")
 ax.set_xlim(0, 40)
 ax.set_ylim(1e-4, 1)
 ax.set_title("OSIC orderings, 4x4 16-QAM over Rayleigh fading")

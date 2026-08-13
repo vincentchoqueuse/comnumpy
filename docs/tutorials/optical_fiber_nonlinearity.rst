@@ -363,17 +363,18 @@ instead of two, which is what ``polarizations=1`` is for:
 
 That is the prediction the sweep below has to land on.
 
-The sweep itself is written as an :class:`~comnumpy.experiment.Experiment`:
-the conditions in one dictionary, the studied parameter and its values
-declared once, and ``simulate`` -- the function below -- called once per
-launch power with a copy of the conditions and that point's own seed. What
-it returns is collected into arrays aligned with the powers, and the seed
-is kept in the result, so the whole table can be reproduced from the two
-lines that declare the experiment.
+The sweep follows the storage convention every study of this library
+uses. The receivers and the metrics are declared first; each (metric,
+receiver) pair gets a pre-allocated array of zeros, indexed by **name**
+on both levels -- a column never has to be counted to be found, and a
+misplaced ``+1`` between parallel tables is not expressible. The
+simulation loop fills those arrays, one child seed per launch power so
+the master seed alone reproduces the study, and everything printed or
+drawn afterwards reads from the same dictionaries the loop filled.
 
 .. literalinclude:: ../../examples/optical/NLI_simulation.py
    :language: python
-   :lines: 112-238
+   :lines: 112-240
 
 .. code::
 
@@ -414,8 +415,8 @@ decisively:
    dispersion compensation   18.85 dB   -1.5 dBm       0.3 s
    DBP, 1 step/span          19.29 dB   -1.5 dBm       0.7 s
    DBP, 2 steps/span         20.65 dB    0.0 dBm       1.3 s
-   DBP, 4 steps/span         23.82 dB    3.0 dBm       2.5 s
-   DBP, 50 steps/span        25.91 dB    4.5 dBm      29.6 s
+   DBP, 4 steps/span         23.82 dB    3.0 dBm       2.4 s
+   DBP, 50 steps/span        25.91 dB    4.5 dBm      28.4 s
 
 Start with the second row, because it is the one the closed form claims to
 predict:

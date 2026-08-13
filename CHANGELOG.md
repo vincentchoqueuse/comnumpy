@@ -45,67 +45,42 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
-### Added — `Experiment`, the collection loop as an object
+### Changed — one storage convention for every simulation loop
 
-Every study in the examples was the same sentence -- *run the same
-experiment for several values of one parameter, and keep what each run
-measured* -- and every script spelled it out again: pre-allocated
-`np.zeros((n_points, n_methods))`, nested loops indexed by hand, one
-accumulator per metric divided by `N_test` at the end. The two MIMO
-detector sweeps also ran **unseeded**: the curves in the documentation
-were not reproducible by anyone, including their author.
+Every study in the examples was the same sentence -- run the same
+simulation for several values of one parameter, keep what each run
+measured -- and every script spelled its storage out differently:
+`np.zeros((n_points, n_methods))` indexed by position, an accumulator
+per metric divided by `N_test` at the end, and, in the two MIMO
+detector sweeps, **no seed at all** -- the curves in the documentation
+were reproducible by nobody, their author included. One of those
+positional tables carried a `+1` column offset, the textbook silent
+bug.
 
-`Experiment` is that sentence as an object:
+The four sweeps -- both MIMO detector comparisons, the
+chromatic-dispersion compensator study and the launch-power sweep of
+the DBP tutorial -- now follow one convention, written into the
+tutorial skill:
 
-```python
-experiment = Experiment(config, parameter="snr_dB",
-                        values=np.arange(0, 45, 5), seed=42)
-result = experiment.run(simulate)
-result.print(ylabel="BLER")
-result.plot(ylabel="BLER", yscale="log")
-```
+* the methods and the metrics are **declared first**, as the ordered
+  dictionaries they are;
+* storage is **pre-allocated to zeros, one array per (metric, method),
+  indexed by name** on both levels -- a column never has to be counted
+  to be found, and a misplaced `+1` between parallel tables is not
+  expressible;
+* the simulation loop draws **one child seed per point** from a master
+  seed (`np.random.SeedSequence(seed).spawn`, decisions D6/D35) and
+  fills the arrays;
+* the display comes last, from the same dictionaries the loop filled --
+  each inner dictionary is exactly the `curves` that `print_data` and
+  `plot_data` render.
 
-`simulate(config, seed)` is the experiment itself, written by the user:
-it receives a copy of the conditions with the studied parameter set and
-a per-point child seed (D6/D35, the same spawning `monte_carlo` uses),
-and returns a plain dictionary of what it observed. The experiment
-aligns each entry into an array, refuses a simulate that changes its
-observations mid-run, and hands back a result carrying the parameter,
-the values, the configuration, the seed and the wall time. When no seed
-is given, one is drawn and **kept** -- `result.seed` always answers, so
-an interesting accident can be re-run.
-
-`save=` narrows what is kept, as names or as `{"ser": True}` flags.
-
-An observation may itself be a mapping -- one SNR per receiver, one BER
-per detector. Such a **group** collects into a dictionary of arrays, so
-the study over several methods that motivated all of this needs no name
-mangling and no re-packing: `simulate` returns
-`{"snr [dB]": {"ZF": ..., "ML": ...}}` and `result.data["snr [dB]"]` is
-directly the curves that `print_data` and `plot_data` render. The first
-version of this module collected flat dictionaries only, and the DBP
-sweep had to smuggle its structure through prefixed keys --
-`"ser " + name` packed on one side, unpacked by loops on the other:
-storage boilerplate moved rather than removed. The groups delete it.
-
-The result renders through `comnumpy.data` -- `result.print()` is the
-conditions plus one table per group, `result.plot("snr [dB]")` one
-family of curves -- so the table a page pastes and its figure cannot
-come from different runs.
-
-Deliberately not a framework: one parameter, one callable, one
-dictionary out. Sweeping a single chain parameter with standard metrics
-stays `monte_carlo`, which is one call; `Experiment` is for the study
-*around* a chain -- several detectors on one frame, several receivers
-on one propagation -- where the collection loop was becoming the
-longest part of the script.
-
-Four studies are rewritten on it: the two MIMO detector sweeps, the
-chromatic-dispersion compensator comparison, and the launch-power sweep
-of the DBP tutorial -- each of them seeded at last, each printing its
-conditions and its table from the object it draws.
-`monte_carlo_simulation_1.py` leaves `SLOW` on the way: listed at 32 s,
-measured twice at 4.4 s.
+An `Experiment` object that ran the loop behind a callback was written,
+measured and removed the same day, before any release: it made the
+scripts shorter nowhere, and it hid exactly the loop the tutorials are
+supposed to teach. What the tutorials needed was a storage convention,
+not an engine. The reproducibility it briefly carried stays: the seeds
+above are now in the scripts themselves.
 
 ### Changed — the figures finally use the style sheet that ships with the package
 

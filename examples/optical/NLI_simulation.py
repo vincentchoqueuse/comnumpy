@@ -7,7 +7,7 @@ figures into ../../docs/tutorials/img/.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from comnumpy import Experiment, plot_data, print_data
+from comnumpy import plot_data, print_data
 from comnumpy.core import Sequential
 from comnumpy.core.compensators import DataAidedPhaseCompensator
 from comnumpy.core.filters import SRRCFilter
@@ -123,69 +123,71 @@ receivers = {
 
 channel = get_channel()
 
+# Storage, declared before the loop: one array per (metric, receiver),
+# full of zeros, indexed by name on both levels -- a column never has to
+# be counted to be found, and each inner dictionary is exactly what
+# print_data and plot_data render.
+snr = {}
+ser = {}
+errors = {}
+times = {}
+for name in receivers:
+    snr[name] = np.zeros(len(dBm_list))
+    ser[name] = np.zeros(len(dBm_list))
+    errors[name] = np.zeros(len(dBm_list))
+    times[name] = np.zeros(len(dBm_list))
 
-def simulate(config, seed):
-    """One launch power: two fields per trial, every receiver on both.
+# simulation loop: one child seed per launch power (D6/D35), so the
+# whole study is reproduced by the master seed alone
+seed = 0
+point_seeds = np.random.SeedSequence(seed).spawn(len(dBm_list))
+for index, dBm in enumerate(dBm_list):
+    point_seed = int(point_seeds[index].generate_state(1)[0])
+    amp = launch_amplitude(dbm_to_watt(dBm))
 
-    The two propagations of a trial share their seed, so they carry the
-    same symbols and the same amplifier noise and differ only by the
-    fibre's Kerr term. Each receiver then decides the field that matches
-    its claim -- the bound receives the linear one -- and its errors are
-    *counted* rather than averaged: the rate is a ratio of totals over
-    the trials, and the count that says whether a point means anything
-    survives to the tables below.
-    """
-    amp = launch_amplitude(dbm_to_watt(config["launch_dBm"]))
-    snr = {}
+    # one counter per receiver: the rate is a ratio of error and symbol
+    # totals over the trials, not a mean of per-trial rates, and the
+    # count that says whether a point means anything is kept
     counters = {}
-    times = {}
     for name in receivers:
-        snr[name] = 0.0
         counters[name] = ErrorCounter()
-        times[name] = 0.0
-    for trial in range(config["n_trials"]):
+
+    for trial in range(N_trial):
+        # the two propagations of a trial share their seed, so they
+        # carry the same symbols and the same amplifier noise and
+        # differ only by the fibre's Kerr term
         fields = {}
         for use_only_linear in (True, False):
-            channel.seed(seed + trial)
+            channel.seed(point_seed + trial)
             channel.set_params(launch__gain=amp,
                                link__use_only_linear=use_only_linear)
-            fields[use_only_linear] = channel(config["n_symbols"])
+            fields[use_only_linear] = channel(N_s)
         symbols = channel.tap("signal_tx")
         reference = channel.tap("data_tx")
 
+        # each receiver decides the field that matches its claim: the
+        # bound receives the linear one
         for name, (steps, linear_only) in receivers.items():
             receiver = get_receiver(steps, linear_only, gain=1 / amp,
                                     reference=symbols)
             detected = receiver(fields[name == "amplifier noise only"])
-            snr[name] += compute_effective_snr(
-                symbols, receiver.tap("phase")) / config["n_trials"]
+            snr[name][index] += compute_effective_snr(
+                symbols, receiver.tap("phase")) / N_trial
             counters[name].update(reference, detected)
-            times[name] += receiver.elapsed_
+            times[name][index] += receiver.elapsed_
 
-    # One flat record per point: the six SNRs under the receiver names,
-    # everything else under a prefixed one, split again after the run.
-    observed = {}
-    for name in receivers:
-        observed[name] = 10 * np.log10(snr[name])
-        observed["ser " + name] = counters[name].rate
-        observed["errors " + name] = counters[name].n_errors
-        observed["time " + name] = times[name]
-    return observed
+    for name, counter in counters.items():
+        ser[name][index] = counter.rate
+        errors[name][index] = counter.n_errors
 
-
-experiment = Experiment({"n_symbols": N_s, "n_trials": N_trial},
-                        parameter="launch_dBm", values=dBm_list, seed=0)
-result = experiment.run(simulate)
-
+# display, from the dictionaries the loop filled; the SNR averages in
+# linear and is read in dB
 snr_dB = {}
-ser = {}
 for name in receivers:
-    snr_dB[name] = result.data[name]
-    ser[name] = result.data["ser " + name]
+    snr_dB[name] = 10 * np.log10(snr[name])
 
-# The sweep result, written down once. It is printed here and drawn
-# below from the same object; transposed because six receiver names as
-# column headers would make the table 160 characters wide.
+# transposed: six receiver names as column headers would make the table
+# 160 characters wide
 snr_data = {"x": dBm_list, "curves": snr_dB}
 print_data(snr_data, xlabel="launch power [dBm]",
            ylabel="effective SNR [dB]", transpose=True)
@@ -193,7 +195,7 @@ print_data(snr_data, xlabel="launch power [dBm]",
 print("\nreceiver                  best SNR   at power    total time")
 for name, values in snr_dB.items():
     best = int(np.argmax(values))
-    total = float(np.sum(result.data["time " + name]))
+    total = float(np.sum(times[name]))
     print(f"{name:24s} {values[best]:6.2f} dB {dBm_list[best]:6.1f} dBm "
           f"{total:9.1f} s")
 
@@ -211,8 +213,8 @@ symbols_per_point = N_s * N_trial
 print("\nreceiver                  errors at its best power")
 for name in receivers:
     best = int(np.argmax(snr_dB[name]))
-    errors = int(result.data["errors " + name][best])
-    print(f"{name:24s} {errors:7d} over {symbols_per_point} symbols")
+    count = int(errors[name][best])
+    print(f"{name:24s} {count:7d} over {symbols_per_point} symbols")
 
 # The prediction, on the same axes as the measurement. It describes the
 # receiver that only undoes the dispersion -- the GN model counts the

@@ -55,16 +55,19 @@ then learns the wrong lesson -- they came to see how the library is used.
   `compute_metric_rayleigh_theo` for the closed forms,
   `constellation_capacity` and `bicm_capacity` for the rates.
 - Monte-Carlo: `monte_carlo(chain, param, values, metrics, stimulus, seed=)`
-  when one chain and standard metrics cover the study. When the study is
-  *around* a chain -- several detectors on one frame, several receivers
-  on one propagation -- write the point as a function and hand it to
-  `Experiment(config, parameter=, values=, seed=)`: `simulate(config,
-  seed)` returns a dict of what it observed -- a number per name, or a
-  **group** `{"snr [dB]": {method: value}}` that collects into one
-  family of curves. `result.print()` prints one table per group,
-  `result.plot("snr [dB]")` draws one, and the seed is always kept.
-  Never pre-allocate `np.zeros((n_points, n_methods))` and index it by
-  hand, and never smuggle structure through prefixed key names.
+  when one chain and standard metrics cover the study. When the study
+  is *around* a chain -- several detectors on one frame, several
+  receivers on one propagation -- write the loop out, on **one storage
+  convention**: declare the methods and the metrics first; pre-allocate
+  one `np.zeros(n_points)` per (metric, method), indexed by **name** on
+  both levels, never by position -- a 2-D `np.zeros((n_points,
+  n_methods))` puts a countable offset between parallel columns, which
+  is the classic silent bug; draw one child seed per point from a
+  master seed (`np.random.SeedSequence(seed).spawn`, D6/D35); let the
+  loop fill the arrays; display last, from the same dictionaries the
+  loop filled -- each inner dict is exactly the `curves` that
+  `print_data` and `plot_data` render. The loop is the pedagogy: it
+  stays visible.
 - **A swept result is one dictionary, shown two ways.**
   `data = {"x": snr_dB, "curves": {"ZF": ..., "ML": ...}}` — which is
   already the shape `monte_carlo` returns — then `print_data(data,

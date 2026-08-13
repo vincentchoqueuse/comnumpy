@@ -11,7 +11,6 @@ from .exceptions import ComnumpyError, ShapeError, NotFittedError
 from .serialization import to_json, from_json
 from .monte_carlo import monte_carlo
 from .data import print_data, plot_data
-from .experiment import Experiment, ExperimentResult
 from .core import (
     Processor, Sequential,
     SymbolGenerator, SymbolMapper, SymbolDemapper,
@@ -26,5 +25,5 @@ __all__ = [
     "AWGN", "compute_ser", "Constellation", "get_alphabet",
     "ebn0_to_snr_dB", "esn0_to_snr_dB",
     "to_json", "from_json", "monte_carlo",
-    "print_data", "plot_data", "Experiment", "ExperimentResult",
+    "print_data", "plot_data",
 ]

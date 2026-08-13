@@ -11,7 +11,7 @@ multi-element arrays", Globecom '00, San Francisco, 2000.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import Experiment, style
+from comnumpy import plot_data, print_data, style
 from comnumpy.core import Sequential
 from comnumpy.core.generators import SymbolGenerator
 from comnumpy.core.mappers import SymbolMapper
@@ -25,42 +25,44 @@ from comnumpy.mimo.detectors import (
 
 style.use()
 
-# The experimental conditions, in one place. The studied parameter --
-# the SNR -- is deliberately not here: the experiment sets it.
-config = {
-    "N": 400,        # symbols per frame
-    "N_test": 500,   # channel draws per point; more smooths the curve
-    "N_r": 2,
-    "N_t": 2,
-}
+# parameters
+N = 400          # symbols per frame
+N_test = 500     # channel draws per point; more smooths the curve
+N_r, N_t = 2, 2
 constellation = Constellation("PSK", 4)
+snr_dB_list = np.arange(0, 45, 5)
+seed = 42        # one master seed reproduces the whole figure
+detector_names = ("ML", "ZF", "OSIC")
 
 chain = Sequential([
     SymbolGenerator(constellation.order, name="data_tx"),
     SymbolMapper(constellation),
-    FlatMIMOChannel(rayleigh_channel(N_r=2, N_t=2), name="channel"),
+    FlatMIMOChannel(rayleigh_channel(N_r=N_r, N_t=N_t), name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     ], taps=["data_tx"])
 
+# Storage, declared before the loop: one array per detector, full of
+# zeros, indexed by name -- a column never has to be counted to be
+# found, and the dictionary is what the table and the figure render.
+bler = {}
+for name in detector_names:
+    bler[name] = np.zeros(len(snr_dB_list))
 
-def simulate(config, seed):
-    """One SNR point: N_test channel draws, the three detectors on each.
-
-    A frame is in error when at least one of its bits is, and every
-    detector decides the *same* received frame, so the comparison is
-    over identical realizations. The point's seed drives both the
-    channel draws and the chain, so the whole curve is reproduced by
-    the experiment's seed alone.
-    """
-    rng = np.random.default_rng(seed)
-    sigma2 = config["N_t"] * 10 ** (-config["snr_dB"] / 10)
+# simulation loop: one child seed per SNR point (D6/D35), so the whole
+# figure is reproduced by the master seed alone
+point_seeds = np.random.SeedSequence(seed).spawn(len(snr_dB_list))
+for index, snr_dB in enumerate(snr_dB_list):
+    rng = np.random.default_rng(int(point_seeds[index].generate_state(1)[0]))
+    sigma2 = N_t * 10 ** (-snr_dB / 10)
     chain.set_params(noise__sigma2=sigma2)
-    bler = {"ML": 0.0, "ZF": 0.0, "OSIC": 0.0}
-    for _ in range(config["N_test"]):
-        H = rayleigh_channel(N_r=config["N_r"], N_t=config["N_t"], rng=rng)
+
+    for _ in range(N_test):
+        # new channel realization, decided by every detector: the
+        # comparison is over identical frames
+        H = rayleigh_channel(N_r=N_r, N_t=N_t, rng=rng)
         chain.seed(int(rng.integers(2 ** 31)))
         chain.set_params(channel__H=H)
-        Y = chain((config["N_t"], config["N"]))
+        Y = chain((N_t, N))
         S_ref = chain.tap("data_tx")
 
         detectors = {
@@ -72,16 +74,15 @@ def simulate(config, seed):
         for name, detector in detectors.items():
             ber = compute_ber(S_ref, detector(Y),
                               width=constellation.bits_per_symbol)
-            bler[name] += float(ber > 0) / config["N_test"]
-    return {"BLER": bler}
+            # a frame is in error when at least one of its bits is
+            bler[name][index] += float(ber > 0) / N_test
 
+# display, from the same dictionary the loop filled
+data = {"x": snr_dB_list, "curves": bler}
+print_data(data, xlabel="snr_dB", ylabel="BLER")
 
-experiment = Experiment(config, parameter="snr_dB",
-                        values=np.arange(0, 45, 5), seed=42)
-result = experiment.run(simulate)
-result.print()
-
-ax = result.plot("BLER", yscale="log", marker="o", fillstyle="none")
+ax = plot_data(data, xlabel="SNR [dB]", ylabel="BLER", yscale="log",
+               marker="o", fillstyle="none")
 ax.set_xlim(0, 40)
 ax.set_ylim(1e-3, 1)
 ax.set_title("2x2 QPSK over Rayleigh fading, one draw per frame")
