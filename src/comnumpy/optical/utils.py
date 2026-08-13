@@ -367,6 +367,14 @@ def is_polarization_pair(x: np.ndarray, block: str) -> bool:
     refused, because a pointwise Kerr step applied row by row would
     describe parallel fibres, not one fibre carrying several signals.
 
+    **The leading axes are a batch.** Only ``-2`` and ``-1`` are read,
+    so ``(B, P, N)`` propagates ``B`` independent realizations in one
+    call and every block downstream broadcasts over them -- the same
+    rule the MIMO blocks follow on their antenna axis (D2). That is
+    also why the polarization axis must be written even when there is
+    one of them: ``(B, N)`` is indistinguishable from ``(P, N)``, so a
+    batch of single-polarization fields is ``(B, 1, N)``.
+
     Parameters
     ----------
     x : np.ndarray
@@ -394,8 +402,12 @@ def is_polarization_pair(x: np.ndarray, block: str) -> bool:
         f"(..., P, N) with P in {{1, 2}}; got {x.shape}, i.e. "
         f"{polarizations} on the polarization axis. A pointwise Kerr step "
         f"row by row would describe {polarizations} separate fibres, with "
-        f"no XPM and no FWM between them. Multiplex WDM channels into one "
-        f"field first with comnumpy.optical.WDMMultiplexer (decision D44).")
+        f"no XPM and no FWM between them. Two shapes are confused with "
+        f"this one. For {polarizations} WDM channels, multiplex them into "
+        f"one field first with comnumpy.optical.WDMMultiplexer (D44). For "
+        f"{polarizations} independent realizations propagated at once, "
+        f"write the polarization axis: "
+        f"({polarizations}, 1, {x.shape[-1]}).")
 
 
 def manakov_kerr(x: np.ndarray, gamma: float,
