@@ -1080,9 +1080,9 @@ the single most useful thing the GN model has to say.</p>
                <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">)])</span>
     <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
         <span class="o">*</span><span class="n">source</span><span class="p">,</span>
+        <span class="n">Amplifier</span><span class="p">(</span><span class="n">launch_amplitude</span><span class="p">(</span><span class="n">power_W</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;launch&quot;</span><span class="p">),</span>
         <span class="n">Upsampler</span><span class="p">(</span><span class="n">OS</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">OS</span><span class="p">)),</span>
         <span class="n">SRRCFilter</span><span class="p">(</span><span class="n">ROLLOFF</span><span class="p">,</span> <span class="n">OS</span><span class="p">,</span> <span class="n">N_h</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">),</span>
-        <span class="n">Amplifier</span><span class="p">(</span><span class="n">launch_amplitude</span><span class="p">(</span><span class="n">power_W</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;launch&quot;</span><span class="p">),</span>
         <span class="n">FiberLink</span><span class="p">(</span><span class="n">N_SPANS</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">SPAN_KM</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">FS</span><span class="p">,</span> <span class="n">fiber</span><span class="o">=</span><span class="n">SMF</span><span class="p">,</span>
                   <span class="n">NF_dB</span><span class="o">=</span><span class="n">NF_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fibre&quot;</span><span class="p">),</span>
         <span class="n">DBP</span><span class="p">(</span><span class="n">N_SPANS</span><span class="p">,</span> <span class="n">L_span</span><span class="o">=</span><span class="n">SPAN_KM</span><span class="p">,</span> <span class="n">StPS</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">FS</span><span class="p">,</span> <span class="n">fiber</span><span class="o">=</span><span class="n">SMF</span><span class="p">,</span>
@@ -1111,18 +1111,18 @@ the single most useful thing the GN model has to say.</p>
         flowchart LR
     source[&quot;SymbolGenerator&quot;]
     tx[&quot;SymbolMapper&quot;]
+    launch[&quot;Amplifier&quot;]
     upsampler[&quot;Upsampler&quot;]
     srrcfilter[&quot;SRRCFilter&quot;]
-    launch[&quot;Amplifier&quot;]
     fibre[&quot;FiberLink&quot;]
     dbp[&quot;DBP&quot;]
     srrcfilter_2[&quot;SRRCFilter&quot;]
     downsampler[&quot;Downsampler&quot;]
     source --&gt; tx
-    tx --&gt; upsampler
+    tx --&gt; launch
+    launch --&gt; upsampler
     upsampler --&gt; srrcfilter
-    srrcfilter --&gt; launch
-    launch --&gt; fibre
+    srrcfilter --&gt; fibre
     fibre --&gt; dbp
     dbp --&gt; srrcfilter_2
     srrcfilter_2 --&gt; downsampler

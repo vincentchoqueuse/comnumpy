@@ -910,14 +910,16 @@ outline marks a tapped block:</p>
 exactly four things to do: <strong>reseed</strong> the chain so the run is reproducible,
 <strong>reconfigure</strong> the block that has to change, <strong>run</strong> it, and <strong>measure</strong>
 against the transmitted symbols.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A Monte Carlo simulation is a stateless loop: reconfigure the chain,</span>
-<span class="c1"># run it, measure, collect. Written out, at three SNR values:</span>
-<span class="n">by_hand</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">]:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A Monte Carlo simulation is three parts, always in this order: the</span>
+<span class="c1"># metric pre-allocated, the loop that fills it, the display at the end.</span>
+<span class="c1"># Written out, at three SNR values:</span>
+<span class="n">probed_snr_dB</span> <span class="o">=</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">]</span>
+<span class="n">ser_by_hand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">probed_snr_dB</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">snr_dB</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">probed_snr_dB</span><span class="p">):</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">awgn_channel__snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">)</span>
     <span class="n">detected</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>                  <span class="c1"># run first: the tap is filled by it</span>
-    <span class="n">by_hand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">))</span>
+    <span class="n">ser_by_hand</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">detected</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Three chain services appear there, and they are the ones every study is made
@@ -940,8 +942,8 @@ at every point:</p>
 
 <span class="c1"># An abscissa and one series per curve is what a sweep produces, and</span>
 <span class="c1"># print_data is what shows it: the same dictionary would draw the figure.</span>
-<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">snr_dB_list</span><span class="p">[::</span><span class="mi">8</span><span class="p">],</span>
-            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;loop&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">by_hand</span><span class="p">),</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">probed_snr_dB</span><span class="p">,</span>
+            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;loop&quot;</span><span class="p">:</span> <span class="n">ser_by_hand</span><span class="p">,</span>
                        <span class="s2">&quot;monte_carlo&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]}},</span>
            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
 </pre></div>
@@ -1075,13 +1077,14 @@ not guess (decision D41), so it happens at the call site:</p>
 <span class="n">ebn0_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">N_compare</span> <span class="o">=</span> <span class="mi">100000</span>
 <span class="n">fine_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">orders</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">])</span>
+<span class="n">bits_per_symbol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>     <span class="c1"># vectorized, not a loop</span>
 <span class="n">measured_ber</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">theory_ber</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">required_rows</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">:</span> <span class="p">[],</span>
-                 <span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">:</span> <span class="p">[]}</span>
-<span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">]:</span>
-    <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
-    <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+<span class="n">required_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">orders</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">order</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">orders</span><span class="p">):</span>
+    <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+    <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bits_per_symbol</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
     <span class="n">snr_dB_values</span> <span class="o">=</span> <span class="n">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="o">=</span><span class="n">bits</span><span class="p">)</span>
     <span class="n">collected</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">get_chain</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span>
                             <span class="n">snr_dB_values</span><span class="p">,</span>
@@ -1094,11 +1097,9 @@ not guess (decision D41), so it happens at the call site:</p>
     <span class="c1"># measurement: the sweep grid is 2 dB coarse and noisy at 1e-3.</span>
     <span class="n">fine_ber</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">fine_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
     <span class="n">above_underflow</span> <span class="o">=</span> <span class="n">fine_ber</span> <span class="o">&gt;</span> <span class="mi">0</span>            <span class="c1"># the tail reaches 0 in float64</span>
-    <span class="n">required_dB</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_ber</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                  <span class="n">fine_dB_list</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="n">required_rows</span><span class="p">[</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
-    <span class="n">required_rows</span><span class="p">[</span><span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">required_dB</span><span class="p">)</span>
+    <span class="n">required_dB</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
+        <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">fine_ber</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">fine_dB_list</span><span class="p">[</span><span class="n">above_underflow</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>The metric changes with the axis. Against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the natural quantity
@@ -1123,7 +1124,9 @@ disagreeing with theory.</p>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">()</span>
-<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">required_rows</span><span class="p">},</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">orders</span><span class="p">,</span>
+            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;bits per symbol&quot;</span><span class="p">:</span> <span class="n">bits_per_symbol</span><span class="p">,</span>
+                       <span class="s2">&quot;Eb/N0 at BER=1e-3 [dB]&quot;</span><span class="p">:</span> <span class="n">required_dB</span><span class="p">}},</span>
            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;QAM order&quot;</span><span class="p">)</span>
 
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>

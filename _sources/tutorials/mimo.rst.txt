@@ -69,7 +69,7 @@ block:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 183-186
+   :lines: 182-185
 
 Each chain is given the same seed before running, so the five numbers below
 differ by the detector alone -- same symbols, same noise, same channel:
@@ -89,7 +89,7 @@ Let us look at what each receive antenna sees, read from the ``"noise"`` tap:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 65-73
+   :lines: 65-72
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
@@ -103,7 +103,7 @@ Applying the pseudo-inverse of the channel matrix separates the streams:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 75-87
+   :lines: 74-81
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -233,15 +233,20 @@ the matrix the signal goes through **and** the one the detector inverts:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 89-133
+   :lines: 83-129
 
 .. code::
 
-   ZF    0.3313 0.2106 0.1065 0.0428 0.0148 0.0047 0.0020
-   MMSE  0.2871 0.1762 0.0876 0.0345 0.0116 0.0036 0.0014
-   OSIC  0.2826 0.1610 0.0668 0.0192 0.0037 0.0007 0.0003
-   ML    0.2807 0.1560 0.0620 0.0159 0.0027 0.0006 0.0003
-   SD    0.2807 0.1560 0.0620 0.0159 0.0027 0.0006 0.0003
+   SER
+   snr_dB       ZF     MMSE       OSIC         ML         SD
+   ---------------------------------------------------------
+        0  0.33129  0.28710  2.826e-01  2.807e-01  2.807e-01
+        3  0.21064  0.17623  1.610e-01  1.560e-01  1.560e-01
+        6  0.10650  0.08759  6.679e-02  6.196e-02  6.196e-02
+        9  0.04285  0.03451  1.920e-02  1.588e-02  1.588e-02
+       12  0.01485  0.01159  3.738e-03  2.737e-03  2.737e-03
+       15  0.00474  0.00363  7.125e-04  5.500e-04  5.500e-04
+       18  0.00203  0.00142  3.375e-04  2.625e-04  2.625e-04
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
@@ -276,16 +281,16 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 135-181
+   :lines: 131-180
 
 .. code::
 
-     ML  0 dB    142.3 ms    65536 nodes   SER 0.7900
-     ML  9 dB    129.7 ms    65536 nodes   SER 0.5044
-     ML 18 dB    127.2 ms    65536 nodes   SER 0.0112
-     SD  0 dB    236.3 ms     91.8 nodes   SER 0.7900
-     SD  9 dB     49.5 ms     19.2 nodes   SER 0.5044
-     SD 18 dB     16.7 ms      5.8 nodes   SER 0.0112
+     ML  0 dB    160.3 ms    65536 nodes   SER 0.7900
+     ML  9 dB    120.5 ms    65536 nodes   SER 0.5044
+     ML 18 dB    109.9 ms    65536 nodes   SER 0.0112
+     SD  0 dB    203.0 ms     91.8 nodes   SER 0.7900
+     SD  9 dB     42.0 ms     19.2 nodes   SER 0.5044
+     SD 18 dB     14.3 ms      5.8 nodes   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%

@@ -110,7 +110,7 @@ outline marks a tapped block:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 141-147
+   :lines: 144-150
 
 Monte Carlo Simulation
 """"""""""""""""""""""
@@ -122,7 +122,7 @@ against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 44-51
+   :lines: 44-53
 
 Three chain services appear there, and they are the ones every study is made
 of.
@@ -141,7 +141,7 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 53-64
+   :lines: 55-66
 
 .. code::
 
@@ -209,7 +209,7 @@ two expressions above transcribe line for line:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 67-80
+   :lines: 69-82
 
 From the constellation
 """"""""""""""""""""""
@@ -222,7 +222,7 @@ by :math:`k` above happens inside.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 82-87
+   :lines: 84-89
 
 .. code::
 
@@ -244,7 +244,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 89-95
+   :lines: 91-97
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%
@@ -272,7 +272,7 @@ not guess (decision D41), so it happens at the call site:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 97-127
+   :lines: 99-128
 
 The metric changes with the axis. Against :math:`E_b/N_0` the natural quantity
 is the bit error rate, and ``compute_ber`` needs the symbol width, which
@@ -300,7 +300,7 @@ disagreeing with theory.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 129-139
+   :lines: 130-142
 
 .. image:: img/monte_carlo_awgn_orders.png
    :width: 100%
