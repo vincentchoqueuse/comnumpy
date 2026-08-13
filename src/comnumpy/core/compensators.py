@@ -859,8 +859,9 @@ class LinearEqualizer(Processor):
     :math:`\mathbb{E}[|s[n]|^2] = 1`). The two coincide when
     :math:`\sigma^2 = 0`.
 
-    Axes: *declared axis* -- expects a 1D serial signal ``(N,)`` and
-    returns ``(N-L+1,)``.
+    Axes: *axis -1* -- expects a serial signal ``(..., N)`` and returns
+    ``(..., N-L+1)``; leading axes are batch (independent frames, one
+    equalizer matrix).
 
     Parameters
     ----------
@@ -909,12 +910,15 @@ class LinearEqualizer(Processor):
         X = np.asarray(X).astype(complex)
         H = self.get_H(X.shape[-1])
 
+        # the estimator matrix acts on the last axis; the trailing
+        # length-1 axis makes matmul treat it as a column, so leading
+        # axes are batch (independent frames equalized in one call)
         match self.method:
             case "zf":
-                Y = zf_estimator(X, H)
+                Y = zf_estimator(X[..., None], H)
             case "mmse":
-                Y = mmse_estimator(X, H, self.sigma2)
-        return Y
+                Y = mmse_estimator(X[..., None], H, self.sigma2)
+        return Y[..., 0]
 
 
 @dataclass(slots=True)

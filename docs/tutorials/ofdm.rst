@@ -90,9 +90,12 @@ of it, and ``info()`` returns what the channel is:
    powers_dB: [0.0, -1.0, -2.0, -3.0, -8.0, -17.2, -20.8]
    rms_delay_spread_ns: 43.12922598416199
    coherence_bandwidth_Hz: 4637226.739785324
+   rice_k_dB: None
    fs_Hz: 7680000.0
+   f_doppler_Hz: 0.0
    n_taps: 4
    resolvable_delays_samples: [0, 1, 3]
+   resolvable_powers: [0.5765216771059146, 0.420805847284595, 0.00267247560949035]
 
 The profile has seven arrivals within 410 ns, but at :math:`f_s = 7.68` MHz
 the receiver can only distinguish **4 taps**: two echoes separated by less
@@ -143,7 +146,7 @@ Results
 
 .. code::
 
-   single carrier: SER 0.0117, 1829 ms
+   single carrier: SER 0.0117, 3669 ms
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -153,7 +156,7 @@ Results
 On the left, the constellation has disappeared: each sample is a mixture of
 four consecutive symbols, and no decision region survives this. On the right,
 the equalizer has restored the sixteen clusters. Note the second number:
-nearly two seconds for 1280 symbols.
+more than three seconds for 1280 symbols.
 
 
 OFDM Communication Chain
@@ -199,7 +202,7 @@ Results
 
 .. code::
 
-   OFDM          : SER 0.0406, 1.20 ms (1525 times faster)
+   OFDM          : SER 0.0406, 1.00 ms (3670 times faster)
 
 .. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
@@ -218,21 +221,21 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 101-131
+   :lines: 101-128
 
 .. code::
 
    SER
    SNR [dB]  single carrier    OFDM
    --------------------------------
-          6         0.62734  0.5234
-          8         0.52695  0.3953
-         10         0.42969  0.2973
-         12         0.27070  0.1980
-         14         0.15117  0.1426
-         16         0.06562  0.0672
-         18         0.01523  0.0383
-         20         0.00195  0.0195
+          6         0.62578  0.5117
+          8         0.53750  0.3980
+         10         0.40664  0.3172
+         12         0.28164  0.1996
+         14         0.16875  0.1336
+         16         0.06172  0.0750
+         18         0.01641  0.0410
+         20         0.00352  0.0223
 
 .. image:: img/one_shot_ofdm_fig4.png
    :width: 100%
@@ -265,17 +268,17 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 132-168
+   :lines: 129-165
 
 .. code::
 
    receiver runtime [ms], and their ratio
    block length N  single carrier   OFDM   ratio
    ---------------------------------------------
-              128            8.74  0.613    14.2
-              256           32.64  0.644    50.7
-              512          209.35  0.999   209.5
-             1024         1685.07  1.123  1500.4
+              128            7.34  0.568    12.9
+              256           34.91  0.567    61.6
+              512          188.09  0.793   237.1
+             1024         1377.50  0.862  1598.3
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%

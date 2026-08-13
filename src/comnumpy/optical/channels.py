@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Literal, Optional
 from comnumpy.core import Processor
 from .utils import apply_chromatic_dispersion, apply_kerr_nonlinearity, compute_beta2
 from .constants import CD_COEFFICIENT, SPEED_OF_LIGHT, WAVELENGTH, KERR_COEFFICIENT
@@ -26,15 +26,27 @@ class PhaseNoise(Processor):
     the samples). The magnitude :math:`|y[n]| = |x[n]|` is preserved.
 
     Axes: *axis -1* -- the phase random walk accumulates along the
-    samples. Leading axes share the **same** walk: the phase comes from
-    one laser, so the two rows of a polarization pair ``(2, N)`` see the
-    same :math:`\phi[n]`.
+    samples. What shares one walk is declared by ``per``, which names
+    the *event* -- the slice of the array that sees one laser:
+
+    - ``"pair"`` (default): one walk per trailing ``(2, N)`` block --
+      the two rows of a polarization pair come from one laser, and
+      every leading axis is batch: independent draws per trial. A 2-D
+      or deeper input whose axis -2 is not 2 is refused, because it
+      cannot be read both ways: use ``"row"`` for independent rows or
+      ``"signal"`` for one shared walk.
+    - ``"row"``: one independent walk per 1-D row.
+    - ``"signal"``: one walk broadcast over the whole array.
+
+    A 1-D input sees one walk under every setting.
 
     Parameters
     ----------
     sigma2 : float
         Variance :math:`\sigma^2` of the per-sample phase increments, in
         rad^2.
+    per : {"pair", "row", "signal"}, optional, keyword-only
+        The event that shares one laser. Default is ``"pair"``.
     seed : int, optional, keyword-only
         Local RNG seed.
     name : str, optional, keyword-only
@@ -55,6 +67,8 @@ class PhaseNoise(Processor):
     [1. 1. 1.]
     """
     sigma2: float
+    per: Literal["pair", "row", "signal"] = field(default="pair",
+                                                  kw_only=True)
     seed: Optional[int] = field(default=None, kw_only=True)
     name: str = field(default="phase noise", kw_only=True)
     # internal state (declared for slots, D40a)
@@ -64,12 +78,30 @@ class PhaseNoise(Processor):
     def __post_init__(self) -> None:
         self.rng = np.random.default_rng(self.seed)
 
+    def prepare(self, x: np.ndarray) -> None:
+        from comnumpy.exceptions import ShapeError  # local import (D36)
+        if self.per == "pair" and np.ndim(x) >= 2 and np.shape(x)[-2] != 2:
+            raise ShapeError(
+                f"PhaseNoise(per='pair') expects a polarization pair "
+                f"(..., 2, N), got shape {np.shape(x)} -- an axis -2 of "
+                f"size {np.shape(x)[-2]} cannot be read as a pair. Use "
+                f"per='row' for one independent laser per row, or "
+                f"per='signal' for one walk shared by the whole array.")
+
     def noise_rvs(self, X: np.ndarray) -> np.ndarray:
-        """Draw the Wiener phase increment for a signal of the length of X."""
+        """Draw one Wiener walk per event declared by ``per``."""
         assert self.rng is not None      # set in __post_init__
+        n = np.shape(X)[-1]
+        if self.per == "signal" or np.ndim(X) <= 1:
+            shape: tuple[int, ...] = (n,)
+        elif self.per == "pair":
+            # one walk per trailing (2, N) block, broadcast over the pair
+            shape = np.shape(X)[:-2] + (1, n)
+        else:                            # "row"
+            shape = np.shape(X)
         noise = self.rng.normal(loc=0, scale=np.sqrt(self.sigma2),
-                                size=np.shape(X)[-1])
-        self._b = np.cumsum(noise)
+                                size=shape)
+        self._b = np.cumsum(noise, axis=-1)
         return self._b
 
     def forward(self, x: np.ndarray) -> np.ndarray:

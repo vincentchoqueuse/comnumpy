@@ -45,6 +45,31 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Added — batch axes are a contract, not an accident (D51)
+
+Leading axes ahead of a block's event axes are batch axes: independent
+trials, run in one call. The contract has three families, now stated in
+CONVENTIONS.md and locked by `tests/core/test_batch_axes.py`:
+deterministic blocks broadcast their one configuration (`FIRChannel`
+reshapes its kernel so scipy convolves along the last axis;
+`LinearEqualizer` applies its matrix as a column product -- both
+previously crashed on a batch); stochastic blocks draw independently
+per event (`PhaseNoise` declares its event with `per=`: `"pair"` --
+default, one laser per polarization pair, independent across trials --
+`"row"` or `"signal"`; the ambiguous shape is refused with the
+resolutions named); adaptive blocks carry independent state per event
+(`BlindDualMIMOCompensator` on `(..., 2, N)` adapts one butterfly per
+pair and exposes `H_` with the batch axes in front).
+
+Two silent traps died on the way. `compute_ser`/`compute_ber` with
+`axis=None` used to ravel *before* truncating to the common length, so
+a batch whose rows carried a tail (an OFDM frame after a `full`
+convolution) compared misaligned rows -- SER 0.47 where the truth was
+0.02; both now truncate along the last axis first, and the pooled rate
+is exactly the mean of the per-row rates. And the OFDM tutorial's
+repeat-loop became one batched call:
+`monte_carlo(chain, param, values, metrics, (n_trials, N), seed=…)`.
+
 ### Added — `print(obj)` renders `info()`
 
 Any object that defines `info()` -- a channel, a constellation -- now

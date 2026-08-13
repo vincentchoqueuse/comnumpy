@@ -67,9 +67,14 @@ class BlindDualMIMOCompensator(Processor):
     takes it to within a tenth of the floor, and DD closes what is
     left.
 
-    Axes: *declared axis* -- expects the dual-polarization layout
-    ``(2, N)``, produces ``(2, N // oversampling)`` (one output sample
-    per ``oversampling`` input samples: fractionally spaced equalizer).
+    Axes: *polarization pair* -- expects ``(..., 2, N)``, produces
+    ``(..., 2, N // oversampling)`` (one output sample per
+    ``oversampling`` input samples: fractionally spaced equalizer).
+    Leading axes are batch, and the butterfly is a per-pair algorithm:
+    each pair gets its **own** equalizer state, adapted independently.
+    After a batched pass ``H_`` carries the batch axes in front,
+    ``(..., 2, 2(2L+1))``, so a further ``partial_fit`` resumes each
+    pair from its own state.
 
     **Delay.** The centre tap of the initial equalizer sits :math:`L`
     input samples back, so output sample :math:`k` is aligned with
@@ -267,10 +272,45 @@ class BlindDualMIMOCompensator(Processor):
         return Y
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        from comnumpy.exceptions import ShapeError  # local import (D36)
+        if X.ndim < 2 or X.shape[-2] != 2:
+            raise ShapeError(
+                f"BlindDualMIMOCompensator expects a polarization pair "
+                f"(..., 2, N), got shape {X.shape}")
+        if X.ndim == 2:
+            return self._forward_pair(X)
 
-        if X.shape[0] != 2:
-            raise ValueError(f"Blind Dual MIMO Compensator only works for dual polarization signals (X shape={X.shape})")
+        # batched: one independent equalizer per leading index -- the
+        # butterfly is a per-pair algorithm, so its state cannot be
+        # shared across trials. After the pass, H_ carries the batch
+        # axes in front, and a further partial_fit resumes each pair
+        # from its own state.
+        assert self.H_ is not None      # initialize_H ran in __post_init__
+        batch_shape = X.shape[:-2]
+        if self.H_.ndim == 2:
+            initial = np.broadcast_to(
+                self.H_, batch_shape + self.H_.shape).copy()
+        elif self.H_.shape[:-2] == batch_shape:
+            initial = self.H_
+        else:
+            raise ShapeError(
+                f"the equalizer state H_ carries batch shape "
+                f"{self.H_.shape[:-2]} from a previous pass, but the "
+                f"input carries {batch_shape} -- call initialize_H() to "
+                f"restart from the identity equalizer")
+        states = np.empty_like(initial)
+        outputs = np.empty(
+            batch_shape + (2, X.shape[-1] // self.oversampling),
+            dtype=complex)
+        for index in np.ndindex(*batch_shape):
+            self.H_ = initial[index].copy()
+            outputs[index] = self._forward_pair(X[index])
+            states[index] = self.H_
+        self.H_ = states
+        return outputs
 
+    def _forward_pair(self, X: np.ndarray) -> np.ndarray:
+        """One adaptation pass over a single ``(2, N)`` pair."""
         L = self.L
         os = self.oversampling
         M, N = X.shape
