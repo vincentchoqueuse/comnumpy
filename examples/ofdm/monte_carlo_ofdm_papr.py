@@ -122,10 +122,11 @@ papr_1024 = compute_papr(ofdm_1024(n_symbols * N_sc), unit="dB", axis=-1)
 
 measured = {"$N_{sc}$ = 256": compute_ccdf(papr_256),
             "$N_{sc}$ = 1024": compute_ccdf(papr_1024)}
-reference = {}
-for name, n_sub in (("$N_{sc}$ = 256", 256), ("$N_{sc}$ = 1024", 1024)):
-    reference[name] = compute_papr_ccdf_theo(threshold_dB, n_sub,
-                                             oversampling=os, unit="dB")
+reference = {
+    "$N_{sc}$ = 256": compute_papr_ccdf_theo(threshold_dB, 256,
+                                             oversampling=os, unit="dB"),
+    "$N_{sc}$ = 1024": compute_papr_ccdf_theo(threshold_dB, 1024,
+                                              oversampling=os, unit="dB")}
 
 # Markers are placed on a logarithmic grid of the ordinate: spacing them
 # evenly in index would crowd the top of the curve and leave the tail --

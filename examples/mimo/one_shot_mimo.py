@@ -180,25 +180,32 @@ sd_16 = Sequential([
     SphereDecoder(big_constellation, H=big_H, name="detector"),
 ], taps=["tx"], name="4x4 MIMO, SD")
 
-# --- metrics, pre-allocated ------------------------------------------
-elapsed = {}
-for name in ("ML", "SD"):
-    elapsed[name] = np.zeros(len(snr_dB_list))
+elapsed = {"ML": np.zeros(len(snr_dB_list)),
+           "SD": np.zeros(len(snr_dB_list))}
 
 # --- simulation loop -------------------------------------------------
-# A wall time is measured per point, so this one stays a loop.
-for name, big_chain in (("ML", ml_16), ("SD", sd_16)):
-    for index, snr_dB in enumerate(snr_dB_list):
-        big_chain.seed(4)
-        big_chain.set_params(noise__sigma2=4 * 10 ** (-snr_dB / 10))
-        start = time.perf_counter()
-        detected = big_chain((4, 400))
-        elapsed[name][index] = (time.perf_counter() - start) * 1e3
-        errors = compute_ser(big_chain.tap("tx"), detected)
-        nodes = (f"{big_chain['detector'].nodes_:7.1f} nodes"
-                 if name == "SD" else f"{16 ** 4:7d} nodes")
-        print(f"  {name:2s} {snr_dB:2d} dB {elapsed[name][index]:8.1f} ms  "
-              f"{nodes}   SER {errors:.4f}")
+# A wall time is measured per point, so the sweep stays a loop -- one
+# loop, over the SNR, with both chains timed explicitly in the body.
+for index, snr_dB in enumerate(snr_dB_list):
+    sigma2_point = 4 * 10 ** (-snr_dB / 10)
+
+    ml_16.seed(4)
+    ml_16.set_params(noise__sigma2=sigma2_point)
+    start = time.perf_counter()
+    detected = ml_16((4, 400))
+    elapsed["ML"][index] = (time.perf_counter() - start) * 1e3
+    errors = compute_ser(ml_16.tap("tx"), detected)
+    print(f"  ML {snr_dB:2d} dB {elapsed['ML'][index]:8.1f} ms  "
+          f"{16 ** 4:7d} nodes   SER {errors:.4f}")
+
+    sd_16.seed(4)
+    sd_16.set_params(noise__sigma2=sigma2_point)
+    start = time.perf_counter()
+    detected = sd_16((4, 400))
+    elapsed["SD"][index] = (time.perf_counter() - start) * 1e3
+    errors = compute_ser(sd_16.tap("tx"), detected)
+    print(f"  SD {snr_dB:2d} dB {elapsed['SD'][index]:8.1f} ms  "
+          f"{sd_16['detector'].nodes_:7.1f} nodes   SER {errors:.4f}")
 
 # --- results: figure -------------------------------------------------
 # A runtime is not an error rate, so it does not go through

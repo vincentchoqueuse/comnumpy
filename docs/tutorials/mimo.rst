@@ -286,7 +286,7 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 159-216
+   :lines: 159-223
 
 .. code::
 

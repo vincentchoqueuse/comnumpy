@@ -162,7 +162,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 100-151
+   :lines: 100-152
 
 Results
 """""""
@@ -174,7 +174,7 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 153-157
+   :lines: 154-158
 
 .. code::
 
