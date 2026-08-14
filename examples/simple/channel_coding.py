@@ -1,9 +1,7 @@
-import time
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comnumpy import monte_carlo
+from comnumpy import monte_carlo, print_data
 from comnumpy.core import Sequential
 from comnumpy.core.channels import AWGN
 from comnumpy.core.generators import SymbolGenerator
@@ -42,57 +40,63 @@ print("4 bits in ->", encoder(np.array([1, 0, 1, 1])), "(with the tail)")
 
 spectrum = distance_spectrum((0o133, 0o171), n_terms=4)
 print(f"free distance d_free = {spectrum.d_free}")
-def row(label, values):
-    """One line of the distance spectrum, six terms wide."""
-    line = label
-    for value in values[:6]:
-        line += f"{value:7d}"
-    return line
+print_data({"x": spectrum.distances[:6],
+            "curves": {"a_d": spectrum.a_d[:6],
+                       "beta_d": spectrum.beta_d[:6]}},
+           xlabel="d", ylabel="distance spectrum")
 
 
-print(row("d      ", spectrum.distances))
-print(row("a_d    ", spectrum.a_d))
-print(row("beta_d ", spectrum.beta_d))
+# --- three chains, three sweeps --------------------------------------
+# One Sequential per scheme, written out; monte_carlo moves the noise.
+uncoded = Sequential([
+    SymbolGenerator(2, name="tx"),
+    SymbolMapper(BPSK),
+    AWGN(snr_dB=0.0, name="noise"),
+    SymbolDemapper(BPSK),
+], taps=["tx"], name="uncoded BPSK")
 
+hard = Sequential([
+    SymbolGenerator(2, name="tx"),
+    ConvolutionalEncoder((0o133, 0o171)),
+    SymbolMapper(BPSK),
+    AWGN(snr_dB=0.0, name="noise"),
+    SymbolDemapper(BPSK),
+    ViterbiDecoder((0o133, 0o171)),
+], taps=["tx"], name="K=7 convolutional, hard")
 
-def get_uncoded_chain():
-    return Sequential([
-        SymbolGenerator(2, name="tx"),
-        SymbolMapper(BPSK),
-        AWGN(snr_dB=0.0, name="noise"),
-        SymbolDemapper(BPSK),
-    ], taps=["tx"], name="uncoded BPSK")
-
-
-def get_coded_chain(soft):
-    return Sequential([
-        SymbolGenerator(2, name="tx"),
-        ConvolutionalEncoder((0o133, 0o171)),
-        SymbolMapper(BPSK),
-        AWGN(snr_dB=0.0, name="noise"),
-        SymbolDemapper(BPSK, soft=soft),
-        ViterbiDecoder((0o133, 0o171), soft=soft),
-    ], taps=["tx"], name=f"K=7 convolutional, {'soft' if soft else 'hard'}")
-
+soft = Sequential([
+    SymbolGenerator(2, name="tx"),
+    ConvolutionalEncoder((0o133, 0o171)),
+    SymbolMapper(BPSK),
+    AWGN(snr_dB=0.0, name="noise"),
+    SymbolDemapper(BPSK, soft=True),
+    ViterbiDecoder((0o133, 0o171), soft=True),
+], taps=["tx"], name="K=7 convolutional, soft")
 
 curves = {}
-for label, chain, code_rate in (("uncoded", get_uncoded_chain(), 1.0),
-                                ("hard-decision Viterbi", get_coded_chain(False), rate),
-                                ("soft-decision Viterbi", get_coded_chain(True), rate)):
-    start = time.perf_counter()
-    results = monte_carlo(chain, "noise.snr_dB", snr_dB(ebn0_dB, code_rate),
-                          {"ber": compute_ser}, n_bits, reference="tx", seed=4)
-    curves[label] = results["ber"]
-    line = f"{label:24s} "
-    for value in results["ber"]:
-        line += f"{value:.2e} "
-    print(line + f"  ({time.perf_counter() - start:.1f} s)")
+curves["uncoded"] = monte_carlo(
+    uncoded, "noise.snr_dB", snr_dB(ebn0_dB, 1.0), {"ber": compute_ser},
+    n_bits, reference="tx", seed=4)["ber"]
+curves["hard-decision Viterbi"] = monte_carlo(
+    hard, "noise.snr_dB", snr_dB(ebn0_dB, rate), {"ber": compute_ser},
+    n_bits, reference="tx", seed=4)["ber"]
+curves["soft-decision Viterbi"] = monte_carlo(
+    soft, "noise.snr_dB", snr_dB(ebn0_dB, rate), {"ber": compute_ser},
+    n_bits, reference="tx", seed=4)["ber"]
 
+# --- results: table ---------------------------------------------------
+print()
+print_data({"x": ebn0_dB, "curves": curves},
+           xlabel="Eb/N0 [dB]", ylabel="BER")
+
+# --- the union bound, against the soft measurement -------------------
 bound = union_bound_ber(distance_spectrum((0o133, 0o171), n_terms=8), ebn0_dB)
-line = "union bound              "
-for value in bound:
-    line += f"{value:.2e} "
-print(line)
+print()
+print_data({"x": ebn0_dB,
+            "curves": {"soft-decision Viterbi": curves[
+                           "soft-decision Viterbi"],
+                       "union bound": bound}},
+           xlabel="Eb/N0 [dB]", ylabel="BER")
 
 ax = plot_error_rate(ebn0_dB, curves, theory={"soft-decision Viterbi": bound},
                      x_theory=ebn0_dB, xlabel="Eb/N0 [dB]", ylabel="BER",
@@ -107,25 +111,32 @@ print(f"\nLDPC: H is {H.shape[0]} x {H.shape[1]}, k = {ldpc_encoder.k} "
       f"information bits, rate = {ldpc_encoder.rate:.3f}, "
       f"column weight {H.sum(axis=0)[0]}, row weight {H.sum(axis=1)[0]}")
 
+# One chain; the iteration count is a parameter, so the second sweep
+# reconfigures the decoder with set_params instead of rebuilding.
 n_frames = 40
+ldpc = Sequential([
+    SymbolGenerator(2, name="tx"),
+    LDPCEncoder(H),
+    SymbolMapper(BPSK),
+    AWGN(snr_dB=0.0, name="noise"),
+    SymbolDemapper(BPSK, soft=True),
+    LDPCDecoder(H, n_iter=5, name="decoder"),
+], taps=["tx"], name="LDPC")
+
 ldpc_curves = {}
-for n_iter in (5, 25):
-    link = Sequential([
-        SymbolGenerator(2, name="tx"),
-        LDPCEncoder(H),
-        SymbolMapper(BPSK),
-        AWGN(snr_dB=0.0, name="noise"),
-        SymbolDemapper(BPSK, soft=True),
-        LDPCDecoder(H, n_iter=n_iter),
-    ], taps=["tx"], name=f"LDPC, {n_iter} iterations")
-    results = monte_carlo(link, "noise.snr_dB", snr_dB(ebn0_dB, ldpc_encoder.rate),
-                          {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
-                          reference="tx", seed=6)
-    ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), {n_iter} iterations"] = results["ber"]
-    line = f"LDPC {n_iter:2d} iterations       "
-    for value in results["ber"]:
-        line += f"{value:.2e} "
-    print(line)
+ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), 5 iterations"] = monte_carlo(
+    ldpc, "noise.snr_dB", snr_dB(ebn0_dB, ldpc_encoder.rate),
+    {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
+    reference="tx", seed=6)["ber"]
+ldpc.set_params(decoder__n_iter=25)
+ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), 25 iterations"] = monte_carlo(
+    ldpc, "noise.snr_dB", snr_dB(ebn0_dB, ldpc_encoder.rate),
+    {"ber": compute_ser}, (n_frames, ldpc_encoder.k),
+    reference="tx", seed=6)["ber"]
+
+print()
+print_data({"x": ebn0_dB, "curves": ldpc_curves},
+           xlabel="Eb/N0 [dB]", ylabel="BER")
 
 comparison = {"uncoded": curves["uncoded"],
               "soft-decision Viterbi": curves["soft-decision Viterbi"]}
@@ -136,9 +147,4 @@ ax.set_ylim(1e-6, 1)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/channel_coding_fig2.png")
 
-mermaid_dir = "../../docs/tutorials/mermaid/"
-for diagram_name, diagram_chain in [("channel_coding", get_coded_chain(True))]:
-    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
-        stream.write(diagram_chain.to_mermaid())
 
-plt.show()
