@@ -198,7 +198,9 @@ class SelectiveMIMOChannel(BaseMIMOChannel):
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         assert self.H is not None      # validate_input rejects a None channel
-        validate_input(X, self.H.shape[1])
+        # shape[2] is N_t of the (L, N_r, N_t) stack: validating against
+        # shape[1] rejected every non-square channel's correct input
+        validate_input(X, self.H.shape[2])
         L, N_r, N_t = self.H.shape
         N = X.shape[1]
 

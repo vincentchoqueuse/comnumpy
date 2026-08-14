@@ -51,13 +51,15 @@ class DBP(Processor):
     which is 1.8x faster than the same ``B`` calls at 12288 samples and
     3.1x at 1024 -- the split-step loop, the per-span amplifier and the
     parameter precomputation are paid once instead of ``B`` times. A
-    batch of single-polarization fields is ``(B, 1, N)``; ``(B, N)``
-    reads ``B`` as polarizations and is refused.
+    batch of single-polarization fields is ``(B, 1, N)``; a bare
+    ``(B, N)`` reads ``B`` as polarizations -- refused for
+    :math:`B \ge 3`, while ``(2, N)`` is read as one polarization pair
+    by convention.
 
     Parameters
     ----------
     N_spans : int
-        Number of spans to back-propagate.
+        Number of spans to back-propagate. Default is 1.
     L_span : float, keyword-only
         Span length :math:`L_{\mathrm{span}}` in km. Default is 80.
     StPS : int, keyword-only
@@ -71,24 +73,10 @@ class DBP(Processor):
     use_only_linear : bool, keyword-only
         If True, only the linear effects (CD and attenuation) are
         compensated, in a single exact step per span. Default is False.
-    c : float, keyword-only
-        Speed of light :math:`c` in m/s. Default is ``SPEED_OF_LIGHT``.
-    h : float, keyword-only
-        Planck constant :math:`h` in J.s (kept for symmetry with
-        :class:`FiberLink`; unused by the deterministic inverse).
-    gamma : float, keyword-only
-        Kerr coefficient :math:`\gamma` in rad/W/km. Default is
-        ``KERR_COEFFICIENT``.
-    lamb : float, keyword-only
-        Wavelength :math:`\lambda` in nm. Default is ``WAVELENGTH``.
-    alpha_dB : float, keyword-only
-        Fiber loss :math:`\alpha_{dB}` in dB/km. Default is ``FIBER_LOSS``.
-    cd_coefficient : float, keyword-only
-        Dispersion coefficient :math:`D` in ps/nm/km. Default is
-        ``CD_COEFFICIENT``.
-    nu : float, keyword-only
-        Optical carrier frequency :math:`\nu` in Hz (kept for symmetry
-        with :class:`FiberLink`; unused by the deterministic inverse).
+    fiber : FiberSpec, keyword-only
+        The physical fibre to invert (D46) -- the same object handed to
+        :class:`FiberLink`, so the two cannot disagree. Default is a
+        standard single-mode fibre, ``FiberSpec()``.
     step_log_factor : float, keyword-only
         Adjustment factor of the logarithmic step-size distribution.
         Default is 0.4.

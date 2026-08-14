@@ -26,28 +26,22 @@ os = 4                                  # oversampling, to see the peaks
 constellation = Constellation("PSK", 4)
 
 
-def get_transmitter(n_sub, oversampling=os, name="ofdm"):
-    """The OFDM transmitter, up to the IFFT.
-
-    Oversampling is zero padding: the data occupy ``n_sub`` of the
-    ``oversampling * n_sub`` bins, so the IFFT interpolates between the
-    Nyquist samples and the peaks stop hiding between them.
-    """
-    carrier_type = np.zeros(oversampling * n_sub)
-    carrier_type[:n_sub] = 1
-    return Sequential([
-        SymbolGenerator(constellation.order, name="tx"),
-        SymbolMapper(constellation),
-        Serial2Parallel(n_sub, name="s2p"),
-        CarrierAllocator(carrier_type=carrier_type, name="carrier_allocator"),
-        IFFTProcessor(),
-    ], name=name)
-
-
 # --- what the transmitter puts out -----------------------------------
-chain = get_transmitter(N_sc)
-chain.seed(0)
-blocks = chain(4 * N_sc)                # four OFDM symbols
+# One transmitter, up to the IFFT. Oversampling is zero padding: the
+# data occupy N_sc of the os * N_sc bins, so the IFFT interpolates
+# between the Nyquist samples and the peaks stop hiding between them.
+carrier_1024 = np.zeros(os * N_sc)
+carrier_1024[:N_sc] = 1
+ofdm_1024 = Sequential([
+    SymbolGenerator(constellation.order, name="tx"),
+    SymbolMapper(constellation),
+    Serial2Parallel(N_sc, name="s2p"),
+    CarrierAllocator(carrier_type=carrier_1024, name="carrier_allocator"),
+    IFFTProcessor(),
+], name="ofdm 1024")
+
+ofdm_1024.seed(0)
+blocks = ofdm_1024(4 * N_sc)            # four OFDM symbols
 signal = np.ravel(blocks)               # C-order flatten of the (T, F) blocks
 power = np.abs(signal) ** 2 / np.mean(np.abs(signal) ** 2)
 
@@ -66,7 +60,7 @@ plt.savefig(f"{img_dir}/monte_carlo_ofdm_papr_fig1.png")
 # Each sample is a sum of N_sc independent terms, so the central limit
 # theorem applies: the samples are complex Gaussian, and their power is
 # exponential. Nothing about OFDM is needed beyond that.
-long_run = np.ravel(chain(200 * N_sc))
+long_run = np.ravel(ofdm_1024(200 * N_sc))
 normalized = long_run / np.std(long_run)
 gain = np.abs(long_run) ** 2 / np.mean(np.abs(long_run) ** 2)
 
@@ -104,21 +98,35 @@ print(f"their average                 : "
       f"{compute_papr(blocks, unit='dB', axis=-1, reduction='mean'):.2f} dB")
 
 # --- the distribution -------------------------------------------------
-# The CCDF is estimated over many symbols, in batches, because 20 000
-# OFDM symbols at 4096 samples do not have to exist at the same time.
+# Two subcarrier counts, so two chains -- the 1024 one already exists.
+# The batch needs no loop: Serial2Parallel stacks the OFDM symbols on
+# the leading axis, so 20 000 symbols are one call and compute_papr
+# reads one value per row.
+n_symbols = 20000
 threshold_dB = np.arange(4, 14, 0.1)
-n_batches, batch = 20, 1000
-measured, reference = {}, {}
-for n_sub in (256, 1024):
-    transmitter = get_transmitter(n_sub)
-    transmitter.seed(1)
-    values = np.concatenate([
-        compute_papr(transmitter(batch * n_sub), unit="dB", axis=-1)
-        for _ in range(n_batches)])
-    sorted_dB, ccdf = compute_ccdf(values)
-    measured[f"$N_{{sc}}$ = {n_sub}"] = (sorted_dB, ccdf)
-    reference[f"$N_{{sc}}$ = {n_sub}"] = compute_papr_ccdf_theo(
-        threshold_dB, n_sub, oversampling=os, unit="dB")
+
+carrier_256 = np.zeros(os * 256)
+carrier_256[:256] = 1
+ofdm_256 = Sequential([
+    SymbolGenerator(constellation.order, name="tx"),
+    SymbolMapper(constellation),
+    Serial2Parallel(256, name="s2p"),
+    CarrierAllocator(carrier_type=carrier_256, name="carrier_allocator"),
+    IFFTProcessor(),
+], name="ofdm 256")
+
+ofdm_256.seed(1)
+papr_256 = compute_papr(ofdm_256(n_symbols * 256), unit="dB", axis=-1)
+ofdm_1024.seed(1)
+papr_1024 = compute_papr(ofdm_1024(n_symbols * N_sc), unit="dB", axis=-1)
+
+measured = {"$N_{sc}$ = 256": compute_ccdf(papr_256),
+            "$N_{sc}$ = 1024": compute_ccdf(papr_1024)}
+reference = {
+    "$N_{sc}$ = 256": compute_papr_ccdf_theo(threshold_dB, 256,
+                                             oversampling=os, unit="dB"),
+    "$N_{sc}$ = 1024": compute_papr_ccdf_theo(threshold_dB, 1024,
+                                              oversampling=os, unit="dB")}
 
 # Markers are placed on a logarithmic grid of the ordinate: spacing them
 # evenly in index would crowd the top of the curve and leave the tail --
@@ -149,18 +157,3 @@ for n_sub in (256, 1024):
     print(f"N_sc = {n_sub:4d}: PAPR exceeded once in a thousand symbols above "
           f"{solved:.2f} dB")
 
-# --- the two models, against the measurement -------------------------
-# "effective" replaces the sample count by a fitted multiple of N_sc;
-# "level_crossing" replaces the fitted constant by a term that grows
-# with the threshold, at the price of describing the *continuous*
-# waveform, whose peak a sampled one can only underestimate.
-print("\nCCDF models against the measurement")
-print("N_sc  level  threshold   effective   level crossing")
-for name, (sorted_dB, ccdf) in measured.items():
-    n_sub = int(name.split("= ")[1].rstrip("$"))
-    for level in (1e-2, 1e-3):
-        index = int(np.clip(ccdf.size * (1 - level), 0, ccdf.size - 1))
-        at = sorted_dB[index]
-        print(f"{n_sub:5d} {ccdf[index]:6.0e} {at:8.2f} dB "
-              f"{compute_papr_ccdf_theo(at, n_sub, oversampling=os, unit='dB'):11.1e}"
-              f"{compute_papr_ccdf_theo(at, n_sub, unit='dB', method='level_crossing'):16.1e}")

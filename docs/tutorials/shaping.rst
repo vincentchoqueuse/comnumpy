@@ -46,7 +46,7 @@ variance -- and the Gaussian is the maximum-entropy law at fixed variance.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 1-32
+   :lines: 1-31
 
 
 Why a Uniform QAM Is Not Optimal
@@ -59,7 +59,7 @@ then the mutual information :math:`I(X;Y)` of that discrete input, which
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 34-62
+   :lines: 33-61
 
 .. image:: img/probabilistic_shaping_fig1.png
    :width: 100%
@@ -117,7 +117,7 @@ transmit power**, which is the only comparison that means anything.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 64-119
+   :lines: 63-118
 
 .. image:: img/probabilistic_shaping_fig2.png
    :width: 100%
@@ -156,7 +156,7 @@ that lives there:
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 121-133
+   :lines: 120-132
 
 .. code::
 
@@ -189,7 +189,7 @@ the rate is :math:`k/n`. As :math:`n` grows, :math:`k/n \to H(X)`; at finite
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 135-148
+   :lines: 134-147
 
 .. code::
 
@@ -218,9 +218,7 @@ compose instead of fighting.
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 150-162
-
-.. mermaid:: mermaid/shaping_pas.mmd
+   :lines: 149-159
 
 Uniform bits go in, shaped symbols come out, so the check is to run it and
 count what comes out. The signs are equiprobable, so the law the signed
@@ -235,7 +233,7 @@ which is the Maxwell-Boltzmann law on the full constellation at the same
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 164-191
+   :lines: 161-188
 
 .. image:: img/probabilistic_shaping_fig3.png
    :width: 100%
@@ -263,7 +261,7 @@ the generalized mutual information,
 
 .. literalinclude:: ../../examples/simple/probabilistic_shaping.py
    :language: python
-   :lines: 193-205
+   :lines: 190-202
 
 .. code::
 

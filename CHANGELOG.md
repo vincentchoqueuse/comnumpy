@@ -45,6 +45,78 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — every tutorial script held to the writing doctrine
+
+The conventions sweep closed over the whole tutorial set. The coding
+page: three chains written out in place of a factory pair, the LDPC
+iteration count varied by `set_params(decoder__n_iter=)` on one chain
+instead of rebuilding it in a loop, two `print_data` tables in place of
+hand-rolled aligned prints. The AWGN page: the chain inline, the
+constellation-order study reconfiguring it with `set_params`, the
+diagram section gone (its feature demo lives in the getting-started
+page). The OFDM page: two explicit `monte_carlo` calls and a runtime
+loop over the swept lengths only. The MIMO cost study and the PAPR
+references: unrolled. The shaping and GN-model scripts lose their
+mermaid dumps and stray `plt.show`; the GN-model factory stays -- its
+source genuinely changes structure (a Gaussian stimulus against a
+mapped one) -- and so do the two DBP scripts' factories, the one
+sanctioned chain split, for the Monte-Carlo cost of re-propagating the
+fibre. The interpolation the shaping page keeps reads its own computed
+capacity curves, not a closed form.
+
+### Changed — the Alamouti and MIMO tutorials rewritten on the batch
+
+Both pages carried simulation scaffolding that drowned the reader: a
+factory building five chains behind a `kind` flag, per-SNR draw counts,
+zipped channel sweeps, interpolation codas reading numbers off closed
+forms, mermaid dumps. They are rewritten on one doctrine, now in the
+tutorial skill. The page opens on **one** chain, one channel draw, no
+batch -- the problem shown plainly. The simulation then draws a
+**fixed** stack of channels once (`rayleigh_channel(size=K)`, the same
+K draws at every SNR point: the reader compares curves, not draw
+counts), builds **one `Sequential` per technique** -- written out in
+full, no factory -- with the stack on the channel block and on the
+detector, and runs **one `monte_carlo` per technique** sweeping the
+noise variance, zipped into the detector when it weights by it (MMSE,
+OSIC): no simulation loop at all. On the MIMO page each technique is
+one unit -- equations, chain, sweep -- interleaved. To make it
+possible, `SpaceTimeDecoder` accepts a stacked H (channel k decodes
+frame k, locked in `tests/mimo/test_stacked_channel.py`) and both
+Alamouti blocks join the BROADCAST register of the batch contract.
+
+### Changed — the 91 docstrings audited against their code
+
+Five parallel reviewers read every `Processor` docstring against its
+`forward()` -- equations, Axes lines, parameter lists, doctests -- and
+62 findings were fixed. Four were **code** bugs the prose exposed:
+`Resampler` resampled axis 0 (scipy's default) while promising the last
+axis; `SelectiveMIMOChannel` validated its input against `N_r` instead
+of `N_t`, rejecting every non-square channel's correct frames;
+`BlindCFOCompensator.history` stored 16 times the offset (renamed
+`history_`, D23, and fixed to store the omega_0 iterates it documents);
+and `Laser` drew its "random" initial phase from a Gaussian of std 2 pi
+instead of uniformly on [-pi, pi).
+
+The rest is the docstrings catching up with the code. Wrong equations
+straightened: `BWFilter`'s mask (off by 2 vs its own parameters),
+`AmplitudeDemapper`'s decision (on |Re y|, per quadrature lane, not
+|y|), the Rice path of `TappedDelayLineChannel` (the gamma_0 scaling
+the code applies), the ambiguous alpha_dB conversion in the optical
+helpers. Stale claims deleted: seven phantom pre-D46 parameters on
+`FiberLink` and `DBP` (now one `fiber: FiberSpec` entry), the unusable
+`norm` field of `FrequencyDomainEqualizer` (removed -- it never reached
+the FFT), 1-D-only Axes lines on blocks that broadcast (CD, Kerr,
+EDFA, BlindPhaseTracker), "multiplied" for a division, `"time"` as a
+method that never existed. The MIMO detectors' stored decisions are
+`S_` (D23), the CMA equalizer is written W -- H is the channel
+everywhere else -- and `BlindPhaseSearchCompensator` gained the
+Attributes section its `phase_` deserved. The batch registers were
+corrected on the way: `DelayRemover` and `BlindPhaseTracker` are
+verified BROADCAST, `Normalizer` moved to EXEMPT -- its gain is one
+scalar over the whole array by documented design, and its docstring now
+warns that a batch is pooled. `PtsPaprReductor` validates its (T, F)
+layout in `prepare()` instead of dying on a bare IndexError.
+
 ### Added — the batch promise is a ratchet over the catalogue
 
 A convention over 91 blocks is only worth the sweep that checks it.

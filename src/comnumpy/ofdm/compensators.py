@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Literal, Optional
+from typing import Optional
 from dataclasses import dataclass, field
 from comnumpy._backend import fft, fftshift  # cupy-compatible (D3)
 from comnumpy.core.processors import WeightAmplifier
@@ -43,13 +43,13 @@ class FrequencyDomainEqualizer(WeightAmplifier):
         The impulse response :math:`h[l]` of the channel to be equalized.
         Required (a ValueError is raised when it is missing).
     axis : int, optional, keyword-only
-        The axis along which to compute the DFT and apply the weights.
-        Default is -1.
+        The axis along which the weights are applied. Default is -1,
+        the only value currently supported: the channel DFT is computed
+        on the 1-D ``h`` along its own axis, so any other value raises
+        at ``prepare``.
     shift : bool, optional, keyword-only
         If True, applies an fftshift to the weights, for inputs whose
         zero-frequency subcarrier is centered. Default is False.
-    norm : {"ortho", "backward", "forward"}, optional, keyword-only
-        FFT normalization mode. Default is "ortho".
     name : str, optional, keyword-only
         Name of the equalizer instance. Default is
         ``"frequency domain equalizer"``.
@@ -70,7 +70,6 @@ class FrequencyDomainEqualizer(WeightAmplifier):
     h: Optional[np.ndarray] = None
     axis: int = field(default=-1, kw_only=True)
     shift: bool = field(default=False, kw_only=True)
-    norm: Literal["ortho", "backward", "forward"] = field(default="ortho", kw_only=True)
     name: str = field(default="frequency domain equalizer", kw_only=True)
     # the base class takes its weight at construction; here it is
     # computed from h in prepare(), so it is init=False and starts empty

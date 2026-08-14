@@ -201,9 +201,3 @@ for order, label in ((4, "QPSK"), (16, "16QAM"), (64, "64QAM"),
     noiseless.set_params(fibre__noise_scaling=0.0)
     value = measure(noiseless, [1e-3])[0]
     print(f"{label:12s} {value:10.2f} dB   {value - nli_only_dB:+10.2f} dB")
-
-mermaid_dir = "../../docs/tutorials/mermaid/"
-with open(f"{mermaid_dir}/gn_model.mmd", "w") as stream:
-    stream.write(get_chain().to_mermaid())
-
-plt.show()

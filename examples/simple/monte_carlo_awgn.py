@@ -22,24 +22,15 @@ constellation = Constellation("QAM", 16)
 snr_dB_list = np.arange(0, 22)
 
 
-def get_chain(constellation):
-    """Symbols in, decided symbols out, over an AWGN channel.
-
-    The last section of this page runs one of these per constellation
-    order, so the constellation is an argument rather than a global. The
-    transmitter is named because a sweep has to compare against what it
-    produced, and the channel is named because a sweep has to reconfigure
-    it.
-    """
-    return Sequential([
-        SymbolGenerator(constellation.order, name="tx"),
-        SymbolMapper(constellation),
-        AWGN(snr_dB=0, name="awgn_channel"),
-        SymbolDemapper(constellation),
-        ], taps=["tx"])
-
-
-chain = get_chain(constellation)
+# One chain, transmitter to decision. Every block that a sweep must
+# reconfigure is named: the channel for the SNR, the generator, mapper
+# and demapper for the constellation the last section changes.
+chain = Sequential([
+    SymbolGenerator(constellation.order, name="tx"),
+    SymbolMapper(constellation, name="mapper"),
+    AWGN(snr_dB=0, name="awgn_channel"),
+    SymbolDemapper(constellation, name="demapper"),
+], taps=["tx"])
 
 # A Monte Carlo simulation is three parts, always in this order: the
 # metric pre-allocated, the loop that fills it, the display at the end.
@@ -110,7 +101,11 @@ for index, order in enumerate(orders):
     other = Constellation("QAM", int(order))
     bits = int(bits_per_symbol[index])
     snr_dB_values = ebn0_to_snr_dB(ebn0_dB_list, bits_per_symbol=bits)
-    collected = monte_carlo(get_chain(other), "awgn_channel.snr_dB",
+    # the same chain, reconfigured (D50): set_params re-runs the
+    # coercions a bare assignment would skip
+    chain.set_params(tx__M=other.order, mapper__alphabet=other,
+                     demapper__alphabet=other)
+    collected = monte_carlo(chain, "awgn_channel.snr_dB",
                             snr_dB_values,
                             {"ber": partial(compute_ber, width=bits)},
                             N_compare, reference="tx", seed=1)
@@ -126,10 +121,3 @@ ax = plot_error_rate(ebn0_dB_list, measured_ber, theory=theory_ber,
 ax.set_ylim(1e-6, 1)
 plt.savefig(f"{img_dir}/monte_carlo_awgn_orders.png")
 
-# The chain diagrams this tutorial shows are exported from the chains
-# themselves (D33c), so the picture cannot drift from the code -- the
-# smoke test compares what a run writes with what the page displays.
-mermaid_dir = "../../docs/tutorials/mermaid/"
-for diagram_name, diagram_chain in [("awgn_chain", chain)]:
-    with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
-        stream.write(diagram_chain.to_mermaid())

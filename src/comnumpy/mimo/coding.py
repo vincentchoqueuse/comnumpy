@@ -130,7 +130,9 @@ class SpaceTimeCode:
         \in \mathbb{C}^{N_t \times T}
 
     and the receiver observes
-    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{B}`.
+    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{V}`,
+    with :math:`\mathbf{V}` the noise (:math:`\mathbf{B}_k` being taken
+    by the conjugate dispersion matrices above).
     The **rate** is :math:`K/T` symbols per channel use, the **diversity
     order** is the minimum rank of
     :math:`\mathbf{G}(\mathbf{s}) - \mathbf{G}(\mathbf{s}')` over
@@ -777,6 +779,9 @@ class SpaceTimeDecoder(Processor):
     ------
     ValueError
         If the code is not orthogonal, or if ``H`` was not set.
+    ShapeError
+        If the number of received samples is not a multiple of the
+        code's ``n_slots``.
 
     References
     ----------
@@ -820,9 +825,29 @@ class SpaceTimeDecoder(Processor):
                 f"{code.name!r} spans {code.n_slots} channel uses per "
                 f"codeword and got {received.shape[-1]} samples, which "
                 f"is not a multiple of it.")
-        matrix = code.equivalent_channel(self.H)
-        energy = (code.orthogonality_gain
-                  * float(np.sum(np.abs(np.asarray(self.H)) ** 2)))
+        H = np.asarray(self.H)
+        if H.ndim > 2:
+            # stacked channel (D51): one equivalent matrix and one
+            # energy per draw -- channel k decodes frame k
+            if received.shape[:-2] != H.shape[:-2]:
+                raise ShapeError(
+                    f"a stacked channel with leading shape "
+                    f"{H.shape[:-2]} decodes one frame per draw and "
+                    f"needs observations (..., n_rx, N) with the same "
+                    f"leading shape, got {received.shape}.")
+            flat_H = H.reshape((-1,) + H.shape[-2:])
+            matrices = []
+            for k in range(flat_H.shape[0]):
+                matrices.append(code.equivalent_channel(flat_H[k]))
+            matrix = np.stack(matrices).reshape(
+                H.shape[:-2] + matrices[0].shape)
+            energy = (code.orthogonality_gain
+                      * np.sum(np.abs(H) ** 2,
+                               axis=(-2, -1)))[..., None, None]
+        else:
+            matrix = code.equivalent_channel(H)
+            energy = (code.orthogonality_gain
+                      * float(np.sum(np.abs(H) ** 2)))
         n_words = received.shape[-1] // code.n_slots
         blocks = received.reshape(received.shape[:-1]
                                   + (n_words, code.n_slots))

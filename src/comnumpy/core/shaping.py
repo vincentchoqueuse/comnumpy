@@ -1153,8 +1153,10 @@ class DistributionMatcher(Processor):
     Its output is what ``SymbolMapper`` consumes, so a shaped
     transmitter is a chain like any other.
 
-    Axes: *element-wise* -- the bit stream is read along the last axis,
-    and leading axes are carried through unchanged.
+    Axes: *axis -1* -- the bit stream is read in blocks of ``n_bits``
+    along the last axis, whose length changes (:math:`k` bits in,
+    :math:`n` amplitudes out); leading axes are carried through
+    unchanged.
 
     Parameters
     ----------
@@ -1214,7 +1216,9 @@ class DistributionDematcher(Processor):
     identity on any sequence the matcher produced -- and an error on any
     other, which is the honest answer after a detection mistake.
 
-    Axes: *element-wise* -- indices are read along the last axis.
+    Axes: *axis -1* -- indices are read in blocks of ``length`` along
+    the last axis, whose length changes (:math:`n` amplitudes in,
+    :math:`k` bits out); leading axes are carried through unchanged.
 
     Parameters
     ----------
@@ -1354,13 +1358,15 @@ class AmplitudeDemapper(Processor):
 
     .. math::
 
-        \hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|
+        \hat{x}[n] = \arg\min_i
+        \left| \left|\Re e\, y[n]\right| - a_i \right|
 
-    Taking the magnitude first is not a shortcut, it is the maximum
-    likelihood decision: on a constellation symmetric about the origin,
-    the nearest point to :math:`y` always has the amplitude nearest to
-    :math:`|y|`, so deciding on :math:`|y|` and deciding on :math:`y`
-    give the same amplitude. The sign is dropped because in PAS it
+    The real part is taken first because the amplitudes live on one
+    quadrature lane of the constellation -- each lane of a QAM symbol
+    is demapped on its own. On that lane, deciding on the magnitude is
+    not a shortcut but the maximum likelihood decision: the ASK points
+    are symmetric about the origin, so the nearest point always has the
+    amplitude nearest to :math:`|\Re e\, y|`. The sign is dropped because in PAS it
     carries parity, not data -- a real receiver feeds it to the FEC
     decoder instead.
 

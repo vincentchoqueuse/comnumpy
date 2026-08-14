@@ -60,5 +60,3 @@ mermaid_dir = "../../docs/getting_started/mermaid/"
 for diagram_name, diagram_chain in [("profiling_chain", chain)]:
     with open(f"{mermaid_dir}/{diagram_name}.mmd", "w") as stream:
         stream.write(diagram_chain.to_mermaid())
-
-plt.show()

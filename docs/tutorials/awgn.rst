@@ -81,7 +81,7 @@ this page builds one per constellation order.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 25-42
+   :lines: 25-33
 
 The processors are:
 
@@ -99,19 +99,6 @@ The processors are:
 - ``SymbolDemapper``
   Maps received noisy constellation points back to integers.
 
-The chain, as the chain itself describes it:
-
-.. mermaid:: mermaid/awgn_chain.mmd
-
-The diagram above is not drawn by hand. It is what the chain says about
-itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
-script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:
-
-.. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
-   :language: python
-   :lines: 129-135
-
 Monte Carlo Simulation
 """"""""""""""""""""""
 
@@ -122,7 +109,7 @@ against the transmitted symbols.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 44-53
+   :lines: 35-44
 
 Three chain services appear there, and they are the ones every study is made
 of.
@@ -141,7 +128,7 @@ at every point:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 55-66
+   :lines: 46-58
 
 .. code::
 
@@ -209,7 +196,7 @@ two expressions above transcribe line for line:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 69-82
+   :lines: 60-73
 
 From the constellation
 """"""""""""""""""""""
@@ -222,7 +209,7 @@ by :math:`k` above happens inside.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 84-89
+   :lines: 75-81
 
 .. code::
 
@@ -244,7 +231,7 @@ share a colour, so a pair reads as one statement.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 91-97
+   :lines: 83-89
 
 .. image:: img/monte_carlo_awgn.png
    :width: 100%
@@ -272,7 +259,7 @@ not guess (decision D41), so it happens at the call site:
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 99-120
+   :lines: 91-114
 
 The metric changes with the axis. Against :math:`E_b/N_0` the natural quantity
 is the bit error rate, and ``compute_ber`` needs the symbol width, which
@@ -291,7 +278,7 @@ disagreeing with theory.
 
 .. literalinclude:: ../../examples/simple/monte_carlo_awgn.py
    :language: python
-   :lines: 120-127
+   :lines: 116-123
 
 .. image:: img/monte_carlo_awgn_orders.png
    :width: 100%

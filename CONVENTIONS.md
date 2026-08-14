@@ -41,7 +41,7 @@ Every block belongs to exactly one category, stated in its docstring
 ("Axes:" line):
 
 1. **Element-wise** — operates pointwise, shape-agnostic
-   (`AWGN`, `SymbolMapper`, `HardClipper`).
+   (`AWGN`, `SymbolMapper`, `Clipper`).
 2. **Axis -1** — hardcodes `axis=-1` and broadcasts over everything else
    (filters, `FFTProcessor`, `IFFTProcessor`, `CyclicPrefixer`).
 3. **Declared axis** — requires a specific axis and validates it in

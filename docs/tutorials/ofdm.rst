@@ -146,7 +146,7 @@ Results
 
 .. code::
 
-   single carrier: SER 0.0117, 3669 ms
+   single carrier: SER 0.0117, 3713 ms
 
 .. image:: img/one_shot_ofdm_fig2.png
    :width: 100%
@@ -202,7 +202,7 @@ Results
 
 .. code::
 
-   OFDM          : SER 0.0406, 1.00 ms (3670 times faster)
+   OFDM          : SER 0.0406, 1.06 ms (3494 times faster)
 
 .. image:: img/one_shot_ofdm_fig3.png
    :width: 100%
@@ -221,7 +221,7 @@ range of SNR values:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 101-128
+   :lines: 101-130
 
 .. code::
 
@@ -268,17 +268,17 @@ block length grows:
 
 .. literalinclude:: ../../examples/ofdm/one_shot_ofdm.py
    :language: python
-   :lines: 129-165
+   :lines: 131-166
 
 .. code::
 
    receiver runtime [ms], and their ratio
    block length N  single carrier   OFDM   ratio
    ---------------------------------------------
-              128            7.34  0.568    12.9
-              256           34.91  0.567    61.6
-              512          188.09  0.793   237.1
-             1024         1377.50  0.862  1598.3
+              128            8.16  0.805    10.1
+              256           33.58  0.733    45.8
+              512          219.69  0.890   246.8
+             1024         1491.35  0.945  1577.4
 
 .. image:: img/one_shot_ofdm_fig5.png
    :width: 100%

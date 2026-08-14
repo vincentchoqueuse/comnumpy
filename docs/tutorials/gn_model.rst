@@ -252,8 +252,6 @@ Everything above is a prediction. Now we propagate samples and find out.
    :language: python
    :lines: 117-152
 
-.. mermaid:: mermaid/gn_model.mmd
-
 ``launch_amplitude(power_W, polarizations=2)`` is the factor of two of the
 warning above, named rather than written: :math:`\sqrt{P/2}` of field per
 polarization for a channel power :math:`P`.
@@ -401,11 +399,6 @@ So the GN model is pessimistic for real formats, and predictably so. The
 enhanced GN model exists to recover that gap; this library does not implement
 it, and the table above is the honest statement of what that costs -- about a
 decibel for 16QAM, less as the format grows.
-
-.. literalinclude:: ../../examples/optical/gn_model.py
-   :language: python
-   :lines: 205-209
-
 
 Going further
 ^^^^^^^^^^^^^

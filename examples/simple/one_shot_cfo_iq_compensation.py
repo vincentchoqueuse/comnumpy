@@ -55,7 +55,7 @@ for tap, name in [("awgn", "received signal"),
     plot_iq(chain.tap(tap), title=name)
 
 # show evolution of the angular frequency estimate
-w0_history = chain["cfo_comp"].history
+w0_history = chain["cfo_comp"].history_
 plt.figure()
 plt.plot(w0_history)
 plt.xlabel("number of iteration")

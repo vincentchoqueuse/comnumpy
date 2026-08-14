@@ -45,14 +45,14 @@ are simply not seen.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 1-44
+   :lines: 1-41
 
 Let us generate four OFDM symbols and look at the instantaneous power,
 normalized by its own mean:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 47-63
+   :lines: 43-57
 
 .. image:: img/monte_carlo_ofdm_papr_fig1.png
    :width: 100%
@@ -81,7 +81,7 @@ non-zero probability.
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 69-95
+   :lines: 59-89
 
 .. image:: img/monte_carlo_ofdm_papr_fig2.png
    :width: 100%
@@ -109,7 +109,7 @@ with those values, which saves reducing them by hand:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 98-104
+   :lines: 91-98
 
 .. code::
 
@@ -150,20 +150,10 @@ the oversampling rather than the effective count: the fit belongs to the
 library, with its domain of validity, rather than to each script that draws
 the curve.
 
-The fitted constant can be avoided. Counting how often a Gaussian process
-crosses a level gives an effective count that grows with the threshold
-instead,
-
-.. math::
-
-   \mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sc}
-   \sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)
-
-which the same function returns with ``method="level_crossing"``. It has no
-fitted constant, but it describes the peak of the **continuous-time**
-waveform, which a sampled one can only underestimate -- so it reads high on
-sampled data, and it is a large-threshold approximation. The two are
-compared against the measurement at the end of this page.
+A fit-free alternative based on level-crossing counts exists -- the same
+function returns it with ``method="level_crossing"`` -- but it describes the
+peak of the **continuous-time** waveform, which sampled data can only
+underestimate, so it reads high here.
 
 Implementation
 """"""""""""""
@@ -172,7 +162,7 @@ We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 109-145
+   :lines: 100-152
 
 Results
 """""""
@@ -184,33 +174,12 @@ Results
 
 .. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
    :language: python
-   :lines: 146-150
+   :lines: 154-158
 
 .. code::
 
    N_sc =  256: PAPR exceeded once in a thousand symbols above 11.30 dB
    N_sc = 1024: PAPR exceeded once in a thousand symbols above 11.72 dB
-
-Which of the two models to believe is a question the measurement answers:
-
-.. literalinclude:: ../../examples/ofdm/monte_carlo_ofdm_papr.py
-   :language: python
-   :lines: 152-166
-
-.. code::
-
-   N_sc  level  threshold   effective   level crossing
-     256  1e-02    10.43 dB     1.2e-02         1.4e-02
-     256  1e-03    11.28 dB     1.1e-03         1.4e-03
-    1024  1e-02    11.00 dB     9.6e-03         1.2e-02
-    1024  1e-03    11.69 dB     1.1e-03         1.6e-03
-
-The effective-count model is within 20 % of the measurement, the
-level-crossing one 20 to 60 % above it -- consistently above, which is the
-direction it must err in, since it is the continuous-time waveform that is
-being modelled and the simulation only sees four samples per Nyquist
-interval. Take the first to size an amplifier from sampled data, and the
-second when the question is the analogue waveform itself.
 
 The measured points sit on the closed form over the whole range. As expected,
 the probability of a large PAPR grows with the number of subcarriers -- but

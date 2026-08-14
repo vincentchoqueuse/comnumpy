@@ -237,7 +237,9 @@ class Normalizer(Amplifier):
 
     Axes: *element-wise* -- the gain :math:`\alpha` is a single scalar
     measured over the whole array in ``prepare()``, then applied
-    pointwise.
+    pointwise. On a batched input the rows are therefore **pooled into
+    one estimate** -- normalize per trial by looping when each row must
+    reach the target on its own.
 
     Unlike ``Amplifier``, the gain is *not* a parameter here: it is
     measured, so it is exposed as ``gain_`` (decision D23) and the
@@ -409,11 +411,11 @@ class BlindIQCompensator(Processor):
 
     Attributes
     ----------
-    alpha_ : complex
+    alpha_ : complex or np.ndarray
         Estimated coefficient :math:`\alpha` applied to the in-phase
         component (data-dependent, hence the trailing underscore,
         decision D23; initialized to 1).
-    beta_ : complex
+    beta_ : complex or np.ndarray
         Estimated coefficient :math:`\beta` applied to the quadrature
         component (data-dependent, hence the trailing underscore,
         decision D23; initialized to 0).
@@ -527,12 +529,15 @@ class BlindCFOCompensator(Processor):
     Newton step uses the exact first and second derivatives of the
     periodogram with respect to :math:`\omega`.
 
-    Axes: *declared axis* -- accepts ``(N,)`` or ``(..., P, N)``; the
-    correction :math:`e^{-j\widehat{\omega}_0 n}` uses the sample index
-    :math:`n` along the last axis. The estimand is **shared** (D49): a
-    frequency offset is one laser beating against one local oscillator,
-    so the periodogram is accumulated over every path and a single
-    :math:`\widehat{\omega}_0` is applied to all of them. That is not
+    Axes: *declared axis* -- accepts ``(N,)`` or one polarization pair
+    ``(2, N)``; the correction :math:`e^{-j\widehat{\omega}_0 n}` uses
+    the sample index :math:`n` along the last axis. The estimand is
+    **shared** (D49): a frequency offset is one laser beating against
+    one local oscillator, so the periodogram is accumulated over the
+    pair and a single :math:`\widehat{\omega}_0` is applied to both
+    rows. A wider batch is refused with ``ShapeError`` -- one scalar
+    estimate cannot serve independent trials (D51); loop over them, one
+    compensator each. That is not
     only tidier than one estimate per path -- it is the better
     estimator, since it sees all the data.
 
@@ -552,7 +557,7 @@ class BlindCFOCompensator(Processor):
         refinement.
     save_history : bool, optional, keyword-only
         If True, every intermediate value of :math:`\omega_0` is appended
-        to ``history``. Default is False.
+        to ``history_``. Default is False.
     method : {"grad", "newton"}, optional, keyword-only
         Local optimizer. Default is ``"newton"``.
     step_size : float, optional, keyword-only
@@ -570,7 +575,7 @@ class BlindCFOCompensator(Processor):
         Estimated frequency offset :math:`\widehat{\omega}_0` in
         rad/sample (data-dependent, hence the trailing underscore,
         decision D23; None before the first ``fit``).
-    history : list
+    history_ : list
         Successive iterates of :math:`\omega_0` when
         ``save_history=True``.
 
@@ -616,13 +621,13 @@ class BlindCFOCompensator(Processor):
     name: str = field(default="cfo_compensator", kw_only=True)
     # internal state (declared for slots, D40a)
     grid_search_array: np.ndarray = field(init=False, repr=False)
-    history: list[float] = field(init=False, repr=False, default_factory=list)
+    history_: list[float] = field(init=False, repr=False, default_factory=list)
     # estimated quantity (D23), declared for slots (D40a)
     w0_: Optional[float] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
         self.grid_search_array = np.arange(self.grid_search_tuple[0], self.grid_search_tuple[1], self.grid_search_tuple[2])
-        self.history = []
+        self.history_ = []
 
     def prepare(self, x: np.ndarray) -> None:
         from comnumpy.exceptions import ShapeError  # local import (D36)
@@ -653,7 +658,7 @@ class BlindCFOCompensator(Processor):
 
     def callback(self, intermediate_result: float) -> None:
         if self.save_history:
-            self.history.append(intermediate_result)
+            self.history_.append(intermediate_result)
 
     def fit(self, x: np.ndarray, w0: float) -> None:
         w = 4*w0
@@ -671,7 +676,7 @@ class BlindCFOCompensator(Processor):
 
             index_max = np.argmax(cost_vect)
             w = w_vect[index_max]
-            self.callback(4*w)
+            self.callback(float(np.real(w) / 4))
 
         for _ in range(self.N_iter):
 
@@ -695,7 +700,7 @@ class BlindCFOCompensator(Processor):
                     f"{self.method!r}, expected 'grad' or 'newton'.")
 
             w = w + h
-            self.callback(4*w)
+            self.callback(float(np.real(w) / 4))
 
         self.w0_ = float(np.real(w)/4)
 
@@ -768,7 +773,7 @@ class BlindPhaseCompensation(Processor):
 
     Attributes
     ----------
-    theta_ : float
+    theta_ : float or np.ndarray
         Estimated phase :math:`\widehat{\theta}` in radians
         (data-dependent, hence the trailing underscore, decision D23).
 
@@ -1099,7 +1104,7 @@ class DataAidedPhaseCompensator(DataAidedMixin, Processor):
 
     Attributes
     ----------
-    theta_ : float
+    theta_ : float or np.ndarray
         Estimated phase :math:`\widehat{\theta}` in radians
         (data-dependent, hence the trailing underscore, decision D23).
         Re-estimated at every call (per-block regime, D22).
@@ -1221,7 +1226,7 @@ class DataAidedComplexGainCompensator(DataAidedMixin, Processor):
 
     Attributes
     ----------
-    gain_ : complex
+    gain_ : complex or np.ndarray
         Estimated complex gain :math:`\widehat{g}` (data-dependent, hence
         the trailing underscore, decision D23).
 
@@ -1534,7 +1539,7 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
         ``Sequential(wiring={"synchronizer.reference": "source"})``
         instead of freezing an array.
     scale_correction : bool, optional
-        If True (default), the output is multiplied by the complex peak
+        If True (default), the output is divided by the complex peak
         :math:`\widehat{a}`; otherwise only the delay is corrected.
     up_factor : int, optional, keyword-only
         Interpolation factor :math:`U` applied before the correlation;
@@ -1556,7 +1561,8 @@ class DataAidedFineSynchronizer(DataAidedMixin, Processor):
     delay_ : int
         Estimated delay :math:`\widehat{m}_0`, expressed in *upsampled*
         samples (data-dependent, hence the trailing underscore, decision
-        D23; divide by ``up_factor`` to get it in symbol periods).
+        D23; divide by ``up_factor`` to get it in input sample
+        periods).
     scale_ : complex
         Compensation gain :math:`1/\widehat{a}` actually applied, or 1
         when ``scale_correction`` is False.
@@ -1737,6 +1743,13 @@ class BlindPhaseSearchCompensator(Processor):
         additive noise.
     name : str, optional, keyword-only
         Block name. Default ``"bps"``.
+
+    Attributes
+    ----------
+    phase_ : np.ndarray
+        Estimated unwrapped phase trajectory of the last call, of the
+        same shape as the input -- one trajectory per leading-axis row
+        (data-dependent, hence the trailing underscore, D23).
 
     References
     ----------

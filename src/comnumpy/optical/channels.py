@@ -143,7 +143,10 @@ class ChromaticDispersion(Processor):
     With ``direction=-1`` the phase shift and the attenuation are both
     inverted (backward propagation, used for CD compensation).
 
-    Axes: *declared axis* -- requires a full-field 1D signal (N,).
+    Axes: *axis -1* -- the transfer function is applied along the last
+    axis; leading axes are batch, every row through the same fibre.
+    :math:`\beta_2` is given in ps^2/km and converted internally to
+    s^2/km (factor :math:`10^{-24}`), so the exponent is dimensionless.
 
     Parameters
     ----------
@@ -228,9 +231,10 @@ class KerrNonLinearity(Processor):
     an optional amplitude gain. With ``direction=-1`` the phase rotation
     is conjugated (backward propagation, used in DBP).
 
-    Axes: *declared axis* -- requires a full-field 1D signal (N,). A
-    pointwise Kerr step applied to separate channels would model SPM only
-    (no XPM, no FWM).
+    Axes: *element-wise* -- the rotation is pointwise, leading axes
+    are batch, and the shape is not validated. The signal must be the
+    **full field**: a pointwise Kerr step applied to separate channels
+    would model SPM only (no XPM, no FWM).
 
     Parameters
     ----------

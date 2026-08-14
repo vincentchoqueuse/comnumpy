@@ -20,7 +20,6 @@ from comnumpy import style
 style.use()
 
 img_dir = "../../docs/tutorials/img/"
-mermaid_dir = "../../docs/tutorials/mermaid/"
 
 snr_dB = np.arange(0, 27, 2)
 snr = 10 ** (snr_dB / 10)
@@ -158,8 +157,6 @@ chain = Sequential([
     AmplitudeMapper(amplitudes, name="signs"),
     ], name="probabilistic amplitude shaping")
 chain.seed(42)
-with open(f"{mermaid_dir}/shaping_pas.mmd", "w") as stream:
-    stream.write(chain.to_mermaid())
 
 # Run it and count. The signs are equiprobable, so the law carried by the
 # signed 8-PAM is P(+/- a_i) = P_A(a_i) / 2, which is Maxwell-Boltzmann

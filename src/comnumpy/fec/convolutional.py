@@ -48,7 +48,7 @@ class ConvolutionalEncoder(Processor):
     Signal Model
     ------------
     With input bits :math:`x[m]` and generator polynomials
-    :math:`g_1, \dots, g_n` of constraint length :math:`K`, the coded
+    :math:`g_0, \dots, g_{n-1}` of constraint length :math:`K`, the coded
     stream interleaves the :math:`n` parity outputs:
 
     .. math::

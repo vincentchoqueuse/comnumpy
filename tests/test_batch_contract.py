@@ -42,6 +42,25 @@ QPSK = Constellation("PSK", 4)
 PAIR = RNG.standard_normal((3, 2, N)) + 1j * RNG.standard_normal((3, 2, N))
 
 
+def _alamouti_pieces():
+    # ONE 2-D channel broadcast over the batch: the row-equality check
+    # runs the same factory on the batch and on one row, so the config
+    # must not carry the batch itself (the stacked-H path is locked in
+    # tests/mimo/test_stacked_channel.py)
+    from comnumpy.mimo.channels import FlatMIMOChannel
+    from comnumpy.mimo.coding import SpaceTimeEncoder, get_code
+    from comnumpy.mimo.utils import rayleigh_channel
+    channel = rayleigh_channel(1, 2, seed=3)
+    encoded = SpaceTimeEncoder(get_code("alamouti"))(SERIAL)
+    return channel, FlatMIMOChannel(channel)(encoded)
+
+
+ALAMOUTI_H, ALAMOUTI_RX = _alamouti_pieces()
+# a rotated QPSK frame set, for the blind trackers
+QPSK_POINTS = np.asarray(QPSK.alphabet)
+ROTATED_QPSK = QPSK_POINTS[RNG.integers(0, 4, (3, 200))] * np.exp(1j * 0.3)
+
+
 def _fs():
     return {"fs": 32e9}
 
@@ -59,8 +78,6 @@ BROADCAST = {
             np.array([1.0, 0.4])), SERIAL),
     "core.compensators.BlindIQCompensator":
         (lambda: _cls("core.compensators", "BlindIQCompensator")(), SERIAL),
-    "core.compensators.Normalizer":
-        (lambda: _cls("core.compensators", "Normalizer")("max"), SERIAL),
     "core.compensators.DCCorrector":
         (lambda: _cls("core.compensators", "DCCorrector")(), SERIAL),
     "core.devices.RappAmplifier":
@@ -91,6 +108,11 @@ BROADCAST = {
         (lambda: _cls("core.processors", "Downsampler")(2), SERIAL),
     "core.processors.Upsampler":
         (lambda: _cls("core.processors", "Upsampler")(2), SERIAL),
+    "core.processors.DelayRemover":
+        (lambda: _cls("core.processors", "DelayRemover")(3), SERIAL),
+    "core.processors.BlindPhaseTracker":
+        (lambda: _cls("core.processors", "BlindPhaseTracker")(
+            16, QPSK_POINTS), ROTATED_QPSK),
     "core.processors.Serial2Parallel":
         (lambda: _cls("core.processors", "Serial2Parallel")(8), SERIAL),
     "core.processors.Parallel2Serial":
@@ -101,6 +123,13 @@ BROADCAST = {
     "mimo.channels.FlatMIMOChannel":
         (lambda: _cls("mimo.channels", "FlatMIMOChannel")(
             _rayleigh(2, 2, seed=1)), PAIR),
+    "mimo.coding.SpaceTimeEncoder":
+        (lambda: _cls("mimo.coding", "SpaceTimeEncoder")(
+            _cls("mimo.coding", "get_code")("alamouti")), SERIAL),
+    "mimo.coding.SpaceTimeDecoder":
+        (lambda: _cls("mimo.coding", "SpaceTimeDecoder")(
+            _cls("mimo.coding", "get_code")("alamouti"), H=ALAMOUTI_H),
+         ALAMOUTI_RX),
     "mimo.detectors.LinearDetector":
         (lambda: _cls("mimo.detectors", "LinearDetector")(
             QPSK, H=_rayleigh(2, 2, seed=1), method="zf"), PAIR),
@@ -173,23 +202,26 @@ REFUSES = {
 EXEMPT = {
     # abstract bases and containers
     "mimo.channels.BaseMIMOChannel": "abstract base, forward raises",
+    "core.compensators.Normalizer": "the gain is ONE scalar measured "
+        "over the whole array -- a documented estimand, batch rows "
+        "pooled by design; the docstring says so",
     # generic event = the whole 1-D stream by declared design; a batch
     # has no meaning the docstring does not already refuse
     "core.compensators.DataAidedFineSynchronizer":
         "estimates one delay against one 1-D reference",
     "core.compensators.DataAidedSimpleSynchronizer":
         "estimates one delay against one 1-D reference",
-    "core.frames.Framer": "frames one 1-D stream against a FrameStructure",
-    "core.frames.Deframer": "deframes one 1-D stream",
-    "core.processors.AutoConcatenator": "concatenates along the last axis "
-        "with internal history: one stream per instance",
-    "core.processors.BlindPhaseTracker": "sequential per-sample tracker, "
-        "one trajectory per instance (superseded by "
-        "BlindPhaseSearchCompensator for pairs)",
+    "core.frames.Framer": "frames (..., T, N) against a "
+        "FrameStructure; needs one, not generically constructible here",
+    "core.frames.Deframer": "same FrameStructure dependency",
+    "core.processors.AutoConcatenator": "its masks are configured by a "
+        "companion block (HermitianPrefixer); not generically "
+        "constructible",
+
     "core.processors.DataAdder": "adds a stored companion signal of the "
         "un-batched shape",
     "core.processors.DataExtractor": "extracts against stored 1-D markers",
-    "core.processors.DelayRemover": "drops a scalar delay from one stream",
+
     "core.processors.SampleRemover": "drops N samples of one stream",
     "core.processors.Resampler": "scipy.signal.resample along a declared "
         "axis; not swept here because its output length depends on the "
@@ -202,10 +234,11 @@ EXEMPT = {
         "amplitude stream",
     "core.shaping.AmplitudeDemapper": "shaping operates on one 1-D "
         "amplitude stream",
-    "core.shaping.DistributionMatcher": "arithmetic-coding state over one "
-        "1-D bit stream",
-    "core.shaping.DistributionDematcher": "arithmetic-coding state over "
-        "one 1-D bit stream",
+    "core.shaping.DistributionMatcher": "blocks of n_bits along the "
+        "last axis, leading axes carried through; not swept for want of "
+        "a canonical probe distribution",
+    "core.shaping.DistributionDematcher": "blocks of `length` along the "
+        "last axis, leading axes carried through; same",
     "core.channels.TappedDelayLineChannel": "frozen-realization channel: "
         "one seeded draw is the configuration (D51), sounded via "
         "impulse_response",
@@ -218,10 +251,6 @@ EXEMPT = {
         "in tests/fec",
     "mimo.channels.SelectiveMIMOChannel": "builds an (L N_t, N) stacked "
         "convolution matrix for one frame",
-    "mimo.coding.SpaceTimeEncoder": "Alamouti layout (N_t, N) per code "
-        "block, one frame per call",
-    "mimo.coding.SpaceTimeDecoder": "Alamouti layout per code block, one "
-        "frame per call",
     "mimo.compensators.BlindDualMIMOCompensator": "adaptive per pair; its "
         "batch (one butterfly per pair) is locked in "
         "tests/core/test_batch_axes.py",

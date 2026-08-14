@@ -84,17 +84,16 @@ class SRRCFilter(Processor):
         If True, normalize the taps to unit energy
         :math:`\sum_m h^2[m] = 1`. Default is True.
     scale : float, optional, keyword-only
-        Amplitude scaling factor applied to the output. Default is 1.0.
-        Only the ``"fft"`` method applies it.
-    method : {"lfilter", "time", "fft"}, optional, keyword-only
+        Amplitude scaling factor applied to the output. Default is
+        1.0, applied by both methods.
+    method : {"lfilter", "fft"}, optional, keyword-only
         Filtering method: ``"lfilter"`` for the causal FIR convolution
         (``scipy.signal.lfilter``), ``"fft"`` for the circular
         frequency-domain product with the delay-compensated response
-        returned by :meth:`H`. Default is ``"lfilter"``. The ``"time"``
-        value is declared in the type but not implemented.
+        returned by :meth:`H`. Default is ``"lfilter"``.
     axis : int, optional, keyword-only
-        Declared filtering axis. Default is -1; the implementation always
-        filters along the last axis.
+        Filtering axis. Default is -1. The ``"lfilter"`` method honours
+        it; the ``"fft"`` method always filters along the last axis.
     name : str, optional, keyword-only
         Name of the filter instance. Default is ``"SRRCFilter"``.
 
@@ -231,8 +230,8 @@ class BWFilter(Processor):
 
         H[k] =
         \begin{cases}
-        1 & \text{if } |f[k]| \leq w_n \\
-        0 & \text{if } |f[k]| > w_n
+        1 & \text{if } |f[k]| \leq w_n / 2 \\
+        0 & \text{if } |f[k]| > w_n / 2
         \end{cases}
 
     where :math:`f[k]` is the frequency of bin :math:`k` in cycles per
@@ -259,8 +258,6 @@ class BWFilter(Processor):
     ------
     ValueError
         If ``wn`` is outside :math:`(0, 1]`.
-    NotImplementedError
-        If the input has more than one dimension.
 
     References
     ----------

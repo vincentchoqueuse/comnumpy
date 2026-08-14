@@ -68,15 +68,17 @@ class Upsampler(Processor):
 
     Axes: *declared axis* -- the zero stuffing runs along ``axis``
     (default -1, the sample axis of the Serial layout ``(..., N)``) and
-    the remaining axes are left untouched.
+    the remaining axes are left untouched. The anti-imaging filter of
+    ``use_filter=True`` always acts along the **last** axis, whatever
+    ``axis`` says.
 
     Parameters
     ----------
     L : int
         Upsampling factor :math:`L`. Must be a positive integer.
     phase : int, optional, keyword-only
-        Phase offset :math:`\tau \in \mathbb{N}` of the retained samples.
-        Default is 0.
+        Phase offset :math:`\tau` of the retained samples, with
+        :math:`0 \le \tau < L`. Default is 0.
     scale : float, optional, keyword-only
         Output scaling factor :math:`\alpha`. Default is 1.0.
     axis : int, optional, keyword-only
@@ -168,7 +170,9 @@ class Downsampler(Processor):
 
     Axes: *declared axis* -- the decimation runs along ``axis`` (default
     -1, the sample axis of the Serial layout ``(..., N)``) and the
-    remaining axes are left untouched.
+    remaining axes are left untouched. The anti-aliasing filter of
+    ``use_filter=True`` always acts along the **last** axis, whatever
+    ``axis`` says.
 
     Parameters
     ----------
@@ -183,9 +187,8 @@ class Downsampler(Processor):
         Axis along which the downsampling is performed. Default is -1.
     use_filter : bool, optional, keyword-only
         If True, apply the anti-aliasing lowpass filter of normalized
-        cutoff :math:`1/L` before the decimation. Default is False.
-        The filter is a :class:`comnumpy.core.filters.BWFilter`, which
-        only accepts a 1D input.
+        cutoff :math:`1/L` (a :class:`comnumpy.core.filters.BWFilter`)
+        before the decimation. Default is False.
     name : str, optional, keyword-only
         Name of the processor instance. Default is ``"downsampler"``.
 
@@ -261,7 +264,11 @@ class Serial2Parallel(Processor):
     .. math::
 
         y[t, f] = x\!\left[t F + f\right], \qquad
-        0 \le t < T, \quad 0 \le f < F, \quad T = \left\lceil \frac{N}{F} \right\rceil
+        0 \le t < T, \quad 0 \le f < F, \quad
+        T = \left\lceil \frac{N}{F} \right\rceil
+        \; \text{(zero-padding)}, \qquad
+        T = \left\lfloor \frac{N}{F} \right\rfloor
+        \; \text{(truncate)}
 
     Equivalently, :math:`t = \lfloor n / F \rfloor` and
     :math:`f = n \bmod F`: the **serial index runs fastest on the last
@@ -800,8 +807,9 @@ class SampleRemover(Processor):
     and :math:`y[n]` has length :math:`N - D`. It is the exact inverse of
     :class:`DataAdder` when the same :math:`n_0` is used.
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the
-    splice uses flat indexing and does not broadcast.
+    Axes: *1D only* -- operates on a serial signal ``(N,)``; the
+    splice uses flat indexing and a batch is refused with
+    ``ShapeError``.
 
     Parameters
     ----------
@@ -924,8 +932,9 @@ class DataAdder(Processor):
     :math:`N + D`. Applying :class:`SampleRemover` with the same
     :math:`n_0` and :math:`D` restores :math:`x[n]`.
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the
-    splice is a concatenation along the first axis.
+    Axes: *1D only* -- operates on a serial signal ``(N,)``; the
+    splice is a concatenation, and a batch is refused with
+    ``ShapeError``.
 
     Parameters
     ----------
@@ -1041,7 +1050,7 @@ class DataExtractor(Processor):
         if self.selector is None:
             return x
 
-        # transformer un tuple en slice si c'est un tuple simple
+        # turn a plain tuple into the slice it describes
         if isinstance(self.selector, tuple):
             self.selector = slice(*self.selector)
 
@@ -1076,8 +1085,9 @@ class Resampler(Processor):
     a polyphase implementation (``scipy.signal.resample_poly``), which
     never computes the discarded samples.
 
-    Axes: *declared axis* -- the resampling runs along the last axis, the
-    sample axis of the Serial layout ``(..., N)``.
+    Axes: *axis -1* -- the resampling runs along the last axis, the
+    sample axis of the Serial layout ``(..., N)``; leading axes are
+    batch, every row resampled by the same factors.
 
     Parameters
     ----------
@@ -1121,7 +1131,9 @@ class Resampler(Processor):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         from scipy import signal  # local import (D36)
-        y = signal.resample_poly(x, self.up, self.down)
+        # axis=-1 explicitly: scipy's default is axis 0, which on a
+        # batched (..., N) input would resample the batch axis (D51)
+        y = signal.resample_poly(x, self.up, self.down, axis=-1)
         return y
 
 
@@ -1237,10 +1249,11 @@ class BlindPhaseTracker(Processor):
     phases give mathematically identical costs and which one wins is
     arbitrary. That is a property of the criterion, not of the search.
 
-    Axes: *declared axis* -- operates on a 1D serial signal ``(N,)``; the
-    decision of a sample under a test phase does not depend on any other
-    sample, so the whole search is a table of decision errors plus a
-    moving sum over it, and nothing is done in order.
+    Axes: *axis -1* -- one independent trajectory per leading-axis row
+    (D49): a ``(..., P, N)`` signal gets one phase estimate per path.
+    The decision of a sample under a test phase does not depend on any
+    other sample, so the whole search is a table of decision errors plus
+    a moving sum over it, and nothing is done in order.
 
     Parameters
     ----------
@@ -1262,8 +1275,8 @@ class BlindPhaseTracker(Processor):
         underscore).
     theta_ : np.ndarray
         The estimated phase trajectory :math:`\hat{\theta}[n]` of the last
-        call, of length :math:`N` (data-derived, hence the trailing
-        underscore, D23). A block never draws (D25, D42): plot it from the
+        call, of the same shape as the input (data-derived, hence the
+        trailing underscore, D23). A block never draws (D25, D42): plot it from the
         caller, for instance with ``matplotlib.pyplot.plot(tracker.theta_)``.
 
     References
