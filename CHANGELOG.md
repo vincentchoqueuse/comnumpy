@@ -45,6 +45,25 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — every tutorial script held to the writing doctrine
+
+The conventions sweep closed over the whole tutorial set. The coding
+page: three chains written out in place of a factory pair, the LDPC
+iteration count varied by `set_params(decoder__n_iter=)` on one chain
+instead of rebuilding it in a loop, two `print_data` tables in place of
+hand-rolled aligned prints. The AWGN page: the chain inline, the
+constellation-order study reconfiguring it with `set_params`, the
+diagram section gone (its feature demo lives in the getting-started
+page). The OFDM page: two explicit `monte_carlo` calls and a runtime
+loop over the swept lengths only. The MIMO cost study and the PAPR
+references: unrolled. The shaping and GN-model scripts lose their
+mermaid dumps and stray `plt.show`; the GN-model factory stays -- its
+source genuinely changes structure (a Gaussian stimulus against a
+mapped one) -- and so do the two DBP scripts' factories, the one
+sanctioned chain split, for the Monte-Carlo cost of re-propagating the
+fibre. The interpolation the shaping page keeps reads its own computed
+capacity curves, not a closed form.
+
 ### Changed — the Alamouti and MIMO tutorials rewritten on the batch
 
 Both pages carried simulation scaffolding that drowned the reader: a
