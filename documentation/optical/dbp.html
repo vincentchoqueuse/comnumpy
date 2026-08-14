@@ -505,11 +505,13 @@ with <code class="docutils literal notranslate"><span class="pre">P</span></code
 which is 1.8x faster than the same <code class="docutils literal notranslate"><span class="pre">B</span></code> calls at 12288 samples and
 3.1x at 1024 – the split-step loop, the per-span amplifier and the
 parameter precomputation are paid once instead of <code class="docutils literal notranslate"><span class="pre">B</span></code> times. A
-batch of single-polarization fields is <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">1,</span> <span class="pre">N)</span></code>; <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">N)</span></code>
-reads <code class="docutils literal notranslate"><span class="pre">B</span></code> as polarizations and is refused.</p>
+batch of single-polarization fields is <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">1,</span> <span class="pre">N)</span></code>; a bare
+<code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">N)</span></code> reads <code class="docutils literal notranslate"><span class="pre">B</span></code> as polarizations – refused for
+<span class="math notranslate nohighlight">\(B \ge 3\)</span>, while <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N)</span></code> is read as one polarization pair
+by convention.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_spans<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number of spans to back-propagate.</p>
+<dd class="field-odd"><p>Number of spans to back-propagate. Default is 1.</p>
 </dd>
 <dt class="field-even">type N_spans<span class="colon">:</span></dt>
 <dd class="field-even"><p>int</p>
@@ -551,51 +553,13 @@ compensated, in a single exact step per span. Default is False.</p>
 <dt class="field-even">type use_only_linear<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool, keyword-only</p>
 </dd>
-<dt class="field-odd">param c<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Speed of light <span class="math notranslate nohighlight">\(c\)</span> in m/s. Default is <code class="docutils literal notranslate"><span class="pre">SPEED_OF_LIGHT</span></code>.</p>
+<dt class="field-odd">param fiber<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The physical fibre to invert (D46) – the same object handed to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code>, so the two cannot disagree. Default is a
+standard single-mode fibre, <code class="docutils literal notranslate"><span class="pre">FiberSpec()</span></code>.</p>
 </dd>
-<dt class="field-even">type c<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param h<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Planck constant <span class="math notranslate nohighlight">\(h\)</span> in J.s (kept for symmetry with
-<code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code>; unused by the deterministic inverse).</p>
-</dd>
-<dt class="field-even">type h<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param gamma<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Kerr coefficient <span class="math notranslate nohighlight">\(\gamma\)</span> in rad/W/km. Default is
-<code class="docutils literal notranslate"><span class="pre">KERR_COEFFICIENT</span></code>.</p>
-</dd>
-<dt class="field-even">type gamma<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param lamb<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Wavelength <span class="math notranslate nohighlight">\(\lambda\)</span> in nm. Default is <code class="docutils literal notranslate"><span class="pre">WAVELENGTH</span></code>.</p>
-</dd>
-<dt class="field-even">type lamb<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param alpha_dB<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Fiber loss <span class="math notranslate nohighlight">\(\alpha_{dB}\)</span> in dB/km. Default is <code class="docutils literal notranslate"><span class="pre">FIBER_LOSS</span></code>.</p>
-</dd>
-<dt class="field-even">type alpha_dB<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param cd_coefficient<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dispersion coefficient <span class="math notranslate nohighlight">\(D\)</span> in ps/nm/km. Default is
-<code class="docutils literal notranslate"><span class="pre">CD_COEFFICIENT</span></code>.</p>
-</dd>
-<dt class="field-even">type cd_coefficient<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
-</dd>
-<dt class="field-odd">param nu<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Optical carrier frequency <span class="math notranslate nohighlight">\(\nu\)</span> in Hz (kept for symmetry
-with <code class="xref py py-class docutils literal notranslate"><span class="pre">FiberLink</span></code>; unused by the deterministic inverse).</p>
-</dd>
-<dt class="field-even">type nu<span class="colon">:</span></dt>
-<dd class="field-even"><p>float, keyword-only</p>
+<dt class="field-even">type fiber<span class="colon">:</span></dt>
+<dd class="field-even"><p>FiberSpec, keyword-only</p>
 </dd>
 <dt class="field-odd">param step_log_factor<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Adjustment factor of the logarithmic step-size distribution.

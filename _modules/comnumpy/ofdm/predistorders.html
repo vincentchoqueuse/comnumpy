@@ -765,7 +765,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    For real-valued inputs, :math:`T_m \, \mathrm{sign}(x[n])` replaces the</span>
 <span class="sd">    polar form.</span>
 
-<span class="sd">    Axes: *element-wise* -- the clipping is applied pointwise; the</span>
+<span class="sd">    Axes: *axis -1* -- the clipping is applied pointwise, but the</span>
 <span class="sd">    threshold :math:`T_m` is computed from the mean power **along the</span>
 <span class="sd">    last axis**, so each row of a batch is clipped against its own</span>
 <span class="sd">    power -- one transmitter per trial (D51).</span>
@@ -824,7 +824,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ------------</span>
 <span class="sd">    The frequency-domain input is iteratively transformed to the time</span>
 <span class="sd">    domain, clipped, transformed back and filtered. Starting from</span>
-<span class="sd">    :math:`X^{(0)}[k] = x[k]`, each iteration :math:`i = 1, \dots, N_{it}`</span>
+<span class="sd">    :math:`X^{(0)}[k] = X[k]`, each iteration :math:`i = 1, \dots, N_{it}`</span>
 <span class="sd">    computes:</span>
 
 <span class="sd">    .. math::</span>
@@ -840,7 +840,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    and where:</span>
 
-<span class="sd">    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,</span>
+<span class="sd">    * :math:`X[k]` is the frequency-domain input at subcarrier :math:`k`,</span>
 <span class="sd">    * :math:`P_s` is the mean power of the current time-domain block :math:`s^{(i)}[n]`,</span>
 <span class="sd">    * :math:`\mathrm{PAPR_{max}}` is the target maximum PAPR in dB,</span>
 <span class="sd">    * :math:`w` is the filtering weight applied in the frequency domain.</span>
@@ -926,14 +926,14 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
-<span class="sd">    Each frequency-domain block :math:`x[k]` of length :math:`N` is</span>
+<span class="sd">    Each frequency-domain block :math:`X[k]` of length :math:`N` is</span>
 <span class="sd">    partitioned into :math:`M` disjoint adjacent sub-blocks</span>
-<span class="sd">    :math:`x_m[k]` (each keeping its :math:`N/M` contiguous subcarriers</span>
+<span class="sd">    :math:`X_m[k]` (each keeping its :math:`N/M` contiguous subcarriers</span>
 <span class="sd">    and zeros elsewhere). The transmitted time-domain block is the</span>
 <span class="sd">    phase-rotated combination:</span>
 
 <span class="sd">    .. math::</span>
-<span class="sd">        y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{x_m\}[n]</span>
+<span class="sd">        y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{X_m\}[n]</span>
 
 <span class="sd">    where the phase factors are selected by exhaustive search over the</span>
 <span class="sd">    phase alphabet :math:`\mathcal{B}` to minimize the PAPR:</span>
@@ -941,24 +941,24 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    .. math::</span>
 <span class="sd">        (\hat{b}_1, \dots, \hat{b}_M) =</span>
 <span class="sd">        \arg\min_{b_m \in \mathcal{B}}</span>
-<span class="sd">        \mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{x_m\}\right)</span>
+<span class="sd">        \mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{X_m\}\right)</span>
 
 <span class="sd">    and where:</span>
 
-<span class="sd">    * :math:`x[k]` is the frequency-domain input at subcarrier :math:`k`,</span>
+<span class="sd">    * :math:`X[k]` is the frequency-domain input at subcarrier :math:`k`,</span>
 <span class="sd">    * :math:`M` is the number of sub-blocks,</span>
 <span class="sd">    * :math:`\mathcal{B}` is the phase factor alphabet,</span>
 <span class="sd">    * :math:`y[n]` is the time-domain output block.</span>
 
-<span class="sd">    Axes: *declared axis* -- expects the Block layout ``(T, F)``; one</span>
-<span class="sd">    phase combination is optimized per block and the IDFT runs along the</span>
-<span class="sd">    block content axis.</span>
+<span class="sd">    Axes: *declared axis* -- expects the 2-D Block layout ``(T, F)``,</span>
+<span class="sd">    validated in ``prepare()``; one phase combination is optimized per</span>
+<span class="sd">    block and the IDFT runs along the block content axis.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    phase_alphabet : list</span>
-<span class="sd">        Phase factor alphabet :math:`\mathcal{B}` used in the PTS method</span>
-<span class="sd">        (e.g. ``[1, -1]``).</span>
+<span class="sd">    phase_alphabet : list, optional</span>
+<span class="sd">        Phase factor alphabet :math:`\mathcal{B}` used in the PTS</span>
+<span class="sd">        method. Default is ``[1, -1]``.</span>
 <span class="sd">    N_sub : int, optional, keyword-only</span>
 <span class="sd">        Number of sub-blocks :math:`M` the OFDM signal is divided into. Default is 16.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
@@ -994,6 +994,14 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">phase_alphabet</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">combinations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
             <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase_alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">N_sub</span><span class="p">)))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;PtsPaprReductor expects the 2-D Block layout (T, F), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- reshape with &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Serial2Parallel first.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_subblocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="c1"># Adjacent partition: blocks consist of a contiguous set of subcarriers and are of equal size</span>

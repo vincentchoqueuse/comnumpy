@@ -548,8 +548,8 @@ FIR has <span class="math notranslate nohighlight">\(2 N_h L + 1\)</span> taps. 
 <dd class="field-even"><p>bool, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param scale<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Amplitude scaling factor applied to the output. Default is 1.0.
-Only the <code class="docutils literal notranslate"><span class="pre">&quot;fft&quot;</span></code> method applies it.</p>
+<dd class="field-odd"><p>Amplitude scaling factor applied to the output. Default is
+1.0, applied by both methods.</p>
 </dd>
 <dt class="field-even">type scale<span class="colon">:</span></dt>
 <dd class="field-even"><p>float, optional, keyword-only</p>
@@ -558,15 +558,14 @@ Only the <code class="docutils literal notranslate"><span class="pre">&quot;fft&
 <dd class="field-odd"><p>Filtering method: <code class="docutils literal notranslate"><span class="pre">&quot;lfilter&quot;</span></code> for the causal FIR convolution
 (<code class="docutils literal notranslate"><span class="pre">scipy.signal.lfilter</span></code>), <code class="docutils literal notranslate"><span class="pre">&quot;fft&quot;</span></code> for the circular
 frequency-domain product with the delay-compensated response
-returned by <a class="reference internal" href="#comnumpy.core.filters.SRRCFilter.H" title="comnumpy.core.filters.SRRCFilter.H"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H()</span></code></a>. Default is <code class="docutils literal notranslate"><span class="pre">&quot;lfilter&quot;</span></code>. The <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>
-value is declared in the type but not implemented.</p>
+returned by <a class="reference internal" href="#comnumpy.core.filters.SRRCFilter.H" title="comnumpy.core.filters.SRRCFilter.H"><code class="xref py py-meth docutils literal notranslate"><span class="pre">H()</span></code></a>. Default is <code class="docutils literal notranslate"><span class="pre">&quot;lfilter&quot;</span></code>.</p>
 </dd>
 <dt class="field-even">type method<span class="colon">:</span></dt>
-<dd class="field-even"><p>{“lfilter”, “time”, “fft”}, optional, keyword-only</p>
+<dd class="field-even"><p>{“lfilter”, “fft”}, optional, keyword-only</p>
 </dd>
 <dt class="field-odd">param axis<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Declared filtering axis. Default is -1; the implementation always
-filters along the last axis.</p>
+<dd class="field-odd"><p>Filtering axis. Default is -1. The <code class="docutils literal notranslate"><span class="pre">&quot;lfilter&quot;</span></code> method honours
+it; the <code class="docutils literal notranslate"><span class="pre">&quot;fft&quot;</span></code> method always filters along the last axis.</p>
 </dd>
 <dt class="field-even">type axis<span class="colon">:</span></dt>
 <dd class="field-even"><p>int, optional, keyword-only</p>
@@ -626,8 +625,8 @@ X[k] = \sum_{n=0}^{N-1} x[n] \, e^{-j 2 \pi k n / N}\]</div>
 <div class="math notranslate nohighlight">
 \[\begin{split}H[k] =
 \begin{cases}
-1 &amp; \text{if } |f[k]| \leq w_n \\
-0 &amp; \text{if } |f[k]| &gt; w_n
+1 &amp; \text{if } |f[k]| \leq w_n / 2 \\
+0 &amp; \text{if } |f[k]| &gt; w_n / 2
 \end{cases}\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(f[k]\)</span> is the frequency of bin <span class="math notranslate nohighlight">\(k\)</span> in cycles per
 sample (<code class="docutils literal notranslate"><span class="pre">fftfreq(N,</span> <span class="pre">d=1)</span></code>, so <span class="math notranslate nohighlight">\(|f[k]| \leq 1/2\)</span>) and the
@@ -651,9 +650,6 @@ cycles per sample is <span class="math notranslate nohighlight">\(|f| \leq w_n /
 </dd>
 <dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
 <dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">wn</span></code> is outside <span class="math notranslate nohighlight">\((0, 1]\)</span>.</p>
-</dd>
-<dt class="field-even">raises NotImplementedError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If the input has more than one dimension.</p>
 </dd>
 </dl>
 <p class="rubric">References</p>

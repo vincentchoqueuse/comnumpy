@@ -1210,8 +1210,10 @@ pp. 1098-1112, Feb. 2020.</p>
 bits, maps each one onto <span class="math notranslate nohighlight">\(n\)</span> symbol indices, and concatenates.
 Its output is what <code class="docutils literal notranslate"><span class="pre">SymbolMapper</span></code> consumes, so a shaped
 transmitter is a chain like any other.</p>
-<p>Axes: <em>element-wise</em> – the bit stream is read along the last axis,
-and leading axes are carried through unchanged.</p>
+<p>Axes: <em>axis -1</em> – the bit stream is read in blocks of <code class="docutils literal notranslate"><span class="pre">n_bits</span></code>
+along the last axis, whose length changes (<span class="math notranslate nohighlight">\(k\)</span> bits in,
+<span class="math notranslate nohighlight">\(n\)</span> amplitudes out); leading axes are carried through
+unchanged.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param shaper<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The enumerative code doing the work.</p>
@@ -1257,7 +1259,9 @@ and leading axes are carried through unchanged.</p>
 enumerative code is a bijection onto its block set, this is an
 identity on any sequence the matcher produced – and an error on any
 other, which is the honest answer after a detection mistake.</p>
-<p>Axes: <em>element-wise</em> – indices are read along the last axis.</p>
+<p>Axes: <em>axis -1</em> – indices are read in blocks of <code class="docutils literal notranslate"><span class="pre">length</span></code> along
+the last axis, whose length changes (<span class="math notranslate nohighlight">\(n\)</span> amplitudes in,
+<span class="math notranslate nohighlight">\(k\)</span> bits out); leading axes are carried through unchanged.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param shaper<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The same code used to shape.</p>
@@ -1363,12 +1367,14 @@ Commun., vol. 63, no. 12, pp. 4651-4665, Dec. 2015, Section IV
 <p>The inverse of <a class="reference internal" href="#comnumpy.core.shaping.AmplitudeMapper" title="comnumpy.core.shaping.AmplitudeMapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeMapper</span></code></a> on the half that carries the
 shaped data:</p>
 <div class="math notranslate nohighlight">
-\[\hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|\]</div>
-<p>Taking the magnitude first is not a shortcut, it is the maximum
-likelihood decision: on a constellation symmetric about the origin,
-the nearest point to <span class="math notranslate nohighlight">\(y\)</span> always has the amplitude nearest to
-<span class="math notranslate nohighlight">\(|y|\)</span>, so deciding on <span class="math notranslate nohighlight">\(|y|\)</span> and deciding on <span class="math notranslate nohighlight">\(y\)</span>
-give the same amplitude. The sign is dropped because in PAS it
+\[\hat{x}[n] = \arg\min_i
+\left| \left|\Re e\, y[n]\right| - a_i \right|\]</div>
+<p>The real part is taken first because the amplitudes live on one
+quadrature lane of the constellation – each lane of a QAM symbol
+is demapped on its own. On that lane, deciding on the magnitude is
+not a shortcut but the maximum likelihood decision: the ASK points
+are symmetric about the origin, so the nearest point always has the
+amplitude nearest to <span class="math notranslate nohighlight">\(|\Re e\, y|\)</span>. The sign is dropped because in PAS it
 carries parity, not data – a real receiver feeds it to the FEC
 decoder instead.</p>
 <p>Axes: <em>element-wise</em> – applied pointwise, shape-agnostic.</p>

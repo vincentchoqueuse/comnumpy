@@ -570,7 +570,10 @@ from the dispersion coefficient <span class="math notranslate nohighlight">\(D\)
 \[\beta_2 = -\frac{10^3 \, D \lambda^2}{2 \pi c}\]</div>
 <p>With <code class="docutils literal notranslate"><span class="pre">direction=-1</span></code> the phase shift and the attenuation are both
 inverted (backward propagation, used for CD compensation).</p>
-<p>Axes: <em>declared axis</em> – requires a full-field 1D signal (N,).</p>
+<p>Axes: <em>axis -1</em> – the transfer function is applied along the last
+axis; leading axes are batch, every row through the same fibre.
+<span class="math notranslate nohighlight">\(\beta_2\)</span> is given in ps^2/km and converted internally to
+s^2/km (factor <span class="math notranslate nohighlight">\(10^{-24}\)</span>), so the exponent is dimensionless.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param z<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Fiber length <span class="math notranslate nohighlight">\(z\)</span> in km.</p>
@@ -664,9 +667,10 @@ intensity-dependent phase rotation</p>
 <p>where <span class="math notranslate nohighlight">\(\gamma\)</span> is the Kerr coefficient (rad/W/km) and <span class="math notranslate nohighlight">\(g\)</span>
 an optional amplitude gain. With <code class="docutils literal notranslate"><span class="pre">direction=-1</span></code> the phase rotation
 is conjugated (backward propagation, used in DBP).</p>
-<p>Axes: <em>declared axis</em> – requires a full-field 1D signal (N,). A
-pointwise Kerr step applied to separate channels would model SPM only
-(no XPM, no FWM).</p>
+<p>Axes: <em>element-wise</em> – the rotation is pointwise, leading axes
+are batch, and the shape is not validated. The signal must be the
+<strong>full field</strong>: a pointwise Kerr step applied to separate channels
+would model SPM only (no XPM, no FWM).</p>
 <dl class="field-list simple">
 <dt class="field-odd">param z<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Segment length <span class="math notranslate nohighlight">\(z\)</span> in km.</p>

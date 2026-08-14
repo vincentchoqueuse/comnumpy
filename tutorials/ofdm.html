@@ -589,7 +589,7 @@ The cost is the pseudo-inverse of an <span class="math notranslate nohighlight">
 </section>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">3669</span> <span class="n">ms</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single</span> <span class="n">carrier</span><span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0117</span><span class="p">,</span> <span class="mi">3713</span> <span class="n">ms</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig2.png"><img alt="Received constellation, before and after equalization" class="align-center" src="../_images/one_shot_ofdm_fig2.png" style="width: 100%;" />
@@ -654,7 +654,7 @@ on one side; the same in reverse, closed by a one-tap
 </section>
 <section id="id3">
 <h3>Results<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.00</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">3670</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OFDM</span>          <span class="p">:</span> <span class="n">SER</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mf">1.06</span> <span class="n">ms</span> <span class="p">(</span><span class="mi">3494</span> <span class="n">times</span> <span class="n">faster</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig3.png"><img alt="OFDM constellation after one-tap equalization" class="align-center" src="../_images/one_shot_ofdm_fig3.png" style="width: 100%;" />
@@ -678,12 +678,14 @@ range of SNR values:</p>
 <span class="n">snr_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">n_trials</span> <span class="o">=</span> <span class="mi">2</span>
 
-<span class="c1"># --- simulation loop -------------------------------------------------</span>
+<span class="c1"># --- the sweep: no simulation loop -----------------------------------</span>
 <span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
-    <span class="n">measured</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span>
-                                 <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
-                                 <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="n">measured</span><span class="p">[</span><span class="s2">&quot;single carrier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">sc_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="n">measured</span><span class="p">[</span><span class="s2">&quot;OFDM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">ofdm_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
 
 <span class="c1"># --- results: table and figure ---------------------------------------</span>
 
@@ -733,20 +735,19 @@ system is uncoded, and why the comparison above is its worst case.</p>
 block length grows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what it costs ---------------------------------------------------</span>
 <span class="c1"># A chain records the wall time of its last pass in `elapsed_`, so the</span>
-<span class="c1"># run is also the measurement.</span>
+<span class="c1"># run is also the measurement. One loop, over the swept lengths; the</span>
+<span class="c1"># two chains are timed explicitly inside it.</span>
 <span class="n">lengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">1024</span><span class="p">])</span>
+<span class="n">runtime</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;single carrier&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)),</span>
+           <span class="s2">&quot;OFDM&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">))}</span>
 
-<span class="c1"># --- metrics, pre-allocated ------------------------------------------</span>
-<span class="n">runtime</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="s2">&quot;OFDM&quot;</span><span class="p">):</span>
-    <span class="n">runtime</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">))</span>
-
-<span class="c1"># --- simulation loop -------------------------------------------------</span>
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;single carrier&quot;</span><span class="p">,</span> <span class="n">sc_chain</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;OFDM&quot;</span><span class="p">,</span> <span class="n">ofdm_chain</span><span class="p">)):</span>
-        <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">chain</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
-        <span class="n">runtime</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">chain</span><span class="o">.</span><span class="n">elapsed_</span>
+    <span class="n">sc_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sc_chain</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
+    <span class="n">runtime</span><span class="p">[</span><span class="s2">&quot;single carrier&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">sc_chain</span><span class="o">.</span><span class="n">elapsed_</span>
+    <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ofdm_chain</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
+    <span class="n">runtime</span><span class="p">[</span><span class="s2">&quot;OFDM&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">ofdm_chain</span><span class="o">.</span><span class="n">elapsed_</span>
 
 <span class="c1"># --- results: table and figure ---------------------------------------</span>
 
@@ -773,10 +774,10 @@ block length grows:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">receiver</span> <span class="n">runtime</span> <span class="p">[</span><span class="n">ms</span><span class="p">],</span> <span class="ow">and</span> <span class="n">their</span> <span class="n">ratio</span>
 <span class="n">block</span> <span class="n">length</span> <span class="n">N</span>  <span class="n">single</span> <span class="n">carrier</span>   <span class="n">OFDM</span>   <span class="n">ratio</span>
 <span class="o">---------------------------------------------</span>
-           <span class="mi">128</span>            <span class="mf">7.34</span>  <span class="mf">0.568</span>    <span class="mf">12.9</span>
-           <span class="mi">256</span>           <span class="mf">34.91</span>  <span class="mf">0.567</span>    <span class="mf">61.6</span>
-           <span class="mi">512</span>          <span class="mf">188.09</span>  <span class="mf">0.793</span>   <span class="mf">237.1</span>
-          <span class="mi">1024</span>         <span class="mf">1377.50</span>  <span class="mf">0.862</span>  <span class="mf">1598.3</span>
+           <span class="mi">128</span>            <span class="mf">8.16</span>  <span class="mf">0.805</span>    <span class="mf">10.1</span>
+           <span class="mi">256</span>           <span class="mf">33.58</span>  <span class="mf">0.733</span>    <span class="mf">45.8</span>
+           <span class="mi">512</span>          <span class="mf">219.69</span>  <span class="mf">0.890</span>   <span class="mf">246.8</span>
+          <span class="mi">1024</span>         <span class="mf">1491.35</span>  <span class="mf">0.945</span>  <span class="mf">1577.4</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/one_shot_ofdm_fig5.png"><img alt="Receiver runtime against block length" class="align-center" src="../_images/one_shot_ofdm_fig5.png" style="width: 100%;" />

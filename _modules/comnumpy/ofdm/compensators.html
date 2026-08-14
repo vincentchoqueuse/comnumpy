@@ -727,7 +727,7 @@ window.runMermaid = runMermaid;</script>
                   
   <h1>Source code for comnumpy.ofdm.compensators</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">fftshift</span>  <span class="c1"># cupy-compatible (D3)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightAmplifier</span>
@@ -773,13 +773,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        The impulse response :math:`h[l]` of the channel to be equalized.</span>
 <span class="sd">        Required (a ValueError is raised when it is missing).</span>
 <span class="sd">    axis : int, optional, keyword-only</span>
-<span class="sd">        The axis along which to compute the DFT and apply the weights.</span>
-<span class="sd">        Default is -1.</span>
+<span class="sd">        The axis along which the weights are applied. Default is -1,</span>
+<span class="sd">        the only value currently supported: the channel DFT is computed</span>
+<span class="sd">        on the 1-D ``h`` along its own axis, so any other value raises</span>
+<span class="sd">        at ``prepare``.</span>
 <span class="sd">    shift : bool, optional, keyword-only</span>
 <span class="sd">        If True, applies an fftshift to the weights, for inputs whose</span>
 <span class="sd">        zero-frequency subcarrier is centered. Default is False.</span>
-<span class="sd">    norm : {&quot;ortho&quot;, &quot;backward&quot;, &quot;forward&quot;}, optional, keyword-only</span>
-<span class="sd">        FFT normalization mode. Default is &quot;ortho&quot;.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the equalizer instance. Default is</span>
 <span class="sd">        ``&quot;frequency domain equalizer&quot;``.</span>
@@ -800,7 +800,6 @@ window.runMermaid = runMermaid;</script>
     <span class="n">h</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="s2">&quot;backward&quot;</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;frequency domain equalizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># the base class takes its weight at construction; here it is</span>
     <span class="c1"># computed from h in prepare(), so it is init=False and starts empty</span>

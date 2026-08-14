@@ -498,7 +498,9 @@ cutoff <span class="math notranslate nohighlight">\(1/L\)</span> is applied to t
 turns the operation into an interpolation.</p>
 <p>Axes: <em>declared axis</em> – the zero stuffing runs along <code class="docutils literal notranslate"><span class="pre">axis</span></code>
 (default -1, the sample axis of the Serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>) and
-the remaining axes are left untouched.</p>
+the remaining axes are left untouched. The anti-imaging filter of
+<code class="docutils literal notranslate"><span class="pre">use_filter=True</span></code> always acts along the <strong>last</strong> axis, whatever
+<code class="docutils literal notranslate"><span class="pre">axis</span></code> says.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param L<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Upsampling factor <span class="math notranslate nohighlight">\(L\)</span>. Must be a positive integer.</p>
@@ -507,8 +509,8 @@ the remaining axes are left untouched.</p>
 <dd class="field-even"><p>int</p>
 </dd>
 <dt class="field-odd">param phase<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Phase offset <span class="math notranslate nohighlight">\(\tau \in \mathbb{N}\)</span> of the retained samples.
-Default is 0.</p>
+<dd class="field-odd"><p>Phase offset <span class="math notranslate nohighlight">\(\tau\)</span> of the retained samples, with
+<span class="math notranslate nohighlight">\(0 \le \tau &lt; L\)</span>. Default is 0.</p>
 </dd>
 <dt class="field-even">type phase<span class="colon">:</span></dt>
 <dd class="field-even"><p>int, optional, keyword-only</p>
@@ -582,7 +584,9 @@ the mirror image of <a class="reference internal" href="#comnumpy.core.processor
 of the same cutoff comes <strong>after</strong> the zero stuffing.</p>
 <p>Axes: <em>declared axis</em> – the decimation runs along <code class="docutils literal notranslate"><span class="pre">axis</span></code> (default
 -1, the sample axis of the Serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>) and the
-remaining axes are left untouched.</p>
+remaining axes are left untouched. The anti-aliasing filter of
+<code class="docutils literal notranslate"><span class="pre">use_filter=True</span></code> always acts along the <strong>last</strong> axis, whatever
+<code class="docutils literal notranslate"><span class="pre">axis</span></code> says.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param L<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Downsampling factor <span class="math notranslate nohighlight">\(L\)</span>. Must be a positive integer.</p>
@@ -611,9 +615,8 @@ Default is 0.</p>
 </dd>
 <dt class="field-odd">param use_filter<span class="colon">:</span></dt>
 <dd class="field-odd"><p>If True, apply the anti-aliasing lowpass filter of normalized
-cutoff <span class="math notranslate nohighlight">\(1/L\)</span> before the decimation. Default is False.
-The filter is a <a class="reference internal" href="filters.html#comnumpy.core.filters.BWFilter" title="comnumpy.core.filters.BWFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">comnumpy.core.filters.BWFilter</span></code></a>, which
-only accepts a 1D input.</p>
+cutoff <span class="math notranslate nohighlight">\(1/L\)</span> (a <a class="reference internal" href="filters.html#comnumpy.core.filters.BWFilter" title="comnumpy.core.filters.BWFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">comnumpy.core.filters.BWFilter</span></code></a>)
+before the decimation. Default is False.</p>
 </dd>
 <dt class="field-even">type use_filter<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool, optional, keyword-only</p>
@@ -668,7 +671,11 @@ serial stream becomes the sample of index <span class="math notranslate nohighli
 <span class="math notranslate nohighlight">\(t\)</span>:</p>
 <div class="math notranslate nohighlight">
 \[y[t, f] = x\!\left[t F + f\right], \qquad
-0 \le t &lt; T, \quad 0 \le f &lt; F, \quad T = \left\lceil \frac{N}{F} \right\rceil\]</div>
+0 \le t &lt; T, \quad 0 \le f &lt; F, \quad
+T = \left\lceil \frac{N}{F} \right\rceil
+\; \text{(zero-padding)}, \qquad
+T = \left\lfloor \frac{N}{F} \right\rfloor
+\; \text{(truncate)}\]</div>
 <p>Equivalently, <span class="math notranslate nohighlight">\(t = \lfloor n / F \rfloor\)</span> and
 <span class="math notranslate nohighlight">\(f = n \bmod F\)</span>: the <strong>serial index runs fastest on the last
 axis</strong>. This is exactly a C-order (row-major) <code class="docutils literal notranslate"><span class="pre">reshape</span></code>, which is
@@ -1053,8 +1060,9 @@ x[n + D] &amp; \text{for } n_0 \le n &lt; N - D,
 the first deleted sample, <span class="math notranslate nohighlight">\(D\)</span> the number of deleted samples,
 and <span class="math notranslate nohighlight">\(y[n]\)</span> has length <span class="math notranslate nohighlight">\(N - D\)</span>. It is the exact inverse of
 <a class="reference internal" href="#comnumpy.core.processors.DataAdder" title="comnumpy.core.processors.DataAdder"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataAdder</span></code></a> when the same <span class="math notranslate nohighlight">\(n_0\)</span> is used.</p>
-<p>Axes: <em>declared axis</em> – operates on a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
-splice uses flat indexing and does not broadcast.</p>
+<p>Axes: <em>1D only</em> – operates on a serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
+splice uses flat indexing and a batch is refused with
+<code class="docutils literal notranslate"><span class="pre">ShapeError</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param N_start<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Index <span class="math notranslate nohighlight">\(n_0\)</span> of the first sample to delete. Default is 0.</p>
@@ -1158,8 +1166,9 @@ x[n - D] &amp; \text{for } n_0 + D \le n &lt; N + D,
 <p>where <span class="math notranslate nohighlight">\(x[n]\)</span> has length <span class="math notranslate nohighlight">\(N\)</span> and <span class="math notranslate nohighlight">\(y[n]\)</span> has length
 <span class="math notranslate nohighlight">\(N + D\)</span>. Applying <a class="reference internal" href="#comnumpy.core.processors.SampleRemover" title="comnumpy.core.processors.SampleRemover"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRemover</span></code></a> with the same
 <span class="math notranslate nohighlight">\(n_0\)</span> and <span class="math notranslate nohighlight">\(D\)</span> restores <span class="math notranslate nohighlight">\(x[n]\)</span>.</p>
-<p>Axes: <em>declared axis</em> – operates on a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
-splice is a concatenation along the first axis.</p>
+<p>Axes: <em>1D only</em> – operates on a serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
+splice is a concatenation, and a batch is refused with
+<code class="docutils literal notranslate"><span class="pre">ShapeError</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param symbol<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Sequence <span class="math notranslate nohighlight">\(s[m]\)</span> to insert, of length <span class="math notranslate nohighlight">\(D\)</span>.</p>
@@ -1278,8 +1287,9 @@ x_c\!\left(n Q / P\right)\)</span> where <span class="math notranslate nohighlig
 continuous-time waveform. The three stages are evaluated jointly by
 a polyphase implementation (<code class="docutils literal notranslate"><span class="pre">scipy.signal.resample_poly</span></code>), which
 never computes the discarded samples.</p>
-<p>Axes: <em>declared axis</em> – the resampling runs along the last axis, the
-sample axis of the Serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>.</p>
+<p>Axes: <em>axis -1</em> – the resampling runs along the last axis, the
+sample axis of the Serial layout <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">N)</span></code>; leading axes are
+batch, every row resampled by the same factors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param up<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Interpolation factor <span class="math notranslate nohighlight">\(P\)</span>. Must be a positive integer.</p>
@@ -1414,10 +1424,11 @@ constellation of finer rotational symmetry – 8-PSK repeats every
 <span class="math notranslate nohighlight">\(\pi/4\)</span>, so the range covers two of its periods – several test
 phases give mathematically identical costs and which one wins is
 arbitrary. That is a property of the criterion, not of the search.</p>
-<p>Axes: <em>declared axis</em> – operates on a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>; the
-decision of a sample under a test phase does not depend on any other
-sample, so the whole search is a table of decision errors plus a
-moving sum over it, and nothing is done in order.</p>
+<p>Axes: <em>axis -1</em> – one independent trajectory per leading-axis row
+(D49): a <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code> signal gets one phase estimate per path.
+The decision of a sample under a test phase does not depend on any
+other sample, so the whole search is a table of decision errors plus
+a moving sum over it, and nothing is done in order.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param L<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Half-length <span class="math notranslate nohighlight">\(L\)</span> of the sliding window; the local cost is
@@ -1458,8 +1469,8 @@ underscore).</p>
 <dt class="sig sig-object py" id="comnumpy.core.processors.BlindPhaseTracker.theta_">
 <span class="sig-name descname"><span class="pre">theta_</span></span><a class="headerlink" href="#comnumpy.core.processors.BlindPhaseTracker.theta_" title="Link to this definition">#</a></dt>
 <dd><p>The estimated phase trajectory <span class="math notranslate nohighlight">\(\hat{\theta}[n]\)</span> of the last
-call, of length <span class="math notranslate nohighlight">\(N\)</span> (data-derived, hence the trailing
-underscore, D23). A block never draws (D25, D42): plot it from the
+call, of the same shape as the input (data-derived, hence the
+trailing underscore, D23). A block never draws (D25, D42): plot it from the
 caller, for instance with <code class="docutils literal notranslate"><span class="pre">matplotlib.pyplot.plot(tracker.theta_)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>

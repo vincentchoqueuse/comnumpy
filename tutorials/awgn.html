@@ -43,362 +43,6 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
-
-
-
-const initStyles = () => {
-    const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
-    document.head.appendChild(defaultStyle);
-
-    const fullscreenStyle = document.createElement('style');
-    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
-    document.head.appendChild(fullscreenStyle);
-}
-
-// Detect if page has dark background
-const isDarkTheme = () => {
-    // We use a set of heuristics:
-    // 1. Check for common dark mode classes or attributes
-    // 2. Check computed background color brightness
-    if (document.documentElement.classList.contains('dark') ||
-        document.documentElement.getAttribute('data-theme') === 'dark' ||
-        document.body.classList.contains('dark') ||
-        document.body.getAttribute('data-theme') === 'dark') {
-        // console.log("Dark theme detected via class/attribute");
-        return true;
-    }
-    if (document.documentElement.classList.contains('light') ||
-        document.documentElement.getAttribute('data-theme') === 'light' ||
-        document.body.classList.contains('light') ||
-        document.body.getAttribute('data-theme') === 'light') {
-        // console.log("Light theme detected via class/attribute");
-        return false;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // console.log("Dark theme detected via prefers-color-scheme");
-        return true;
-    }
-    const bgColor = window.getComputedStyle(document.body).backgroundColor;
-    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
-    if (match) {
-        const r = parseInt(match[1]);
-        const g = parseInt(match[2]);
-        const b = parseInt(match[3]);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        // console.log("Background color brightness:", brightness);
-        return brightness < 128;
-    }
-    // console.log("No dark or light theme detected, defaulting to light theme");
-    return false;
-};
-
-let darkTheme = isDarkTheme();
-let modal = null;
-let modalContent = null;
-let previousScrollOffset = [window.scrollX, window.scrollY];
-let _lazyObserver = null;
-let _renderQueue = Promise.resolve();
-let closeModal = () => {};
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('active')) {
-        closeModal();
-    }
-});
-
-// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
-// so this is safe to call both for the initial batch and for diagrams that
-// render lazily once they become visible.
-const addZoomToSvgs = (svgs) => {
-    svgs.each(function() {
-        if (this.getAttribute('data-zoom-applied') === 'true') return;
-        var svg = d3.select(this);
-        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
-        var inner = svg.select("g");
-        var zoom = d3.zoom().on("zoom", function(event) {
-            inner.attr("transform", event.transform);
-        });
-        svg.call(zoom);
-        this.setAttribute('data-zoom-applied', 'true');
-    });
-};
-
-const runMermaid = async (rerun) => {
-    console.log("Running mermaid diagrams, rerun =", rerun);
-    // clear all existing mermaid charts
-    let all_mermaids = document.querySelectorAll(".mermaid");
-
-    if (rerun) {
-        // Disconnect any previous lazy rendering observer
-        if (_lazyObserver) {
-            _lazyObserver.disconnect();
-            _lazyObserver = null;
-        }
-
-        all_mermaids.forEach((el) => {
-            el.removeAttribute('data-mermaid-deferred');
-            el.removeAttribute('data-mermaid-render-failed');
-            if(!el.hasAttribute("data-original-code")) {
-                // store original code
-                // console.log(`Storing original code for first run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-            if(el.getAttribute("data-processed") === "true") {
-                // remove and restore original
-                el.removeAttribute("data-processed");
-                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
-                el.innerHTML = el.getAttribute('data-original-code');
-            } else {
-                // store original code
-                // console.log(`Storing original code for re-run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-        });
-
-        // Separate visible and hidden elements. Mermaid's layout engine measures
-        // text dimensions via the DOM, which fails for elements hidden by a parent
-        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
-        // producing broken SVGs. Render visible elements now, defer hidden ones.
-        const visible = [];
-        const hidden = [];
-        all_mermaids.forEach((el) => {
-            // offsetParent is null for display:none ancestors.
-            // getClientRects().length > 0 catches position:fixed elements
-            // (which also have null offsetParent but are still visible).
-            if (el.offsetParent !== null || el.getClientRects().length > 0) {
-                visible.push(el);
-            } else {
-                hidden.push(el);
-                el.setAttribute('data-mermaid-deferred', 'true');
-            }
-        });
-
-        if (visible.length > 0) {
-            try {
-                await mermaid.run({ nodes: visible });
-            } catch (e) {
-                console.error("Mermaid rendering failed:", e);
-            }
-        }
-
-        // Lazily render hidden elements when they become visible.
-        // Uses a promise chain (_renderQueue) to serialize rendering,
-        // since IntersectionObserver may report multiple entries at once
-        // and mermaid.run() is not safe to call concurrently.
-        if (hidden.length > 0) {
-            if (typeof IntersectionObserver === 'undefined') {
-                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
-            } else {
-                _renderQueue = Promise.resolve();
-                _lazyObserver = new IntersectionObserver((entries) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
-                            _lazyObserver.unobserve(entry.target);
-                            const el = entry.target;
-                            _renderQueue = _renderQueue.then(async () => {
-                                try {
-                                    await mermaid.run({ nodes: [el] });
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    // Apply zoom to the now-rendered diagram, matching
-                                    // the decoration visible diagrams receive.
-                                    if (false) {
-                                        addZoomToSvgs(d3.selectAll("").select(function() {
-                                            return this.querySelector("svg");
-                                        }));
-                                    }
-                                } catch (e) {
-                                    console.error("Mermaid deferred rendering failed:", e);
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    el.setAttribute('data-mermaid-render-failed', 'true');
-                                }
-                            });
-                        }
-                    }
-                });
-                hidden.forEach((el) => _lazyObserver.observe(el));
-            }
-        }
-    }
-
-    all_mermaids = document.querySelectorAll(".mermaid");
-    // Exclude deferred (hidden) and render-failed elements from completion checks
-    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
-    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
-
-    if (false) {
-        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
-        if(mermaids_to_add_zoom > 0) {
-            var svgs = d3.selectAll("").select(function() {
-                return this.querySelector("svg");
-            });
-            // Wait until every active (visible) diagram has rendered. Deferred
-            // diagrams are excluded, so a fixed d3_node_count that counts a
-            // hidden diagram no longer loops forever waiting for its SVG.
-            if(mermaids_active.length !== mermaids_processed.length) {
-                setTimeout(() => runMermaid(false), 200);
-                return;
-            }
-            addZoomToSvgs(svgs);
-        }
-    } else if(mermaids_active.length !== mermaids_processed.length) {
-        // Wait for mermaid to process all diagrams
-        setTimeout(() => runMermaid(false), 200);
-        return;
-    }
-
-    // Stop here if not adding fullscreen capability
-    if (!true) return;
-
-    if (modal !== null ) {
-        // Destroy existing modal
-        modal.remove();
-        modal = null;
-        modalContent = null;
-    }
-
-    modal = document.createElement('div');
-    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
-    modal.innerHTML = `
-        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
-        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
-    `;
-    document.body.appendChild(modal);
-
-    modalContent = modal.querySelector('.mermaid-container-fullscreen');
-    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    closeModal = () => {
-        modal.classList.remove('active');
-        modalContent.innerHTML = '';
-        document.body.style.overflow = ''
-        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
-        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
-            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
-            // Already processed, adjust button class if needed
-            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
-            if (existingBtn) {
-                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-            }
-            return;
-        }
-
-        const container = document.createElement('div');
-        container.className = 'mermaid-container';
-        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
-        container.appendChild(mermaidDiv);
-
-        const fullscreenBtn = document.createElement('button');
-        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
-        fullscreenBtn.textContent = "\u26f6";
-        fullscreenBtn.style.opacity = "50%";
-
-        // Calculate dynamic position based on diagram's margin and padding
-        const diagramStyle = window.getComputedStyle(mermaidDiv);
-        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
-        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
-        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
-        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
-        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
-        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
-
-        fullscreenBtn.addEventListener('click', () => {
-            previousScrollOffset = [window.scrollX, window.scrollY];
-            const clone = mermaidDiv.cloneNode(true);
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-
-            const svg = clone.querySelector('svg');
-            if (svg) {
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                svg.style.width = '100%';
-                svg.style.height = 'auto';
-                svg.style.maxWidth = '100%';
-                svg.style.display = 'block';
-
-                if (false) {
-                    setTimeout(() => {
-                        const g = svg.querySelector('g');
-                        if (g) {
-                            var svgD3 = d3.select(svg);
-                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
-                            var inner = svgD3.select("g");
-                            var zoom = d3.zoom().on("zoom", function(event) {
-                                inner.attr("transform", event.transform);
-                            });
-                            svgD3.call(zoom);
-                        }
-                    }, 100);
-                }
-            }
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-        container.appendChild(fullscreenBtn);
-    });
-};
-
-
-
-const load = async () => {
-    initStyles();
-
-
-    await runMermaid(true);
-
-    const reRunIfThemeChanges = async () => {
-        const newDarkTheme = isDarkTheme();
-        if (newDarkTheme !== darkTheme) {
-            darkTheme = newDarkTheme;
-            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
-            await mermaid.initialize(
-                {...{"startOnLoad": false},
-                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-                }
-            );
-            await runMermaid(true);
-        }
-    };
-
-    // Update theme classes when theme changes
-    const themeObserver = new MutationObserver(reRunIfThemeChanges);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    themeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-};
-
-
-
-
-
-console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
-mermaid.initialize(
-    {...{"startOnLoad": false},
-    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-    }
-);
-
-window.addEventListener("load", load);
-window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/awgn';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -846,24 +490,15 @@ closed form we compare against below.</p>
 The chain includes symbol generation, mapping, transmission over an AWGN channel,
 and symbol demapping. It is written as a function because the last section of
 this page builds one per constellation order.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_chain</span><span class="p">(</span><span class="n">constellation</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Symbols in, decided symbols out, over an AWGN channel.</span>
-
-<span class="sd">    The last section of this page runs one of these per constellation</span>
-<span class="sd">    order, so the constellation is an argument rather than a global. The</span>
-<span class="sd">    transmitter is named because a sweep has to compare against what it</span>
-<span class="sd">    produced, and the channel is named because a sweep has to reconfigure</span>
-<span class="sd">    it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
-        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-        <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">])</span>
-
-
-<span class="n">chain</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="n">constellation</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># One chain, transmitter to decision. Every block that a sweep must</span>
+<span class="c1"># reconfigure is named: the channel for the SNR, the generator, mapper</span>
+<span class="c1"># and demapper for the constellation the last section changes.</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mapper&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn_channel&quot;</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;demapper&quot;</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>The processors are:</p>
@@ -879,31 +514,6 @@ Simulates the effect of noise for a given SNR value (here expressed in dB).</p><
 <li><p><code class="docutils literal notranslate"><span class="pre">SymbolDemapper</span></code>
 Maps received noisy constellation points back to integers.</p></li>
 </ul>
-<p>The chain, as the chain itself describes it:</p>
-<pre  class="mermaid">
-        flowchart LR
-    tx[&quot;SymbolGenerator&quot;]
-    symbol_mapper[&quot;SymbolMapper&quot;]
-    awgn_channel[&quot;AWGN&quot;]
-    symbol_demapper[&quot;SymbolDemapper&quot;]
-    tx --&gt; symbol_mapper
-    symbol_mapper --&gt; awgn_channel
-    awgn_channel --&gt; symbol_demapper
-    classDef tapped stroke-dasharray: 4 2
-    class tx tapped
-    </pre><p>The diagram above is not drawn by hand. It is what the chain says about
-itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
-script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The chain diagrams this tutorial shows are exported from the chains</span>
-<span class="c1"># themselves (D33c), so the picture cannot drift from the code -- the</span>
-<span class="c1"># smoke test compares what a run writes with what the page displays.</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
-<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;awgn_chain&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
-</pre></div>
-</div>
 </section>
 <section id="monte-carlo-simulation">
 <h3>Monte Carlo Simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">#</a></h3>
@@ -947,6 +557,7 @@ at every point:</p>
             <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;loop&quot;</span><span class="p">:</span> <span class="n">ser_by_hand</span><span class="p">,</span>
                        <span class="s2">&quot;monte_carlo&quot;</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">[::</span><span class="mi">8</span><span class="p">]}},</span>
            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span>
@@ -1027,6 +638,7 @@ by <span class="math notranslate nohighlight">\(k\)</span> above happens inside.
 <span class="n">from_object</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
 <span class="n">gap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ser_theo_array</span> <span class="o">-</span> <span class="n">from_object</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;largest gap between the two closed forms: </span><span class="si">{</span><span class="n">gap</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">largest</span> <span class="n">gap</span> <span class="n">between</span> <span class="n">the</span> <span class="n">two</span> <span class="n">closed</span> <span class="n">forms</span><span class="p">:</span> <span class="mf">3.331e-16</span>
@@ -1043,13 +655,13 @@ you: <code class="docutils literal notranslate"><span class="pre">plot_error_rat
 closed form as a line of the same colour, on a logarithmic ordinate with a
 grid on both decades. A measurement and the theory it is being compared with
 share a colour, so a pair reads as one statement.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot_error_rate draws the measurements as markers and the closed form</span>
-<span class="c1"># as a line of the same colour: the figure every sweep ends with</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># as a line of the same colour: the figure every sweep ends with</span>
 <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">constellation</span><span class="o">.</span><span class="n">family</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_array</span><span class="p">},</span>
                 <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">ser_theo_array</span><span class="p">},</span>
                 <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SER performance for </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_awgn.png&quot;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_awgn.png"><img alt="../_images/monte_carlo_awgn.png" class="align-center" src="../_images/monte_carlo_awgn.png" style="width: 100%;" />
@@ -1071,8 +683,7 @@ equal energy per <strong>bit</strong>, <span class="math notranslate nohighlight
 <a class="reference internal" href="../documentation/core/utils.html#comnumpy.core.utils.ebn0_to_snr_dB" title="comnumpy.core.utils.ebn0_to_snr_dB"><code class="xref py py-func docutils literal notranslate"><span class="pre">ebn0_to_snr_dB()</span></code></a> exists. The conversion needs
 <span class="math notranslate nohighlight">\(k\)</span> – chain-level knowledge the channel block does not have and should
 not guess (decision D41), so it happens at the call site:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comparing orders is only fair at equal energy per *bit*: at equal</span>
-<span class="c1"># energy per symbol a dense constellation is favoured, because it spends</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># energy per symbol a dense constellation is favoured, because it spends</span>
 <span class="c1"># the same energy on more bits. ebn0_to_snr_dB does that conversion, and</span>
 <span class="c1"># it needs k, which is chain-level knowledge the channel does not have.</span>
 <span class="n">ebn0_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -1085,14 +696,17 @@ not guess (decision D41), so it happens at the call site:</p>
     <span class="n">other</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bits_per_symbol</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
     <span class="n">snr_dB_values</span> <span class="o">=</span> <span class="n">ebn0_to_snr_dB</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">bits_per_symbol</span><span class="o">=</span><span class="n">bits</span><span class="p">)</span>
-    <span class="n">collected</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">get_chain</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span>
+    <span class="c1"># the same chain, reconfigured (D50): set_params re-runs the</span>
+    <span class="c1"># coercions a bare assignment would skip</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">tx__M</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">mapper__alphabet</span><span class="o">=</span><span class="n">other</span><span class="p">,</span>
+                     <span class="n">demapper__alphabet</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+    <span class="n">collected</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;awgn_channel.snr_dB&quot;</span><span class="p">,</span>
                             <span class="n">snr_dB_values</span><span class="p">,</span>
                             <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">compute_ber</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">bits</span><span class="p">)},</span>
                             <span class="n">N_compare</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">order_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">-QAM&quot;</span>
     <span class="n">measured_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">collected</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
     <span class="n">theory_ber</span><span class="p">[</span><span class="n">order_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;bit&quot;</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
-
 </pre></div>
 </div>
 <p>The metric changes with the axis. Against <span class="math notranslate nohighlight">\(E_b/N_0\)</span> the natural quantity
@@ -1108,14 +722,14 @@ factor 2.2 for 256-QAM at 0 dB, and settle onto it as the error rate falls:
 below <span class="math notranslate nohighlight">\(10^{-2}\)</span> the two agree to within a few percent for every order.
 This is an approximation behaving as documented, not a simulation
 disagreeing with theory.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB_list</span><span class="p">,</span> <span class="n">measured_ber</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory_ber</span><span class="p">,</span>
                      <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;$E_b/N_0$ [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
                      <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Square QAM at equal energy per bit&quot;</span><span class="p">)</span>
 <span class="c1"># The closed forms run down to 1e-12; the measurements cannot follow them</span>
 <span class="c1"># past a few 1e-6, so the axis stops where the simulation stops speaking.</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_awgn_orders.png&quot;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/monte_carlo_awgn_orders.png"><img alt="../_images/monte_carlo_awgn_orders.png" class="align-center" src="../_images/monte_carlo_awgn_orders.png" style="width: 100%;" />

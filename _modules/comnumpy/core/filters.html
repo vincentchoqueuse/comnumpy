@@ -814,17 +814,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        If True, normalize the taps to unit energy</span>
 <span class="sd">        :math:`\sum_m h^2[m] = 1`. Default is True.</span>
 <span class="sd">    scale : float, optional, keyword-only</span>
-<span class="sd">        Amplitude scaling factor applied to the output. Default is 1.0.</span>
-<span class="sd">        Only the ``&quot;fft&quot;`` method applies it.</span>
-<span class="sd">    method : {&quot;lfilter&quot;, &quot;time&quot;, &quot;fft&quot;}, optional, keyword-only</span>
+<span class="sd">        Amplitude scaling factor applied to the output. Default is</span>
+<span class="sd">        1.0, applied by both methods.</span>
+<span class="sd">    method : {&quot;lfilter&quot;, &quot;fft&quot;}, optional, keyword-only</span>
 <span class="sd">        Filtering method: ``&quot;lfilter&quot;`` for the causal FIR convolution</span>
 <span class="sd">        (``scipy.signal.lfilter``), ``&quot;fft&quot;`` for the circular</span>
 <span class="sd">        frequency-domain product with the delay-compensated response</span>
-<span class="sd">        returned by :meth:`H`. Default is ``&quot;lfilter&quot;``. The ``&quot;time&quot;``</span>
-<span class="sd">        value is declared in the type but not implemented.</span>
+<span class="sd">        returned by :meth:`H`. Default is ``&quot;lfilter&quot;``.</span>
 <span class="sd">    axis : int, optional, keyword-only</span>
-<span class="sd">        Declared filtering axis. Default is -1; the implementation always</span>
-<span class="sd">        filters along the last axis.</span>
+<span class="sd">        Filtering axis. Default is -1. The ``&quot;lfilter&quot;`` method honours</span>
+<span class="sd">        it; the ``&quot;fft&quot;`` method always filters along the last axis.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the filter instance. Default is ``&quot;SRRCFilter&quot;``.</span>
 
@@ -967,8 +966,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        H[k] =</span>
 <span class="sd">        \begin{cases}</span>
-<span class="sd">        1 &amp; \text{if } |f[k]| \leq w_n \\</span>
-<span class="sd">        0 &amp; \text{if } |f[k]| &gt; w_n</span>
+<span class="sd">        1 &amp; \text{if } |f[k]| \leq w_n / 2 \\</span>
+<span class="sd">        0 &amp; \text{if } |f[k]| &gt; w_n / 2</span>
 <span class="sd">        \end{cases}</span>
 
 <span class="sd">    where :math:`f[k]` is the frequency of bin :math:`k` in cycles per</span>
@@ -995,8 +994,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If ``wn`` is outside :math:`(0, 1]`.</span>
-<span class="sd">    NotImplementedError</span>
-<span class="sd">        If the input has more than one dimension.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>

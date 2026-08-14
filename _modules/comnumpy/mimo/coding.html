@@ -860,7 +860,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        \in \mathbb{C}^{N_t \times T}</span>
 
 <span class="sd">    and the receiver observes</span>
-<span class="sd">    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{B}`.</span>
+<span class="sd">    :math:`\mathbf{Y} = \mathbf{H}\mathbf{G}(\mathbf{s}) + \mathbf{V}`,</span>
+<span class="sd">    with :math:`\mathbf{V}` the noise (:math:`\mathbf{B}_k` being taken</span>
+<span class="sd">    by the conjugate dispersion matrices above).</span>
 <span class="sd">    The **rate** is :math:`K/T` symbols per channel use, the **diversity</span>
 <span class="sd">    order** is the minimum rank of</span>
 <span class="sd">    :math:`\mathbf{G}(\mathbf{s}) - \mathbf{G}(\mathbf{s}&#39;)` over</span>
@@ -1537,6 +1539,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If the code is not orthogonal, or if ``H`` was not set.</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the number of received samples is not a multiple of the</span>
+<span class="sd">        code&#39;s ``n_slots``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1580,9 +1585,29 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> spans </span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">n_slots</span><span class="si">}</span><span class="s2"> channel uses per &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;codeword and got </span><span class="si">{</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> samples, which &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;is not a multiple of it.&quot;</span><span class="p">)</span>
-        <span class="n">matrix</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">equivalent_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
-        <span class="n">energy</span> <span class="o">=</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">orthogonality_gain</span>
-                  <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># stacked channel (D51): one equivalent matrix and one</span>
+            <span class="c1"># energy per draw -- channel k decodes frame k</span>
+            <span class="k">if</span> <span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;a stacked channel with leading shape &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> decodes one frame per draw and &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;needs observations (..., n_rx, N) with the same &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;leading shape, got </span><span class="si">{</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">flat_H</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+            <span class="n">matrices</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flat_H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">matrices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">equivalent_channel</span><span class="p">(</span><span class="n">flat_H</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">matrices</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">matrices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">energy</span> <span class="o">=</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">orthogonality_gain</span>
+                      <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                               <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">equivalent_channel</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+            <span class="n">energy</span> <span class="o">=</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">orthogonality_gain</span>
+                      <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
         <span class="n">n_words</span> <span class="o">=</span> <span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">code</span><span class="o">.</span><span class="n">n_slots</span>
         <span class="n">blocks</span> <span class="o">=</span> <span class="n">received</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">received</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                                   <span class="o">+</span> <span class="p">(</span><span class="n">n_words</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">n_slots</span><span class="p">))</span>

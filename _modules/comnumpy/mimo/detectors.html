@@ -830,7 +830,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    and the detector returns the integer indices of</span>
 <span class="sd">    :math:`\widehat{\mathbf{x}}[n]` in the alphabet</span>
-<span class="sd">    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S[:, n]]``).</span>
+<span class="sd">    (:math:`\widehat{\mathbf{x}}[n]` = ``alphabet[S_[:, n]]``).</span>
 
 <span class="sd">    .. WARNING::</span>
 
@@ -852,6 +852,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Must be set before calling the detector.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the detector. Default is ``&quot;ML Detector&quot;``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S_ : np.ndarray</span>
+<span class="sd">        Decisions of the last call, as alphabet indices</span>
+<span class="sd">        (data-dependent, hence the trailing underscore, D23).</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -878,8 +884,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ML Detector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># internal state (declared for slots, D40a)</span>
-    <span class="n">S</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># estimated state (D23), declared for slots (D40a)</span>
+    <span class="n">S_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># accept anything array-like, a Constellation included</span>
@@ -913,10 +919,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">H</span> <span class="o">=</span> <span class="n">_required_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">S</span> <span class="o">=</span> <span class="n">_detect_stacked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S_</span> <span class="o">=</span> <span class="n">S</span>
             <span class="k">return</span> <span class="n">S</span>
         <span class="n">S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_</span> <span class="o">=</span> <span class="n">S</span>
         <span class="k">return</span> <span class="n">S</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1042,6 +1048,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Average number of tree nodes visited per detected vector in the</span>
 <span class="sd">        last call -- data-dependent, hence the trailing underscore (D23).</span>
 <span class="sd">        Compare it with :math:`|\mathcal{M}|^{N_t}`.</span>
+<span class="sd">    S_ : np.ndarray</span>
+<span class="sd">        Decisions of the last call, as alphabet indices (D23).</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -1096,8 +1104,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Sphere Decoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
-    <span class="n">S</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                    <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">S_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                     <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">nodes_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
     <span class="c1"># running counters behind nodes_, declared for slots (D40a)</span>
     <span class="n">_visited</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -1170,12 +1178,12 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
             <span class="n">S</span> <span class="o">=</span> <span class="n">_detect_stacked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S_</span> <span class="o">=</span> <span class="n">S</span>
             <span class="k">return</span> <span class="n">S</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
         <span class="n">S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visited</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_</span> <span class="o">=</span> <span class="n">S</span>
         <span class="k">return</span> <span class="n">S</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_detect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>

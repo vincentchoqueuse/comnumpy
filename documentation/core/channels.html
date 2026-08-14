@@ -485,7 +485,11 @@ measured input power <span class="math notranslate nohighlight">\(P_x = \mathbb{
 \[\sigma^2 = P_x \, 10^{-\mathrm{SNR_{dB}}/10}\]</div>
 <p>For real-valued inputs, a real Gaussian noise of variance
 <span class="math notranslate nohighlight">\(\sigma^2\)</span> is applied instead of a circular complex one.</p>
-<p>Axes: <em>element-wise</em> – applied pointwise, shape-agnostic.</p>
+<p>Axes: <em>element-wise</em> – applied pointwise, shape-agnostic. One
+caveat under a batch (D51): with <code class="docutils literal notranslate"><span class="pre">snr_dB=</span></code> the signal power is
+measured over the <strong>whole</strong> input, batch rows included, so rows of
+unequal power share one variance rather than each receiving the
+requested SNR; <code class="docutils literal notranslate"><span class="pre">sigma2=</span></code> is batch-neutral.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param snr_dB<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Signal-to-noise ratio <span class="math notranslate nohighlight">\(\mathrm{SNR_{dB}}\)</span> in decibels,
@@ -639,8 +643,11 @@ as frequency-selective model, not block fading. Setting
 <p>When the profile declares a Rice factor <span class="math notranslate nohighlight">\(K\)</span>, the first path
 carries a specular component:</p>
 <div class="math notranslate nohighlight">
-\[a_0[n] = \sqrt{\frac{K}{K+1}} \, e^{j \phi}
-       + \sqrt{\frac{1}{K+1}} \, g[n]\]</div>
+\[a_0[n] = \sqrt{\gamma_0}\left(\sqrt{\frac{K}{K+1}} \,
+e^{j \phi} + \sqrt{\frac{1}{K+1}} \, g[n]\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(g[n]\)</span> is the unit-power Rayleigh process of the first
+path, so that <span class="math notranslate nohighlight">\(\mathbb{E}[|a_0[n]|^2] = \gamma_0\)</span> still
+holds.</p>
 <p>The output keeps the input length: the delayed copies are zero-padded
 at the start, i.e. the channel is causal and the transient is kept.</p>
 <p>Axes: <em>axis -1</em> – expects a 1D serial signal <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>.</p>

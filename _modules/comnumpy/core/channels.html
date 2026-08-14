@@ -762,7 +762,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    For real-valued inputs, a real Gaussian noise of variance</span>
 <span class="sd">    :math:`\sigma^2` is applied instead of a circular complex one.</span>
 
-<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic.</span>
+<span class="sd">    Axes: *element-wise* -- applied pointwise, shape-agnostic. One</span>
+<span class="sd">    caveat under a batch (D51): with ``snr_dB=`` the signal power is</span>
+<span class="sd">    measured over the **whole** input, batch rows included, so rows of</span>
+<span class="sd">    unequal power share one variance rather than each receiving the</span>
+<span class="sd">    requested SNR; ``sigma2=`` is batch-neutral.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -978,8 +982,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        a_0[n] = \sqrt{\frac{K}{K+1}} \, e^{j \phi}</span>
-<span class="sd">               + \sqrt{\frac{1}{K+1}} \, g[n]</span>
+<span class="sd">        a_0[n] = \sqrt{\gamma_0}\left(\sqrt{\frac{K}{K+1}} \,</span>
+<span class="sd">        e^{j \phi} + \sqrt{\frac{1}{K+1}} \, g[n]\right)</span>
+
+<span class="sd">    where :math:`g[n]` is the unit-power Rayleigh process of the first</span>
+<span class="sd">    path, so that :math:`\mathbb{E}[|a_0[n]|^2] = \gamma_0` still</span>
+<span class="sd">    holds.</span>
 
 <span class="sd">    The output keeps the input length: the delayed copies are zero-padded</span>
 <span class="sd">    at the start, i.e. the channel is causal and the transient is kept.</span>

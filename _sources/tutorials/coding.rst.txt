@@ -61,7 +61,7 @@ simple -- and the codes below all have rate 1/2.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 22-31
+   :lines: 21-29
 
 That helper deserves a line of its own, because it is where most coded
 simulations go wrong. The channel sees *symbols*, so it is parameterized by
@@ -106,23 +106,29 @@ a path in a **trellis**. That trellis is the object the decoder searches.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 33-55
+   :lines: 32-46
 
 .. code::
 
    generators ('0o133', '0o171')  K = 7  states = 64  rate = 0.5
    4 bits in -> [1 1 0 1 0 0 0 1 1 0 1 0 0 0 1 0 0 1 1 1] (with the tail)
    free distance d_free = 10
-   d           10     11     12     13     14     15
-   a_d         11      0     38      0    193      0
-   beta_d      36      0    211      0   1404      0
+   distance spectrum
+    d  a_d  beta_d
+   ---------------
+   10   11      36
+   11    0       0
+   12   38     211
+   13    0       0
+   14  193    1404
+   15    0       0
 
 Four input bits produced twenty output bits rather than eight: the encoder is
 **terminated**, so :math:`K - 1 = 6` zero bits are appended to flush the
 register and bring it back to the all-zero state. On a short block that
 overhead is visible; on a realistic one it is not.
 
-The last three lines are the code's **distance spectrum**, and they are worth
+The table is the code's **distance spectrum**, and they are worth
 more than they look. :math:`d_{\mathrm{free}} = 10` is the smallest Hamming
 distance between two distinct code sequences; :math:`a_d` counts the error
 events at distance :math:`d`, and :math:`\beta_d` counts the *information*
@@ -168,17 +174,21 @@ wrong side. The information thrown away by deciding too early is worth about
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 57-89
-
-The chain, as the chain itself describes it:
-
-.. mermaid:: mermaid/channel_coding.mmd
+   :lines: 49-90
 
 .. code::
 
-   uncoded                  7.86e-02 5.68e-02 3.79e-02 2.28e-02 1.31e-02 6.45e-03 2.80e-03 7.75e-04   (0.0 s)
-   hard-decision Viterbi    3.71e-01 2.43e-01 1.14e-01 3.15e-02 7.52e-03 9.75e-04 0.00e+00 0.00e+00   (8.1 s)
-   soft-decision Viterbi    1.40e-01 4.32e-02 3.63e-03 3.50e-04 0.00e+00 0.00e+00 0.00e+00 0.00e+00   (8.9 s)
+   BER
+   Eb/N0 [dB]    uncoded  hard-decision Viterbi  soft-decision Viterbi
+   -------------------------------------------------------------------
+            0  7.865e-02              3.708e-01              1.401e-01
+            1  5.680e-02              2.434e-01              4.320e-02
+            2  3.787e-02              1.143e-01              3.625e-03
+            3  2.278e-02              3.150e-02              3.500e-04
+            4  1.305e-02              7.525e-03              0.000e+00
+            5  6.450e-03              9.750e-04              0.000e+00
+            6  2.800e-03              0.000e+00              0.000e+00
+            7  7.750e-04              0.000e+00              0.000e+00
 
 Three readings, and the first one is a warning.
 
@@ -195,7 +205,7 @@ needs 5 dB and soft decoding a little under 3 -- the classic figure for this
 code. Nothing was added to the receiver except *not throwing information
 away*: the same trellis, the same recursion, a different branch metric.
 
-**And the last two columns are not results.** Zero errors in 40 000 bits does
+**And the zero entries are not results.** Zero errors in 40 000 bits does
 not mean the BER is zero; it means it is somewhere below roughly
 :math:`1/40000 = 2.5 \times 10^{-5}` and this simulation cannot see it. The
 figure drops those points rather than drawing them at zero on a logarithmic
@@ -224,11 +234,21 @@ closed form: no simulation, no random draw, and no floor at
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 91-101
+   :lines: 92-106
 
 .. code::
 
-   union bound              1.82e+01 9.32e-01 2.85e-02 6.81e-04 1.87e-05 4.43e-07 5.61e-09 2.70e-11
+   BER
+   Eb/N0 [dB]  soft-decision Viterbi  union bound
+   ----------------------------------------------
+            0              1.401e-01    1.817e+01
+            1              4.320e-02    9.323e-01
+            2              3.625e-03    2.846e-02
+            3              3.500e-04    6.814e-04
+            4              0.000e+00    1.869e-05
+            5              0.000e+00    4.427e-07
+            6              0.000e+00    5.609e-09
+            7              0.000e+00    2.702e-11
 
 .. image:: img/channel_coding_fig1.png
    :width: 100%
@@ -279,17 +299,26 @@ by construction, there is no hard-decision variant of it.
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 103-128
+   :lines: 108-139
 
 .. code::
 
    LDPC: H is 1020 x 2040, k = 1022 information bits, rate = 0.501, column weight 3, row weight 6
-   LDPC  5 iterations       1.70e-01 1.09e-01 3.31e-02 2.30e-03 0.00e+00 0.00e+00 0.00e+00 0.00e+00
-   LDPC 25 iterations       1.70e-01 1.14e-01 8.78e-03 0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00
+   BER
+   Eb/N0 [dB]  LDPC (2040, 1022), 5 iterations  LDPC (2040, 1022), 25 iterations
+   -----------------------------------------------------------------------------
+            0                          0.17021                           0.16955
+            1                          0.10908                           0.11424
+            2                          0.03312                           0.00878
+            3                          0.00230                           0.00000
+            4                          0.00000                           0.00000
+            5                          0.00000                           0.00000
+            6                          0.00000                           0.00000
+            7                          0.00000                           0.00000
 
 .. literalinclude:: ../../examples/simple/channel_coding.py
    :language: python
-   :lines: 130-143
+   :lines: 141-148
 
 .. image:: img/channel_coding_fig2.png
    :width: 100%

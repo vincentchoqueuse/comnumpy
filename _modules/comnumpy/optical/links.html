@@ -810,13 +810,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    which is 1.8x faster than the same ``B`` calls at 12288 samples and</span>
 <span class="sd">    3.1x at 1024 -- the split-step loop, the per-span amplifier and the</span>
 <span class="sd">    parameter precomputation are paid once instead of ``B`` times. A</span>
-<span class="sd">    batch of single-polarization fields is ``(B, 1, N)``; ``(B, N)``</span>
-<span class="sd">    reads ``B`` as polarizations and is refused.</span>
+<span class="sd">    batch of single-polarization fields is ``(B, 1, N)``; a bare</span>
+<span class="sd">    ``(B, N)`` reads ``B`` as polarizations -- refused for</span>
+<span class="sd">    :math:`B \ge 3`, while ``(2, N)`` is read as one polarization pair</span>
+<span class="sd">    by convention.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    N_spans : int</span>
-<span class="sd">        Number of spans in the fiber link.</span>
+<span class="sd">        Number of spans in the fiber link. Default is 1.</span>
 <span class="sd">    L_span : float, keyword-only</span>
 <span class="sd">        Span length :math:`L_{\mathrm{span}}` in km. Default is 80.</span>
 <span class="sd">    StPS : int, keyword-only</span>
@@ -835,23 +837,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    use_only_linear : bool, keyword-only</span>
 <span class="sd">        If True, only the linear effects (CD and attenuation) are</span>
 <span class="sd">        simulated, in a single exact step per span. Default is False.</span>
-<span class="sd">    c : float, keyword-only</span>
-<span class="sd">        Speed of light :math:`c` in m/s. Default is ``SPEED_OF_LIGHT``.</span>
-<span class="sd">    h : float, keyword-only</span>
-<span class="sd">        Planck constant :math:`h` in J.s. Default is ``PLANCK_CONSTANT``.</span>
-<span class="sd">    gamma : float, keyword-only</span>
-<span class="sd">        Kerr coefficient :math:`\gamma` in rad/W/km. Default is</span>
-<span class="sd">        ``KERR_COEFFICIENT``.</span>
-<span class="sd">    lamb : float, keyword-only</span>
-<span class="sd">        Wavelength :math:`\lambda` in nm. Default is ``WAVELENGTH``.</span>
-<span class="sd">    alpha_dB : float, keyword-only</span>
-<span class="sd">        Fiber loss :math:`\alpha_{dB}` in dB/km. Default is ``FIBER_LOSS``.</span>
-<span class="sd">    cd_coefficient : float, keyword-only</span>
-<span class="sd">        Dispersion coefficient :math:`D` in ps/nm/km. Default is</span>
-<span class="sd">        ``CD_COEFFICIENT``.</span>
-<span class="sd">    nu : float, keyword-only</span>
-<span class="sd">        Optical carrier frequency :math:`\nu` in Hz. Default is</span>
-<span class="sd">        ``OPTICAL_CARRIER_FREQUENCY``.</span>
+<span class="sd">    fiber : FiberSpec, keyword-only</span>
+<span class="sd">        The physical fibre (D46): loss :math:`\alpha_{dB}`, Kerr</span>
+<span class="sd">        coefficient :math:`\gamma`, dispersion :math:`D` and the</span>
+<span class="sd">        wavelength the carrier frequency is derived from. Default is a</span>
+<span class="sd">        standard single-mode fibre, ``FiberSpec()``.</span>
 <span class="sd">    step_log_factor : float, keyword-only</span>
 <span class="sd">        Adjustment factor of the logarithmic step-size distribution.</span>
 <span class="sd">        Default is 0.4.</span>
@@ -1071,13 +1061,15 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        .. math::</span>
 
-<span class="sd">            P_{\mathrm{ASE}} = P \, N_s \, N_{\mathrm{ASE}} \, B,</span>
+<span class="sd">            P_{\mathrm{ASE}} = n_{\mathrm{pol}} \, N_s \,</span>
+<span class="sd">            N_{\mathrm{ASE}} \, B,</span>
 <span class="sd">            \qquad</span>
 <span class="sd">            N_{\mathrm{ASE}} = (G - 1) h \nu \, n_{sp},</span>
 <span class="sd">            \qquad</span>
 <span class="sd">            n_{sp} = \frac{\mathrm{NF}/2}{1 - 1/G}</span>
 
-<span class="sd">        with :math:`P` the number of polarizations. That factor is the</span>
+<span class="sd">        with :math:`n_{\mathrm{pol}}` the number of polarizations</span>
+<span class="sd">        (:math:`P` denotes power everywhere else in this module). That factor is the</span>
 <span class="sd">        whole reason this method exists. :math:`N_{\mathrm{ASE}}` is a</span>
 <span class="sd">        density **per polarization**, and a dual-polarization link</span>
 <span class="sd">        carries two independent copies of it; quoting a channel power</span>

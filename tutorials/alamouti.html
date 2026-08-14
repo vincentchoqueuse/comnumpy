@@ -43,362 +43,6 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
-
-
-
-const initStyles = () => {
-    const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
-    document.head.appendChild(defaultStyle);
-
-    const fullscreenStyle = document.createElement('style');
-    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
-    document.head.appendChild(fullscreenStyle);
-}
-
-// Detect if page has dark background
-const isDarkTheme = () => {
-    // We use a set of heuristics:
-    // 1. Check for common dark mode classes or attributes
-    // 2. Check computed background color brightness
-    if (document.documentElement.classList.contains('dark') ||
-        document.documentElement.getAttribute('data-theme') === 'dark' ||
-        document.body.classList.contains('dark') ||
-        document.body.getAttribute('data-theme') === 'dark') {
-        // console.log("Dark theme detected via class/attribute");
-        return true;
-    }
-    if (document.documentElement.classList.contains('light') ||
-        document.documentElement.getAttribute('data-theme') === 'light' ||
-        document.body.classList.contains('light') ||
-        document.body.getAttribute('data-theme') === 'light') {
-        // console.log("Light theme detected via class/attribute");
-        return false;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // console.log("Dark theme detected via prefers-color-scheme");
-        return true;
-    }
-    const bgColor = window.getComputedStyle(document.body).backgroundColor;
-    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
-    if (match) {
-        const r = parseInt(match[1]);
-        const g = parseInt(match[2]);
-        const b = parseInt(match[3]);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        // console.log("Background color brightness:", brightness);
-        return brightness < 128;
-    }
-    // console.log("No dark or light theme detected, defaulting to light theme");
-    return false;
-};
-
-let darkTheme = isDarkTheme();
-let modal = null;
-let modalContent = null;
-let previousScrollOffset = [window.scrollX, window.scrollY];
-let _lazyObserver = null;
-let _renderQueue = Promise.resolve();
-let closeModal = () => {};
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('active')) {
-        closeModal();
-    }
-});
-
-// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
-// so this is safe to call both for the initial batch and for diagrams that
-// render lazily once they become visible.
-const addZoomToSvgs = (svgs) => {
-    svgs.each(function() {
-        if (this.getAttribute('data-zoom-applied') === 'true') return;
-        var svg = d3.select(this);
-        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
-        var inner = svg.select("g");
-        var zoom = d3.zoom().on("zoom", function(event) {
-            inner.attr("transform", event.transform);
-        });
-        svg.call(zoom);
-        this.setAttribute('data-zoom-applied', 'true');
-    });
-};
-
-const runMermaid = async (rerun) => {
-    console.log("Running mermaid diagrams, rerun =", rerun);
-    // clear all existing mermaid charts
-    let all_mermaids = document.querySelectorAll(".mermaid");
-
-    if (rerun) {
-        // Disconnect any previous lazy rendering observer
-        if (_lazyObserver) {
-            _lazyObserver.disconnect();
-            _lazyObserver = null;
-        }
-
-        all_mermaids.forEach((el) => {
-            el.removeAttribute('data-mermaid-deferred');
-            el.removeAttribute('data-mermaid-render-failed');
-            if(!el.hasAttribute("data-original-code")) {
-                // store original code
-                // console.log(`Storing original code for first run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-            if(el.getAttribute("data-processed") === "true") {
-                // remove and restore original
-                el.removeAttribute("data-processed");
-                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
-                el.innerHTML = el.getAttribute('data-original-code');
-            } else {
-                // store original code
-                // console.log(`Storing original code for re-run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-        });
-
-        // Separate visible and hidden elements. Mermaid's layout engine measures
-        // text dimensions via the DOM, which fails for elements hidden by a parent
-        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
-        // producing broken SVGs. Render visible elements now, defer hidden ones.
-        const visible = [];
-        const hidden = [];
-        all_mermaids.forEach((el) => {
-            // offsetParent is null for display:none ancestors.
-            // getClientRects().length > 0 catches position:fixed elements
-            // (which also have null offsetParent but are still visible).
-            if (el.offsetParent !== null || el.getClientRects().length > 0) {
-                visible.push(el);
-            } else {
-                hidden.push(el);
-                el.setAttribute('data-mermaid-deferred', 'true');
-            }
-        });
-
-        if (visible.length > 0) {
-            try {
-                await mermaid.run({ nodes: visible });
-            } catch (e) {
-                console.error("Mermaid rendering failed:", e);
-            }
-        }
-
-        // Lazily render hidden elements when they become visible.
-        // Uses a promise chain (_renderQueue) to serialize rendering,
-        // since IntersectionObserver may report multiple entries at once
-        // and mermaid.run() is not safe to call concurrently.
-        if (hidden.length > 0) {
-            if (typeof IntersectionObserver === 'undefined') {
-                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
-            } else {
-                _renderQueue = Promise.resolve();
-                _lazyObserver = new IntersectionObserver((entries) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
-                            _lazyObserver.unobserve(entry.target);
-                            const el = entry.target;
-                            _renderQueue = _renderQueue.then(async () => {
-                                try {
-                                    await mermaid.run({ nodes: [el] });
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    // Apply zoom to the now-rendered diagram, matching
-                                    // the decoration visible diagrams receive.
-                                    if (false) {
-                                        addZoomToSvgs(d3.selectAll("").select(function() {
-                                            return this.querySelector("svg");
-                                        }));
-                                    }
-                                } catch (e) {
-                                    console.error("Mermaid deferred rendering failed:", e);
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    el.setAttribute('data-mermaid-render-failed', 'true');
-                                }
-                            });
-                        }
-                    }
-                });
-                hidden.forEach((el) => _lazyObserver.observe(el));
-            }
-        }
-    }
-
-    all_mermaids = document.querySelectorAll(".mermaid");
-    // Exclude deferred (hidden) and render-failed elements from completion checks
-    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
-    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
-
-    if (false) {
-        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
-        if(mermaids_to_add_zoom > 0) {
-            var svgs = d3.selectAll("").select(function() {
-                return this.querySelector("svg");
-            });
-            // Wait until every active (visible) diagram has rendered. Deferred
-            // diagrams are excluded, so a fixed d3_node_count that counts a
-            // hidden diagram no longer loops forever waiting for its SVG.
-            if(mermaids_active.length !== mermaids_processed.length) {
-                setTimeout(() => runMermaid(false), 200);
-                return;
-            }
-            addZoomToSvgs(svgs);
-        }
-    } else if(mermaids_active.length !== mermaids_processed.length) {
-        // Wait for mermaid to process all diagrams
-        setTimeout(() => runMermaid(false), 200);
-        return;
-    }
-
-    // Stop here if not adding fullscreen capability
-    if (!true) return;
-
-    if (modal !== null ) {
-        // Destroy existing modal
-        modal.remove();
-        modal = null;
-        modalContent = null;
-    }
-
-    modal = document.createElement('div');
-    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
-    modal.innerHTML = `
-        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
-        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
-    `;
-    document.body.appendChild(modal);
-
-    modalContent = modal.querySelector('.mermaid-container-fullscreen');
-    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    closeModal = () => {
-        modal.classList.remove('active');
-        modalContent.innerHTML = '';
-        document.body.style.overflow = ''
-        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
-        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
-            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
-            // Already processed, adjust button class if needed
-            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
-            if (existingBtn) {
-                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-            }
-            return;
-        }
-
-        const container = document.createElement('div');
-        container.className = 'mermaid-container';
-        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
-        container.appendChild(mermaidDiv);
-
-        const fullscreenBtn = document.createElement('button');
-        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
-        fullscreenBtn.textContent = "\u26f6";
-        fullscreenBtn.style.opacity = "50%";
-
-        // Calculate dynamic position based on diagram's margin and padding
-        const diagramStyle = window.getComputedStyle(mermaidDiv);
-        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
-        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
-        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
-        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
-        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
-        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
-
-        fullscreenBtn.addEventListener('click', () => {
-            previousScrollOffset = [window.scrollX, window.scrollY];
-            const clone = mermaidDiv.cloneNode(true);
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-
-            const svg = clone.querySelector('svg');
-            if (svg) {
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                svg.style.width = '100%';
-                svg.style.height = 'auto';
-                svg.style.maxWidth = '100%';
-                svg.style.display = 'block';
-
-                if (false) {
-                    setTimeout(() => {
-                        const g = svg.querySelector('g');
-                        if (g) {
-                            var svgD3 = d3.select(svg);
-                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
-                            var inner = svgD3.select("g");
-                            var zoom = d3.zoom().on("zoom", function(event) {
-                                inner.attr("transform", event.transform);
-                            });
-                            svgD3.call(zoom);
-                        }
-                    }, 100);
-                }
-            }
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-        container.appendChild(fullscreenBtn);
-    });
-};
-
-
-
-const load = async () => {
-    initStyles();
-
-
-    await runMermaid(true);
-
-    const reRunIfThemeChanges = async () => {
-        const newDarkTheme = isDarkTheme();
-        if (newDarkTheme !== darkTheme) {
-            darkTheme = newDarkTheme;
-            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
-            await mermaid.initialize(
-                {...{"startOnLoad": false},
-                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-                }
-            );
-            await runMermaid(true);
-        }
-    };
-
-    // Update theme classes when theme changes
-    const themeObserver = new MutationObserver(reRunIfThemeChanges);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    themeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-};
-
-
-
-
-
-console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
-mermaid.initialize(
-    {...{"startOnLoad": false},
-    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-    }
-);
-
-window.addEventListener("load", load);
-window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/alamouti';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -801,13 +445,13 @@ probability that it is nearly zero:</p>
 <p>We start with the imports and the parameters, QPSK over a Rayleigh channel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Rayleigh fading, receive diversity, and the Alamouti space-time code.</span>
 
-<span class="sd">Run from this directory: it writes the tutorial&#39;s figures and diagrams</span>
-<span class="sd">into ../../docs/tutorials/.</span>
+<span class="sd">Run from this directory: it writes the tutorial&#39;s figures into</span>
+<span class="sd">../../docs/tutorials/.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">style</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">print_data</span><span class="p">,</span> <span class="n">style</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.mappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolDemapper</span><span class="p">,</span> <span class="n">SymbolMapper</span>
@@ -823,18 +467,20 @@ probability that it is nearly zero:</p>
 <span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
 
 <span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
 
 <span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">M</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">order</span>
 <span class="n">code</span> <span class="o">=</span> <span class="n">get_code</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">)</span>
 <span class="n">power</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span>          <span class="c1"># split the power over the antennas</span>
-<span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.2</span>
 </pre></div>
 </div>
 <p>Let us check the law on draws from
 <a class="reference internal" href="../documentation/mimo/utils.html#comnumpy.mimo.utils.rayleigh_channel" title="comnumpy.mimo.utils.rayleigh_channel"><code class="xref py py-func docutils literal notranslate"><span class="pre">rayleigh_channel()</span></code></a>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the fading channel ----------------------------------------------</span>
+<span class="c1"># One Rayleigh coefficient is a complex Gaussian, so its squared modulus</span>
+<span class="c1"># is exponential with unit mean: the instantaneous SNR is the average one</span>
+<span class="c1"># multiplied by that draw.</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">20000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span>
 <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
 
@@ -942,80 +588,34 @@ all.</p>
 </section>
 <section id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h2>
-<p>The three schemes differ by what is put on the antennas and what is done with
-what comes back, so one function builds them all:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_chain</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the chain of one scheme, on a given channel realization.</span>
+<p>One channel draw, one chain, transmitter to decision. The scaling by
+<span class="math notranslate nohighlight">\(1/\sqrt{N_t}\)</span> matters for the comparison that follows: two antennas
+each transmitting <span class="math notranslate nohighlight">\(|s|^2\)</span> would spend twice the power of a single
+antenna, a 3 dB advantage that has nothing to do with coding. Splitting the
+power keeps the comparison about diversity alone.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- one shot ---------------------------------------------------------</span>
+<span class="c1"># One channel draw, one chain, transmitter to decision: what Alamouti</span>
+<span class="c1"># combining does to a single receive antenna.</span>
+<span class="n">H_one</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">one_shot</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">Amplifier</span><span class="p">(</span><span class="n">power</span><span class="p">),</span>
+    <span class="n">SpaceTimeEncoder</span><span class="p">(</span><span class="n">code</span><span class="p">),</span>
+    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H_one</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SpaceTimeDecoder</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H_one</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+    <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">power</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;detector&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alamouti 2x1&quot;</span><span class="p">)</span>
 
-<span class="sd">    The three schemes differ by two blocks -- what is put on the</span>
-<span class="sd">    antennas, and what is done with what comes back -- so they are one</span>
-<span class="sd">    function and not three scripts.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">source</span> <span class="o">=</span> <span class="p">[</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-              <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">)]</span>
-    <span class="n">channel</span> <span class="o">=</span> <span class="p">[</span><span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
-               <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">)]</span>
-    <span class="k">match</span> <span class="n">kind</span><span class="p">:</span>
-        <span class="k">case</span> <span class="s2">&quot;alamouti&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-                <span class="o">*</span><span class="n">source</span><span class="p">,</span> <span class="n">Amplifier</span><span class="p">(</span><span class="n">power</span><span class="p">),</span> <span class="n">SpaceTimeEncoder</span><span class="p">(</span><span class="n">code</span><span class="p">),</span> <span class="o">*</span><span class="n">channel</span><span class="p">,</span>
-                <span class="n">SpaceTimeDecoder</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
-                <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">power</span><span class="p">),</span> <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-            <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;detector&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alamouti 2x1&quot;</span><span class="p">)</span>
-        <span class="k">case</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
-            <span class="c1"># zero forcing on an (N_r, 1) channel *is* maximum ratio</span>
-            <span class="c1"># combining: the pseudo-inverse of a column is h^H / ||h||^2</span>
-            <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-                <span class="o">*</span><span class="n">source</span><span class="p">,</span> <span class="o">*</span><span class="n">channel</span><span class="p">,</span>
-                <span class="n">LinearDetector</span><span class="p">(</span><span class="n">constellation</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
-            <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> Rx, </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> Tx&quot;</span><span class="p">)</span>
-        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown link </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">one_shot</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>                        <span class="c1"># every stochastic block, reproducibly</span>
+<span class="n">s_rx</span> <span class="o">=</span> <span class="n">one_shot</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">one-shot SER: </span><span class="si">{</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">one_shot</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s1">&#39;tx&#39;</span><span class="p">),</span><span class="w"> </span><span class="n">s_rx</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">one_shot</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
 
-
-<span class="n">alamouti</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">))</span>
-<span class="n">siso</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">mrc</span> <span class="o">=</span> <span class="n">get_chain</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>The scaling by <span class="math notranslate nohighlight">\(1/\sqrt{N_t}\)</span> matters for the comparison that follows.
-Two antennas each transmitting <span class="math notranslate nohighlight">\(|s|^2\)</span> would spend twice the power of a
-single antenna, which is a 3 dB advantage that has nothing to do with coding.
-Splitting the power keeps the comparison about diversity alone.</p>
-<pre  class="mermaid">
-        flowchart LR
-    tx[&quot;SymbolGenerator&quot;]
-    symbol_mapper[&quot;SymbolMapper&quot;]
-    signal_amplifier[&quot;Amplifier&quot;]
-    space_time_encoder[&quot;SpaceTimeEncoder&quot;]
-    channel[&quot;FlatMIMOChannel&quot;]
-    noise[&quot;AWGN&quot;]
-    detector[&quot;SpaceTimeDecoder&quot;]
-    signal_amplifier_2[&quot;Amplifier&quot;]
-    symbol_demapper[&quot;SymbolDemapper&quot;]
-    tx --&gt; symbol_mapper
-    symbol_mapper --&gt; signal_amplifier
-    signal_amplifier --&gt; space_time_encoder
-    space_time_encoder --&gt; channel
-    channel --&gt; noise
-    noise --&gt; detector
-    detector --&gt; signal_amplifier_2
-    signal_amplifier_2 --&gt; symbol_demapper
-    classDef tapped stroke-dasharray: 4 2
-    class tx,noise,detector tapped
-    </pre><p>The diagram is not drawn by hand. It is what the chain says about itself –
-<code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the script, so the
-block names are the ones the code uses and a dashed outline marks a tapped
-block.</p>
-<section id="one-shot-simulation">
-<h3>One-shot simulation<a class="headerlink" href="#one-shot-simulation" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">alamouti</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>                        <span class="c1"># every stochastic block, reproducibly</span>
-<span class="n">s_rx</span> <span class="o">=</span> <span class="n">alamouti</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">one-shot SER: </span><span class="si">{</span><span class="n">compute_ser</span><span class="p">(</span><span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s1">&#39;tx&#39;</span><span class="p">),</span><span class="w"> </span><span class="n">s_rx</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">alamouti</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="n">code</span><span class="o">.</span><span class="n">n_symbols</span><span class="p">)</span>
-
-<span class="n">received</span> <span class="o">=</span> <span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">combined</span> <span class="o">=</span> <span class="n">alamouti</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">power</span>
+<span class="n">received</span> <span class="o">=</span> <span class="n">one_shot</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">one_shot</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">power</span>
 <span class="n">fig2</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_left</span><span class="p">,</span> <span class="n">ax_right</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
 <span class="n">plot_iq</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_left</span><span class="p">)</span>
 <span class="n">ax_left</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;tap(&#39;noise&#39;): the single receive antenna&quot;</span><span class="p">)</span>
@@ -1027,15 +627,15 @@ block.</p>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">one</span><span class="o">-</span><span class="n">shot</span> <span class="n">SER</span><span class="p">:</span> <span class="mf">0.0600</span>
 <span class="c1">#    block                        id                   output shape       dtype         time ms</span>
-<span class="mi">0</span>    <span class="n">SymbolGenerator</span>              <span class="n">tx</span>                   <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">int64</span>            <span class="mf">0.04</span>
+<span class="mi">0</span>    <span class="n">SymbolGenerator</span>              <span class="n">tx</span>                   <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">int64</span>            <span class="mf">0.03</span>
 <span class="mi">1</span>    <span class="n">SymbolMapper</span>                 <span class="n">symbol_mapper</span>        <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.00</span>
 <span class="mi">2</span>    <span class="n">Amplifier</span>                    <span class="n">signal_amplifier</span>     <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.01</span>
-<span class="mi">3</span>    <span class="n">SpaceTimeEncoder</span>             <span class="n">space_time_encoder</span>   <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.10</span>
+<span class="mi">3</span>    <span class="n">SpaceTimeEncoder</span>             <span class="n">space_time_encoder</span>   <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.06</span>
 <span class="mi">4</span>    <span class="n">FlatMIMOChannel</span>              <span class="n">channel</span>              <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.01</span>
-<span class="mi">5</span>    <span class="n">AWGN</span>                         <span class="n">noise</span>                <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.06</span>
-<span class="mi">6</span>    <span class="n">SpaceTimeDecoder</span>             <span class="n">detector</span>             <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.12</span>
-<span class="mi">7</span>    <span class="n">Amplifier</span>                    <span class="n">signal_amplifier_2</span>   <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.01</span>
-<span class="mi">8</span>    <span class="n">SymbolDemapper</span>               <span class="n">symbol_demapper</span>      <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">int64</span>            <span class="mf">0.08</span>
+<span class="mi">5</span>    <span class="n">AWGN</span>                         <span class="n">noise</span>                <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>          <span class="n">complex128</span>       <span class="mf">0.05</span>
+<span class="mi">6</span>    <span class="n">SpaceTimeDecoder</span>             <span class="n">detector</span>             <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.08</span>
+<span class="mi">7</span>    <span class="n">Amplifier</span>                    <span class="n">signal_amplifier_2</span>   <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">complex128</span>       <span class="mf">0.00</span>
+<span class="mi">8</span>    <span class="n">SymbolDemapper</span>               <span class="n">symbol_demapper</span>      <span class="p">(</span><span class="mi">1000</span><span class="p">,)</span>            <span class="n">int64</span>            <span class="mf">0.06</span>
 </pre></div>
 </div>
 <p>The shape column is the code at work: 1000 symbols enter, the encoder spreads
@@ -1049,57 +649,81 @@ same run after combining, and the four QPSK points are back. Nothing was
 estimated to get there – only the two conjugations and the matched filter of
 the equations above.</p>
 </section>
-</section>
 <section id="monte-carlo-evaluation">
 <h2>Monte Carlo Evaluation<a class="headerlink" href="#monte-carlo-evaluation" title="Link to this heading">#</a></h2>
-<p>Averaging over fading means running the chain once per channel realization,
-which is a sweep whose parameter is the channel. <code class="xref py py-func docutils literal notranslate"><span class="pre">sweep()</span></code>
-takes several dotted parameter names at once and zips them, so one sweep point
-sets the channel the signal goes through <strong>and</strong> the channel the detector
-inverts:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">average_ser</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Average one chain over independent quasi-static fading draws.</span>
-
-<span class="sd">    The chain is built once. ``monte_carlo`` takes several dotted parameters</span>
-<span class="sd">    at once and zips them, so one sweep point sets the channel the</span>
-<span class="sd">    signal goes through *and* the channel the detector inverts -- which</span>
-<span class="sd">    is exactly what a fading realization is.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">draws</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
-        <span class="n">H</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
-        <span class="n">draws</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">H</span><span class="p">,</span> <span class="n">H</span><span class="p">))</span>
-    <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">noise__sigma2</span><span class="o">=</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">))</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;channel.H&quot;</span><span class="p">,</span> <span class="s2">&quot;detector.H&quot;</span><span class="p">),</span> <span class="n">draws</span><span class="p">,</span>
-                          <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">stimulus</span><span class="o">=</span><span class="n">stimulus</span><span class="p">,</span>
-                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ser&quot;</span><span class="p">]))</span>
-
-
-<span class="c1"># The accuracy of an average over fading is set by the number of channel</span>
-<span class="c1"># draws, not by the symbol count, so the draw count grows with the SNR.</span>
-<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="n">draws</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2500</span><span class="p">,</span> <span class="mi">3500</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">6000</span><span class="p">]</span>
+<p>Averaging over fading takes many channel draws, and the draws are a
+<strong>batch</strong>: the <em>same</em> 5000 realizations serve every SNR point, one draw per
+row. Each scheme is one chain, built once with its stack of channels – the
+channel block propagates draw <span class="math notranslate nohighlight">\(k\)</span> on frame <span class="math notranslate nohighlight">\(k\)</span>, and the detector
+holds the same stack:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- averaging over fading --------------------------------------------</span>
+<span class="c1"># The SAME K channel draws serve every SNR point: one draw is one row</span>
+<span class="c1"># of the batch (D51), each chain is built once with its stack -- the</span>
+<span class="c1"># channel block propagates draw k on frame k, the detector holds the</span>
+<span class="c1"># same stack -- and only the noise moves along the sweep.</span>
+<span class="n">K</span> <span class="o">=</span> <span class="mi">5000</span>
 <span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">80</span>
-<span class="n">links</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">siso</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">)),</span>
-    <span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">alamouti</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span>
-    <span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">mrc</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">)),</span>
-<span class="p">}</span>
-<span class="c1"># --- metrics, pre-allocated ------------------------------------------</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">H_siso</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
+<span class="n">H_alamouti</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
+<span class="n">H_mrc</span> <span class="o">=</span> <span class="n">rayleigh_channel</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
+
+<span class="n">siso</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H_siso</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="c1"># zero forcing on an (N_r, 1) channel *is* maximum ratio combining:</span>
+    <span class="c1"># the pseudo-inverse of a column is h^H / ||h||^2</span>
+    <span class="n">LinearDetector</span><span class="p">(</span><span class="n">constellation</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H_siso</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;1 Tx, 1 Rx&quot;</span><span class="p">)</span>
+
+<span class="n">alamouti</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">Amplifier</span><span class="p">(</span><span class="n">power</span><span class="p">),</span>
+    <span class="n">SpaceTimeEncoder</span><span class="p">(</span><span class="n">code</span><span class="p">),</span>
+    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H_alamouti</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SpaceTimeDecoder</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H_alamouti</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+    <span class="n">Amplifier</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">power</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alamouti 2x1&quot;</span><span class="p">)</span>
+
+<span class="n">mrc</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">FlatMIMOChannel</span><span class="p">(</span><span class="n">H_mrc</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">sigma2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">LinearDetector</span><span class="p">(</span><span class="n">constellation</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H_mrc</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;MRC 1x2&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From there the sweep needs no simulation loop at all:
+<a class="reference internal" href="../documentation/toplevel/monte_carlo.html#comnumpy.monte_carlo.monte_carlo" title="comnumpy.monte_carlo.monte_carlo"><code class="xref py py-func docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a> moves the noise variance, and
+everything else – the channels, the chains – is frozen:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the sweep: no simulation loop -----------------------------------</span>
+<span class="c1"># monte_carlo moves the noise variance; everything else is frozen in</span>
+<span class="c1"># the chains above.</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">sigma2_list</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr_dB_list</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+
 <span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
-    <span class="n">curves</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">))</span>
-
-<span class="c1"># --- simulation loop -------------------------------------------------</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">stimulus</span><span class="p">)</span> <span class="ow">in</span> <span class="n">links</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">draws</span><span class="p">,</span>
-                                                <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
-        <span class="n">curves</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">average_ser</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">n_rx</span><span class="p">,</span> <span class="n">n_tx</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">,</span>
-                                          <span class="n">stimulus</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
-
-<span class="c1"># --- results: figure against the closed forms ------------------------</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;1 Tx, 1 Rx (no diversity)&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">siso</span><span class="p">,</span> <span class="s2">&quot;noise.sigma2&quot;</span><span class="p">,</span> <span class="n">sigma2_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;Alamouti, 2 Tx, 1 Rx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">alamouti</span><span class="p">,</span> <span class="s2">&quot;noise.sigma2&quot;</span><span class="p">,</span> <span class="n">sigma2_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">2</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;MRC, 1 Tx, 2 Rx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">mrc</span><span class="p">,</span> <span class="s2">&quot;noise.sigma2&quot;</span><span class="p">,</span> <span class="n">sigma2_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_symbols</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">3</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- results: table and figure against the closed forms --------------</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;snr_dB&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
 
 <span class="n">fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">snr_dB_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
 <span class="n">per_bit</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">fine</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
@@ -1111,90 +735,46 @@ inverts:</p>
 <span class="p">}</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="n">theory</span><span class="p">,</span> <span class="n">x_theory</span><span class="o">=</span><span class="n">fine</span><span class="p">,</span>
                      <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;symbol error rate&quot;</span><span class="p">,</span>
-                     <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-PSK over Rayleigh, equal transmit power&quot;</span><span class="p">)</span>
+                     <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">-PSK over Rayleigh, </span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2"> channel draws, &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;equal transmit power&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_alamouti_fig3.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SER</span>
+<span class="n">snr_dB</span>  <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>  <span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>  <span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>
+<span class="o">------------------------------------------------------------------------</span>
+     <span class="mi">4</span>                    <span class="mf">0.22261</span>             <span class="mf">1.778e-01</span>        <span class="mf">8.162e-02</span>
+     <span class="mi">8</span>                    <span class="mf">0.11186</span>             <span class="mf">6.430e-02</span>        <span class="mf">2.155e-02</span>
+    <span class="mi">12</span>                    <span class="mf">0.04976</span>             <span class="mf">1.675e-02</span>        <span class="mf">4.200e-03</span>
+    <span class="mi">16</span>                    <span class="mf">0.02082</span>             <span class="mf">3.373e-03</span>        <span class="mf">5.700e-04</span>
+    <span class="mi">20</span>                    <span class="mf">0.00843</span>             <span class="mf">5.525e-04</span>        <span class="mf">8.000e-05</span>
+    <span class="mi">24</span>                    <span class="mf">0.00312</span>             <span class="mf">6.250e-05</span>        <span class="mf">2.500e-06</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/one_shot_alamouti_fig3.png"><img alt="../_images/one_shot_alamouti_fig3.png" class="align-center" src="../_images/one_shot_alamouti_fig3.png" style="width: 100%;" />
+</a>
 <p>The three curves are three readings of one closed form,
 <a class="reference internal" href="../documentation/core/metrics.html#comnumpy.core.metrics.compute_ser_rayleigh_psk" title="comnumpy.core.metrics.compute_ser_rayleigh_psk"><code class="xref py py-func docutils literal notranslate"><span class="pre">compute_ser_rayleigh_psk()</span></code></a>: <span class="math notranslate nohighlight">\(L\)</span> branches
 evaluated at the per-branch SNR, with a transmit scheme dividing that SNR by
-<span class="math notranslate nohighlight">\(N_t\)</span> because it splits its power over the antennas. <code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code>
-draws measurements as hollow markers and their references as lines of the same
-colour, so a pair reads as one statement:</p>
-<a class="reference internal image-reference" href="../_images/one_shot_alamouti_fig3.png"><img alt="../_images/one_shot_alamouti_fig3.png" class="align-center" src="../_images/one_shot_alamouti_fig3.png" style="width: 100%;" />
-</a>
-<p>The two statements this tutorial is about – the slope and the 3 dB – are
-exact, so they are read off the closed form rather than fitted to the points;
-the simulation is what confronts them:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the two claims, read off the closed form -------------------------</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">closed_form</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Rayleigh SER this curve should follow, at equal transmit power.&quot;&quot;&quot;</span>
-    <span class="n">power_split</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">n_tx</span> <span class="k">if</span> <span class="s2">&quot;Alamouti&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">else</span> <span class="mi">1</span>
-    <span class="n">diversity</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="s2">&quot;no diversity&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">else</span> <span class="mi">2</span>
-    <span class="k">return</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span>
-        <span class="n">M</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="n">power_split</span><span class="p">,</span>
-        <span class="n">diversity</span><span class="o">=</span><span class="n">diversity</span><span class="p">)</span>
-
-
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="n">closed_form</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">)</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> measured / closed form  &quot;</span>
-    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ratio</span><span class="p">:</span>
-        <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-
-<span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">])</span>
-<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">curves</span><span class="p">:</span>
-    <span class="n">reference</span> <span class="o">=</span> <span class="n">closed_form</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span>
-    <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">high</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">reference</span><span class="p">),</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> diversity order </span><span class="si">{</span><span class="o">-</span><span class="n">slope</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="n">grid_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
-<span class="n">alamouti_snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">grid_dB</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-<span class="n">target</span> <span class="o">=</span> <span class="mf">1e-3</span>
-<span class="n">of</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;MRC&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">alamouti_snr</span><span class="p">,</span> <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-      <span class="s2">&quot;Alamouti&quot;</span><span class="p">:</span> <span class="n">compute_ser_rayleigh_psk</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">alamouti_snr</span> <span class="o">/</span> <span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">,</span>
-                                           <span class="n">diversity</span><span class="o">=</span><span class="mi">2</span><span class="p">)}</span>
-<span class="n">needed</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">of</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">needed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">values</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                             <span class="n">grid_dB</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNR for SER = </span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: MRC </span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;MRC&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB, Alamouti &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;Alamouti&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB, gap </span><span class="si">{</span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;Alamouti&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">needed</span><span class="p">[</span><span class="s1">&#39;MRC&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;(10log10(N_t) = </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">n_tx</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;alamouti&quot;</span><span class="p">,</span> <span class="n">alamouti</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;mrc&quot;</span><span class="p">,</span> <span class="n">mrc</span><span class="p">)]:</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.99</span> <span class="mf">0.97</span> <span class="mf">0.94</span> <span class="mf">0.90</span> <span class="mf">0.83</span> <span class="mf">0.86</span>
-<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.98</span> <span class="mf">0.92</span> <span class="mf">0.88</span> <span class="mf">0.77</span> <span class="mf">0.84</span> <span class="mf">0.65</span>
-<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">measured</span> <span class="o">/</span> <span class="n">closed</span> <span class="n">form</span>  <span class="mf">0.98</span> <span class="mf">0.91</span> <span class="mf">0.82</span> <span class="mf">0.72</span> <span class="mf">0.73</span> <span class="mf">0.28</span>
-<span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span> <span class="p">(</span><span class="n">no</span> <span class="n">diversity</span><span class="p">)</span>    <span class="n">diversity</span> <span class="n">order</span> <span class="mf">1.00</span>
-<span class="n">Alamouti</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Rx</span>         <span class="n">diversity</span> <span class="n">order</span> <span class="mf">2.00</span>
-<span class="n">MRC</span><span class="p">,</span> <span class="mi">1</span> <span class="n">Tx</span><span class="p">,</span> <span class="mi">2</span> <span class="n">Rx</span>              <span class="n">diversity</span> <span class="n">order</span> <span class="mf">2.00</span>
-<span class="n">SNR</span> <span class="k">for</span> <span class="n">SER</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">:</span> <span class="n">MRC</span> <span class="mf">15.6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">Alamouti</span> <span class="mf">18.6</span> <span class="n">dB</span><span class="p">,</span> <span class="n">gap</span> <span class="mf">3.01</span> <span class="n">dB</span> <span class="p">(</span><span class="mi">10</span><span class="n">log10</span><span class="p">(</span><span class="n">N_t</span><span class="p">)</span> <span class="o">=</span> <span class="mf">3.01</span> <span class="n">dB</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>The slope.</strong> The single-antenna scheme has diversity order 1, the two
-others 2: the error rate falls twice as fast, which is the whole reason a
-space-time code exists.</p>
-<p><strong>The 3 dB.</strong> Reaching a symbol error rate of <span class="math notranslate nohighlight">\(10^{-3}\)</span> costs 15.6 dB
-with two receive antennas and 18.6 dB with Alamouti, a gap of <strong>3.01 dB</strong>
-against <span class="math notranslate nohighlight">\(10\log_{10} N_t = 3.01\)</span> dB. That is the price of transmitting
-<em>blind</em>: the receiver knows the channel and weights its branches by
-<span class="math notranslate nohighlight">\(h_i^{*}\)</span>, the transmitter cannot and splits its power evenly. Alamouti
-buys the full diversity order anyway; it pays only in array gain, not in
-slope.</p>
-<p><strong>The ratios.</strong> The measurement tracks the closed form to a few percent at low
-SNR and drifts below it as the SNR grows, down to 0.28 for the steepest curve:
-6000 channel draws no longer sample the deep fades that dominate the average
-there. Nothing is wrong with either side –
-<code class="docutils literal notranslate"><span class="pre">validation/mimo_diversity_ber.py</span></code> runs the same three schemes with up to
-80 000 draws and lands within 4.4 % of the same curves.</p>
+<span class="math notranslate nohighlight">\(N_t\)</span> because it splits its power over the antennas.
+<code class="docutils literal notranslate"><span class="pre">plot_error_rate</span></code> draws measurements as hollow markers and their references
+as lines of the same colour, so a pair reads as one statement – and the two
+statements this tutorial is about are on the figure:</p>
+<p><strong>The slope.</strong> The single-antenna curve loses one decade of error rate per
+10 dB; the two others fall twice as fast. That is diversity order 2, the
+whole reason a space-time code exists.</p>
+<p><strong>The 3 dB.</strong> The Alamouti and MRC curves are parallel, separated
+horizontally by <span class="math notranslate nohighlight">\(10\log_{10} N_t = 3\)</span> dB. That is the price of
+transmitting <em>blind</em>: the receiver knows the channel and weights its
+branches by <span class="math notranslate nohighlight">\(h_i^{*}\)</span>; the transmitter cannot, and splits its power
+evenly. Alamouti buys the full diversity order anyway – it pays only in
+array gain, never in slope.</p>
+<p>The last MRC point sits on the estimator’s floor: 2.5e-6 out of 400 000
+symbols is one error, not a rate. <code class="docutils literal notranslate"><span class="pre">validation/mimo_diversity_ber.py</span></code> runs
+the same three schemes with up to 80 000 draws and lands within 4.4 % of the
+closed forms.</p>
 </section>
 <section id="beyond-two-antennas">
 <h2>Beyond two antennas<a class="headerlink" href="#beyond-two-antennas" title="Link to this heading">#</a></h2>
@@ -1290,10 +870,7 @@ symbols.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#space-time-coding-miso">Space-time coding (MISO)</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#one-shot-simulation">One-shot simulation</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monte-carlo-evaluation">Monte Carlo Evaluation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beyond-two-antennas">Beyond two antennas</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>

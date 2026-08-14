@@ -744,20 +744,24 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
 <span class="sd">    At each step :math:`n`, the two output polarizations are computed</span>
-<span class="sd">    from the estimated equalizer matrix :math:`\mathbf{H}` of size</span>
-<span class="sd">    :math:`2 \times 2(2L+1)`:</span>
+<span class="sd">    from the estimated equalizer matrix :math:`\mathbf{W}` of size</span>
+<span class="sd">    :math:`2 \times 2(2L+1)` -- written :math:`\mathbf{W}`, not</span>
+<span class="sd">    :math:`\mathbf{H}`, because everywhere else in this package</span>
+<span class="sd">    :math:`\mathbf{H}` is the channel; the attribute is ``H_`` for</span>
+<span class="sd">    historical reasons, the trailing underscore marking it as estimated</span>
+<span class="sd">    (D23):</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        y_i[n] = \mathbf{h}_i^H \tilde{\mathbf{x}}[n], \qquad</span>
+<span class="sd">        y_i[n] = \mathbf{w}_i^H \tilde{\mathbf{x}}[n], \qquad</span>
 <span class="sd">        \tilde{\mathbf{x}}[n] = \begin{bmatrix}</span>
 <span class="sd">        x_0[n] &amp; \cdots &amp; x_0[n-2L] &amp; x_1[n] &amp; \cdots &amp; x_1[n-2L]</span>
 <span class="sd">        \end{bmatrix}^T</span>
 
-<span class="sd">    where :math:`\mathbf{h}_i^T` is the :math:`i`-th row of</span>
-<span class="sd">    :math:`\mathbf{H}` and :math:`x_0`, :math:`x_1` are the two received</span>
+<span class="sd">    where :math:`\mathbf{w}_i^T` is the :math:`i`-th row of</span>
+<span class="sd">    :math:`\mathbf{W}` and :math:`x_0`, :math:`x_1` are the two received</span>
 <span class="sd">    polarizations. The equalizer is updated by stochastic gradient</span>
-<span class="sd">    descent, :math:`\mathbf{H} \leftarrow \mathbf{H} + \mu \mathbf{g}[n]`,</span>
+<span class="sd">    descent, :math:`\mathbf{W} \leftarrow \mathbf{W} + \mu \mathbf{g}[n]`,</span>
 <span class="sd">    minimizing one of the following blind losses:</span>
 
 <span class="sd">    * Constant Modulus Algorithm (CMA):</span>
@@ -866,8 +870,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
-<span class="sd">    ValueError</span>
-<span class="sd">        If the input is not a dual-polarization signal of shape ``(2, N)``.</span>
+<span class="sd">    ShapeError</span>
+<span class="sd">        If the input does not carry a polarization pair ``(..., 2, N)``,</span>
+<span class="sd">        or if ``H_`` carries the batch shape of a previous pass and the</span>
+<span class="sd">        new input carries a different one -- call :meth:`initialize_H`</span>
+<span class="sd">        to restart from the identity equalizer.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>

@@ -493,7 +493,7 @@ T_m \, e^{i \angle x[n]} &amp; \text{if } |x[n]| &gt; T_m,
 </ul>
 <p>For real-valued inputs, <span class="math notranslate nohighlight">\(T_m \, \mathrm{sign}(x[n])\)</span> replaces the
 polar form.</p>
-<p>Axes: <em>element-wise</em> – the clipping is applied pointwise; the
+<p>Axes: <em>axis -1</em> – the clipping is applied pointwise, but the
 threshold <span class="math notranslate nohighlight">\(T_m\)</span> is computed from the mean power <strong>along the
 last axis</strong>, so each row of a batch is clipped against its own
 power – one transmitter per trial (D51).</p>
@@ -535,7 +535,7 @@ doi: 10.1109/SURV.2013.021313.00164.</p>
 <h2>Signal Model<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>The frequency-domain input is iteratively transformed to the time
 domain, clipped, transformed back and filtered. Starting from
-<span class="math notranslate nohighlight">\(X^{(0)}[k] = x[k]\)</span>, each iteration <span class="math notranslate nohighlight">\(i = 1, \dots, N_{it}\)</span>
+<span class="math notranslate nohighlight">\(X^{(0)}[k] = X[k]\)</span>, each iteration <span class="math notranslate nohighlight">\(i = 1, \dots, N_{it}\)</span>
 computes:</p>
 <div class="math notranslate nohighlight">
 \[s^{(i)}[n] = \mathrm{IDFT}\{X^{(i-1)}\}[n], \qquad
@@ -547,7 +547,7 @@ clipping of <a class="reference internal" href="#comnumpy.ofdm.predistorders.Har
 \gamma = \sqrt{10^{\mathrm{PAPR_{max}}/10}},\]</div>
 <p>and where:</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x[k]\)</span> is the frequency-domain input at subcarrier <span class="math notranslate nohighlight">\(k\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(X[k]\)</span> is the frequency-domain input at subcarrier <span class="math notranslate nohighlight">\(k\)</span>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(P_s\)</span> is the mean power of the current time-domain block <span class="math notranslate nohighlight">\(s^{(i)}[n]\)</span>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(\mathrm{PAPR_{max}}\)</span> is the target maximum PAPR in dB,</p></li>
 <li><p><span class="math notranslate nohighlight">\(w\)</span> is the filtering weight applied in the frequency domain.</p></li>
@@ -615,36 +615,36 @@ vol. 59, no. 1, pp. 33-37, 2011.</p>
 <dd><p>Implements the Partial Transmit Sequences (PTS) method for Peak-to-Average Power Ratio (PAPR) reduction in OFDM signals.</p>
 <section id="id2">
 <h2>Signal Model<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<p>Each frequency-domain block <span class="math notranslate nohighlight">\(x[k]\)</span> of length <span class="math notranslate nohighlight">\(N\)</span> is
+<p>Each frequency-domain block <span class="math notranslate nohighlight">\(X[k]\)</span> of length <span class="math notranslate nohighlight">\(N\)</span> is
 partitioned into <span class="math notranslate nohighlight">\(M\)</span> disjoint adjacent sub-blocks
-<span class="math notranslate nohighlight">\(x_m[k]\)</span> (each keeping its <span class="math notranslate nohighlight">\(N/M\)</span> contiguous subcarriers
+<span class="math notranslate nohighlight">\(X_m[k]\)</span> (each keeping its <span class="math notranslate nohighlight">\(N/M\)</span> contiguous subcarriers
 and zeros elsewhere). The transmitted time-domain block is the
 phase-rotated combination:</p>
 <div class="math notranslate nohighlight">
-\[y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{x_m\}[n]\]</div>
+\[y[n] = \sum_{m=1}^{M} \hat{b}_m \, \mathrm{IDFT}\{X_m\}[n]\]</div>
 <p>where the phase factors are selected by exhaustive search over the
 phase alphabet <span class="math notranslate nohighlight">\(\mathcal{B}\)</span> to minimize the PAPR:</p>
 <div class="math notranslate nohighlight">
 \[(\hat{b}_1, \dots, \hat{b}_M) =
 \arg\min_{b_m \in \mathcal{B}}
-\mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{x_m\}\right)\]</div>
+\mathrm{PAPR}\left(\sum_{m=1}^{M} b_m \, \mathrm{IDFT}\{X_m\}\right)\]</div>
 <p>and where:</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x[k]\)</span> is the frequency-domain input at subcarrier <span class="math notranslate nohighlight">\(k\)</span>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(X[k]\)</span> is the frequency-domain input at subcarrier <span class="math notranslate nohighlight">\(k\)</span>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(M\)</span> is the number of sub-blocks,</p></li>
 <li><p><span class="math notranslate nohighlight">\(\mathcal{B}\)</span> is the phase factor alphabet,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y[n]\)</span> is the time-domain output block.</p></li>
 </ul>
-<p>Axes: <em>declared axis</em> – expects the Block layout <code class="docutils literal notranslate"><span class="pre">(T,</span> <span class="pre">F)</span></code>; one
-phase combination is optimized per block and the IDFT runs along the
-block content axis.</p>
+<p>Axes: <em>declared axis</em> – expects the 2-D Block layout <code class="docutils literal notranslate"><span class="pre">(T,</span> <span class="pre">F)</span></code>,
+validated in <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>; one phase combination is optimized per
+block and the IDFT runs along the block content axis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">param phase_alphabet<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Phase factor alphabet <span class="math notranslate nohighlight">\(\mathcal{B}\)</span> used in the PTS method
-(e.g. <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">-1]</span></code>).</p>
+<dd class="field-odd"><p>Phase factor alphabet <span class="math notranslate nohighlight">\(\mathcal{B}\)</span> used in the PTS
+method. Default is <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">-1]</span></code>.</p>
 </dd>
 <dt class="field-even">type phase_alphabet<span class="colon">:</span></dt>
-<dd class="field-even"><p>list</p>
+<dd class="field-even"><p>list, optional</p>
 </dd>
 <dt class="field-odd">param N_sub<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of sub-blocks <span class="math notranslate nohighlight">\(M\)</span> the OFDM signal is divided into. Default is 16.</p>

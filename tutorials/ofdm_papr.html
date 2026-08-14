@@ -471,30 +471,25 @@ are simply not seen.</p>
 <span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;PSK&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">get_transmitter</span><span class="p">(</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="n">os</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ofdm&quot;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The OFDM transmitter, up to the IFFT.</span>
-
-<span class="sd">    Oversampling is zero padding: the data occupy ``n_sub`` of the</span>
-<span class="sd">    ``oversampling * n_sub`` bins, so the IFFT interpolates between the</span>
-<span class="sd">    Nyquist samples and the peaks stop hiding between them.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">oversampling</span> <span class="o">*</span> <span class="n">n_sub</span><span class="p">)</span>
-    <span class="n">carrier_type</span><span class="p">[:</span><span class="n">n_sub</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-        <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s2p&quot;</span><span class="p">),</span>
-        <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
-        <span class="n">IFFTProcessor</span><span class="p">(),</span>
-    <span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="c1"># --- what the transmitter puts out -----------------------------------</span>
+<span class="c1"># One transmitter, up to the IFFT. Oversampling is zero padding: the</span>
+<span class="c1"># data occupy N_sc of the os * N_sc bins, so the IFFT interpolates</span>
+<span class="c1"># between the Nyquist samples and the peaks stop hiding between them.</span>
+<span class="n">carrier_1024</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">)</span>
+<span class="n">carrier_1024</span><span class="p">[:</span><span class="n">N_sc</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">ofdm_1024</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">Serial2Parallel</span><span class="p">(</span><span class="n">N_sc</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s2p&quot;</span><span class="p">),</span>
+    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_1024</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
+    <span class="n">IFFTProcessor</span><span class="p">(),</span>
+<span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ofdm 1024&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Let us generate four OFDM symbols and look at the instantaneous power,
 normalized by its own mean:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- what the transmitter puts out -----------------------------------</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="n">get_transmitter</span><span class="p">(</span><span class="n">N_sc</span><span class="p">)</span>
-<span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">blocks</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">)</span>                <span class="c1"># four OFDM symbols</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ofdm_1024</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">blocks</span> <span class="o">=</span> <span class="n">ofdm_1024</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">)</span>            <span class="c1"># four OFDM symbols</span>
 <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span>               <span class="c1"># C-order flatten of the (T, F) blocks</span>
 <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
@@ -526,7 +521,11 @@ asymptotically a circular complex Gaussian, and its power is therefore
 \qquad \gamma = \frac{|x[n]|^2}{\mathbb{E}\left[|x[n]|^2\right]}\]</div>
 <p>which is a law with no upper bound: arbitrarily large peaks have small but
 non-zero probability.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">long_run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="mi">200</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- why it looks like that ------------------------------------------</span>
+<span class="c1"># Each sample is a sum of N_sc independent terms, so the central limit</span>
+<span class="c1"># theorem applies: the samples are complex Gaussian, and their power is</span>
+<span class="c1"># exponential. Nothing about OFDM is needed beyond that.</span>
+<span class="n">long_run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">ofdm_1024</span><span class="p">(</span><span class="mi">200</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">))</span>
 <span class="n">normalized</span> <span class="o">=</span> <span class="n">long_run</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">long_run</span><span class="p">)</span>
 <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">long_run</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">long_run</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
@@ -571,7 +570,8 @@ of one OFDM symbol,</p>
 reduces along the axis one waveform lies on, so a block array gives one value
 per OFDM symbol without any reshaping; <code class="docutils literal notranslate"><span class="pre">reduction</span></code> then says what to do
 with those values, which saves reducing them by hand:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">papr_dB</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the metric -------------------------------------------------------</span>
+<span class="n">papr_dB</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">line</span> <span class="o">=</span> <span class="s2">&quot;PAPR of the four symbols above: &quot;</span>
 <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">papr_dB</span><span class="p">:</span>
     <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
@@ -608,33 +608,43 @@ Prasad, 2000).</p>
 the oversampling rather than the effective count: the fit belongs to the
 library, with its domain of validity, rather than to each script that draws
 the curve.</p>
-<p>The fitted constant can be avoided. Counting how often a Gaussian process
-crosses a level gives an effective count that grows with the threshold
-instead,</p>
-<div class="math notranslate nohighlight">
-\[\mathrm{CCDF}(\gamma) \simeq 1 - \exp\left(-N_{sc}
-\sqrt{\frac{\pi}{3}}\, \sqrt{\gamma}\, e^{-\gamma}\right)\]</div>
-<p>which the same function returns with <code class="docutils literal notranslate"><span class="pre">method=&quot;level_crossing&quot;</span></code>. It has no
-fitted constant, but it describes the peak of the <strong>continuous-time</strong>
-waveform, which a sampled one can only underestimate – so it reads high on
-sampled data, and it is a large-threshold approximation. The two are
-compared against the measurement at the end of this page.</p>
+<p>A fit-free alternative based on level-crossing counts exists – the same
+function returns it with <code class="docutils literal notranslate"><span class="pre">method=&quot;level_crossing&quot;</span></code> – but it describes the
+peak of the <strong>continuous-time</strong> waveform, which sampled data can only
+underestimate, so it reads high here.</p>
 <section id="implementation">
 <h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
 <p>We estimate the CCDF over 20 000 OFDM symbols, for 256 and 1024 subcarriers:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">threshold_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-<span class="n">n_batches</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">1000</span>
-<span class="n">measured</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">n_sub</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">1024</span><span class="p">):</span>
-    <span class="n">transmitter</span> <span class="o">=</span> <span class="n">get_transmitter</span><span class="p">(</span><span class="n">n_sub</span><span class="p">)</span>
-    <span class="n">transmitter</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-        <span class="n">compute_papr</span><span class="p">(</span><span class="n">transmitter</span><span class="p">(</span><span class="n">batch</span> <span class="o">*</span> <span class="n">n_sub</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_batches</span><span class="p">)])</span>
-    <span class="n">sorted_dB</span><span class="p">,</span> <span class="n">ccdf</span> <span class="o">=</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-    <span class="n">measured</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;$N_</span><span class="se">{{</span><span class="s2">sc</span><span class="se">}}</span><span class="s2">$ = </span><span class="si">{</span><span class="n">n_sub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">sorted_dB</span><span class="p">,</span> <span class="n">ccdf</span><span class="p">)</span>
-    <span class="n">reference</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;$N_</span><span class="se">{{</span><span class="s2">sc</span><span class="se">}}</span><span class="s2">$ = </span><span class="si">{</span><span class="n">n_sub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_papr_ccdf_theo</span><span class="p">(</span>
-        <span class="n">threshold_dB</span><span class="p">,</span> <span class="n">n_sub</span><span class="p">,</span> <span class="n">oversampling</span><span class="o">=</span><span class="n">os</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the distribution -------------------------------------------------</span>
+<span class="c1"># Two subcarrier counts, so two chains -- the 1024 one already exists.</span>
+<span class="c1"># The batch needs no loop: Serial2Parallel stacks the OFDM symbols on</span>
+<span class="c1"># the leading axis, so 20 000 symbols are one call and compute_papr</span>
+<span class="c1"># reads one value per row.</span>
+<span class="n">n_symbols</span> <span class="o">=</span> <span class="mi">20000</span>
+<span class="n">threshold_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">carrier_256</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">os</span> <span class="o">*</span> <span class="mi">256</span><span class="p">)</span>
+<span class="n">carrier_256</span><span class="p">[:</span><span class="mi">256</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">ofdm_256</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
+    <span class="n">Serial2Parallel</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s2p&quot;</span><span class="p">),</span>
+    <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="n">carrier_256</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator&quot;</span><span class="p">),</span>
+    <span class="n">IFFTProcessor</span><span class="p">(),</span>
+<span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ofdm 256&quot;</span><span class="p">)</span>
+
+<span class="n">ofdm_256</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">papr_256</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">ofdm_256</span><span class="p">(</span><span class="n">n_symbols</span> <span class="o">*</span> <span class="mi">256</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">ofdm_1024</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">papr_1024</span> <span class="o">=</span> <span class="n">compute_papr</span><span class="p">(</span><span class="n">ofdm_1024</span><span class="p">(</span><span class="n">n_symbols</span> <span class="o">*</span> <span class="n">N_sc</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">measured</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;$N_</span><span class="si">{sc}</span><span class="s2">$ = 256&quot;</span><span class="p">:</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">papr_256</span><span class="p">),</span>
+            <span class="s2">&quot;$N_</span><span class="si">{sc}</span><span class="s2">$ = 1024&quot;</span><span class="p">:</span> <span class="n">compute_ccdf</span><span class="p">(</span><span class="n">papr_1024</span><span class="p">)}</span>
+<span class="n">reference</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;$N_</span><span class="si">{sc}</span><span class="s2">$ = 256&quot;</span><span class="p">:</span> <span class="n">compute_papr_ccdf_theo</span><span class="p">(</span><span class="n">threshold_dB</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span>
+                                             <span class="n">oversampling</span><span class="o">=</span><span class="n">os</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;$N_</span><span class="si">{sc}</span><span class="s2">$ = 1024&quot;</span><span class="p">:</span> <span class="n">compute_papr_ccdf_theo</span><span class="p">(</span><span class="n">threshold_dB</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span>
+                                              <span class="n">oversampling</span><span class="o">=</span><span class="n">os</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;dB&quot;</span><span class="p">)}</span>
 
 <span class="c1"># Markers are placed on a logarithmic grid of the ordinate: spacing them</span>
 <span class="c1"># evenly in index would crowd the top of the curve and leave the tail --</span>
@@ -658,7 +668,6 @@ compared against the measurement at the end of this page.</p>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/monte_carlo_ofdm_papr_fig3.png&quot;</span><span class="p">)</span>
-
 </pre></div>
 </div>
 </section>
@@ -677,37 +686,6 @@ compared against the measurement at the end of this page.</p>
 <span class="n">N_sc</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">:</span> <span class="n">PAPR</span> <span class="n">exceeded</span> <span class="n">once</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">thousand</span> <span class="n">symbols</span> <span class="n">above</span> <span class="mf">11.72</span> <span class="n">dB</span>
 </pre></div>
 </div>
-<p>Which of the two models to believe is a question the measurement answers:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the two models, against the measurement -------------------------</span>
-<span class="c1"># &quot;effective&quot; replaces the sample count by a fitted multiple of N_sc;</span>
-<span class="c1"># &quot;level_crossing&quot; replaces the fitted constant by a term that grows</span>
-<span class="c1"># with the threshold, at the price of describing the *continuous*</span>
-<span class="c1"># waveform, whose peak a sampled one can only underestimate.</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">CCDF models against the measurement&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;N_sc  level  threshold   effective   level crossing&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">sorted_dB</span><span class="p">,</span> <span class="n">ccdf</span><span class="p">)</span> <span class="ow">in</span> <span class="n">measured</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">n_sub</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;= &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">1e-2</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">):</span>
-        <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">ccdf</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">level</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ccdf</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">at</span> <span class="o">=</span> <span class="n">sorted_dB</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_sub</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ccdf</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">:</span><span class="s2">6.0e</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">at</span><span class="si">:</span><span class="s2">8.2f</span><span class="si">}</span><span class="s2"> dB &quot;</span>
-              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">compute_papr_ccdf_theo</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="w"> </span><span class="n">n_sub</span><span class="p">,</span><span class="w"> </span><span class="n">oversampling</span><span class="o">=</span><span class="n">os</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;dB&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">11.1e</span><span class="si">}</span><span class="s2">&quot;</span>
-              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">compute_papr_ccdf_theo</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="w"> </span><span class="n">n_sub</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;dB&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;level_crossing&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">16.1e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">N_sc</span>  <span class="n">level</span>  <span class="n">threshold</span>   <span class="n">effective</span>   <span class="n">level</span> <span class="n">crossing</span>
-  <span class="mi">256</span>  <span class="mf">1e-02</span>    <span class="mf">10.43</span> <span class="n">dB</span>     <span class="mf">1.2e-02</span>         <span class="mf">1.4e-02</span>
-  <span class="mi">256</span>  <span class="mf">1e-03</span>    <span class="mf">11.28</span> <span class="n">dB</span>     <span class="mf">1.1e-03</span>         <span class="mf">1.4e-03</span>
- <span class="mi">1024</span>  <span class="mf">1e-02</span>    <span class="mf">11.00</span> <span class="n">dB</span>     <span class="mf">9.6e-03</span>         <span class="mf">1.2e-02</span>
- <span class="mi">1024</span>  <span class="mf">1e-03</span>    <span class="mf">11.69</span> <span class="n">dB</span>     <span class="mf">1.1e-03</span>         <span class="mf">1.6e-03</span>
-</pre></div>
-</div>
-<p>The effective-count model is within 20 % of the measurement, the
-level-crossing one 20 to 60 % above it – consistently above, which is the
-direction it must err in, since it is the continuous-time waveform that is
-being modelled and the simulation only sees four samples per Nyquist
-interval. Take the first to size an amplifier from sampled data, and the
-second when the question is the analogue waveform itself.</p>
 <p>The measured points sit on the closed form over the whole range. As expected,
 the probability of a large PAPR grows with the number of subcarriers – but
 slowly: four times as many subcarriers cost only 0.4 dB, because the number

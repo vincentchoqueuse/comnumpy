@@ -1916,8 +1916,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Its output is what ``SymbolMapper`` consumes, so a shaped</span>
 <span class="sd">    transmitter is a chain like any other.</span>
 
-<span class="sd">    Axes: *element-wise* -- the bit stream is read along the last axis,</span>
-<span class="sd">    and leading axes are carried through unchanged.</span>
+<span class="sd">    Axes: *axis -1* -- the bit stream is read in blocks of ``n_bits``</span>
+<span class="sd">    along the last axis, whose length changes (:math:`k` bits in,</span>
+<span class="sd">    :math:`n` amplitudes out); leading axes are carried through</span>
+<span class="sd">    unchanged.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1980,7 +1982,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    identity on any sequence the matcher produced -- and an error on any</span>
 <span class="sd">    other, which is the honest answer after a detection mistake.</span>
 
-<span class="sd">    Axes: *element-wise* -- indices are read along the last axis.</span>
+<span class="sd">    Axes: *axis -1* -- indices are read in blocks of ``length`` along</span>
+<span class="sd">    the last axis, whose length changes (:math:`n` amplitudes in,</span>
+<span class="sd">    :math:`k` bits out); leading axes are carried through unchanged.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2126,13 +2130,15 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        \hat{x}[n] = \arg\min_i \left| \left|y[n]\right| - a_i \right|</span>
+<span class="sd">        \hat{x}[n] = \arg\min_i</span>
+<span class="sd">        \left| \left|\Re e\, y[n]\right| - a_i \right|</span>
 
-<span class="sd">    Taking the magnitude first is not a shortcut, it is the maximum</span>
-<span class="sd">    likelihood decision: on a constellation symmetric about the origin,</span>
-<span class="sd">    the nearest point to :math:`y` always has the amplitude nearest to</span>
-<span class="sd">    :math:`|y|`, so deciding on :math:`|y|` and deciding on :math:`y`</span>
-<span class="sd">    give the same amplitude. The sign is dropped because in PAS it</span>
+<span class="sd">    The real part is taken first because the amplitudes live on one</span>
+<span class="sd">    quadrature lane of the constellation -- each lane of a QAM symbol</span>
+<span class="sd">    is demapped on its own. On that lane, deciding on the magnitude is</span>
+<span class="sd">    not a shortcut but the maximum likelihood decision: the ASK points</span>
+<span class="sd">    are symmetric about the origin, so the nearest point always has the</span>
+<span class="sd">    amplitude nearest to :math:`|\Re e\, y|`. The sign is dropped because in PAS it</span>
 <span class="sd">    carries parity, not data -- a real receiver feeds it to the FEC</span>
 <span class="sd">    decoder instead.</span>
 

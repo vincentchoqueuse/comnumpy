@@ -477,17 +477,21 @@
 <section id="signal-model">
 <h2>Signal Model<a class="headerlink" href="#signal-model" title="Link to this heading">#</a></h2>
 <p>At each step <span class="math notranslate nohighlight">\(n\)</span>, the two output polarizations are computed
-from the estimated equalizer matrix <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> of size
-<span class="math notranslate nohighlight">\(2 \times 2(2L+1)\)</span>:</p>
+from the estimated equalizer matrix <span class="math notranslate nohighlight">\(\mathbf{W}\)</span> of size
+<span class="math notranslate nohighlight">\(2 \times 2(2L+1)\)</span> – written <span class="math notranslate nohighlight">\(\mathbf{W}\)</span>, not
+<span class="math notranslate nohighlight">\(\mathbf{H}\)</span>, because everywhere else in this package
+<span class="math notranslate nohighlight">\(\mathbf{H}\)</span> is the channel; the attribute is <code class="docutils literal notranslate"><span class="pre">H_</span></code> for
+historical reasons, the trailing underscore marking it as estimated
+(D23):</p>
 <div class="math notranslate nohighlight">
-\[y_i[n] = \mathbf{h}_i^H \tilde{\mathbf{x}}[n], \qquad
+\[y_i[n] = \mathbf{w}_i^H \tilde{\mathbf{x}}[n], \qquad
 \tilde{\mathbf{x}}[n] = \begin{bmatrix}
 x_0[n] &amp; \cdots &amp; x_0[n-2L] &amp; x_1[n] &amp; \cdots &amp; x_1[n-2L]
 \end{bmatrix}^T\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mathbf{h}_i^T\)</span> is the <span class="math notranslate nohighlight">\(i\)</span>-th row of
-<span class="math notranslate nohighlight">\(\mathbf{H}\)</span> and <span class="math notranslate nohighlight">\(x_0\)</span>, <span class="math notranslate nohighlight">\(x_1\)</span> are the two received
+<p>where <span class="math notranslate nohighlight">\(\mathbf{w}_i^T\)</span> is the <span class="math notranslate nohighlight">\(i\)</span>-th row of
+<span class="math notranslate nohighlight">\(\mathbf{W}\)</span> and <span class="math notranslate nohighlight">\(x_0\)</span>, <span class="math notranslate nohighlight">\(x_1\)</span> are the two received
 polarizations. The equalizer is updated by stochastic gradient
-descent, <span class="math notranslate nohighlight">\(\mathbf{H} \leftarrow \mathbf{H} + \mu \mathbf{g}[n]\)</span>,
+descent, <span class="math notranslate nohighlight">\(\mathbf{W} \leftarrow \mathbf{W} + \mu \mathbf{g}[n]\)</span>,
 minimizing one of the following blind losses:</p>
 <ul class="simple">
 <li><p>Constant Modulus Algorithm (CMA):
@@ -623,8 +627,11 @@ to the identity equalizer (center tap) and updated at each call.</p>
 </dd></dl>
 
 <dl class="field-list simple">
-<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the input is not a dual-polarization signal of shape <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N)</span></code>.</p>
+<dt class="field-odd">raises ShapeError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If the input does not carry a polarization pair <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">2,</span> <span class="pre">N)</span></code>,
+    or if <code class="docutils literal notranslate"><span class="pre">H_</span></code> carries the batch shape of a previous pass and the
+    new input carries a different one – call <code class="xref py py-meth docutils literal notranslate"><span class="pre">initialize_H()</span></code>
+    to restart from the identity equalizer.</p>
 </dd>
 </dl>
 <p class="rubric">References</p>

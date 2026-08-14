@@ -627,7 +627,9 @@ the input instead of being configured:</p>
 </ul>
 <p>Axes: <em>element-wise</em> – the gain <span class="math notranslate nohighlight">\(\alpha\)</span> is a single scalar
 measured over the whole array in <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>, then applied
-pointwise.</p>
+pointwise. On a batched input the rows are therefore <strong>pooled into
+one estimate</strong> – normalize per trial by looping when each row must
+reach the target on its own.</p>
 <p>Unlike <code class="docutils literal notranslate"><span class="pre">Amplifier</span></code>, the gain is <em>not</em> a parameter here: it is
 measured, so it is exposed as <code class="docutils literal notranslate"><span class="pre">gain_</span></code> (decision D23) and the
 inherited <code class="docutils literal notranslate"><span class="pre">gain</span></code> argument is removed from the constructor. The
@@ -769,7 +771,7 @@ component (data-dependent, hence the trailing underscore,
 decision D23; initialized to 1).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>complex</p>
+<dd class="field-odd"><p>complex or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -782,7 +784,7 @@ component (data-dependent, hence the trailing underscore,
 decision D23; initialized to 0).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>complex</p>
+<dd class="field-odd"><p>complex or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -835,12 +837,15 @@ search over <span class="math notranslate nohighlight">\(\omega_0\)</span>, foll
 the criterion by Newton’s method (or by plain gradient ascent). The
 Newton step uses the exact first and second derivatives of the
 periodogram with respect to <span class="math notranslate nohighlight">\(\omega\)</span>.</p>
-<p>Axes: <em>declared axis</em> – accepts <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">P,</span> <span class="pre">N)</span></code>; the
-correction <span class="math notranslate nohighlight">\(e^{-j\widehat{\omega}_0 n}\)</span> uses the sample index
-<span class="math notranslate nohighlight">\(n\)</span> along the last axis. The estimand is <strong>shared</strong> (D49): a
-frequency offset is one laser beating against one local oscillator,
-so the periodogram is accumulated over every path and a single
-<span class="math notranslate nohighlight">\(\widehat{\omega}_0\)</span> is applied to all of them. That is not
+<p>Axes: <em>declared axis</em> – accepts <code class="docutils literal notranslate"><span class="pre">(N,)</span></code> or one polarization pair
+<code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">N)</span></code>; the correction <span class="math notranslate nohighlight">\(e^{-j\widehat{\omega}_0 n}\)</span> uses
+the sample index <span class="math notranslate nohighlight">\(n\)</span> along the last axis. The estimand is
+<strong>shared</strong> (D49): a frequency offset is one laser beating against
+one local oscillator, so the periodogram is accumulated over the
+pair and a single <span class="math notranslate nohighlight">\(\widehat{\omega}_0\)</span> is applied to both
+rows. A wider batch is refused with <code class="docutils literal notranslate"><span class="pre">ShapeError</span></code> – one scalar
+estimate cannot serve independent trials (D51); loop over them, one
+compensator each. That is not
 only tidier than one estimate per path – it is the better
 estimator, since it sees all the data.</p>
 <dl class="field-list simple">
@@ -874,7 +879,7 @@ refinement.</p>
 </dd>
 <dt class="field-odd">param save_history<span class="colon">:</span></dt>
 <dd class="field-odd"><p>If True, every intermediate value of <span class="math notranslate nohighlight">\(\omega_0\)</span> is appended
-to <code class="docutils literal notranslate"><span class="pre">history</span></code>. Default is False.</p>
+to <code class="docutils literal notranslate"><span class="pre">history_</span></code>. Default is False.</p>
 </dd>
 <dt class="field-even">type save_history<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool, optional, keyword-only</p>
@@ -920,8 +925,8 @@ decision D23; None before the first <code class="docutils literal notranslate"><
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindCFOCompensator.history">
-<span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#comnumpy.core.compensators.BlindCFOCompensator.history" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindCFOCompensator.history_">
+<span class="sig-name descname"><span class="pre">history_</span></span><a class="headerlink" href="#comnumpy.core.compensators.BlindCFOCompensator.history_" title="Link to this definition">#</a></dt>
 <dd><p>Successive iterates of <span class="math notranslate nohighlight">\(\omega_0\)</span> when
 <code class="docutils literal notranslate"><span class="pre">save_history=True</span></code>.</p>
 <dl class="field-list simple">
@@ -1031,7 +1036,7 @@ last <code class="docutils literal notranslate"><span class="pre">fit</span></co
 (data-dependent, hence the trailing underscore, decision D23).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p>float or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1115,6 +1120,19 @@ additive noise.</p>
 <dd class="field-even"><p>str, optional, keyword-only</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="comnumpy.core.compensators.BlindPhaseSearchCompensator.phase_">
+<span class="sig-name descname"><span class="pre">phase_</span></span><a class="headerlink" href="#comnumpy.core.compensators.BlindPhaseSearchCompensator.phase_" title="Link to this definition">#</a></dt>
+<dd><p>Estimated unwrapped phase trajectory of the last call, of the
+same shape as the input – one trajectory per leading-axis row
+(data-dependent, hence the trailing underscore, D23).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p class="rubric">References</p>
 <p>T. Pfau, S. Hoffmann, R. Noe, “Hardware-Efficient Coherent Digital
 Receiver Concept With Feedforward Carrier Recovery for M-QAM
@@ -1360,7 +1378,7 @@ a multi-path signal rather than choosing for the caller.</p>
 Re-estimated at every call (per-block regime, D22).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p>float or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1462,7 +1480,7 @@ call (per-block regime, D22); if False, the gain of the last
 the trailing underscore, decision D23).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>complex</p>
+<dd class="field-odd"><p>complex or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1673,7 +1691,7 @@ instead of freezing an array.</p>
 <dd class="field-even"><p>np.ndarray, optional</p>
 </dd>
 <dt class="field-odd">param scale_correction<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If True (default), the output is multiplied by the complex peak
+<dd class="field-odd"><p>If True (default), the output is divided by the complex peak
 <span class="math notranslate nohighlight">\(\widehat{a}\)</span>; otherwise only the delay is corrected.</p>
 </dd>
 <dt class="field-even">type scale_correction<span class="colon">:</span></dt>
@@ -1719,7 +1737,8 @@ None (search over the whole record).</p>
 <span class="sig-name descname"><span class="pre">delay_</span></span><a class="headerlink" href="#comnumpy.core.compensators.DataAidedFineSynchronizer.delay_" title="Link to this definition">#</a></dt>
 <dd><p>Estimated delay <span class="math notranslate nohighlight">\(\widehat{m}_0\)</span>, expressed in <em>upsampled</em>
 samples (data-dependent, hence the trailing underscore, decision
-D23; divide by <code class="docutils literal notranslate"><span class="pre">up_factor</span></code> to get it in symbol periods).</p>
+D23; divide by <code class="docutils literal notranslate"><span class="pre">up_factor</span></code> to get it in input sample
+periods).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
@@ -1855,14 +1874,17 @@ pp. 501-507, 1993 (interpolation-based fractional timing recovery).</p></li>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindCFOCompensator"><code class="docutils literal notranslate"><span class="pre">BlindCFOCompensator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindCFOCompensator.w0_"><code class="docutils literal notranslate"><span class="pre">BlindCFOCompensator.w0_</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindCFOCompensator.history"><code class="docutils literal notranslate"><span class="pre">BlindCFOCompensator.history</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindCFOCompensator.history_"><code class="docutils literal notranslate"><span class="pre">BlindCFOCompensator.history_</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseCompensation"><code class="docutils literal notranslate"><span class="pre">BlindPhaseCompensation</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseCompensation.theta_"><code class="docutils literal notranslate"><span class="pre">BlindPhaseCompensation.theta_</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseSearchCompensator"><code class="docutils literal notranslate"><span class="pre">BlindPhaseSearchCompensator</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseSearchCompensator"><code class="docutils literal notranslate"><span class="pre">BlindPhaseSearchCompensator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.BlindPhaseSearchCompensator.phase_"><code class="docutils literal notranslate"><span class="pre">BlindPhaseSearchCompensator.phase_</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.LinearEqualizer"><code class="docutils literal notranslate"><span class="pre">LinearEqualizer</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedFIRCompensator"><code class="docutils literal notranslate"><span class="pre">DataAidedFIRCompensator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedFIRCompensator.h_"><code class="docutils literal notranslate"><span class="pre">DataAidedFIRCompensator.h_</span></code></a></li>

@@ -43,362 +43,6 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
-
-
-
-const initStyles = () => {
-    const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
-    document.head.appendChild(defaultStyle);
-
-    const fullscreenStyle = document.createElement('style');
-    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
-    document.head.appendChild(fullscreenStyle);
-}
-
-// Detect if page has dark background
-const isDarkTheme = () => {
-    // We use a set of heuristics:
-    // 1. Check for common dark mode classes or attributes
-    // 2. Check computed background color brightness
-    if (document.documentElement.classList.contains('dark') ||
-        document.documentElement.getAttribute('data-theme') === 'dark' ||
-        document.body.classList.contains('dark') ||
-        document.body.getAttribute('data-theme') === 'dark') {
-        // console.log("Dark theme detected via class/attribute");
-        return true;
-    }
-    if (document.documentElement.classList.contains('light') ||
-        document.documentElement.getAttribute('data-theme') === 'light' ||
-        document.body.classList.contains('light') ||
-        document.body.getAttribute('data-theme') === 'light') {
-        // console.log("Light theme detected via class/attribute");
-        return false;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // console.log("Dark theme detected via prefers-color-scheme");
-        return true;
-    }
-    const bgColor = window.getComputedStyle(document.body).backgroundColor;
-    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
-    if (match) {
-        const r = parseInt(match[1]);
-        const g = parseInt(match[2]);
-        const b = parseInt(match[3]);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        // console.log("Background color brightness:", brightness);
-        return brightness < 128;
-    }
-    // console.log("No dark or light theme detected, defaulting to light theme");
-    return false;
-};
-
-let darkTheme = isDarkTheme();
-let modal = null;
-let modalContent = null;
-let previousScrollOffset = [window.scrollX, window.scrollY];
-let _lazyObserver = null;
-let _renderQueue = Promise.resolve();
-let closeModal = () => {};
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('active')) {
-        closeModal();
-    }
-});
-
-// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
-// so this is safe to call both for the initial batch and for diagrams that
-// render lazily once they become visible.
-const addZoomToSvgs = (svgs) => {
-    svgs.each(function() {
-        if (this.getAttribute('data-zoom-applied') === 'true') return;
-        var svg = d3.select(this);
-        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
-        var inner = svg.select("g");
-        var zoom = d3.zoom().on("zoom", function(event) {
-            inner.attr("transform", event.transform);
-        });
-        svg.call(zoom);
-        this.setAttribute('data-zoom-applied', 'true');
-    });
-};
-
-const runMermaid = async (rerun) => {
-    console.log("Running mermaid diagrams, rerun =", rerun);
-    // clear all existing mermaid charts
-    let all_mermaids = document.querySelectorAll(".mermaid");
-
-    if (rerun) {
-        // Disconnect any previous lazy rendering observer
-        if (_lazyObserver) {
-            _lazyObserver.disconnect();
-            _lazyObserver = null;
-        }
-
-        all_mermaids.forEach((el) => {
-            el.removeAttribute('data-mermaid-deferred');
-            el.removeAttribute('data-mermaid-render-failed');
-            if(!el.hasAttribute("data-original-code")) {
-                // store original code
-                // console.log(`Storing original code for first run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-            if(el.getAttribute("data-processed") === "true") {
-                // remove and restore original
-                el.removeAttribute("data-processed");
-                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
-                el.innerHTML = el.getAttribute('data-original-code');
-            } else {
-                // store original code
-                // console.log(`Storing original code for re-run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-        });
-
-        // Separate visible and hidden elements. Mermaid's layout engine measures
-        // text dimensions via the DOM, which fails for elements hidden by a parent
-        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
-        // producing broken SVGs. Render visible elements now, defer hidden ones.
-        const visible = [];
-        const hidden = [];
-        all_mermaids.forEach((el) => {
-            // offsetParent is null for display:none ancestors.
-            // getClientRects().length > 0 catches position:fixed elements
-            // (which also have null offsetParent but are still visible).
-            if (el.offsetParent !== null || el.getClientRects().length > 0) {
-                visible.push(el);
-            } else {
-                hidden.push(el);
-                el.setAttribute('data-mermaid-deferred', 'true');
-            }
-        });
-
-        if (visible.length > 0) {
-            try {
-                await mermaid.run({ nodes: visible });
-            } catch (e) {
-                console.error("Mermaid rendering failed:", e);
-            }
-        }
-
-        // Lazily render hidden elements when they become visible.
-        // Uses a promise chain (_renderQueue) to serialize rendering,
-        // since IntersectionObserver may report multiple entries at once
-        // and mermaid.run() is not safe to call concurrently.
-        if (hidden.length > 0) {
-            if (typeof IntersectionObserver === 'undefined') {
-                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
-            } else {
-                _renderQueue = Promise.resolve();
-                _lazyObserver = new IntersectionObserver((entries) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
-                            _lazyObserver.unobserve(entry.target);
-                            const el = entry.target;
-                            _renderQueue = _renderQueue.then(async () => {
-                                try {
-                                    await mermaid.run({ nodes: [el] });
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    // Apply zoom to the now-rendered diagram, matching
-                                    // the decoration visible diagrams receive.
-                                    if (false) {
-                                        addZoomToSvgs(d3.selectAll("").select(function() {
-                                            return this.querySelector("svg");
-                                        }));
-                                    }
-                                } catch (e) {
-                                    console.error("Mermaid deferred rendering failed:", e);
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    el.setAttribute('data-mermaid-render-failed', 'true');
-                                }
-                            });
-                        }
-                    }
-                });
-                hidden.forEach((el) => _lazyObserver.observe(el));
-            }
-        }
-    }
-
-    all_mermaids = document.querySelectorAll(".mermaid");
-    // Exclude deferred (hidden) and render-failed elements from completion checks
-    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
-    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
-
-    if (false) {
-        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
-        if(mermaids_to_add_zoom > 0) {
-            var svgs = d3.selectAll("").select(function() {
-                return this.querySelector("svg");
-            });
-            // Wait until every active (visible) diagram has rendered. Deferred
-            // diagrams are excluded, so a fixed d3_node_count that counts a
-            // hidden diagram no longer loops forever waiting for its SVG.
-            if(mermaids_active.length !== mermaids_processed.length) {
-                setTimeout(() => runMermaid(false), 200);
-                return;
-            }
-            addZoomToSvgs(svgs);
-        }
-    } else if(mermaids_active.length !== mermaids_processed.length) {
-        // Wait for mermaid to process all diagrams
-        setTimeout(() => runMermaid(false), 200);
-        return;
-    }
-
-    // Stop here if not adding fullscreen capability
-    if (!true) return;
-
-    if (modal !== null ) {
-        // Destroy existing modal
-        modal.remove();
-        modal = null;
-        modalContent = null;
-    }
-
-    modal = document.createElement('div');
-    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
-    modal.innerHTML = `
-        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
-        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
-    `;
-    document.body.appendChild(modal);
-
-    modalContent = modal.querySelector('.mermaid-container-fullscreen');
-    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    closeModal = () => {
-        modal.classList.remove('active');
-        modalContent.innerHTML = '';
-        document.body.style.overflow = ''
-        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
-        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
-            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
-            // Already processed, adjust button class if needed
-            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
-            if (existingBtn) {
-                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-            }
-            return;
-        }
-
-        const container = document.createElement('div');
-        container.className = 'mermaid-container';
-        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
-        container.appendChild(mermaidDiv);
-
-        const fullscreenBtn = document.createElement('button');
-        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
-        fullscreenBtn.textContent = "\u26f6";
-        fullscreenBtn.style.opacity = "50%";
-
-        // Calculate dynamic position based on diagram's margin and padding
-        const diagramStyle = window.getComputedStyle(mermaidDiv);
-        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
-        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
-        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
-        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
-        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
-        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
-
-        fullscreenBtn.addEventListener('click', () => {
-            previousScrollOffset = [window.scrollX, window.scrollY];
-            const clone = mermaidDiv.cloneNode(true);
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-
-            const svg = clone.querySelector('svg');
-            if (svg) {
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                svg.style.width = '100%';
-                svg.style.height = 'auto';
-                svg.style.maxWidth = '100%';
-                svg.style.display = 'block';
-
-                if (false) {
-                    setTimeout(() => {
-                        const g = svg.querySelector('g');
-                        if (g) {
-                            var svgD3 = d3.select(svg);
-                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
-                            var inner = svgD3.select("g");
-                            var zoom = d3.zoom().on("zoom", function(event) {
-                                inner.attr("transform", event.transform);
-                            });
-                            svgD3.call(zoom);
-                        }
-                    }, 100);
-                }
-            }
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-        container.appendChild(fullscreenBtn);
-    });
-};
-
-
-
-const load = async () => {
-    initStyles();
-
-
-    await runMermaid(true);
-
-    const reRunIfThemeChanges = async () => {
-        const newDarkTheme = isDarkTheme();
-        if (newDarkTheme !== darkTheme) {
-            darkTheme = newDarkTheme;
-            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
-            await mermaid.initialize(
-                {...{"startOnLoad": false},
-                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-                }
-            );
-            await runMermaid(true);
-        }
-    };
-
-    // Update theme classes when theme changes
-    const themeObserver = new MutationObserver(reRunIfThemeChanges);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    themeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-};
-
-
-
-
-
-console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
-mermaid.initialize(
-    {...{"startOnLoad": false},
-    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-    }
-);
-
-window.addEventListener("load", load);
-window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/coding';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -804,12 +448,10 @@ spectrum alone – no simulation.</p></li>
 </section>
 <section id="import-libraries">
 <h3>Import Libraries<a class="headerlink" href="#import-libraries" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">print_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
@@ -823,6 +465,8 @@ spectrum alone – no simulation.</p></li>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">style</span>
 
 <span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
+
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/img/&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -830,8 +474,7 @@ spectrum alone – no simulation.</p></li>
 <h3>Define Parameters<a class="headerlink" href="#define-parameters" title="Link to this heading">#</a></h3>
 <p>The modulation is BPSK – one bit per symbol, which keeps the accounting
 simple – and the codes below all have rate 1/2.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="n">BPSK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">])</span>   <span class="c1"># bit 0 -&gt; +1, bit 1 -&gt; -1</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BPSK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.0</span><span class="n">j</span><span class="p">])</span>   <span class="c1"># bit 0 -&gt; +1, bit 1 -&gt; -1</span>
 <span class="n">ebn0_dB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="n">n_bits</span> <span class="o">=</span> <span class="mi">40000</span>
 <span class="n">rate</span> <span class="o">=</span> <span class="mf">0.5</span>                                   <span class="c1"># both codes below are rate 1/2</span>
@@ -872,8 +515,7 @@ standardized and every textbook tabulates, so it is the default here:</p>
 <p>The window is the state: the encoder remembers <span class="math notranslate nohighlight">\(K-1 = 6\)</span> past bits, so
 it has <span class="math notranslate nohighlight">\(2^6 = 64\)</span> states, and the sequence of states it walks through is
 a path in a <strong>trellis</strong>. That trellis is the object the decoder searches.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="n">encoder</span> <span class="o">=</span> <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">encoder</span> <span class="o">=</span> <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">))</span>
 <span class="n">generators</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">encoder</span><span class="o">.</span><span class="n">g</span><span class="p">:</span>
     <span class="n">generators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
@@ -884,32 +526,31 @@ a path in a <strong>trellis</strong>. That trellis is the object the decoder sea
 
 <span class="n">spectrum</span> <span class="o">=</span> <span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;free distance d_free = </span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">d_free</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One line of the distance spectrum, six terms wide.&quot;&quot;&quot;</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="n">label</span>
-    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[:</span><span class="mi">6</span><span class="p">]:</span>
-        <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">7d</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="n">line</span>
-
-
-<span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="s2">&quot;d      &quot;</span><span class="p">,</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">distances</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="s2">&quot;a_d    &quot;</span><span class="p">,</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">a_d</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="s2">&quot;beta_d &quot;</span><span class="p">,</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">beta_d</span><span class="p">))</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">distances</span><span class="p">[:</span><span class="mi">6</span><span class="p">],</span>
+            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;a_d&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">a_d</span><span class="p">[:</span><span class="mi">6</span><span class="p">],</span>
+                       <span class="s2">&quot;beta_d&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">beta_d</span><span class="p">[:</span><span class="mi">6</span><span class="p">]}},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;distance spectrum&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">generators</span> <span class="p">(</span><span class="s1">&#39;0o133&#39;</span><span class="p">,</span> <span class="s1">&#39;0o171&#39;</span><span class="p">)</span>  <span class="n">K</span> <span class="o">=</span> <span class="mi">7</span>  <span class="n">states</span> <span class="o">=</span> <span class="mi">64</span>  <span class="n">rate</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="mi">4</span> <span class="n">bits</span> <span class="ow">in</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">]</span> <span class="p">(</span><span class="k">with</span> <span class="n">the</span> <span class="n">tail</span><span class="p">)</span>
 <span class="n">free</span> <span class="n">distance</span> <span class="n">d_free</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">d</span>           <span class="mi">10</span>     <span class="mi">11</span>     <span class="mi">12</span>     <span class="mi">13</span>     <span class="mi">14</span>     <span class="mi">15</span>
-<span class="n">a_d</span>         <span class="mi">11</span>      <span class="mi">0</span>     <span class="mi">38</span>      <span class="mi">0</span>    <span class="mi">193</span>      <span class="mi">0</span>
-<span class="n">beta_d</span>      <span class="mi">36</span>      <span class="mi">0</span>    <span class="mi">211</span>      <span class="mi">0</span>   <span class="mi">1404</span>      <span class="mi">0</span>
+<span class="n">distance</span> <span class="n">spectrum</span>
+ <span class="n">d</span>  <span class="n">a_d</span>  <span class="n">beta_d</span>
+<span class="o">---------------</span>
+<span class="mi">10</span>   <span class="mi">11</span>      <span class="mi">36</span>
+<span class="mi">11</span>    <span class="mi">0</span>       <span class="mi">0</span>
+<span class="mi">12</span>   <span class="mi">38</span>     <span class="mi">211</span>
+<span class="mi">13</span>    <span class="mi">0</span>       <span class="mi">0</span>
+<span class="mi">14</span>  <span class="mi">193</span>    <span class="mi">1404</span>
+<span class="mi">15</span>    <span class="mi">0</span>       <span class="mi">0</span>
 </pre></div>
 </div>
 <p>Four input bits produced twenty output bits rather than eight: the encoder is
 <strong>terminated</strong>, so <span class="math notranslate nohighlight">\(K - 1 = 6\)</span> zero bits are appended to flush the
 register and bring it back to the all-zero state. On a short block that
 overhead is visible; on a realistic one it is not.</p>
-<p>The last three lines are the code’s <strong>distance spectrum</strong>, and they are worth
+<p>The table is the code’s <strong>distance spectrum</strong>, and they are worth
 more than they look. <span class="math notranslate nohighlight">\(d_{\mathrm{free}} = 10\)</span> is the smallest Hamming
 distance between two distinct code sequences; <span class="math notranslate nohighlight">\(a_d\)</span> counts the error
 events at distance <span class="math notranslate nohighlight">\(d\)</span>, and <span class="math notranslate nohighlight">\(\beta_d\)</span> counts the <em>information</em>
@@ -943,60 +584,61 @@ demapper’s log-likelihood ratios, so a sample that fell halfway between the
 two constellation points weighs less than one that landed squarely on the
 wrong side. The information thrown away by deciding too early is worth about
 2 dB, and the simulation below measures exactly that.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_uncoded_chain</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
-        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;uncoded BPSK&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- three chains, three sweeps --------------------------------------</span>
+<span class="c1"># One Sequential per scheme, written out; monte_carlo moves the noise.</span>
+<span class="n">uncoded</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;uncoded BPSK&quot;</span><span class="p">)</span>
 
+<span class="n">hard</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="n">ViterbiDecoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;K=7 convolutional, hard&quot;</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">get_coded_chain</span><span class="p">(</span><span class="n">soft</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-        <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
-        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">),</span>
-        <span class="n">ViterbiDecoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">soft</span><span class="o">=</span><span class="n">soft</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;K=7 convolutional, </span><span class="si">{</span><span class="s1">&#39;soft&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">soft</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;hard&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
+<span class="n">soft</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">ConvolutionalEncoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">ViterbiDecoder</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">soft</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;K=7 convolutional, soft&quot;</span><span class="p">)</span>
 
 <span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">code_rate</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;uncoded&quot;</span><span class="p">,</span> <span class="n">get_uncoded_chain</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;hard-decision Viterbi&quot;</span><span class="p">,</span> <span class="n">get_coded_chain</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">rate</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">,</span> <span class="n">get_coded_chain</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span> <span class="n">rate</span><span class="p">)):</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">code_rate</span><span class="p">),</span>
-                          <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">curves</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">24s</span><span class="si">}</span><span class="s2"> &quot;</span>
-    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]:</span>
-        <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> &quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;  (</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s)&quot;</span><span class="p">)</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;uncoded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">uncoded</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;hard-decision Viterbi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">hard</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">rate</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">soft</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">rate</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+    <span class="n">n_bits</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">4</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+
+<span class="c1"># --- results: table ---------------------------------------------------</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">ebn0_dB</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The chain, as the chain itself describes it:</p>
-<pre  class="mermaid">
-        flowchart LR
-    tx[&quot;SymbolGenerator&quot;]
-    conv_encoder[&quot;ConvolutionalEncoder&quot;]
-    symbol_mapper[&quot;SymbolMapper&quot;]
-    noise[&quot;AWGN&quot;]
-    symbol_demapper[&quot;SymbolDemapper&quot;]
-    viterbi[&quot;ViterbiDecoder&quot;]
-    tx --&gt; conv_encoder
-    conv_encoder --&gt; symbol_mapper
-    symbol_mapper --&gt; noise
-    noise --&gt; symbol_demapper
-    symbol_demapper --&gt; viterbi
-    classDef tapped stroke-dasharray: 4 2
-    class tx tapped
-    </pre><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uncoded</span>                  <span class="mf">7.86e-02</span> <span class="mf">5.68e-02</span> <span class="mf">3.79e-02</span> <span class="mf">2.28e-02</span> <span class="mf">1.31e-02</span> <span class="mf">6.45e-03</span> <span class="mf">2.80e-03</span> <span class="mf">7.75e-04</span>   <span class="p">(</span><span class="mf">0.0</span> <span class="n">s</span><span class="p">)</span>
-<span class="n">hard</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>    <span class="mf">3.71e-01</span> <span class="mf">2.43e-01</span> <span class="mf">1.14e-01</span> <span class="mf">3.15e-02</span> <span class="mf">7.52e-03</span> <span class="mf">9.75e-04</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>   <span class="p">(</span><span class="mf">8.1</span> <span class="n">s</span><span class="p">)</span>
-<span class="n">soft</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>    <span class="mf">1.40e-01</span> <span class="mf">4.32e-02</span> <span class="mf">3.63e-03</span> <span class="mf">3.50e-04</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>   <span class="p">(</span><span class="mf">8.9</span> <span class="n">s</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BER</span>
+<span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>    <span class="n">uncoded</span>  <span class="n">hard</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>  <span class="n">soft</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>
+<span class="o">-------------------------------------------------------------------</span>
+         <span class="mi">0</span>  <span class="mf">7.865e-02</span>              <span class="mf">3.708e-01</span>              <span class="mf">1.401e-01</span>
+         <span class="mi">1</span>  <span class="mf">5.680e-02</span>              <span class="mf">2.434e-01</span>              <span class="mf">4.320e-02</span>
+         <span class="mi">2</span>  <span class="mf">3.787e-02</span>              <span class="mf">1.143e-01</span>              <span class="mf">3.625e-03</span>
+         <span class="mi">3</span>  <span class="mf">2.278e-02</span>              <span class="mf">3.150e-02</span>              <span class="mf">3.500e-04</span>
+         <span class="mi">4</span>  <span class="mf">1.305e-02</span>              <span class="mf">7.525e-03</span>              <span class="mf">0.000e+00</span>
+         <span class="mi">5</span>  <span class="mf">6.450e-03</span>              <span class="mf">9.750e-04</span>              <span class="mf">0.000e+00</span>
+         <span class="mi">6</span>  <span class="mf">2.800e-03</span>              <span class="mf">0.000e+00</span>              <span class="mf">0.000e+00</span>
+         <span class="mi">7</span>  <span class="mf">7.750e-04</span>              <span class="mf">0.000e+00</span>              <span class="mf">0.000e+00</span>
 </pre></div>
 </div>
 <p>Three readings, and the first one is a warning.</p>
@@ -1011,7 +653,7 @@ earn its name.</p>
 needs 5 dB and soft decoding a little under 3 – the classic figure for this
 code. Nothing was added to the receiver except <em>not throwing information
 away</em>: the same trellis, the same recursion, a different branch metric.</p>
-<p><strong>And the last two columns are not results.</strong> Zero errors in 40 000 bits does
+<p><strong>And the zero entries are not results.</strong> Zero errors in 40 000 bits does
 not mean the BER is zero; it means it is somewhere below roughly
 <span class="math notranslate nohighlight">\(1/40000 = 2.5 \times 10^{-5}\)</span> and this simulation cannot see it. The
 figure drops those points rather than drawing them at zero on a logarithmic
@@ -1032,20 +674,34 @@ Q\left(\sqrt{2 R \, d \, \frac{E_b}{N_0}}\right)\]</div>
 <p>with <span class="math notranslate nohighlight">\(\beta_d\)</span> the information-weight spectrum printed above. This is a
 closed form: no simulation, no random draw, and no floor at
 <span class="math notranslate nohighlight">\(2.5\times10^{-5}\)</span>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bound</span> <span class="o">=</span> <span class="n">union_bound_ber</span><span class="p">(</span><span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span> <span class="n">ebn0_dB</span><span class="p">)</span>
-<span class="n">line</span> <span class="o">=</span> <span class="s2">&quot;union bound              &quot;</span>
-<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">bound</span><span class="p">:</span>
-    <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> &quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- the union bound, against the soft measurement -------------------</span>
+<span class="n">bound</span> <span class="o">=</span> <span class="n">union_bound_ber</span><span class="p">(</span><span class="n">distance_spectrum</span><span class="p">((</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="n">n_terms</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span> <span class="n">ebn0_dB</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">ebn0_dB</span><span class="p">,</span>
+            <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">[</span>
+                           <span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">],</span>
+                       <span class="s2">&quot;union bound&quot;</span><span class="p">:</span> <span class="n">bound</span><span class="p">}},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">)</span>
 
 <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;soft-decision Viterbi&quot;</span><span class="p">:</span> <span class="n">bound</span><span class="p">},</span>
                      <span class="n">x_theory</span><span class="o">=</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">,</span>
                      <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rate-1/2 convolutional code, K = 7&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/channel_coding_fig1.png&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">union</span> <span class="n">bound</span>              <span class="mf">1.82e+01</span> <span class="mf">9.32e-01</span> <span class="mf">2.85e-02</span> <span class="mf">6.81e-04</span> <span class="mf">1.87e-05</span> <span class="mf">4.43e-07</span> <span class="mf">5.61e-09</span> <span class="mf">2.70e-11</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BER</span>
+<span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>  <span class="n">soft</span><span class="o">-</span><span class="n">decision</span> <span class="n">Viterbi</span>  <span class="n">union</span> <span class="n">bound</span>
+<span class="o">----------------------------------------------</span>
+         <span class="mi">0</span>              <span class="mf">1.401e-01</span>    <span class="mf">1.817e+01</span>
+         <span class="mi">1</span>              <span class="mf">4.320e-02</span>    <span class="mf">9.323e-01</span>
+         <span class="mi">2</span>              <span class="mf">3.625e-03</span>    <span class="mf">2.846e-02</span>
+         <span class="mi">3</span>              <span class="mf">3.500e-04</span>    <span class="mf">6.814e-04</span>
+         <span class="mi">4</span>              <span class="mf">0.000e+00</span>    <span class="mf">1.869e-05</span>
+         <span class="mi">5</span>              <span class="mf">0.000e+00</span>    <span class="mf">4.427e-07</span>
+         <span class="mi">6</span>              <span class="mf">0.000e+00</span>    <span class="mf">5.609e-09</span>
+         <span class="mi">7</span>              <span class="mf">0.000e+00</span>    <span class="mf">2.702e-11</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/channel_coding_fig1.png"><img alt="../_images/channel_coding_fig1.png" class="align-center" src="../_images/channel_coding_fig1.png" style="width: 100%;" />
@@ -1082,37 +738,52 @@ approximates the exact update by</p>
 \cdot \min_{b' \in \mathcal{N}(c)\setminus b} \left|L_{b' \to c}\right|\]</div>
 <p>which is why the decoder needs the demapper’s LLRs: an LDPC decoder is soft
 by construction, there is no hard-decision variant of it.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">make_gallager_parity_check</span><span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="n">d_v</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">d_c</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">H</span> <span class="o">=</span> <span class="n">make_gallager_parity_check</span><span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="n">d_v</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">d_c</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ldpc_encoder</span> <span class="o">=</span> <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LDPC: H is </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, k = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2"> &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;information bits, rate = </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;column weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, row weight </span><span class="si">{</span><span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+<span class="c1"># One chain; the iteration count is a parameter, so the second sweep</span>
+<span class="c1"># reconfigures the decoder with set_params instead of rebuilding.</span>
 <span class="n">n_frames</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">ldpc</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">),</span>
+    <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
+    <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">LDPCDecoder</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;decoder&quot;</span><span class="p">),</span>
+<span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LDPC&quot;</span><span class="p">)</span>
+
 <span class="n">ldpc_curves</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">n_iter</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span>
-    <span class="n">link</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
-        <span class="n">LDPCEncoder</span><span class="p">(</span><span class="n">H</span><span class="p">),</span>
-        <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">),</span>
-        <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;noise&quot;</span><span class="p">),</span>
-        <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">BPSK</span><span class="p">,</span> <span class="n">soft</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">LDPCDecoder</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iter</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;LDPC, </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations&quot;</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="p">),</span>
-                          <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="p">),</span>
-                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-    <span class="n">ldpc_curves</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;LDPC (2040, </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2">), </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;LDPC </span><span class="si">{</span><span class="n">n_iter</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2"> iterations       &quot;</span>
-    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;ber&quot;</span><span class="p">]:</span>
-        <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> &quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="n">ldpc_curves</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;LDPC (2040, </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2">), 5 iterations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">ldpc</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="p">),</span>
+    <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="p">),</span>
+    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">6</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+<span class="n">ldpc</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">decoder__n_iter</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">ldpc_curves</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;LDPC (2040, </span><span class="si">{</span><span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2">), 25 iterations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">ldpc</span><span class="p">,</span> <span class="s2">&quot;noise.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">rate</span><span class="p">),</span>
+    <span class="p">{</span><span class="s2">&quot;ber&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">ldpc_encoder</span><span class="o">.</span><span class="n">k</span><span class="p">),</span>
+    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">6</span><span class="p">)[</span><span class="s2">&quot;ber&quot;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_data</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">ebn0_dB</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">ldpc_curves</span><span class="p">},</span>
+           <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Eb/N0 [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;BER&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LDPC</span><span class="p">:</span> <span class="n">H</span> <span class="ow">is</span> <span class="mi">1020</span> <span class="n">x</span> <span class="mi">2040</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">1022</span> <span class="n">information</span> <span class="n">bits</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="mf">0.501</span><span class="p">,</span> <span class="n">column</span> <span class="n">weight</span> <span class="mi">3</span><span class="p">,</span> <span class="n">row</span> <span class="n">weight</span> <span class="mi">6</span>
-<span class="n">LDPC</span>  <span class="mi">5</span> <span class="n">iterations</span>       <span class="mf">1.70e-01</span> <span class="mf">1.09e-01</span> <span class="mf">3.31e-02</span> <span class="mf">2.30e-03</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>
-<span class="n">LDPC</span> <span class="mi">25</span> <span class="n">iterations</span>       <span class="mf">1.70e-01</span> <span class="mf">1.14e-01</span> <span class="mf">8.78e-03</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span> <span class="mf">0.00e+00</span>
+<span class="n">BER</span>
+<span class="n">Eb</span><span class="o">/</span><span class="n">N0</span> <span class="p">[</span><span class="n">dB</span><span class="p">]</span>  <span class="n">LDPC</span> <span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="mi">1022</span><span class="p">),</span> <span class="mi">5</span> <span class="n">iterations</span>  <span class="n">LDPC</span> <span class="p">(</span><span class="mi">2040</span><span class="p">,</span> <span class="mi">1022</span><span class="p">),</span> <span class="mi">25</span> <span class="n">iterations</span>
+<span class="o">-----------------------------------------------------------------------------</span>
+         <span class="mi">0</span>                          <span class="mf">0.17021</span>                           <span class="mf">0.16955</span>
+         <span class="mi">1</span>                          <span class="mf">0.10908</span>                           <span class="mf">0.11424</span>
+         <span class="mi">2</span>                          <span class="mf">0.03312</span>                           <span class="mf">0.00878</span>
+         <span class="mi">3</span>                          <span class="mf">0.00230</span>                           <span class="mf">0.00000</span>
+         <span class="mi">4</span>                          <span class="mf">0.00000</span>                           <span class="mf">0.00000</span>
+         <span class="mi">5</span>                          <span class="mf">0.00000</span>                           <span class="mf">0.00000</span>
+         <span class="mi">6</span>                          <span class="mf">0.00000</span>                           <span class="mf">0.00000</span>
+         <span class="mi">7</span>                          <span class="mf">0.00000</span>                           <span class="mf">0.00000</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">comparison</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;uncoded&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">[</span><span class="s2">&quot;uncoded&quot;</span><span class="p">],</span>
@@ -1123,12 +794,6 @@ by construction, there is no hard-decision variant of it.</p>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/channel_coding_fig2.png&quot;</span><span class="p">)</span>
-
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/tutorials/mermaid/&quot;</span>
-<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;channel_coding&quot;</span><span class="p">,</span> <span class="n">get_coded_chain</span><span class="p">(</span><span class="kc">True</span><span class="p">))]:</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
-
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/channel_coding_fig2.png"><img alt="../_images/channel_coding_fig2.png" class="align-center" src="../_images/channel_coding_fig2.png" style="width: 100%;" />
