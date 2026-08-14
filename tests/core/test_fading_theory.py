@@ -163,7 +163,7 @@ class TestAgainstTheLibrarysOwnChains(unittest.TestCase):
             chain.set_params(channel__H=realization,
                              detector__H=realization)
             detected = chain(stimulus)
-            errors += int(np.sum(chain.tap("tx") != detected))
+            errors += int(np.sum(chain.observation("tx") != detected))
             total += detected.size
         return errors / total
 
@@ -175,7 +175,7 @@ class TestAgainstTheLibrarysOwnChains(unittest.TestCase):
             FlatMIMOChannel(H, name="channel"),
             AWGN(sigma2=0.1, name="noise"),
             LinearDetector(alphabet, H=H, name="detector"),
-        ], taps=["tx"])
+        ], observations=["tx"])
 
     def test_one_antenna_each_side_matches_diversity_one(self):
         chain = self.linear_chain(rayleigh_channel(1, 1, seed=0))
@@ -222,7 +222,7 @@ class TestAgainstTheLibrarysOwnChains(unittest.TestCase):
             SpaceTimeDecoder(code, H=H, name="detector"),
             Amplifier(1 / power),
             SymbolDemapper(alphabet),
-        ], taps=["tx"])
+        ], observations=["tx"])
         for snr_dB in self.SNR_DB:
             measured = self.simulate(chain, 1, 2, snr_dB, self.N_SYMBOLS)
             theory = compute_ser_rayleigh_psk(

@@ -1,7 +1,7 @@
 """Plotting functions for frequency-domain OFDM signals.
 
 Like the core visualizers, these are plain functions operating on
-arrays extracted with ``Sequential(taps=...)`` -- never in-chain
+arrays extracted with ``Sequential(observations=...)`` -- never in-chain
 blocks. Every function takes ``ax=None`` and returns the axis
 (decision D25).
 """

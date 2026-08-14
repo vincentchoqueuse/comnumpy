@@ -65,7 +65,7 @@ def simulate(chain, n_rx, n_tx, snr_dB, stimulus, n_channels, seed):
         chain.set_params(channel__H=realization,
                          detector__H=realization)
         detected = chain(stimulus)
-        errors += int(np.sum(chain.tap("tx") != detected))
+        errors += int(np.sum(chain.observation("tx") != detected))
         total += detected.size
     return errors / total
 
@@ -78,7 +78,7 @@ def linear_chain(H):
         FlatMIMOChannel(H, name="channel"),
         AWGN(sigma2=0.1, name="noise"),
         LinearDetector(ALPHABET, H=H, name="detector"),
-    ], taps=["tx"])
+    ], observations=["tx"])
 
 
 def alamouti_chain(H, code):
@@ -93,7 +93,7 @@ def alamouti_chain(H, code):
         SpaceTimeDecoder(code, H=H, name="detector"),
         Amplifier(1 / power),
         SymbolDemapper(ALPHABET),
-    ], taps=["tx"])
+    ], observations=["tx"])
 
 
 def theory(diversity, branch_split=1):

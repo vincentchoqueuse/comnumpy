@@ -23,13 +23,13 @@ class TestAWGNChainPerformance(unittest.TestCase):
             SymbolMapper(alphabet),
             AWGN(snr_dB=SNR_dB),
             SymbolDemapper(alphabet),
-            ], taps=["tx"])
+            ], observations=["tx"])
 
         # run chain
         y = chain(N)
 
         # evaluate metrics
-        data_tx = chain.tap("tx")
+        data_tx = chain.observation("tx")
         ser = compute_ser(data_tx, y)
 
         snr_per_bit = (10**(SNR_dB/10))/np.log2(M)

@@ -30,7 +30,7 @@ chain = Sequential([
             AWGN(sigma2=sigma2, name="awgn"),
             BlindPhaseCompensation(constellation, name="phase_compensation"),
             SymbolDemapper(constellation)
-            ], taps=["data_tx", "awgn", "phase_compensation"])
+            ], observations=["data_tx", "awgn", "phase_compensation"])
 
 # simulate communication
 y = chain(N)
@@ -41,13 +41,13 @@ print(f"true phase: {true_phase}")
 print(f"compensation phase: {estimated_phase}")
 
 # compute metric
-data_tx = chain.tap("data_tx")
+data_tx = chain.observation("data_tx")
 ser_after = compute_ser(data_tx, y)
 
 # print metric and plot
 print(f"after: SER={ser_after}")
 
-for tap, name in [("awgn", "received data"),
+for observed, name in [("awgn", "received data"),
                   ("phase_compensation", "after phase correction")]:
-    plot_iq(chain.tap(tap), title=name)
+    plot_iq(chain.observation(observed), title=name)
 plt.show()

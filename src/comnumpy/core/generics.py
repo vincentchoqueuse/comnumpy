@@ -128,7 +128,7 @@ class ChainGraph(TypedDict):
     nodes: List[Dict[str, str]]
     signal_edges: List[Tuple[str, str]]
     data_edges: List[Tuple[str, str, str]]
-    taps: List[str]
+    observations: List[str]
 
 
 # (index, class name, block id, output shape, dtype, elapsed ms)
@@ -183,14 +183,16 @@ class Sequential():
         Dictionary of callback functions called after each processor. Keys
         are processor names (str) or indices (int), values are callables
         accepting the processor output.
-    taps : list of str, optional, keyword-only
-        Block ids (see :meth:`block_ids`) whose output should be recorded
-        during ``forward``. Taps are the *only* observation mechanism:
-        they are chain metadata, so the module list describes the
-        communication system and nothing else, and the cost is one
-        dictionary store per tapped block (a reference is kept, no copy
-        -- blocks allocate fresh outputs, so the reference stays valid).
-        Retrieve with :meth:`tap`.
+    observations : list of str, optional, keyword-only
+        Block ids (see :meth:`block_ids`) whose output should be retained
+        during ``forward``. An observation is simply the output of a
+        named mechanism, kept for experimental analysis: it performs no
+        computation and does not alter the signal. Observations are chain
+        metadata, so the module list describes the communication system
+        and nothing else, and the cost is one dictionary store per
+        observed block (a reference is kept, no copy -- blocks allocate
+        fresh outputs, so the reference stays valid). Retrieve with
+        :meth:`observation`.
     elapsed_ : float
         Wall time of the last pass, in seconds (data-dependent, hence the
         trailing underscore, decision D23). Every call records it, so
@@ -202,19 +204,20 @@ class Sequential():
         Before a target block runs, the chain assigns it the signal
         produced by the source block *in the same pass* -- this is how a
         data-aided estimator receives a reference generated upstream
-        (``{"phase_comp.reference": "tx"}``). The source is tapped
+        (``{"phase_comp.reference": "tx"}``). The source is observed
         automatically and must come earlier in the chain, so the value is
-        never stale. Like taps, the edge is chain metadata: blocks stay
-        declarative and never hold a reference to another block.
+        never stale. Like observations, the edge is chain metadata:
+        blocks stay declarative and never hold a reference to another
+        block.
 
     Examples
     --------
     >>> from comnumpy.core.generators import SymbolGenerator
     >>> from comnumpy.core.channels import AWGN
     >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)],
-    ...                    taps=["generator"])
+    ...                    observations=["generator"])
     >>> y = chain.seed(1)(5)
-    >>> print(chain.tap("generator"))
+    >>> print(chain.observation("generator"))
     [0 0 3 1 3]
     >>> chain.elapsed_ > 0
     True
@@ -224,10 +227,10 @@ class Sequential():
     name: str = 'sequential'
     callbacks: Optional[Dict[Union[str, int], Callable[[Any], None]]] = \
         field(default_factory=dict)
-    taps: Optional[List[str]] = field(default=None, kw_only=True)
+    observations: Optional[List[str]] = field(default=None, kw_only=True)
     wiring: Optional[Dict[str, str]] = field(default=None, kw_only=True)
-    # signals recorded at the declared taps (references, not copies)
-    tapped_: Dict[str, Any] = field(init=False, repr=False, default_factory=dict)
+    # signals retained at the declared observations (references, not copies)
+    observed_: Dict[str, Any] = field(init=False, repr=False, default_factory=dict)
     # wall time of the last pass (D23: data-dependent, hence the underscore)
     elapsed_: float = field(init=False, repr=False, default=0.0)
 
@@ -479,25 +482,25 @@ class Sequential():
         Run the chain on ``X`` and tabulate each block's output shape,
         dtype and execution time (decision D33b). Returns the rows.
 
-        The pass is the ordinary one: taps are recorded and the data
-        edges declared in ``wiring`` are fed, so the chain summarized is
-        the chain that runs.
+        The pass is the ordinary one: observations are retained and the
+        data edges declared in ``wiring`` are fed, so the chain
+        summarized is the chain that runs.
         """
         ids, recorded, feeds = self._resolve_edges()
         if ids is None:
             ids = self.block_ids()
-        self.tapped_.clear()
+        self.observed_.clear()
         rows: List[_SummaryRow] = []
         Y = X
         for index, (block_id, module) in enumerate(
                 zip(ids, self.module_list, strict=True)):
             for param, source in feeds.get(index, ()):
-                setattr(module, param, self.tapped_[source])
+                setattr(module, param, self.observed_[source])
             start_time = time.time()
             Y = module(Y)
             elapsed_ms = (time.time() - start_time) * 1e3
             if block_id in recorded:
-                self.tapped_[block_id] = Y
+                self.observed_[block_id] = Y
             shape = getattr(Y, "shape", None)
             dtype = getattr(Y, "dtype", type(Y).__name__)
             rows.append((index, type(module).__name__, block_id,
@@ -528,7 +531,8 @@ class Sequential():
         dict
             ``nodes`` (list of ``{"id", "type"}``), ``signal_edges``
             (list of ``(source, target)``), ``data_edges`` (list of
-            ``(source, target, param)``) and ``taps`` (observed ids).
+            ``(source, target, param)``) and ``observations`` (observed
+            ids).
 
         Examples
         --------
@@ -548,7 +552,7 @@ class Sequential():
                       for block_id, module in zip(ids, self.module_list, strict=True)],
             "signal_edges": list(zip(ids[:-1], ids[1:], strict=True)),
             "data_edges": data_edges,
-            "taps": list(self.taps or ()),
+            "observations": list(self.observations or ()),
         }
 
     def to_mermaid(self) -> str:
@@ -558,22 +562,22 @@ class Sequential():
 
         Signal flow is drawn with solid arrows, declared data edges
         (``wiring``, D42c) with dashed arrows labelled by the parameter
-        they feed, and tapped blocks are outlined -- so the picture shows
-        every edge the chain actually has.
+        they feed, and observed blocks are outlined -- so the picture
+        shows every edge the chain actually has.
 
         Examples
         --------
         >>> from comnumpy.core.generators import SymbolGenerator
         >>> from comnumpy.core.channels import AWGN
         >>> chain = Sequential([SymbolGenerator(4), AWGN(snr_dB=10)],
-        ...                    taps=["generator"])
+        ...                    observations=["generator"])
         >>> print(chain.to_mermaid())
         flowchart LR
             generator["SymbolGenerator"]
             awgn["AWGN"]
             generator --> awgn
-            classDef tapped stroke-dasharray: 4 2
-            class generator tapped
+            classDef observed stroke-dasharray: 4 2
+            class generator observed
         """
         model = self.graph()
         lines = ["flowchart LR"]
@@ -583,9 +587,9 @@ class Sequential():
             lines.append(f"    {a} --> {b}")
         for source, target, param in model["data_edges"]:
             lines.append(f"    {source} -.->|{param}| {target}")
-        if model["taps"]:
-            lines.append("    classDef tapped stroke-dasharray: 4 2")
-            lines.append(f"    class {','.join(model['taps'])} tapped")
+        if model["observations"]:
+            lines.append("    classDef observed stroke-dasharray: 4 2")
+            lines.append(f"    class {','.join(model['observations'])} observed")
         return "\n".join(lines)
 
     def set_debug(self, debug: Optional[bool] = None) -> None:
@@ -598,9 +602,9 @@ class Sequential():
     def profile_execution_time(self, X: np.ndarray) -> Dict[str, float]:
         """Time each block over one pass, keyed by block id.
 
-        The pass is the ordinary one: taps are recorded and the data
-        edges declared in ``wiring`` are fed, so a chain that profiles is
-        the chain that runs. The keys are the ids of :meth:`block_ids`,
+        The pass is the ordinary one: observations are retained and the
+        data edges declared in ``wiring`` are fed, so a chain that
+        profiles is the chain that runs. The keys are the ids of :meth:`block_ids`,
         so two blocks sharing a name still get one entry each.
 
         Parameters
@@ -625,40 +629,41 @@ class Sequential():
         ids, recorded, feeds = self._resolve_edges()
         if ids is None:
             ids = self.block_ids()
-        self.tapped_.clear()
+        self.observed_.clear()
 
         Y = X
         time_elapsed: Dict[str, float] = {}
 
         for index, processor in enumerate(self.module_list):
             for param, source in feeds.get(index, ()):
-                setattr(processor, param, self.tapped_[source])
+                setattr(processor, param, self.observed_[source])
             start_time = time.time()
             Y = processor(Y)
             stop_time = time.time()
             if ids[index] in recorded:
-                self.tapped_[ids[index]] = Y
+                self.observed_[ids[index]] = Y
             time_elapsed[ids[index]] = stop_time - start_time
 
         self.elapsed_ = sum(time_elapsed.values())
         return time_elapsed
 
     def _resolve_edges(self) -> _EdgePlan:
-        """Validate taps/wiring against the block ids; return the plan.
+        """Validate observations/wiring against the block ids; return the plan.
 
         Returns ``(ids, recorded, feeds)`` where ``recorded`` is the set of
         ids to store during the pass and ``feeds`` maps a block index to
         the ``(param, source_id)`` pairs to assign before it runs.
         """
-        if not self.taps and not self.wiring:
+        if not self.observations and not self.wiring:
             return None, set(), {}
 
         ids = self.block_ids()
         index_of = {block_id: i for i, block_id in enumerate(ids)}
-        recorded: Set[str] = set(self.taps or ())
+        recorded: Set[str] = set(self.observations or ())
         unknown = sorted(recorded - index_of.keys())
         if unknown:
-            raise KeyError(f"unknown tap ids {unknown}; known block ids: {ids}")
+            raise KeyError(
+                f"unknown observation ids {unknown}; known block ids: {ids}")
 
         feeds: Dict[int, List[Tuple[str, str]]] = {}
         for target, source in (self.wiring or {}).items():
@@ -687,22 +692,22 @@ class Sequential():
         Process the input data through all modules in the sequence.
         """
         ids, recorded, feeds = self._resolve_edges()
-        # a tap is a record of *this* pass: stale entries from an earlier
-        # run or an earlier taps= configuration must not survive it
-        self.tapped_.clear()
+        # an observation belongs to *this* pass: stale entries from an
+        # earlier run or an earlier observations= list must not survive it
+        self.observed_.clear()
 
         Y = X
         start = time.perf_counter()
         for index, processor in enumerate(self.module_list):
             # feed declared data edges before the block runs (wiring)
             for param, source in feeds.get(index, ()):
-                setattr(processor, param, self.tapped_[source])
+                setattr(processor, param, self.observed_[source])
 
             Y = processor(Y)
 
-            # record the output at declared taps (reference, no copy)
+            # retain the output at declared observations (reference, no copy)
             if ids is not None and ids[index] in recorded:
-                self.tapped_[ids[index]] = Y
+                self.observed_[ids[index]] = Y
 
             # run callback if needed
             # callbacks= may be explicitly None, and `key in None` used to
@@ -717,16 +722,19 @@ class Sequential():
         self.elapsed_ = time.perf_counter() - start
         return Y
 
-    def tap(self, block_id: str) -> Any:
+    def observation(self, block_id: str) -> Any:
         """
-        Return the signal recorded at a declared tap during the last run.
+        Return the output retained at a declared observation during the
+        last run. The signal comes back exactly as the block produced
+        it -- same shape, same dtype, no computation.
         """
-        if block_id not in self.tapped_:
+        if block_id not in self.observed_:
             raise KeyError(
-                f"no signal recorded for tap {block_id!r}; recorded: "
-                f"{sorted(self.tapped_)}, declared taps: {self.taps or []} "
-                f"(declare the tap, then run the chain)")
-        return self.tapped_[block_id]
+                f"no signal retained for observation {block_id!r}; retained: "
+                f"{sorted(self.observed_)}, declared observations: "
+                f"{self.observations or []} "
+                f"(declare the observation, then run the chain)")
+        return self.observed_[block_id]
 
     def get_module_by_index(self, index: int) -> Processor:
         """

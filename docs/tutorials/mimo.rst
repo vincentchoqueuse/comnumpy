@@ -68,7 +68,7 @@ forcing:
 Received Constellations
 """""""""""""""""""""""
 
-Let us look at what each receive antenna sees, read from the ``"noise"`` tap:
+Let us look at what each receive antenna sees, read from the ``"noise"`` observation:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python

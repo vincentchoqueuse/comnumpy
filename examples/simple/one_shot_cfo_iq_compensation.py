@@ -24,7 +24,7 @@ iq_params = np.array([1, 0]) + 0.2*(np.random.randn(2) + 1j*np.random.randn(2))
 # One chain describing the whole system. The phase compensator is data
 # aided: `wiring` feeds it the transmitted symbols of the current run,
 # produced upstream by the mapper -- so the reference is never stale.
-# `taps` extracts the signals we want to look at afterwards.
+# `observations` retains the signals we want to look at afterwards.
 chain = Sequential([
             SymbolGenerator(constellation.order, name="data_tx"),
             SymbolMapper(constellation, name="signal_tx"),
@@ -36,23 +36,23 @@ chain = Sequential([
             DataAidedPhaseCompensator(reference=np.zeros(1), name="phase_comp"),
             SymbolDemapper(constellation)
             ],
-            taps=["data_tx", "awgn", "gsop", "cfo_comp", "phase_comp"],
+            observations=["data_tx", "awgn", "gsop", "cfo_comp", "phase_comp"],
             wiring={"phase_comp.reference": "signal_tx"})
 
 # simulate communication
 y = chain(N)
 
 # compute metric
-ser_after = compute_ser(chain.tap("data_tx"), y)
+ser_after = compute_ser(chain.observation("data_tx"), y)
 
 # print metric and plot
 print(f"after: SER={ser_after}")
 
-for tap, name in [("awgn", "received signal"),
+for observed, name in [("awgn", "received signal"),
                   ("gsop", "after GSOP"),
                   ("cfo_comp", "after GSOP+CFO comp"),
                   ("phase_comp", "after GSOP + CFO comp + phase correction")]:
-    plot_iq(chain.tap(tap), title=name)
+    plot_iq(chain.observation(observed), title=name)
 
 # show evolution of the angular frequency estimate
 w0_history = chain["cfo_comp"].history_

@@ -66,20 +66,20 @@ one_shot = Sequential([
     SpaceTimeDecoder(code, H=H_one, name="detector"),
     Amplifier(1 / power),
     SymbolDemapper(constellation),
-], taps=["tx", "noise", "detector"], name="Alamouti 2x1")
+], observations=["tx", "noise", "detector"], name="Alamouti 2x1")
 
 one_shot.seed(7)                        # every stochastic block, reproducibly
 s_rx = one_shot(500 * code.n_symbols)
-print(f"\none-shot SER: {compute_ser(one_shot.tap('tx'), s_rx):.4f}")
+print(f"\none-shot SER: {compute_ser(one_shot.observation('tx'), s_rx):.4f}")
 one_shot.summary(500 * code.n_symbols)
 
-received = one_shot.tap("noise")[0]
-combined = one_shot.tap("detector") / power
+received = one_shot.observation("noise")[0]
+combined = one_shot.observation("detector") / power
 fig2, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
 plot_iq(received, marker=".", ax=ax_left)
-ax_left.set_title("tap('noise'): the single receive antenna")
+ax_left.set_title("observation('noise'): the single receive antenna")
 plot_iq(combined, reference=constellation, ax=ax_right)
-ax_right.set_title("tap('detector'): after Alamouti combining")
+ax_right.set_title("observation('detector'): after Alamouti combining")
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_alamouti_fig2.png")
 
@@ -103,7 +103,7 @@ siso = Sequential([
     # zero forcing on an (N_r, 1) channel *is* maximum ratio combining:
     # the pseudo-inverse of a column is h^H / ||h||^2
     LinearDetector(constellation, H=H_siso, name="detector"),
-], taps=["tx"], name="1 Tx, 1 Rx")
+], observations=["tx"], name="1 Tx, 1 Rx")
 
 alamouti = Sequential([
     SymbolGenerator(M, name="tx"),
@@ -115,7 +115,7 @@ alamouti = Sequential([
     SpaceTimeDecoder(code, H=H_alamouti, name="detector"),
     Amplifier(1 / power),
     SymbolDemapper(constellation),
-], taps=["tx"], name="Alamouti 2x1")
+], observations=["tx"], name="Alamouti 2x1")
 
 mrc = Sequential([
     SymbolGenerator(M, name="tx"),
@@ -123,7 +123,7 @@ mrc = Sequential([
     FlatMIMOChannel(H_mrc, name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     LinearDetector(constellation, H=H_mrc, name="detector"),
-], taps=["tx"], name="MRC 1x2")
+], observations=["tx"], name="MRC 1x2")
 
 # --- the sweep: no simulation loop -----------------------------------
 # monte_carlo moves the noise variance; everything else is frozen in

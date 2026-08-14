@@ -90,7 +90,7 @@ The chain, as the chain itself describes it:
 The diagram above is not drawn by hand. It is what the chain says about
 itself -- ``chain.to_mermaid()`` (decision D33c) -- exported by the
 script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:
+outline marks an observed block:
 
 .. literalinclude:: ../../examples/simple/profiling_awgn_ofdm.py
    :language: python

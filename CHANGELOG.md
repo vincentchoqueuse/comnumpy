@@ -29,7 +29,7 @@ one release; there is no compatibility layer.
 | Optional block parameters accepted positionally | keyword-only (D40b): only the principal first argument is positional |
 | Bare `ValueError` on shape mismatch | `comnumpy.ShapeError` (still a `ValueError` subclass — existing `except ValueError` keeps working) |
 | `import comnumpy` loaded matplotlib (~1 s) | lazy imports: no matplotlib at import time, ~90 ms (enforced in CI) |
-| `Recorder(name="tx")` inserted in `module_list`, read with `chain["tx"].get_data()` | name the block itself and declare a tap: `Sequential([SymbolGenerator(16, name="tx"), ...], taps=["tx"])`, read with `chain.tap("tx")` |
+| `Recorder(name="tx")` inserted in `module_list`, read with `chain["tx"].get_data()` | name the block itself and declare an observation: `Sequential([SymbolGenerator(16, name="tx"), ...], observations=["tx"])`, read with `chain.observation("tx")` (first shipped as `taps=`/`tap()`, renamed before release) |
 | `Logger`, `Debugger`, `PowerReporter`, `TimeSignalMonitor` blocks | removed — tap the block and call `signal_report(chain.tap("x"))`, then log the returned dict |
 | `MetricRecorder(metric_fn=f)` block | removed — `f(chain.tap("x"))` |
 | `Scope(scope_type="iq", ...)`, `TimeScope`, `SpectrumScope`, `IQScope`, `KDEScope`, `WelchScope` blocks | removed — functions `plot_iq`, `plot_time`, `plot_spectrum`, `plot_kde`, `plot_welch` applied to a tapped signal |
@@ -44,6 +44,26 @@ one release; there is no compatibility layer.
 | `TrainedBasedPhaseCompensator`, `TrainedBasedComplexGainCompensator`, `TrainedBasedSimpleSynchronizer`, `TrainedBasedFineSynchronizer` | `DataAidedPhaseCompensator`, `DataAidedComplexGainCompensator`, `DataAidedSimpleSynchronizer`, `DataAidedFineSynchronizer` (`DataAidedFIRCompensator` already had the right name) |
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
+
+### Changed — `taps` becomes `observations`
+
+The retained-signal mechanism of `Sequential` is renamed after what it
+is: an **observation** is simply the output of a named mechanism,
+explicitly retained for experimental analysis. It performs no
+computation and does not alter the signal -- same shape, same dtype,
+dimensions never reduced; power, SNR or SER stay with the metrics,
+applied to the observation afterwards. Declare with
+`Sequential([...], observations=["tx"])` (or `chain.observations =
+[...]`), read back with `chain.observation("tx")` after the run. No
+new naming system: observation names are the block names already used
+by `set_params`, `wiring` and the profile table. Renamed with it:
+`tapped_` -> `observed_`, the `taps` key of `graph()` and of the JSON
+export -> `observations`, and the `tapped` mermaid class -> `observed`.
+An empty `observations` list retains nothing, so large batches and
+fibre propagations pay only for what they declare. `taps=`/`tap()` are
+gone (one breaking-change window, no compatibility layer); the FIR
+sense of the word -- filter taps, channel taps, `TappedDelayLine` -- is
+untouched.
 
 ### Fixed — a full-library audit: 37 findings, 37 fixed
 

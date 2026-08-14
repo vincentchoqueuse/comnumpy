@@ -44,11 +44,11 @@ chain = Sequential([
     SymbolMapper(alphabet),
     AWGN(snr_dB=15, seed=123),
     SymbolDemapper(alphabet),
-], taps=["tx"])
+], observations=["tx"])
 
 # Transmit 10,000 symbols and evaluate performance
 detected = chain(10_000)
-print(f"SER = {compute_ser(chain.tap('tx'), detected)}")  # SER = 0.016
+print(f"SER = {compute_ser(chain.observation('tx'), detected)}")  # SER = 0.016
 ```
 
 ## Installation

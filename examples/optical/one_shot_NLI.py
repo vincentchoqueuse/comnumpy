@@ -77,15 +77,15 @@ def get_chain(n_spans, *, steps=1, linear_only=True):
         Amplifier(1 / amp),
         DataAidedPhaseCompensator(name="phase"),
         SymbolDemapper(constellation, name="data_rx"),
-        ], taps=["data_tx", "signal_tx", "rx_field", "phase", "data_rx"],
+        ], observations=["data_tx", "signal_tx", "rx_field", "phase", "data_rx"],
         wiring={"phase.reference": "signal_tx"})
 
 
 def score(chain):
     """Effective SNR in dB and symbol error rate of a finished run."""
-    return (compute_effective_snr(chain.tap("signal_tx"),
-                                  chain.tap("phase"), unit="dB"),
-            compute_ser(chain.tap("data_tx"), chain.tap("data_rx")))
+    return (compute_effective_snr(chain.observation("signal_tx"),
+                                  chain.observation("phase"), unit="dB"),
+            compute_ser(chain.observation("data_tx"), chain.observation("data_rx")))
 
 
 # --- 1. what the link does to the signal ------------------------------
@@ -110,14 +110,14 @@ print("spans   measured   ASE only   the fibre      SER     phase     time")
 for n_spans in spans:
     chain = get_chain(n_spans).seed(0)
     chain(N_s)
-    estimates[n_spans] = chain.tap("phase")
+    estimates[n_spans] = chain.observation("phase")
     snr, ser = score(chain)
     snr_per_span[n_spans] = snr
     elapsed = chain.elapsed_
     theta_deg = np.rad2deg(chain["phase"].theta_)
     # the field the receiver saw, before any of the DSP; the loop keeps
     # overwriting it, so what survives it is the longest link's
-    received_field = chain.tap("rx_field")
+    received_field = chain.observation("rx_field")
 
     chain.seed(0).set_params(link__use_only_linear=True)
     chain(N_s)
@@ -211,7 +211,7 @@ fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
 for ax, symbols, name in [
         (axes[0], estimates[N_span],
          f"dispersion compensation\nSNR {snr_per_span[N_span]:.2f} dB"),
-        (axes[1], back_propagated.tap("phase"),
+        (axes[1], back_propagated.observation("phase"),
          f"digital back-propagation\nSNR {snr_dbp:.2f} dB")]:
     plot_iq(symbols, reference=constellation, title=name, ax=ax)
 plt.tight_layout()

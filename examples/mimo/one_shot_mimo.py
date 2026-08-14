@@ -39,14 +39,14 @@ chain = Sequential([
     FlatMIMOChannel(H, name="channel"),
     AWGN(sigma2=sigma2, name="noise"),
     LinearDetector(constellation, H=H, method="zf", name="detector"),
-], taps=["tx", "noise"], name=f"{N_r}x{N_t} MIMO, ZF")
+], observations=["tx", "noise"], name=f"{N_r}x{N_t} MIMO, ZF")
 
 chain.seed(0)
 detected = chain((N_t, N))
 print(f"ZF, one channel draw: SER = "
-      f"{compute_ser(chain.tap('tx'), detected):.4f}")
+      f"{compute_ser(chain.observation('tx'), detected):.4f}")
 
-Y = chain.tap("noise")
+Y = chain.observation("noise")
 fig1, axes1 = plt.subplots(nrows=1, ncols=N_r, figsize=(4 * N_r, 4))
 for index in range(N_r):
     plot_iq(Y[index, :], ax=axes1[index])
@@ -88,7 +88,7 @@ zf = Sequential([
     AWGN(sigma2=1.0, name="noise"),
     LinearDetector(constellation, H=H_stack, method="zf",
                    name="detector"),
-], taps=["tx"], name="ZF")
+], observations=["tx"], name="ZF")
 curves["ZF"] = monte_carlo(
     zf, "noise.sigma2", sigma2_list, {"ser": compute_ser},
     stimulus, reference="tx", seed=1)["ser"]
@@ -101,7 +101,7 @@ mmse = Sequential([
     AWGN(sigma2=1.0, name="noise"),
     LinearDetector(constellation, H=H_stack, method="mmse", sigma2=1.0,
                    name="detector"),
-], taps=["tx"], name="MMSE")
+], observations=["tx"], name="MMSE")
 curves["MMSE"] = monte_carlo(
     mmse, ("noise.sigma2", "detector.sigma2"), both, {"ser": compute_ser},
     stimulus, reference="tx", seed=2)["ser"]
@@ -115,7 +115,7 @@ osic = Sequential([
     OrderedSuccessiveInterferenceCancellationDetector(
         constellation, osic_type="sinr", H=H_stack, sigma2=1.0,
         name="detector"),
-], taps=["tx"], name="OSIC")
+], observations=["tx"], name="OSIC")
 curves["OSIC"] = monte_carlo(
     osic, ("noise.sigma2", "detector.sigma2"), both, {"ser": compute_ser},
     stimulus, reference="tx", seed=3)["ser"]
@@ -127,7 +127,7 @@ ml = Sequential([
     FlatMIMOChannel(H_stack, name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     MaximumLikelihoodDetector(constellation, H=H_stack, name="detector"),
-], taps=["tx"], name="ML")
+], observations=["tx"], name="ML")
 curves["ML"] = monte_carlo(
     ml, "noise.sigma2", sigma2_list, {"ser": compute_ser},
     stimulus, reference="tx", seed=4)["ser"]
@@ -139,7 +139,7 @@ sd = Sequential([
     FlatMIMOChannel(H_stack, name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     SphereDecoder(constellation, H=H_stack, name="detector"),
-], taps=["tx"], name="SD")
+], observations=["tx"], name="SD")
 curves["SD"] = monte_carlo(
     sd, "noise.sigma2", sigma2_list, {"ser": compute_ser},
     stimulus, reference="tx", seed=5)["ser"]
@@ -170,7 +170,7 @@ ml_16 = Sequential([
     AWGN(sigma2=1.0, name="noise"),
     MaximumLikelihoodDetector(big_constellation, H=big_H,
                               name="detector"),
-], taps=["tx"], name="4x4 MIMO, ML")
+], observations=["tx"], name="4x4 MIMO, ML")
 
 sd_16 = Sequential([
     SymbolGenerator(big_constellation.order, name="tx"),
@@ -178,7 +178,7 @@ sd_16 = Sequential([
     FlatMIMOChannel(big_H, name="channel"),
     AWGN(sigma2=1.0, name="noise"),
     SphereDecoder(big_constellation, H=big_H, name="detector"),
-], taps=["tx"], name="4x4 MIMO, SD")
+], observations=["tx"], name="4x4 MIMO, SD")
 
 elapsed = {"ML": np.zeros(len(snr_dB_list)),
            "SD": np.zeros(len(snr_dB_list))}
@@ -194,7 +194,7 @@ for index, snr_dB in enumerate(snr_dB_list):
     start = time.perf_counter()
     detected = ml_16((4, 400))
     elapsed["ML"][index] = (time.perf_counter() - start) * 1e3
-    errors = compute_ser(ml_16.tap("tx"), detected)
+    errors = compute_ser(ml_16.observation("tx"), detected)
     print(f"  ML {snr_dB:2d} dB {elapsed['ML'][index]:8.1f} ms  "
           f"{16 ** 4:7d} nodes   SER {errors:.4f}")
 
@@ -203,7 +203,7 @@ for index, snr_dB in enumerate(snr_dB_list):
     start = time.perf_counter()
     detected = sd_16((4, 400))
     elapsed["SD"][index] = (time.perf_counter() - start) * 1e3
-    errors = compute_ser(sd_16.tap("tx"), detected)
+    errors = compute_ser(sd_16.observation("tx"), detected)
     print(f"  SD {snr_dB:2d} dB {elapsed['SD'][index]:8.1f} ms  "
           f"{sd_16['detector'].nodes_:7.1f} nodes   SER {errors:.4f}")
 

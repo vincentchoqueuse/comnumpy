@@ -49,7 +49,7 @@ chain = Sequential([
     SRRCFilter(rolloff, oversampling, N_h=N_h),
     ChromaticDispersion(z, fs=fs),
     AWGN(sigma2=1.0, name="noise"),
-    ], taps=["generator"])
+    ], observations=["generator"])
 
 compensators = {
     "Savory": Sequential([
@@ -97,7 +97,7 @@ for k in k_vect:
         chain.set_params(noise__sigma2=sigma2)
         chain.seed(int(point_seeds[index].generate_state(1)[0]))
         y = chain(N)
-        s = chain.tap("generator")
+        s = chain.observation("generator")
 
         for name, compensator in compensators.items():
             s_est = compensator(y)

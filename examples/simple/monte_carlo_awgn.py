@@ -30,7 +30,7 @@ chain = Sequential([
     SymbolMapper(constellation, name="mapper"),
     AWGN(snr_dB=0, name="awgn_channel"),
     SymbolDemapper(constellation, name="demapper"),
-], taps=["tx"])
+], observations=["tx"])
 
 # A Monte Carlo simulation is three parts, always in this order: the
 # metric pre-allocated, the loop that fills it, the display at the end.
@@ -40,8 +40,8 @@ ser_by_hand = np.zeros(len(probed_snr_dB))
 for index, snr_dB in enumerate(probed_snr_dB):
     chain.seed(1)
     chain.set_params(awgn_channel__snr_dB=snr_dB)
-    detected = chain(N)                  # run first: the tap is filled by it
-    ser_by_hand[index] = compute_ser(chain.tap("tx"), detected)
+    detected = chain(N)                  # run first: the observation is filled by it
+    ser_by_hand[index] = compute_ser(chain.observation("tx"), detected)
 
 # monte_carlo (decision D35) is that loop, and nothing more: the same
 # reconfigure-reseed-run-collect, over every point, in one call.

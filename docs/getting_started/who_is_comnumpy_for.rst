@@ -51,7 +51,7 @@ the ones that matter in daily research work. A chain can be::
 
     qam = Constellation("QAM", 16)
     chain = Sequential([SymbolGenerator(qam.order, name="tx"), SymbolMapper(qam),
-                        AWGN(snr_dB=15, name="noise")], taps=["tx"])
+                        AWGN(snr_dB=15, name="noise")], observations=["tx"])
 
     chain.seed(42)                            # every stochastic block, reproducibly
     chain.set_params(noise__snr_dB=12)        # reconfigured after construction
@@ -60,7 +60,7 @@ the ones that matter in daily research work. A chain can be::
     print(chain.to_mermaid())                 # the experiment, as a picture
 
 None of that requires rewriting the chain, and none of it is
-instrumentation inserted between the blocks: taps, wiring and seeding
+instrumentation inserted between the blocks: observations, wiring and seeding
 are chain *metadata*, so the block list keeps describing the
 communication system and nothing else. A study made of a hundred
 parameter points and a figure is then a few lines, and the exact

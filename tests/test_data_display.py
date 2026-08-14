@@ -238,7 +238,7 @@ class TestMonteCarloShape(unittest.TestCase):
             SymbolMapper(constellation),
             AWGN(snr_dB=0, name="awgn"),
             SymbolDemapper(constellation),
-        ], taps=["tx"])
+        ], observations=["tx"])
         snr_dB = np.arange(0, 9, 4)
         curves = monte_carlo(chain, "awgn.snr_dB", snr_dB,
                              {"ser": compute_ser}, 2000,

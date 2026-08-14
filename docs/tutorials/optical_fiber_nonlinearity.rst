@@ -112,7 +112,7 @@ symbol sequence, which the chain produces itself, so the edge is *declared*
 -- ``wiring={"phase.reference": "signal_tx"}`` feeds the compensator the
 output of the ``signal_tx`` block before it runs, on every pass.
 
-And ``taps`` names the four signals the figures need. ``rx_field`` is the
+And ``observations`` names the four signals the figures need. ``rx_field`` is the
 field as it comes off the fibre, before any of the DSP; ``phase`` is the
 final estimate. Reading them costs nothing and keeps the module list a
 description of the system rather than of the plotting.

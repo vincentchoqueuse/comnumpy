@@ -705,16 +705,16 @@ class TestTheSignHalf(unittest.TestCase):
             AWGN(snr_dB=30.0, name="noise"),
             AmplitudeDemapper(AMPLITUDES),
             DistributionDematcher(shaper),
-        ], taps=["bits", "mapper"])
+        ], observations=["bits", "mapper"])
         link.seed(2)
         recovered = link(20 * shaper.n_bits)
-        np.testing.assert_array_equal(recovered, link.tap("bits"))
-        signed = link.tap("mapper")
+        np.testing.assert_array_equal(recovered, link.observation("bits"))
+        signed = link.observation("mapper")
         # the sign block is stochastic, so D6 must reach it: same seed,
         # same signs, not merely the same magnitudes
         link.seed(2)
         np.testing.assert_allclose(link(20 * shaper.n_bits), recovered)
-        np.testing.assert_allclose(link.tap("mapper"), signed)
+        np.testing.assert_allclose(link.observation("mapper"), signed)
 
 
 class TestShapedSource(unittest.TestCase):

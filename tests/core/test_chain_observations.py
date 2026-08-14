@@ -1,4 +1,4 @@
-"""Chain taps: signal probes as chain metadata, not in-chain blocks."""
+"""Chain observations: retained outputs as chain metadata, not in-chain blocks."""
 import unittest
 
 import numpy as np
@@ -19,35 +19,35 @@ class TestTaps(unittest.TestCase):
         ], **kwargs)
 
     def test_tap_records_the_block_output(self):
-        """A tap records exactly the tapped block's output, untouched."""
+        """An observation retains exactly the observed block output, untouched."""
         alphabet = get_alphabet("QAM", 16)
-        chain = self.build(taps=["generator", "symbol_mapper"]).seed(3)
+        chain = self.build(observations=["generator", "symbol_mapper"]).seed(3)
         chain(1000)
-        symbols = chain.tap("generator")
-        # the mapper tap must be the exact image of the generator tap
-        np.testing.assert_array_equal(chain.tap("symbol_mapper"),
+        symbols = chain.observation("generator")
+        # the mapper observation must be the exact image of the generator one
+        np.testing.assert_array_equal(chain.observation("symbol_mapper"),
                                       alphabet[symbols])
-        # taps do not change the chain output: same seed, no taps
+        # observations do not change the chain output: same seed, none declared
         y_ref = self.build().seed(3)(1000)
         np.testing.assert_array_equal(
-            self.build(taps=["generator"]).seed(3)(1000), y_ref)
+            self.build(observations=["generator"]).seed(3)(1000), y_ref)
 
     def test_module_list_stays_pure(self):
         """The chain description contains communication blocks only."""
-        chain = self.build(taps=["generator", "noise"])
+        chain = self.build(observations=["generator", "noise"])
         self.assertEqual(len(chain.module_list), 4)
         chain(100)
-        self.assertEqual(sorted(chain.tapped_), ["generator", "noise"])
+        self.assertEqual(sorted(chain.observed_), ["generator", "noise"])
 
     def test_unknown_tap_rejected_at_run(self):
-        chain = self.build(taps=["nope"])
+        chain = self.build(observations=["nope"])
         with self.assertRaises(KeyError):
             chain(10)
 
     def test_tap_before_run_raises(self):
-        chain = self.build(taps=["generator"])
+        chain = self.build(observations=["generator"])
         with self.assertRaises(KeyError):
-            chain.tap("generator")
+            chain.observation("generator")
 
 
 if __name__ == "__main__":

@@ -188,8 +188,8 @@ def to_json(chain: Sequential, path: str | pathlib.Path | None = None,
     document: dict[str, Any] = {"comnumpy": FORMAT_VERSION, "blocks": blocks}
     # chain-level metadata is intent too: dropping it would rebuild a chain
     # that no longer records or feeds what its author declared
-    if chain.taps:
-        document["taps"] = list(chain.taps)
+    if chain.observations:
+        document["observations"] = list(chain.observations)
     if chain.wiring:
         document["wiring"] = dict(chain.wiring)
     if arrays:
@@ -283,5 +283,5 @@ def from_json(source: str | pathlib.Path,
                 f"{entry['inputs']}; only linear chains are supported")
 
     return Sequential([_instantiate(entry, arrays) for entry in blocks],
-                      taps=document.get("taps"),
+                      observations=document.get("observations"),
                       wiring=document.get("wiring"))

@@ -96,9 +96,9 @@ class TestBudget(unittest.TestCase):
         link = FiberLink(5, L_span=80.0, NF_dB=5.0, fs=64e9,
                          use_only_linear=True, name="link")
         chain = Sequential([GaussianGenerator(dbm_to_watt(0.0), name="tx"),
-                            link], taps=["tx"]).seed(0)
+                            link], observations=["tx"]).seed(0)
         y = chain(400000)
-        measured = float(np.var(y) - np.var(chain.tap("tx")))
+        measured = float(np.var(y) - np.var(chain.observation("tx")))
         predicted = link.budget(link.fs)["ase_power_W"]
         self.assertAlmostEqual(10 * np.log10(measured / predicted), 0.0,
                                delta=0.1)

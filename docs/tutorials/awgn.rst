@@ -118,7 +118,7 @@ of.
 always gives the same signal -- a curve you cannot reproduce is a curve you
 cannot debug. ``set_params`` addresses a block by the name it was given at
 construction, with the dotted notation ``"awgn_channel.snr_dB"``; this is why
-blocks are named. And the tap returns what the transmitter produced, so the
+blocks are named. And the observation returns what the transmitter produced, so the
 metric has something to compare against -- after the run, never before.
 
 Now the same thing in one call. :func:`~comnumpy.monte_carlo.monte_carlo` takes

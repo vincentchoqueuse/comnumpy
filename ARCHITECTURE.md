@@ -522,10 +522,10 @@ from comnumpy import Sequential, SymbolGenerator, SymbolMapper, \
 
 alphabet = get_alphabet("QAM", 16)
 chain = Sequential([SymbolGenerator(M=16, name="tx"), SymbolMapper(alphabet),
-                    AWGN(snr_dB=15), SymbolDemapper(alphabet)], taps=["tx"])
+                    AWGN(snr_dB=15), SymbolDemapper(alphabet)], observations=["tx"])
 chain.seed(42)                       # D6 seeded, D42 records "tx"
 detected = chain(10_000)
-ser = compute_ser(chain.tap("tx"), detected)   # SER = 0.0165
+ser = compute_ser(chain.observation("tx"), detected)   # SER = 0.0165
 ```
 
 Huit lignes, un seul import, aucune connaissance de l'arborescence
@@ -656,14 +656,14 @@ qu'exécuté.
 
 | # | Décision | Motif | Alternatives rejetées | Statut |
 |---|----------|-------|-----------------------|--------|
-| D42 | **`module_list` ne contient que le système de communication.** (a) Tout bloc dont la seule fonction est d'observer est **supprimé** — `Recorder`, `Logger`, `Debugger`, `PowerReporter`, `TimeSignalMonitor`, `MetricRecorder`, la famille `Scope`, `FFTMonitor` ; `core/monitors.py` disparaît. (b) L'observation devient une **métadonnée de chaîne** : `Sequential(..., taps=["id"])` enregistre la sortie des blocs nommés pendant `forward`, relue par `chain.tap("id")`. (c) Une arête de donnée supplémentaire se déclare de la même façon : `Sequential(..., wiring={"bloc.param": "source"})` affecte au bloc cible, avant son exécution, le signal produit par la source **dans la même passe**. (d) Le tracé et le compte rendu sont des **fonctions** appliquées aux tableaux extraits (`plot_iq`, `plot_spectrum`, …, `signal_report`), jamais des blocs. (e) Ce qu'un bloc calcule en interne et que sa sortie ne contient pas s'expose en attribut souligné D23 (`pilots_` de `CarrierExtractor`), pas par un puits externe | Un `Recorder` inséré dans `module_list` fait mentir toutes les vues qui décrivent la chaîne — `__repr__`, `summary()`, `to_mermaid()` (D33), l'export JSON et les indices de `set_params` (D31/D34) voient un système à N+2 blocs. La ligne de partage est nette : un tap capture ce qui **circule sur le fil**, un attribut souligné expose ce qu'un bloc a calculé et que sa sortie ne porte pas. Le coût est une écriture de dictionnaire par bloc tappé — une **référence**, sans copie ; ce qui repose sur l'invariant, désormais écrit dans CONVENTIONS.md, qu'aucun bloc ne modifie son entrée sur place. (c) traite le seul cas que (b) ne couvre pas et que le `Recorder` servait vraiment : un estimateur assisté par les données dont la référence est **produite par la chaîne**. Un `reference=` figé y est faux et **silencieusement** faux — en Monte-Carlo il continue de comparer aux symboles du premier tirage. C'est la forme bornée du champ `inputs` de D31 : une seconde entrée déclarée par la chaîne, sans DAG général (§8) | Filtrer les `Recorder` à l'affichage (le mensonge change de place : sérialisation, indices et `set_params` les voient toujours) ; mode « tout tracer » (coût mémoire réel sur les chaînes optiques full-field, contraire à P2) ; laisser les blocs se référencer entre eux comme avant (arête de graphe passant par la configuration — non sérialisable : un paramètre *callable* est une frontière assumée de D31, donc toute chaîne enregistrant ses pilotes était inexportable) ; hooks à la PyTorch (machinerie invisible, contraire à P7) | **Acté** |
+| D42 | **`module_list` ne contient que le système de communication.** (a) Tout bloc dont la seule fonction est d'observer est **supprimé** — `Recorder`, `Logger`, `Debugger`, `PowerReporter`, `TimeSignalMonitor`, `MetricRecorder`, la famille `Scope`, `FFTMonitor` ; `core/monitors.py` disparaît. (b) L'observation devient une **métadonnée de chaîne** : `Sequential(..., observations=["id"])` conserve la sortie des blocs nommés pendant `forward`, relue par `chain.observation("id")`. (c) Une arête de donnée supplémentaire se déclare de la même façon : `Sequential(..., wiring={"bloc.param": "source"})` affecte au bloc cible, avant son exécution, le signal produit par la source **dans la même passe**. (d) Le tracé et le compte rendu sont des **fonctions** appliquées aux tableaux extraits (`plot_iq`, `plot_spectrum`, …, `signal_report`), jamais des blocs. (e) Ce qu'un bloc calcule en interne et que sa sortie ne contient pas s'expose en attribut souligné D23 (`pilots_` de `CarrierExtractor`), pas par un puits externe | Un `Recorder` inséré dans `module_list` fait mentir toutes les vues qui décrivent la chaîne — `__repr__`, `summary()`, `to_mermaid()` (D33), l'export JSON et les indices de `set_params` (D31/D34) voient un système à N+2 blocs. La ligne de partage est nette : une observation capture ce qui **circule sur le fil**, un attribut souligné expose ce qu'un bloc a calculé et que sa sortie ne porte pas. Le coût est une écriture de dictionnaire par bloc observé — une **référence**, sans copie ; ce qui repose sur l'invariant, désormais écrit dans CONVENTIONS.md, qu'aucun bloc ne modifie son entrée sur place. (c) traite le seul cas que (b) ne couvre pas et que le `Recorder` servait vraiment : un estimateur assisté par les données dont la référence est **produite par la chaîne**. Un `reference=` figé y est faux et **silencieusement** faux — en Monte-Carlo il continue de comparer aux symboles du premier tirage. C'est la forme bornée du champ `inputs` de D31 : une seconde entrée déclarée par la chaîne, sans DAG général (§8) | Filtrer les `Recorder` à l'affichage (le mensonge change de place : sérialisation, indices et `set_params` les voient toujours) ; mode « tout tracer » (coût mémoire réel sur les chaînes optiques full-field, contraire à P2) ; laisser les blocs se référencer entre eux comme avant (arête de graphe passant par la configuration — non sérialisable : un paramètre *callable* est une frontière assumée de D31, donc toute chaîne enregistrant ses pilotes était inexportable) ; hooks à la PyTorch (machinerie invisible, contraire à P7) | **Acté** |
 
 **Trois besoins, trois mécanismes.** La distinction est normative ; toute
 demande d'observation doit tomber dans l'une des trois cases.
 
 | Besoin | Mécanisme |
 |---|---|
-| Regarder un signal après coup | `taps=[...]` puis `chain.tap(id)` |
+| Regarder un signal après coup | `observations=[...]` puis `chain.observation(id)` |
 | Alimenter un bloc avec un signal amont **du tirage courant** | `wiring={"bloc.param": "source"}` |
 | Référence connue d'avance (préambule, séquence d'apprentissage) | paramètre tableau du bloc |
 
@@ -678,12 +678,12 @@ chain = Sequential([
     BlindIQCompensator(name="gsop"), BlindCFOCompensator(name="cfo"),
     DataAidedPhaseCompensator(reference=np.zeros(1), name="phase"),
     SymbolDemapper(alphabet),
-], taps=["data_tx", "awgn", "gsop", "phase"],
+], observations=["data_tx", "awgn", "gsop", "phase"],
    wiring={"phase.reference": "signal_tx"})
 
 y = chain(5_000)
-ser = compute_ser(chain.tap("data_tx"), y)
-plot_iq(chain.tap("gsop"), title="after GSOP")    # D25: plotting is a function
+ser = compute_ser(chain.observation("data_tx"), y)
+plot_iq(chain.observation("gsop"), title="after GSOP")    # D25: plotting is a function
 ```
 
 `len(chain.module_list) == 9`, et les neuf sont des blocs de

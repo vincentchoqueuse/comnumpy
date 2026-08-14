@@ -53,7 +53,7 @@ uncoded = Sequential([
     SymbolMapper(BPSK),
     AWGN(snr_dB=0.0, name="noise"),
     SymbolDemapper(BPSK),
-], taps=["tx"], name="uncoded BPSK")
+], observations=["tx"], name="uncoded BPSK")
 
 hard = Sequential([
     SymbolGenerator(2, name="tx"),
@@ -62,7 +62,7 @@ hard = Sequential([
     AWGN(snr_dB=0.0, name="noise"),
     SymbolDemapper(BPSK),
     ViterbiDecoder((0o133, 0o171)),
-], taps=["tx"], name="K=7 convolutional, hard")
+], observations=["tx"], name="K=7 convolutional, hard")
 
 soft = Sequential([
     SymbolGenerator(2, name="tx"),
@@ -71,7 +71,7 @@ soft = Sequential([
     AWGN(snr_dB=0.0, name="noise"),
     SymbolDemapper(BPSK, soft=True),
     ViterbiDecoder((0o133, 0o171), soft=True),
-], taps=["tx"], name="K=7 convolutional, soft")
+], observations=["tx"], name="K=7 convolutional, soft")
 
 curves = {}
 curves["uncoded"] = monte_carlo(
@@ -121,7 +121,7 @@ ldpc = Sequential([
     AWGN(snr_dB=0.0, name="noise"),
     SymbolDemapper(BPSK, soft=True),
     LDPCDecoder(H, n_iter=5, name="decoder"),
-], taps=["tx"], name="LDPC")
+], observations=["tx"], name="LDPC")
 
 ldpc_curves = {}
 ldpc_curves[f"LDPC (2040, {ldpc_encoder.k}), 5 iterations"] = monte_carlo(

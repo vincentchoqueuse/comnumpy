@@ -37,14 +37,14 @@ class TestWiring(unittest.TestCase):
         """The regression this exists for: no stale reference across runs."""
         # seeded (D6): at 20 dB a 16-QAM symbol error is rare but not
         # impossible, and an unseeded chain made this assertion flaky
-        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"}).seed(7)
+        chain = self.build(observations=["tx"], wiring={"comp.reference": "ref"}).seed(7)
         for _ in range(3):
             y = chain(2000)
             # the compensator saw this pass's reference, not a previous one
             np.testing.assert_array_equal(chain["comp"].reference,
-                                          chain.tapped_["ref"])
+                                          chain.observed_["ref"])
             self.assertAlmostEqual(chain["comp"].theta_, -PHASE, places=1)
-            self.assertEqual(compute_ser(chain.tap("tx"), y), 0.0)
+            self.assertEqual(compute_ser(chain.observation("tx"), y), 0.0)
 
     def test_frozen_reference_would_be_stale(self):
         """Without wiring the reference is frozen -- documents the trap."""
@@ -55,10 +55,10 @@ class TestWiring(unittest.TestCase):
         chain(500)
         np.testing.assert_array_equal(chain["comp"].reference, frozen)
 
-    def test_source_is_tapped_automatically(self):
+    def test_source_is_observed_automatically(self):
         chain = self.build(wiring={"comp.reference": "ref"})
         chain(100)
-        self.assertIn("ref", chain.tapped_)
+        self.assertIn("ref", chain.observed_)
 
     def test_module_list_stays_pure(self):
         chain = self.build(wiring={"comp.reference": "ref"})
@@ -79,22 +79,22 @@ class TestWiring(unittest.TestCase):
 
     def test_graph_shows_the_data_edge(self):
         """A picture of the chain must show every edge it actually has."""
-        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"})
+        chain = self.build(observations=["tx"], wiring={"comp.reference": "ref"})
         model = chain.graph()
         self.assertEqual(model["data_edges"], [("ref", "comp", "reference")])
         self.assertEqual(len(model["signal_edges"]), 5)
-        self.assertEqual(model["taps"], ["tx"])
+        self.assertEqual(model["observations"], ["tx"])
 
         mermaid = chain.to_mermaid()
         self.assertIn("ref -.->|reference| comp", mermaid)   # dashed, labelled
-        self.assertIn("class tx tapped", mermaid)
+        self.assertIn("class tx observed", mermaid)
         # the signal path is still drawn with solid arrows
         self.assertIn("tx --> ref", mermaid)
 
     def test_graph_without_wiring_has_no_data_edge(self):
         model = self.build().graph()
         self.assertEqual(model["data_edges"], [])
-        self.assertEqual(model["taps"], [])
+        self.assertEqual(model["observations"], [])
 
     def test_reference_may_be_left_to_the_chain(self):
         """A wired block is built without one: there is nothing to pass yet."""
@@ -119,11 +119,11 @@ class TestWiring(unittest.TestCase):
 
     def test_profiling_runs_the_same_pass(self):
         """Profiling must feed the wiring too, or it profiles nothing."""
-        chain = self.build(taps=["tx"], wiring={"comp.reference": "ref"}).seed(7)
+        chain = self.build(observations=["tx"], wiring={"comp.reference": "ref"}).seed(7)
         profile = chain.profile_execution_time(200)
         self.assertEqual(list(profile), chain.block_ids())
         np.testing.assert_array_equal(chain["comp"].reference,
-                                      chain.tapped_["ref"])
+                                      chain.observed_["ref"])
 
     def test_every_pass_records_its_own_wall_time(self):
         """`elapsed_` spares the caller a stopwatch around the call."""

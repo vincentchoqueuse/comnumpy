@@ -15,7 +15,7 @@ and shows what the second version has that the first does not.
 - What a one-shot AWGN simulation is, written out by hand.
 - Which parts of it are conventions you have to keep consistent yourself.
 - How to assemble the same thing as a ``Sequential`` chain, and how to look
-  inside it with a tap.
+  inside it with an observation.
 - What a ``Constellation`` knows about itself, and why that matters more than
   it looks.
 
@@ -82,7 +82,7 @@ The Same Thing, as a Chain
 
 The diagram is not drawn by hand: it is what the chain says about itself,
 ``chain.to_mermaid()``, so the block names are the ones the code uses and a
-dashed outline marks a tapped block.
+dashed outline marks an observed block.
 
 Four processors, and each one is worth a sentence -- these four come back in
 every tutorial that follows:
@@ -114,9 +114,9 @@ than in the caller's head.
 
 **Nothing in the chain records, displays or measures.** A chain contains
 communication blocks only. To see a signal in the middle of it, give the
-block a name and declare that name as a **tap** -- ``taps=["tx", "awgn"]``
+block a name and declare that name as an **observation** -- ``observations=["tx", "awgn"]``
 above -- and the chain keeps what that block produced. One habit to take
-right away: *run the chain first, read the tap after*. A tap holds the last
+right away: *run the chain first, read the observation after*. An observation holds the last
 run, so reading it before calling the chain raises rather than returning
 stale data.
 
@@ -176,7 +176,7 @@ It also draws itself, next to what the channel did to it:
    :align: center
 
 The chain answers the same way:
-:meth:`~comnumpy.core.generics.Sequential.tap` for a signal inside it,
+:meth:`~comnumpy.core.generics.Sequential.observation` for a signal inside it,
 ``seed`` for reproducibility,
 :meth:`~comnumpy.core.generics.Sequential.set_params` to reconfigure a named
 block after construction, ``elapsed_`` for the time the last pass took, and

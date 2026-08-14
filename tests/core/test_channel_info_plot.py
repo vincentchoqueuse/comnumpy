@@ -94,20 +94,20 @@ class TestWhatATappedDelayLineSaysAboutItself(unittest.TestCase):
 class TestDrawingAChannel(unittest.TestCase):
 
     def setUp(self):
-        self.taps = np.array([1.0, 0.0, 0.5])
+        self.observations = np.array([1.0, 0.0, 0.5])
         self.addCleanup(plt.close, "all")
 
     def test_the_delay_domain_is_a_stem_per_tap(self):
-        ax = plot_channel_response(self.taps)
+        ax = plot_channel_response(self.observations)
         self.assertEqual(ax.get_xlabel(), "tap index")
         self.assertEqual(ax.get_ylabel(), "$|h[l]|$")
 
     def test_a_sampling_rate_turns_the_abscissa_into_a_delay(self):
-        ax = plot_channel_response(self.taps, fs=7.68e6)
+        ax = plot_channel_response(self.observations, fs=7.68e6)
         self.assertEqual(ax.get_xlabel(), "delay [us]")
 
     def test_the_frequency_domain_is_a_curve(self):
-        ax = plot_channel_response(self.taps, domain="frequency")
+        ax = plot_channel_response(self.observations, domain="frequency")
         self.assertEqual(ax.get_ylabel(), "$|H(f)|$")
         drawn = ax.lines[0].get_ydata()
         # the swing of |1 + 0.5 e^{-2j pi 2 f}| over the band
@@ -115,7 +115,7 @@ class TestDrawingAChannel(unittest.TestCase):
         self.assertAlmostEqual(float(np.min(drawn)), 0.5, places=3)
 
     def test_decibels_are_twenty_log_of_the_same_curve(self):
-        ax = plot_channel_response(self.taps, domain="frequency", scale="dB")
+        ax = plot_channel_response(self.observations, domain="frequency", scale="dB")
         self.assertEqual(ax.get_ylabel(), "$|H(f)|$ [dB]")
         drawn = ax.lines[0].get_ydata()
         self.assertAlmostEqual(float(np.max(drawn)),
@@ -127,15 +127,15 @@ class TestDrawingAChannel(unittest.TestCase):
 
     def test_it_refuses_a_domain_it_cannot_draw(self):
         with self.assertRaises(ValueError):
-            plot_channel_response(self.taps, domain="phase")
+            plot_channel_response(self.observations, domain="phase")
 
     def test_it_refuses_a_scale_it_cannot_draw(self):
         with self.assertRaises(ValueError):
-            plot_channel_response(self.taps, scale="log")
+            plot_channel_response(self.observations, scale="log")
 
     def test_a_channel_draws_itself_on_the_axis_it_is_given(self):
         _, ax = plt.subplots()
-        returned = FIRChannel(self.taps).plot("frequency", scale="dB", ax=ax)
+        returned = FIRChannel(self.observations).plot("frequency", scale="dB", ax=ax)
         self.assertIs(returned, ax)
         self.assertEqual(ax.get_ylabel(), "$|H(f)|$ [dB]")
 

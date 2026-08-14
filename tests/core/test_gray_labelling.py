@@ -95,10 +95,10 @@ class TestComputeBerCountsGrayBits(unittest.TestCase):
             SymbolMapper(constellation),
             AWGN(snr_dB=float(ebn0_to_snr_dB(11.0, bits_per_symbol=4))),
             SymbolDemapper(constellation),
-        ], taps=["tx"])
+        ], observations=["tx"])
         chain.seed(3)
         detected = chain(400000)
-        measured = float(compute_ber(chain.tap("tx"), detected, width=4))
+        measured = float(compute_ber(chain.observation("tx"), detected, width=4))
         theory = float(constellation.metrics(11.0, per="bit")["ber"])
         self.assertGreater(measured, 0.0, "no errors: raise N or the SNR")
         self.assertLess(abs(measured - theory) / theory, 0.20,

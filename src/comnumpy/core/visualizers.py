@@ -2,7 +2,7 @@
 
 Visualization is deliberately *not* part of a chain: chains describe
 the communication system only, signals are extracted with
-``Sequential(taps=...)`` and handed to the plain functions below. Every
+``Sequential(observations=...)`` and handed to the plain functions below. Every
 function takes ``ax=None``, draws on the given axis (creating one only
 when needed) and returns it (decision D25); none of them calls
 ``plt.show()``.
