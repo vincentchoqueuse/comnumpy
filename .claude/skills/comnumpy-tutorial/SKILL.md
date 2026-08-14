@@ -74,7 +74,15 @@ then learns the wrong lesson -- they came to see how the library is used.
   **On the page, interleave**: one technique is one unit -- its idea
   and equations, then its `Sequential` and its `monte_carlo` call
   quoted together as one `literalinclude` block. The reader meets each
-  method whole: theory, chain, sweep. When the study
+  method whole: theory, chain, sweep.
+  **Never a loop over the techniques.** A `for name, chain in (...)`
+  around two or three `monte_carlo` calls is over-engineering: write
+  the calls out, one explicit statement per chain, filling
+  `curves[name]` by name. A loop earns its place at ten iterations,
+  not at two. The same goes for storage: two curves are a dict literal
+  of two `np.zeros`, not an init loop; and a runtime sweep is ONE loop
+  over the swept variable with each chain timed explicitly in the
+  body, never a nested loop over the techniques. When the study
   is *around* a chain -- several detectors on one frame, several
   receivers on one propagation -- write the loop out, on **one storage
   convention**: declare the methods and the metrics first; pre-allocate

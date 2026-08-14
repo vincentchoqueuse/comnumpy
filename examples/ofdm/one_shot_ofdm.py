@@ -109,12 +109,14 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 snr_list = np.arange(6, 22, 2)
 n_trials = 2
 
-# --- simulation loop -------------------------------------------------
+# --- the sweep: no simulation loop -----------------------------------
 measured = {}
-for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
-    measured[name] = monte_carlo(chain, "data_rx.snr_dB", snr_list,
-                                 {"ser": compute_ser}, (n_trials, N),
-                                 reference="data_tx", seed=1)["ser"]
+measured["single carrier"] = monte_carlo(
+    sc_chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser},
+    (n_trials, N), reference="data_tx", seed=1)["ser"]
+measured["OFDM"] = monte_carlo(
+    ofdm_chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser},
+    (n_trials, N), reference="data_tx", seed=1)["ser"]
 
 # --- results: table and figure ---------------------------------------
 
@@ -128,20 +130,19 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig4.png")
 
 # --- what it costs ---------------------------------------------------
 # A chain records the wall time of its last pass in `elapsed_`, so the
-# run is also the measurement.
+# run is also the measurement. One loop, over the swept lengths; the
+# two chains are timed explicitly inside it.
 lengths = np.array([128, 256, 512, 1024])
+runtime = {"single carrier": np.zeros(len(lengths)),
+           "OFDM": np.zeros(len(lengths))}
 
-# --- metrics, pre-allocated ------------------------------------------
-runtime = {}
-for name in ("single carrier", "OFDM"):
-    runtime[name] = np.zeros(len(lengths))
-
-# --- simulation loop -------------------------------------------------
 for index, length in enumerate(lengths):
-    for name, chain in (("single carrier", sc_chain), ("OFDM", ofdm_chain)):
-        chain.seed(1)
-        chain(int(length))
-        runtime[name][index] = 1e3 * chain.elapsed_
+    sc_chain.seed(1)
+    sc_chain(int(length))
+    runtime["single carrier"][index] = 1e3 * sc_chain.elapsed_
+    ofdm_chain.seed(1)
+    ofdm_chain(int(length))
+    runtime["OFDM"][index] = 1e3 * ofdm_chain.elapsed_
 
 # --- results: table and figure ---------------------------------------
 
