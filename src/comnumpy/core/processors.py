@@ -115,6 +115,11 @@ class Upsampler(Processor):
     filter: Optional[BWFilter] = field(init=False, repr=False, default_factory=lambda: None)
 
     def __post_init__(self):
+        if not 0 <= self.phase < self.L:
+            raise ValueError(
+                f"Upsampler: expected 0 <= phase < L, got phase={self.phase} "
+                f"with L={self.L} -- the phase places the sample inside one "
+                f"group of L output slots.")
         self.filter = BWFilter(1/self.L)
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -326,6 +331,12 @@ class Serial2Parallel(Processor):
     def __post_init__(self):
         if not (self.N_sub > 0):
             raise ValueError("N_sub must be a positive number.")
+        # validated here, not in the remainder branch of forward: a typo'd
+        # method must not pass silently just because the lengths divide
+        if self.method not in ("zero-padding", "truncate"):
+            raise ValueError(
+                f"{type(self).__name__}: unknown method {self.method!r}, "
+                f"expected 'zero-padding' or 'truncate'.")
 
     def set_N_sub(self, N_sub: int) -> None:
         self.N_sub = N_sub
@@ -341,15 +352,8 @@ class Serial2Parallel(Processor):
                 new_shape = X.shape[:-1] + (N_sub*M,)
                 X_processed = np.zeros(new_shape, dtype=X.dtype)
                 X_processed[..., :N] = X
-            elif self.method == "truncate":
+            else:  # "truncate" -- validated in __post_init__
                 X_processed = X[..., :M * N_sub]
-            else:
-                raise ValueError(
-                    f"{type(self).__name__}: unknown method "
-                    f"{self.method!r}, expected 'zero-padding' or "
-                    f"'truncate' -- the input length {N} is not a "
-                    f"multiple of N_sub={N_sub}, so one of the two has "
-                    f"to say what to do with the remainder.")
         else:
             X_processed = X
 
@@ -410,6 +414,13 @@ class Parallel2Serial(Processor):
     True
     """
     name: str = "P2S"
+
+    def prepare(self, X: np.ndarray):
+        if X.ndim < 2:
+            raise ShapeError(
+                f"Parallel2Serial expects the Block layout (..., T, F) with "
+                f"at least two axes, got {X.shape} -- the signal is already "
+                f"serial, or Serial2Parallel is missing upstream.")
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         # Pure C-order reshape flattening the last two axes
@@ -624,6 +635,10 @@ class Complex2Real(Processor):
                 if self.validate_input and (not np.isclose(np.real(np.ravel(X)), 0, atol=10**-7).all()):
                     raise ValueError("the input data is not imaginary since the real part is non zero ")
                 Y = np.imag(X)
+            case _:
+                raise ValueError(
+                    f"Complex2Real: unknown part {self.part!r}, expected "
+                    f"'real' or 'imag'.")
 
         return Y
 
@@ -848,6 +863,11 @@ class SampleRemover(Processor):
                 f"{x.ndim}D {x.shape} -- flatten the stream with "
                 f"Parallel2Serial, or apply the block to each stream "
                 f"separately.")
+        if self.N_start + self.length > len(x):
+            raise ShapeError(
+                f"SampleRemover removes samples [{self.N_start}, "
+                f"{self.N_start + self.length}), which extends past the end "
+                f"of the {len(x)}-sample input.")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         y = np.zeros(len(x) - self.length, dtype=x.dtype)
@@ -1050,11 +1070,13 @@ class DataExtractor(Processor):
         if self.selector is None:
             return x
 
-        # turn a plain tuple into the slice it describes
-        if isinstance(self.selector, tuple):
-            self.selector = slice(*self.selector)
+        # turn a plain tuple into the slice it describes -- locally, so
+        # the configured selector stays the tuple the caller declared
+        selector = self.selector
+        if isinstance(selector, tuple):
+            selector = slice(*selector)
 
-        return x[self.selector]
+        return x[selector]
 
 
 @dataclass(slots=True)

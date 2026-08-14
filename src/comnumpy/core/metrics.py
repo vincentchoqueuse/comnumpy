@@ -183,6 +183,12 @@ def compute_ser_awgn_qam(order: int, snr_per_bit: np.ndarray | float
     from scipy.stats import norm  # local import (D36)
 
     gamma_b = snr_per_bit
+    root = np.sqrt(order)
+    if order < 4 or root != int(root):
+        raise ValueError(
+            f"compute_ser_awgn_qam: expected a square QAM order (4, 16, 64, "
+            f"256, ...), got order={order} -- the two-independent-PAM "
+            f"decomposition below does not hold for cross constellations.")
 
     # see book Proakis "Digital communication", p 280
     M = order
@@ -648,6 +654,10 @@ def compute_ser(X_target: np.ndarray, X_detected: np.ndarray,
         # of a batch after the first -- a silent offset, not an error
         N = min(x_target.shape[-1], x_detected.shape[-1])
         difference = x_target[..., :N] - x_detected[..., :N]
+        if difference.size == 0:
+            raise ValueError(
+                "compute_ser: no symbols to compare (an input is empty, or "
+                "the two share no overlap along the last axis)")
         return np.count_nonzero(difference) / difference.size
     else:
         N = X_target.shape[axis]
@@ -1123,10 +1133,15 @@ def compute_acpr(signal: np.ndarray, bandwidth: float,
     [-27.6193 -27.6193]
     """
 
-    def band_power(lower_freq: float, upper_freq: float) -> float:
+    def band_power(lower_freq: float, upper_freq: float, *,
+                   open_lower: bool = False, open_upper: bool = False) -> float:
         # Parseval: the power in a band is the energy of the bins it
-        # contains, divided by the number of samples
-        mask = (freq_axis >= lower_freq) & (freq_axis <= upper_freq)
+        # contains, divided by the number of samples. The edge a band
+        # shares with its neighbour is open on one side, so a bin sitting
+        # exactly on it is counted once, never in both bands.
+        above = freq_axis > lower_freq if open_lower else freq_axis >= lower_freq
+        below = freq_axis < upper_freq if open_upper else freq_axis <= upper_freq
+        mask = above & below
         return float(np.sum(np.abs(spectrum[mask]) ** 2) / signal.size)
 
     signal = np.asarray(signal)
@@ -1144,10 +1159,13 @@ def compute_acpr(signal: np.ndarray, bandwidth: float,
     adj_lower_left = main_lower - bandwidth
     adj_upper_left = main_lower
 
-    # Calculate power in main and adjacent channels
+    # Calculate power in main and adjacent channels; the main channel
+    # owns its edges, the adjacent bands start just past them
     main_power = band_power(main_lower, main_upper)
-    adj_power_right = band_power(adj_lower_right, adj_upper_right)
-    adj_power_left = band_power(adj_lower_left, adj_upper_left)
+    adj_power_right = band_power(adj_lower_right, adj_upper_right,
+                                 open_lower=True)
+    adj_power_left = band_power(adj_lower_left, adj_upper_left,
+                                open_upper=True)
 
     # Calculate ACPR in dB
     acpr_right = 10 * np.log10(adj_power_right / main_power)
@@ -1319,8 +1337,14 @@ class ErrorCounter:
         shorter of the two sets the length, which is what a chain with
         a filter delay produces.
         """
-        target = np.asarray(reference).ravel()
-        estimate = np.asarray(detected).ravel()
+        target = np.atleast_1d(np.asarray(reference))
+        estimate = np.atleast_1d(np.asarray(detected))
+        # truncate along the *last* axis before raveling, as compute_ser
+        # does: pooling a batch first would misalign every row after the
+        # first against its per-row-truncated detection
+        N = min(target.shape[-1], estimate.shape[-1])
+        target = target[..., :N].ravel()
+        estimate = estimate[..., :N].ravel()
         length = min(target.size, estimate.size)
         if length == 0:
             raise ValueError(

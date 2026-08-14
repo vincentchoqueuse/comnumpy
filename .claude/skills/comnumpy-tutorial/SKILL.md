@@ -95,6 +95,13 @@ then learns the wrong lesson -- they came to see how the library is used.
   loop filled -- each inner dict is exactly the `curves` that
   `print_data` and `plot_data` render. The loop is the pedagogy: it
   stays visible.
+- **One vocabulary across the pages.** The swept dict a page displays
+  is `curves` -- never `measured`, `collected` or `results` -- and its
+  closed-form companion is `theory`; a domain name (`snr_dB`,
+  `runtime`, `ccdf_curves`) is allowed only when it says strictly more.
+  The sweep axis carries its unit: `snr_dB_list`, `ebn0_dB_list`,
+  `dBm_list`. `reference` is reserved for the library's meaning -- the
+  known signal a data-aided block compares against.
 - **A swept result is one dictionary, shown two ways.**
   `data = {"x": snr_dB, "curves": {"ZF": ..., "ML": ...}}` — which is
   already the shape `monte_carlo` returns — then `print_data(data,

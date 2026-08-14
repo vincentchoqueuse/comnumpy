@@ -164,7 +164,8 @@ def _transposed(x: np.ndarray, curves: Dict[str, np.ndarray], *,
     row is what is read across, and a row whose cells change format is
     unreadable. `x` keeps its own, since it is the header.
     """
-    grid = np.concatenate([values for values in curves.values()])
+    stacked = [values for values in curves.values()]
+    grid = np.concatenate(stacked) if stacked else np.array([])
     template = _column_format(grid)
     heads = _cells(x)
     body = {}
@@ -174,10 +175,12 @@ def _transposed(x: np.ndarray, curves: Dict[str, np.ndarray], *,
             row.append(_MISSING if math.isnan(value) else template.format(value))
         body[name] = row
 
-    name_width = max(len(xlabel), *(len(name) for name in body))
-    cell_width = max(len(head) for head in heads)
+    # list form, not star-args: a degenerate table (no curves, empty x)
+    # must still render its header instead of dying inside max()
+    name_width = max([len(xlabel)] + [len(name) for name in body])
+    cell_width = max([0] + [len(head) for head in heads])
     for row in body.values():
-        cell_width = max(cell_width, *(len(cell) for cell in row))
+        cell_width = max([cell_width] + [len(cell) for cell in row])
 
     def line(first: str, cells: list[str]) -> str:
         return (first.ljust(name_width) + "  "
@@ -276,7 +279,7 @@ def format_data(data: Mapping[str, Any], *,
 
     headers = [xlabel] + list(curves)
     columns = [_cells(x)] + [_cells(values) for values in curves.values()]
-    widths = [max(len(header), *(len(cell) for cell in column))
+    widths = [max([len(header)] + [len(cell) for cell in column])
               for header, column in zip(headers, columns, strict=True)]
 
     def row(fields: list[str]) -> str:

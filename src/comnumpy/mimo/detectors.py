@@ -844,7 +844,10 @@ class ApproximateMessagePassingDetector(Processor):
                 z_t, self.alphabet, sigma2_t
             )  # F function in the original publication
             kernel = np.abs(self.alphabet.reshape(1, -1) - x_t.reshape(-1, 1)) ** 2
-            G = soft_projector(z_t, self.alphabet, tau_2, kernel)
+            # same effective variance as F: G is the posterior variance of
+            # the *same* distribution (Jeon et al., Algorithm 2); tau_2
+            # alone made the weights collapse and the state go NaN
+            G = soft_projector(z_t, self.alphabet, sigma2_t, kernel)
             tau_2_old = tau_2
             tau_2 = (beta / sigma2) * np.mean(G)
             term1 = tau_2 / (1 + tau_2_old)
@@ -991,7 +994,9 @@ class OrthogonalApproximateMessagePassingDetector(Processor):
         R = _required_noise_variance(self.sigma2, block) * np.eye(N_r)
         H_H = np.conjugate(np.transpose(H))
         num = np.sum(np.abs(error) ** 2) - np.trace(R)
-        den = np.trace(np.matmul(H_H, H))
+        # trace(H^H H) is real analytically but complex-typed: take the
+        # real part rather than lean on numpy's complex ordering
+        den = np.real(np.trace(np.matmul(H_H, H)))
         return float(max(num / den, epsilon))
 
     def get_tau_2(self, B: np.ndarray, W: np.ndarray, vt_2: float) -> float:

@@ -99,6 +99,13 @@ class AWGN(Processor):
             P_x = float(np.mean(np.abs(x) ** 2))
             sigma2n = P_x * 10 ** (-self.snr_dB / 10)
 
+        if sigma2n < 0:
+            # a swept sigma2 gone negative would otherwise turn into
+            # sqrt(<0) and an all-NaN pass with only a RuntimeWarning
+            raise ValueError(
+                f"AWGN: the noise variance is negative (sigma2={sigma2n}); "
+                f"a variance is non-negative -- check the sweep values.")
+
         shape = x.shape
         if np.iscomplexobj(x):
             scale = np.sqrt(sigma2n / 2)

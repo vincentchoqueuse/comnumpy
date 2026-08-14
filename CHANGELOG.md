@@ -45,6 +45,84 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Fixed — a full-library audit: 37 findings, 37 fixed
+
+Five independent reviews swept the whole library -- core signal path,
+compensators/metrics/utils, optical, MIMO+FEC, and the chain machinery
+with OFDM -- hunting for wrong axes, dtype loss, RNG misuse, numerical
+blow-ups and validation gaps, each finding verified by running a minimal
+reproduction before being counted. The numerical cores came back clean
+against independent references (closed-form SER curves cross-checked by
+Monte-Carlo and numeric fading integration; Viterbi against exhaustive
+ML; LDPC min-sum against brute force; ML against the sphere decoder
+bit-for-bit; CD/DBP round trips to 1e-14; EDFA and Raman against their
+closed forms; the (133,171) distance spectrum against the published
+tables). The confirmed defects, all fixed and locked by
+`tests/test_audit_regressions.py`:
+
+- **Real mis-computations.** `Sequential.seed()` never reached blocks
+  inside a nested `Sequential` or a wrapper chain, so a seeded composite
+  chain was not reproducible; it now recurses. The AMP detector
+  evaluated its posterior-variance term `G` at variance `tau^2` instead
+  of `sigma^2 (1 + tau^2)` (Jeon et al., Algorithm 2) and its state went
+  NaN at high SNR -- silently hard-projected to symbol 0;
+  `soft_projector` also gained the log-sum-exp guard, which fixes the
+  same divergence in OAMP. `ErrorCounter` raveled before truncating, so
+  a batched reference against a delay-truncated detection counted
+  phantom errors on every row after the first. `CarrierAllocator`
+  allocated its buffer with the data dtype and silently zeroed complex
+  pilots on real data. `OFDMReceiver` read `N_fft` as `len(mask)`, which
+  is the *period* of a 2-D scattered mask. `compute_acpr` counted a bin
+  sitting exactly on a band edge in both bands. `SRRCFilter(rho=0)` -- 
+  the documented sinc case -- crashed on `1/(4 rho)`. A logarithmic
+  split-step schedule with `alpha_dB=0` (the default) was all-NaN; a
+  lossless fiber now gets the uniform spacing it is the limit of. The
+  FIR CD compensator applied a `sqrt(1/(4 pi K))` gain when its design
+  collapsed to one tap (short fiber, `z=0` crashed outright); below one
+  tap of memory it is now the identity it tends to. `Sequential.summary`
+  ran the chain without feeding `wiring` or recording taps.
+- **State that lied.** `FrameField` froze the *caller's* array in place;
+  it now freezes its own copy. `Deframer` recorded views of the input
+  buffer; the recorded fields now own their data. `tap()` served signals
+  from a previous run or a previous `taps=` configuration; the record is
+  cleared at each pass. `DataExtractor.forward` overwrote its declared
+  tuple selector with a slice. `Downsampler`/`Upsampler(use_filter=True)`
+  silently turned a real signal complex through `BWFilter`, which now
+  keeps a real signal real (its mask is symmetric).
+- **Contract mismatches.** A nested chain exported to JSON but failed to
+  import (`Sequential` was missing from the registry); int-keyed
+  callbacks were documented but never fired; the encoder/decoder pair
+  broke exactly at the empty message (`ViterbiDecoder` now accepts the
+  tail-only codeword); the distribution matcher pair died on a
+  zero-length stream; the Optical 90 hybrid and the MZM drew their local
+  oscillator with `len(x)` and crashed on any `(2, N)` input despite
+  advertising shape-agnostic behavior; `print_data` died on empty or
+  curveless tables instead of rendering the header.
+- **Validation gaps** (wrong or late errors): `compute_ser_awgn_qam`
+  accepted cross constellations (32, 128) and returned a wrong closed
+  form; negative `AWGN` variance produced NaN with only a warning;
+  `Serial2Parallel` validated `method=` only when the length did not
+  divide; `Complex2Real` leaked `UnboundLocalError`; `Upsampler(phase)`,
+  `SampleRemover` windows, `CyclicPrefixer(N_cp > N)`,
+  `Parallel2Serial` on 1-D input and `SRRCFilter(method='fft')` on a
+  signal shorter than the filter all died deep in numpy instead of
+  saying what was wrong; the generators rejected `np.int64` sizes and
+  accepted `True`; OAMP's `get_vt_2` ordered a complex trace.
+
+Also tightened along the way: `compute_ser` on an empty comparison now
+raises a clear `ValueError` instead of a bare `ZeroDivisionError`.
+
+### Changed — one vocabulary across the tutorial scripts
+
+The displayed sweep dict is `curves` everywhere, its closed-form
+companion `theory`, and the axis carries its unit (`snr_dB_list`);
+`measured`, `collected` and bare `reference` (outside the library's
+data-aided meaning) are gone, with domain names (`snr_dB`,
+`ccdf_curves`) kept only where they say strictly more. The canon is in
+the tutorial skill. The optical pages were already on the structural
+doctrine: `one_shot_pdm` inline, and the two DBP scripts keeping the
+one sanctioned chain split and their per-span progress table.
+
 ### Changed — every tutorial script held to the writing doctrine
 
 The conventions sweep closed over the whole tutorial set. The coding

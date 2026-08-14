@@ -762,7 +762,12 @@ def soft_projector(z: np.ndarray, alphabet: np.ndarray, sigma2: float,
     alphabet = np.asarray(alphabet).reshape(1, -1)
     z = z.reshape(-1, 1)
 
-    term1 = np.exp(-(1 / np.real(sigma2)) * np.abs(alphabet - z) ** 2)
+    # log-sum-exp: subtracting the row-wise best exponent changes nothing
+    # analytically (it cancels between num and den) but keeps the weights
+    # finite when every |z - a_m|^2 / sigma2 is large -- the high-SNR
+    # regime the AMP detectors call this in, where the naive form is 0/0
+    exponent = -(1 / np.real(sigma2)) * np.abs(alphabet - z) ** 2
+    term1 = np.exp(exponent - np.max(exponent, axis=1, keepdims=True))
 
     if kernel is None:
         kernel = alphabet

@@ -95,8 +95,8 @@ ebn0_dB_list = np.arange(0, 25, 2)
 N_compare = 100000
 orders = np.array([4, 16, 64, 256])
 bits_per_symbol = np.log2(orders).astype(int)     # vectorized, not a loop
-measured_ber = {}
-theory_ber = {}
+curves = {}
+theory = {}
 for index, order in enumerate(orders):
     other = Constellation("QAM", int(order))
     bits = int(bits_per_symbol[index])
@@ -110,10 +110,10 @@ for index, order in enumerate(orders):
                             {"ber": partial(compute_ber, width=bits)},
                             N_compare, reference="tx", seed=1)
     order_label = f"{order}-QAM"
-    measured_ber[order_label] = collected["ber"]
-    theory_ber[order_label] = other.metrics(ebn0_dB_list, per="bit")["ber"]
+    curves[order_label] = collected["ber"]
+    theory[order_label] = other.metrics(ebn0_dB_list, per="bit")["ber"]
 
-ax = plot_error_rate(ebn0_dB_list, measured_ber, theory=theory_ber,
+ax = plot_error_rate(ebn0_dB_list, curves, theory=theory,
                      xlabel="$E_b/N_0$ [dB]", ylabel="BER",
                      title="Square QAM at equal energy per bit")
 # The closed forms run down to 1e-12; the measurements cannot follow them

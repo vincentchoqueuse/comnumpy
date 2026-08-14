@@ -84,6 +84,9 @@ def _registry() -> dict[str, type]:
             if (isinstance(attr, type) and issubclass(attr, Processor)
                     and attr is not Processor):
                 registry.setdefault(attr.__name__, attr)
+    # a nested Sequential is a block too: the encoder recurses into it as
+    # a dataclass, so the decoder must know how to build one back
+    registry.setdefault("Sequential", Sequential)
     registry.update(_EXTRA_BLOCKS)
     return registry
 

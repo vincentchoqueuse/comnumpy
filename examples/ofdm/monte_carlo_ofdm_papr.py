@@ -120,9 +120,9 @@ papr_256 = compute_papr(ofdm_256(n_symbols * 256), unit="dB", axis=-1)
 ofdm_1024.seed(1)
 papr_1024 = compute_papr(ofdm_1024(n_symbols * N_sc), unit="dB", axis=-1)
 
-measured = {"$N_{sc}$ = 256": compute_ccdf(papr_256),
+ccdf_curves = {"$N_{sc}$ = 256": compute_ccdf(papr_256),
             "$N_{sc}$ = 1024": compute_ccdf(papr_1024)}
-reference = {
+theory = {
     "$N_{sc}$ = 256": compute_papr_ccdf_theo(threshold_dB, 256,
                                              oversampling=os, unit="dB"),
     "$N_{sc}$ = 1024": compute_papr_ccdf_theo(threshold_dB, 1024,
@@ -134,11 +134,11 @@ reference = {
 levels = np.logspace(0, -4, 25)
 
 fig, ax = plt.subplots(figsize=(7, 4.5))
-for name, (sorted_dB, ccdf) in measured.items():
+for name, (sorted_dB, ccdf) in ccdf_curves.items():
     shown = np.clip((ccdf.size * (1 - levels)).astype(int), 0, ccdf.size - 1)
     line, = ax.plot(sorted_dB[shown], ccdf[shown], "o", fillstyle="none",
                     label=f"{name}, simulated")
-    ax.plot(threshold_dB, reference[name], "-", color=line.get_color(),
+    ax.plot(threshold_dB, theory[name], "-", color=line.get_color(),
             label=f"{name}, theory")
 ax.set_yscale("log")
 ax.set_ylim(1e-4, 1)

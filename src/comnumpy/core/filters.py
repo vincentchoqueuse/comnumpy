@@ -2,6 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 from comnumpy.core.generics import Processor
+from comnumpy.exceptions import ShapeError
 
 __all__ = ["SRRCFilter", "BWFilter"]
 
@@ -144,7 +145,9 @@ class SRRCFilter(Processor):
             if t_temp == 0:
                 h_temp = (1 + rho*((4/np.pi)-1))
             else:
-                if np.abs(t_temp) == (1/(4*rho)):
+                # rho = 0 is the sinc pulse: the singularity at 1/(4*rho)
+                # moves to infinity and the general branch reduces to it
+                if rho != 0 and np.abs(t_temp) == (1/(4*rho)):
                     term1 = (1 + (2/np.pi))
                     term2 = (1 - (2/np.pi))
                     coef = rho / np.sqrt(2)
@@ -169,6 +172,11 @@ class SRRCFilter(Processor):
         from comnumpy._backend import fft  # local import (D36), cupy-compatible (D3)
         # see hager code on LDBP
         h = self.h()
+        if NFFT < len(h):
+            raise ShapeError(
+                f"SRRCFilter(method='fft') needs at least as many samples as "
+                f"filter taps ({len(h)} = 2*N_h*oversampling + 1), got {NFFT} "
+                f"-- use method='lfilter' or a longer signal")
         filter_delay = self.oversampling*self.N_h
         H_tmp = np.concatenate((h, np.zeros(NFFT-len(h))))
         H_tmp = np.roll(H_tmp, -filter_delay)
@@ -295,4 +303,8 @@ class BWFilter(Processor):
         H = (abs(w) <= self.wn / 2).astype(float)
         fft_x = fft(x, NFFT)
         y = ifft(H*fft_x, NFFT)
+        if np.isrealobj(x):
+            # the mask is symmetric in +/-f, so a real signal stays real:
+            # keep its dtype instead of leaking the ifft's complex128
+            y = np.real(y)
         return y

@@ -221,7 +221,9 @@ class ViterbiDecoder(Processor):
                 f"got {r.shape} -- check the encoder rate.")
         T = r.shape[-1] // n
         n_tail = self.K - 1 if self.terminated else 0
-        if T <= n_tail:
+        # strictly shorter: T == n_tail is the tail alone, the codeword the
+        # encoder produces for an empty message, and decodes to an empty one
+        if T < n_tail:
             raise ShapeError(
                 f"coded length {r.shape[-1]} is shorter than the tail "
                 f"({n_tail} steps of {n} bits) -- nothing to decode.")

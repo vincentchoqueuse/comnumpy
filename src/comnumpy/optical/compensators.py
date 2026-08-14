@@ -127,11 +127,17 @@ class ChromaticDispersionFIRCompensator(Processor):
         beta2_ps2_per_km = compute_beta2(self.lamb, self.D, self.c)
         beta2 = ((10**-12)**2)*beta2_ps2_per_km  # convert into s^2/km
         K = - beta2 * self.z * (self.fs**2) / 2
-        N = int(2 * np.floor(2 * K * np.pi) + 1)
-        bound = int(np.floor(N / 2))
-        n_vect = np.arange(-bound, bound + 1)
-        coef = np.sqrt(1j / (4 * K * np.pi))
-        self.h = coef * np.exp(-1j * (n_vect**2) / (4 * K))
+        bound = int(np.floor(2 * K * np.pi))
+        if bound == 0:
+            # below one tap of memory the Savory design is outside its
+            # validity: its sqrt(1/(4*pi*K)) amplitude diverges as K -> 0
+            # although the channel tends to identity. The dispersion is
+            # not resolvable at this fs, so the compensator is a pass-through.
+            self.h = np.ones(1, dtype=complex)
+        else:
+            n_vect = np.arange(-bound, bound + 1)
+            coef = np.sqrt(1j / (4 * K * np.pi))
+            self.h = coef * np.exp(-1j * (n_vect**2) / (4 * K))
         self.K = K
 
     def forward(self, x: np.ndarray) -> np.ndarray:

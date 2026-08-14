@@ -531,6 +531,10 @@ def get_logarithmic_step_size(L_span: float, StPS: int, alpha_dB: float = 0,
     """
     alpha = (np.log(10)/10) * (alpha_dB)
     alpha_adj = step_log_factor*alpha
+    if alpha_adj == 0:
+        # lossless limit of the Sinkin spacing: without attenuation the
+        # nonlinear phase accrues uniformly, and the formula below is 0/0
+        return get_linear_step_size(L_span, StPS)
     delta = (1-np.exp(-alpha_adj*L_span))/StPS
     n_vect = 1 + np.arange(StPS)
     z = -(1/alpha_adj)*np.log((1-n_vect*delta)/(1-(n_vect-1)*delta))

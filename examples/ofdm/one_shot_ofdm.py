@@ -106,25 +106,25 @@ plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 # pools the n_trials frames of each sweep point -- exactly the mean of
 # the per-trial rates. The channel stays the same throughout, by
 # construction.
-snr_list = np.arange(6, 22, 2)
+snr_dB_list = np.arange(6, 22, 2)
 n_trials = 2
 
 # --- the sweep: no simulation loop -----------------------------------
-measured = {}
-measured["single carrier"] = monte_carlo(
-    sc_chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser},
+curves = {}
+curves["single carrier"] = monte_carlo(
+    sc_chain, "data_rx.snr_dB", snr_dB_list, {"ser": compute_ser},
     (n_trials, N), reference="data_tx", seed=1)["ser"]
-measured["OFDM"] = monte_carlo(
-    ofdm_chain, "data_rx.snr_dB", snr_list, {"ser": compute_ser},
+curves["OFDM"] = monte_carlo(
+    ofdm_chain, "data_rx.snr_dB", snr_dB_list, {"ser": compute_ser},
     (n_trials, N), reference="data_tx", seed=1)["ser"]
 
 # --- results: table and figure ---------------------------------------
 
-ser_data = {"x": snr_list, "curves": measured}
+ser_data = {"x": snr_dB_list, "curves": curves}
 print()
 print_data(ser_data, xlabel="SNR [dB]", ylabel="SER")
 
-plot_error_rate(snr_list, measured, ylabel="SER",
+plot_error_rate(snr_dB_list, curves, ylabel="SER",
                 title="16-QAM over one EPA realization")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig4.png")
 
