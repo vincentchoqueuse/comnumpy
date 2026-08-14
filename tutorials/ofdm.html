@@ -675,25 +675,25 @@ range of SNR values:</p>
 <span class="c1"># pools the n_trials frames of each sweep point -- exactly the mean of</span>
 <span class="c1"># the per-trial rates. The channel stays the same throughout, by</span>
 <span class="c1"># construction.</span>
-<span class="n">snr_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">snr_dB_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">n_trials</span> <span class="o">=</span> <span class="mi">2</span>
 
 <span class="c1"># --- the sweep: no simulation loop -----------------------------------</span>
-<span class="n">measured</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">measured</span><span class="p">[</span><span class="s2">&quot;single carrier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
-    <span class="n">sc_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+<span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;single carrier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">sc_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
     <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
-<span class="n">measured</span><span class="p">[</span><span class="s2">&quot;OFDM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
-    <span class="n">ofdm_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
+<span class="n">curves</span><span class="p">[</span><span class="s2">&quot;OFDM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">ofdm_chain</span><span class="p">,</span> <span class="s2">&quot;data_rx.snr_dB&quot;</span><span class="p">,</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ser&quot;</span><span class="p">:</span> <span class="n">compute_ser</span><span class="p">},</span>
     <span class="p">(</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;data_tx&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
 
 <span class="c1"># --- results: table and figure ---------------------------------------</span>
 
-<span class="n">ser_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">snr_list</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">measured</span><span class="p">}</span>
+<span class="n">ser_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">snr_dB_list</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">:</span> <span class="n">curves</span><span class="p">}</span>
 <span class="nb">print</span><span class="p">()</span>
 <span class="n">print_data</span><span class="p">(</span><span class="n">ser_data</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;SNR [dB]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">)</span>
 
-<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_list</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
+<span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr_dB_list</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;SER&quot;</span><span class="p">,</span>
                 <span class="n">title</span><span class="o">=</span><span class="s2">&quot;16-QAM over one EPA realization&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/one_shot_ofdm_fig4.png&quot;</span><span class="p">)</span>
 

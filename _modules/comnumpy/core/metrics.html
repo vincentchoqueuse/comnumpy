@@ -916,6 +916,12 @@ window.runMermaid = runMermaid;</script>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>  <span class="c1"># local import (D36)</span>
 
     <span class="n">gamma_b</span> <span class="o">=</span> <span class="n">snr_per_bit</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">root</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;compute_ser_awgn_qam: expected a square QAM order (4, 16, 64, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;256, ...), got order=</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> -- the two-independent-PAM &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;decomposition below does not hold for cross constellations.&quot;</span><span class="p">)</span>
 
     <span class="c1"># see book Proakis &quot;Digital communication&quot;, p 280</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">order</span>
@@ -1396,6 +1402,10 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># of a batch after the first -- a silent offset, not an error</span>
         <span class="n">N</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">x_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_detected</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">difference</span> <span class="o">=</span> <span class="n">x_target</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span> <span class="o">-</span> <span class="n">x_detected</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">difference</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;compute_ser: no symbols to compare (an input is empty, or &quot;</span>
+                <span class="s2">&quot;the two share no overlap along the last axis)&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">difference</span><span class="p">)</span> <span class="o">/</span> <span class="n">difference</span><span class="o">.</span><span class="n">size</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">X_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
@@ -1889,10 +1899,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [-27.6193 -27.6193]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">band_power</span><span class="p">(</span><span class="n">lower_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">upper_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">band_power</span><span class="p">(</span><span class="n">lower_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">upper_freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                   <span class="n">open_lower</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">open_upper</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="c1"># Parseval: the power in a band is the energy of the bins it</span>
-        <span class="c1"># contains, divided by the number of samples</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_axis</span> <span class="o">&gt;=</span> <span class="n">lower_freq</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">freq_axis</span> <span class="o">&lt;=</span> <span class="n">upper_freq</span><span class="p">)</span>
+        <span class="c1"># contains, divided by the number of samples. The edge a band</span>
+        <span class="c1"># shares with its neighbour is open on one side, so a bin sitting</span>
+        <span class="c1"># exactly on it is counted once, never in both bands.</span>
+        <span class="n">above</span> <span class="o">=</span> <span class="n">freq_axis</span> <span class="o">&gt;</span> <span class="n">lower_freq</span> <span class="k">if</span> <span class="n">open_lower</span> <span class="k">else</span> <span class="n">freq_axis</span> <span class="o">&gt;=</span> <span class="n">lower_freq</span>
+        <span class="n">below</span> <span class="o">=</span> <span class="n">freq_axis</span> <span class="o">&lt;</span> <span class="n">upper_freq</span> <span class="k">if</span> <span class="n">open_upper</span> <span class="k">else</span> <span class="n">freq_axis</span> <span class="o">&lt;=</span> <span class="n">upper_freq</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">above</span> <span class="o">&amp;</span> <span class="n">below</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">spectrum</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">signal</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 
     <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
@@ -1910,10 +1925,13 @@ window.runMermaid = runMermaid;</script>
     <span class="n">adj_lower_left</span> <span class="o">=</span> <span class="n">main_lower</span> <span class="o">-</span> <span class="n">bandwidth</span>
     <span class="n">adj_upper_left</span> <span class="o">=</span> <span class="n">main_lower</span>
 
-    <span class="c1"># Calculate power in main and adjacent channels</span>
+    <span class="c1"># Calculate power in main and adjacent channels; the main channel</span>
+    <span class="c1"># owns its edges, the adjacent bands start just past them</span>
     <span class="n">main_power</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">main_lower</span><span class="p">,</span> <span class="n">main_upper</span><span class="p">)</span>
-    <span class="n">adj_power_right</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_right</span><span class="p">,</span> <span class="n">adj_upper_right</span><span class="p">)</span>
-    <span class="n">adj_power_left</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_left</span><span class="p">,</span> <span class="n">adj_upper_left</span><span class="p">)</span>
+    <span class="n">adj_power_right</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_right</span><span class="p">,</span> <span class="n">adj_upper_right</span><span class="p">,</span>
+                                 <span class="n">open_lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">adj_power_left</span> <span class="o">=</span> <span class="n">band_power</span><span class="p">(</span><span class="n">adj_lower_left</span><span class="p">,</span> <span class="n">adj_upper_left</span><span class="p">,</span>
+                                <span class="n">open_upper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Calculate ACPR in dB</span>
     <span class="n">acpr_right</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">adj_power_right</span> <span class="o">/</span> <span class="n">main_power</span><span class="p">)</span>
@@ -2093,8 +2111,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        shorter of the two sets the length, which is what a chain with</span>
 <span class="sd">        a filter delay produces.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
-        <span class="n">estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">detected</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">detected</span><span class="p">))</span>
+        <span class="c1"># truncate along the *last* axis before raveling, as compute_ser</span>
+        <span class="c1"># does: pooling a batch first would misalign every row after the</span>
+        <span class="c1"># first against its per-row-truncated detection</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">estimate</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">estimate</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
         <span class="n">length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">estimate</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

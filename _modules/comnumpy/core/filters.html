@@ -730,6 +730,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SRRCFilter&quot;</span><span class="p">,</span> <span class="s2">&quot;BWFilter&quot;</span><span class="p">]</span>
 
@@ -874,7 +875,9 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">t_temp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">h_temp</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">rho</span><span class="o">*</span><span class="p">((</span><span class="mi">4</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_temp</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">rho</span><span class="p">)):</span>
+                <span class="c1"># rho = 0 is the sinc pulse: the singularity at 1/(4*rho)</span>
+                <span class="c1"># moves to infinity and the general branch reduces to it</span>
+                <span class="k">if</span> <span class="n">rho</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_temp</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">rho</span><span class="p">)):</span>
                     <span class="n">term1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
                     <span class="n">term2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
                     <span class="n">coef</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -901,6 +904,11 @@ window.runMermaid = runMermaid;</script>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span>  <span class="c1"># local import (D36), cupy-compatible (D3)</span>
         <span class="c1"># see hager code on LDBP</span>
         <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">NFFT</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SRRCFilter(method=&#39;fft&#39;) needs at least as many samples as &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;filter taps (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2"> = 2*N_h*oversampling + 1), got </span><span class="si">{</span><span class="n">NFFT</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;-- use method=&#39;lfilter&#39; or a longer signal&quot;</span><span class="p">)</span>
         <span class="n">filter_delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">oversampling</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">N_h</span>
         <span class="n">H_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NFFT</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">))))</span>
         <span class="n">H_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">H_tmp</span><span class="p">,</span> <span class="o">-</span><span class="n">filter_delay</span><span class="p">)</span>
@@ -1031,6 +1039,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wn</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
         <span class="n">fft_x</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">ifft</span><span class="p">(</span><span class="n">H</span><span class="o">*</span><span class="n">fft_x</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isrealobj</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="c1"># the mask is symmetric in +/-f, so a real signal stays real:</span>
+            <span class="c1"># keep its dtype instead of leaking the ifft&#39;s complex128</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span></div>
 
 </pre></div>

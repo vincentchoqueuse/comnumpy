@@ -1088,8 +1088,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        A ``numpy.random.SeedSequence`` spawned from ``seed`` gives each</span>
 <span class="sd">        block that declares a ``seed`` field its own independent child</span>
 <span class="sd">        seed, then re-runs its parametric initialization so the RNG is</span>
-<span class="sd">        rebuilt. Same chain + same seed = same signal, whatever the</span>
-<span class="sd">        number or order of stochastic blocks.</span>
+<span class="sd">        rebuilt. A nested :class:`Sequential` -- in the module list or</span>
+<span class="sd">        held by a wrapper block -- is seeded recursively from its own</span>
+<span class="sd">        child seed. Same chain + same seed = same signal, whatever the</span>
+<span class="sd">        number, order or nesting of stochastic blocks.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -1102,18 +1104,30 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        True</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">seed_sequence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">SeedSequence</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-        <span class="n">stochastic</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">module</span> <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span>
-            <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="s2">&quot;seed&quot;</span> <span class="ow">in</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">module</span><span class="p">)}</span>
-        <span class="p">]</span>
-        <span class="k">for</span> <span class="n">module</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">stochastic</span><span class="p">,</span> <span class="n">seed_sequence</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stochastic</span><span class="p">)),</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">):</span>
+                <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s2">&quot;seed&quot;</span> <span class="ow">in</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">module</span><span class="p">)}:</span>
+                    <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># a wrapper block holding an inner chain (e.g. the</span>
+                    <span class="c1"># OFDM chains) is seeded through that chain</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">):</span>
+                            <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">seed_sequence</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)),</span>
                                  <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-            <span class="c1"># setattr, not module.seed: the field was discovered by name</span>
+            <span class="n">child_seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">generate_state</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">):</span>
+                <span class="n">target</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">child_seed</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="c1"># setattr, not target.seed: the field was discovered by name</span>
             <span class="c1"># above and no base class declares it (noqa: B010 is the price)</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;seed&quot;</span><span class="p">,</span>  <span class="c1"># noqa: B010</span>
-                    <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">generate_state</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
-            <span class="n">post_init</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;__post_init__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="n">child_seed</span><span class="p">)</span>  <span class="c1"># noqa: B010</span>
+            <span class="n">post_init</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;__post_init__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">post_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">post_init</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -1223,14 +1237,26 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run the chain on ``X`` and tabulate each block&#39;s output shape,</span>
 <span class="sd">        dtype and execution time (decision D33b). Returns the rows.</span>
+
+<span class="sd">        The pass is the ordinary one: taps are recorded and the data</span>
+<span class="sd">        edges declared in ``wiring`` are fed, so the chain summarized is</span>
+<span class="sd">        the chain that runs.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ids</span><span class="p">,</span> <span class="n">recorded</span><span class="p">,</span> <span class="n">feeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_edges</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ids</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tapped_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">_SummaryRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">block_id</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ids</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">feeds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="p">()):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tapped_</span><span class="p">[</span><span class="n">source</span><span class="p">])</span>
             <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
             <span class="n">Y</span> <span class="o">=</span> <span class="n">module</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
             <span class="n">elapsed_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e3</span>
+            <span class="k">if</span> <span class="n">block_id</span> <span class="ow">in</span> <span class="n">recorded</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tapped_</span><span class="p">[</span><span class="n">block_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">index</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">block_id</span><span class="p">,</span>
@@ -1370,6 +1396,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">ids</span><span class="p">,</span> <span class="n">recorded</span><span class="p">,</span> <span class="n">feeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_edges</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ids</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tapped_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
         <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span>
         <span class="n">time_elapsed</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1434,6 +1461,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Process the input data through all modules in the sequence.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ids</span><span class="p">,</span> <span class="n">recorded</span><span class="p">,</span> <span class="n">feeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_edges</span><span class="p">()</span>
+        <span class="c1"># a tap is a record of *this* pass: stale entries from an earlier</span>
+        <span class="c1"># run or an earlier taps= configuration must not survive it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tapped_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
         <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
@@ -1455,6 +1485,9 @@ window.runMermaid = runMermaid;</script>
             <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">processor</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
                 <span class="n">callbacks</span><span class="p">[</span><span class="n">key</span><span class="p">](</span><span class="n">Y</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
+                <span class="c1"># the documented alternative: callbacks keyed by position</span>
+                <span class="n">callbacks</span><span class="p">[</span><span class="n">index</span><span class="p">](</span><span class="n">Y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
         <span class="k">return</span> <span class="n">Y</span></div>
 

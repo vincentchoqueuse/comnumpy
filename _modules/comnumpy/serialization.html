@@ -815,6 +815,9 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">Processor</span><span class="p">)</span>
                     <span class="ow">and</span> <span class="n">attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Processor</span><span class="p">):</span>
                 <span class="n">registry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="c1"># a nested Sequential is a block too: the encoder recurses into it as</span>
+    <span class="c1"># a dataclass, so the decoder must know how to build one back</span>
+    <span class="n">registry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;Sequential&quot;</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">)</span>
     <span class="n">registry</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_EXTRA_BLOCKS</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">registry</span>
 

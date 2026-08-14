@@ -471,70 +471,6 @@
   <section id="module-comnumpy.core.compensators">
 <span id="compensators"></span><h1>Compensators<a class="headerlink" href="#module-comnumpy.core.compensators" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DataAidedMixin</span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin" title="Link to this definition">#</a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.validate_paths">
-<span class="sig-name descname"><span class="pre">validate_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.validate_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths" title="Link to this definition">#</a></dt>
-<dd><p>Refuse a multi-path signal (D49).</p>
-<p>A data-aided estimator is fitted against one reference sequence,
-so it measures one record. Which of the two families it belongs
-to – shared over the paths, or one per path – depends on the
-quantity and on where in the receiver it sits, and the caller is
-the one who knows: this says so instead of broadcasting by
-accident.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.path_mode">
-<span class="sig-name descname"><span class="pre">path_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.path_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.path_mode" title="Link to this definition">#</a></dt>
-<dd><p>Answer the D49 question instead of only asking it.</p>
-<p><a class="reference internal" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths" title="comnumpy.core.compensators.DataAidedMixin.validate_paths"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_paths()</span></code></a> refuses a multi-path signal because the
-block cannot know which family its estimand belongs to. Blocks
-that expose <code class="docutils literal notranslate"><span class="pre">shared=</span></code> let the caller say, which is the only
-place the answer exists:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">shared=True</span></code> – one physical quantity behind every path (a
-laser’s phase before any equalizer, the mean nonlinear phase
-of a dual-polarization link, which comes from the <em>total</em>
-intensity). Fitted jointly over the flattened signal, which
-is also the better estimator since it sees all the data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">shared=False</span></code> – one per path (each output of a butterfly
-equalizer, each receiver front end). One estimate each.</p></li>
-</ul>
-<p>Leaving it unset keeps the refusal, because silently picking
-one is how a wrong answer looks right.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>str</em> – <code class="docutils literal notranslate"><span class="pre">&quot;single&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;shared&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;per_path&quot;</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="comnumpy.core.compensators.DataAidedMixin.get_reference">
-<span class="sig-name descname"><span class="pre">get_reference</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DataAidedMixin.get_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DataAidedMixin.get_reference" title="Link to this definition">#</a></dt>
-<dd><p>Retrieve the reference signal associated with the model.</p>
-<p>The reference is a plain array. When it is known in advance
-(preamble, training sequence) it is passed directly as
-<code class="docutils literal notranslate"><span class="pre">reference=...</span></code>; when it is produced by the chain itself, the
-edge is declared with <code class="docutils literal notranslate"><span class="pre">Sequential(wiring={&quot;block.reference&quot;:</span>
-<span class="pre">&quot;source&quot;})</span></code> so that each Monte-Carlo run uses its own reference.
-Until one of the two has happened, <code class="docutils literal notranslate"><span class="pre">reference</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> and
-this raises.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>np.ndarray</em> – The reference signal array.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="../toplevel/exceptions.html#comnumpy.exceptions.NotFittedError" title="comnumpy.exceptions.NotFittedError"><strong>NotFittedError</strong></a> – If no reference was given and none was wired in.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.core.compensators.DCCorrector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DCCorrector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean_corrector'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/compensators.html#DCCorrector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.compensators.DCCorrector" title="Link to this definition">#</a></dt>
 <dd><p>Remove the DC component of a signal and set it to a target value.</p>
@@ -1856,12 +1792,6 @@ pp. 501-507, 1993 (interpolation-based fractional timing recovery).</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.validate_paths"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.validate_paths()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.path_mode"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.path_mode()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DataAidedMixin.get_reference"><code class="docutils literal notranslate"><span class="pre">DataAidedMixin.get_reference()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.DCCorrector"><code class="docutils literal notranslate"><span class="pre">DCCorrector</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.Normalizer"><code class="docutils literal notranslate"><span class="pre">Normalizer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.compensators.Normalizer.gain_"><code class="docutils literal notranslate"><span class="pre">Normalizer.gain_</span></code></a></li>

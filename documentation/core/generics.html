@@ -677,8 +677,10 @@ numeric suffix disambiguates duplicates (<code class="docutils literal notransla
 <p>A <code class="docutils literal notranslate"><span class="pre">numpy.random.SeedSequence</span></code> spawned from <code class="docutils literal notranslate"><span class="pre">seed</span></code> gives each
 block that declares a <code class="docutils literal notranslate"><span class="pre">seed</span></code> field its own independent child
 seed, then re-runs its parametric initialization so the RNG is
-rebuilt. Same chain + same seed = same signal, whatever the
-number or order of stochastic blocks.</p>
+rebuilt. A nested <a class="reference internal" href="#comnumpy.core.generics.Sequential" title="comnumpy.core.generics.Sequential"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequential</span></code></a> – in the module list or
+held by a wrapper block – is seeded recursively from its own
+child seed. Same chain + same seed = same signal, whatever the
+number, order or nesting of stochastic blocks.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">)])</span>
@@ -723,6 +725,9 @@ re-run, so the block state stays consistent.</p>
 <span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.summary" title="Link to this definition">#</a></dt>
 <dd><p>Run the chain on <code class="docutils literal notranslate"><span class="pre">X</span></code> and tabulate each block’s output shape,
 dtype and execution time (decision D33b). Returns the rows.</p>
+<p>The pass is the ordinary one: taps are recorded and the data
+edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so the chain summarized is
+the chain that runs.</p>
 </dd></dl>
 
 <dl class="py method">

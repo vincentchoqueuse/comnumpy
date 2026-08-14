@@ -904,7 +904,9 @@ window.runMermaid = runMermaid;</script>
             <span class="n">N_carriers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">N_fft</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
-            <span class="n">N_carriers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">)</span>
+            <span class="c1"># shape[-1], not len(): a 2-D scattered mask is (T_period, N_fft)</span>
+            <span class="c1"># and its first axis is the period, not the FFT size</span>
+            <span class="n">N_carriers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>

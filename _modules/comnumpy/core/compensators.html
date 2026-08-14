@@ -752,10 +752,13 @@ window.runMermaid = runMermaid;</script>
 <span class="p">]</span>
 
 
-<div class="viewcode-block" id="DataAidedMixin">
-<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedMixin</span><span class="p">():</span>
+    <span class="c1"># a plain class, not a dataclass: it has no fields of its own, and</span>
+    <span class="c1"># dataclass(slots=True) would *recreate* the class, which multiple</span>
+    <span class="c1"># inheritance with the equally-recreated Processor cannot express.</span>
+    <span class="c1"># The empty slots keep the concrete slotted subclasses dict-free.</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
     <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
         <span class="c1"># declared by every concrete class; annotating it here would</span>
         <span class="c1"># make it a field of the mixin and reorder theirs</span>
@@ -770,8 +773,6 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DataAidedMixin.validate_paths">
-<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.validate_paths">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Refuse a multi-path signal (D49).</span>
 
@@ -783,11 +784,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        accident.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">validate_single_path</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                             <span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="p">)</span></div>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="DataAidedMixin.path_mode">
-<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.path_mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">path_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Answer the D49 question instead of only asking it.</span>
 
@@ -827,13 +825,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;-- so that it is fitted jointly; pass shared=False if each &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;path carries its own. Broadcasting would pick one by &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;accident (decision D49).&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;shared&quot;</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="s2">&quot;per_path&quot;</span></div>
-
+        <span class="k">return</span> <span class="s2">&quot;shared&quot;</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="s2">&quot;per_path&quot;</span>
 
     <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;a quantity&quot;</span>
 
-<div class="viewcode-block" id="DataAidedMixin.get_reference">
-<a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedMixin.get_reference">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Retrieve the reference signal associated with the model.</span>
@@ -863,9 +858,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="sa">f</span><span class="s2">&quot;sequence is known in advance, or declare the edge with &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;Sequential(wiring=</span><span class="se">{{</span><span class="s2">&#39;&lt;block_id&gt;.reference&#39;: &#39;&lt;source_id&gt;&#39;</span><span class="se">}}</span><span class="s2">) &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;if the chain produces it.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span></div>
-</div>
-
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DCCorrector">
