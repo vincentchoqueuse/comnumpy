@@ -7,9 +7,10 @@ compare on it.
 
 .. note::
 
-   **Before you start.** :doc:`awgn` introduced ``monte_carlo``, which is used
-   here to average over channel realizations rather than over noise. The
-   chain is the same object; only the number of antennas changes.
+   **Before you start.** :doc:`awgn` introduced ``monte_carlo``. Here the
+   averaging over fading is a *batch*: a fixed stack of channel draws is
+   built into each chain, and the sweep only moves the noise. The chain
+   is the same object; only the number of antennas changes.
 
 **What you'll learn:**
 
@@ -45,42 +46,24 @@ problem, and it is what the rest of this tutorial is about.
 Implementation
 """"""""""""""
 
-We start with the imports:
+We start with the imports and the parameters:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 1-21
+   :lines: 1-32
 
-The channel is drawn once, with a seed: the first half of the tutorial is
-about **one** realization, so it must be the same one on every run. The link
-is a single ``Sequential`` closed by a detector, so comparing five detectors
-means comparing five chains that differ by their last block alone:
-
-.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
-   :language: python
-   :lines: 23-63
-
-.. mermaid:: mermaid/mimo_zf.mmd
-
-The diagram is not drawn by hand. It is what the chain says about itself --
-``chain.to_mermaid()`` (decision D33c) -- exported by the script, so the
-block names are the ones the code uses and a dashed outline marks a tapped
-block:
+The channel is drawn once, with a seed: this first half of the tutorial is
+about **one** realization, so it must be the same one on every run. One
+chain, transmitter to decision, closed by the most direct detector -- zero
+forcing:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 185-188
-
-Each chain is given the same seed before running, so the five numbers below
-differ by the detector alone -- same symbols, same noise, same channel:
+   :lines: 34-47
 
 .. code::
 
-   * detector ZF   : ser=0.0025
-   * detector MMSE : ser=0.0025
-   * detector OSIC : ser=0.0010
-   * detector ML   : ser=0.0005
-   * detector SD   : ser=0.0005
+   ZF, one channel draw: SER = 0.0025
 
 Received Constellations
 """""""""""""""""""""""
@@ -89,21 +72,18 @@ Let us look at what each receive antenna sees, read from the ``"noise"`` tap:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 65-72
+   :lines: 49-56
 
 .. image:: img/monte_carlo_mimo_fig1.png
    :width: 100%
    :align: center
 
-No constellation is visible on any antenna: each one receives a noisy
-superposition of the two transmitted streams. This is the problem the
-detector has to solve.
-
-Applying the pseudo-inverse of the channel matrix separates the streams:
+No constellation is visible on any antenna: each one observes a mixture of
+the two streams. The ZF estimator inverts that mixture:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 74-81
+   :lines: 58-65
 
 .. image:: img/monte_carlo_mimo_fig2.png
    :width: 100%
@@ -119,7 +99,19 @@ Detection Strategies
 ^^^^^^^^^^^^^^^^^^^^
 
 The five detectors are five answers to one question: what to do with the
-interference that the other streams put on top of the one being read.
+interference that the other streams put on top of the one being read. One
+channel realization proves nothing about them -- over fading, the error rate
+is an *average*, dominated by the rare draws where the matrix is nearly
+singular -- so each answer is judged over the **same** 200 channel draws,
+stacked into a batch: one draw is one row (D51), the channel block
+propagates draw :math:`k` on frame :math:`k`, and each detector holds the
+same stack. The draws and the sweep are set up once:
+
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 67-81
+
+Each technique is then three things -- an idea, one chain, one sweep.
 
 Zero forcing (ZF)
 """""""""""""""""
@@ -141,6 +133,10 @@ enhancement**. It also costs diversity: each stream spends :math:`N_t-1` of
 its :math:`N_r` degrees of freedom cancelling the others, leaving a diversity
 order of :math:`N_r - N_t + 1` instead of :math:`N_r`.
 
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 83-94
+
 Minimum mean square error (MMSE)
 """"""""""""""""""""""""""""""""
 
@@ -159,7 +155,13 @@ conditioned. As :math:`\sigma^2 \to 0` it *is* zero forcing; as
 :math:`\sigma^2 \to \infty` it becomes the matched filter
 :math:`\mathbf{H}^H`. In between it accepts a little residual interference in
 exchange for much less amplified noise. It does not buy diversity, which is
-why the ZF and MMSE curves run parallel.
+why the ZF and MMSE curves run parallel. Because the detector *weights by*
+:math:`\sigma^2`, the sweep zips the noise variance into it, one pair of
+dotted parameters per point:
+
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 96-107
 
 Ordered successive interference cancellation (OSIC)
 """""""""""""""""""""""""""""""""""""""""""""""""""
@@ -172,6 +174,10 @@ the full :math:`N_r` diversity, the first only :math:`N_r - N_t + 1`, which
 is why the ordering matters and why ``osic_type="sinr"`` sorts by
 post-detection SNR (the V-BLAST rule). The price is error propagation: a
 wrong decision is subtracted as if it were right.
+
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 109-121
 
 Maximum likelihood (ML)
 """""""""""""""""""""""
@@ -187,7 +193,12 @@ refuses that split and scores the candidate vectors jointly:
 Nothing is inverted, so nothing is amplified, and every receive antenna
 contributes to every stream: the diversity order is :math:`N_r`. The cost is
 that the minimum is taken over :math:`|\mathcal{M}|^{N_t}` vectors -- 16 here,
-but 65 536 for 16-QAM on four streams.
+but 65 536 for 16-QAM on four streams. ML compares distances and never needs
+:math:`\sigma^2`, so its sweep moves the noise alone:
+
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 123-133
 
 Sphere decoding (SD)
 """"""""""""""""""""
@@ -211,66 +222,57 @@ can be discarded**: it cannot contain the minimum. Only the lattice points
 inside a shrinking ball are ever visited, and nothing is approximated, so the
 decision is exactly the ML one.
 
+.. literalinclude:: ../../examples/mimo/one_shot_mimo.py
+   :language: python
+   :lines: 135-145
+
 .. note ::
 
    Diversity orders are claims about a limit, and the SNR range simulated
-   below stops at 18 dB, which is not the asymptotic regime. They are
+   here stops at 18 dB, which is not the asymptotic regime. They are
    checked where a limit can be reached: ``validation/mimo_zf_ml_ber.py``
    confirms diversity 1 for zero forcing and 2 for maximum likelihood on a
    2x2 channel, against the closed forms of :mod:`comnumpy.core.metrics`
    (decision D7).
 
 
-Monte Carlo Evaluation
-^^^^^^^^^^^^^^^^^^^^^^
+Results
+^^^^^^^
 
-A single channel realization proves nothing: over fading, the error rate is
-an *average*, dominated by the rare draws where the matrix is nearly
-singular. Averaging means one independent draw per frame, and the draws are
-a **stack**: ``rayleigh_channel(size=n_channels)`` returns ``(200, 3, 2)``,
-the channel block propagates frame :math:`k` through matrix :math:`k`, and
-the detector -- handed the *same* stack -- decides frame :math:`k` against
-matrix :math:`k`. The chain runs once per SNR point instead of once per
-draw, and the pooled SER over equal-size frames is exactly the mean of the
-per-draw rates:
+The five curves come from the same dictionary, shown twice:
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 83-132
+   :lines: 147-157
 
 .. code::
 
    SER
-   snr_dB       ZF     MMSE       OSIC         ML         SD
-   ---------------------------------------------------------
-        0  0.33086  0.28510  2.822e-01  2.791e-01  2.791e-01
-        3  0.20976  0.17386  1.595e-01  1.545e-01  1.545e-01
-        6  0.10669  0.08601  6.488e-02  5.980e-02  5.980e-02
-        9  0.04389  0.03476  1.890e-02  1.584e-02  1.584e-02
-       12  0.01510  0.01174  4.163e-03  2.488e-03  2.488e-03
-       15  0.00507  0.00394  8.000e-04  3.875e-04  3.875e-04
-       18  0.00201  0.00144  1.625e-04  1.625e-04  1.625e-04
+   snr_dB       ZF     MMSE     OSIC         ML         SD
+   -------------------------------------------------------
+        0  0.33427  0.28820  0.28735  2.851e-01  2.868e-01
+        3  0.21634  0.17955  0.16855  1.613e-01  1.620e-01
+        6  0.11209  0.09271  0.07311  6.785e-02  6.871e-02
+        9  0.04911  0.04034  0.02546  2.057e-02  2.095e-02
+       12  0.01876  0.01570  0.00779  4.700e-03  4.950e-03
+       15  0.00719  0.00583  0.00243  8.125e-04  6.875e-04
+       18  0.00286  0.00196  0.00100  1.000e-04  2.500e-05
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
    :align: center
 
 The ordering is the textbook one and it holds at every SNR: ML is the best,
-OSIC follows closely, MMSE beats ZF everywhere, and the gap widens with the
-SNR -- at 18 dB, ML is an order of magnitude below ZF. The reason is the
-slope: with :math:`N_r = 3` receive antennas and :math:`N_t = 2` streams, ML
-enjoys the full receive diversity while a linear detector spends part of it
-cancelling the other stream.
+OSIC follows, MMSE beats ZF everywhere, and the gap widens with the SNR --
+at 18 dB, ML is an order of magnitude below ZF. The reason is the slope:
+with :math:`N_r = 3` receive antennas and :math:`N_t = 2` streams, ML enjoys
+the full receive diversity while a linear detector spends part of it
+cancelling the other stream. The ML and SD rows differ only by their noise
+draws (each sweep reseeds its own chain): where they share a seed they are
+digit for digit the same decision, which is the sphere decoder's claim.
 
-The sphere decoder's row is **the ML row, digit for digit**, which is the
-claim it has to make: a pruning that changed a single decision would not be
-maximum likelihood any more. The two curves therefore lie on top of each
-other in the figure, and only their markers tell them apart.
-
-Note which detectors are told the noise variance and which are not: MMSE and
-OSIC weight by :math:`\sigma^2`, ZF ignores the noise by construction, and ML
-only compares distances -- so neither of the last two has that parameter at
-all, and ``set_params`` says so if you try.
+The last rows sit near the estimator's floor: 2.5e-05 out of 40 000 symbols
+per point is one error, not a rate.
 
 
 Computational Cost
@@ -284,16 +286,16 @@ where that product no longer fits. We therefore time both detectors on
 
 .. literalinclude:: ../../examples/mimo/one_shot_mimo.py
    :language: python
-   :lines: 134-183
+   :lines: 159-216
 
 .. code::
 
-     ML  0 dB    142.0 ms    65536 nodes   SER 0.7900
-     ML  9 dB    123.5 ms    65536 nodes   SER 0.5044
-     ML 18 dB    140.8 ms    65536 nodes   SER 0.0112
-     SD  0 dB    197.5 ms     91.8 nodes   SER 0.7900
-     SD  9 dB     36.3 ms     19.2 nodes   SER 0.5044
-     SD 18 dB     11.8 ms      5.8 nodes   SER 0.0112
+     ML  0 dB    176.7 ms    65536 nodes   SER 0.7900
+     ML  9 dB    113.7 ms    65536 nodes   SER 0.5044
+     ML 18 dB    119.0 ms    65536 nodes   SER 0.0112
+     SD  0 dB    163.4 ms     91.8 nodes   SER 0.7900
+     SD  9 dB     33.3 ms     19.2 nodes   SER 0.5044
+     SD 18 dB     10.8 ms      5.8 nodes   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%

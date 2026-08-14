@@ -40,6 +40,22 @@ INDICES = RNG.integers(0, 4, (3, N))
 BITS = RNG.integers(0, 2, (3, N))
 QPSK = Constellation("PSK", 4)
 PAIR = RNG.standard_normal((3, 2, N)) + 1j * RNG.standard_normal((3, 2, N))
+
+
+def _alamouti_pieces():
+    # ONE 2-D channel broadcast over the batch: the row-equality check
+    # runs the same factory on the batch and on one row, so the config
+    # must not carry the batch itself (the stacked-H path is locked in
+    # tests/mimo/test_stacked_channel.py)
+    from comnumpy.mimo.channels import FlatMIMOChannel
+    from comnumpy.mimo.coding import SpaceTimeEncoder, get_code
+    from comnumpy.mimo.utils import rayleigh_channel
+    channel = rayleigh_channel(1, 2, seed=3)
+    encoded = SpaceTimeEncoder(get_code("alamouti"))(SERIAL)
+    return channel, FlatMIMOChannel(channel)(encoded)
+
+
+ALAMOUTI_H, ALAMOUTI_RX = _alamouti_pieces()
 # a rotated QPSK frame set, for the blind trackers
 QPSK_POINTS = np.asarray(QPSK.alphabet)
 ROTATED_QPSK = QPSK_POINTS[RNG.integers(0, 4, (3, 200))] * np.exp(1j * 0.3)
@@ -107,6 +123,13 @@ BROADCAST = {
     "mimo.channels.FlatMIMOChannel":
         (lambda: _cls("mimo.channels", "FlatMIMOChannel")(
             _rayleigh(2, 2, seed=1)), PAIR),
+    "mimo.coding.SpaceTimeEncoder":
+        (lambda: _cls("mimo.coding", "SpaceTimeEncoder")(
+            _cls("mimo.coding", "get_code")("alamouti")), SERIAL),
+    "mimo.coding.SpaceTimeDecoder":
+        (lambda: _cls("mimo.coding", "SpaceTimeDecoder")(
+            _cls("mimo.coding", "get_code")("alamouti"), H=ALAMOUTI_H),
+         ALAMOUTI_RX),
     "mimo.detectors.LinearDetector":
         (lambda: _cls("mimo.detectors", "LinearDetector")(
             QPSK, H=_rayleigh(2, 2, seed=1), method="zf"), PAIR),
@@ -228,10 +251,6 @@ EXEMPT = {
         "in tests/fec",
     "mimo.channels.SelectiveMIMOChannel": "builds an (L N_t, N) stacked "
         "convolution matrix for one frame",
-    "mimo.coding.SpaceTimeEncoder": "Alamouti layout (N_t, N) per code "
-        "block, one frame per call",
-    "mimo.coding.SpaceTimeDecoder": "Alamouti layout per code block, one "
-        "frame per call",
     "mimo.compensators.BlindDualMIMOCompensator": "adaptive per pair; its "
         "batch (one butterfly per pair) is locked in "
         "tests/core/test_batch_axes.py",

@@ -59,9 +59,22 @@ then learns the wrong lesson -- they came to see how the library is used.
   of **one** chain are not a Python loop: grow the stimulus a leading
   batch axis -- `(n_trials, N)` -- and every block broadcasts over it,
   stochastic blocks draw independently per trial, and the pooled metric
-  is exactly the mean of the per-trial rates (D51; the exception is a
-  channel whose realization is frozen at construction -- a new draw per
-  trial is a new instance, and that loop stays visible). When the study
+  is exactly the mean of the per-trial rates (D51).
+  **Averaging over a random channel (fading, MIMO)** is the same idea
+  with the draws stacked into the configuration: draw a **fixed** set
+  of channels once -- `rayleigh_channel(size=K)`, one draw = one batch
+  row, the SAME K draws at every sweep point, never a draw count that
+  grows with the SNR (the reader compares curves, not draw counts) --
+  hand the stack to the channel block AND to its detector at
+  construction, and sweep the noise variance with `monte_carlo`: no
+  simulation loop at all. A detector that weights by the noise
+  (`MMSE`, `OSIC`) receives the swept variance too, by zipping two
+  dotted paths: `monte_carlo(chain, ("noise.sigma2",
+  "detector.sigma2"), list(zip(values, values)), ...)`.
+  **On the page, interleave**: one technique is one unit -- its idea
+  and equations, then its `Sequential` and its `monte_carlo` call
+  quoted together as one `literalinclude` block. The reader meets each
+  method whole: theory, chain, sweep. When the study
   is *around* a chain -- several detectors on one frame, several
   receivers on one propagation -- write the loop out, on **one storage
   convention**: declare the methods and the metrics first; pre-allocate
@@ -115,34 +128,23 @@ then learns the wrong lesson -- they came to see how the library is used.
 
 ### Naming the chain
 
-Three rules, and they are about where the reader looks and what the
-signature promises.
+**Default: no function. One `Sequential` per technique, written out in
+full, before the sweep.** A page that compares SISO, Alamouti and MRC
+writes three `Sequential([...])` blocks -- even if they share most of
+their blocks -- because the reader must see each chain whole; a factory
+with a `kind` flag hides behind the flag exactly what the page is
+comparing, and a factory called once with no argument is ceremony. The
+batch contract (D51) is what makes this possible: the channel draws are
+stacked into the chain at construction (see the Monte-Carlo bullet), so
+nothing needs rebuilding inside a loop -- there is no loop.
 
-1. **A function only when the chain is built more than once** -- several
-   values of a parameter, several variants, a Monte-Carlo. A chain built
-   once and used once is written inline: wrapping four blocks in a
-   function called once, with no argument, is ceremony, and it puts an
-   indirection between the reader and their first chain.
-2. **Always `get_<thing>()`**, one prefix, the noun saying what comes
-   back. Which noun follows from how the page is organized:
-
-   | the page… | names |
-   |---|---|
-   | has one chain | `get_chain(...)` |
-   | cuts one chain in two | `get_channel()` and `get_receiver()` |
-   | compares two structurally different chains | `get_uncoded_chain()`, `get_coded_chain(soft)` |
-   | builds a sub-assembly, not a whole chain | the part: `get_transmitter()` |
-
-   Two chains that differ by a block or two are **one** function with a
-   parameter, not two functions. Two chains that differ in structure --
-   four blocks against six -- are two functions, because merging them
-   would hide behind a flag exactly what the page is comparing.
-3. **What varies is a parameter, never a module global.** Constants of
-   the page (the fibre, the constellation, the roll-off) may stay
-   global; anything the page *varies* goes through the signature. A
-   function whose signature announces three arguments and silently reads
-   eleven more is a closure wearing a `def`, and the reader cannot tell
-   from the call site what changed.
+A `def` remains legitimate in exactly one case: the chain is genuinely
+rebuilt with different *structure* along the page (a DBP receiver with
+a varying step count, a coded chain against an uncoded one built in
+several places). Then it is `get_<thing>()`, the noun saying what comes
+back (`get_chain`, `get_receiver`, `get_transmitter`), and what varies
+is a parameter of the signature, never a module global read silently
+from inside.
 
 ### The rest of the script
 
@@ -171,6 +173,10 @@ signature promises.
   one and 9.1 ms in the other.
 - State the estimator's floor when a curve hits one (an SER of 1e-4 from
   8192 symbols is the estimator, not the link).
+- **No analysis codas.** No `np.interp` readings of a closed form, no
+  diversity-order polyfits, no measured/theory ratio tables, no mermaid
+  dumps at the end of a script: they drown the reader. What a figure
+  shows is said in one sentence of prose next to the figure.
 
 ## Register
 

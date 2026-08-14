@@ -45,6 +45,26 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — the Alamouti and MIMO tutorials rewritten on the batch
+
+Both pages carried simulation scaffolding that drowned the reader: a
+factory building five chains behind a `kind` flag, per-SNR draw counts,
+zipped channel sweeps, interpolation codas reading numbers off closed
+forms, mermaid dumps. They are rewritten on one doctrine, now in the
+tutorial skill. The page opens on **one** chain, one channel draw, no
+batch -- the problem shown plainly. The simulation then draws a
+**fixed** stack of channels once (`rayleigh_channel(size=K)`, the same
+K draws at every SNR point: the reader compares curves, not draw
+counts), builds **one `Sequential` per technique** -- written out in
+full, no factory -- with the stack on the channel block and on the
+detector, and runs **one `monte_carlo` per technique** sweeping the
+noise variance, zipped into the detector when it weights by it (MMSE,
+OSIC): no simulation loop at all. On the MIMO page each technique is
+one unit -- equations, chain, sweep -- interleaved. To make it
+possible, `SpaceTimeDecoder` accepts a stacked H (channel k decodes
+frame k, locked in `tests/mimo/test_stacked_channel.py`) and both
+Alamouti blocks join the BROADCAST register of the batch contract.
+
 ### Changed — the 91 docstrings audited against their code
 
 Five parallel reviewers read every `Processor` docstring against its

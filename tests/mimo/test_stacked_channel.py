@@ -85,6 +85,21 @@ class TestStackedChannelAndDetectors(unittest.TestCase):
         with self.assertRaises(ShapeError):
             detector(np.ones((K + 1, N_R, N), dtype=complex))
 
+    def test_the_alamouti_decoder_decodes_frame_k_against_channel_k(self):
+        from comnumpy.mimo.coding import (SpaceTimeDecoder,
+                                          SpaceTimeEncoder, get_code)
+        code = get_code("alamouti")
+        rng = np.random.default_rng(2)
+        s = (rng.standard_normal((K, 40))
+             + 1j * rng.standard_normal((K, 40)))
+        stacked = rayleigh_channel(1, 2, seed=6, size=K)
+        received = FlatMIMOChannel(stacked)(SpaceTimeEncoder(code)(s))
+        decoded = SpaceTimeDecoder(code, H=stacked)(received)
+        single = SpaceTimeDecoder(code, H=stacked[2])(received[2])
+        np.testing.assert_allclose(decoded[2], single)
+        # the orthogonal design is lossless without noise
+        np.testing.assert_allclose(decoded, s)
+
     def test_the_sphere_decoder_still_counts_its_nodes(self):
         decoder = SphereDecoder(CONSTELLATION, H=self.H)
         decoder(self.Y)
