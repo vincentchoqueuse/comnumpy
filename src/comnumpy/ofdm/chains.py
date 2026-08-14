@@ -171,7 +171,9 @@ class OFDMReceiver(Processor):
             N_carriers = self.carrier_type.N_fft
         else:
             self.carrier_type = np.asarray(self.carrier_type)
-            N_carriers = len(self.carrier_type)
+            # shape[-1], not len(): a 2-D scattered mask is (T_period, N_fft)
+            # and its first axis is the period, not the FFT size
+            N_carriers = self.carrier_type.shape[-1]
         self.h = np.asarray(self.h)
 
         self.chain = Sequential([

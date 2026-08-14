@@ -24,8 +24,13 @@ __all__ = [
 ]
 
 
-@dataclass(slots=True)
 class DataAidedMixin():
+    # a plain class, not a dataclass: it has no fields of its own, and
+    # dataclass(slots=True) would *recreate* the class, which multiple
+    # inheritance with the equally-recreated Processor cannot express.
+    # The empty slots keep the concrete slotted subclasses dict-free.
+    __slots__ = ()
+
     if TYPE_CHECKING:
         # declared by every concrete class; annotating it here would
         # make it a field of the mixin and reorder theirs

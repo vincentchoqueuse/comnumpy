@@ -87,6 +87,10 @@ class CyclicPrefixer(AutoConcatenator):
     def prepare(self, X: np.ndarray):
         """Initialize the mask based on the signal shape"""
         input_length = X.shape[-1]
+        if self.N_cp > input_length:
+            raise ShapeError(
+                f"CyclicPrefixer(N_cp={self.N_cp}) needs blocks of at least "
+                f"N_cp samples to copy from, got {input_length}")
         output_mask_length = input_length + self.N_cp
 
         input_copy_mask = np.zeros(input_length)
@@ -524,7 +528,12 @@ class CarrierAllocator(Processor):
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         new_shape = X.shape[:-1] + (self.N,)
-        Y = np.zeros(new_shape, dtype=X.dtype)
+        # the buffer must hold the pilots too: real data symbols with
+        # complex pilots would otherwise silently drop the imaginary part
+        pilots = np.asarray(self.pilots if self.pilots is not None else [])
+        dtype = np.result_type(X.dtype, pilots.dtype) if pilots.size \
+            else X.dtype
+        Y = np.zeros(new_shape, dtype=dtype)
 
         if self.period == 1:
             row = self.mask[0]

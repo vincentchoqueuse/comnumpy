@@ -67,7 +67,9 @@ class FrameField:
         # the enum, so `role.name` works and an invalid role fails here
         object.__setattr__(self, "role", FieldRole(self.role))
         if self.values is not None:
-            values = np.asarray(self.values)
+            # np.array, not asarray: freezing must apply to a copy this
+            # field owns, never to the caller's own buffer
+            values = np.array(self.values)
             values.setflags(write=False)
             object.__setattr__(self, "values", values)
             if self.length is not None and self.length != len(values):
@@ -351,8 +353,10 @@ class Deframer(Processor):
         return self.received_fields[name]
 
     def forward(self, X: np.ndarray) -> np.ndarray:
+        # copies, not views: the recorded fields are state that outlives
+        # the pass, and must not change if the caller reuses the buffer
         self.received_fields = {
-            f.name: X[..., self.frame.slice_of(f.name)]
+            f.name: X[..., self.frame.slice_of(f.name)].copy()
             for f in self.frame.fields}
         payload_name = self.frame.fields_by_role(FieldRole.PAYLOAD)[0].name
         return self.received_fields[payload_name]

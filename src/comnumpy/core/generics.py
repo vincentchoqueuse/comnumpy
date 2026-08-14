@@ -335,8 +335,10 @@ class Sequential():
         A ``numpy.random.SeedSequence`` spawned from ``seed`` gives each
         block that declares a ``seed`` field its own independent child
         seed, then re-runs its parametric initialization so the RNG is
-        rebuilt. Same chain + same seed = same signal, whatever the
-        number or order of stochastic blocks.
+        rebuilt. A nested :class:`Sequential` -- in the module list or
+        held by a wrapper block -- is seeded recursively from its own
+        child seed. Same chain + same seed = same signal, whatever the
+        number, order or nesting of stochastic blocks.
 
         Examples
         --------
@@ -349,18 +351,30 @@ class Sequential():
         True
         """
         seed_sequence = np.random.SeedSequence(seed)
-        stochastic = [
-            module for module in self.module_list
-            if dataclasses.is_dataclass(module)
-            and "seed" in {f.name for f in dataclasses.fields(module)}
-        ]
-        for module, child in zip(stochastic, seed_sequence.spawn(len(stochastic)),
+        targets: List[object] = []
+        for module in self.module_list:
+            if isinstance(module, Sequential):
+                targets.append(module)
+            elif dataclasses.is_dataclass(module):
+                if "seed" in {f.name for f in dataclasses.fields(module)}:
+                    targets.append(module)
+                else:
+                    # a wrapper block holding an inner chain (e.g. the
+                    # OFDM chains) is seeded through that chain
+                    for f in dataclasses.fields(module):
+                        value = getattr(module, f.name, None)
+                        if isinstance(value, Sequential):
+                            targets.append(value)
+        for target, child in zip(targets, seed_sequence.spawn(len(targets)),
                                  strict=True):
-            # setattr, not module.seed: the field was discovered by name
+            child_seed = int(child.generate_state(1)[0])
+            if isinstance(target, Sequential):
+                target.seed(child_seed)
+                continue
+            # setattr, not target.seed: the field was discovered by name
             # above and no base class declares it (noqa: B010 is the price)
-            setattr(module, "seed",  # noqa: B010
-                    int(child.generate_state(1)[0]))
-            post_init = getattr(module, "__post_init__", None)
+            setattr(target, "seed", child_seed)  # noqa: B010
+            post_init = getattr(target, "__post_init__", None)
             if post_init is not None:
                 post_init()
         return self
@@ -464,14 +478,26 @@ class Sequential():
         """
         Run the chain on ``X`` and tabulate each block's output shape,
         dtype and execution time (decision D33b). Returns the rows.
+
+        The pass is the ordinary one: taps are recorded and the data
+        edges declared in ``wiring`` are fed, so the chain summarized is
+        the chain that runs.
         """
+        ids, recorded, feeds = self._resolve_edges()
+        if ids is None:
+            ids = self.block_ids()
+        self.tapped_.clear()
         rows: List[_SummaryRow] = []
         Y = X
         for index, (block_id, module) in enumerate(
-                zip(self.block_ids(), self.module_list, strict=True)):
+                zip(ids, self.module_list, strict=True)):
+            for param, source in feeds.get(index, ()):
+                setattr(module, param, self.tapped_[source])
             start_time = time.time()
             Y = module(Y)
             elapsed_ms = (time.time() - start_time) * 1e3
+            if block_id in recorded:
+                self.tapped_[block_id] = Y
             shape = getattr(Y, "shape", None)
             dtype = getattr(Y, "dtype", type(Y).__name__)
             rows.append((index, type(module).__name__, block_id,
@@ -599,6 +625,7 @@ class Sequential():
         ids, recorded, feeds = self._resolve_edges()
         if ids is None:
             ids = self.block_ids()
+        self.tapped_.clear()
 
         Y = X
         time_elapsed: Dict[str, float] = {}
@@ -660,6 +687,9 @@ class Sequential():
         Process the input data through all modules in the sequence.
         """
         ids, recorded, feeds = self._resolve_edges()
+        # a tap is a record of *this* pass: stale entries from an earlier
+        # run or an earlier taps= configuration must not survive it
+        self.tapped_.clear()
 
         Y = X
         start = time.perf_counter()
@@ -681,6 +711,9 @@ class Sequential():
             key = getattr(processor, 'name', None)
             if key is not None and key in callbacks:
                 callbacks[key](Y)
+            elif index in callbacks:
+                # the documented alternative: callbacks keyed by position
+                callbacks[index](Y)
         self.elapsed_ = time.perf_counter() - start
         return Y
 

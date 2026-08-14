@@ -1200,6 +1200,9 @@ class DistributionMatcher(Processor):
                 f"not a multiple of it. Pad the stream, or choose a "
                 f"shaper whose n_bits divides it.")
         flat = bits.reshape(-1, step)
+        if flat.shape[0] == 0:
+            # zero blocks is a legal multiple; np.stack refuses an empty list
+            return np.zeros(bits.shape[:-1] + (0,), dtype=np.int64)
         blocks = np.stack([self.shaper.encode(row) for row in flat])
         return blocks.reshape(bits.shape[:-1] + (-1,))
 
@@ -1257,6 +1260,9 @@ class DistributionDematcher(Processor):
                 f"and got {indices.shape[-1]} along the last axis, which "
                 f"is not a multiple of it.")
         flat = indices.reshape(-1, step)
+        if flat.shape[0] == 0:
+            # zero blocks is a legal multiple; np.stack refuses an empty list
+            return np.zeros(indices.shape[:-1] + (0,), dtype=np.int64)
         blocks = np.stack([self.shaper.decode(row) for row in flat])
         return blocks.reshape(indices.shape[:-1] + (-1,))
 

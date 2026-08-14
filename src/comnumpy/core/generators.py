@@ -113,8 +113,10 @@ class SymbolGenerator(Processor):
         self.rng = np.random.default_rng(self.seed)
 
     def forward(self, X: object) -> np.ndarray:
-        if isinstance(X, int):
-            size = (X,)
+        # np.integer too: sizes come out of shape arithmetic. bool is an
+        # int subclass and would slip through as 0 or 1.
+        if isinstance(X, (int, np.integer)) and not isinstance(X, bool):
+            size = (int(X),)
         elif isinstance(X, (tuple, list)):
             size = tuple(X)
         else:
@@ -180,8 +182,10 @@ class GaussianGenerator(Processor):
         self.rng = np.random.default_rng(self.seed)
 
     def forward(self, X: object) -> np.ndarray:
-        if isinstance(X, int):
-            size = (X,)
+        # np.integer too: sizes come out of shape arithmetic. bool is an
+        # int subclass and would slip through as 0 or 1.
+        if isinstance(X, (int, np.integer)) and not isinstance(X, bool):
+            size = (int(X),)
         elif isinstance(X, (tuple, list)):
             size = tuple(X)
         else:

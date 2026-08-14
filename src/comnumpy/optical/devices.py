@@ -163,9 +163,11 @@ class Optical90HybridCircuit(Processor):
             y = x
         else:
             if self.laser_in:
-                E_laser = self.laser_in(len(x))
+                # shape[-1], not len(x): the local oscillator runs along the
+                # sample axis and broadcasts over any leading batch axes
+                E_laser = self.laser_in(x.shape[-1])
             else:
-                E_laser = np.ones(len(x))
+                E_laser = np.ones(x.shape[-1])
 
             y = self.sensitivity * x * np.conj(E_laser)
             y = np.real(y) + 1j*np.imag(y)
@@ -393,9 +395,11 @@ class MachZehnderModulator(Processor):
         m = max(np.max(np.abs(np.real(x))), np.max(np.abs(np.imag(x))))  # normalization coeff
 
         if self.laser_in is not None:
-            E_laser = self.laser_in(len(x))
+            # shape[-1], not len(x): the carrier runs along the sample axis
+            # and broadcasts over any leading batch axes
+            E_laser = self.laser_in(x.shape[-1])
         else:
-            E_laser = np.ones(len(x))  # ideal laser
+            E_laser = np.ones(x.shape[-1])  # ideal laser
 
         if self.is_ideal:
             y = -np.pi / 2 * self.Vpp / (2 * self.Vpi) * E_laser * x
