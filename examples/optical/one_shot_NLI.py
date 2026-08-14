@@ -169,14 +169,14 @@ plt.savefig(f"{img_dir}/one_shot_nli_fig2.png")
 
 # the dicts are keyed by span count in sweep order, so their values
 # are already the curves
-measured = np.array(list(snr_per_span.values()))
+snr_measured = np.array(list(snr_per_span.values()))
 ase_only = np.array(list(snr_ase_only.values()))
 
 # An effective SNR is not an error rate: linear ordinate, two curves,
 # nothing a helper would say better than the four lines that draw it.
 fig3, ax = plt.subplots()
 ax.plot(spans, ase_only, "o-", fillstyle="none", label="amplifier noise only")
-ax.plot(spans, measured, "s-", fillstyle="none",
+ax.plot(spans, snr_measured, "s-", fillstyle="none",
         label="dispersion compensation only")
 ax.set_xlabel("spans travelled")
 ax.set_ylabel("effective SNR [dB]")

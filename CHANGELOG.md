@@ -45,6 +45,17 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — one vocabulary across the tutorial scripts
+
+The displayed sweep dict is `curves` everywhere, its closed-form
+companion `theory`, and the axis carries its unit (`snr_dB_list`);
+`measured`, `collected` and bare `reference` (outside the library's
+data-aided meaning) are gone, with domain names (`snr_dB`,
+`ccdf_curves`) kept only where they say strictly more. The canon is in
+the tutorial skill. The optical pages were already on the structural
+doctrine: `one_shot_pdm` inline, and the two DBP scripts keeping the
+one sanctioned chain split and their per-span progress table.
+
 ### Changed — every tutorial script held to the writing doctrine
 
 The conventions sweep closed over the whole tutorial set. The coding
