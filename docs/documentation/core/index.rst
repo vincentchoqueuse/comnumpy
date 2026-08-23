@@ -34,15 +34,15 @@ Observing signals inside a chain
 
 A chain describes the communication system and nothing else: there are no
 recorder, logger or scope blocks to insert between the processors. To
-observe a signal, name the block and declare it as a *tap*::
+observe a signal, name the block and declare it as an *observation*::
 
    chain = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(alphabet),
-                       AWGN(snr_dB=15, name="awgn")], taps=["tx", "awgn"])
+                       AWGN(snr_dB=15, name="awgn")], observations=["tx", "awgn"])
    y = chain(1000)
-   plot_iq(chain.tap("awgn"))
+   plot_iq(chain.observation("awgn"))
 
-``taps`` is chain metadata: each tapped block costs one dictionary store of
-a reference (no copy), and :meth:`~comnumpy.core.generics.Sequential.tap`
+``observations`` is chain metadata: each observed block costs one dictionary store of
+a reference (no copy), and :meth:`~comnumpy.core.generics.Sequential.observation`
 returns the recorded array afterwards. Plotting and reporting are plain
 functions applied to the extracted arrays -- see :doc:`visualizers` and
 ``comnumpy.core.metrics.signal_report``.

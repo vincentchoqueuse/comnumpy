@@ -38,7 +38,7 @@ chain = Sequential([
     SymbolMapper(constellation),
     FlatMIMOChannel(rayleigh_channel(N_r=N_r, N_t=N_t), name="channel"),
     AWGN(sigma2=1.0, name="noise"),
-    ], taps=["data_tx"])
+    ], observations=["data_tx"])
 
 # --- metrics, pre-allocated ------------------------------------------
 # One array per detector, full of zeros, indexed by name -- a column
@@ -62,7 +62,7 @@ for index, snr_dB in enumerate(snr_dB_list):
     chain.set_params(noise__sigma2=sigma2, channel__H=H)
     chain.seed(int(rng.integers(2 ** 31)))
     Y = chain((N_test, N_t, N))
-    S_ref = chain.tap("data_tx")
+    S_ref = chain.observation("data_tx")
 
     detectors = {
         "ML": MaximumLikelihoodDetector(alphabet=constellation, H=H),

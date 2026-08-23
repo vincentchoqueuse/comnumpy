@@ -22,12 +22,14 @@ __all__ = [
 ]
 
 # Gauss-Hermite is the natural quadrature for an integral against a
-# Gaussian weight. Convergence is not uniform in the constellation size:
-# measured against a 100-node reference over rho in [0.01, 1000], the
-# error at 40 nodes is 1.6e-7 bit for QPSK, 1.2e-6 for 16-QAM and 2.1e-5
-# for 64-QAM -- a dense constellation makes the integrand sharper. 40 is
-# the default because it is accurate enough to read a coded curve against
-# and still cheap; pass more through ``n_nodes`` if a figure needs it.
+# Gaussian weight. Convergence is not uniform in the constellation size
+# or orientation (the node grid is axis-aligned): measured against a
+# 100-node reference over rho in [0.01, 1000], the error at 40 nodes is
+# 1.9e-5 bit for QPSK (diagonal, the pi/4 standards convention), 1.2e-6
+# for 16-QAM and 2.1e-5 for 64-QAM -- a dense constellation makes the
+# integrand sharper. 40 is the default because it is accurate enough to
+# read a coded curve against and still cheap; pass more through
+# ``n_nodes`` if a figure needs it.
 _GH_NODES = 40
 
 # The likelihood tensor is (M, M, Q): for 256-QAM with 40 nodes that would

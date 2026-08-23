@@ -1180,7 +1180,7 @@ def signal_report(x: np.ndarray, compute_papr: bool = False,
     Summary statistics of a signal, as plain data.
 
     Replaces the former in-chain monitor blocks: extract the signal with
-    ``Sequential(taps=...)``, compute the report, and let the caller
+    ``Sequential(observations=...)``, compute the report, and let the caller
     decide how to present it (``logging``, table, assertion, ...).
 
     Signal Model

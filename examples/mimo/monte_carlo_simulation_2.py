@@ -37,7 +37,7 @@ chain = Sequential([
     SymbolMapper(constellation),
     FlatMIMOChannel(rayleigh_channel(N_r=N_r, N_t=N_t), name="channel"),
     AWGN(sigma2=1.0, name="noise"),
-    ], taps=["data_tx"])
+    ], observations=["data_tx"])
 
 # --- metrics, pre-allocated ------------------------------------------
 # One array per ordering, indexed by name. The error counts get one
@@ -70,7 +70,7 @@ for index, snr_dB in enumerate(snr_dB_list):
         chain.seed(int(rng.integers(2 ** 31)))
         chain.set_params(channel__H=H)
         Y = chain((N_t, N))
-        S_ref = chain.tap("data_tx")
+        S_ref = chain.observation("data_tx")
 
         for ordering, counter in counters.items():
             detector = OrderedSuccessiveInterferenceCancellationDetector(

@@ -136,13 +136,13 @@ class TestCyclicPrefixExactness(unittest.TestCase):
             FrequencyDomainEqualizer(h=h),
             CarrierExtractor(self.alloc),
             Parallel2Serial(),
-        ], taps=["tx"])
+        ], observations=["tx"])
         chain.seed(SEED)
         n = self.N_OFDM_SYMBOLS * self.alloc.N_data
         # the FIR channel lengthens the stream by L-1 samples, so the
         # receiver's Serial2Parallel emits one extra (zero-padded) block
         y = chain(n)[:n]
-        tx = chain.tap("tx")
+        tx = chain.observation("tx")
         x = self.alphabet[tx]
         nmse = float(np.sum(np.abs(y - x) ** 2) / np.sum(np.abs(x) ** 2))
         decided = np.argmin(np.abs(y[:, None] - self.alphabet[None, :]), axis=-1)
@@ -219,14 +219,14 @@ class TestParsevalAndSNR(unittest.TestCase):
             FFTProcessor(),
             CarrierExtractor(self.alloc),
             Parallel2Serial(),
-        ], taps=["tx", "tx_time"])
+        ], observations=["tx", "tx_time"])
         chain.seed(SEED)
         n = self.N_OFDM_SYMBOLS * self.alloc.N_data
         y = chain(n)[:n]
-        x = self.alphabet[chain.tap("tx")]
+        x = self.alphabet[chain.observation("tx")]
         # the AWGN block sets sigma2 from the power it measures on its own
         # input, i.e. on the time-domain stream, cyclic prefix included
-        snr_time = float(np.mean(np.abs(chain.tap("tx_time")) ** 2)) \
+        snr_time = float(np.mean(np.abs(chain.observation("tx_time")) ** 2)) \
             / chain["noise"].sigma2_
         snr_sub = float(np.mean(np.abs(x) ** 2)) \
             / float(np.mean(np.abs(y - x) ** 2))

@@ -68,13 +68,13 @@ chain = Sequential([
     SymbolMapper(constellation),
     AWGN(snr_dB=snr_dB, name="awgn"),
     SymbolDemapper(constellation),
-    ], taps=["tx", "awgn"])
+    ], observations=["tx", "awgn"])
 
 # seeded, so the number this page quotes is the number you get (D6)
 chain.seed(0)
 y = chain(N)
 
-ser = compute_ser(chain.tap("tx"), y)
+ser = compute_ser(chain.observation("tx"), y)
 # AWGN(snr_dB=) is a symbol SNR and the closed form is quoted against
 # Eb/N0: per="symbol" makes the conversion, which is 10log10(k) dB.
 ser_theo = constellation.metrics(snr_dB, per="symbol")["ser"]
@@ -90,7 +90,7 @@ print(constellation)
 # --- 4. the figures ---------------------------------------------------
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
 constellation.plot(ax=axes[0])
-plot_iq(chain.tap("awgn"), title=f"received at {snr_dB} dB", ax=axes[1])
+plot_iq(chain.observation("awgn"), title=f"received at {snr_dB} dB", ax=axes[1])
 plt.tight_layout()
 plt.savefig(f"{img_dir}/first_simulation_fig1.png")
 

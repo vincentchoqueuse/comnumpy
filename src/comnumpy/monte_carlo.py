@@ -74,7 +74,7 @@ def _evaluate(chain: Sequential, params: list[str], point: Any,
 
     y = chain(stimulus)
 
-    target = chain.tap(reference) if reference is not None else None
+    target = chain.observation(reference) if reference is not None else None
     return {name: (metric(target, y) if target is not None else metric(y))
             for name, metric in metrics.items()}
 
@@ -103,15 +103,15 @@ def monte_carlo(chain: Sequential,
         Parameter values, one sweep point each.
     metrics : mapping of str to callable
         Metrics collected at every point. Called as ``metric(target, y)``
-        when ``reference`` names a tapped block, else ``metric(y)``.
+        when ``reference`` names an observed block, else ``metric(y)``.
         Smaller-is-better quantities (BER, SER, EVM); there is no
         ``score()`` (decision D24).
     stimulus
         Input passed to the chain at every point (e.g. a symbol count).
     reference : str, optional, keyword-only
-        Block id whose tapped output is the metric target. The tap is
+        Block id whose observed output is the metric target. The observation is
         declared on the chain if it is not already
-        (:attr:`Sequential.taps`).
+        (:attr:`Sequential.observations`).
     seed : int, optional, keyword-only
         Master seed; every sweep point gets an independent child seed
         through the chain (decisions D6/D35), so the whole curve is
@@ -185,8 +185,8 @@ def monte_carlo(chain: Sequential,
     (2,)
     """
     params = [param] if isinstance(param, str) else list(param)
-    if reference is not None and reference not in (chain.taps or []):
-        chain.taps = (chain.taps or []) + [reference]
+    if reference is not None and reference not in (chain.observations or []):
+        chain.observations = (chain.observations or []) + [reference]
     if seed is None:
         # Not an error: a first look at a curve does not need to be
         # reproducible. But a curve nobody can reproduce is not a result,

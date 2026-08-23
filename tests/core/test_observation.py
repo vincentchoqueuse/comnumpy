@@ -1,7 +1,7 @@
 """Observation surface: plotting functions and signal_report.
 
 Since the Recorder/Logger/Scope blocks are gone, observation is made of
-plain functions applied to arrays extracted with ``Sequential(taps=...)``.
+plain functions applied to arrays extracted with ``Sequential(observations=...)``.
 These tests pin the contracts those functions must honour: return the
 axis, never call ``plt.show()``, never touch the input.
 """

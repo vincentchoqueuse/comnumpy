@@ -41,7 +41,7 @@ Before writing a helper, look for it. The recurring failure is
 reimplementing from scratch what `comnumpy` already does, and the reader
 then learns the wrong lesson -- they came to see how the library is used.
 
-- Chains: `Sequential`, `taps=` to observe a signal inside one, `wiring=`
+- Chains: `Sequential`, `observations=` to retain a signal inside one, `wiring=`
   to feed a data-aided block a reference the chain produces itself,
   `set_params` (dotted or `__`) to change one parameter, `seed` for
   reproducibility, `elapsed_` for the wall time of the last pass,
@@ -170,7 +170,7 @@ from inside.
 - **No inline `for`.** List, dict and set comprehensions, and generator
   expressions inside `join`/`sum`/`np.array`/`tuple`, are banned in tutorial
   scripts. Write the loop out, with a body. This is a hard rule.
-- Name blocks (`name="data_tx"`) so that taps, wiring, `set_params` and the
+- Name blocks (`name="data_tx"`) so that observations, wiring, `set_params` and the
   profile table all read as the same vocabulary.
 - Comments in the script explain *why*, and they are part of what the page
   shows -- the `literalinclude` ranges quote them.

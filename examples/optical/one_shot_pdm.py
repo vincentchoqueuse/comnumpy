@@ -48,11 +48,11 @@ chain = Sequential([
     PhaseNoise(2 * np.pi * linewidth / fs, name="laser"),
     PMDEmulator(dgd, n_sections=8, fs=fs, seed=11, name="fibre"),
     AWGN(snr_dB=snr_dB, name="noise"),
-    ], taps=["data_tx", "signal_tx", "noise"])
+    ], observations=["data_tx", "signal_tx", "noise"])
 chain.seed(0)
 received = chain((2, N))
-sent = chain.tap("signal_tx")
-reference = chain.tap("data_tx")
+sent = chain.observation("signal_tx")
+reference = chain.observation("data_tx")
 
 # What the receiver faces, sampled naively at the symbol rate: the two
 # polarizations are mixed by an unknown rotation, delayed against each

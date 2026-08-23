@@ -106,9 +106,9 @@ class TestItWiresIntoAChain(unittest.TestCase):
              Amplifier(2 * np.exp(1j * np.pi / 5), name="channel"),
              DataAidedComplexGainCompensator(reference=np.zeros(1),
                                              shared=True, name="gain")],
-            taps=["tx"], wiring={"gain.reference": "tx"})
+            observations=["tx"], wiring={"gain.reference": "tx"})
         out = chain.seed(0)((2, 128))
-        self.assertLess(np.abs(out - chain.tapped_["tx"]).max(), 1e-12)
+        self.assertLess(np.abs(out - chain.observed_["tx"]).max(), 1e-12)
 
 
 if __name__ == "__main__":

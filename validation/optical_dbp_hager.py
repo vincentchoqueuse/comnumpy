@@ -126,7 +126,7 @@ def get_channel(link, *, linear_only):
                   NF_dB=NF_DB, fs=fs, use_only_linear=linear_only,
                   name="link"),
         Downsampler(ratio, use_filter=True),
-    ], taps=["tx"])
+    ], observations=["tx"])
 
 
 def get_receiver(link, steps, linear_only, step_type, reference):
@@ -165,7 +165,7 @@ def run(name, link):
                 channel.seed(index * N_TRIALS + trial)
                 channel.set_params(launch__gain=amplitude)
                 fields[is_linear] = channel(N_SYMBOLS)
-            sent = linear.tap("tx")
+            sent = linear.observation("tx")
 
             for column, (_, steps, only_linear, step_type) in enumerate(RECEIVERS):
                 receiver = get_receiver(link, steps, only_linear, step_type,

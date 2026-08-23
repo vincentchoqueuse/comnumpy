@@ -14,7 +14,7 @@ and nothing is explained twice.
      - What it introduces
    * - 0
      - :doc:`../getting_started/first_simulation`
-     - The ``Sequential`` chain, the blocks it is made of, a tap to look
+     - The ``Sequential`` chain, the blocks it is made of, an observation to look
        inside it, and one error rate.
    * - 1
      - :doc:`awgn`

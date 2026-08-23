@@ -22,7 +22,7 @@ rolloff = 0.25
 N_h = 1000
 sigma2 = 3e-2
 
-# create chain; taps extract the signals to observe after the run
+# create chain; observations retain the signals to inspect after the run
 chain = Sequential([
     SymbolGenerator(constellation.order, name="tx"),
     SymbolMapper(constellation),
@@ -33,18 +33,18 @@ chain = Sequential([
     Downsampler(oversampling, phase=2*oversampling*N_h),
     DataExtractor(selector=(0, N), name="extractor"),
     SymbolDemapper(constellation),
-    ], taps=["tx", "awgn_channel", "extractor"])
+    ], observations=["tx", "awgn_channel", "extractor"])
 
 # run chain
 y = chain(N)
 
 # evaluate metrics
-data_tx = chain.tap("tx")
+data_tx = chain.observation("tx")
 ser_exp = compute_ser(data_tx, y)
 
 # plot the extracted signals
-plot_spectrum(chain.tap("awgn_channel"), title="received signal")
-plot_iq(chain.tap("extractor"), title="after SRRC+downsampling+extractor")
+plot_spectrum(chain.observation("awgn_channel"), title="received signal")
+plot_iq(chain.observation("extractor"), title="after SRRC+downsampling+extractor")
 
 # plot error distribution
 N_min = np.min([len(data_tx), len(y)])

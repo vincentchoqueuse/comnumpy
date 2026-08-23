@@ -134,7 +134,7 @@ def get_chain(order=16, power_W=1e-3):
             use_only_linear=True, name="dbp"),
         SRRCFilter(ROLLOFF, OS, N_h=40, method="fft", scale=1 / np.sqrt(OS)),
         Downsampler(OS),
-    ], taps=["tx"], name=f"{N_SPANS} x {SPAN_KM:.0f} km SMF")
+    ], observations=["tx"], name=f"{N_SPANS} x {SPAN_KM:.0f} km SMF")
 
 
 def effective_snr_dB(sent, received):

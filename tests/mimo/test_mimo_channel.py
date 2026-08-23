@@ -31,10 +31,10 @@ class TestMIMOChannelChain(unittest.TestCase):
             FlatMIMOChannel(self.H),
             AWGN(sigma2=self.sigma2),
             detector
-            ], taps=["tx"])
+            ], observations=["tx"])
 
         Y = chain((self.N_t, self.N))
-        data_tx = chain.tap("tx")
+        data_tx = chain.observation("tx")
         return compute_ser(data_tx, Y)
 
     def test_zf_one_shot(self):

@@ -262,7 +262,7 @@ a block by its identifier and re-runs its precomputation (decision D34), and
 :func:`~comnumpy.monte_carlo` drives ``"launch.gain"`` over a list of values the
 same way. One chain, built once, answers every question below.
 
-``taps=["tx"]`` marks the mapper output as readable from outside the chain --
+``observations=["tx"]`` marks the mapper output as readable from outside the chain --
 the dashed box in the diagram, decision D33c. The transmitted symbols are
 what every measurement compares against.
 

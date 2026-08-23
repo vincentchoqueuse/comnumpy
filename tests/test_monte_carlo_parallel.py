@@ -31,7 +31,7 @@ def build_chain(order=4):
         SymbolMapper(alphabet),
         AWGN(snr_dB=0.0, name="noise"),
         SymbolDemapper(alphabet),
-    ], taps=["tx"])
+    ], observations=["tx"])
 
 
 def mean_power(y):

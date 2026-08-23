@@ -21,13 +21,13 @@ class TestSimpleChain(unittest.TestCase):
             SymbolGenerator(M, name="tx"),
             SymbolMapper(alphabet),
             SymbolDemapper(alphabet),
-            ], taps=["tx"])
+            ], observations=["tx"])
 
         # run chain
         y = chain(N)
 
         # evaluate metrics
-        data_tx = chain.tap("tx")
+        data_tx = chain.observation("tx")
         ser = compute_ser(data_tx, y)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 

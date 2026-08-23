@@ -187,17 +187,17 @@ power keeps the comparison about diversity alone.
 
 .. code::
 
-   one-shot SER: 0.0600
+   one-shot SER: 0.0570
    #    block                        id                   output shape       dtype         time ms
-   0    SymbolGenerator              tx                   (1000,)            int64            0.03
+   0    SymbolGenerator              tx                   (1000,)            int64            0.04
    1    SymbolMapper                 symbol_mapper        (1000,)            complex128       0.00
    2    Amplifier                    signal_amplifier     (1000,)            complex128       0.01
-   3    SpaceTimeEncoder             space_time_encoder   (2, 1000)          complex128       0.06
+   3    SpaceTimeEncoder             space_time_encoder   (2, 1000)          complex128       0.09
    4    FlatMIMOChannel              channel              (1, 1000)          complex128       0.01
-   5    AWGN                         noise                (1, 1000)          complex128       0.05
-   6    SpaceTimeDecoder             detector             (1000,)            complex128       0.08
-   7    Amplifier                    signal_amplifier_2   (1000,)            complex128       0.00
-   8    SymbolDemapper               symbol_demapper      (1000,)            int64            0.06
+   5    AWGN                         noise                (1, 1000)          complex128       0.06
+   6    SpaceTimeDecoder             detector             (1000,)            complex128       0.16
+   7    Amplifier                    signal_amplifier_2   (1000,)            complex128       0.01
+   8    SymbolDemapper               symbol_demapper      (1000,)            int64            0.08
 
 The shape column is the code at work: 1000 symbols enter, the encoder spreads
 them over ``(2, 1000)`` -- two antennas, one thousand channel uses, so rate 1
@@ -244,12 +244,12 @@ everything else -- the channels, the chains -- is frozen:
    SER
    snr_dB  1 Tx, 1 Rx (no diversity)  Alamouti, 2 Tx, 1 Rx  MRC, 1 Tx, 2 Rx
    ------------------------------------------------------------------------
-        4                    0.22261             1.778e-01        8.162e-02
-        8                    0.11186             6.430e-02        2.155e-02
-       12                    0.04976             1.675e-02        4.200e-03
-       16                    0.02082             3.373e-03        5.700e-04
-       20                    0.00843             5.525e-04        8.000e-05
-       24                    0.00312             6.250e-05        2.500e-06
+        4                    0.22230             1.767e-01        8.138e-02
+        8                    0.11242             6.442e-02        2.169e-02
+       12                    0.05004             1.635e-02        4.137e-03
+       16                    0.02064             3.442e-03        6.375e-04
+       20                    0.00841             5.275e-04        5.250e-05
+       24                    0.00300             7.000e-05        7.500e-06
 
 .. image:: img/one_shot_alamouti_fig3.png
    :width: 100%

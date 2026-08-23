@@ -60,17 +60,17 @@ sc_chain = Sequential([
         AWGN(snr_dB=snr_dB, name="data_rx"),
         LinearEqualizer(h, method="zf", name="data_rx_eq"),
         SymbolDemapper(constellation)
-    ], taps=["data_tx", "data_rx", "data_rx_eq"])
+    ], observations=["data_tx", "data_rx", "data_rx_eq"])
 
 sc_chain.seed(1)
 detected = sc_chain(N)
-sc_ser = compute_ser(sc_chain.tap("data_tx"), detected)
+sc_ser = compute_ser(sc_chain.observation("data_tx"), detected)
 print(f"single carrier: SER {sc_ser:.4f}, {sc_chain.elapsed_ * 1e3:.0f} ms")
 
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4.2))
-for ax, tap, name in [(axes[0], "data_rx", "received"),
+for ax, observed, name in [(axes[0], "data_rx", "received"),
                       (axes[1], "data_rx_eq", "after ZF equalization")]:
-    plot_iq(sc_chain.tap(tap), reference=constellation, title=name, ax=ax)
+    plot_iq(sc_chain.observation(observed), reference=constellation, title=name, ax=ax)
 plt.tight_layout()
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig2.png")
 
@@ -85,16 +85,16 @@ ofdm_chain = Sequential([
         AWGN(snr_dB=snr_dB, name="data_rx"),
         OFDMReceiver(N_carrier, N_cp, h=h, name="data_rx_eq"),
         SymbolDemapper(constellation)
-    ], taps=["data_tx", "data_rx_eq"])
+    ], observations=["data_tx", "data_rx_eq"])
 
 ofdm_chain.seed(1)
 detected = ofdm_chain(N)
-ofdm_ser = compute_ser(ofdm_chain.tap("data_tx"), detected)
+ofdm_ser = compute_ser(ofdm_chain.observation("data_tx"), detected)
 speedup = sc_chain.elapsed_ / ofdm_chain.elapsed_
 print(f"OFDM          : SER {ofdm_ser:.4f}, {ofdm_chain.elapsed_ * 1e3:.2f} ms "
       f"({speedup:.0f} times faster)")
 
-plot_iq(ofdm_chain.tap("data_rx_eq"), reference=constellation,
+plot_iq(ofdm_chain.observation("data_rx_eq"), reference=constellation,
         title="OFDM, after one-tap equalization")
 plt.savefig(f"{img_dir}/one_shot_ofdm_fig3.png")
 

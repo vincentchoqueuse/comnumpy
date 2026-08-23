@@ -56,7 +56,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
             CarrierExtractor(self.carrier_type),
             Parallel2Serial(),
             SymbolDemapper(self.alphabet)
-        ], taps=["data_tx"])
+        ], observations=["data_tx"])
 
     def build_modular_chain(self):
         return Sequential([
@@ -77,13 +77,13 @@ class TestOFDMSimpleChain(unittest.TestCase):
                 h=self.h
             ),
             SymbolDemapper(self.alphabet)
-        ], taps=["data_tx"])
+        ], observations=["data_tx"])
 
     def test_manual_chain_ser_zero(self):
         """Test manual OFDM chain with SER=0 under perfect channel knowledge."""
         chain = self.build_manual_chain()
         y = chain(self.N)
-        data_tx = chain.tap("data_tx")
+        data_tx = chain.observation("data_tx")
         ser = compute_ser(data_tx, y)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 
@@ -91,7 +91,7 @@ class TestOFDMSimpleChain(unittest.TestCase):
         """Test modular OFDM chain using OFDMTransmitter and OFDMReceiver."""
         chain = self.build_modular_chain()
         y = chain(self.N)
-        data_tx = chain.tap("data_tx")
+        data_tx = chain.observation("data_tx")
         ser = compute_ser(data_tx, y)
         np.testing.assert_allclose(ser, 0, atol=1e-8)
 

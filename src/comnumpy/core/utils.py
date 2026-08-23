@@ -163,7 +163,14 @@ def _construct_alphabet(modulation: str, order: int, mapping: str) -> np.ndarray
     if modulation == "PSK":
         n_bits = int(np.log2(order))
         labels = _gray_labels(n_bits) if mapping == "gray" else np.arange(order)
-        return np.exp(2j * np.pi * np.arange(order) / order)[np.argsort(labels)]
+        # QPSK carries the pi/4 offset of the standards (3GPP, 802.11):
+        # points on the diagonals, the same set as QAM-4. The raw
+        # exp(2j*pi*m/M) sampling put them on the axes -- a constellation
+        # rotated by pi/4 from every textbook figure. BPSK and M >= 8
+        # keep the phase-0 convention.
+        offset = np.pi / 4 if order == 4 else 0.0
+        angles = 2 * np.pi * np.arange(order) / order + offset
+        return np.exp(1j * angles)[np.argsort(labels)]
     if modulation == "PAM":
         return _pam_levels(order, mapping).astype(complex)
     if modulation == "QAM":

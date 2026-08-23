@@ -67,7 +67,7 @@ def get_channel():
         FiberLink(N_spans=N_span, L_span=L_span, StPS=StPS, NF_dB=NF_dB,
                   fs=fs, fiber=fiber, name="link"),
         Downsampler(oversampling_ratio, use_filter=True),
-        ], taps=["data_tx", "signal_tx"])
+        ], observations=["data_tx", "signal_tx"])
 
 
 def get_receiver(steps, linear_only, *, gain, reference):
@@ -87,7 +87,7 @@ def get_receiver(steps, linear_only, *, gain, reference):
         Amplifier(gain),
         DataAidedPhaseCompensator(reference, name="phase"),
         SymbolDemapper(constellation, name="data_rx"),
-        ], taps=["phase"])
+        ], observations=["phase"])
 
 
 # --- what the closed form expects of this link -------------------------
@@ -163,8 +163,8 @@ for index, dBm in enumerate(dBm_list):
             channel.set_params(launch__gain=amp,
                                link__use_only_linear=use_only_linear)
             fields[use_only_linear] = channel(N_s)
-        symbols = channel.tap("signal_tx")
-        reference = channel.tap("data_tx")
+        symbols = channel.observation("signal_tx")
+        reference = channel.observation("data_tx")
 
         # each receiver decides the field that matches its claim: the
         # bound receives the linear one
@@ -173,7 +173,7 @@ for index, dBm in enumerate(dBm_list):
                                     reference=symbols)
             detected = receiver(fields[name == "amplifier noise only"])
             snr[name][index] += compute_effective_snr(
-                symbols, receiver.tap("phase")) / N_trial
+                symbols, receiver.observation("phase")) / N_trial
             counters[name].update(reference, detected)
             times[name][index] += receiver.elapsed_
 

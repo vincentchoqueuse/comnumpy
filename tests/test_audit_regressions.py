@@ -61,10 +61,10 @@ class TestChainMachinery(unittest.TestCase):
         rows = wired.summary(64, print_out=False)
         self.assertEqual(len(rows), 3)
 
-        tapped = Sequential([SymbolGenerator(4, name="generator"),
-                             AWGN(sigma2=0.1)], taps=["generator"])
-        tapped.summary(8, print_out=False)
-        self.assertEqual(tapped.tap("generator").shape, (8,))
+        observed = Sequential([SymbolGenerator(4, name="generator"),
+                             AWGN(sigma2=0.1)], observations=["generator"])
+        observed.summary(8, print_out=False)
+        self.assertEqual(observed.observation("generator").shape, (8,))
 
     def test_an_int_keyed_callback_fires(self):
         fired = []
@@ -74,12 +74,12 @@ class TestChainMachinery(unittest.TestCase):
 
     def test_a_tap_does_not_survive_its_reconfiguration(self):
         chain = Sequential([SymbolGenerator(4, name="generator"),
-                            AWGN(sigma2=0.1)], taps=["generator", "awgn"])
+                            AWGN(sigma2=0.1)], observations=["generator", "awgn"])
         chain(8)
-        chain.taps = ["awgn"]
+        chain.observations = ["awgn"]
         chain(8)
         with self.assertRaises(KeyError):
-            chain.tap("generator")
+            chain.observation("generator")
 
     def test_a_nested_chain_round_trips_through_json(self):
         chain = Sequential([SymbolGenerator(4, seed=1),

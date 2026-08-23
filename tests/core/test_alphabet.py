@@ -50,6 +50,13 @@ class TestConstructionMatchesTheTables(unittest.TestCase):
                 for mapping in ("gray", "bin"):
                     with self.subTest(alphabet=f"{family}-{order}-{mapping}"):
                         tabulated = load_reference(family, order, mapping)
+                        if family == "PSK" and order == 4:
+                            # the one deliberate deviation from the tables:
+                            # QPSK carries the pi/4 offset of the standards
+                            # (points on the diagonals), where the table put
+                            # it on the axes. The labelling is untouched, so
+                            # the relationship is exactly a global rotation.
+                            tabulated = tabulated * np.exp(1j * np.pi / 4)
                         built = _construct_alphabet(family, order, mapping)
                         np.testing.assert_allclose(built, tabulated, atol=1e-6)
 

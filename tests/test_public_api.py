@@ -116,7 +116,7 @@ class TestPublicAPI(unittest.TestCase):
         self.assertTrue(issubclass(comnumpy.ShapeError, comnumpy.ComnumpyError))
 
     def test_no_in_chain_instrumentation_block(self):
-        """Observation is done with taps; instrumentation blocks are gone.
+        """Observation is a chain declaration; instrumentation blocks are gone.
 
         A chain must describe the communication system only, so no
         recorder/logger/scope/monitor block may come back into the public
@@ -140,7 +140,7 @@ class TestPublicAPI(unittest.TestCase):
                                  f"{module.__name__} defines {name}")
 
     def test_chain_output_is_reachable_without_instrumentation(self):
-        """The canonical flow: name a block, tap it, read it back."""
+        """The canonical flow: name a block, observe it, read it back."""
         from comnumpy import (AWGN, Sequential, SymbolDemapper, SymbolGenerator,
                               SymbolMapper, compute_ser, get_alphabet)
         alphabet = get_alphabet("QAM", 16)
@@ -149,9 +149,9 @@ class TestPublicAPI(unittest.TestCase):
             SymbolMapper(alphabet),
             AWGN(snr_dB=15, seed=123),
             SymbolDemapper(alphabet),
-        ], taps=["tx"])
+        ], observations=["tx"])
         detected = chain(10_000)
-        self.assertLess(compute_ser(chain.tap("tx"), detected), 0.05)
+        self.assertLess(compute_ser(chain.observation("tx"), detected), 0.05)
 
 
 if __name__ == "__main__":

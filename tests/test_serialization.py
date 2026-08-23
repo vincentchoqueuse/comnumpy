@@ -143,7 +143,7 @@ class TestRoundTrip(unittest.TestCase):
         self.assertEqual(role.name, "SYNC")
 
     def test_chain_metadata_survives(self):
-        """taps and wiring are intent: a rebuilt chain still records/feeds."""
+        """observations and wiring are intent: a rebuilt chain still records/feeds."""
         alphabet = get_alphabet("QAM", 16)
         chain = Sequential([
             SymbolGenerator(16, seed=5, name="tx"),
@@ -152,17 +152,17 @@ class TestRoundTrip(unittest.TestCase):
             AWGN(sigma2=0.01, seed=6),
             DataAidedPhaseCompensator(reference=np.zeros(1), name="comp"),
             SymbolDemapper(alphabet),
-        ], taps=["tx"], wiring={"comp.reference": "ref"})
+        ], observations=["tx"], wiring={"comp.reference": "ref"})
         self.run_twice_and_compare(chain, 500, npz=True)
 
         with tempfile.TemporaryDirectory() as tmp:
             npz = Path(tmp) / "arrays.npz"
             rebuilt = from_json(to_json(chain, npz_path=npz), npz_path=npz)
-        self.assertEqual(rebuilt.taps, ["tx"])
+        self.assertEqual(rebuilt.observations, ["tx"])
         self.assertEqual(rebuilt.wiring, {"comp.reference": "ref"})
         # the rebuilt chain is still usable end to end
         y = rebuilt(500)
-        self.assertEqual(compute_ser(rebuilt.tap("tx"), y), 0.0)
+        self.assertEqual(compute_ser(rebuilt.observation("tx"), y), 0.0)
 
     def test_complex_scalar_params_roundtrip(self):
         """Complex gains are ordinary in this domain; JSON has no complex."""

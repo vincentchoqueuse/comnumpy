@@ -84,13 +84,13 @@ chain = Sequential([
                                            # to decide on, not the default 20
                                            sub_block_length=500, name="filter"),
             DelayRemover(delay=int(0.9*N), name="tail"),
-            ], taps=["filter", "tail"])
+            ], observations=["filter", "tail"])
 
 # simulate communication
 Y = chain((N_t, N))
 
-data = chain.tap("filter")  # full CMA output (before tail removal)
-plot_iq(chain.tap("tail"), title="after CMA convergence")
+data = chain.observation("filter")  # full CMA output (before tail removal)
+plot_iq(chain.observation("tail"), title="after CMA convergence")
 
 # compute CMA loss
 kernel_size = 100

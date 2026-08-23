@@ -29,10 +29,10 @@ class TestFIRChannelChain(unittest.TestCase):
             AWGN(sigma2=self.sigma2),
             equalizer,
             SymbolDemapper(self.alphabet),
-            ], taps=["tx"])
+            ], observations=["tx"])
 
         y = chain(self.N)
-        data_tx = chain.tap("tx")
+        data_tx = chain.observation("tx")
         return compute_ser(data_tx, y)
 
     def test_zf_one_shot(self):

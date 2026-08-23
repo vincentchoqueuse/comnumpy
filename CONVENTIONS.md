@@ -96,30 +96,38 @@ by realization inequality, `REFUSES` by the raised error) or exempted
 with a written reason. A new block cannot merge without declaring what
 a batch means for it.
 
-## Observing signals: taps, not blocks
+## Observing signals: observations, not blocks
 
 A chain describes the communication system. Nothing else goes into
 `module_list` — no recorder, logger, scope or debugger block. To observe
-an intermediate signal, name the block and declare it as a tap:
+an intermediate signal, name the block and declare it as an observation.
+An observation is simply the output of a named mechanism, retained for
+experimental analysis: it performs no computation and does not alter the
+signal — same shape, same dtype, dimensions never reduced.
 
 ```python
 chain = Sequential([SymbolGenerator(16, name="tx"), SymbolMapper(alphabet),
-                    AWGN(snr_dB=15, name="awgn")], taps=["tx", "awgn"])
+                    AWGN(snr_dB=15, name="awgn")],
+                   observations=["tx", "awgn"])
 y = chain(1000)
-x_tx = chain.tap("tx")          # signal recorded during the last run
-plot_iq(chain.tap("awgn"))      # plotting is a function, not a block
+x_tx = chain.observation("tx")     # signal retained during the last run
+plot_iq(chain.observation("awgn"))  # plotting is a function, not a block
 ```
 
 Consequences of this rule:
 
 * `repr`, `summary()`, `to_mermaid()`, the JSON export and the block
   indices describe the communication system only.
-* A tap costs one dictionary store of a **reference** per tapped block
-  (no copy). This relies on the library-wide invariant that **a block
+* Power, SNR, SER and the like stay with the metrics: an observation is
+  data, a metric is a computation applied to it.
+* An observation costs one dictionary store of a **reference** per
+  observed block (no copy) — an empty `observations` list retains
+  nothing, so large batches and fibre propagations pay only for what
+  they declare. This relies on the library-wide invariant that **a block
   never mutates its input in place**: `forward()` returns a freshly
   allocated array (or the input untouched). Custom blocks must honour it
-  — an in-place block would corrupt earlier taps *and* break chain
-  re-entrancy.
+  — an in-place block would corrupt earlier observations *and* break
+  chain re-entrancy.
 * Blocks never hold a live reference to another block. A data-aided
   block takes its reference as a plain array (`reference=x_tx`) when
   the reference is known in advance — a preamble, a training sequence.
@@ -147,13 +155,15 @@ chain = Sequential([
 Before `comp` runs, the chain assigns it the signal `ref` produced in the
 same pass. Rules:
 
-* the source is tapped automatically — no need to list it in `taps`;
+* the source is observed automatically — no need to list it in
+  `observations`;
 * the source must run **before** the target; a backward edge raises,
   because it would serve the previous run's value;
 * the wiring feeds *data*, not structure: the target's `__post_init__` is
   not re-run (use `set_params` for parameters that need a re-precompute);
-* like taps, the edge is chain metadata — `module_list` is unchanged, and
-  `taps`/`wiring` are carried through the JSON export.
+* like observations, the edge is chain metadata — `module_list` is
+  unchanged, and `observations`/`wiring` are carried through the JSON
+  export.
 
 This is the honest, bounded version of the `inputs` field of decision
 D31: a second input to a block, declared by the chain. A general DAG is
