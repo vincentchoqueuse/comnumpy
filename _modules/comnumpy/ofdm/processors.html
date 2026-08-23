@@ -737,8 +737,8 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_carrier_allocation</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;CyclicPrefixer&quot;</span><span class="p">,</span> <span class="s2">&quot;CyclicPrefixRemover&quot;</span><span class="p">,</span> <span class="s2">&quot;HermitianPrefixer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FFTProcessor&quot;</span><span class="p">,</span> <span class="s2">&quot;IFFTProcessor&quot;</span><span class="p">,</span> <span class="s2">&quot;CarrierAllocator&quot;</span><span class="p">,</span> <span class="s2">&quot;CarrierExtractor&quot;</span><span class="p">,</span>
+    <span class="s2">"CyclicPrefixer"</span><span class="p">,</span> <span class="s2">"CyclicPrefixRemover"</span><span class="p">,</span> <span class="s2">"HermitianPrefixer"</span><span class="p">,</span>
+    <span class="s2">"FFTProcessor"</span><span class="p">,</span> <span class="s2">"IFFTProcessor"</span><span class="p">,</span> <span class="s2">"CarrierAllocator"</span><span class="p">,</span> <span class="s2">"CarrierExtractor"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>      <span class="c1"># matplotlib stays out of import time (D36)</span>
@@ -750,7 +750,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CyclicPrefixer</span><span class="p">(</span><span class="n">AutoConcatenator</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for adding a cyclic prefix to combat multipath interference.</span>
 
 <span class="sd">    Signal Model</span>
@@ -780,7 +780,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Length :math:`N_{cp}` of the cyclic prefix to be added. Must be a</span>
 <span class="sd">        non-negative integer. Default is 10.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;cp adder&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"cp adder"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -798,9 +798,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
 <span class="sd">    [[2 3 1 2 3]</span>
 <span class="sd">     [5 6 4 5 6]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cp adder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"cp adder"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
@@ -811,18 +811,18 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>      <span class="c1"># pyright: ignore[reportUnnecessaryIsInstance]</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a non-negative integer cyclic-prefix length, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a non-negative integer cyclic-prefix length, "</span>
+                <span class="sa">f</span><span class="s2">"got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CyclicPrefixer.prepare">
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixer.prepare">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the mask based on the signal shape&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize the mask based on the signal shape"""</span>
         <span class="n">input_length</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">&gt;</span> <span class="n">input_length</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CyclicPrefixer(N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">}</span><span class="s2">) needs blocks of at least &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;N_cp samples to copy from, got </span><span class="si">{</span><span class="n">input_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"CyclicPrefixer(N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">}</span><span class="s2">) needs blocks of at least "</span>
+                <span class="sa">f</span><span class="s2">"N_cp samples to copy from, got </span><span class="si">{</span><span class="n">input_length</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">output_mask_length</span> <span class="o">=</span> <span class="n">input_length</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span>
 
         <span class="n">input_copy_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">input_length</span><span class="p">)</span>
@@ -846,7 +846,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CyclicPrefixRemover">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CyclicPrefixRemover</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for removing a cyclic prefix from the input data.</span>
 
 <span class="sd">    Signal Model</span>
@@ -872,7 +872,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Length :math:`N_{cp}` of the cyclic prefix to be removed. Must be a</span>
 <span class="sd">        non-negative integer.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;cp remover&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"cp remover"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -885,9 +885,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; remover = CyclicPrefixRemover(N_cp=3)</span>
 <span class="sd">    &gt;&gt;&gt; print(remover(X))</span>
 <span class="sd">    [ 3  4  5  6  7  8  9 10 11 12]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cp remover&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"cp remover"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
@@ -898,8 +898,8 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>      <span class="c1"># pyright: ignore[reportUnnecessaryIsInstance]</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a non-negative integer cyclic-prefix length, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a non-negative integer cyclic-prefix length, "</span>
+                <span class="sa">f</span><span class="s2">"got N_cp=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="si">!r}</span><span class="s2"> -- pass 0 for no prefix"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="c1"># Remove the cyclic prefix along the block content axis</span>
@@ -911,7 +911,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.HermitianPrefixer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HermitianPrefixer</span><span class="p">(</span><span class="n">AutoConcatenator</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for enforcing Hermitian symmetry on frequency-domain blocks, so that the IDFT output is real-valued.</span>
 
 <span class="sd">    Signal Model</span>
@@ -945,11 +945,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    shift : bool, optional, keyword-only</span>
 <span class="sd">        Whether to swap the original and conjugate halves. Default is False.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;hermitian prefixer&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"hermitian prefixer"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    J. Armstrong, &quot;OFDM for Optical Communications&quot;, Journal of Lightwave</span>
+<span class="sd">    J. Armstrong, "OFDM for Optical Communications", Journal of Lightwave</span>
 <span class="sd">    Technology, vol. 27, no. 3, pp. 189-204, 2009.</span>
 
 <span class="sd">    Examples</span>
@@ -964,9 +964,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(prefixer(X))</span>
 <span class="sd">    [[0.+0.j 3.-3.j 2.-2.j 1.-1.j 0.+0.j 1.+1.j 2.+2.j 3.+3.j]</span>
 <span class="sd">     [0.+0.j 6.-6.j 5.-5.j 4.-4.j 0.+0.j 4.+4.j 5.+5.j 6.+6.j]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;hermitian prefixer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"hermitian prefixer"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_copy_mask</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1013,14 +1013,14 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.FFTProcessor">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FFTProcessor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for performing Fast Fourier Transform (FFT) on the input data.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
 <span class="sd">    The FFT computes the Discrete Fourier Transform (DFT), which maps a</span>
 <span class="sd">    block of time-domain samples to its frequency-domain representation.</span>
-<span class="sd">    With the default orthonormal normalization (``norm=&quot;ortho&quot;``), the DFT</span>
+<span class="sd">    With the default orthonormal normalization (``norm="ortho"``), the DFT</span>
 <span class="sd">    of a block of length :math:`N` is given by:</span>
 
 <span class="sd">    .. math::</span>
@@ -1040,11 +1040,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    shift : bool, optional</span>
 <span class="sd">        If True, applies the FFT shift which swaps the low and high frequency components.</span>
 <span class="sd">        Default is False.</span>
-<span class="sd">    norm : {&quot;ortho&quot;, &quot;backward&quot;, &quot;forward&quot;}, optional, keyword-only</span>
-<span class="sd">        Normalization mode for FFT. &quot;ortho&quot; means orthonormal FFT is computed.</span>
-<span class="sd">        Default is &quot;ortho&quot;.</span>
+<span class="sd">    norm : {"ortho", "backward", "forward"}, optional, keyword-only</span>
+<span class="sd">        Normalization mode for FFT. "ortho" means orthonormal FFT is computed.</span>
+<span class="sd">        Default is "ortho".</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;fft&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"fft"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1057,10 +1057,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; x = np.ones(4)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(fft_processor(x)), 3) + 0.0)</span>
 <span class="sd">    [2. 0. 0. 0.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="s2">&quot;backward&quot;</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;fft&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"ortho"</span><span class="p">,</span> <span class="s2">"backward"</span><span class="p">,</span> <span class="s2">"forward"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ortho"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"fft"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -1074,14 +1074,14 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.IFFTProcessor">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IFFTProcessor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for performing Inverse Fast Fourier Transform (IFFT) on the input data.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
 <span class="sd">    The IFFT computes the Inverse Discrete Fourier Transform (IDFT), which</span>
 <span class="sd">    maps a block of frequency-domain samples back to the time domain. With</span>
-<span class="sd">    the default orthonormal normalization (``norm=&quot;ortho&quot;``), the IDFT of a</span>
+<span class="sd">    the default orthonormal normalization (``norm="ortho"``), the IDFT of a</span>
 <span class="sd">    block of length :math:`N` is given by:</span>
 
 <span class="sd">    .. math::</span>
@@ -1101,11 +1101,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    shift : bool, optional</span>
 <span class="sd">        If True, applies the IFFT shift which swaps the low and high frequency components.</span>
 <span class="sd">        Default is False.</span>
-<span class="sd">    norm : {&quot;ortho&quot;, &quot;backward&quot;, &quot;forward&quot;}, optional, keyword-only</span>
-<span class="sd">        Normalization mode for IFFT. &quot;ortho&quot; means orthonormal IFFT is computed.</span>
-<span class="sd">        Default is &quot;ortho&quot;.</span>
+<span class="sd">    norm : {"ortho", "backward", "forward"}, optional, keyword-only</span>
+<span class="sd">        Normalization mode for IFFT. "ortho" means orthonormal IFFT is computed.</span>
+<span class="sd">        Default is "ortho".</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;ifft&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"ifft"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1118,10 +1118,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; X = np.array([2.0, 0.0, 0.0, 0.0])</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(ifft_processor(X)), 3))</span>
 <span class="sd">    [1. 1. 1. 1.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="s2">&quot;backward&quot;</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ortho&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ifft&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">norm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"ortho"</span><span class="p">,</span> <span class="s2">"backward"</span><span class="p">,</span> <span class="s2">"forward"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ortho"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ifft"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
@@ -1135,7 +1135,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierAllocator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CarrierAllocator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for allocating data to specific subcarriers.</span>
 
 <span class="sd">    Signal Model</span>
@@ -1165,7 +1165,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ``prepare()`` (decision D18). The mask says *where*, the ``pilots``</span>
 <span class="sd">    argument says *what*: transmitter and receiver share the same</span>
 <span class="sd">    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object, which</span>
-<span class="sd">    removes the &quot;diverging masks&quot; class of bugs.</span>
+<span class="sd">    removes the "diverging masks" class of bugs.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1179,7 +1179,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        symbol (or a scalar broadcast to all of them). Default is</span>
 <span class="sd">        None, treated as no pilots.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;carrier allocator&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"carrier allocator"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -1211,14 +1211,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">     [3 0 0 6 9]]</span>
 
 <span class="sd">    &gt;&gt;&gt; from comnumpy.ofdm.allocation import get_allocation</span>
-<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(get_allocation(&quot;802.11a&quot;), pilots=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; allocator = CarrierAllocator(get_allocation("802.11a"), pilots=1.0)</span>
 <span class="sd">    &gt;&gt;&gt; Y = allocator(np.ones((10, 48)))</span>
 <span class="sd">    &gt;&gt;&gt; print(Y.shape)</span>
 <span class="sd">    (10, 64)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">carrier_type</span><span class="p">:</span> <span class="nb">object</span>
     <span class="n">pilots</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;carrier allocator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"carrier allocator"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
     <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">N</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1240,8 +1240,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">n_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">n_data</span> <span class="o">==</span> <span class="n">n_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the number of data subcarriers must be constant over the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;period, got </span><span class="si">{</span><span class="n">n_data</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"the number of data subcarriers must be constant over the "</span>
+                <span class="sa">f</span><span class="s2">"period, got </span><span class="si">{</span><span class="n">n_data</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">N_data</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pilots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1253,8 +1253,8 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">pilots</span><span class="p">,</span> <span class="p">(</span><span class="n">n_pilots</span><span class="p">,))</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pilots</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n_pilots</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;incompatible number of pilots (</span><span class="si">{</span><span class="n">n_pilots</span><span class="si">}</span><span class="s2"> needed for this &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;OFDM symbol, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pilots</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided)&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"incompatible number of pilots (</span><span class="si">{</span><span class="n">n_pilots</span><span class="si">}</span><span class="s2"> needed for this "</span>
+                <span class="sa">f</span><span class="s2">"OFDM symbol, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pilots</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided)"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pilots</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set_carrier_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">carrier_type</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1264,15 +1264,15 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CarrierAllocator expects (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(N_data=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2"> data subcarriers per OFDM symbol), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- fix Serial2Parallel(N_sub=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;or the allocation.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"CarrierAllocator expects (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) "</span>
+                <span class="sa">f</span><span class="s2">"(N_data=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2"> data subcarriers per OFDM symbol), "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- fix Serial2Parallel(N_sub=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">) "</span>
+                <span class="sa">f</span><span class="s2">"or the allocation."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CarrierAllocator with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;expects a Block layout (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">), got 1D &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- add the OFDM-symbol axis with Serial2Parallel.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"CarrierAllocator with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation "</span>
+                <span class="sa">f</span><span class="s2">"expects a Block layout (..., T, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N_data</span><span class="si">}</span><span class="s2">), got 1D "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- add the OFDM-symbol axis with Serial2Parallel."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">new_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,)</span>
@@ -1302,13 +1302,13 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="CarrierAllocator.plot">
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierAllocator.plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Axes"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Plot the carrier allocation; returns the axis (decision D25).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Carrier Allocation&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Carrier Allocation"</span><span class="p">)</span></div>
 </div>
 
 
@@ -1317,7 +1317,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierExtractor">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CarrierExtractor</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Processor for extracting data from specific subcarriers.</span>
 
 <span class="sd">    Signal Model</span>
@@ -1343,7 +1343,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    (or ``(..., N_fft)`` for a period-1 allocation) and validates it in</span>
 <span class="sd">    ``prepare()`` (decision D18). Share the same</span>
 <span class="sd">    :class:`~comnumpy.ofdm.allocation.CarrierAllocation` object with the</span>
-<span class="sd">    transmitter&#39;s :class:`CarrierAllocator`.</span>
+<span class="sd">    transmitter's :class:`CarrierAllocator`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1354,7 +1354,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``to_fft_order()`` (decision D16); a raw 1D array is taken as an</span>
 <span class="sd">        FFT-order mask.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;carrier extractor&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"carrier extractor"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1398,9 +1398,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(extractor(Z))</span>
 <span class="sd">    [[1 4 7]</span>
 <span class="sd">     [2 5 8]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">carrier_type</span><span class="p">:</span> <span class="nb">object</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;carrier extractor&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"carrier extractor"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
     <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1418,13 +1418,13 @@ window.runMermaid = runMermaid;</script>
         <span class="n">N_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">N_fft</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CarrierExtractor expects (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(N_fft=</span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2"> subcarriers), got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- use the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;same allocation as the transmitter&#39;s CarrierAllocator.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"CarrierExtractor expects (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">) "</span>
+                <span class="sa">f</span><span class="s2">"(N_fft=</span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2"> subcarriers), got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- use the "</span>
+                <span class="sa">f</span><span class="s2">"same allocation as the transmitter's CarrierAllocator."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CarrierExtractor with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;expects a Block layout (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">), got 1D </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"CarrierExtractor with a period-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="si">}</span><span class="s2"> allocation "</span>
+                <span class="sa">f</span><span class="s2">"expects a Block layout (..., T, </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">), got 1D </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -1447,13 +1447,13 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="CarrierExtractor.plot">
 <a class="viewcode-back" href="../../../documentation/ofdm/processors.html#comnumpy.ofdm.processors.CarrierExtractor.plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Axes"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Plot the carrier allocation; returns the axis (decision D25).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">CarrierAllocation</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Carrier Allocation&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">plot_carrier_allocation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">shift</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Carrier Allocation"</span><span class="p">)</span></div>
 </div>
 
 

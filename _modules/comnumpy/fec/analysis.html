@@ -726,7 +726,7 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.fec.analysis</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Analytical reference for convolutional codes (decisions D4, D7).</span>
+<span></span><span class="sd">"""Analytical reference for convolutional codes (decisions D4, D7).</span>
 
 <span class="sd">The distance spectrum is **enumerated from the trellis of the code</span>
 <span class="sd">itself**, never transcribed from a textbook table: the same</span>
@@ -740,7 +740,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">That spectrum feeds the union bound, which is the analytical curve a</span>
 <span class="sd">soft-decision Viterbi decoder is measured against</span>
 <span class="sd">(``validation/fec_union_bound.py``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
@@ -754,7 +754,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.fec.convolutional</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_output_table</span><span class="p">,</span> <span class="n">_parse_generators</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportPrivateUsage]</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DistanceSpectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;distance_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;union_bound_ber&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"DistanceSpectrum"</span><span class="p">,</span> <span class="s2">"distance_spectrum"</span><span class="p">,</span> <span class="s2">"union_bound_ber"</span><span class="p">]</span>
 
 <span class="c1"># safety net for the automatic growth of ``d_max``: a rate-1/n code whose</span>
 <span class="c1"># free distance exceeds this has a trellis far outside the teaching range</span>
@@ -765,7 +765,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/analysis.html#comnumpy.fec.analysis.DistanceSpectrum">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DistanceSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Weight enumerator of the error events of a rate :math:`1/n` code.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Weight enumerator of the error events of a rate :math:`1/n` code.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -821,8 +821,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    A. J. Viterbi, &quot;Convolutional codes and their performance in</span>
-<span class="sd">    communication systems,&quot; IEEE Trans. Commun. Technol. 19(5), 1971</span>
+<span class="sd">    A. J. Viterbi, "Convolutional codes and their performance in</span>
+<span class="sd">    communication systems," IEEE Trans. Commun. Technol. 19(5), 1971</span>
 <span class="sd">    (transfer function :math:`T(D, N)` and its derivative);</span>
 <span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
 <span class="sd">    McGraw-Hill, 2008, Section 8.2.</span>
@@ -834,7 +834,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    5 0.5</span>
 <span class="sd">    &gt;&gt;&gt; print(spectrum.distances, spectrum.a_d, spectrum.beta_d)</span>
 <span class="sd">    [5 6 7] [1 2 4] [ 1  4 12]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">K</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">k</span><span class="p">:</span> <span class="nb">int</span>
@@ -847,19 +847,19 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_branch_weight</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Output Hamming weight of every trellis branch, indexed by register.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Output Hamming weight of every trellis branch, indexed by register."""</span>
     <span class="k">return</span> <span class="n">_output_table</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_zero_weight_cycle</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True if the nonzero states carry a cycle of zero-output-weight branches.</span>
+<span class="w">    </span><span class="sd">"""True if the nonzero states carry a cycle of zero-output-weight branches.</span>
 
 <span class="sd">    Such a cycle is the signature of a catastrophic encoder: it lets an</span>
 <span class="sd">    error event accumulate input weight without accumulating output</span>
 <span class="sd">    weight, so :math:`a_d` and :math:`\\beta_d` are infinite. Detected by</span>
 <span class="sd">    peeling away the states that have no zero-weight successor; whatever</span>
 <span class="sd">    survives lies on a cycle.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">S</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">successors</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">)}</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
@@ -882,7 +882,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_enumerate_error_events</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                             <span class="n">d_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Breadth-first count of the error events of output weight &lt;= ``d_max``.</span>
+<span class="w">    </span><span class="sd">"""Breadth-first count of the error events of output weight &lt;= ``d_max``.</span>
 
 <span class="sd">    One iteration = one trellis step. ``count[s][d]`` is the number of</span>
 <span class="sd">    paths of the current length that reached state ``s`` with output</span>
@@ -890,7 +890,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    cumulated input weight. A path that steps into state 0 is a finished</span>
 <span class="sd">    error event and is banked into ``a`` / ``beta``. Paths heavier than</span>
 <span class="sd">    ``d_max`` are pruned, which is what makes the frontier die out.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">S</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">beta</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -932,7 +932,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">def</span><span class="w"> </span><span class="nf">distance_spectrum</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">),</span> <span class="o">*</span><span class="p">,</span>
                       <span class="n">n_terms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
                       <span class="n">d_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DistanceSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enumerate the distance spectrum of a rate :math:`1/n` convolutional code.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Enumerate the distance spectrum of a rate :math:`1/n` convolutional code.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -968,7 +968,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    g : tuple of int</span>
 <span class="sd">        Generator polynomials :math:`g_i` in octal (MSB = current input</span>
-<span class="sd">        tap), identical to the encoder&#39;s. Default ``(0o133, 0o171)``,</span>
+<span class="sd">        tap), identical to the encoder's. Default ``(0o133, 0o171)``,</span>
 <span class="sd">        the NASA/Voyager :math:`K = 7` code.</span>
 <span class="sd">    n_terms : int, optional, keyword-only</span>
 <span class="sd">        Number of *non-zero* coefficients :math:`a_d` wanted; ``d_max``</span>
@@ -993,8 +993,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    A. J. Viterbi, &quot;Convolutional codes and their performance in</span>
-<span class="sd">    communication systems,&quot; IEEE Trans. Commun. Technol. 19(5),</span>
+<span class="sd">    A. J. Viterbi, "Convolutional codes and their performance in</span>
+<span class="sd">    communication systems," IEEE Trans. Commun. Technol. 19(5),</span>
 <span class="sd">    pp. 751-772, 1971 (transfer function of the state diagram);</span>
 <span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
 <span class="sd">    McGraw-Hill, 2008, Section 8.2.</span>
@@ -1007,16 +1007,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; nasa = distance_spectrum(n_terms=3)   # (133, 171), K = 7</span>
 <span class="sd">    &gt;&gt;&gt; print(nasa.d_free, nasa.distances, nasa.a_d)</span>
 <span class="sd">    10 [10 11 12 13 14] [ 11   0  38   0 193]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">g</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">_parse_generators</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
     <span class="n">weight</span> <span class="o">=</span> <span class="n">_branch_weight</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">_zero_weight_cycle</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;distance_spectrum: generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> are &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;catastrophic (the trellis has a cycle of zero output weight, so &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;a finite number of channel errors can cause infinitely many &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;information errors, and a_d is infinite) -- pick generators &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;whose polynomials are coprime, e.g. (0o5, 0o7) for K=3.&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"distance_spectrum: generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> are "</span>
+            <span class="sa">f</span><span class="s2">"catastrophic (the trellis has a cycle of zero output weight, so "</span>
+            <span class="sa">f</span><span class="s2">"a finite number of channel errors can cause infinitely many "</span>
+            <span class="sa">f</span><span class="s2">"information errors, and a_d is infinite) -- pick generators "</span>
+            <span class="sa">f</span><span class="s2">"whose polynomials are coprime, e.g. (0o5, 0o7) for K=3."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">d_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">_enumerate_error_events</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">d_max</span><span class="p">))</span>
@@ -1028,10 +1028,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">break</span>
             <span class="k">if</span> <span class="n">d_max</span> <span class="o">&gt;</span> <span class="n">_D_MAX_LIMIT</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;distance_spectrum: fewer than n_terms=</span><span class="si">{</span><span class="n">n_terms</span><span class="si">}</span><span class="s2"> non-zero &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;coefficients below d_max=</span><span class="si">{</span><span class="n">_D_MAX_LIMIT</span><span class="si">}</span><span class="s2"> for generators &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- pass d_max explicitly if &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;the code really has such a sparse spectrum.&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"distance_spectrum: fewer than n_terms=</span><span class="si">{</span><span class="n">n_terms</span><span class="si">}</span><span class="s2"> non-zero "</span>
+                    <span class="sa">f</span><span class="s2">"coefficients below d_max=</span><span class="si">{</span><span class="n">_D_MAX_LIMIT</span><span class="si">}</span><span class="s2"> for generators "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- pass d_max explicitly if "</span>
+                    <span class="sa">f</span><span class="s2">"the code really has such a sparse spectrum."</span><span class="p">)</span>
             <span class="n">d_max</span> <span class="o">*=</span> <span class="mi">2</span>
         <span class="c1"># trim to the requested number of non-zero coefficients</span>
         <span class="n">nonzero</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
@@ -1040,8 +1040,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">support</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">support</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;distance_spectrum: no error event of output weight &lt;= </span><span class="si">{</span><span class="n">d_max</span><span class="si">}</span><span class="s2"> &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;for generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- increase d_max.&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"distance_spectrum: no error event of output weight &lt;= </span><span class="si">{</span><span class="n">d_max</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"for generators </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">oct</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">gi</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- increase d_max."</span><span class="p">)</span>
     <span class="n">d_free</span> <span class="o">=</span> <span class="n">support</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">kept</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">d_free</span><span class="p">,</span> <span class="n">d_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">DistanceSpectrum</span><span class="p">(</span>
@@ -1057,7 +1057,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/analysis.html#comnumpy.fec.analysis.union_bound_ber">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">union_bound_ber</span><span class="p">(</span><span class="n">spectrum</span><span class="p">:</span> <span class="n">DistanceSpectrum</span><span class="p">,</span>
                     <span class="n">ebn0_dB</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Union bound on the bit error rate of soft-decision Viterbi decoding over AWGN.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Union bound on the bit error rate of soft-decision Viterbi decoding over AWGN.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1080,7 +1080,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Two honest caveats, both visible in ``validation/fec_union_bound.py``:</span>
 <span class="sd">    the sum is **truncated** at the ``d_max`` of ``spectrum``, so it is a</span>
 <span class="sd">    genuine upper bound only where its tail is negligible; and the full</span>
-<span class="sd">    series only converges above the code&#39;s cutoff rate. Below roughly</span>
+<span class="sd">    series only converges above the code's cutoff rate. Below roughly</span>
 <span class="sd">    3 dB the truncated sum keeps growing with ``d_max`` and usually</span>
 <span class="sd">    exceeds 1 -- a value :math:`&gt; 1` is not a tight bound, it is no</span>
 <span class="sd">    information at all. Above 4 dB the terms fall geometrically, the</span>
@@ -1112,18 +1112,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
 <span class="sd">    McGraw-Hill, 2008, Section 8.2 (union bound for soft-decision</span>
-<span class="sd">    decoding, eq. 8.2-22); A. J. Viterbi, &quot;Convolutional codes and their</span>
-<span class="sd">    performance in communication systems,&quot; IEEE Trans. Commun. Technol.</span>
+<span class="sd">    decoding, eq. 8.2-22); A. J. Viterbi, "Convolutional codes and their</span>
+<span class="sd">    performance in communication systems," IEEE Trans. Commun. Technol.</span>
 <span class="sd">    19(5), 1971.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; spectrum = distance_spectrum((0o5, 0o7), d_max=26)   # K = 3</span>
-<span class="sd">    &gt;&gt;&gt; print(f&quot;{float(union_bound_ber(spectrum, 5.0)):.3e}&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(f"{float(union_bound_ber(spectrum, 5.0)):.3e}")</span>
 <span class="sd">    9.171e-05</span>
-<span class="sd">    &gt;&gt;&gt; print(f&quot;{float(union_bound_ber(distance_spectrum(d_max=30), 5.0)):.3e}&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(f"{float(union_bound_ber(distance_spectrum(d_max=30), 5.0)):.3e}")</span>
 <span class="sd">    4.427e-07</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>    <span class="c1"># local import (D36)</span>
 
     <span class="n">gamma_b</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ebn0_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span>

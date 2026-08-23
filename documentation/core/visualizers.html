@@ -472,7 +472,7 @@
 <p>Plotting functions for time-domain signals.</p>
 <p>Visualization is deliberately <em>not</em> part of a chain: chains describe
 the communication system only, signals are extracted with
-<code class="docutils literal notranslate"><span class="pre">Sequential(taps=...)</span></code> and handed to the plain functions below. Every
+<code class="docutils literal notranslate"><span class="pre">Sequential(observations=...)</span></code> and handed to the plain functions below. Every
 function takes <code class="docutils literal notranslate"><span class="pre">ax=None</span></code>, draws on the given axis (creating one only
 when needed) and returns it (decision D25); none of them calls
 <code class="docutils literal notranslate"><span class="pre">plt.show()</span></code>.</p>
@@ -553,8 +553,8 @@ same axis with a legend; slice beforehand for anything fancier.</p>
 <dd><p>Scatter the in-phase and quadrature components of a signal.</p>
 <p>For a single stream this is two matplotlib calls, and the examples of
 this repository make them rather than call this function:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
-<span class="n">style</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;iq&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="s2">"."</span><span class="p">)</span>
+<span class="n">style</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">"iq"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>which is shorter, shows the reader what an IQ plane <em>is</em>, and leaves
@@ -586,10 +586,10 @@ compensator, say) and tell them apart.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_alphabet</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet</span> <span class="o">=</span> <span class="n">get_alphabet</span><span class="p">(</span><span class="s2">"QAM"</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">received</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">200</span><span class="p">)]</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_iq</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;16-QAM&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_iq</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"16-QAM"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">)</span>             <span class="c1"># the cloud, and the ideal points</span>
 <span class="go">2</span>
 </pre></div>
@@ -675,18 +675,18 @@ of iterations.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;QPSK&quot;</span><span class="p">:</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)},</span>
-<span class="gp">... </span>                     <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;QPSK&quot;</span><span class="p">:</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">-</span> <span class="mf">0.05</span><span class="p">)})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="p">{</span><span class="s2">"QPSK"</span><span class="p">:</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)},</span>
+<span class="gp">... </span>                     <span class="n">theory</span><span class="o">=</span><span class="p">{</span><span class="s2">"QPSK"</span><span class="p">:</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">-</span> <span class="mf">0.05</span><span class="p">)})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">)</span>                      <span class="c1"># one marker set, one curve</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">get_yscale</span><span class="p">()</span>
-<span class="go">&#39;log&#39;</span>
+<span class="go">'log'</span>
 </pre></div>
 </div>
 <p>A linear ordinate keeps the zeros, because there a zero is a point
 and not a missing measurement:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">])},</span>
-<span class="gp">... </span>                     <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;bit/symbol&quot;</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_error_rate</span><span class="p">(</span><span class="n">snr</span><span class="p">,</span> <span class="p">{</span><span class="s2">"rate"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">])},</span>
+<span class="gp">... </span>                     <span class="n">ylabel</span><span class="o">=</span><span class="s2">"bit/symbol"</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_xdata</span><span class="p">())</span>
 <span class="go">6</span>
 </pre></div>

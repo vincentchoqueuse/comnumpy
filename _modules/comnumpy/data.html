@@ -726,22 +726,22 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.data</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;One representation of a result, several ways of showing it.</span>
+<span></span><span class="sd">"""One representation of a result, several ways of showing it.</span>
 
 <span class="sd">A sweep produces the same thing every time: an abscissa, and one series</span>
 <span class="sd">of values per curve. Printing it as a table and plotting it are two</span>
 <span class="sd">renderings of that one object, and they should not require restating it::</span>
 
 <span class="sd">    data = {</span>
-<span class="sd">        &quot;x&quot;: lengths,</span>
-<span class="sd">        &quot;curves&quot;: {</span>
-<span class="sd">            &quot;Single carrier&quot;: runtime[&quot;single carrier&quot;],</span>
-<span class="sd">            &quot;OFDM&quot;: runtime[&quot;OFDM&quot;],</span>
+<span class="sd">        "x": lengths,</span>
+<span class="sd">        "curves": {</span>
+<span class="sd">            "Single carrier": runtime["single carrier"],</span>
+<span class="sd">            "OFDM": runtime["OFDM"],</span>
 <span class="sd">        },</span>
 <span class="sd">    }</span>
 
-<span class="sd">    print_data(data, xlabel=&quot;Frame length&quot;, ylabel=&quot;Runtime (ms)&quot;)</span>
-<span class="sd">    plot_data(data, xlabel=&quot;Frame length&quot;, ylabel=&quot;Runtime (ms)&quot;)</span>
+<span class="sd">    print_data(data, xlabel="Frame length", ylabel="Runtime (ms)")</span>
+<span class="sd">    plot_data(data, xlabel="Frame length", ylabel="Runtime (ms)")</span>
 
 <span class="sd">``x`` is the abscissa, ``curves`` maps a name to a series, and every</span>
 <span class="sd">series has the length of ``x``. That is the whole contract, and it is</span>
@@ -754,10 +754,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">:func:`~comnumpy.monte_carlo.monte_carlo` gives back one array per metric</span>
 <span class="sd">aligned with the values it swept::</span>
 
-<span class="sd">    curves = monte_carlo(chain, &quot;awgn.snr_dB&quot;, snr_dB, {&quot;ser&quot;: compute_ser},</span>
-<span class="sd">                         N, reference=&quot;tx&quot;, seed=1)</span>
-<span class="sd">    data = {&quot;x&quot;: snr_dB, &quot;curves&quot;: curves}</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    curves = monte_carlo(chain, "awgn.snr_dB", snr_dB, {"ser": compute_ser},</span>
+<span class="sd">                         N, reference="tx", seed=1)</span>
+<span class="sd">    data = {"x": snr_dB, "curves": curves}</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -768,7 +768,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>                                       <span class="c1"># pragma: no cover</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;unpack&quot;</span><span class="p">,</span> <span class="s2">&quot;format_data&quot;</span><span class="p">,</span> <span class="s2">&quot;print_data&quot;</span><span class="p">,</span> <span class="s2">&quot;plot_data&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"unpack"</span><span class="p">,</span> <span class="s2">"format_data"</span><span class="p">,</span> <span class="s2">"print_data"</span><span class="p">,</span> <span class="s2">"plot_data"</span><span class="p">]</span>
 
 <span class="c1"># A column is written in scientific notation as soon as reading it in</span>
 <span class="c1"># fixed point would be a wall of zeros: five decades of dynamic range is</span>
@@ -778,21 +778,21 @@ window.runMermaid = runMermaid;</script>
 <span class="c1"># Significant digits kept on the *smallest* value of the column, not the</span>
 <span class="c1"># largest: the small entries are the ones a fixed number of decimals</span>
 <span class="c1"># destroys. A column of 8.5, 42.1, 282.3, 2374.0 calibrated on its</span>
-<span class="c1"># largest gets zero decimals and prints the first entry as &quot;8&quot;.</span>
+<span class="c1"># largest gets zero decimals and prints the first entry as "8".</span>
 <span class="n">_SIGNIFICANT_DIGITS</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">_MAX_DECIMALS</span> <span class="o">=</span> <span class="mi">6</span>
-<span class="n">_MISSING</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
+<span class="n">_MISSING</span> <span class="o">=</span> <span class="s2">"-"</span>
 
 
 <div class="viewcode-block" id="unpack">
 <a class="viewcode-back" href="../../documentation/toplevel/data.html#comnumpy.data.unpack">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">unpack</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check the contract of a data dictionary and return its two parts.</span>
+<span class="w">    </span><span class="sd">"""Check the contract of a data dictionary and return its two parts.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : mapping</span>
-<span class="sd">        ``{&quot;x&quot;: abscissa, &quot;curves&quot;: {name: values, ...}}``.</span>
+<span class="sd">        ``{"x": abscissa, "curves": {name: values, ...}}``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -808,70 +808,70 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; x, curves = unpack({&quot;x&quot;: [1, 2], &quot;curves&quot;: {&quot;a&quot;: [3.0, 4.0]}})</span>
-<span class="sd">    &gt;&gt;&gt; x.tolist(), curves[&quot;a&quot;].tolist()</span>
+<span class="sd">    &gt;&gt;&gt; x, curves = unpack({"x": [1, 2], "curves": {"a": [3.0, 4.0]}})</span>
+<span class="sd">    &gt;&gt;&gt; x.tolist(), curves["a"].tolist()</span>
 <span class="sd">    ([1.0, 2.0], [3.0, 4.0])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComnumpyError</span><span class="p">,</span> <span class="n">ShapeError</span>  <span class="c1"># local (D36)</span>
 
-    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;curves&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"curves"</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ComnumpyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;data is missing the key(s) </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">; expected &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="s2">&#39;x&#39;: abscissa, &#39;curves&#39;: </span><span class="se">{{</span><span class="s2">name: values</span><span class="se">}}}}</span><span class="s2"> -- pass the &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;swept values as &#39;x&#39; and what was measured as &#39;curves&#39;.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;curves&quot;</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="sa">f</span><span class="s2">"data is missing the key(s) </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">; expected "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">{{</span><span class="s2">'x': abscissa, 'curves': </span><span class="se">{{</span><span class="s2">name: values</span><span class="se">}}}}</span><span class="s2"> -- pass the "</span>
+            <span class="sa">f</span><span class="s2">"swept values as 'x' and what was measured as 'curves'."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"curves"</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ComnumpyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;data[&#39;curves&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;curves&#39;</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; expected &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;a mapping of name to values, so that each series carries the &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;label a table column and a plot legend both need.&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"data['curves'] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'curves'</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; expected "</span>
+            <span class="sa">f</span><span class="s2">"a mapping of name to values, so that each series carries the "</span>
+            <span class="sa">f</span><span class="s2">"label a table column and a plot legend both need."</span><span class="p">)</span>
 
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"x"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">curves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;curves&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"curves"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;curve </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has </span><span class="si">{</span><span class="n">series</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> values, expected &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> -- one per point of &#39;x&#39;. A sweep that lost a &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;point silently shifts every value that follows it.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"curve </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has </span><span class="si">{</span><span class="n">series</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> values, expected "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> -- one per point of 'x'. A sweep that lost a "</span>
+                <span class="sa">f</span><span class="s2">"point silently shifts every value that follows it."</span><span class="p">)</span>
         <span class="n">curves</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">series</span>
     <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">curves</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_column_format</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The format string a whole column is written with.</span>
+<span class="w">    </span><span class="sd">"""The format string a whole column is written with.</span>
 
 <span class="sd">    Per column, never per cell: a column read down must have its decimal</span>
 <span class="sd">    points in one place, which is the only reason a table beats a list.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">finite</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">finite</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:.3e}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="si">{:.3e}</span><span class="s2">"</span>
     <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">finite</span><span class="p">[</span><span class="n">finite</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>                         <span class="c1"># every value is zero</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:.0f}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="si">{:.0f}</span><span class="s2">"</span>
     <span class="n">largest</span><span class="p">,</span> <span class="n">smallest</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">magnitude</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">magnitude</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
 
     <span class="n">integral</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">finite</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">finite</span><span class="p">)))</span> <span class="ow">and</span> <span class="n">largest</span> <span class="o">&lt;</span> <span class="mf">1e6</span>
     <span class="k">if</span> <span class="n">integral</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:.0f}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="si">{:.0f}</span><span class="s2">"</span>
 
     <span class="n">decades</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">largest</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">smallest</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">decades</span> <span class="o">&gt;</span> <span class="n">_DECADES_BEFORE_SCIENTIFIC</span> <span class="ow">or</span> <span class="n">smallest</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:.3e}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="si">{:.3e}</span><span class="s2">"</span>
 
     <span class="n">decimals</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">_SIGNIFICANT_DIGITS</span> <span class="o">-</span> <span class="mi">1</span>
                            <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">smallest</span><span class="p">)),</span> <span class="mi">0</span><span class="p">),</span>
                        <span class="n">_MAX_DECIMALS</span><span class="p">))</span>
     <span class="c1"># ... and no more than the values actually carry. A column of -6.0,</span>
-    <span class="c1"># -4.5, 3.0 is exact at one decimal, and &quot;-6.00&quot; only adds a zero the</span>
+    <span class="c1"># -4.5, 3.0 is exact at one decimal, and "-6.00" only adds a zero the</span>
     <span class="c1"># measurement never had.</span>
     <span class="k">while</span> <span class="n">decimals</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">finite</span><span class="p">,</span> <span class="n">decimals</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">finite</span><span class="p">,</span>
                                        <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="n">decimals</span> <span class="o">-=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="s2">&quot;{:.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">decimals</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;f}&quot;</span>
+    <span class="k">return</span> <span class="s2">"{:."</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">decimals</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"f}"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cells</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -881,7 +881,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_MISSING</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"inf"</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">"-inf"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">out</span>
@@ -889,12 +889,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_transposed</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">curves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
                 <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One row per curve, one column per point of `x`.</span>
+<span class="w">    </span><span class="sd">"""One row per curve, one column per point of `x`.</span>
 
 <span class="sd">    The whole grid shares one format here rather than one per column: a</span>
 <span class="sd">    row is what is read across, and a row whose cells change format is</span>
 <span class="sd">    unreadable. `x` keeps its own, since it is the header.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">stacked</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span> <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
     <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">stacked</span><span class="p">)</span> <span class="k">if</span> <span class="n">stacked</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
     <span class="n">template</span> <span class="o">=</span> <span class="n">_column_format</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
@@ -914,25 +914,25 @@ window.runMermaid = runMermaid;</script>
         <span class="n">cell_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">cell_width</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">row</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">line</span><span class="p">(</span><span class="n">first</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">name_width</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;  &quot;</span>
-                <span class="o">+</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">cell_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="p">))</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">name_width</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"  "</span>
+                <span class="o">+</span> <span class="s2">"  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">cell_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="p">))</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
 
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">ylabel</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">(</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">heads</span><span class="p">))</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">name_width</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">heads</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">cell_width</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="p">(</span><span class="n">name_width</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">heads</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">cell_width</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
-    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="format_data">
 <a class="viewcode-back" href="../../documentation/toplevel/data.html#comnumpy.data.format_data">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
-                <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"x"</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a data dictionary as an aligned text table.</span>
+<span class="w">    </span><span class="sd">"""Render a data dictionary as an aligned text table.</span>
 
 <span class="sd">    One column per curve, named after it, plus the abscissa on the left.</span>
 <span class="sd">    Column widths follow the widest of the header and its cells, every</span>
@@ -945,15 +945,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ``transpose=True`` turns the table a quarter: one row per curve,</span>
 <span class="sd">    named on the left, one column per point of ``x``. That is the right</span>
 <span class="sd">    way round when the curves are many and their names are long -- six</span>
-<span class="sd">    receivers with names like ``&quot;DBP, 50 steps/span&quot;`` make a table 160</span>
+<span class="sd">    receivers with names like ``"DBP, 50 steps/span"`` make a table 160</span>
 <span class="sd">    characters wide as columns, and a readable one as rows.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : mapping</span>
-<span class="sd">        ``{&quot;x&quot;: abscissa, &quot;curves&quot;: {name: values}}``, see :func:`unpack`.</span>
+<span class="sd">        ``{"x": abscissa, "curves": {name: values}}``, see :func:`unpack`.</span>
 <span class="sd">    xlabel : str, optional, keyword-only</span>
-<span class="sd">        Header of the abscissa column. Default ``&quot;x&quot;``.</span>
+<span class="sd">        Header of the abscissa column. Default ``"x"``.</span>
 <span class="sd">    ylabel : str, optional, keyword-only</span>
 <span class="sd">        What the curves measure, printed as a caption above the table --</span>
 <span class="sd">        the unit belongs there rather than repeated in every cell.</span>
@@ -967,10 +967,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; data = {&quot;x&quot;: [1000, 2000, 4000, 8000],</span>
-<span class="sd">    ...         &quot;curves&quot;: {&quot;Single carrier&quot;: [12.43, 24.81, 49.07, 98.71],</span>
-<span class="sd">    ...                    &quot;OFDM&quot;: [3.21, 5.87, 11.42, 22.31]}}</span>
-<span class="sd">    &gt;&gt;&gt; print(format_data(data, xlabel=&quot;Frame length&quot;, ylabel=&quot;Runtime (ms)&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; data = {"x": [1000, 2000, 4000, 8000],</span>
+<span class="sd">    ...         "curves": {"Single carrier": [12.43, 24.81, 49.07, 98.71],</span>
+<span class="sd">    ...                    "OFDM": [3.21, 5.87, 11.42, 22.31]}}</span>
+<span class="sd">    &gt;&gt;&gt; print(format_data(data, xlabel="Frame length", ylabel="Runtime (ms)"))</span>
 <span class="sd">    Runtime (ms)</span>
 <span class="sd">    Frame length  Single carrier   OFDM</span>
 <span class="sd">    -----------------------------------</span>
@@ -986,8 +986,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    An error rate spans decades, so its column goes to scientific</span>
 <span class="sd">    notation on its own:</span>
 
-<span class="sd">    &gt;&gt;&gt; print(format_data({&quot;x&quot;: [0, 5], &quot;curves&quot;: {&quot;SER&quot;: [7.4e-1, 1.2e-6]}},</span>
-<span class="sd">    ...                   xlabel=&quot;SNR [dB]&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; print(format_data({"x": [0, 5], "curves": {"SER": [7.4e-1, 1.2e-6]}},</span>
+<span class="sd">    ...                   xlabel="SNR [dB]"))</span>
 <span class="sd">    SNR [dB]        SER</span>
 <span class="sd">    -------------------</span>
 <span class="sd">           0  7.400e-01</span>
@@ -995,17 +995,17 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Turned a quarter, when the names are the long part:</span>
 
-<span class="sd">    &gt;&gt;&gt; print(format_data({&quot;x&quot;: [-6.0, -4.5, -3.0],</span>
-<span class="sd">    ...                    &quot;curves&quot;: {&quot;dispersion compensation&quot;:</span>
+<span class="sd">    &gt;&gt;&gt; print(format_data({"x": [-6.0, -4.5, -3.0],</span>
+<span class="sd">    ...                    "curves": {"dispersion compensation":</span>
 <span class="sd">    ...                               [15.8, 17.1, 18.2],</span>
-<span class="sd">    ...                               &quot;DBP, 50 steps/span&quot;:</span>
+<span class="sd">    ...                               "DBP, 50 steps/span":</span>
 <span class="sd">    ...                               [15.9, 17.4, 18.8]}},</span>
-<span class="sd">    ...                   xlabel=&quot;launch power [dBm]&quot;, transpose=True))</span>
+<span class="sd">    ...                   xlabel="launch power [dBm]", transpose=True))</span>
 <span class="sd">    launch power [dBm]       -6.0  -4.5  -3.0</span>
 <span class="sd">    -----------------------------------------</span>
 <span class="sd">    dispersion compensation  15.8  17.1  18.2</span>
 <span class="sd">    DBP, 50 steps/span       15.9  17.4  18.8</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">curves</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">transpose</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_transposed</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">ylabel</span><span class="p">)</span>
@@ -1016,7 +1016,7 @@ window.runMermaid = runMermaid;</script>
               <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
                          <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">width</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span>
                                                  <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
 
@@ -1024,24 +1024,24 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">ylabel</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="n">headers</span><span class="p">))</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
     <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">([</span><span class="n">column</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="print_data">
 <a class="viewcode-back" href="../../documentation/toplevel/data.html#comnumpy.data.print_data">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">print_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
-               <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"x"</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print what :func:`format_data` renders.</span>
+<span class="w">    </span><span class="sd">"""Print what :func:`format_data` renders.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : mapping</span>
-<span class="sd">        ``{&quot;x&quot;: abscissa, &quot;curves&quot;: {name: values}}``, see :func:`unpack`.</span>
+<span class="sd">        ``{"x": abscissa, "curves": {name: values}}``, see :func:`unpack`.</span>
 <span class="sd">    xlabel, ylabel : str, optional, keyword-only</span>
 <span class="sd">        As in :func:`format_data`.</span>
 <span class="sd">    transpose : bool, optional, keyword-only</span>
@@ -1049,12 +1049,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; print_data({&quot;x&quot;: [0, 1], &quot;curves&quot;: {&quot;gain&quot;: [1.5, 2.25]}})</span>
+<span class="sd">    &gt;&gt;&gt; print_data({"x": [0, 1], "curves": {"gain": [1.5, 2.25]}})</span>
 <span class="sd">    x  gain</span>
 <span class="sd">    -------</span>
 <span class="sd">    0  1.50</span>
 <span class="sd">    1  2.25</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">format_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">ylabel</span><span class="p">,</span>
                       <span class="n">transpose</span><span class="o">=</span><span class="n">transpose</span><span class="p">))</span></div>
 
@@ -1066,17 +1066,17 @@ window.runMermaid = runMermaid;</script>
               <span class="n">xlabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
               <span class="n">kind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
               <span class="n">xscale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">yscale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-              <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the same data dictionary as a figure.</span>
+              <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Axes"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw the same data dictionary as a figure.</span>
 
-<span class="sd">    One line per curve, labelled with its name -- the table&#39;s columns and</span>
-<span class="sd">    the figure&#39;s legend come from the same dictionary, so they cannot</span>
+<span class="sd">    One line per curve, labelled with its name -- the table's columns and</span>
+<span class="sd">    the figure's legend come from the same dictionary, so they cannot</span>
 <span class="sd">    describe different runs.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : mapping</span>
-<span class="sd">        ``{&quot;x&quot;: abscissa, &quot;curves&quot;: {name: values}}``, see :func:`unpack`.</span>
+<span class="sd">        ``{"x": abscissa, "curves": {name: values}}``, see :func:`unpack`.</span>
 <span class="sd">    xlabel, ylabel : str, optional, keyword-only</span>
 <span class="sd">        Axis labels.</span>
 <span class="sd">    kind : str, optional, keyword-only</span>
@@ -1084,7 +1084,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        its :data:`~comnumpy.style.KINDS`. Without it the axis still gets</span>
 <span class="sd">        a grid and a legend, but no default labels.</span>
 <span class="sd">    xscale, yscale : str, optional, keyword-only</span>
-<span class="sd">        ``&quot;linear&quot;`` or ``&quot;log&quot;``. Left alone when not given.</span>
+<span class="sd">        ``"linear"`` or ``"log"``. Left alone when not given.</span>
 <span class="sd">    ax : matplotlib.axes.Axes, optional, keyword-only</span>
 <span class="sd">        Axis to draw on; created when None (decision D25).</span>
 <span class="sd">    **kwargs</span>
@@ -1099,13 +1099,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; import matplotlib</span>
-<span class="sd">    &gt;&gt;&gt; matplotlib.use(&quot;Agg&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; data = {&quot;x&quot;: [0, 1, 2], &quot;curves&quot;: {&quot;ZF&quot;: [0.1, 0.05, 0.01],</span>
-<span class="sd">    ...                                    &quot;ML&quot;: [0.08, 0.03, 0.004]}}</span>
-<span class="sd">    &gt;&gt;&gt; ax = plot_data(data, xlabel=&quot;SNR [dB]&quot;, ylabel=&quot;SER&quot;, yscale=&quot;log&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; matplotlib.use("Agg")</span>
+<span class="sd">    &gt;&gt;&gt; data = {"x": [0, 1, 2], "curves": {"ZF": [0.1, 0.05, 0.01],</span>
+<span class="sd">    ...                                    "ML": [0.08, 0.03, 0.004]}}</span>
+<span class="sd">    &gt;&gt;&gt; ax = plot_data(data, xlabel="SNR [dB]", ylabel="SER", yscale="log")</span>
 <span class="sd">    &gt;&gt;&gt; len(ax.lines), ax.get_yscale()</span>
-<span class="sd">    (2, &#39;log&#39;)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    (2, 'log')</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>          <span class="c1"># local import (D36)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">style</span>               <span class="c1"># local import (D36)</span>
 
@@ -1119,7 +1119,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">yscale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># a rate of zero is a missing measurement, not a point at the</span>
         <span class="c1"># bottom of the figure; see plot_error_rate</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s2">&quot;nonpositive&quot;</span><span class="p">:</span> <span class="s2">&quot;mask&quot;</span><span class="p">}</span> <span class="k">if</span> <span class="n">yscale</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="n">yscale</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s2">"nonpositive"</span><span class="p">:</span> <span class="s2">"mask"</span><span class="p">}</span> <span class="k">if</span> <span class="n">yscale</span> <span class="o">==</span> <span class="s2">"log"</span>
                                  <span class="k">else</span> <span class="p">{}))</span>
     <span class="k">if</span> <span class="n">xlabel</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
@@ -1127,8 +1127,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">style</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;both&quot;</span> <span class="k">if</span> <span class="s2">&quot;log&quot;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xscale</span><span class="p">(),</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_yscale</span><span class="p">())</span>
-            <span class="k">else</span> <span class="s2">&quot;major&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">"both"</span> <span class="k">if</span> <span class="s2">"log"</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xscale</span><span class="p">(),</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_yscale</span><span class="p">())</span>
+            <span class="k">else</span> <span class="s2">"major"</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ax</span></div>
 

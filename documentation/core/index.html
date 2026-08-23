@@ -494,15 +494,15 @@
 <h2>Observing signals inside a chain<a class="headerlink" href="#observing-signals-inside-a-chain" title="Link to this heading">#</a></h2>
 <p>A chain describes the communication system and nothing else: there are no
 recorder, logger or scope blocks to insert between the processors. To
-observe a signal, name the block and declare it as a <em>tap</em>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
-                    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn&quot;</span><span class="p">)],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="s2">&quot;awgn&quot;</span><span class="p">])</span>
+observe a signal, name the block and declare it as an <em>observation</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"tx"</span><span class="p">),</span> <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">alphabet</span><span class="p">),</span>
+                    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"awgn"</span><span class="p">)],</span> <span class="n">observations</span><span class="o">=</span><span class="p">[</span><span class="s2">"tx"</span><span class="p">,</span> <span class="s2">"awgn"</span><span class="p">])</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;awgn&quot;</span><span class="p">))</span>
+<span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">observation</span><span class="p">(</span><span class="s2">"awgn"</span><span class="p">))</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">taps</span></code> is chain metadata: each tapped block costs one dictionary store of
-a reference (no copy), and <a class="reference internal" href="generics.html#comnumpy.core.generics.Sequential.tap" title="comnumpy.core.generics.Sequential.tap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tap()</span></code></a>
+<p><code class="docutils literal notranslate"><span class="pre">observations</span></code> is chain metadata: each observed block costs one dictionary store of
+a reference (no copy), and <a class="reference internal" href="generics.html#comnumpy.core.generics.Sequential.observation" title="comnumpy.core.generics.Sequential.observation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">observation()</span></code></a>
 returns the recorded array afterwards. Plotting and reporting are plain
 functions applied to the extracted arrays – see <a class="reference internal" href="visualizers.html"><span class="doc">Visualizers</span></a> and
 <code class="docutils literal notranslate"><span class="pre">comnumpy.core.metrics.signal_report</span></code>.</p>

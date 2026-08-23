@@ -726,14 +726,14 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.fec.ldpc</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;LDPC coding: systematic encoder and min-sum decoder (decision D5).</span>
+<span></span><span class="sd">"""LDPC coding: systematic encoder and min-sum decoder (decision D5).</span>
 
 <span class="sd">Same vectorization philosophy as the convolutional module (D4): the</span>
 <span class="sd">decoder state lives in ``(batch, n_edges)`` arrays, message-passing</span>
 <span class="sd">updates are segmented numpy reductions (``ufunc.reduceat``) over the</span>
 <span class="sd">edges of the Tanner graph, and the only Python loop is over decoding</span>
 <span class="sd">iterations.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
@@ -744,16 +744,16 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LDPCEncoder&quot;</span><span class="p">,</span> <span class="s2">&quot;LDPCDecoder&quot;</span><span class="p">,</span> <span class="s2">&quot;make_gallager_parity_check&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"LDPCEncoder"</span><span class="p">,</span> <span class="s2">"LDPCDecoder"</span><span class="p">,</span> <span class="s2">"make_gallager_parity_check"</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_rref_gf2</span><span class="p">(</span><span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduced row echelon form of ``H`` over GF(2).</span>
+<span class="w">    </span><span class="sd">"""Reduced row echelon form of ``H`` over GF(2).</span>
 
 <span class="sd">    Returns the ``(rank, n)`` reduced matrix (dependent rows dropped)</span>
 <span class="sd">    and the pivot column indices. Non-pivot columns are the free</span>
 <span class="sd">    (information) positions of the systematic encoding.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">A</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">pivot_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -779,7 +779,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/ldpc.html#comnumpy.fec.ldpc.make_gallager_parity_check">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_gallager_parity_check</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">d_c</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
                                <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Regular parity-check matrix from the Gallager ensemble.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Regular parity-check matrix from the Gallager ensemble.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -809,7 +809,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    R. G. Gallager, &quot;Low-density parity-check codes,&quot; IRE Trans. Inf.</span>
+<span class="sd">    R. G. Gallager, "Low-density parity-check codes," IRE Trans. Inf.</span>
 <span class="sd">    Theory 8(1), 1962.</span>
 
 <span class="sd">    Examples</span>
@@ -817,11 +817,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; H = make_gallager_parity_check(12, d_v=3, d_c=6, seed=0)</span>
 <span class="sd">    &gt;&gt;&gt; print(H.shape, int(H.sum(axis=0)[0]), int(H.sum(axis=1)[0]))</span>
 <span class="sd">    (6, 12) 3 6</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="n">d_c</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> must be a multiple of d_c=</span><span class="si">{</span><span class="n">d_c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> must be a multiple of d_c=</span><span class="si">{</span><span class="n">d_c</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">d_v</span> <span class="o">&lt;</span> <span class="n">d_c</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;need 0 &lt; d_v &lt; d_c, got d_v=</span><span class="si">{</span><span class="n">d_v</span><span class="si">}</span><span class="s2">, d_c=</span><span class="si">{</span><span class="n">d_c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"need 0 &lt; d_v &lt; d_c, got d_v=</span><span class="si">{</span><span class="n">d_v</span><span class="si">}</span><span class="s2">, d_c=</span><span class="si">{</span><span class="n">d_c</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
     <span class="n">band</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span> <span class="o">//</span> <span class="n">d_c</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">//</span> <span class="n">d_c</span><span class="p">):</span>
@@ -835,7 +835,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/ldpc.html#comnumpy.fec.ldpc.LDPCEncoder">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LDPCEncoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Systematic encoder for an LDPC code given its parity-check matrix.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Systematic encoder for an LDPC code given its parity-check matrix.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -862,7 +862,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Parity-check matrix of shape ``(m, n)`` (entries 0/1); must</span>
 <span class="sd">        match the decoder.</span>
 <span class="sd">    name : str, keyword-only</span>
-<span class="sd">        Name of the processor. Default ``&quot;ldpc_encoder&quot;``.</span>
+<span class="sd">        Name of the processor. Default ``"ldpc_encoder"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -880,9 +880,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [0 0 1 0 0 1 1]</span>
 <span class="sd">    &gt;&gt;&gt; print(H @ c % 2)</span>
 <span class="sd">    [0 0 0]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ldpc_encoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ldpc_encoder"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># systematic structure (parametric, allowed in __post_init__)</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -900,15 +900,15 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Code rate :math:`k / n` (true rank, not design rate).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Code rate :math:`k / n` (true rank, not design rate)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;LDPCEncoder expects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2"> information bits on the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;last axis, got </span><span class="si">{</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- k = n - rank(H).&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"LDPCEncoder expects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="si">}</span><span class="s2"> information bits on the "</span>
+                <span class="sa">f</span><span class="s2">"last axis, got </span><span class="si">{</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- k = n - rank(H)."</span><span class="p">)</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
         <span class="n">c</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">free_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">bits</span>
         <span class="n">c</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pivot_cols</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">bits</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_P</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
@@ -920,7 +920,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/ldpc.html#comnumpy.fec.ldpc.LDPCDecoder">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LDPCDecoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Min-sum belief-propagation decoder for an LDPC code.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-sum belief-propagation decoder for an LDPC code.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -932,11 +932,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    .. math::</span>
 
 <span class="sd">        m_{i \to j} = \alpha</span>
-<span class="sd">        \prod_{j&#39; \in N(i) \setminus j} \mathrm{sign}(m_{j&#39; \to i})</span>
-<span class="sd">        \min_{j&#39; \in N(i) \setminus j} |m_{j&#39; \to i}|</span>
+<span class="sd">        \prod_{j' \in N(i) \setminus j} \mathrm{sign}(m_{j' \to i})</span>
+<span class="sd">        \min_{j' \in N(i) \setminus j} |m_{j' \to i}|</span>
 
 <span class="sd">    and the variable update is</span>
-<span class="sd">    :math:`m_{j \to i} = L_j + \sum_{i&#39; \in N(j) \setminus i} m_{i&#39; \to j}`.</span>
+<span class="sd">    :math:`m_{j \to i} = L_j + \sum_{i' \in N(j) \setminus i} m_{i' \to j}`.</span>
 <span class="sd">    Iterations stop early when the hard decision satisfies every parity</span>
 <span class="sd">    check. All messages live in ``(batch, n_edges)`` arrays; the check</span>
 <span class="sd">    and variable updates are segmented reductions over edges sorted by</span>
@@ -944,8 +944,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    iterations.</span>
 
 <span class="sd">    Axes: *axis -1* -- channel LLRs on the last axis, broadcast over</span>
-<span class="sd">    the rest; ``(..., n)`` maps to ``(..., k)`` (``output=&quot;info&quot;``) or</span>
-<span class="sd">    ``(..., n)`` (``output=&quot;codeword&quot;``).</span>
+<span class="sd">    the rest; ``(..., n)`` maps to ``(..., k)`` (``output="info"``) or</span>
+<span class="sd">    ``(..., n)`` (``output="codeword"``).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -958,11 +958,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Normalization factor of the check update (normalized min-sum).</span>
 <span class="sd">        Default 1.0 (plain min-sum); 0.75 is a common choice that</span>
 <span class="sd">        recovers most of the sum-product gap.</span>
-<span class="sd">    output : {&quot;info&quot;, &quot;codeword&quot;}, keyword-only</span>
+<span class="sd">    output : {"info", "codeword"}, keyword-only</span>
 <span class="sd">        Return the information bits at the systematic positions</span>
 <span class="sd">        (default) or the full hard-decision codeword.</span>
 <span class="sd">    name : str, keyword-only</span>
-<span class="sd">        Name of the processor. Default ``&quot;ldpc_decoder&quot;``.</span>
+<span class="sd">        Name of the processor. Default ``"ldpc_decoder"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -971,10 +971,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    R. G. Gallager, &quot;Low-density parity-check codes,&quot; IRE Trans. Inf.</span>
-<span class="sd">    Theory 8(1), 1962; J. Chen, M. Fossorier, &quot;Near optimum universal</span>
+<span class="sd">    R. G. Gallager, "Low-density parity-check codes," IRE Trans. Inf.</span>
+<span class="sd">    Theory 8(1), 1962; J. Chen, M. Fossorier, "Near optimum universal</span>
 <span class="sd">    belief propagation based decoding of low-density parity check</span>
-<span class="sd">    codes,&quot; IEEE Trans. Commun. 50(3), 2002 (normalized min-sum).</span>
+<span class="sd">    codes," IEEE Trans. Commun. 50(3), 2002 (normalized min-sum).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -987,12 +987,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; decoder = LDPCDecoder(H)</span>
 <span class="sd">    &gt;&gt;&gt; print(decoder(llr))</span>
 <span class="sd">    [1 0 1 1]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">H</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">output</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;codeword&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ldpc_decoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"info"</span><span class="p">,</span> <span class="s2">"codeword"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"info"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ldpc_decoder"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Tanner graph in edge form (parametric, allowed in __post_init__)</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">free_cols</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1013,15 +1013,15 @@ window.runMermaid = runMermaid;</script>
         <span class="n">v_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_idx</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_c_counts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v_counts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;LDPCDecoder: H has an empty row or column -- every &quot;</span>
-                <span class="s2">&quot;check and every variable must touch at least one edge.&quot;</span><span class="p">)</span>
+                <span class="s2">"LDPCDecoder: H has an empty row or column -- every "</span>
+                <span class="s2">"check and every variable must touch at least one edge."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_c_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
             <span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_c_counts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_v_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_idx</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_v_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_idx</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"stable"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_v_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">v_counts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m_vc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Min-sum extrinsic check-to-variable messages, (batch, E).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Min-sum extrinsic check-to-variable messages, (batch, E)."""</span>
         <span class="n">starts</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c_starts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c_counts</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">m_vc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
         <span class="n">sign_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
@@ -1044,8 +1044,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">llr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">llr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;LDPCDecoder expects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2"> channel LLRs on the last &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;axis, got </span><span class="si">{</span><span class="n">llr</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- one LLR per codeword bit.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"LDPCDecoder expects </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2"> channel LLRs on the last "</span>
+                <span class="sa">f</span><span class="s2">"axis, got </span><span class="si">{</span><span class="n">llr</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- one LLR per codeword bit."</span><span class="p">)</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">llr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">L</span> <span class="o">=</span> <span class="n">llr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>                       <span class="c1"># (B, n)</span>
         <span class="n">var_idx</span><span class="p">,</span> <span class="n">v_order</span><span class="p">,</span> <span class="n">v_starts</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_var_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_v_order</span><span class="p">,</span>
@@ -1065,7 +1065,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">m_vc</span> <span class="o">=</span> <span class="n">L_total</span><span class="p">[:,</span> <span class="n">var_idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">m_cv</span>
 
         <span class="n">hard</span> <span class="o">=</span> <span class="n">hard</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;codeword&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">"codeword"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">hard</span>
         <span class="k">return</span> <span class="n">hard</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">free_cols</span><span class="p">]</span></div>
 

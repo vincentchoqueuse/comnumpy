@@ -770,7 +770,7 @@ and shows what the second version has that the first does not.</p>
 <li><p>What a one-shot AWGN simulation is, written out by hand.</p></li>
 <li><p>Which parts of it are conventions you have to keep consistent yourself.</p></li>
 <li><p>How to assemble the same thing as a <code class="docutils literal notranslate"><span class="pre">Sequential</span></code> chain, and how to look
-inside it with a tap.</p></li>
+inside it with an observation.</p></li>
 <li><p>What a <code class="docutils literal notranslate"><span class="pre">Constellation</span></code> knows about itself, and why that matters more than
 it looks.</p></li>
 </ul>
@@ -782,11 +782,11 @@ it looks.</p></li>
 <span class="n">comnumpy</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;One AWGN simulation, written twice: by hand, then as a chain.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""One AWGN simulation, written twice: by hand, then as a chain.</span>
 
 <span class="sd">Run from this directory: it writes the figures and diagrams of the</span>
 <span class="sd">getting-started page into ../../docs/getting_started/.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
@@ -801,8 +801,8 @@ it looks.</p></li>
 
 <span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
 
-<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/img/&quot;</span>
-<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
+<span class="n">img_dir</span> <span class="o">=</span> <span class="s2">"../../docs/getting_started/img/"</span>
+<span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">"../../docs/getting_started/mermaid/"</span>
 
 <span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span>     <span class="c1"># number of symbols</span>
 <span class="n">snr_dB</span> <span class="o">=</span> <span class="mi">10</span>   <span class="c1"># signal-to-noise ratio per symbol, in dB</span>
@@ -864,7 +864,7 @@ a formula that has to have been got right.</p></li>
     <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">bits</span> <span class="o">*</span> <span class="n">snr_per_bit</span> <span class="o">/</span> <span class="p">(</span><span class="n">order</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
 <span class="n">ser_theo_by_hand</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">component</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;by hand : SER = </span><span class="si">{</span><span class="n">ser_by_hand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, theory = </span><span class="si">{</span><span class="n">ser_theo_by_hand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"by hand : SER = </span><span class="si">{</span><span class="n">ser_by_hand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, theory = </span><span class="si">{</span><span class="n">ser_theo_by_hand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>None of this is hard. All of it is a place where a study drifts as it grows:
@@ -876,25 +876,25 @@ with nothing checking that they did.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- 2. the same thing, as a chain ------------------------------------</span>
 <span class="c1"># The constellation is one object: it holds the alphabet, its order and</span>
 <span class="c1"># its own closed form, so the modulation is named once.</span>
-<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">"QAM"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 
 <span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span>
+    <span class="n">SymbolGenerator</span><span class="p">(</span><span class="n">constellation</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"tx"</span><span class="p">),</span>
     <span class="n">SymbolMapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;awgn&quot;</span><span class="p">),</span>
+    <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"awgn"</span><span class="p">),</span>
     <span class="n">SymbolDemapper</span><span class="p">(</span><span class="n">constellation</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="s2">&quot;awgn&quot;</span><span class="p">])</span>
+    <span class="p">],</span> <span class="n">observations</span><span class="o">=</span><span class="p">[</span><span class="s2">"tx"</span><span class="p">,</span> <span class="s2">"awgn"</span><span class="p">])</span>
 
 <span class="c1"># seeded, so the number this page quotes is the number you get (D6)</span>
 <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
 
-<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">ser</span> <span class="o">=</span> <span class="n">compute_ser</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">observation</span><span class="p">(</span><span class="s2">"tx"</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 <span class="c1"># AWGN(snr_dB=) is a symbol SNR and the closed form is quoted against</span>
-<span class="c1"># Eb/N0: per=&quot;symbol&quot; makes the conversion, which is 10log10(k) dB.</span>
-<span class="n">ser_theo</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">&quot;symbol&quot;</span><span class="p">)[</span><span class="s2">&quot;ser&quot;</span><span class="p">]</span>
+<span class="c1"># Eb/N0: per="symbol" makes the conversion, which is 10log10(k) dB.</span>
+<span class="n">ser_theo</span> <span class="o">=</span> <span class="n">constellation</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">snr_dB</span><span class="p">,</span> <span class="n">per</span><span class="o">=</span><span class="s2">"symbol"</span><span class="p">)[</span><span class="s2">"ser"</span><span class="p">]</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;chain   : SER = </span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, theory = </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"chain   : SER = </span><span class="si">{</span><span class="n">ser</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, theory = </span><span class="si">{</span><span class="n">ser_theo</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre  class="mermaid">
@@ -906,11 +906,11 @@ with nothing checking that they did.</p>
     tx --&gt; symbol_mapper
     symbol_mapper --&gt; awgn
     awgn --&gt; symbol_demapper
-    classDef tapped stroke-dasharray: 4 2
-    class tx,awgn tapped
+    classDef observed stroke-dasharray: 4 2
+    class tx,awgn observed
     </pre><p>The diagram is not drawn by hand: it is what the chain says about itself,
 <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code>, so the block names are the ones the code uses and a
-dashed outline marks a tapped block.</p>
+dashed outline marks an observed block.</p>
 <p>Four processors, and each one is worth a sentence – these four come back in
 every tutorial that follows:</p>
 <ul class="simple">
@@ -935,9 +935,9 @@ passed, and the factor <span class="math notranslate nohighlight">\(k\)</span> i
 than in the caller’s head.</p>
 <p><strong>Nothing in the chain records, displays or measures.</strong> A chain contains
 communication blocks only. To see a signal in the middle of it, give the
-block a name and declare that name as a <strong>tap</strong> – <code class="docutils literal notranslate"><span class="pre">taps=[&quot;tx&quot;,</span> <span class="pre">&quot;awgn&quot;]</span></code>
+block a name and declare that name as an <strong>observation</strong> – <code class="docutils literal notranslate"><span class="pre">observations=[&quot;tx&quot;,</span> <span class="pre">&quot;awgn&quot;]</span></code>
 above – and the chain keeps what that block produced. One habit to take
-right away: <em>run the chain first, read the tap after</em>. A tap holds the last
+right away: <em>run the chain first, read the observation after</em>. An observation holds the last
 run, so reading it before calling the chain raises rather than returning
 stale data.</p>
 <p><code class="docutils literal notranslate"><span class="pre">seed</span></code> fixes every random draw in the chain, so the numbers below are the
@@ -985,18 +985,18 @@ which is what <a class="reference internal" href="../tutorials/ofdm_papr.html"><
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- 4. the figures ---------------------------------------------------</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">))</span>
 <span class="n">constellation</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;awgn&quot;</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;received at </span><span class="si">{</span><span class="n">snr_dB</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">plot_iq</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">observation</span><span class="p">(</span><span class="s2">"awgn"</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"received at </span><span class="si">{</span><span class="n">snr_dB</span><span class="si">}</span><span class="s2"> dB"</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/first_simulation_fig1.png&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">img_dir</span><span class="si">}</span><span class="s2">/first_simulation_fig1.png"</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/first_simulation.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/first_simulation.mmd"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
     <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/first_simulation_fig1.png"><img alt="../_images/first_simulation_fig1.png" class="align-center" src="../_images/first_simulation_fig1.png" style="width: 100%;" />
 </a>
 <p>The chain answers the same way:
-<a class="reference internal" href="../documentation/core/generics.html#comnumpy.core.generics.Sequential.tap" title="comnumpy.core.generics.Sequential.tap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tap()</span></code></a> for a signal inside it,
+<a class="reference internal" href="../documentation/core/generics.html#comnumpy.core.generics.Sequential.observation" title="comnumpy.core.generics.Sequential.observation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">observation()</span></code></a> for a signal inside it,
 <code class="docutils literal notranslate"><span class="pre">seed</span></code> for reproducibility,
 <a class="reference internal" href="../documentation/core/generics.html#comnumpy.core.generics.Sequential.set_params" title="comnumpy.core.generics.Sequential.set_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_params()</span></code></a> to reconfigure a named
 block after construction, <code class="docutils literal notranslate"><span class="pre">elapsed_</span></code> for the time the last pass took, and

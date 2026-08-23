@@ -726,7 +726,7 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.optical.raman</h1><div class="highlight"><pre>
-<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Distributed Raman amplification: gain spectra and the pump equations.</span>
+<span></span><span class="sa">r</span><span class="sd">"""Distributed Raman amplification: gain spectra and the pump equations.</span>
 
 <span class="sd">Two objects and one solver, split the way the physics is:</span>
 
@@ -751,7 +751,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">would describe a discrete amplifier, which is the one thing distributed</span>
 <span class="sd">amplification is not. What this module produces is the gain profile</span>
 <span class="sd">:math:`G(z)`, meant to be applied inside the linear step.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -763,9 +763,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RamanGainSpectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;RamanSolution&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_raman&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;get_gain_spectrum&quot;</span><span class="p">,</span> <span class="s2">&quot;register_gain_spectrum&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;available_gain_spectra&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"RamanGainSpectrum"</span><span class="p">,</span> <span class="s2">"RamanSolution"</span><span class="p">,</span> <span class="s2">"solve_raman"</span><span class="p">,</span>
+           <span class="s2">"get_gain_spectrum"</span><span class="p">,</span> <span class="s2">"register_gain_spectrum"</span><span class="p">,</span>
+           <span class="s2">"available_gain_spectra"</span><span class="p">]</span>
 
 <span class="n">PLANCK</span> <span class="o">=</span> <span class="mf">6.62607015e-34</span>          <span class="c1"># J s</span>
 <span class="n">BOLTZMANN</span> <span class="o">=</span> <span class="mf">1.380649e-23</span>         <span class="c1"># J/K</span>
@@ -774,7 +774,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_scale</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">low</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
                  <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">slips</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reject a value that is off by orders of magnitude, and say why.</span>
+<span class="w">    </span><span class="sd">"""Reject a value that is off by orders of magnitude, and say why.</span>
 
 <span class="sd">    Every parameter below is a physical quantity in a stated unit, and</span>
 <span class="sd">    the failure that matters is not a wrong value -- it is the *right*</span>
@@ -787,28 +787,28 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    check, so any real glass or fibre must fit inside it. ``slips`` maps</span>
 <span class="sd">    a candidate unit to the factor that converts it *to* the expected</span>
 <span class="sd">    one, so the message can name the mistake instead of only the bound.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">for</span> <span class="n">candidate</span><span class="p">,</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">slips</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">converted</span> <span class="o">=</span> <span class="n">value</span> <span class="o">*</span> <span class="n">factor</span>
         <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">converted</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, but reading it as </span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;gives </span><span class="si">{</span><span class="n">converted</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, which is in range -- the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;parameter is expected in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, but reading it as </span><span class="si">{</span><span class="n">candidate</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"gives </span><span class="si">{</span><span class="n">converted</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, which is in range -- the "</span>
+                <span class="sa">f</span><span class="s2">"parameter is expected in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible </span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">; this is a unit check rather than a physical &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;one, so a value outside it is almost always a scale mistake&quot;</span><span class="p">)</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> is far outside the plausible </span><span class="si">{</span><span class="n">low</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> to "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">high</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">; this is a unit check rather than a physical "</span>
+        <span class="sa">f</span><span class="s2">"one, so a value outside it is almost always a scale mistake"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="RamanGainSpectrum">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RamanGainSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalized Raman gain shape against the pump-signal frequency shift.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalized Raman gain shape against the pump-signal frequency shift.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -822,7 +822,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    This object carries the **shape** :math:`\tilde{g}(\Delta \nu)`,</span>
 <span class="sd">    normalized so that :math:`\max_{\Delta \nu} \tilde{g} = 1`; the</span>
-<span class="sd">    fibre&#39;s peak coefficient :math:`g_R / A_\mathrm{eff}` multiplies it</span>
+<span class="sd">    fibre's peak coefficient :math:`g_R / A_\mathrm{eff}` multiplies it</span>
 <span class="sd">    (see :func:`solve_raman`). Exactly one of the two closed forms below</span>
 <span class="sd">    is selected, the D41 way -- one keyword per parameterization, no</span>
 <span class="sd">    discriminator argument.</span>
@@ -858,7 +858,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Normalizing to the peak leaves a single free number,</span>
 <span class="sd">    :math:`\Delta \nu_\mathrm{peak}`: the slope is then</span>
 <span class="sd">    :math:`1/\Delta \nu_\mathrm{peak}` in normalized units and the</span>
-<span class="sd">    absolute slope comes from the fibre&#39;s peak coefficient.</span>
+<span class="sd">    absolute slope comes from the fibre's peak coefficient.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -869,7 +869,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Peak Stokes shift :math:`\Delta \nu_\mathrm{peak}` in THz.</span>
 <span class="sd">        Mutually exclusive with ``lorentzian``.</span>
 <span class="sd">    standard : str, keyword-only</span>
-<span class="sd">        Name of the model, e.g. ``&quot;Blow-Wood&quot;``.</span>
+<span class="sd">        Name of the model, e.g. ``"Blow-Wood"``.</span>
 <span class="sd">    reference : str, keyword-only</span>
 <span class="sd">        Publication the parameters were copied from (same provenance</span>
 <span class="sd">        rule as D15/D20/D43).</span>
@@ -890,8 +890,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    K. J. Blow, D. Wood, &quot;Theoretical description of transient</span>
-<span class="sd">    stimulated Raman scattering in optical fibers&quot;, IEEE J. Quantum</span>
+<span class="sd">    K. J. Blow, D. Wood, "Theoretical description of transient</span>
+<span class="sd">    stimulated Raman scattering in optical fibers", IEEE J. Quantum</span>
 <span class="sd">    Electron., vol. 25, no. 12, pp. 2665-2673, 1989.</span>
 
 <span class="sd">    G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
@@ -899,12 +899,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; spectrum = get_gain_spectrum("blow-wood")</span>
 <span class="sd">    &gt;&gt;&gt; round(spectrum.peak_shift_THz, 2)</span>
 <span class="sd">    13.08</span>
 <span class="sd">    &gt;&gt;&gt; round(float(spectrum.shape(13.08e12)), 6)</span>
 <span class="sd">    1.0</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">lorentzian</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">triangular</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -912,73 +912,73 @@ window.runMermaid = runMermaid;</script>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">quoted_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"custom"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">given</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">),</span>
-                                          <span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span>
-                                          <span class="p">(</span><span class="s2">&quot;tabulated&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">))</span>
+        <span class="n">given</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"lorentzian"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span><span class="p">),</span>
+                                          <span class="p">(</span><span class="s2">"triangular"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span>
+                                          <span class="p">(</span><span class="s2">"tabulated"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">))</span>
                  <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">given</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected exactly one parameterization, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">given</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="si">}</span><span class="s2"> -- pass lorentzian=(tau1_fs, tau2_fs), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;triangular=peak_shift_THz, or &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;tabulated=(shift_Hz, gain)&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected exactly one parameterization, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">given</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2"> -- pass lorentzian=(tau1_fs, tau2_fs), "</span>
+                <span class="sa">f</span><span class="s2">"triangular=peak_shift_THz, or "</span>
+                <span class="sa">f</span><span class="s2">"tabulated=(shift_Hz, gain)"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">shift</span><span class="p">,</span> <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
                            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">shift</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">shift</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;expected two 1D arrays of the same length, got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"expected two 1D arrays of the same length, got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">shift</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;a measured spectrum needs at least two points, got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"a measured spectrum needs at least two points, got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">shift</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;expected the Stokes shifts to be strictly increasing; &quot;</span>
-                    <span class="s2">&quot;sort the table before passing it, so that the &quot;</span>
-                    <span class="s2">&quot;interpolation cannot silently fold back on itself&quot;</span><span class="p">)</span>
+                    <span class="s2">"expected the Stokes shifts to be strictly increasing; "</span>
+                    <span class="s2">"sort the table before passing it, so that the "</span>
+                    <span class="s2">"interpolation cannot silently fold back on itself"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">shift</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;expected non-negative Stokes shifts: the table gives &quot;</span>
-                    <span class="s2">&quot;the gain a pump grants a signal below it, and the &quot;</span>
-                    <span class="s2">&quot;other side is fixed by the model, not measured&quot;</span><span class="p">)</span>
+                    <span class="s2">"expected non-negative Stokes shifts: the table gives "</span>
+                    <span class="s2">"the gain a pump grants a signal below it, and the "</span>
+                    <span class="s2">"other side is fixed by the model, not measured"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;expected a positive peak gain, got </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"expected a positive peak gain, got </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gain</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="c1"># the shifts are the axis a unit slip hides in: a table given</span>
             <span class="c1"># in THz is still increasing, still positive, and still</span>
             <span class="c1"># interpolates -- it simply puts the whole Raman band inside</span>
             <span class="c1"># the first 40 Hz, where no pump-signal pair ever lands, and</span>
             <span class="c1"># the model then reports no gain at all rather than an error</span>
-            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the largest tabulated Stokes shift&quot;</span><span class="p">,</span>
-                         <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">shift</span><span class="p">)),</span> <span class="mf">1e11</span><span class="p">,</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">&quot;Hz&quot;</span><span class="p">,</span>
-                         <span class="p">{</span><span class="s2">&quot;terahertz&quot;</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">,</span> <span class="s2">&quot;gigahertz&quot;</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">})</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tabulated&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">gain</span><span class="p">))</span>
+            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">"the largest tabulated Stokes shift"</span><span class="p">,</span>
+                         <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">shift</span><span class="p">)),</span> <span class="mf">1e11</span><span class="p">,</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">"Hz"</span><span class="p">,</span>
+                         <span class="p">{</span><span class="s2">"terahertz"</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">,</span> <span class="s2">"gigahertz"</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">})</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"tabulated"</span><span class="p">,</span> <span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">gain</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">tau1</span><span class="p">,</span> <span class="n">tau2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
             <span class="k">if</span> <span class="n">tau1</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">tau2</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;expected positive time constants in fs, got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">tau1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">tau2</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">tau</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;tau1&quot;</span><span class="p">,</span> <span class="n">tau1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;tau2&quot;</span><span class="p">,</span> <span class="n">tau2</span><span class="p">)):</span>
-                <span class="n">_check_scale</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">,</span>
-                             <span class="p">{</span><span class="s2">&quot;seconds&quot;</span><span class="p">:</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">&quot;picoseconds&quot;</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;lorentzian&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tau1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau2</span><span class="p">)))</span>
+                    <span class="sa">f</span><span class="s2">"expected positive time constants in fs, got "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">tau1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">tau2</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">tau</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"tau1"</span><span class="p">,</span> <span class="n">tau1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"tau2"</span><span class="p">,</span> <span class="n">tau2</span><span class="p">)):</span>
+                <span class="n">_check_scale</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">"fs"</span><span class="p">,</span>
+                             <span class="p">{</span><span class="s2">"seconds"</span><span class="p">:</span> <span class="mf">1e15</span><span class="p">,</span> <span class="s2">"picoseconds"</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"lorentzian"</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tau1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau2</span><span class="p">)))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;expected a positive peak shift in THz, got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;THz&quot;</span><span class="p">,</span>
-                         <span class="p">{</span><span class="s2">&quot;hertz&quot;</span><span class="p">:</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="s2">&quot;gigahertz&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;triangular&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
+                    <span class="sa">f</span><span class="s2">"expected a positive peak shift in THz, got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">_check_scale</span><span class="p">(</span><span class="s2">"triangular"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">"THz"</span><span class="p">,</span>
+                         <span class="p">{</span><span class="s2">"hertz"</span><span class="p">:</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="s2">"gigahertz"</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"triangular"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_quoted_at</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_quoted_at</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -988,28 +988,28 @@ window.runMermaid = runMermaid;</script>
             <span class="n">wavelength_nm</span><span class="p">,</span> <span class="n">area_um2</span><span class="p">,</span> <span class="n">radius_um</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;expected quoted_at=(wavelength_nm, effective_area_um2, &quot;</span>
-                <span class="s2">&quot;core_radius_um) -- the three travel together because the &quot;</span>
-                <span class="s2">&quot;scaling is meaningless with any one of them missing&quot;</span>
+                <span class="s2">"expected quoted_at=(wavelength_nm, effective_area_um2, "</span>
+                <span class="s2">"core_radius_um) -- the three travel together because the "</span>
+                <span class="s2">"scaling is meaningless with any one of them missing"</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
         <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">,</span> <span class="n">area_um2</span><span class="p">,</span> <span class="n">radius_um</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected three positive numbers in quoted_at, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">area_um2</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">radius_um</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted wavelength&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span>
-                     <span class="mf">100.0</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;metres&quot;</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">,</span> <span class="s2">&quot;micrometres&quot;</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
-        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted effective area&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
-                     <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;um^2&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;square metres&quot;</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">})</span>
-        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">&quot;the quoted core radius&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">),</span>
-                     <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;um&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;metres&quot;</span><span class="p">:</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">&quot;nanometres&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;quoted_at&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"expected three positive numbers in quoted_at, got "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">area_um2</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">radius_um</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">"the quoted wavelength"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span>
+                     <span class="mf">100.0</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="s2">"nm"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"metres"</span><span class="p">:</span> <span class="mf">1e9</span><span class="p">,</span> <span class="s2">"micrometres"</span><span class="p">:</span> <span class="mf">1e3</span><span class="p">})</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">"the quoted effective area"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
+                     <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">"um^2"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"square metres"</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">})</span>
+        <span class="n">_check_scale</span><span class="p">(</span><span class="s2">"the quoted core radius"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">),</span>
+                     <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">,</span> <span class="s2">"um"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"metres"</span><span class="p">:</span> <span class="mf">1e6</span><span class="p">,</span> <span class="s2">"nanometres"</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">})</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"quoted_at"</span><span class="p">,</span>
                            <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_um2</span><span class="p">),</span>
                             <span class="nb">float</span><span class="p">(</span><span class="n">radius_um</span><span class="p">)))</span>
 
 <div class="viewcode-block" id="RamanGainSpectrum.pair_scaling">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum.pair_scaling">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pair_scaling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Waveguide correction of the gain, per (receiver, partner) pair.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Waveguide correction of the gain, per (receiver, partner) pair.</span>
 
 <span class="sd">        The gain :meth:`shape` is a property of the glass and depends on</span>
 <span class="sd">        the Stokes shift alone. The coefficient that multiplies</span>
@@ -1049,21 +1049,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        source for them; the one-parameter law above is that model with</span>
 <span class="sd">        the index contrast eliminated, and is derived in</span>
 <span class="sd">        ``validation/optical_raman_gnpy.py`` rather than taken from a</span>
-<span class="sd">        paper. The gain profile it is applied to comes from A. D&#39;Amico</span>
+<span class="sd">        paper. The gain profile it is applied to comes from A. D'Amico</span>
 <span class="sd">        et al., J. Lightwave Technol., vol. 40, pp. 3499-3511, 2022,</span>
 <span class="sd">        Section III.D.</span>
 
 <span class="sd">        The confirmation that matters is empirical rather than</span>
 <span class="sd">        bibliographic: with this law the coupling coefficients match</span>
-<span class="sd">        GNPy&#39;s element by element on the gain side, ratio 1.0000.</span>
+<span class="sd">        GNPy's element by element on the gain side, ratio 1.0000.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum("blow-wood")</span>
 <span class="sd">        &gt;&gt;&gt; float(np.max(np.abs(spectrum.pair_scaling(</span>
 <span class="sd">        ...     np.array([193e12, 206e12])) - 1.0)))</span>
 <span class="sd">        0.0</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">frequency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frequency_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quoted_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
@@ -1077,7 +1077,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># -- the shape --------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unnormalized gain, for the shift in Hz (may be negative).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Unnormalized gain, for the shift in Hz (may be negative)."""</span>
         <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">grid</span><span class="p">,</span> <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabulated</span>
@@ -1100,13 +1100,13 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="RamanGainSpectrum.shape">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanGainSpectrum.shape">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalized gain :math:`\tilde{g}(\Delta \nu)`, peak value 1.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Normalized gain :math:`\tilde{g}(\Delta \nu)`, peak value 1.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        shift_Hz : array_like</span>
 <span class="sd">            Stokes shift :math:`\Delta \nu = \nu_p - \nu_s` in Hz. A</span>
-<span class="sd">            negative shift means the &quot;signal&quot; is above the pump, where</span>
+<span class="sd">            negative shift means the "signal" is above the pump, where</span>
 <span class="sd">            the model gives no gain.</span>
 
 <span class="sd">        Returns</span>
@@ -1116,46 +1116,46 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum(&quot;triangular&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; spectrum = get_gain_spectrum("triangular")</span>
 <span class="sd">        &gt;&gt;&gt; [round(float(spectrum.shape(f)), 3) for f in (0.0, 6e12, -6e12)]</span>
 <span class="sd">        [0.0, 0.455, 0.0]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">peak</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">())))</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">)</span> <span class="o">/</span> <span class="n">peak</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
 
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_probe_grid</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shift grid used to locate the peak and the width, in Hz.</span>
+<span class="w">        </span><span class="sd">"""Shift grid used to locate the peak and the width, in Hz.</span>
 
 <span class="sd">        0 to 40 THz at 0.1 GHz: the silica gain is negligible past</span>
 <span class="sd">        40 THz, and the step is what fixes the two decimals the</span>
 <span class="sd">        self-check compares.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">40e12</span><span class="p">,</span> <span class="mi">400_001</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">peak_shift_THz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Stokes shift :math:`\Delta \nu_\mathrm{peak}` of the maximum.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Stokes shift :math:`\Delta \nu_\mathrm{peak}` of the maximum."""</span>
         <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">grid</span><span class="p">)))]</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fwhm_THz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full width at half maximum of the gain shape, in THz.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Full width at half maximum of the gain shape, in THz."""</span>
         <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_grid</span><span class="p">()</span>
         <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
         <span class="n">above</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">gain</span> <span class="o">&gt;=</span> <span class="n">gain</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="n">above</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">above</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;lorentzian tau=(</span><span class="si">%.4g</span><span class="s2">, </span><span class="si">%.4g</span><span class="s2">) fs&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"lorentzian tau=(</span><span class="si">%.4g</span><span class="s2">, </span><span class="si">%.4g</span><span class="s2">) fs"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span>
                  <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lorentzian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                 <span class="k">else</span> <span class="s2">&quot;triangular peak=</span><span class="si">%.4g</span><span class="s2"> THz&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RamanGainSpectrum(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  peak at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;FWHM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz&quot;</span>
-                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">))</span></div>
+                 <span class="k">else</span> <span class="s2">"triangular peak=</span><span class="si">%.4g</span><span class="s2"> THz"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangular</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"RamanGainSpectrum(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"  peak at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz, "</span>
+                <span class="sa">f</span><span class="s2">"FWHM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> THz"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span></div>
 
 
 
@@ -1166,7 +1166,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="register_gain_spectrum">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.register_gain_spectrum">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_gain_spectrum</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a catalog entry; users can add their own fits.</span>
+<span class="w">    </span><span class="sd">"""Register a catalog entry; users can add their own fits.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1175,23 +1175,23 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; @register_gain_spectrum(&quot;LAB&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; @register_gain_spectrum("LAB")</span>
 <span class="sd">    ... def _lab():</span>
-<span class="sd">    ...     return RamanGainSpectrum(triangular=14.0, standard=&quot;LAB&quot;,</span>
-<span class="sd">    ...                              reference=&quot;bench&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; round(get_gain_spectrum(&quot;LAB&quot;).peak_shift_THz, 1)</span>
+<span class="sd">    ...     return RamanGainSpectrum(triangular=14.0, standard="LAB",</span>
+<span class="sd">    ...                              reference="bench")</span>
+<span class="sd">    &gt;&gt;&gt; round(get_gain_spectrum("LAB").peak_shift_THz, 1)</span>
 <span class="sd">    14.0</span>
 
 <span class="sd">    The registry is process-wide, so an example that adds to it has to</span>
-<span class="sd">    take it back out: a doctest that leaves &quot;LAB&quot; behind makes every</span>
+<span class="sd">    take it back out: a doctest that leaves "LAB" behind makes every</span>
 <span class="sd">    later test that iterates the catalog see an entry that only exists</span>
 <span class="sd">    when the doctests ran first, which is a failure that depends on</span>
 <span class="sd">    collection order.</span>
 
-<span class="sd">    &gt;&gt;&gt; _ = _SPECTRUM_REGISTRY.pop(&quot;LAB&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; &quot;LAB&quot; in available_gain_spectra()</span>
+<span class="sd">    &gt;&gt;&gt; _ = _SPECTRUM_REGISTRY.pop("LAB")</span>
+<span class="sd">    &gt;&gt;&gt; "LAB" in available_gain_spectra()</span>
 <span class="sd">    False</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">RamanGainSpectrum</span><span class="p">]):</span>
         <span class="n">_SPECTRUM_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span>
@@ -1202,7 +1202,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="available_gain_spectra">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.available_gain_spectra">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">available_gain_spectra</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Names accepted by :func:`get_gain_spectrum`.</span>
+<span class="w">    </span><span class="sd">"""Names accepted by :func:`get_gain_spectrum`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1211,9 +1211,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; [name for name in available_gain_spectra() if &quot;-&quot; in name]</span>
-<span class="sd">    [&#39;blow-wood&#39;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; [name for name in available_gain_spectra() if "-" in name]</span>
+<span class="sd">    ['blow-wood']</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_SPECTRUM_REGISTRY</span><span class="p">)</span></div>
 
 
@@ -1221,7 +1221,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="get_gain_spectrum">
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.get_gain_spectrum">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_gain_spectrum</span><span class="p">(</span><span class="n">standard</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a catalog gain spectrum by name.</span>
+<span class="w">    </span><span class="sd">"""Return a catalog gain spectrum by name.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1237,40 +1237,40 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; get_gain_spectrum(&quot;blow-wood&quot;).standard</span>
-<span class="sd">    &#39;Blow-Wood single damped oscillator&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; get_gain_spectrum("blow-wood").standard</span>
+<span class="sd">    'Blow-Wood single damped oscillator'</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">standard</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_SPECTRUM_REGISTRY</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;unknown Raman gain spectrum </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">available_gain_spectra</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- register your own with &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;@register_gain_spectrum&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"unknown Raman gain spectrum </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">available_gain_spectra</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- register your own with "</span>
+            <span class="sa">f</span><span class="s2">"@register_gain_spectrum"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_SPECTRUM_REGISTRY</span><span class="p">[</span><span class="n">standard</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_expect</span><span class="p">(</span><span class="n">spectrum</span><span class="p">:</span> <span class="n">RamanGainSpectrum</span><span class="p">,</span>
                   <span class="n">expect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify a catalog entry against figures published with it (D20).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Verify a catalog entry against figures published with it (D20)."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">expect</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">spectrum</span>
-    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;peak_shift_THz&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="p">,</span>
-              <span class="s2">&quot;fwhm_THz&quot;</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="p">}</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"peak_shift_THz"</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">peak_shift_THz</span><span class="p">,</span>
+              <span class="s2">"fwhm_THz"</span><span class="p">:</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">fwhm_THz</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">wanted</span> <span class="ow">in</span> <span class="n">expect</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">got</span> <span class="o">=</span> <span class="n">checks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">got</span> <span class="o">-</span> <span class="n">wanted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">2e-2</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wanted</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;the source&#39;</span><span class="si">}</span><span class="s2">, this model gives &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> -- one of the two is wrong.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'the source'</span><span class="si">}</span><span class="s2">, this model gives "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> -- one of the two is wrong."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">spectrum</span>
 
 
-<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">&quot;blow-wood&quot;</span><span class="p">)</span>
+<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">"blow-wood"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_blow_wood</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Single damped oscillator, :math:`\tau_1 = 12.2` fs, :math:`\tau_2 = 32` fs.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single damped oscillator, :math:`\tau_1 = 12.2` fs, :math:`\tau_2 = 32` fs.</span>
 
 <span class="sd">    Reproduces the peak of the silica Raman gain to within 1 % --</span>
 <span class="sd">    13.08 THz against the 13.2 THz that is published -- which is what</span>
@@ -1285,19 +1285,19 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    amplifier, where the spectral shape *is* the gain flatness. A</span>
 <span class="sd">    multi-Lorentzian fit is what that needs; none is shipped, because</span>
 <span class="sd">    none has been transcribed from its source.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span>
         <span class="n">RamanGainSpectrum</span><span class="p">(</span><span class="n">lorentzian</span><span class="o">=</span><span class="p">(</span><span class="mf">12.2</span><span class="p">,</span> <span class="mf">32.0</span><span class="p">),</span>
-                          <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;Blow-Wood single damped oscillator&quot;</span><span class="p">,</span>
-                          <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Blow &amp; Wood, IEEE JQE 25(12), 1989; &quot;</span>
-                                    <span class="s2">&quot;Agrawal, Nonlinear Fiber Optics, 5th ed., &quot;</span>
-                                    <span class="s2">&quot;section 2.3&quot;</span><span class="p">),</span>
-        <span class="p">{</span><span class="s2">&quot;peak_shift_THz&quot;</span><span class="p">:</span> <span class="mf">13.2</span><span class="p">})</span>
+                          <span class="n">standard</span><span class="o">=</span><span class="s2">"Blow-Wood single damped oscillator"</span><span class="p">,</span>
+                          <span class="n">reference</span><span class="o">=</span><span class="s2">"Blow &amp; Wood, IEEE JQE 25(12), 1989; "</span>
+                                    <span class="s2">"Agrawal, Nonlinear Fiber Optics, 5th ed., "</span>
+                                    <span class="s2">"section 2.3"</span><span class="p">),</span>
+        <span class="p">{</span><span class="s2">"peak_shift_THz"</span><span class="p">:</span> <span class="mf">13.2</span><span class="p">})</span>
 
 
-<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">&quot;triangular&quot;</span><span class="p">)</span>
+<span class="nd">@register_gain_spectrum</span><span class="p">(</span><span class="s2">"triangular"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_triangular</span><span class="p">(</span><span class="n">peak_shift_THz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">13.2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanGainSpectrum</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Linear gain up to the peak, zero beyond.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Linear gain up to the peak, zero beyond.</span>
 
 <span class="sd">    The model behind the closed-form inter-channel Raman tilt of a WDM</span>
 <span class="sd">    comb: over a band a few THz wide the gain is proportional to the</span>
@@ -1305,47 +1305,47 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    channel index. Only valid for :math:`\Delta \nu` well below the</span>
 <span class="sd">    peak -- it is a slope, not a spectrum, and it says nothing at all</span>
 <span class="sd">    above :math:`\Delta \nu_\mathrm{peak}`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">RamanGainSpectrum</span><span class="p">(</span><span class="n">triangular</span><span class="o">=</span><span class="n">peak_shift_THz</span><span class="p">,</span>
-                             <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;triangular tilt model&quot;</span><span class="p">,</span>
-                             <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Semrau, Killey &amp; Bayvel, &quot;</span>
-                                       <span class="s2">&quot;J. Lightwave Technol. 36(14), 2018&quot;</span><span class="p">)</span>
+                             <span class="n">standard</span><span class="o">=</span><span class="s2">"triangular tilt model"</span><span class="p">,</span>
+                             <span class="n">reference</span><span class="o">=</span><span class="s2">"Semrau, Killey &amp; Bayvel, "</span>
+                                       <span class="s2">"J. Lightwave Technol. 36(14), 2018"</span><span class="p">)</span>
 
 
 <span class="c1"># -- the wave table -------------------------------------------------------</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_group</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One entry per member of a group, as a 1-D float array.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One entry per member of a group, as a 1-D float array."""</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> dimensions, expected a scalar or a &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;1-D sequence with one entry per wave&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> dimensions, expected a scalar or a "</span>
+            <span class="sa">f</span><span class="s2">"1-D sequence with one entry per wave"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">array</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_broadcast_group</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
                      <span class="n">group</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bring every member of a group to the same length.</span>
+<span class="w">    </span><span class="sd">"""Bring every member of a group to the same length.</span>
 
 <span class="sd">    A scalar is shared by every wave of the group (one launch power for</span>
 <span class="sd">    a flat comb, one loss for every pump); anything else must already</span>
 <span class="sd">    have one entry per wave. Two different lengths are always a</span>
 <span class="sd">    mistake, never a broadcast.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> entries while the </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> set has &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">; expected either a single value shared by every &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> or one value per </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> entries while the </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> set has "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">; expected either a single value shared by every "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2"> or one value per </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">count</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="p">(</span><span class="n">count</span><span class="p">,))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
                    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_photon_occupancy</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span>
                       <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Phonon occupancy :math:`1 + \eta` of the Raman ASE.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Phonon occupancy :math:`1 + \eta` of the Raman ASE.</span>
 
 <span class="sd">    .. math::</span>
 
@@ -1357,11 +1357,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    zero-temperature value. It grows without bound as the shift goes to</span>
 <span class="sd">    zero, which is why the closely spaced pairs of a WDM comb are noisy</span>
 <span class="sd">    per unit of gain even though they exchange very little power.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift_Hz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">temperature_K</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">over</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
         <span class="n">occupancy</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span>
             <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">BOLTZMANN</span> <span class="o">*</span> <span class="n">temperature_K</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">occupancy</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
@@ -1369,7 +1369,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coupling_matrix</span><span class="p">(</span><span class="n">frequency_Hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gain_peak_W_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
                      <span class="n">spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RamanGainSpectrum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pairwise Raman coupling :math:`C_{ij}` of a set of waves.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Pairwise Raman coupling :math:`C_{ij}` of a set of waves.</span>
 
 <span class="sd">    ``C[i, j]`` is the coefficient multiplying :math:`P_i P_j` in the</span>
 <span class="sd">    equation of wave :math:`i`: positive when :math:`j` is the bluer of</span>
@@ -1382,7 +1382,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    which is what makes the total photon flux conserved in the lossless</span>
 <span class="sd">    limit whatever the number of waves.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shift</span> <span class="o">=</span> <span class="n">frequency_Hz</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">frequency_Hz</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># every pair at the peak coefficient: only meaningful for one</span>
@@ -1400,7 +1400,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/raman.html#comnumpy.optical.raman.RamanSolution">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RamanSolution</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Power profiles along the span, and what is read off them.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Power profiles along the span, and what is read off them.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1467,10 +1467,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                        pump_backward_W=0.2, signal_W=1e-3)</span>
 <span class="sd">    &gt;&gt;&gt; round(solution.on_off_gain_dB, 2)</span>
 <span class="sd">    5.97</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">z_km</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="c1"># the two the ASE decomposition needs, in the solver&#39;s own wave order</span>
+    <span class="c1"># the two the ASE decomposition needs, in the solver's own wave order</span>
     <span class="c1"># (signals first): S[i, j] is what multiplies P_j in the spontaneous</span>
     <span class="c1"># source of signal i, and wave_power_W[j] is that P_j</span>
     <span class="n">wave_power_W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
@@ -1484,7 +1484,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">frequency_signal_Hz</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ase_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ASE seeded by a subset of the waves, by superposition.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""ASE seeded by a subset of the waves, by superposition.</span>
 
 <span class="sd">        The ASE equation is *linear* in the ASE, with a source that is a</span>
 <span class="sd">        sum over the waves above the channel:</span>
@@ -1501,8 +1501,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        The integrating factor is free. :math:`g_i` is the *same* net</span>
 <span class="sd">        gain the signal obeys, so :math:`\exp \int_0^z g_i` is simply</span>
-<span class="sd">        :math:`P_{s,i}(z)/P_{s,i}(0)` -- the signal&#39;s own profile.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        :math:`P_{s,i}(z)/P_{s,i}(0)` -- the signal's own profile.</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">cumulative_trapezoid</span>
 
         <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span>
@@ -1516,13 +1516,13 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">ase_from_pumps_W</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ASE the pumps seed, which is what a Raman amplifier is charged for.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""ASE the pumps seed, which is what a Raman amplifier is charged for."""</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wave_power_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ase_from</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">ase_from_signals_W</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ASE the channels seed in each other, which pump-only models omit.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""ASE the channels seed in each other, which pump-only models omit.</span>
 
 <span class="sd">        Every channel sits below some of its neighbours, so the comb</span>
 <span class="sd">        seeds itself. The shifts involved are small -- a few terahertz</span>
@@ -1530,61 +1530,61 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        \nu / k T} - 1)` is of order one rather than negligible, so the</span>
 <span class="sd">        term is thermally enhanced. Planning tools commonly drop it; on</span>
 <span class="sd">        a 96-channel C-band comb it is worth about 0.17 dB of ASE.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ase_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="p">))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of signal waves the solve carried.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of signal waves the solve carried."""</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_pumps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of pump *wavelengths* (a bidirectional pump counts once).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of pump *wavelengths* (a bidirectional pump counts once)."""</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_per_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One value per signal, or the value itself when there is one.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""One value per signal, or the value itself when there is one."""</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">values</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_off_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gain the pumps buy, in dB: output with pumps over output without.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Gain the pumps buy, in dB: output with pumps over output without."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_signal</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">)[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">net_gain_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Span output over span input, in dB. Negative for a lossy span.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Span output over span input, in dB. Negative for a lossy span."""</span>
         <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_signal</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">signal</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">signal</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gain_profile_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;On-off gain accumulated up to each :math:`z`, in dB.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""On-off gain accumulated up to each :math:`z`, in dB.</span>
 
 <span class="sd">        This is the curve the split-step loop of</span>
 <span class="sd">        :class:`~comnumpy.optical.links.FiberLink` consumes -- one row</span>
 <span class="sd">        per signal, so a WDM link applies its own tilted gain to each</span>
 <span class="sd">        channel of the axis D44 gives it.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_W</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_only_W</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">tilt_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spread of the on-off gain across the signals, in dB.</span>
+<span class="w">        </span><span class="sd">"""Spread of the on-off gain across the signals, in dB.</span>
 
 <span class="sd">        Zero for a single signal. This is the number a multi-pump design</span>
 <span class="sd">        exists to minimize: one pump amplifies the red end of the comb</span>
 <span class="sd">        and starves the blue end, two well-placed pumps flatten it.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_off_gain_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">gains</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">gains</span><span class="p">))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">noise_figure_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Effective noise figure of the span, in dB; may be negative.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Effective noise figure of the span, in dB; may be negative."""</span>
         <span class="n">frequency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency_signal_Hz</span><span class="p">,</span>
                                              <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
         <span class="n">photon</span> <span class="o">=</span> <span class="n">PLANCK</span> <span class="o">*</span> <span class="n">frequency</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span>
@@ -1595,12 +1595,12 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">pump_depletion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fraction of the launched pump power the signals took away.</span>
+<span class="w">        </span><span class="sd">"""Fraction of the launched pump power the signals took away.</span>
 
 <span class="sd">        Zero in the undepleted regime the analytic gain formula</span>
 <span class="sd">        assumes; a large value is the warning that it no longer holds.</span>
 <span class="sd">        Summed over the pumps: a per-pump breakdown is in the profiles.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">forward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_forward_W</span><span class="p">)</span>
         <span class="n">backward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pump_backward_W</span><span class="p">)</span>
         <span class="n">transmission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pump_transmission</span><span class="p">,</span>
@@ -1614,17 +1614,17 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">no_raman</span> <span class="o">-</span> <span class="n">remaining</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">launched</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compact view: the arrays are long, the figures of merit are not.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Compact view: the arrays are long, the figures of merit are not."""</span>
         <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_off_gain_dB</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
-        <span class="n">span</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">z_km</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> km&quot;</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">z_km</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> km"</span>
         <span class="k">if</span> <span class="n">gains</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">gain</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;(tilt </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tilt_dB</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s), </span><span class="si">{</span><span class="n">span</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">gain</span><span class="si">}</span><span class="s2">, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;depletion </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">pump_depletion</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+            <span class="n">gain</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"on-off gain </span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="n">gains</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB "</span>
+                    <span class="sa">f</span><span class="s2">"(tilt </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tilt_dB</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s), "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s), </span><span class="si">{</span><span class="n">span</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">gain</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"depletion </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">pump_depletion</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)"</span><span class="p">)</span>
 
     <span class="n">_pump_transmission</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
                                                          <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
@@ -1646,7 +1646,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">temperature_K</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span><span class="p">,</span>
                 <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">401</span><span class="p">,</span>
                 <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RamanSolution</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Solve the coupled Raman power equations along one span.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Solve the coupled Raman power equations along one span.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1724,8 +1724,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    channel, and likewise for the pumps; a scalar in gives a scalar</span>
 <span class="sd">    out. Since a shift now separates every pair, ``spectrum=`` becomes</span>
 <span class="sd">    *required* as soon as there is more than one signal or more than one</span>
-<span class="sd">    pump wavelength: its default meaning, &quot;the pair sits at the gain</span>
-<span class="sd">    peak&quot;, is only defensible for a single pair.</span>
+<span class="sd">    pump wavelength: its default meaning, "the pair sits at the gain</span>
+<span class="sd">    peak", is only defensible for a single pair.</span>
 
 <span class="sd">    Axes: *not a Processor* -- this is a power-domain solver, and it</span>
 <span class="sd">    returns profiles rather than transforming a signal. See the module</span>
@@ -1759,7 +1759,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        arguments fix the number of channels, those of the pump</span>
 <span class="sd">        arguments the number of pumps.</span>
 <span class="sd">    spectrum : RamanGainSpectrum, optional, keyword-only</span>
-<span class="sd">        Gain shape used to scale ``gain_peak_W_km`` at each pair&#39;s</span>
+<span class="sd">        Gain shape used to scale ``gain_peak_W_km`` at each pair's</span>
 <span class="sd">        shift. ``None`` (default) uses the peak coefficient as given,</span>
 <span class="sd">        i.e. assumes the pump sits at the gain peak, and is only</span>
 <span class="sd">        accepted for a single signal and a single pump wavelength.</span>
@@ -1782,7 +1782,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If no pump is on, if a power or a length is negative, if a pump</span>
-<span class="sd">        does not sit above every signal in frequency, if a group&#39;s</span>
+<span class="sd">        does not sit above every signal in frequency, if a group's</span>
 <span class="sd">        arguments disagree on the number of waves, if several waves need</span>
 <span class="sd">        a ``spectrum=`` and none was given, or if the boundary value</span>
 <span class="sd">        problem fails to converge -- an unconverged mesh is never</span>
@@ -1793,7 +1793,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
 <span class="sd">    2013, Chapter 8.</span>
 
-<span class="sd">    M. N. Islam, &quot;Raman amplifiers for telecommunications&quot;, IEEE J.</span>
+<span class="sd">    M. N. Islam, "Raman amplifiers for telecommunications", IEEE J.</span>
 <span class="sd">    Sel. Topics Quantum Electron., vol. 8, no. 3, pp. 548-559, 2002.</span>
 
 <span class="sd">    Examples</span>
@@ -1807,7 +1807,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    shape of the spectrum, so the comb comes out tilted.</span>
 
 <span class="sd">    &gt;&gt;&gt; comb = [1530.0, 1545.0, 1560.0]</span>
-<span class="sd">    &gt;&gt;&gt; blow_wood = get_gain_spectrum(&quot;blow-wood&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; blow_wood = get_gain_spectrum("blow-wood")</span>
 <span class="sd">    &gt;&gt;&gt; one = solve_raman(length_km=80.0, gain_peak_W_km=0.4,</span>
 <span class="sd">    ...                   wavelength_signal_nm=comb, signal_W=1e-3,</span>
 <span class="sd">    ...                   pump_backward_W=0.4, wavelength_pump_nm=1450.0,</span>
@@ -1827,71 +1827,71 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    (3, 2)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(one.tilt_dB, 2), round(two.tilt_dB, 2))</span>
 <span class="sd">    2.1 0.98</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bvp</span><span class="p">,</span> <span class="n">solve_ivp</span>      <span class="c1"># local import (D36)</span>
 
     <span class="k">if</span> <span class="n">length_km</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a positive span length, got </span><span class="si">{</span><span class="n">length_km</span><span class="si">}</span><span class="s2"> km&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expected a positive span length, got </span><span class="si">{</span><span class="n">length_km</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
 
     <span class="n">n_signals</span><span class="p">,</span> <span class="n">signals</span> <span class="o">=</span> <span class="n">_broadcast_group</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;signal_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">signal_W</span><span class="p">,</span> <span class="s2">&quot;signal_W&quot;</span><span class="p">),</span>
-         <span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_signal_nm</span><span class="p">,</span>
-                                           <span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">),</span>
-         <span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_signal_dB_km</span><span class="p">,</span>
-                                         <span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">)},</span>
-        <span class="s2">&quot;signal&quot;</span><span class="p">)</span>
+        <span class="p">{</span><span class="s2">"signal_W"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">signal_W</span><span class="p">,</span> <span class="s2">"signal_W"</span><span class="p">),</span>
+         <span class="s2">"wavelength_signal_nm"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_signal_nm</span><span class="p">,</span>
+                                           <span class="s2">"wavelength_signal_nm"</span><span class="p">),</span>
+         <span class="s2">"alpha_signal_dB_km"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_signal_dB_km</span><span class="p">,</span>
+                                         <span class="s2">"alpha_signal_dB_km"</span><span class="p">)},</span>
+        <span class="s2">"signal"</span><span class="p">)</span>
     <span class="n">n_pumps</span><span class="p">,</span> <span class="n">pumps</span> <span class="o">=</span> <span class="n">_broadcast_group</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_forward_W</span><span class="p">,</span> <span class="s2">&quot;pump_forward_W&quot;</span><span class="p">),</span>
-         <span class="s2">&quot;pump_backward_W&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_backward_W</span><span class="p">,</span> <span class="s2">&quot;pump_backward_W&quot;</span><span class="p">),</span>
-         <span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_pump_nm</span><span class="p">,</span>
-                                         <span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">),</span>
-         <span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_pump_dB_km</span><span class="p">,</span> <span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">)},</span>
-        <span class="s2">&quot;pump&quot;</span><span class="p">)</span>
+        <span class="p">{</span><span class="s2">"pump_forward_W"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_forward_W</span><span class="p">,</span> <span class="s2">"pump_forward_W"</span><span class="p">),</span>
+         <span class="s2">"pump_backward_W"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">pump_backward_W</span><span class="p">,</span> <span class="s2">"pump_backward_W"</span><span class="p">),</span>
+         <span class="s2">"wavelength_pump_nm"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">wavelength_pump_nm</span><span class="p">,</span>
+                                         <span class="s2">"wavelength_pump_nm"</span><span class="p">),</span>
+         <span class="s2">"alpha_pump_dB_km"</span><span class="p">:</span> <span class="n">_as_group</span><span class="p">(</span><span class="n">alpha_pump_dB_km</span><span class="p">,</span> <span class="s2">"alpha_pump_dB_km"</span><span class="p">)},</span>
+        <span class="s2">"pump"</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">"signal_W"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;expected positive signal powers, got </span><span class="si">{</span><span class="n">signals</span><span class="p">[</span><span class="s1">&#39;signal_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="sa">f</span><span class="s2">"expected positive signal powers, got </span><span class="si">{</span><span class="n">signals</span><span class="p">[</span><span class="s1">'signal_W'</span><span class="p">]</span><span class="si">}</span><span class="s2"> W"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_forward_W"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_backward_W"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;expected non-negative pump powers, got forward &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">&#39;pump_forward_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W and backward &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">&#39;pump_backward_W&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> W&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="sa">f</span><span class="s2">"expected non-negative pump powers, got forward "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">'pump_forward_W'</span><span class="p">]</span><span class="si">}</span><span class="s2"> W and backward "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pumps</span><span class="p">[</span><span class="s1">'pump_backward_W'</span><span class="p">]</span><span class="si">}</span><span class="s2"> W"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_forward_W"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_backward_W"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;expected at least one pump to be on, got every pump at 0 W -- &quot;</span>
-            <span class="s2">&quot;pass pump_forward_W= for co-propagating pumping, &quot;</span>
-            <span class="s2">&quot;pump_backward_W= for counter-propagating, or both for &quot;</span>
-            <span class="s2">&quot;bidirectional&quot;</span><span class="p">)</span>
+            <span class="s2">"expected at least one pump to be on, got every pump at 0 W -- "</span>
+            <span class="s2">"pass pump_forward_W= for co-propagating pumping, "</span>
+            <span class="s2">"pump_backward_W= for counter-propagating, or both for "</span>
+            <span class="s2">"bidirectional"</span><span class="p">)</span>
 
-    <span class="n">nu_signal</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;wavelength_signal_nm&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
-    <span class="n">nu_pump</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;wavelength_pump_nm&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">nu_signal</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">"wavelength_signal_nm"</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">nu_pump</span> <span class="o">=</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="n">pumps</span><span class="p">[</span><span class="s2">"wavelength_pump_nm"</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
     <span class="n">worst</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">nu_pump</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">nu_signal</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span>
     <span class="k">if</span> <span class="n">worst</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;expected every pump above every signal in frequency, got a &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Stokes shift of </span><span class="si">{</span><span class="n">worst</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz for the closest pair -- &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;the pump wavelengths must be the shorter ones&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"expected every pump above every signal in frequency, got a "</span>
+            <span class="sa">f</span><span class="s2">"Stokes shift of </span><span class="si">{</span><span class="n">worst</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> THz for the closest pair -- "</span>
+            <span class="sa">f</span><span class="s2">"the pump wavelengths must be the shorter ones"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">spectrum</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n_signals</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">n_pumps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;spectrum= is required for a multi-wave solve, got None with &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s) and </span><span class="si">{</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s); spectrum=None &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;means every pair sits at the gain peak, which is only &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;defensible for a single pump-signal pair -- pass &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;spectrum=get_gain_spectrum(&#39;blow-wood&#39;) so each pair is &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;coupled at its own frequency shift&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"spectrum= is required for a multi-wave solve, got None with "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_signals</span><span class="si">}</span><span class="s2"> signal(s) and </span><span class="si">{</span><span class="n">n_pumps</span><span class="si">}</span><span class="s2"> pump(s); spectrum=None "</span>
+            <span class="sa">f</span><span class="s2">"means every pair sits at the gain peak, which is only "</span>
+            <span class="sa">f</span><span class="s2">"defensible for a single pump-signal pair -- pass "</span>
+            <span class="sa">f</span><span class="s2">"spectrum=get_gain_spectrum('blow-wood') so each pair is "</span>
+            <span class="sa">f</span><span class="s2">"coupled at its own frequency shift"</span><span class="p">)</span>
 
     <span class="c1"># -- assemble the waves: signals first, then the pumps that are on</span>
     <span class="n">frequency</span> <span class="o">=</span> <span class="p">[</span><span class="n">nu_signal</span><span class="p">]</span>
-    <span class="n">alpha</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;alpha_signal_dB_km&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))]</span>     <span class="c1"># 1/km</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">"alpha_signal_dB_km"</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))]</span>     <span class="c1"># 1/km</span>
     <span class="n">direction</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_signals</span><span class="p">)]</span>
-    <span class="n">launched</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">]]</span>
-    <span class="n">alpha_pump</span> <span class="o">=</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;alpha_pump_dB_km&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">launched</span> <span class="o">=</span> <span class="p">[</span><span class="n">signals</span><span class="p">[</span><span class="s2">"signal_W"</span><span class="p">]]</span>
+    <span class="n">alpha_pump</span> <span class="o">=</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">"alpha_pump_dB_km"</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
     <span class="n">index_forward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_pumps</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">index_backward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_pumps</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">position</span> <span class="o">=</span> <span class="n">n_signals</span>
-    <span class="k">for</span> <span class="n">sign</span><span class="p">,</span> <span class="n">powers</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">((</span><span class="o">+</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_forward_W&quot;</span><span class="p">],</span> <span class="n">index_forward</span><span class="p">),</span>
-                                <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">&quot;pump_backward_W&quot;</span><span class="p">],</span> <span class="n">index_backward</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">sign</span><span class="p">,</span> <span class="n">powers</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">((</span><span class="o">+</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_forward_W"</span><span class="p">],</span> <span class="n">index_forward</span><span class="p">),</span>
+                                <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pumps</span><span class="p">[</span><span class="s2">"pump_backward_W"</span><span class="p">],</span> <span class="n">index_backward</span><span class="p">)):</span>
         <span class="k">for</span> <span class="n">pump</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">powers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">frequency</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nu_pump</span><span class="p">[</span><span class="n">pump</span><span class="p">:</span> <span class="n">pump</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
             <span class="n">alpha</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alpha_pump</span><span class="p">[</span><span class="n">pump</span><span class="p">:</span> <span class="n">pump</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
@@ -1910,10 +1910,10 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">coupling</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="n">n_signals</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="n">shifts</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_signals</span><span class="p">:]</span> <span class="o">-</span> <span class="n">nu</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1e12</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;the pumps buy no gain at all: the shifts &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shifts</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> THz fall outside the &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">spectrum</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;flat&#39;</span><span class="si">}</span><span class="s2"> gain spectrum -- &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;move the pumps closer to the signals in frequency&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"the pumps buy no gain at all: the shifts "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shifts</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> THz fall outside the "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spectrum</span><span class="o">.</span><span class="n">standard</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">spectrum</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'flat'</span><span class="si">}</span><span class="s2"> gain spectrum -- "</span>
+            <span class="sa">f</span><span class="s2">"move the pumps closer to the signals in frequency"</span><span class="p">)</span>
 
     <span class="c1"># spontaneous source, one row per signal: 2 h nu B C_ij (1 + eta_ij)</span>
     <span class="n">shift</span> <span class="o">=</span> <span class="n">nu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">nu</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
@@ -1946,9 +1946,9 @@ window.runMermaid = runMermaid;</script>
                            <span class="n">dense_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">solved</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the co-propagating Raman integration failed: &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2"> -- reduce the pump power or the span &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;length, or loosen tol&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"the co-propagating Raman integration failed: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2"> -- reduce the pump power or the span "</span>
+                <span class="sa">f</span><span class="s2">"length, or loosen tol"</span><span class="p">)</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">y</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">boundary</span><span class="p">(</span><span class="n">left</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1967,11 +1967,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">solved</span> <span class="o">=</span> <span class="n">solve_bvp</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">max_nodes</span><span class="o">=</span><span class="mi">200_000</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">solved</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the bidirectional Raman boundary value problem did not &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;converge (status </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">) -- an &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;unconverged mesh is not returned because it looks like a &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;result; reduce the pump power, shorten the span, or raise &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;n_nodes&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"the bidirectional Raman boundary value problem did not "</span>
+                <span class="sa">f</span><span class="s2">"converge (status </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">solved</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">) -- an "</span>
+                <span class="sa">f</span><span class="s2">"unconverged mesh is not returned because it looks like a "</span>
+                <span class="sa">f</span><span class="s2">"result; reduce the pump power, shorten the span, or raise "</span>
+                <span class="sa">f</span><span class="s2">"n_nodes"</span><span class="p">)</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">solved</span><span class="o">.</span><span class="n">sol</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 
     <span class="c1"># -- reassemble: one row per signal, one row per pump wavelength</span>
@@ -1984,10 +1984,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">pump_profile</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fold</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A single wave keeps the plain 1-D profile it always had.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""A single wave keeps the plain 1-D profile it always had."""</span>
         <span class="k">return</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">rows</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">rows</span>
 
-    <span class="n">loss_only</span> <span class="o">=</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">&quot;signal_W&quot;</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">loss_only</span> <span class="o">=</span> <span class="p">(</span><span class="n">signals</span><span class="p">[</span><span class="s2">"signal_W"</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span>
                  <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_wave</span><span class="p">[:</span><span class="n">n_signals</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span>
     <span class="n">transmission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha_pump</span> <span class="o">*</span> <span class="n">length_km</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">RamanSolution</span><span class="p">(</span>

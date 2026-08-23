@@ -743,12 +743,12 @@ window.runMermaid = runMermaid;</script>
     <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;DataAidedMixin&quot;</span><span class="p">,</span> <span class="s2">&quot;DCCorrector&quot;</span><span class="p">,</span> <span class="s2">&quot;Normalizer&quot;</span><span class="p">,</span> <span class="s2">&quot;BlindIQCompensator&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;BlindCFOCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;BlindPhaseCompensation&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;BlindPhaseSearchCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;LinearEqualizer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;DataAidedFIRCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;DataAidedPhaseCompensator&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;DataAidedComplexGainCompensator&quot;</span><span class="p">,</span> <span class="s2">&quot;DataAidedSimpleSynchronizer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;DataAidedFineSynchronizer&quot;</span><span class="p">,</span>
+    <span class="s2">"DataAidedMixin"</span><span class="p">,</span> <span class="s2">"DCCorrector"</span><span class="p">,</span> <span class="s2">"Normalizer"</span><span class="p">,</span> <span class="s2">"BlindIQCompensator"</span><span class="p">,</span>
+    <span class="s2">"BlindCFOCompensator"</span><span class="p">,</span> <span class="s2">"BlindPhaseCompensation"</span><span class="p">,</span>
+    <span class="s2">"BlindPhaseSearchCompensator"</span><span class="p">,</span> <span class="s2">"LinearEqualizer"</span><span class="p">,</span>
+    <span class="s2">"DataAidedFIRCompensator"</span><span class="p">,</span> <span class="s2">"DataAidedPhaseCompensator"</span><span class="p">,</span>
+    <span class="s2">"DataAidedComplexGainCompensator"</span><span class="p">,</span> <span class="s2">"DataAidedSimpleSynchronizer"</span><span class="p">,</span>
+    <span class="s2">"DataAidedFineSynchronizer"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -765,7 +765,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># None means &quot;the chain supplies it&quot;: a reference produced</span>
+        <span class="c1"># None means "the chain supplies it": a reference produced</span>
         <span class="c1"># upstream does not exist yet when the block is built, and</span>
         <span class="c1"># demanding a placeholder array only to overwrite it before the</span>
         <span class="c1"># first call is a lie about what the block was configured with.</span>
@@ -774,7 +774,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Refuse a multi-path signal (D49).</span>
+<span class="w">        </span><span class="sd">"""Refuse a multi-path signal (D49).</span>
 
 <span class="sd">        A data-aided estimator is fitted against one reference sequence,</span>
 <span class="sd">        so it measures one record. Which of the two families it belongs</span>
@@ -782,12 +782,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        quantity and on where in the receiver it sits, and the caller is</span>
 <span class="sd">        the one who knows: this says so instead of broadcasting by</span>
 <span class="sd">        accident.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">validate_single_path</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                              <span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">path_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Answer the D49 question instead of only asking it.</span>
+<span class="w">        </span><span class="sd">"""Answer the D49 question instead of only asking it.</span>
 
 <span class="sd">        :meth:`validate_paths` refuses a multi-path signal because the</span>
 <span class="sd">        block cannot know which family its estimand belongs to. Blocks</span>
@@ -795,7 +795,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        place the answer exists:</span>
 
 <span class="sd">        * ``shared=True`` -- one physical quantity behind every path (a</span>
-<span class="sd">          laser&#39;s phase before any equalizer, the mean nonlinear phase</span>
+<span class="sd">          laser's phase before any equalizer, the mean nonlinear phase</span>
 <span class="sd">          of a dual-polarization link, which comes from the *total*</span>
 <span class="sd">          intensity). Fitted jointly over the flattened signal, which</span>
 <span class="sd">          is also the better estimator since it sees all the data.</span>
@@ -808,36 +808,36 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        str</span>
-<span class="sd">            ``&quot;single&quot;``, ``&quot;shared&quot;`` or ``&quot;per_path&quot;``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            ``"single"``, ``"shared"`` or ``"per_path"``.</span>
+<span class="sd">        """</span>
         <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;single&quot;</span>
-        <span class="n">shared</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">"single"</span>
+        <span class="n">shared</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"shared"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">shared</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2">, and got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> paths on the antenna axis (shape &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) without being told which kind it is. Pass &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;shared=True if one quantity lies behind every path -- one &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;laser, or a nonlinear phase driven by the total intensity &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;-- so that it is fitted jointly; pass shared=False if each &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;path carries its own. Broadcasting would pick one by &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;accident (decision D49).&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;shared&quot;</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="s2">&quot;per_path&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2">, and got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> paths on the antenna axis (shape "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) without being told which kind it is. Pass "</span>
+                <span class="sa">f</span><span class="s2">"shared=True if one quantity lies behind every path -- one "</span>
+                <span class="sa">f</span><span class="s2">"laser, or a nonlinear phase driven by the total intensity "</span>
+                <span class="sa">f</span><span class="s2">"-- so that it is fitted jointly; pass shared=False if each "</span>
+                <span class="sa">f</span><span class="s2">"path carries its own. Broadcasting would pick one by "</span>
+                <span class="sa">f</span><span class="s2">"accident (decision D49)."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"shared"</span> <span class="k">if</span> <span class="n">shared</span> <span class="k">else</span> <span class="s2">"per_path"</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;a quantity&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"a quantity"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Retrieve the reference signal associated with the model.</span>
 
 <span class="sd">        The reference is a plain array. When it is known in advance</span>
 <span class="sd">        (preamble, training sequence) it is passed directly as</span>
 <span class="sd">        ``reference=...``; when it is produced by the chain itself, the</span>
-<span class="sd">        edge is declared with ``Sequential(wiring={&quot;block.reference&quot;:</span>
-<span class="sd">        &quot;source&quot;})`` so that each Monte-Carlo run uses its own reference.</span>
+<span class="sd">        edge is declared with ``Sequential(wiring={"block.reference":</span>
+<span class="sd">        "source"})`` so that each Monte-Carlo run uses its own reference.</span>
 <span class="sd">        Until one of the two has happened, ``reference`` is ``None`` and</span>
 <span class="sd">        this raises.</span>
 
@@ -850,14 +850,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ------</span>
 <span class="sd">        NotFittedError</span>
 <span class="sd">            If no reference was given and none was wired in.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2"> and was &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;given no reference to fit against. Pass reference= if the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;sequence is known in advance, or declare the edge with &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Sequential(wiring=</span><span class="se">{{</span><span class="s2">&#39;&lt;block_id&gt;.reference&#39;: &#39;&lt;source_id&gt;&#39;</span><span class="se">}}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;if the chain produces it.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> estimates </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimand</span><span class="si">}</span><span class="s2"> and was "</span>
+                <span class="sa">f</span><span class="s2">"given no reference to fit against. Pass reference= if the "</span>
+                <span class="sa">f</span><span class="s2">"sequence is known in advance, or declare the edge with "</span>
+                <span class="sa">f</span><span class="s2">"Sequential(wiring=</span><span class="se">{{</span><span class="s2">'&lt;block_id&gt;.reference': '&lt;source_id&gt;'</span><span class="se">}}</span><span class="s2">) "</span>
+                <span class="sa">f</span><span class="s2">"if the chain produces it."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
 
@@ -865,7 +865,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DCCorrector">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DCCorrector</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Remove the DC component of a signal and set it to a target value.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Remove the DC component of a signal and set it to a target value.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -898,11 +898,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    axis : int, optional, keyword-only</span>
 <span class="sd">        Axis along which :math:`\mu_x` is computed. Default is -1.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the corrector instance. Default is ``&quot;mean_corrector&quot;``.</span>
+<span class="sd">        Name of the corrector instance. Default is ``"mean_corrector"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    B. Razavi, &quot;Design considerations for direct-conversion receivers,&quot;</span>
+<span class="sd">    B. Razavi, "Design considerations for direct-conversion receivers,"</span>
 <span class="sd">    IEEE Transactions on Circuits and Systems II, vol. 44, no. 6,</span>
 <span class="sd">    pp. 428-435, 1997 (DC offset in zero-IF receivers).</span>
 
@@ -913,15 +913,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [-2. -1.  0.  3.]</span>
 <span class="sd">    &gt;&gt;&gt; print(DCCorrector(2.0)(x))</span>
 <span class="sd">    [0. 1. 2. 5.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;mean_corrector&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"mean_corrector"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="c1"># keepdims: without it the mean of a (P, N) signal along axis=-1</span>
         <span class="c1"># came back as (P,) and the subtraction raised a broadcast error,</span>
-        <span class="c1"># so the block&#39;s own documented axis did not work above 1-D</span>
+        <span class="c1"># so the block's own documented axis did not work above 1-D</span>
         <span class="n">x_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
         <span class="k">return</span> <span class="n">y</span></div>
@@ -932,7 +932,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.Normalizer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normalizer</span><span class="p">(</span><span class="n">Amplifier</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Scale a signal by a gain derived from one of its own statistics.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Scale a signal by a gain derived from one of its own statistics.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -946,26 +946,26 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    The gain depends on the selected ``method`` and on the target value</span>
 <span class="sd">    :math:`v`:</span>
 
-<span class="sd">    - **&#39;amp&#39;** -- fixed gain, no measurement:</span>
+<span class="sd">    - **'amp'** -- fixed gain, no measurement:</span>
 
 <span class="sd">      .. math::</span>
 
 <span class="sd">         \alpha = v</span>
 
-<span class="sd">    - **&#39;abs&#39;** -- the largest modulus becomes :math:`v`:</span>
+<span class="sd">    - **'abs'** -- the largest modulus becomes :math:`v`:</span>
 
 <span class="sd">      .. math::</span>
 
 <span class="sd">         \alpha = \frac{v}{\max_n |x[n]|}</span>
 
-<span class="sd">    - **&#39;var&#39;** -- the output variance becomes :math:`v`, with</span>
+<span class="sd">    - **'var'** -- the output variance becomes :math:`v`, with</span>
 <span class="sd">      :math:`\sigma_x^2` the empirical variance of the input:</span>
 
 <span class="sd">      .. math::</span>
 
 <span class="sd">         \alpha = \sqrt{\frac{v}{\sigma_x^2}}</span>
 
-<span class="sd">    - **&#39;max&#39;** -- the largest rectangular excursion becomes :math:`v`</span>
+<span class="sd">    - **'max'** -- the largest rectangular excursion becomes :math:`v`</span>
 <span class="sd">      (the useful one before a DAC or a clipping stage):</span>
 
 <span class="sd">      .. math::</span>
@@ -983,32 +983,32 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    measured, so it is exposed as ``gain_`` (decision D23) and the</span>
 <span class="sd">    inherited ``gain`` argument is removed from the constructor. The</span>
 <span class="sd">    first positional argument is therefore ``method``, which makes</span>
-<span class="sd">    ``Normalizer(&#39;max&#39;)`` mean what it reads.</span>
+<span class="sd">    ``Normalizer('max')`` mean what it reads.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    method : {&#39;amp&#39;, &#39;abs&#39;, &#39;var&#39;, &#39;max&#39;}, optional</span>
+<span class="sd">    method : {'amp', 'abs', 'var', 'max'}, optional</span>
 <span class="sd">        Statistic used to derive the gain :math:`\alpha`. Default is</span>
-<span class="sd">        ``&#39;amp&#39;`` (constant gain). It is the first positional argument.</span>
+<span class="sd">        ``'amp'`` (constant gain). It is the first positional argument.</span>
 <span class="sd">    value : float, optional, keyword-only</span>
 <span class="sd">        Target value :math:`v` of the selected statistic. Must be</span>
 <span class="sd">        strictly positive. Default is 1.0.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the instance. Default is ``&quot;signal_amplifier&quot;``.</span>
+<span class="sd">        Name of the instance. Default is ``"signal_amplifier"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    gain_ : float</span>
 <span class="sd">        Gain :math:`\alpha` actually applied (data-dependent, hence the</span>
 <span class="sd">        trailing underscore, decision D23). Measured from the input in</span>
-<span class="sd">        ``prepare()`` for every method except ``&#39;amp&#39;``, and overwritten</span>
+<span class="sd">        ``prepare()`` for every method except ``'amp'``, and overwritten</span>
 <span class="sd">        at each call.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If ``value`` is not strictly positive, or if ``method`` is not</span>
-<span class="sd">        one of ``&#39;amp&#39;``, ``&#39;abs&#39;``, ``&#39;var&#39;``, ``&#39;max&#39;``.</span>
+<span class="sd">        one of ``'amp'``, ``'abs'``, ``'var'``, ``'max'``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1019,15 +1019,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; x = np.array([1.0, 2.0, 3.0, 4.0])</span>
-<span class="sd">    &gt;&gt;&gt; print(Normalizer(&#39;max&#39;, value=2.0)(x))</span>
+<span class="sd">    &gt;&gt;&gt; print(Normalizer('max', value=2.0)(x))</span>
 <span class="sd">    [0.5 1.  1.5 2. ]</span>
-<span class="sd">    &gt;&gt;&gt; y = Normalizer(method=&#39;var&#39;)(x)          # unit-variance output</span>
+<span class="sd">    &gt;&gt;&gt; y = Normalizer(method='var')(x)          # unit-variance output</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y, 4), round(float(np.var(y)), 6))</span>
 <span class="sd">    [0.8944 1.7889 2.6833 3.5777] 1.0</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;amp&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'amp'</span><span class="p">,</span> <span class="s1">'abs'</span><span class="p">,</span> <span class="s1">'var'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">)</span>
 
-    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;amp&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;amp&quot;</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'amp'</span><span class="p">,</span> <span class="s1">'abs'</span><span class="p">,</span> <span class="s1">'var'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"amp"</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># the gain of Amplifier is configured, the one of Normalizer is</span>
     <span class="c1"># measured: drop the inherited parameter (D23) so that the first</span>
@@ -1039,34 +1039,34 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- pass the statistic as the first &quot;</span>
-                <span class="s2">&quot;positional argument, e.g. Normalizer(&#39;max&#39;, value=2.0); &quot;</span>
-                <span class="s2">&quot;the gain is measured, not configured.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- pass the statistic as the first "</span>
+                <span class="s2">"positional argument, e.g. Normalizer('max', value=2.0); "</span>
+                <span class="s2">"the gain is measured, not configured."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Normalizer: value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">, expected a strictly &quot;</span>
-                <span class="s2">&quot;positive target -- set value to the wanted amplitude, &quot;</span>
-                <span class="s2">&quot;power or variance.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"Normalizer: value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2">, expected a strictly "</span>
+                <span class="s2">"positive target -- set value to the wanted amplitude, "</span>
+                <span class="s2">"power or variance."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="mf">1.0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
-            <span class="k">case</span> <span class="s2">&quot;amp&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"amp"</span><span class="p">:</span>
                 <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-            <span class="k">case</span> <span class="s2">&quot;abs&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"abs"</span><span class="p">:</span>
                 <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-            <span class="k">case</span> <span class="s2">&quot;var&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"var"</span><span class="p">:</span>
                 <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-            <span class="k">case</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"max"</span><span class="p">:</span>
                 <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">X</span><span class="p">))),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">X</span><span class="p">)))])</span>
                 <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">max_value</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="c1"># unreachable through __init__ (validated in __post_init__),</span>
                 <span class="c1"># reachable if `method` is reassigned after construction</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- restore a valid statistic name.&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"Normalizer: method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected one of "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">METHODS</span><span class="si">}</span><span class="s2"> -- restore a valid statistic name."</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="o">=</span> <span class="n">gain</span>
 
@@ -1082,7 +1082,7 @@ window.runMermaid = runMermaid;</script>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlindIQCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
 
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind IQ-imbalance compensator by whitening of the real covariance matrix.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Blind IQ-imbalance compensator by whitening of the real covariance matrix.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1148,7 +1148,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        compensated signal. Default is 1.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the compensator instance. Default is</span>
-<span class="sd">        ``&quot;iq_compensator&quot;``.</span>
+<span class="sd">        ``"iq_compensator"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1163,8 +1163,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    * I. Fatadin, S. J. Savory, D. Ives, &quot;Compensation of quadrature</span>
-<span class="sd">      imbalance in an optical QPSK coherent receiver,&quot; IEEE Photonics</span>
+<span class="sd">    * I. Fatadin, S. J. Savory, D. Ives, "Compensation of quadrature</span>
+<span class="sd">      imbalance in an optical QPSK coherent receiver," IEEE Photonics</span>
 <span class="sd">      Technology Letters, vol. 20, no. 20, pp. 1733-1735, 2008,</span>
 <span class="sd">      doi: 10.1109/LPT.2008.2004630.</span>
 <span class="sd">    * P. J. Schreier, L. L. Scharf, *Statistical Signal Processing of</span>
@@ -1181,10 +1181,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    0.499 0.5</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(abs(np.mean(y.real * y.imag))), 3), round(float(np.mean(np.abs(y)**2)), 3))</span>
 <span class="sd">    0.0 1.0</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;iq_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"iq_compensator"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
     <span class="n">alpha_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                                <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">)</span>
@@ -1195,7 +1195,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha_</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta_</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BlindIQCompensator&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BlindIQCompensator"</span><span class="p">:</span>
         <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">paths</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
@@ -1220,7 +1220,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># one coefficient per path, shaped to broadcast against the</span>
         <span class="c1"># signal -- and a plain scalar when there is a single path, the</span>
-        <span class="c1"># same &quot;scalar in, scalar out&quot; rule the rest of the library uses</span>
+        <span class="c1"># same "scalar in, scalar out" rule the rest of the library uses</span>
         <span class="k">if</span> <span class="n">signal</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">alpha_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">alpha</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">complex</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1244,7 +1244,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindCFOCompensator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlindCFOCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind carrier frequency offset compensator (fourth-power periodogram).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Blind carrier frequency offset compensator (fourth-power periodogram).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1269,7 +1269,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    The maximization is performed in two stages: an optional coarse grid</span>
 <span class="sd">    search over :math:`\omega_0`, followed by ``N_iter`` refinements of</span>
-<span class="sd">    the criterion by Newton&#39;s method (or by plain gradient ascent). The</span>
+<span class="sd">    the criterion by Newton's method (or by plain gradient ascent). The</span>
 <span class="sd">    Newton step uses the exact first and second derivatives of the</span>
 <span class="sd">    periodogram with respect to :math:`\omega`.</span>
 
@@ -1302,16 +1302,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    save_history : bool, optional, keyword-only</span>
 <span class="sd">        If True, every intermediate value of :math:`\omega_0` is appended</span>
 <span class="sd">        to ``history_``. Default is False.</span>
-<span class="sd">    method : {&quot;grad&quot;, &quot;newton&quot;}, optional, keyword-only</span>
-<span class="sd">        Local optimizer. Default is ``&quot;newton&quot;``.</span>
+<span class="sd">    method : {"grad", "newton"}, optional, keyword-only</span>
+<span class="sd">        Local optimizer. Default is ``"newton"``.</span>
 <span class="sd">    step_size : float, optional, keyword-only</span>
-<span class="sd">        Gradient step used when ``method=&quot;grad&quot;``. Default is 1e-8.</span>
+<span class="sd">        Gradient step used when ``method="grad"``. Default is 1e-8.</span>
 <span class="sd">    grid_search_tuple : tuple, optional, keyword-only</span>
 <span class="sd">        ``(start, stop, step)`` of the grid over :math:`\omega_0`, in</span>
 <span class="sd">        rad/sample. Default is ``(-0.1, 0.1, 0.0001)``.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the compensator instance. Default is</span>
-<span class="sd">        ``&quot;cfo_compensator&quot;``.</span>
+<span class="sd">        ``"cfo_compensator"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1331,12 +1331,12 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    * A. J. Viterbi, A. M. Viterbi, &quot;Nonlinear estimation of</span>
+<span class="sd">    * A. J. Viterbi, A. M. Viterbi, "Nonlinear estimation of</span>
 <span class="sd">      PSK-modulated carrier phase with application to burst digital</span>
-<span class="sd">      transmission,&quot; IEEE Transactions on Information Theory, vol. 29,</span>
+<span class="sd">      transmission," IEEE Transactions on Information Theory, vol. 29,</span>
 <span class="sd">      no. 4, pp. 543-551, 1983 (the fourth-power nonlinearity).</span>
-<span class="sd">    * D. C. Rife, R. R. Boorstyn, &quot;Single-tone parameter estimation from</span>
-<span class="sd">      discrete-time observations,&quot; IEEE Transactions on Information</span>
+<span class="sd">    * D. C. Rife, R. R. Boorstyn, "Single-tone parameter estimation from</span>
+<span class="sd">      discrete-time observations," IEEE Transactions on Information</span>
 <span class="sd">      Theory, vol. 20, no. 5, pp. 591-598, 1974 (periodogram maximization</span>
 <span class="sd">      and its local refinement).</span>
 <span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
@@ -1352,17 +1352,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = compensator(x)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(compensator.w0_), 5))</span>
 <span class="sd">    0.01</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">w0_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">N_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">grid_search</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;grad&quot;</span><span class="p">,</span> <span class="s2">&quot;newton&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;newton&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"grad"</span><span class="p">,</span> <span class="s2">"newton"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"newton"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">grid_search_tuple</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0001</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cfo_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"cfo_compensator"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
     <span class="n">grid_search_array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">history_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -1382,9 +1382,9 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># the loop named.</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;BlindCFOCompensator estimates one CFO per signal or &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;per polarization pair (2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;-- loop over the batch, one compensator per trial.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"BlindCFOCompensator estimates one CFO per signal or "</span>
+                <span class="sa">f</span><span class="s2">"per polarization pair (2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"-- loop over the batch, one compensator per trial."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -1424,13 +1424,13 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_iter</span><span class="p">):</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;grad&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"grad"</span><span class="p">:</span>
                 <span class="n">dtft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
                 <span class="n">dtft_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">N_vect</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
                 <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dtft_diff</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft</span><span class="p">)</span> <span class="o">+</span> <span class="n">dtft</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">dtft_diff</span><span class="p">))</span>
                 <span class="n">h</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">grad</span><span class="o">.</span><span class="n">real</span>
 
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"newton"</span><span class="p">:</span>
                 <span class="n">dtft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
                 <span class="n">dtft_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">N_vect</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
                 <span class="n">dtft_diff2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_dtft</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">N_vect</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">x4</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
@@ -1440,8 +1440,8 @@ window.runMermaid = runMermaid;</script>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;BlindCFOCompensator: unknown method &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected &#39;grad&#39; or &#39;newton&#39;.&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"BlindCFOCompensator: unknown method "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, expected 'grad' or 'newton'."</span><span class="p">)</span>
 
             <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">+</span> <span class="n">h</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">))</span>
@@ -1456,8 +1456,8 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w0_init</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">w0_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;BlindCFOCompensator: forward called with should_fit=False &quot;</span>
-                <span class="s2">&quot;but fit() was never called -- call fit(x, w0_init) first.&quot;</span><span class="p">)</span>
+                <span class="s2">"BlindCFOCompensator: forward called with should_fit=False "</span>
+                <span class="s2">"but fit() was never called -- call fit(x, w0_init) first."</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">w0_</span><span class="o">*</span><span class="n">N_vect</span><span class="p">)</span></div>
 
@@ -1467,7 +1467,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindPhaseCompensation">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlindPhaseCompensation</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Blind phase compensator minimizing the error vector magnitude (EVM).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Blind phase compensator minimizing the error vector magnitude (EVM).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1516,7 +1516,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        every call (per-block regime, D22); otherwise the value of the</span>
 <span class="sd">        last ``fit`` is reused.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;phase correction&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"phase correction"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1545,11 +1545,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = compensator(s * np.exp(-1j * 0.3))    # a -0.3 rad rotation</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(compensator.theta_), 4), bool(np.allclose(y, s)))</span>
 <span class="sd">    0.3 True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">theta0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;phase correction&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"phase correction"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
     <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
@@ -1565,7 +1565,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">error_real</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BlindPhaseCompensation&quot;</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BlindPhaseCompensation"</span><span class="p">:</span>
         <span class="n">signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">paths</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">least_squares</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta0</span><span class="p">,</span>
@@ -1582,8 +1582,8 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;BlindPhaseCompensation: forward called with should_fit=False &quot;</span>
-                <span class="s2">&quot;but fit() was never called -- call fit(x) first.&quot;</span><span class="p">)</span>
+                <span class="s2">"BlindPhaseCompensation: forward called with should_fit=False "</span>
+                <span class="s2">"but fit() was never called -- call fit(x) first."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">)</span></div>
 
 
@@ -1592,7 +1592,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.LinearEqualizer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LinearEqualizer</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Block linear equalizer (ZF or MMSE) for a known FIR channel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Block linear equalizer (ZF or MMSE) for a known FIR channel.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1638,13 +1638,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Channel impulse response :math:`h[l]`, a 1D array of length</span>
 <span class="sd">        :math:`L`. It is *configured*, not estimated: use</span>
 <span class="sd">        ``DataAidedFIRCompensator`` when the channel is unknown.</span>
-<span class="sd">    method : {&quot;zf&quot;, &quot;mmse&quot;}, optional, keyword-only</span>
-<span class="sd">        Closed form used. Default is ``&quot;zf&quot;``.</span>
+<span class="sd">    method : {"zf", "mmse"}, optional, keyword-only</span>
+<span class="sd">        Closed form used. Default is ``"zf"``.</span>
 <span class="sd">    sigma2 : float, optional, keyword-only</span>
-<span class="sd">        Noise variance :math:`\sigma^2`, used by ``&quot;mmse&quot;`` only.</span>
+<span class="sd">        Noise variance :math:`\sigma^2`, used by ``"mmse"`` only.</span>
 <span class="sd">        Default is 0.0.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the equalizer instance. Default is ``&quot;equalizer&quot;``.</span>
+<span class="sd">        Name of the equalizer instance. Default is ``"equalizer"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1659,13 +1659,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; x = np.convolve(s, h)                       # noiseless ISI channel</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(LinearEqualizer(h)(x).real, 6))</span>
 <span class="sd">    [ 1. -1.  1.  1.]</span>
-<span class="sd">    &gt;&gt;&gt; print(np.round(LinearEqualizer(h, method=&quot;mmse&quot;, sigma2=0.1)(x).real, 3))</span>
+<span class="sd">    &gt;&gt;&gt; print(np.round(LinearEqualizer(h, method="mmse", sigma2=0.1)(x).real, 3))</span>
 <span class="sd">    [ 0.862 -0.827  0.872  0.973]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="s2">&quot;mmse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;zf&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"zf"</span><span class="p">,</span> <span class="s2">"mmse"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"zf"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;equalizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"equalizer"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_H</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1683,9 +1683,9 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># length-1 axis makes matmul treat it as a column, so leading</span>
         <span class="c1"># axes are batch (independent frames equalized in one call)</span>
         <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
-            <span class="k">case</span> <span class="s2">&quot;zf&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"zf"</span><span class="p">:</span>
                 <span class="n">Y</span> <span class="o">=</span> <span class="n">zf_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">H</span><span class="p">)</span>
-            <span class="k">case</span> <span class="s2">&quot;mmse&quot;</span><span class="p">:</span>
+            <span class="k">case</span> <span class="s2">"mmse"</span><span class="p">:</span>
                 <span class="n">Y</span> <span class="o">=</span> <span class="n">mmse_estimator</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></div>
 
@@ -1695,7 +1695,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedFIRCompensator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedFIRCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided FIR compensator: least-squares channel estimation, then deconvolution.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data-aided FIR compensator: least-squares channel estimation, then deconvolution.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1735,14 +1735,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
 <span class="sd">        the chain itself, leave it unset and declare the edge with</span>
-<span class="sd">        ``Sequential(wiring={&quot;data_aided_fir.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        ``Sequential(wiring={"data_aided_fir.reference": "source"})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    should_fit : bool, optional, keyword-only</span>
 <span class="sd">        If True (default), the channel is re-estimated at every call</span>
 <span class="sd">        (per-block regime, D22); otherwise the estimate of the last</span>
 <span class="sd">        ``fit`` is reused.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;data_aided_fir&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"data_aided_fir"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1773,18 +1773,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [ 1. -1.  1.  1.]</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(compensator.h_, 6) + 0.0)</span>
 <span class="sd">    [1.  0.5 0.  0. ]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_fir&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"data_aided_fir"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a)</span>
     <span class="n">h_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one FIR response against a reference&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"one FIR response against a reference"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataAidedFIRCompensator&quot;</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DataAidedFIRCompensator"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
         <span class="n">L</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -1798,9 +1798,9 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedFIRCompensator: forward called with &quot;</span>
-                <span class="s2">&quot;should_fit=False but fit() was never called -- call &quot;</span>
-                <span class="s2">&quot;fit(x) first.&quot;</span><span class="p">)</span>
+                <span class="s2">"DataAidedFIRCompensator: forward called with "</span>
+                <span class="s2">"should_fit=False but fit() was never called -- call "</span>
+                <span class="s2">"fit(x) first."</span><span class="p">)</span>
 
         <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_</span>
         <span class="n">y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">deconvolve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)]),</span> <span class="n">h</span><span class="p">)</span>
@@ -1812,7 +1812,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedPhaseCompensator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedPhaseCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided phase compensator (maximum-likelihood phase from a known reference).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data-aided phase compensator (maximum-likelihood phase from a known reference).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1847,7 +1847,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known reference :math:`d[n]`. When the reference is produced by</span>
 <span class="sd">        the chain itself, leave it unset and declare the edge with</span>
-<span class="sd">        ``Sequential(wiring={&quot;data_aided_phase.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        ``Sequential(wiring={"data_aided_phase.reference": "source"})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    shared : bool, optional, keyword-only</span>
 <span class="sd">        Which D49 family the phase belongs to, for a multi-path signal.</span>
@@ -1856,7 +1856,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``False`` fits one per path. Default is ``None``, which refuses</span>
 <span class="sd">        a multi-path signal rather than choosing for the caller.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;data_aided_phase&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"data_aided_phase"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1882,15 +1882,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y, 6))</span>
 <span class="sd">    [ 0.707107+0.707107j  0.707107-0.707107j -0.707107+0.707107j</span>
 <span class="sd">     -0.707107-0.707107j]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;data_aided_phase&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"data_aided_phase"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a). A scalar when</span>
     <span class="c1"># the estimand is single or shared, one value per path otherwise.</span>
     <span class="n">theta_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one phase against a reference&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"one phase against a reference"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
@@ -1899,12 +1899,12 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataAidedPhaseCompensator&quot;</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DataAidedPhaseCompensator"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;per_path&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"per_path"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">)))</span>
@@ -1915,7 +1915,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">theta_</span>
         <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedPhaseCompensator: fit() left no phase estimate.&quot;</span><span class="p">)</span>
+                <span class="s2">"DataAidedPhaseCompensator: fit() left no phase estimate."</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="k">if</span> <span class="n">theta</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="n">theta</span><span class="p">))</span></div>
 
@@ -1925,7 +1925,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedComplexGainCompensator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedComplexGainCompensator</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided compensator of a flat complex gain (amplitude and phase).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data-aided compensator of a flat complex gain (amplitude and phase).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1962,8 +1962,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
 <span class="sd">        itself, leave it unset and declare the edge with</span>
-<span class="sd">        ``Sequential(wiring={&quot;complex_gain_compensator.reference&quot;:</span>
-<span class="sd">        &quot;source&quot;})`` instead of freezing an array.</span>
+<span class="sd">        ``Sequential(wiring={"complex_gain_compensator.reference":</span>
+<span class="sd">        "source"})`` instead of freezing an array.</span>
 <span class="sd">    shared : bool, optional, keyword-only</span>
 <span class="sd">        Which D49 family the gain belongs to, for a multi-path signal.</span>
 <span class="sd">        ``True`` fits one gain jointly over every path -- the case of a</span>
@@ -1981,7 +1981,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``fit`` is reused (reused-preamble regime).</span>
 <span class="sd">    name : str, optional, keyword-only</span>
 <span class="sd">        Name of the processor. Default is</span>
-<span class="sd">        ``&quot;complex_gain_compensator&quot;``.</span>
+<span class="sd">        ``"complex_gain_compensator"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2011,29 +2011,29 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    (0.25-0.433013j)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y, 6))</span>
 <span class="sd">    [ 1.+1.j  1.-1.j -1.+1.j -1.-1.j]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">extractor</span><span class="p">:</span> <span class="n">DataExtractor</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DataExtractor</span><span class="p">(</span><span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">should_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">shared</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;complex_gain_compensator&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"complex_gain_compensator"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantity (D23), declared for slots (D40a). A scalar when</span>
     <span class="c1"># the estimand is single or shared, one value per path otherwise.</span>
     <span class="n">gain_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one complex gain against a reference&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"one complex gain against a reference"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataAidedComplexGainCompensator&quot;</span><span class="p">:</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DataAidedComplexGainCompensator"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference</span><span class="p">()</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="c1"># least squares over the last axis: g = &lt;x, y&gt; / &lt;x, x&gt;, which is</span>
         <span class="c1"># what pinv computes for a single column and stays shape-aware</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;per_path&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_mode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"per_path"</span><span class="p">:</span>
             <span class="c1"># abs()**2 rather than conj(x)*x + .real: the product is real</span>
             <span class="c1"># by construction, and newer numpy stubs refuse .real on the sum</span>
             <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -2049,9 +2049,9 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedComplexGainCompensator: forward called with &quot;</span>
-                <span class="s2">&quot;should_fit=False but fit() was never called -- call &quot;</span>
-                <span class="s2">&quot;fit(x_preamble) first.&quot;</span><span class="p">)</span>
+                <span class="s2">"DataAidedComplexGainCompensator: forward called with "</span>
+                <span class="s2">"should_fit=False but fit() was never called -- call "</span>
+                <span class="s2">"fit(x_preamble) first."</span><span class="p">)</span>
 
         <span class="n">gain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_</span><span class="p">)</span>
         <span class="c1"># one gain per path needs an axis to broadcast against the samples</span>
@@ -2063,7 +2063,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.DataAidedSimpleSynchronizer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedSimpleSynchronizer</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided frame synchronizer at one-sample resolution (correlation peak).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data-aided frame synchronizer at one-sample resolution (correlation peak).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -2105,7 +2105,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
 <span class="sd">        itself, leave it unset and declare the edge with</span>
-<span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        ``Sequential(wiring={"synchronizer.reference": "source"})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    scale_correction : bool, optional</span>
 <span class="sd">        If True (default), the output is divided by the complex peak</span>
@@ -2117,7 +2117,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Truncates the realigned signal to that length. Default is None</span>
 <span class="sd">        (keep everything after the peak).</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the synchronizer instance. Default is ``&quot;synchronizer&quot;``.</span>
+<span class="sd">        Name of the synchronizer instance. Default is ``"synchronizer"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2157,19 +2157,19 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [ 1. -1.  1.  1.  1. -1.]</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(DataAidedSimpleSynchronizer(d)(0.5 * x), 6))   # 6 dB attenuation</span>
 <span class="sd">    [ 1. -1.  1.  1.  1. -1.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">signal_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;synchronizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"synchronizer"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
     <span class="n">delay_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">scale_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">cross_corr_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">n_vect_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one delay against a reference&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"one delay against a reference"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
@@ -2194,10 +2194,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">energy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedSimpleSynchronizer: reference energy is 0, &quot;</span>
-                <span class="s2">&quot;expected a non-zero preamble -- pass the transmitted &quot;</span>
-                <span class="s2">&quot;preamble as reference.&quot;</span><span class="p">)</span>
-        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+                <span class="s2">"DataAidedSimpleSynchronizer: reference energy is 0, "</span>
+                <span class="s2">"expected a non-zero preamble -- pass the transmitted "</span>
+                <span class="s2">"preamble as reference."</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">'full'</span><span class="p">)</span>
         <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">cross_corr</span> <span class="o">/</span> <span class="n">energy</span>
         <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -2219,20 +2219,20 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="n">cross_corr</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="n">n_vect</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="s2">&quot;Optional[Axes]&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="s2">"Optional[Axes]"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.plot has nothing to draw: the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cross-correlation was not kept. Construct the block &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with save_cross_correlation=True and run it once, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;then call plot().&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.plot has nothing to draw: the "</span>
+                <span class="sa">f</span><span class="s2">"cross-correlation was not kept. Construct the block "</span>
+                <span class="sa">f</span><span class="s2">"with save_cross_correlation=True and run it once, "</span>
+                <span class="sa">f</span><span class="s2">"then call plot()."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span><span class="p">))</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Cross-correlation magnitude&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Lag&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Cross-correlation magnitude'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Lag'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Magnitude'</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ax</span>
 
@@ -2241,7 +2241,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedSimpleSynchronizer: fit() left no delay estimate.&quot;</span><span class="p">)</span>
+                <span class="s2">"DataAidedSimpleSynchronizer: fit() left no delay estimate."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">delay_</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_len</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2255,7 +2255,7 @@ window.runMermaid = runMermaid;</script>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataAidedFineSynchronizer</span><span class="p">(</span><span class="n">DataAidedMixin</span><span class="p">,</span> <span class="n">Processor</span><span class="p">):</span>
 
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Data-aided frame synchronizer at fractional-sample resolution.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Data-aided frame synchronizer at fractional-sample resolution.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -2301,7 +2301,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    reference : np.ndarray, optional</span>
 <span class="sd">        Known preamble :math:`d[n]`. When it is produced by the chain</span>
 <span class="sd">        itself, leave it unset and declare the edge with</span>
-<span class="sd">        ``Sequential(wiring={&quot;synchronizer.reference&quot;: &quot;source&quot;})``</span>
+<span class="sd">        ``Sequential(wiring={"synchronizer.reference": "source"})``</span>
 <span class="sd">        instead of freezing an array.</span>
 <span class="sd">    scale_correction : bool, optional</span>
 <span class="sd">        If True (default), the output is divided by the complex peak</span>
@@ -2319,7 +2319,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        correlation window and therefore the search range. Default is</span>
 <span class="sd">        None (search over the whole record).</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the synchronizer instance. Default is ``&quot;synchronizer&quot;``.</span>
+<span class="sd">        Name of the synchronizer instance. Default is ``"synchronizer"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2347,8 +2347,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    * J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
 <span class="sd">      McGraw-Hill, 2008, Chapter 5 (frame and symbol synchronization).</span>
-<span class="sd">    * F. M. Gardner, &quot;Interpolation in digital modems -- Part I:</span>
-<span class="sd">      Fundamentals,&quot; IEEE Transactions on Communications, vol. 41, no. 3,</span>
+<span class="sd">    * F. M. Gardner, "Interpolation in digital modems -- Part I:</span>
+<span class="sd">      Fundamentals," IEEE Transactions on Communications, vol. 41, no. 3,</span>
 <span class="sd">      pp. 501-507, 1993 (interpolation-based fractional timing recovery).</span>
 
 <span class="sd">    Examples</span>
@@ -2359,21 +2359,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = synchronizer(x)</span>
 <span class="sd">    &gt;&gt;&gt; print(synchronizer.delay_, synchronizer.delay_ / synchronizer.up_factor, y.shape)</span>
 <span class="sd">    6 3.0 (4,)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">scale_correction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">up_factor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">save_cross_correlation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">signal_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">d_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;synchronizer&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"synchronizer"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># estimated quantities (D23), declared for slots (D40a)</span>
     <span class="n">delay_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">scale_</span><span class="p">:</span> <span class="nb">complex</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">cross_corr_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">n_vect_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">&quot;one fractional delay against a reference&quot;</span>
+    <span class="n">estimand</span> <span class="o">=</span> <span class="s2">"one fractional delay against a reference"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># explicit parent call: zero-arg super() breaks with slots=True</span>
@@ -2397,10 +2397,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x_preamble</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">energy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;DataAidedFineSynchronizer: reference energy is 0, &quot;</span>
-                <span class="s2">&quot;expected a non-zero preamble -- pass the transmitted &quot;</span>
-                <span class="s2">&quot;preamble as reference.&quot;</span><span class="p">)</span>
-        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>  <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+                <span class="s2">"DataAidedFineSynchronizer: reference energy is 0, "</span>
+                <span class="s2">"expected a non-zero preamble -- pass the transmitted "</span>
+                <span class="s2">"preamble as reference."</span><span class="p">)</span>
+        <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>  <span class="n">x_preamble_padded</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">'full'</span><span class="p">)</span>
         <span class="n">cross_corr</span> <span class="o">=</span> <span class="n">cross_corr</span> <span class="o">/</span> <span class="n">energy</span>
         <span class="n">n_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cross_corr</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -2419,20 +2419,20 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="o">=</span> <span class="n">cross_corr</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="o">=</span> <span class="n">n_vect</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="s2">&quot;Optional[Axes]&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="s2">"Optional[Axes]"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.plot has nothing to draw: the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cross-correlation was not kept. Construct the block &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with save_cross_correlation=True and run it once, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;then call plot().&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.plot has nothing to draw: the "</span>
+                <span class="sa">f</span><span class="s2">"cross-correlation was not kept. Construct the block "</span>
+                <span class="sa">f</span><span class="s2">"with save_cross_correlation=True and run it once, "</span>
+                <span class="sa">f</span><span class="s2">"then call plot()."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vect_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_corr_</span><span class="p">))</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Cross-correlation magnitude&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Lag&#39;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Cross-correlation magnitude'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Lag'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Magnitude'</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ax</span>
 
@@ -2467,7 +2467,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/compensators.html#comnumpy.core.compensators.BlindPhaseSearchCompensator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlindPhaseSearchCompensator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Feedforward carrier phase recovery by blind phase search (BPS).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Feedforward carrier phase recovery by blind phase search (BPS).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -2510,7 +2510,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        must be short against the phase drift and long against the</span>
 <span class="sd">        additive noise.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Block name. Default ``&quot;bps&quot;``.</span>
+<span class="sd">        Block name. Default ``"bps"``.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2521,29 +2521,29 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, &quot;Hardware-Efficient Coherent Digital</span>
+<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, "Hardware-Efficient Coherent Digital</span>
 <span class="sd">    Receiver Concept With Feedforward Carrier Recovery for M-QAM</span>
-<span class="sd">    Constellations,&quot; Journal of Lightwave Technology, vol. 27, no. 8,</span>
+<span class="sd">    Constellations," Journal of Lightwave Technology, vol. 27, no. 8,</span>
 <span class="sd">    pp. 989-999, 2009.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;PSK&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet("PSK", 4)</span>
 <span class="sd">    &gt;&gt;&gt; s = alphabet[np.arange(64) % 4]</span>
 <span class="sd">    &gt;&gt;&gt; rotated = s * np.exp(1j * 0.3)</span>
 <span class="sd">    &gt;&gt;&gt; y = BlindPhaseSearchCompensator(alphabet, half_window=8)(rotated)</span>
 <span class="sd">    &gt;&gt;&gt; bool(np.max(np.abs(y - s)) &lt; np.pi / 2 / 32)   # within one grid step</span>
 <span class="sd">    True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">n_test</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">half_window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;bps&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"bps"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">phase_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The unwrapped phase trajectory of one 1D signal.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The unwrapped phase trajectory of one 1D signal."""</span>
         <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">))</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_test</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_test</span>
         <span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -2552,7 +2552,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">rotated</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
             <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rotated</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">cost</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">)</span>
+            <span class="n">cost</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"same"</span><span class="p">)</span>
         <span class="n">raw</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
         <span class="c1"># unwrap modulo pi/2: a jump larger than pi/4 between neighbours</span>
         <span class="c1"># is the estimate crossing the edge of the search range</span>

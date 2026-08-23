@@ -800,14 +800,14 @@ Profiling measures the computational cost of each processor, helping you identif
 <span class="n">N</span> <span class="o">=</span> <span class="mi">100000</span>      <span class="c1"># Number of symbols</span>
 <span class="n">sigma2</span> <span class="o">=</span> <span class="mf">0.01</span>   <span class="c1"># Noise variance</span>
 
-<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">&quot;QAM&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
-<span class="n">allocation</span> <span class="o">=</span> <span class="n">get_allocation</span><span class="p">(</span><span class="s2">&quot;802.11ac-40&quot;</span><span class="p">)</span>  <span class="c1"># 128 subcarriers, from the catalog</span>
+<span class="n">constellation</span> <span class="o">=</span> <span class="n">Constellation</span><span class="p">(</span><span class="s2">"QAM"</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">allocation</span> <span class="o">=</span> <span class="n">get_allocation</span><span class="p">(</span><span class="s2">"802.11ac-40"</span><span class="p">)</span>  <span class="c1"># 128 subcarriers, from the catalog</span>
 
 <span class="n">N_carriers</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_fft</span>
 <span class="n">N_carrier_data</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_data</span>       <span class="c1"># Number of data carriers</span>
 <span class="n">N_carrier_pilots</span> <span class="o">=</span> <span class="n">allocation</span><span class="o">.</span><span class="n">N_pilots</span>   <span class="c1"># Number of pilot carriers</span>
 
-<span class="n">channel_model</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">&quot;TDL-D&quot;</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+<span class="n">channel_model</span> <span class="o">=</span> <span class="n">TappedDelayLineChannel</span><span class="p">(</span><span class="n">get_delay_profile</span><span class="p">(</span><span class="s2">"TDL-D"</span><span class="p">),</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
                                        <span class="n">seed</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">h</span> <span class="o">=</span> <span class="n">channel_model</span><span class="o">.</span><span class="n">impulse_response</span><span class="p">()</span>
 <span class="n">pilots</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N_carrier_pilots</span><span class="p">)</span>  <span class="c1"># Pilot values</span>
@@ -903,10 +903,10 @@ Maps received constellation points back to integer symbols.</p></li>
     </pre><p>The diagram above is not drawn by hand. It is what the chain says about
 itself – <code class="docutils literal notranslate"><span class="pre">chain.to_mermaid()</span></code> (decision D33c) – exported by the
 script, so the block names are the ones the code uses and a dashed
-outline marks a tapped block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">&quot;../../docs/getting_started/mermaid/&quot;</span>
-<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;profiling_chain&quot;</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+outline marks an observed block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mermaid_dir</span> <span class="o">=</span> <span class="s2">"../../docs/getting_started/mermaid/"</span>
+<span class="k">for</span> <span class="n">diagram_name</span><span class="p">,</span> <span class="n">diagram_chain</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"profiling_chain"</span><span class="p">,</span> <span class="n">chain</span><span class="p">)]:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mermaid_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">diagram_name</span><span class="si">}</span><span class="s2">.mmd"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
         <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">diagram_chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -918,7 +918,7 @@ outline marks a tapped block:</p>
 This function measures the execution time of each processor for a given input size
 and produces a bar chart of the results.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plot_chain_profiling</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../../docs/getting_started/img/profiling_chain_fig1.png&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">"../../docs/getting_started/img/profiling_chain_fig1.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The resulting figure shows the time spent in each processor, making it easy to identify which stages dominate the computation.</p>

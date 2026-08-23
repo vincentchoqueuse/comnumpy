@@ -732,14 +732,14 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SRRCFilter&quot;</span><span class="p">,</span> <span class="s2">&quot;BWFilter&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SRRCFilter"</span><span class="p">,</span> <span class="s2">"BWFilter"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="SRRCFilter">
 <a class="viewcode-back" href="../../../documentation/core/filters.html#comnumpy.core.filters.SRRCFilter">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SRRCFilter</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Square-root raised cosine (SRRC) FIR pulse-shaping filter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Square-root raised cosine (SRRC) FIR pulse-shaping filter.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -775,7 +775,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :math:`2 N_h L + 1` taps, and scaled to unit energy</span>
 <span class="sd">    :math:`\sum_m h^2[m] = 1` when ``norm`` is True.</span>
 
-<span class="sd">    **Why the square root, and why on both sides.** Nyquist&#39;s first</span>
+<span class="sd">    **Why the square root, and why on both sides.** Nyquist's first</span>
 <span class="sd">    criterion states that a pulse :math:`g(t)` produces no intersymbol</span>
 <span class="sd">    interference when it vanishes at every non-zero multiple of the</span>
 <span class="sd">    symbol period, :math:`g(mT) = 0` for :math:`m \neq 0`. The raised</span>
@@ -817,16 +817,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    scale : float, optional, keyword-only</span>
 <span class="sd">        Amplitude scaling factor applied to the output. Default is</span>
 <span class="sd">        1.0, applied by both methods.</span>
-<span class="sd">    method : {&quot;lfilter&quot;, &quot;fft&quot;}, optional, keyword-only</span>
-<span class="sd">        Filtering method: ``&quot;lfilter&quot;`` for the causal FIR convolution</span>
-<span class="sd">        (``scipy.signal.lfilter``), ``&quot;fft&quot;`` for the circular</span>
+<span class="sd">    method : {"lfilter", "fft"}, optional, keyword-only</span>
+<span class="sd">        Filtering method: ``"lfilter"`` for the causal FIR convolution</span>
+<span class="sd">        (``scipy.signal.lfilter``), ``"fft"`` for the circular</span>
 <span class="sd">        frequency-domain product with the delay-compensated response</span>
-<span class="sd">        returned by :meth:`H`. Default is ``&quot;lfilter&quot;``.</span>
+<span class="sd">        returned by :meth:`H`. Default is ``"lfilter"``.</span>
 <span class="sd">    axis : int, optional, keyword-only</span>
-<span class="sd">        Filtering axis. Default is -1. The ``&quot;lfilter&quot;`` method honours</span>
-<span class="sd">        it; the ``&quot;fft&quot;`` method always filters along the last axis.</span>
+<span class="sd">        Filtering axis. Default is -1. The ``"lfilter"`` method honours</span>
+<span class="sd">        it; the ``"fft"`` method always filters along the last axis.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the filter instance. Default is ``&quot;SRRCFilter&quot;``.</span>
+<span class="sd">        Name of the filter instance. Default is ``"SRRCFilter"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -843,23 +843,23 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; g = np.convolve(h, h)  # transmit pulse * matched filter = raised cosine</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(g[len(h) - 1 + 4::4][:5]), 3))  # t = T, 2T, ...</span>
 <span class="sd">    [0. 0. 0. 0. 0.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">rho</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">oversampling</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">N_h</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;lfilter&#39;</span><span class="p">,</span> <span class="s1">&#39;fft&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;lfilter&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'lfilter'</span><span class="p">,</span> <span class="s1">'fft'</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"lfilter"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;SRRCFilter&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"SRRCFilter"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;lfilter&quot;</span><span class="p">,</span> <span class="s2">&quot;fft&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"lfilter"</span><span class="p">,</span> <span class="s2">"fft"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;SRRCFilter: unknown method </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">; expected &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;&#39;lfilter&#39; (causal FIR) or &#39;fft&#39; (circular, 1D) -- fix the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;method= argument.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"SRRCFilter: unknown method </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">; expected "</span>
+                <span class="sa">f</span><span class="s2">"'lfilter' (causal FIR) or 'fft' (circular, 1D) -- fix the "</span>
+                <span class="sa">f</span><span class="s2">"method= argument."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">h</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 
@@ -900,15 +900,15 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="SRRCFilter.H">
 <a class="viewcode-back" href="../../../documentation/core/filters.html#comnumpy.core.filters.SRRCFilter.H">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">H</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Frequency response for fft method&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Frequency response for fft method"""</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span>  <span class="c1"># local import (D36), cupy-compatible (D3)</span>
         <span class="c1"># see hager code on LDBP</span>
         <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">NFFT</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;SRRCFilter(method=&#39;fft&#39;) needs at least as many samples as &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;filter taps (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2"> = 2*N_h*oversampling + 1), got </span><span class="si">{</span><span class="n">NFFT</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;-- use method=&#39;lfilter&#39; or a longer signal&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"SRRCFilter(method='fft') needs at least as many samples as "</span>
+                <span class="sa">f</span><span class="s2">"filter taps (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="si">}</span><span class="s2"> = 2*N_h*oversampling + 1), got </span><span class="si">{</span><span class="n">NFFT</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"-- use method='lfilter' or a longer signal"</span><span class="p">)</span>
         <span class="n">filter_delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">oversampling</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">N_h</span>
         <span class="n">H_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NFFT</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">))))</span>
         <span class="n">H_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">H_tmp</span><span class="p">,</span> <span class="o">-</span><span class="n">filter_delay</span><span class="p">)</span>
@@ -921,13 +921,13 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;lfilter&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"lfilter"</span><span class="p">:</span>
             <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">()</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>  <span class="c1"># local import (D36)</span>
             <span class="c1"># asarray: lfilter is typed as returning a tuple when `zi` is</span>
             <span class="c1"># given, which it is not here</span>
             <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># &quot;fft&quot; -- validated in __post_init__</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># "fft" -- validated in __post_init__</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy._backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span>  <span class="c1"># local import (D36), cupy-compatible (D3)</span>
             <span class="c1"># x.shape[-1], not len(x): a polarization pair (..., 2, N)</span>
             <span class="c1"># would otherwise transform two samples instead of N and</span>
@@ -946,7 +946,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/filters.html#comnumpy.core.filters.BWFilter">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BWFilter</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Ideal (brick-wall) low-pass filter applied in the frequency domain.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Ideal (brick-wall) low-pass filter applied in the frequency domain.</span>
 
 <span class="sd">    .. note::</span>
 
@@ -1017,16 +1017,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = BWFilter(0.2)(x)  # cutoff 0.2 x Nyquist = 0.1 cycles/sample</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y[:4].real, 6))</span>
 <span class="sd">    [1.       0.92388  0.707107 0.382683]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">wn</span><span class="p">:</span> <span class="nb">float</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">wn</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;BWFilter: expected a cutoff in (0, 1] normalized to the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Nyquist frequency (scipy.signal convention), got wn=&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wn</span><span class="si">}</span><span class="s2"> -- pass wn=1 to keep the whole band, or &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;wn=1/L for a signal oversampled by L.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"BWFilter: expected a cutoff in (0, 1] normalized to the "</span>
+                <span class="sa">f</span><span class="s2">"Nyquist frequency (scipy.signal convention), got wn="</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wn</span><span class="si">}</span><span class="s2"> -- pass wn=1 to keep the whole band, or "</span>
+                <span class="sa">f</span><span class="s2">"wn=1/L for a signal oversampled by L."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 
@@ -1041,7 +1041,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">y</span> <span class="o">=</span> <span class="n">ifft</span><span class="p">(</span><span class="n">H</span><span class="o">*</span><span class="n">fft_x</span><span class="p">,</span> <span class="n">NFFT</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isrealobj</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="c1"># the mask is symmetric in +/-f, so a real signal stays real:</span>
-            <span class="c1"># keep its dtype instead of leaking the ifft&#39;s complex128</span>
+            <span class="c1"># keep its dtype instead of leaking the ifft's complex128</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span></div>
 

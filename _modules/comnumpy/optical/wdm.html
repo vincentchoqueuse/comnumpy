@@ -726,7 +726,7 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.optical.wdm</h1><div class="highlight"><pre>
-<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Wavelength-division multiplexing: the frequency plan and the two blocks.</span>
+<span></span><span class="sa">r</span><span class="sd">"""Wavelength-division multiplexing: the frequency plan and the two blocks.</span>
 
 <span class="sd">Three objects, and the split between them is the point:</span>
 
@@ -739,10 +739,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">  filters.</span>
 
 <span class="sd">Naming and units follow the convention shared by the software-radio</span>
-<span class="sd">libraries (GNU Radio&#39;s ``freq_xlating_fir_filter``,</span>
+<span class="sd">libraries (GNU Radio's ``freq_xlating_fir_filter``,</span>
 <span class="sd">``pfb_synthesizer_ccf`` / ``pfb_channelizer_ccf``): **frequencies are</span>
 <span class="sd">absolute, in hertz, and every block that needs one takes an explicit</span>
-<span class="sd">sample rate ``fs``**. Nothing here is normalized behind the user&#39;s back.</span>
+<span class="sd">sample rate ``fs``**. Nothing here is normalized behind the user's back.</span>
 <span class="sd">The multiplexer is the synthesis bank, the demultiplexer the analysis</span>
 <span class="sd">bank; the optical names are kept because that is what the field calls</span>
 <span class="sd">them, and the radio names are given here so the equivalence is visible.</span>
@@ -753,7 +753,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">:class:`~comnumpy.core.processors.Upsampler` and</span>
 <span class="sd">:class:`~comnumpy.core.processors.Downsampler` around them. That is what</span>
 <span class="sd">keeps a WDM chain readable: one block, one job.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -769,14 +769,14 @@ window.runMermaid = runMermaid;</script>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;WDMGrid&quot;</span><span class="p">,</span> <span class="s2">&quot;WDMMultiplexer&quot;</span><span class="p">,</span> <span class="s2">&quot;WDMDemultiplexer&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"WDMGrid"</span><span class="p">,</span> <span class="s2">"WDMMultiplexer"</span><span class="p">,</span> <span class="s2">"WDMDemultiplexer"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="WDMGrid">
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WDMGrid</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Where the WDM channels sit, in hertz (decision D44).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Where the WDM channels sit, in hertz (decision D44).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -810,7 +810,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        outermost channels, which is what minimizes the required</span>
 <span class="sd">        :math:`f_s`.</span>
 <span class="sd">    standard : str, keyword-only</span>
-<span class="sd">        Name of the plan, e.g. ``&quot;ITU-T G.694.1 50 GHz&quot;``.</span>
+<span class="sd">        Name of the plan, e.g. ``"ITU-T G.694.1 50 GHz"``.</span>
 <span class="sd">    reference : str, keyword-only</span>
 <span class="sd">        Clause the numbers were copied from (same provenance rule as</span>
 <span class="sd">        D15/D20).</span>
@@ -838,83 +838,83 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; grid = WDMGrid.uniform(5, spacing_Hz=50e9, bandwidth_Hz=32e9)</span>
 <span class="sd">    &gt;&gt;&gt; grid.n_channels, float(grid.offsets_Hz[0]) / 1e9, grid.min_fs / 1e9</span>
 <span class="sd">    (5, -100.0, 232.0)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">frequencies_Hz</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">center_Hz</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"custom"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">frequencies</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span> <span class="k">for</span> <span class="n">nu</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">frequencies</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a WDM grid needs at least one channel, got none&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a WDM grid needs at least one channel, got none"</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected strictly ascending centre frequencies, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">[</span><span class="n">nu</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">nu</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">frequencies</span><span class="p">]</span><span class="si">}</span><span class="s2"> GHz -- sort the plan, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;the channel order is the array order in the multiplexer&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected strictly ascending centre frequencies, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">[</span><span class="n">nu</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">nu</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">frequencies</span><span class="p">]</span><span class="si">}</span><span class="s2"> GHz -- sort the plan, "</span>
+                <span class="sa">f</span><span class="s2">"the channel order is the array order in the multiplexer"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a positive channel bandwidth, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;frequencies_Hz&quot;</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a positive channel bandwidth, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="si">}</span><span class="s2"> Hz"</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"frequencies_Hz"</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;center_Hz&quot;</span><span class="p">,</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"center_Hz"</span><span class="p">,</span>
                                <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;center_Hz&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span><span class="p">))</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"center_Hz"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span><span class="p">))</span>
         <span class="n">spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing_Hz</span>
         <span class="k">if</span> <span class="n">spacing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">&gt;</span> <span class="n">spacing</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a channel bandwidth of at most the tightest &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;spacing </span><span class="si">{</span><span class="n">spacing</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz -- overlapping channels &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cannot be separated by any filter; widen the spacing or &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;narrow the channels&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a channel bandwidth of at most the tightest "</span>
+                <span class="sa">f</span><span class="s2">"spacing </span><span class="si">{</span><span class="n">spacing</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz -- overlapping channels "</span>
+                <span class="sa">f</span><span class="s2">"cannot be separated by any filter; widen the spacing or "</span>
+                <span class="sa">f</span><span class="s2">"narrow the channels"</span><span class="p">)</span>
 
     <span class="c1"># -- properties -----------------------------------------------------</span>
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of channels :math:`C`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of channels :math:`C`."""</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">offsets_Hz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Offsets :math:`f_c` from the composite centre, in Hz.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Offsets :math:`f_c` from the composite centre, in Hz."""</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">)</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">spacing_Hz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tightest spacing between two neighbours; ``None`` if C == 1.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Tightest spacing between two neighbours; ``None`` if C == 1."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequencies_Hz</span><span class="p">)))</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">guard_Hz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unused band between two neighbours; ``None`` if C == 1.</span>
+<span class="w">        </span><span class="sd">"""Unused band between two neighbours; ``None`` if C == 1.</span>
 
 <span class="sd">        Zero is the Nyquist-WDM limit (channels touching); negative is</span>
 <span class="sd">        impossible here, ``__post_init__`` rejects it.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing_Hz</span>
         <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">spacing</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spacing</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">min_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Smallest sampling rate carrying the whole comb, in Hz.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Smallest sampling rate carrying the whole comb, in Hz.</span>
 
 <span class="sd">        This is :math:`2(\max_c |f_c| + B/2)`, the equality case of the</span>
 <span class="sd">        condition in the signal model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets_Hz</span><span class="p">)))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="WDMGrid.plot">
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.plot">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cut</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw the grid: one box per channel, on the frequency axis.</span>
+<span class="w">        </span><span class="sd">"""Draw the grid: one box per channel, on the frequency axis.</span>
 
 <span class="sd">        A grid is a layout, so looking at it should not require</span>
 <span class="sd">        synthesising a signal and estimating its spectrum -- that shows</span>
@@ -937,32 +937,32 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        -------</span>
 <span class="sd">        matplotlib axis</span>
 <span class="sd">            The axis, so the caller keeps control of the figure.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># local import (D36)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rectangle</span>
         <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">),</span> <span class="n">layout</span><span class="o">=</span><span class="s2">"constrained"</span><span class="p">)</span>
         <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets_Hz</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e9</span>
         <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mf">1e9</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">offsets</span><span class="p">):</span>
             <span class="n">chosen</span> <span class="o">=</span> <span class="n">index</span> <span class="o">==</span> <span class="n">cut</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Rectangle</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">offset</span> <span class="o">-</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">width</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span>
-                <span class="n">facecolor</span><span class="o">=</span><span class="s2">&quot;C1&quot;</span> <span class="k">if</span> <span class="n">chosen</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+                <span class="n">facecolor</span><span class="o">=</span><span class="s2">"C1"</span> <span class="k">if</span> <span class="n">chosen</span> <span class="k">else</span> <span class="s2">"none"</span><span class="p">,</span>
                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.45</span> <span class="k">if</span> <span class="n">chosen</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">,</span>
-                <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;C0&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">))</span>
+                <span class="n">edgecolor</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
-                <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s2">&quot;cut&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="mf">1.06</span><span class="p">),</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
-                            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C1&quot;</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s2">"cut"</span><span class="p">,</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="mf">1.06</span><span class="p">),</span> <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                            <span class="n">color</span><span class="o">=</span><span class="s2">"C1"</span><span class="p">)</span>
         <span class="n">span</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">offsets</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">offsets</span><span class="p">))</span> <span class="o">+</span> <span class="n">width</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">offsets</span><span class="p">)</span> <span class="o">-</span> <span class="n">width</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">offsets</span><span class="p">)</span> <span class="o">+</span> <span class="n">width</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.35</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;frequency offset [GHz]&quot;</span><span class="p">)</span>
-        <span class="n">guard</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">guard_Hz</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> \
-            <span class="sa">f</span><span class="s2">&quot;, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">guard_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz guard&quot;</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> grid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels over &quot;</span>
-                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">span</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GHz, </span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz each</span><span class="si">{</span><span class="n">guard</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"frequency offset [GHz]"</span><span class="p">)</span>
+        <span class="n">guard</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">guard_Hz</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> \
+            <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">guard_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz guard"</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> grid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels over "</span>
+                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">span</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GHz, </span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GHz each</span><span class="si">{</span><span class="n">guard</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ax</span></div>
 
 
@@ -972,8 +972,8 @@ window.runMermaid = runMermaid;</script>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">uniform</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">spacing_Hz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
                 <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">center_Hz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">193.1e12</span><span class="p">,</span>
-                <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WDMGrid&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evenly spaced comb centred on ``center_Hz``.</span>
+                <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"custom"</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WDMGrid"</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evenly spaced comb centred on ``center_Hz``.</span>
 
 <span class="sd">        The comb is symmetric about the centre, so an odd</span>
 <span class="sd">        ``n_channels`` puts one channel exactly on it and an even count</span>
@@ -998,9 +998,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &gt;&gt;&gt; grid = WDMGrid.uniform(4, spacing_Hz=50e9, bandwidth_Hz=40e9)</span>
 <span class="sd">        &gt;&gt;&gt; grid.offsets_Hz / 1e9</span>
 <span class="sd">        array([-75., -25.,  25.,  75.])</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">n_channels</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected at least one channel, got </span><span class="si">{</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expected at least one channel, got </span><span class="si">{</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">n_channels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">center_Hz</span> <span class="o">+</span> <span class="n">index</span> <span class="o">*</span> <span class="n">spacing_Hz</span><span class="p">),</span>
                    <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">bandwidth_Hz</span><span class="p">,</span> <span class="n">center_Hz</span><span class="o">=</span><span class="n">center_Hz</span><span class="p">,</span>
@@ -1011,8 +1011,8 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.itu">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">itu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">n_indices</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">bandwidth_Hz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-            <span class="n">m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">center_Hz</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WDMGrid&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Grid built from ITU-T G.694.1 flexible-grid indices.</span>
+            <span class="n">m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">center_Hz</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WDMGrid"</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Grid built from ITU-T G.694.1 flexible-grid indices.</span>
 
 <span class="sd">        A channel is the integer couple :math:`(n, m)` of D19: centre</span>
 <span class="sd">        :math:`193.1\,\text{THz} + n \times 6.25\,\text{GHz}`, slot</span>
@@ -1045,88 +1045,88 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &gt;&gt;&gt; grid = WDMGrid.itu([-8, 0, 8], bandwidth_Hz=32e9)</span>
 <span class="sd">        &gt;&gt;&gt; grid.spacing_Hz / 1e9, grid.guard_Hz / 1e9</span>
 <span class="sd">        (50.0, 18.0)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">itu_grid_frequency</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">n_indices</span><span class="p">]</span>
         <span class="n">slot_Hz</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">bandwidth_Hz</span> <span class="o">&gt;</span> <span class="n">slot_Hz</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected an occupied bandwidth of at most the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">slot_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz slot (m=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">), got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz -- raise m or narrow the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;channel, a channel may not spill outside its slot&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected an occupied bandwidth of at most the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">slot_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz slot (m=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">), got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz -- raise m or narrow the "</span>
+                <span class="sa">f</span><span class="s2">"channel, a channel may not spill outside its slot"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">center</span> <span class="k">for</span> <span class="n">center</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">),</span>
                    <span class="n">bandwidth_Hz</span><span class="o">=</span><span class="n">bandwidth_Hz</span><span class="p">,</span> <span class="n">center_Hz</span><span class="o">=</span><span class="n">center_Hz</span><span class="p">,</span>
-                   <span class="n">standard</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;ITU-T G.694.1 (n, m=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                   <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;ITU-T G.694.1 (2020), section 7&quot;</span><span class="p">)</span></div>
+                   <span class="n">standard</span><span class="o">=</span><span class="sa">f</span><span class="s2">"ITU-T G.694.1 (n, m=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                   <span class="n">reference</span><span class="o">=</span><span class="s2">"ITU-T G.694.1 (2020), section 7"</span><span class="p">)</span></div>
 
 
     <span class="c1"># -- checks and display ---------------------------------------------</span>
 <div class="viewcode-block" id="WDMGrid.validate_fs">
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMGrid.validate_fs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise if ``fs`` cannot carry the comb without aliasing.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Raise if ``fs`` cannot carry the comb without aliasing."""</span>
         <span class="k">if</span> <span class="n">fs</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_fs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected fs &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz to carry the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">-channel grid (outermost channel at &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets_Hz</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz plus half &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz channel), got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz -- raise the sampling rate or drop the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;outer channels&quot;</span><span class="p">)</span></div>
+                <span class="sa">f</span><span class="s2">"expected fs &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz to carry the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">-channel grid (outermost channel at "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets_Hz</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz plus half "</span>
+                <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz channel), got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz -- raise the sampling rate or drop the "</span>
+                <span class="sa">f</span><span class="s2">"outer channels"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ASCII spectral map, in the spirit of D21.</span>
+<span class="w">        </span><span class="sd">"""ASCII spectral map, in the spirit of D21.</span>
 
 <span class="sd">        A grid is a picture; printing the tuple of frequencies is not.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">width</span> <span class="o">=</span> <span class="mi">61</span>
         <span class="n">offsets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets_Hz</span>
         <span class="n">half</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">offsets</span><span class="p">)))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-        <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; &quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">width</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="s2">" "</span><span class="p">]</span> <span class="o">*</span> <span class="n">width</span>
         <span class="k">for</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">offsets</span><span class="p">:</span>
             <span class="n">lo</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">offset</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">half</span>
                            <span class="o">*</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
             <span class="n">hi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">offset</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">half</span>
                            <span class="o">*</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="n">line</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;#&quot;</span>
-            <span class="n">line</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;[&quot;</span>
-            <span class="n">line</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;]&quot;</span>
+                <span class="n">line</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"#"</span>
+            <span class="n">line</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"["</span>
+            <span class="n">line</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"]"</span>
         <span class="n">guard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">guard_Hz</span>
         <span class="n">spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing_Hz</span>
-        <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="o">-</span><span class="n">half</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">+.4g</span><span class="si">}</span><span class="s2"> GHz&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">half</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">+.4g</span><span class="si">}</span><span class="s2"> GHz&quot;</span>
-        <span class="n">axis</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">right</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">right</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="o">-</span><span class="n">half</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">+.4g</span><span class="si">}</span><span class="s2"> GHz"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">half</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">+.4g</span><span class="si">}</span><span class="s2"> GHz"</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">right</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">right</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;WDMGrid(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;  centre </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> THz, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;channel </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;spacing </span><span class="si">{</span><span class="s1">&#39;n/a&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">spacing</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">spacing</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s1">.4g</span><span class="si">}</span><span class="s1"> GHz&#39;</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;guard </span><span class="si">{</span><span class="s1">&#39;n/a&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">guard</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">guard</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s1">.4g</span><span class="si">}</span><span class="s1"> GHz&#39;</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;  needs fs &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz&quot;</span><span class="p">)</span></div>
+            <span class="sa">f</span><span class="s2">"WDMGrid(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  centre </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center_Hz</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e12</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> THz, "</span>
+            <span class="sa">f</span><span class="s2">"channel </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> GHz, "</span>
+            <span class="sa">f</span><span class="s2">"spacing </span><span class="si">{</span><span class="s1">'n/a'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">spacing</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">spacing</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s1">.4g</span><span class="si">}</span><span class="s1"> GHz'</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"guard </span><span class="si">{</span><span class="s1">'n/a'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">guard</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">guard</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s1">.4g</span><span class="si">}</span><span class="s1"> GHz'</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"  needs fs &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_fs</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> GHz"</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_mixing_phasors</span><span class="p">(</span><span class="n">grid</span><span class="p">:</span> <span class="n">WDMGrid</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;``(C, N)`` array of :math:`e^{j 2 \pi f_c n / f_s}`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""``(C, N)`` array of :math:`e^{j 2 \pi f_c n / f_s}`.</span>
 
 <span class="sd">    Warns when an offset is not an integer number of DFT bins: the</span>
 <span class="sd">    multiplexer then shifts a channel by a fraction of a bin, which is</span>
 <span class="sd">    a circular shift with leakage rather than a clean relabelling, and</span>
 <span class="sd">    the round trip stops being exact. The condition is on</span>
 <span class="sd">    ``f_c * N / fs``, so it is the block length that fixes it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">offsets_Hz</span>
     <span class="n">bins</span> <span class="o">=</span> <span class="n">offsets</span> <span class="o">*</span> <span class="n">n_samples</span> <span class="o">/</span> <span class="n">fs</span>
     <span class="n">off_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">bins</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">bins</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">off_bin</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">):</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;WDM offsets are not integer DFT bins at fs=</span><span class="si">%.6g</span><span class="s2"> Hz over </span><span class="si">%d</span><span class="s2"> &quot;</span>
-            <span class="s2">&quot;samples (worst channel off by </span><span class="si">%.3g</span><span class="s2"> bin); the shift leaks &quot;</span>
-            <span class="s2">&quot;across the block edge. Use a block length that is a multiple &quot;</span>
-            <span class="s2">&quot;of fs/gcd(offsets) to keep the round trip exact.&quot;</span><span class="p">,</span>
+            <span class="s2">"WDM offsets are not integer DFT bins at fs=</span><span class="si">%.6g</span><span class="s2"> Hz over </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"samples (worst channel off by </span><span class="si">%.3g</span><span class="s2"> bin); the shift leaks "</span>
+            <span class="s2">"across the block edge. Use a block length that is a multiple "</span>
+            <span class="s2">"of fs/gcd(offsets) to keep the round trip exact."</span><span class="p">,</span>
             <span class="n">fs</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">off_bin</span><span class="p">)))</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">offsets</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">fs</span><span class="p">)</span>
@@ -1136,7 +1136,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMMultiplexer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WDMMultiplexer</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Combine per-channel baseband signals into one full-field waveform.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Combine per-channel baseband signals into one full-field waveform.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1149,7 +1149,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    with :math:`f_c` the offset of channel :math:`c` from the composite</span>
 <span class="sd">    band centre (see :class:`WDMGrid`). This is the synthesis bank of a</span>
-<span class="sd">    software radio (GNU Radio&#39;s ``pfb_synthesizer_ccf``), written</span>
+<span class="sd">    software radio (GNU Radio's ``pfb_synthesizer_ccf``), written</span>
 <span class="sd">    directly rather than through a filter bank because the channels</span>
 <span class="sd">    already arrive at the composite rate.</span>
 
@@ -1198,20 +1198,20 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = WDMMultiplexer(grid, fs=200e9)(x)</span>
 <span class="sd">    &gt;&gt;&gt; y.shape</span>
 <span class="sd">    (64,)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">grid</span><span class="p">:</span> <span class="n">WDMGrid</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;wdm mux&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"wdm mux"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">phasors_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_warn_if_wider_than_its_slot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Say so when a channel does not fit the bandwidth declared for it.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Say so when a channel does not fit the bandwidth declared for it.</span>
 
-<span class="sd">        ``bandwidth_Hz`` is the grid&#39;s *occupied* bandwidth, so a pulse</span>
+<span class="sd">        ``bandwidth_Hz`` is the grid's *occupied* bandwidth, so a pulse</span>
 <span class="sd">        shaped at roll-off :math:`\rho` needs :math:`R_s(1+\rho)`.</span>
 <span class="sd">        Writing the symbol rate is the natural mistake and an expensive</span>
-<span class="sd">        one: the demultiplexer&#39;s brick wall then cuts the skirts of the</span>
+<span class="sd">        one: the demultiplexer's brick wall then cuts the skirts of the</span>
 <span class="sd">        pulse, the root-raised-cosine pair stops being Nyquist, and the</span>
 <span class="sd">        implementation floor of an 11-channel 32 GBd comb at</span>
 <span class="sd">        :math:`\rho = 0.01` falls from 54.1 dB to 33.5 dB -- for</span>
@@ -1223,7 +1223,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        because its truncation sidelobes spill too: on that comb, 0.13 %</span>
 <span class="sd">        for a clipped grid against 0.0004 % for a correct one at 4097</span>
 <span class="sd">        taps, but 0.18 % against 0.038 % at 1025 taps. The check</span>
-<span class="sd">        therefore reports &quot;wider than its slot&quot; without claiming which</span>
+<span class="sd">        therefore reports "wider than its slot" without claiming which</span>
 <span class="sd">        of the two causes it is -- both are real, and the remedy differs.</span>
 
 <span class="sd">        The check belongs to the transmitter. At the receiver the same</span>
@@ -1231,7 +1231,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        which is white and fills the guard band whatever the grid says:</span>
 <span class="sd">        0.12 % of rejected energy after 700 km against 0.0004 % of</span>
 <span class="sd">        genuinely clipped signal, on the very comb this was written for.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
         <span class="n">outside</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span>
@@ -1239,34 +1239,34 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span>
         <span class="n">total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">spilled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">spectrum</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">outside</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
             <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">spilled</span> <span class="o">/</span> <span class="n">total</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">worst</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ratio</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">worst</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;a WDM channel is wider than the </span><span class="si">%.6g</span><span class="s2"> Hz the grid declares &quot;</span>
-                <span class="s2">&quot;for it: </span><span class="si">%.3f</span><span class="s2"> </span><span class="si">%%</span><span class="s2"> of its energy sits outside, and the &quot;</span>
-                <span class="s2">&quot;demultiplexer will cut it. Either bandwidth_Hz is too &quot;</span>
-                <span class="s2">&quot;narrow -- it is the *occupied* bandwidth, so a pulse shaped &quot;</span>
-                <span class="s2">&quot;at roll-off rho needs Rs*(1+rho), not Rs -- or the shaping &quot;</span>
-                <span class="s2">&quot;filter is too short and its truncation sidelobes are what &quot;</span>
-                <span class="s2">&quot;spills. The check cannot tell the two apart, and both are &quot;</span>
-                <span class="s2">&quot;worth knowing: a truncated Nyquist pair costs far more than &quot;</span>
-                <span class="s2">&quot;the fraction suggests.&quot;</span><span class="p">,</span>
+                <span class="s2">"a WDM channel is wider than the </span><span class="si">%.6g</span><span class="s2"> Hz the grid declares "</span>
+                <span class="s2">"for it: </span><span class="si">%.3f</span><span class="s2"> </span><span class="si">%%</span><span class="s2"> of its energy sits outside, and the "</span>
+                <span class="s2">"demultiplexer will cut it. Either bandwidth_Hz is too "</span>
+                <span class="s2">"narrow -- it is the *occupied* bandwidth, so a pulse shaped "</span>
+                <span class="s2">"at roll-off rho needs Rs*(1+rho), not Rs -- or the shaping "</span>
+                <span class="s2">"filter is too short and its truncation sidelobes are what "</span>
+                <span class="s2">"spills. The check cannot tell the two apart, and both are "</span>
+                <span class="s2">"worth knowing: a truncated Nyquist pair costs far more than "</span>
+                <span class="s2">"the fraction suggests."</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">bandwidth_Hz</span><span class="p">,</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">worst</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">validate_fs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a multi-channel signal (..., C, N) with C=&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">, got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- a single &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;channel still needs its own axis, use x[None, :]&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a multi-channel signal (..., C, N) with C="</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">, got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- a single "</span>
+                <span class="sa">f</span><span class="s2">"channel still needs its own axis, use x[None, :]"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels on axis -2 (the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;grid has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> -- &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;the grid and the signal must describe the same comb&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels on axis -2 (the "</span>
+                <span class="sa">f</span><span class="s2">"grid has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> -- "</span>
+                <span class="sa">f</span><span class="s2">"the grid and the signal must describe the same comb"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">phasors_</span> <span class="o">=</span> <span class="n">_mixing_phasors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_warn_if_wider_than_its_slot</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
@@ -1280,7 +1280,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/wdm.html#comnumpy.optical.wdm.WDMDemultiplexer">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WDMDemultiplexer</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Split a full-field waveform back into per-channel baseband signals.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Split a full-field waveform back into per-channel baseband signals.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1299,7 +1299,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    leaky otherwise -- the block warns when it does not.</span>
 
 <span class="sd">    **This is channel selection, not matched filtering.** :math:`B` is</span>
-<span class="sd">    the grid&#39;s *occupied* bandwidth, so for a pulse shaped at roll-off</span>
+<span class="sd">    the grid's *occupied* bandwidth, so for a pulse shaped at roll-off</span>
 <span class="sd">    :math:`\rho` it must be :math:`R_s(1 + \rho)` and not :math:`R_s`;</span>
 <span class="sd">    setting it to the symbol rate clips the skirts of the pulse, which</span>
 <span class="sd">    costs far more than it looks -- measured on an 11-channel 32 GBd</span>
@@ -1316,10 +1316,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Measured on the same comb, a mask at :math:`R_s(1+\rho)`, one at the</span>
 <span class="sd">    full 37.5 GHz slot, and no mask at all give 54.13, 54.14 and</span>
 <span class="sd">    54.13 dB. That is why there is no filter-shape option here -- a</span>
-<span class="sd">    root-raised-cosine in this block would be the *receiver&#39;s* matched</span>
-<span class="sd">    filter wearing the demultiplexer&#39;s name.</span>
+<span class="sd">    root-raised-cosine in this block would be the *receiver's* matched</span>
+<span class="sd">    filter wearing the demultiplexer's name.</span>
 
-<span class="sd">    This is the analysis bank of a software radio (GNU Radio&#39;s</span>
+<span class="sd">    This is the analysis bank of a software radio (GNU Radio's</span>
 <span class="sd">    ``pfb_channelizer_ccf``), minus the decimation: the output stays at</span>
 <span class="sd">    :math:`f_s`, so follow it with</span>
 <span class="sd">    :class:`~comnumpy.core.processors.Downsampler` when the per-channel</span>
@@ -1371,12 +1371,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = WDMMultiplexer(grid, fs=200e9)(x)</span>
 <span class="sd">    &gt;&gt;&gt; WDMDemultiplexer(grid, fs=200e9, channel=1)(y).shape</span>
 <span class="sd">    (256,)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">grid</span><span class="p">:</span> <span class="n">WDMGrid</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">channel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;wdm demux&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"wdm demux"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">phasors_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">mask_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
@@ -1385,11 +1385,11 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a channel index in [0, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="si">}</span><span class="s2"> -- the grid has &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a channel index in [0, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2">), "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="si">}</span><span class="s2"> -- the grid has "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">n_channels</span><span class="si">}</span><span class="s2"> channels"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expected a signal (..., N), got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expected a signal (..., N), got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">phasors_</span> <span class="o">=</span> <span class="n">_mixing_phasors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mask_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">bandwidth_Hz</span> <span class="o">/</span> <span class="mi">2</span>

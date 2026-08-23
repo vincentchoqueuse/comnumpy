@@ -726,11 +726,11 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.core.information</h1><div class="highlight"><pre>
-<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Achievable information rates measured on data: MI, GMI, normalized GMI.</span>
+<span></span><span class="sa">r</span><span class="sd">"""Achievable information rates measured on data: MI, GMI, normalized GMI.</span>
 
 <span class="sd">A pre-FEC bit error rate does not say what a code will recover from a</span>
 <span class="sd">channel: two channels with the same error rate can carry very different</span>
-<span class="sd">amounts of information, and the &quot;soft FEC limit&quot; -- a fixed pre-FEC BER</span>
+<span class="sd">amounts of information, and the "soft FEC limit" -- a fixed pre-FEC BER</span>
 <span class="sd">threshold -- therefore mispredicts post-FEC performance when the</span>
 <span class="sd">modulation format or the channel changes. That is the subject of the</span>
 <span class="sd">reference below, whose conclusion is that the **generalized mutual</span>
@@ -752,7 +752,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">---------------</span>
 <span class="sd">The paper writes its L-values with the bit-1 hypothesis in the</span>
 <span class="sd">numerator (its eq. (6)), so a positive L-value favours the bit **1**.</span>
-<span class="sd">This module keeps comnumpy&#39;s own convention instead -- the one</span>
+<span class="sd">This module keeps comnumpy's own convention instead -- the one</span>
 <span class="sd">:class:`~comnumpy.core.mappers.SymbolDemapper` produces, where a</span>
 <span class="sd">positive LLR favours the bit **0** -- because two conventions inside</span>
 <span class="sd">one library is a defect waiting to happen. The estimators below are</span>
@@ -762,9 +762,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">References</span>
 <span class="sd">----------</span>
-<span class="sd">A. Alvarado, E. Agrell, D. Lavery, R. Maher and P. Bayvel, &quot;Replacing</span>
+<span class="sd">A. Alvarado, E. Agrell, D. Lavery, R. Maher and P. Bayvel, "Replacing</span>
 <span class="sd">the soft-decision FEC limit paradigm in the design of optical</span>
-<span class="sd">communication systems&quot;, J. Lightwave Technol., vol. 33, no. 20,</span>
+<span class="sd">communication systems", J. Lightwave Technol., vol. 33, no. 20,</span>
 <span class="sd">pp. 4338-4352, Oct. 2015, doi:10.1109/JLT.2015.2450537. Equations (6),</span>
 <span class="sd">(7), (16), (17), (21)-(26) and (27)-(32) are cited individually below.</span>
 
@@ -772,7 +772,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">--------</span>
 <span class="sd">&gt;&gt;&gt; import numpy as np</span>
 <span class="sd">&gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">&gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">&gt;&gt;&gt; alphabet = get_alphabet("QAM", 4)</span>
 <span class="sd">&gt;&gt;&gt; rng = np.random.default_rng(0)</span>
 <span class="sd">&gt;&gt;&gt; symbols = rng.integers(0, 4, size=20000)</span>
 <span class="sd">&gt;&gt;&gt; received = alphabet[symbols] + np.sqrt(0.2 / 2) * (</span>
@@ -781,32 +781,32 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">1.893</span>
 <span class="sd">&gt;&gt;&gt; print(round(compute_gmi(received, symbols, alphabet), 3))</span>
 <span class="sd">1.893</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;compute_llr&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_mi&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_gmi&quot;</span><span class="p">,</span> <span class="s2">&quot;compute_ngmi&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"compute_llr"</span><span class="p">,</span> <span class="s2">"compute_mi"</span><span class="p">,</span> <span class="s2">"compute_gmi"</span><span class="p">,</span> <span class="s2">"compute_ngmi"</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bit_table</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;(M, m) bit labels of the alphabet indices, MSB first.</span>
+<span class="w">    </span><span class="sd">"""(M, m) bit labels of the alphabet indices, MSB first.</span>
 
 <span class="sd">    Same convention as :func:`~comnumpy.core.utils.sym_2_bin`: the label</span>
 <span class="sd">    of a constellation point is the binary expansion of its index, so a</span>
 <span class="sd">    Gray mapping is carried by the *order* of the alphabet and there is</span>
 <span class="sd">    no second labelling table to disagree with it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">bits_per_symbol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
     <span class="k">if</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">bits_per_symbol</span> <span class="o">!=</span> <span class="n">order</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;bit-wise rates need an alphabet whose size is a power of two, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;got M=</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">; use compute_mi, which does not label the &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;symbols with bits&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"bit-wise rates need an alphabet whose size is a power of two, "</span>
+            <span class="sa">f</span><span class="s2">"got M=</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">; use compute_mi, which does not label the "</span>
+            <span class="sa">f</span><span class="s2">"symbols with bits"</span><span class="p">)</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">indices</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bits_per_symbol</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_auxiliary_snr</span><span class="p">(</span><span class="n">X_received</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_sent</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The :math:`\rho` of the paper&#39;s eq. (29), matched to the data.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The :math:`\rho` of the paper's eq. (29), matched to the data.</span>
 
 <span class="sd">    The estimators assume a memoryless AWGN law</span>
 <span class="sd">    :math:`f_{Y|X}(y|x) \propto e^{-\rho |y - x|^2}` with</span>
@@ -816,17 +816,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    that law, hence still lower bounds. Estimating :math:`\rho` from the</span>
 <span class="sd">    data is the standard choice: it is the value that maximizes the</span>
 <span class="sd">    Gaussian bound.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">noise</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X_received</span> <span class="o">-</span> <span class="n">X_sent</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">noise</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;the observation matches the transmitted symbols exactly, so no &quot;</span>
-            <span class="s2">&quot;auxiliary SNR can be estimated; pass snr= explicitly&quot;</span><span class="p">)</span>
+            <span class="s2">"the observation matches the transmitted symbols exactly, so no "</span>
+            <span class="s2">"auxiliary SNR can be estimated; pass snr= explicitly"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X_sent</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="n">noise</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_log_sum_exp</span><span class="p">(</span><span class="n">distance</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;\(\log \sum e^{-\rho d}\) over the last axis, without underflow.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""\(\log \sum e^{-\rho d}\) over the last axis, without underflow."""</span>
     <span class="n">smallest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">*</span> <span class="n">smallest</span>
             <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">snr</span> <span class="o">*</span> <span class="p">(</span><span class="n">distance</span> <span class="o">-</span> <span class="n">smallest</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">])),</span>
@@ -837,7 +837,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/information.html#comnumpy.core.information.compute_llr">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_llr</span><span class="p">(</span><span class="n">X_received</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
                 <span class="n">max_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Bit-wise log-likelihood ratios of a memoryless AWGN channel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Bit-wise log-likelihood ratios of a memoryless AWGN channel.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -853,8 +853,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            \frac{\sum_{x \in \mathcal{X}_k^{0}} e^{-\rho |y[n] - x|^2}}</span>
 <span class="sd">                 {\sum_{x \in \mathcal{X}_k^{1}} e^{-\rho |y[n] - x|^2}}</span>
 
-<span class="sd">    -- the paper&#39;s (29) with the two sums exchanged, so that a</span>
-<span class="sd">    **positive** LLR favours the bit 0, comnumpy&#39;s convention. With</span>
+<span class="sd">    -- the paper's (29) with the two sums exchanged, so that a</span>
+<span class="sd">    **positive** LLR favours the bit 0, comnumpy's convention. With</span>
 <span class="sd">    ``max_log=True``, eq. (31):</span>
 
 <span class="sd">    .. math::</span>
@@ -902,12 +902,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 4)</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet("QAM", 4)</span>
 <span class="sd">    &gt;&gt;&gt; llr = compute_llr(alphabet[[0, 3]], alphabet, 10.0)</span>
-<span class="sd">    &gt;&gt;&gt; print(np.sign(llr).astype(int))   # symbol 0 is &quot;00&quot;, symbol 3 is &quot;11&quot;</span>
+<span class="sd">    &gt;&gt;&gt; print(np.sign(llr).astype(int))   # symbol 0 is "00", symbol 3 is "11"</span>
 <span class="sd">    [[ 1  1]</span>
 <span class="sd">     [-1 -1]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="n">_bit_table</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span>
     <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X_received</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">alphabet</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">llr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">X_received</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span>
@@ -933,7 +933,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_mi</span><span class="p">(</span><span class="n">X_received</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">symbols</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                <span class="n">px</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mutual information, in bit/symbol: the rate of a symbol-wise decoder.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Mutual information, in bit/symbol: the rate of a symbol-wise decoder.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -956,14 +956,14 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    with the memoryless AWGN law</span>
 <span class="sd">    :math:`f_{Y|X}(y|x) \propto e^{-\rho|y-x|^2}` of Section III-D. This</span>
-<span class="sd">    is the rate a decoder operating on *symbols* can reach; Shannon&#39;s</span>
+<span class="sd">    is the rate a decoder operating on *symbols* can reach; Shannon's</span>
 <span class="sd">    theorem makes it the limit of the coded-modulation rate</span>
 <span class="sd">    :math:`R_\mathrm{cm}`, and it upper-bounds the bit-wise rate of</span>
-<span class="sd">    :func:`compute_gmi` (paper&#39;s eq. (24) and the discussion after it).</span>
+<span class="sd">    :func:`compute_gmi` (paper's eq. (24) and the discussion after it).</span>
 
 <span class="sd">    The estimator is evaluated on the transmitted sequence rather than</span>
 <span class="sd">    on all :math:`M` symbols times :math:`n_s` noise realizations as the</span>
-<span class="sd">    paper&#39;s (27) writes it; for an i.i.d. input the two have the same</span>
+<span class="sd">    paper's (27) writes it; for an i.i.d. input the two have the same</span>
 <span class="sd">    expectation, and one pass over the measured data is what a</span>
 <span class="sd">    laboratory or a simulation actually produces.</span>
 
@@ -995,20 +995,20 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    A. Alvarado, E. Agrell, D. Lavery, R. Maher and P. Bayvel,</span>
-<span class="sd">    &quot;Replacing the soft-decision FEC limit paradigm in the design of</span>
-<span class="sd">    optical communication systems&quot;, J. Lightwave Technol., vol. 33,</span>
+<span class="sd">    "Replacing the soft-decision FEC limit paradigm in the design of</span>
+<span class="sd">    optical communication systems", J. Lightwave Technol., vol. 33,</span>
 <span class="sd">    no. 20, pp. 4338-4352, 2015, eqs. (16), (17) and (27).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;PSK&quot;, 2)          # BPSK</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet("PSK", 2)          # BPSK</span>
 <span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(2)</span>
 <span class="sd">    &gt;&gt;&gt; symbols = rng.integers(0, 2, size=50000)</span>
 <span class="sd">    &gt;&gt;&gt; received = alphabet[symbols] + 0.3 * rng.normal(size=50000)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(compute_mi(received, symbols, alphabet), 3))</span>
 <span class="sd">    0.997</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">received</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_received</span><span class="p">)</span>
     <span class="n">sent</span> <span class="o">=</span> <span class="n">alphabet</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">symbols</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">snr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1031,7 +1031,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_gmi</span><span class="p">(</span><span class="n">X_received</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">symbols</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                 <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">max_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Generalized mutual information: the rate of a bit-wise decoder.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generalized mutual information: the rate of a bit-wise decoder.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1048,7 +1048,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        \mathrm{GMI} = \sum_{k=1}^{m} I(B_k; Y)</span>
 
 <span class="sd">    For **exact** L-values the optimum is :math:`s = 1` and eq. (30)</span>
-<span class="sd">    gives the estimator, written here with comnumpy&#39;s LLR sign:</span>
+<span class="sd">    gives the estimator, written here with comnumpy's LLR sign:</span>
 
 <span class="sd">    .. math::</span>
 
@@ -1062,8 +1062,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    :math:`m` bits.</span>
 
 <span class="sd">    For **max-log** L-values that is not valid. The paper is explicit:</span>
-<span class="sd">    &quot;the minimization over :math:`s` in (32) is a mandatory step for</span>
-<span class="sd">    approximated L-values&quot;, because using (30) on them returns a rate</span>
+<span class="sd">    "the minimization over :math:`s` in (32) is a mandatory step for</span>
+<span class="sd">    approximated L-values", because using (30) on them returns a rate</span>
 <span class="sd">    *lower* than the true one. With ``max_log=True`` this function</span>
 <span class="sd">    therefore evaluates eq. (32),</span>
 
@@ -1093,7 +1093,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    alphabet : np.ndarray</span>
 <span class="sd">        1-D constellation of size :math:`M`, a power of two. The</span>
 <span class="sd">        labelling is carried by the order of the alphabet, so</span>
-<span class="sd">        ``get_alphabet(&quot;QAM&quot;, M)`` is Gray-labelled by construction.</span>
+<span class="sd">        ``get_alphabet("QAM", M)`` is Gray-labelled by construction.</span>
 <span class="sd">    snr : float, optional, keyword-only</span>
 <span class="sd">        SNR :math:`\rho` of the assumed AWGN law, natural units. Default</span>
 <span class="sd">        (None) estimates it from the data.</span>
@@ -1111,14 +1111,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    A. Alvarado, E. Agrell, D. Lavery, R. Maher and P. Bayvel,</span>
-<span class="sd">    &quot;Replacing the soft-decision FEC limit paradigm in the design of</span>
-<span class="sd">    optical communication systems&quot;, J. Lightwave Technol., vol. 33,</span>
+<span class="sd">    "Replacing the soft-decision FEC limit paradigm in the design of</span>
+<span class="sd">    optical communication systems", J. Lightwave Technol., vol. 33,</span>
 <span class="sd">    no. 20, pp. 4338-4352, 2015, eqs. (21)-(26), (30) and (32).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 16)</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet("QAM", 16)</span>
 <span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(3)</span>
 <span class="sd">    &gt;&gt;&gt; symbols = rng.integers(0, 16, size=40000)</span>
 <span class="sd">    &gt;&gt;&gt; received = alphabet[symbols] + np.sqrt(0.2) * (</span>
@@ -1135,7 +1135,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; print(round(compute_gmi(received, symbols, alphabet,</span>
 <span class="sd">    ...                         max_log=True), 3))</span>
 <span class="sd">    1.675</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">received</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_received</span><span class="p">)</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">snr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1159,7 +1159,7 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># eq. (32): mandatory for approximated L-values. The penalty is convex</span>
     <span class="c1"># in s, so a bounded scalar search is enough; s = 1 is the exact-LLR</span>
     <span class="c1"># optimum and the max-log optimum sits near it.</span>
-    <span class="n">solution</span> <span class="o">=</span> <span class="n">minimize_scalar</span><span class="p">(</span><span class="n">penalty</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;bounded&quot;</span><span class="p">)</span>
+    <span class="n">solution</span> <span class="o">=</span> <span class="n">minimize_scalar</span><span class="p">(</span><span class="n">penalty</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">"bounded"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">bits_per_symbol</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">penalty</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)))</span></div>
 
 
@@ -1169,7 +1169,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_ngmi</span><span class="p">(</span><span class="n">X_received</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">symbols</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
                  <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">snr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">max_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normalized GMI, on the scale of a code rate.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalized GMI, on the scale of a code rate.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1181,7 +1181,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        \mathrm{NGMI} = \frac{\mathrm{GMI}}{m}</span>
 
 <span class="sd">    A binary soft-decision code of rate :math:`R_c` decodes when</span>
-<span class="sd">    :math:`\mathrm{NGMI} \geq R_c`, and -- this is the paper&#39;s result --</span>
+<span class="sd">    :math:`\mathrm{NGMI} \geq R_c`, and -- this is the paper's result --</span>
 <span class="sd">    that threshold is a property of the *code*, transferable from one</span>
 <span class="sd">    channel and one modulation format to another, which a pre-FEC bit</span>
 <span class="sd">    error rate threshold is not. Fig. 4 of the reference makes the point</span>
@@ -1217,22 +1217,22 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    A. Alvarado, E. Agrell, D. Lavery, R. Maher and P. Bayvel,</span>
-<span class="sd">    &quot;Replacing the soft-decision FEC limit paradigm in the design of</span>
-<span class="sd">    optical communication systems&quot;, J. Lightwave Technol., vol. 33,</span>
+<span class="sd">    "Replacing the soft-decision FEC limit paradigm in the design of</span>
+<span class="sd">    optical communication systems", J. Lightwave Technol., vol. 33,</span>
 <span class="sd">    no. 20, pp. 4338-4352, 2015, Section IV and Figs. 3(c), 4.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet(&quot;QAM&quot;, 16)</span>
+<span class="sd">    &gt;&gt;&gt; alphabet = get_alphabet("QAM", 16)</span>
 <span class="sd">    &gt;&gt;&gt; rng = np.random.default_rng(4)</span>
 <span class="sd">    &gt;&gt;&gt; symbols = rng.integers(0, 16, size=40000)</span>
 <span class="sd">    &gt;&gt;&gt; received = alphabet[symbols] + np.sqrt(0.02) * (</span>
 <span class="sd">    ...     rng.normal(size=40000) + 1j * rng.normal(size=40000))</span>
 <span class="sd">    &gt;&gt;&gt; ngmi = compute_ngmi(received, symbols, alphabet)</span>
-<span class="sd">    &gt;&gt;&gt; print(round(ngmi, 3), &quot;-&gt; a rate 0.8 code decodes:&quot;, bool(ngmi &gt;= 0.8))</span>
+<span class="sd">    &gt;&gt;&gt; print(round(ngmi, 3), "-&gt; a rate 0.8 code decodes:", bool(ngmi &gt;= 0.8))</span>
 <span class="sd">    0.963 -&gt; a rate 0.8 code decodes: True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">bits_per_symbol</span> <span class="o">=</span> <span class="n">_bit_table</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphabet</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">compute_gmi</span><span class="p">(</span><span class="n">X_received</span><span class="p">,</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">,</span> <span class="n">snr</span><span class="o">=</span><span class="n">snr</span><span class="p">,</span>
                        <span class="n">max_log</span><span class="o">=</span><span class="n">max_log</span><span class="p">)</span> <span class="o">/</span> <span class="n">bits_per_symbol</span></div>

@@ -738,14 +738,14 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.ofdm.compensators</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrequencyDomainEqualizer</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OFDMTransmitter&quot;</span><span class="p">,</span> <span class="s2">&quot;OFDMReceiver&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"OFDMTransmitter"</span><span class="p">,</span> <span class="s2">"OFDMReceiver"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="OFDMTransmitter">
 <a class="viewcode-back" href="../../../documentation/ofdm/chains.html#comnumpy.ofdm.chains.OFDMTransmitter">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OFDMTransmitter</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;OFDM transmitter chain: allocation, IFFT, cyclic prefix, serialization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""OFDM transmitter chain: allocation, IFFT, cyclic prefix, serialization.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -780,7 +780,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    pilots : np.ndarray or list, optional, keyword-only</span>
 <span class="sd">        Pilot values, one per pilot subcarrier of the allocation mask.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;ofdm_transmitter&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"ofdm_transmitter"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -794,13 +794,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = transmitter(x)</span>
 <span class="sd">    &gt;&gt;&gt; print(y.shape)  # 2 blocks of length 4 + 2</span>
 <span class="sd">    (12,)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">N_carrier_data</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">CarrierAllocation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">pilots</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ofdm_transmitter&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ofdm_transmitter"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a): always assigned in __post_init__</span>
     <span class="c1"># Sequential, not Processor: Sequential does not subclass it, so the</span>
     <span class="c1"># old declaration described something this attribute never holds</span>
@@ -819,7 +819,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
             <span class="n">Serial2Parallel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_carrier_data</span><span class="p">),</span>
-            <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pilots</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;carrier_allocator_tx&quot;</span><span class="p">),</span>
+            <span class="n">CarrierAllocator</span><span class="p">(</span><span class="n">carrier_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">carrier_type</span><span class="p">,</span> <span class="n">pilots</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pilots</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"carrier_allocator_tx"</span><span class="p">),</span>
             <span class="n">IFFTProcessor</span><span class="p">(),</span>
             <span class="n">CyclicPrefixer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_cp</span><span class="p">),</span>
             <span class="n">Parallel2Serial</span><span class="p">()</span>
@@ -834,7 +834,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/ofdm/chains.html#comnumpy.ofdm.chains.OFDMReceiver">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OFDMReceiver</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;OFDM receiver chain: prefix removal, FFT, equalization, extraction.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""OFDM receiver chain: prefix removal, FFT, equalization, extraction.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -871,7 +871,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        :class:`~comnumpy.ofdm.processors.CarrierExtractor`. Default is</span>
 <span class="sd">        an all-data mask of length ``N_carrier_data``.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor instance. Default is ``&quot;ofdm_receiver&quot;``.</span>
+<span class="sd">        Name of the processor instance. Default is ``"ofdm_receiver"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -885,13 +885,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; x_est = OFDMReceiver(4, 2)(y)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(x_est.real, 6) + 0.0)</span>
 <span class="sd">    [0. 1. 2. 3. 4. 5. 6. 7.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">N_carrier_data</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">N_cp</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">carrier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">CarrierAllocation</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ofdm_receiver&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ofdm_receiver"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a): always assigned in __post_init__</span>
     <span class="c1"># Sequential, not Processor: Sequential does not subclass it, so the</span>
     <span class="c1"># old declaration described something this attribute never holds</span>

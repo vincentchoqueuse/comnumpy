@@ -726,7 +726,7 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.core.sequences</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Synchronization sequence catalog (decision D29).</span>
+<span></span><span class="sd">"""Synchronization sequence catalog (decision D29).</span>
 
 <span class="sd">Free functions returning the classic synchronization sequences, each</span>
 <span class="sd">with its reference and its defining property (tested in</span>
@@ -739,21 +739,21 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">after a single correlation with a locally stored replica. Each</span>
 <span class="sd">``Signal Model`` below therefore states that property -- not only the</span>
 <span class="sd">construction rule -- and the doctest that follows *computes* it.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zadoff_chu&quot;</span><span class="p">,</span> <span class="s2">&quot;schmidl_cox_preamble&quot;</span><span class="p">,</span> <span class="s2">&quot;barker&quot;</span><span class="p">,</span> <span class="s2">&quot;golay_pair&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;m_sequence&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"zadoff_chu"</span><span class="p">,</span> <span class="s2">"schmidl_cox_preamble"</span><span class="p">,</span> <span class="s2">"barker"</span><span class="p">,</span> <span class="s2">"golay_pair"</span><span class="p">,</span>
+           <span class="s2">"m_sequence"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="zadoff_chu">
 <a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.zadoff_chu">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">zadoff_chu</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Zadoff-Chu (CAZAC) sequence of root :math:`u` and length :math:`N`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Zadoff-Chu (CAZAC) sequence of root :math:`u` and length :math:`N`.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -827,7 +827,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    D. C. Chu, &quot;Polyphase codes with good periodic correlation properties,&quot;</span>
+<span class="sd">    D. C. Chu, "Polyphase codes with good periodic correlation properties,"</span>
 <span class="sd">    IEEE Trans. Inf. Theory 18(4), pp. 531-532, 1972; usage in</span>
 <span class="sd">    3GPP TS 36.211 (LTE) and 3GPP TS 38.211 (5G-NR).</span>
 
@@ -843,11 +843,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; c = np.array([abs(np.vdot(x, np.roll(y, k))) for k in range(139)])</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(np.max(np.abs(c - np.sqrt(139)))), 9))  # flat, = sqrt(N)</span>
 <span class="sd">    0.0</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">N</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Zadoff-Chu length N must be odd, got </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Zadoff-Chu length N must be odd, got </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">gcd</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;root u=</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> must be coprime with N=</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"root u=</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> must be coprime with N=</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">u</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span></div>
 
@@ -856,7 +856,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="schmidl_cox_preamble">
 <a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.schmidl_cox_preamble">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">schmidl_cox_preamble</span><span class="p">(</span><span class="n">N_fft</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Schmidl &amp; Cox OFDM preamble (two identical time-domain halves).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Schmidl &amp; Cox OFDM preamble (two identical time-domain halves).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -932,8 +932,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    T. M. Schmidl, D. C. Cox, &quot;Robust frequency and timing synchronization</span>
-<span class="sd">    for OFDM,&quot; IEEE Trans. Commun. 45(12), pp. 1613-1621, 1997;</span>
+<span class="sd">    T. M. Schmidl, D. C. Cox, "Robust frequency and timing synchronization</span>
+<span class="sd">    for OFDM," IEEE Trans. Commun. 45(12), pp. 1613-1621, 1997;</span>
 <span class="sd">    R. van Nee, R. Prasad, *OFDM for Wireless Multimedia Communications*,</span>
 <span class="sd">    Artech House, 2000, Chapter 4.</span>
 
@@ -948,9 +948,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; M = abs(P) ** 2 / float(np.sum(np.abs(y[32:]) ** 2)) ** 2</span>
 <span class="sd">    &gt;&gt;&gt; print(round(M, 12), round(float(np.angle(P) / np.pi), 12))  # timing, then CFO</span>
 <span class="sd">    1.0 0.25</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">N_fft</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;N_fft must be even, got </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"N_fft must be even, got </span><span class="si">{</span><span class="n">N_fft</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_fft</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
     <span class="n">qpsk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">N_fft</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
@@ -974,7 +974,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="barker">
 <a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.barker">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">barker</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Barker code of the given length.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Barker code of the given length.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1027,7 +1027,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    R. H. Barker, &quot;Group synchronizing of binary digital systems,&quot; in</span>
+<span class="sd">    R. H. Barker, "Group synchronizing of binary digital systems," in</span>
 <span class="sd">    *Communication Theory*, W. Jackson (ed.), Academic Press, 1953,</span>
 <span class="sd">    pp. 273-287; J. G. Proakis, M. Salehi, *Digital Communications*,</span>
 <span class="sd">    5th ed., McGraw-Hill, 2008 (spread-spectrum signalling);</span>
@@ -1038,15 +1038,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; code = barker(7)</span>
 <span class="sd">    &gt;&gt;&gt; print(code)</span>
 <span class="sd">    [ 1  1  1 -1 -1  1 -1]</span>
-<span class="sd">    &gt;&gt;&gt; R = np.correlate(code, code, &quot;full&quot;)  # aperiodic autocorrelation</span>
+<span class="sd">    &gt;&gt;&gt; R = np.correlate(code, code, "full")  # aperiodic autocorrelation</span>
 <span class="sd">    &gt;&gt;&gt; print(R)</span>
 <span class="sd">    [-1  0 -1  0 -1  0  7  0 -1  0 -1  0 -1]</span>
 <span class="sd">    &gt;&gt;&gt; print(int(np.max(np.abs(np.delete(R, 6)))))  # every sidelobe bounded by 1</span>
 <span class="sd">    1</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">length</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_BARKER</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no Barker code of length </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">; &quot;</span>
-                         <span class="sa">f</span><span class="s2">&quot;known lengths: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_BARKER</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no Barker code of length </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">; "</span>
+                         <span class="sa">f</span><span class="s2">"known lengths: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_BARKER</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_BARKER</span><span class="p">[</span><span class="n">length</span><span class="p">])</span></div>
 
 
@@ -1054,7 +1054,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="golay_pair">
 <a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.golay_pair">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">golay_pair</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Complementary Golay pair :math:`(a, b)` of the given length.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Complementary Golay pair :math:`(a, b)` of the given length.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1113,21 +1113,21 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    M. J. E. Golay, &quot;Complementary series,&quot; IRE Trans. Inf. Theory 7(2),</span>
+<span class="sd">    M. J. E. Golay, "Complementary series," IRE Trans. Inf. Theory 7(2),</span>
 <span class="sd">    pp. 82-87, 1961; IEEE 802.11ad-2012, clause 21.11.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; a, b = golay_pair(8)</span>
-<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, &quot;full&quot;))  # sidelobes are large on their own</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, "full"))  # sidelobes are large on their own</span>
 <span class="sd">    [ 1.  0.  1.  0.  3.  0. -1.  8. -1.  0.  3.  0.  1.  0.  1.]</span>
-<span class="sd">    &gt;&gt;&gt; print(np.correlate(b, b, &quot;full&quot;))  # and opposite in the partner</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(b, b, "full"))  # and opposite in the partner</span>
 <span class="sd">    [-1.  0. -1.  0. -3.  0.  1.  8.  1.  0. -3.  0. -1.  0. -1.]</span>
-<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, &quot;full&quot;) + np.correlate(b, b, &quot;full&quot;))  # 2N delta[k]</span>
+<span class="sd">    &gt;&gt;&gt; print(np.correlate(a, a, "full") + np.correlate(b, b, "full"))  # 2N delta[k]</span>
 <span class="sd">    [ 0.  0.  0.  0.  0.  0.  0. 16.  0.  0.  0.  0.  0.  0.  0.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">length</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;length must be a power of two, got </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"length must be a power of two, got </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">])</span>
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span><span class="p">])</span>
@@ -1145,7 +1145,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="m_sequence">
 <a class="viewcode-back" href="../../../documentation/core/sequences.html#comnumpy.core.sequences.m_sequence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">m_sequence</span><span class="p">(</span><span class="n">degree</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed_state</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Maximum-length sequence from a degree-:math:`m` LFSR.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Maximum-length sequence from a degree-:math:`m` LFSR.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -1234,14 +1234,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    [15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]</span>
 <span class="sd">    &gt;&gt;&gt; int(np.sum(x == 1)), int(np.sum(x == -1)), int(np.sum(x))  # balance</span>
 <span class="sd">    (7, 8, -1)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">degree</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PRIMITIVE_TAPS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;degree must be in </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_PRIMITIVE_TAPS</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"degree must be in </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_PRIMITIVE_TAPS</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">taps</span> <span class="o">=</span> <span class="n">_PRIMITIVE_TAPS</span><span class="p">[</span><span class="n">degree</span><span class="p">]</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="k">if</span> <span class="n">seed_state</span> <span class="ow">is</span> <span class="kc">None</span> \
         <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">seed_state</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">degree</span><span class="p">,)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;seed_state must be a nonzero length-</span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2"> register&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seed_state must be a nonzero length-</span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2"> register"</span><span class="p">)</span>
     <span class="n">N</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>

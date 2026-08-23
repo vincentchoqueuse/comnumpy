@@ -735,7 +735,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>  <span class="c1"># AWGN is element-wise (shape-agnostic); re-exported here for convenience</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_input</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AWGN&quot;</span><span class="p">,</span> <span class="s2">&quot;FlatMIMOChannel&quot;</span><span class="p">,</span> <span class="s2">&quot;SelectiveMIMOChannel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"AWGN"</span><span class="p">,</span> <span class="s2">"FlatMIMOChannel"</span><span class="p">,</span> <span class="s2">"SelectiveMIMOChannel"</span><span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -743,7 +743,7 @@ window.runMermaid = runMermaid;</script>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseMIMOChannel</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
 
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Base class for Multiple-Input Multiple-Output (MIMO) channels.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for Multiple-Input Multiple-Output (MIMO) channels.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -777,36 +777,36 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        (``N + L - 1`` samples); if False, the output is truncated to</span>
 <span class="sd">        ``N`` samples. Default is True.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;mimo_channel&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"mimo_channel"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    D. Tse and P. Viswanath, *Fundamentals of Wireless Communication*,</span>
 <span class="sd">    Cambridge University Press, 2005, Chapter 7.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">H</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">extend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;mimo_channel&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"mimo_channel"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Describe the channel (taps, conditioning); logged and returned.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Describe the channel (taps, conditioning); logged and returned."""</span>
         <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
         <span class="k">if</span> <span class="n">H</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the channel H is not set; pass H= at construction&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the channel H is not set; pass H= at construction"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">H</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">H</span> <span class="o">=</span> <span class="n">H</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
 
         <span class="n">L</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;* MIMO Channel (</span><span class="si">{</span><span class="n">L</span><span class="si">}</span><span class="s2"> tap(s)):&quot;</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"* MIMO Channel (</span><span class="si">{</span><span class="n">L</span><span class="si">}</span><span class="s2"> tap(s)):"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">L</span><span class="p">):</span>
             <span class="n">H_tap</span> <span class="o">=</span> <span class="n">H</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">H_tap</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;tap </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">H_tap</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Condition Number=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">H_tap</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;singular value=</span><span class="si">{</span><span class="n">S</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;norm=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">H_tap</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"tap </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">H_tap</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Condition Number=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">H_tap</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"singular value=</span><span class="si">{</span><span class="n">S</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"norm=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">H_tap</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">description</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -817,7 +817,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/mimo/channels.html#comnumpy.mimo.channels.FlatMIMOChannel">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FlatMIMOChannel</span><span class="p">(</span><span class="n">BaseMIMOChannel</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Flat (frequency-non-selective) MIMO channel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flat (frequency-non-selective) MIMO channel.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -846,7 +846,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    extend : bool, keyword-only</span>
 <span class="sd">        Unused for a flat channel (inherited). Default is True.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;mimo_channel&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"mimo_channel"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -865,7 +865,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; FlatMIMOChannel(H)(x)</span>
 <span class="sd">    array([[ 1.,  1.],</span>
 <span class="sd">           [ 2., -2.]])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># validate_input rejects a None channel</span>
@@ -880,7 +880,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/mimo/channels.html#comnumpy.mimo.channels.SelectiveMIMOChannel">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SelectiveMIMOChannel</span><span class="p">(</span><span class="n">BaseMIMOChannel</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Frequency-selective (multi-tap) MIMO channel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Frequency-selective (multi-tap) MIMO channel.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -909,7 +909,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        samples); if False, it is truncated to ``N`` samples. Default is</span>
 <span class="sd">        True.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the processor. Default is ``&quot;mimo_channel&quot;``.</span>
+<span class="sd">        Name of the processor. Default is ``"mimo_channel"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -927,12 +927,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; x = np.array([[1.0, 0.0, 0.0]])</span>
 <span class="sd">    &gt;&gt;&gt; SelectiveMIMOChannel(H)(x)</span>
 <span class="sd">    array([[1. +0.j, 0.5+0.j, 0. +0.j, 0. +0.j]])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># validate_input rejects a None channel</span>
         <span class="c1"># shape[2] is N_t of the (L, N_r, N_t) stack: validating against</span>
-        <span class="c1"># shape[1] rejected every non-square channel&#39;s correct input</span>
+        <span class="c1"># shape[1] rejected every non-square channel's correct input</span>
         <span class="n">validate_input</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">L</span><span class="p">,</span> <span class="n">N_r</span><span class="p">,</span> <span class="n">N_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>

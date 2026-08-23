@@ -726,7 +726,7 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.optical.fiber</h1><div class="highlight"><pre>
-<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;What the fibre is, separated from how it is simulated (decision D46).</span>
+<span></span><span class="sa">r</span><span class="sd">"""What the fibre is, separated from how it is simulated (decision D46).</span>
 
 <span class="sd">:class:`FiberLink` used to take twenty-one constructor arguments, mixing</span>
 <span class="sd">two things that change for entirely different reasons: the **glass** --</span>
@@ -747,7 +747,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">dispersion at 1310 nm and its ASE photon energy at 1550: the two agreed</span>
 <span class="sd">only because the two defaults happened to. Here :math:`\nu = c / \lambda`</span>
 <span class="sd">is derived, and cannot disagree with itself.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -758,14 +758,14 @@ window.runMermaid = runMermaid;</script>
                         <span class="n">SPEED_OF_LIGHT</span><span class="p">,</span> <span class="n">WAVELENGTH</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_beta2</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FiberSpec&quot;</span><span class="p">,</span> <span class="s2">&quot;get_fiber&quot;</span><span class="p">,</span> <span class="s2">&quot;register_fiber&quot;</span><span class="p">,</span> <span class="s2">&quot;available_fibers&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"FiberSpec"</span><span class="p">,</span> <span class="s2">"get_fiber"</span><span class="p">,</span> <span class="s2">"register_fiber"</span><span class="p">,</span> <span class="s2">"available_fibers"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="FiberSpec">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.FiberSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Physical parameters of an optical fibre, with their provenance.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Physical parameters of an optical fibre, with their provenance.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -811,7 +811,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        not in :class:`~comnumpy.optical.raman.RamanGainSpectrum`.</span>
 <span class="sd">        ``None`` when the entry does not quote one.</span>
 <span class="sd">    standard : str, optional, keyword-only</span>
-<span class="sd">        Name of the fibre, e.g. ``&quot;SMF&quot;``.</span>
+<span class="sd">        Name of the fibre, e.g. ``"SMF"``.</span>
 <span class="sd">    reference : str, optional, keyword-only</span>
 <span class="sd">        Where the numbers come from.</span>
 
@@ -829,38 +829,38 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; fiber = get_fiber(&quot;SMF&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fiber = get_fiber("SMF")</span>
 <span class="sd">    &gt;&gt;&gt; round(fiber.beta2, 3), round(fiber.carrier_frequency_Hz / 1e12, 4)</span>
 <span class="sd">    (-21.683, 193.4145)</span>
 <span class="sd">    &gt;&gt;&gt; round(fiber.effective_length_km(80.0), 3)</span>
 <span class="sd">    21.169</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">alpha_dB</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FIBER_LOSS</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">KERR_COEFFICIENT</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">cd_coefficient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">CD_COEFFICIENT</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">wavelength_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">WAVELENGTH</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">raman_gain_W_km</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"custom"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a non-negative attenuation in dB/km, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span><span class="si">}</span><span class="s2"> -- a fibre with gain is a Raman span, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;see comnumpy.optical.raman&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a non-negative attenuation in dB/km, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span><span class="si">}</span><span class="s2"> -- a fibre with gain is a Raman span, "</span>
+                <span class="sa">f</span><span class="s2">"see comnumpy.optical.raman"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a non-negative Kerr coefficient, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a non-negative Kerr coefficient, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a positive wavelength in nm, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a positive wavelength in nm, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected a non-negative Raman gain, got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected a non-negative Raman gain, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_plausible</span><span class="p">()</span>
 
     <span class="c1"># Plausibility bounds, deliberately loose: they are not laws of</span>
@@ -870,11 +870,11 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># making. Anything a real fibre does fits inside them with room to</span>
     <span class="c1"># spare, so a rejection here is a unit, not a research question.</span>
     <span class="n">_PLAUSIBLE</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;alpha_dB&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="s2">&quot;dB/km&quot;</span><span class="p">,</span> <span class="s2">&quot;0.2 for silica at 1550 nm&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;rad/W/km&quot;</span><span class="p">,</span> <span class="s2">&quot;1.3 for SMF, ~5 for DCF&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;cd_coefficient&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;ps/nm/km&quot;</span><span class="p">,</span> <span class="s2">&quot;17 for SMF, -100 for DCF&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;wavelength_nm&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">,</span> <span class="s2">&quot;1550 in the C band&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;raman_gain_W_km&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="s2">&quot;1/(W km)&quot;</span><span class="p">,</span> <span class="s2">&quot;~0.4 for SMF&quot;</span><span class="p">),</span>
+        <span class="s2">"alpha_dB"</span><span class="p">:</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="s2">"dB/km"</span><span class="p">,</span> <span class="s2">"0.2 for silica at 1550 nm"</span><span class="p">),</span>
+        <span class="s2">"gamma"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="s2">"rad/W/km"</span><span class="p">,</span> <span class="s2">"1.3 for SMF, ~5 for DCF"</span><span class="p">),</span>
+        <span class="s2">"cd_coefficient"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e4</span><span class="p">,</span> <span class="s2">"ps/nm/km"</span><span class="p">,</span> <span class="s2">"17 for SMF, -100 for DCF"</span><span class="p">),</span>
+        <span class="s2">"wavelength_nm"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="s2">"nm"</span><span class="p">,</span> <span class="s2">"1550 in the C band"</span><span class="p">),</span>
+        <span class="s2">"raman_gain_W_km"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="s2">"1/(W km)"</span><span class="p">,</span> <span class="s2">"~0.4 for SMF"</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_plausible</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -882,42 +882,42 @@ window.runMermaid = runMermaid;</script>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">bound</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;expected </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2"> (typically </span><span class="si">{</span><span class="n">typical</span><span class="si">}</span><span class="s2">), got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">, which is beyond the plausible bound &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bound</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> -- this is the size of a unit mistake, not &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;of a fibre. Pass FiberSpec(..., </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=...) in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2"> (typically </span><span class="si">{</span><span class="n">typical</span><span class="si">}</span><span class="s2">), got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">, which is beyond the plausible bound "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bound</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> -- this is the size of a unit mistake, not "</span>
+                    <span class="sa">f</span><span class="s2">"of a fibre. Pass FiberSpec(..., </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=...) in </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;expected wavelength_nm in nm (1550 in the C band), got &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> -- micrometres, perhaps?&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"expected wavelength_nm in nm (1550 in the C band), got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> -- micrometres, perhaps?"</span><span class="p">)</span>
 
     <span class="c1"># -- derived quantities ------------------------------------------------</span>
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">beta2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Group-velocity dispersion :math:`\beta_2` in ps²/km.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Group-velocity dispersion :math:`\beta_2` in ps²/km.</span>
 
 <span class="sd">        Delegates to :func:`~comnumpy.optical.utils.compute_beta2`: one</span>
 <span class="sd">        formula, one place. Writing the conversion a second time here</span>
 <span class="sd">        got the unit scaling wrong by a factor of a thousand, and the</span>
 <span class="sd">        self-check below is what caught it.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">compute_beta2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cd_coefficient</span><span class="p">,</span>
                              <span class="n">SPEED_OF_LIGHT</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">carrier_frequency_Hz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Optical carrier :math:`\nu = c / \lambda`, in Hz.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Optical carrier :math:`\nu = c / \lambda`, in Hz."""</span>
         <span class="k">return</span> <span class="n">SPEED_OF_LIGHT</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">alpha_per_km</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Attenuation :math:`\alpha` in 1/km, the equation&#39;s unit.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Attenuation :math:`\alpha` in 1/km, the equation's unit."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
 
 <div class="viewcode-block" id="FiberSpec.effective_length_km">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.FiberSpec.effective_length_km">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">effective_length_km</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Nonlinear effective length :math:`(1 - e^{-\alpha L})/\alpha`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Nonlinear effective length :math:`(1 - e^{-\alpha L})/\alpha`.</span>
 
 <span class="sd">        The length a lossless fibre would need to accumulate the same</span>
 <span class="sd">        Kerr phase. Equal to ``length_km`` for a lossless fibre.</span>
@@ -934,11 +934,11 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; round(get_fiber(&quot;SMF&quot;).effective_length_km(80.0), 3)</span>
+<span class="sd">        &gt;&gt;&gt; round(get_fiber("SMF").effective_length_km(80.0), 3)</span>
 <span class="sd">        21.169</span>
 <span class="sd">        &gt;&gt;&gt; round(FiberSpec(0.0).effective_length_km(80.0), 3)</span>
 <span class="sd">        80.0</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_per_km</span>
         <span class="k">if</span> <span class="n">alpha</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">length_km</span>
@@ -948,18 +948,18 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="FiberSpec.loss_dB">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.FiberSpec.loss_dB">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loss_dB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Total attenuation of a span of ``length_km``, in dB.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Total attenuation of a span of ``length_km``, in dB."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span> <span class="o">*</span> <span class="n">length_km</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">raman</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span> <span class="ow">is</span> <span class="kc">None</span>
-                 <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;, g_R/A_eff </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> /W/km&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FiberSpec(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> nm)</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  alpha </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> dB/km, gamma </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;rad/W/km, D </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cd_coefficient</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ps/nm/km&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  -&gt; beta2 </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">beta2</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ps^2/km</span><span class="si">{</span><span class="n">raman</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">))</span></div>
+        <span class="n">raman</span> <span class="o">=</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span> <span class="ow">is</span> <span class="kc">None</span>
+                 <span class="k">else</span> <span class="sa">f</span><span class="s2">", g_R/A_eff </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">raman_gain_W_km</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> /W/km"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"FiberSpec(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> nm)</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"  alpha </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_dB</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> dB/km, gamma </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"rad/W/km, D </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cd_coefficient</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ps/nm/km"</span>
+                <span class="sa">f</span><span class="s2">"  -&gt; beta2 </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">beta2</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ps^2/km</span><span class="si">{</span><span class="n">raman</span><span class="si">}</span><span class="s2">"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span></div>
 
 
 
@@ -970,7 +970,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="register_fiber">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.register_fiber">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_fiber</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a catalog entry; users can add their own fibres.</span>
+<span class="w">    </span><span class="sd">"""Register a catalog entry; users can add their own fibres.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -979,13 +979,13 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; @register_fiber(&quot;LAB&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; @register_fiber("LAB")</span>
 <span class="sd">    ... def _lab():</span>
-<span class="sd">    ...     return FiberSpec(0.19, gamma=1.2, standard=&quot;LAB&quot;,</span>
-<span class="sd">    ...                      reference=&quot;bench&quot;)</span>
-<span class="sd">    &gt;&gt;&gt; get_fiber(&quot;LAB&quot;).alpha_dB</span>
+<span class="sd">    ...     return FiberSpec(0.19, gamma=1.2, standard="LAB",</span>
+<span class="sd">    ...                      reference="bench")</span>
+<span class="sd">    &gt;&gt;&gt; get_fiber("LAB").alpha_dB</span>
 <span class="sd">    0.19</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">FiberSpec</span><span class="p">]):</span>
         <span class="n">_FIBER_REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span>
@@ -996,7 +996,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="available_fibers">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.available_fibers">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">available_fibers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Names accepted by :func:`get_fiber`.</span>
+<span class="w">    </span><span class="sd">"""Names accepted by :func:`get_fiber`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1006,8 +1006,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; available_fibers()</span>
-<span class="sd">    [&#39;DCF&#39;, &#39;NZDSF&#39;, &#39;SMF&#39;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ['DCF', 'NZDSF', 'SMF']</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_FIBER_REGISTRY</span><span class="p">)</span></div>
 
 
@@ -1015,7 +1015,7 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="get_fiber">
 <a class="viewcode-back" href="../../../documentation/optical/fiber.html#comnumpy.optical.fiber.get_fiber">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_fiber</span><span class="p">(</span><span class="n">standard</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a catalog fibre by name.</span>
+<span class="w">    </span><span class="sd">"""Return a catalog fibre by name.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1031,83 +1031,83 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; get_fiber(&quot;SMF&quot;).cd_coefficient</span>
+<span class="sd">    &gt;&gt;&gt; get_fiber("SMF").cd_coefficient</span>
 <span class="sd">    17.0</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">standard</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_FIBER_REGISTRY</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;unknown fibre </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: </span><span class="si">{</span><span class="n">available_fibers</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;register your own with @register_fiber, or build a FiberSpec &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;directly&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"unknown fibre </span><span class="si">{</span><span class="n">standard</span><span class="si">!r}</span><span class="s2">; available: </span><span class="si">{</span><span class="n">available_fibers</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- "</span>
+            <span class="sa">f</span><span class="s2">"register your own with @register_fiber, or build a FiberSpec "</span>
+            <span class="sa">f</span><span class="s2">"directly"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_FIBER_REGISTRY</span><span class="p">[</span><span class="n">standard</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_expect</span><span class="p">(</span><span class="n">fiber</span><span class="p">:</span> <span class="n">FiberSpec</span><span class="p">,</span>
                   <span class="n">expect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify a catalog entry against a figure published with it (D20).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Verify a catalog entry against a figure published with it (D20)."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">expect</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">fiber</span>
-    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;beta2&quot;</span><span class="p">:</span> <span class="n">fiber</span><span class="o">.</span><span class="n">beta2</span><span class="p">,</span>
-              <span class="s2">&quot;carrier_frequency_THz&quot;</span><span class="p">:</span> <span class="n">fiber</span><span class="o">.</span><span class="n">carrier_frequency_Hz</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">}</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"beta2"</span><span class="p">:</span> <span class="n">fiber</span><span class="o">.</span><span class="n">beta2</span><span class="p">,</span>
+              <span class="s2">"carrier_frequency_THz"</span><span class="p">:</span> <span class="n">fiber</span><span class="o">.</span><span class="n">carrier_frequency_Hz</span> <span class="o">/</span> <span class="mf">1e12</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">wanted</span> <span class="ow">in</span> <span class="n">expect</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown self-check </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">got</span> <span class="o">=</span> <span class="n">checks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">got</span> <span class="o">-</span> <span class="n">wanted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">5e-3</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wanted</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fiber</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fiber</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;the source&#39;</span><span class="si">}</span><span class="s2">, these coefficients give &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> -- one of the two is wrong.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fiber</span><span class="o">.</span><span class="n">standard</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> from "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fiber</span><span class="o">.</span><span class="n">reference</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'the source'</span><span class="si">}</span><span class="s2">, these coefficients give "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">got</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> -- one of the two is wrong."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fiber</span>
 
 
-<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">&quot;SMF&quot;</span><span class="p">)</span>
+<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">"SMF"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_smf</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Standard single-mode fibre at 1550 nm.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standard single-mode fibre at 1550 nm.</span>
 
-<span class="sd">    The textbook working point, and the library&#39;s historical defaults.</span>
+<span class="sd">    The textbook working point, and the library's historical defaults.</span>
 <span class="sd">    The self-check is the one independent handle these numbers offer:</span>
 <span class="sd">    :math:`D = 17` ps/nm/km at 1550 nm must give</span>
 <span class="sd">    :math:`\beta_2 \approx -21.7` ps²/km, which is quoted separately in</span>
 <span class="sd">    the same references. It comes out at -21.683.</span>
 
-<span class="sd">    These are round textbook values, not a data sheet: no manufacturer&#39;s</span>
+<span class="sd">    These are round textbook values, not a data sheet: no manufacturer's</span>
 <span class="sd">    figures have been transcribed here.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_check_expect</span><span class="p">(</span>
         <span class="n">FiberSpec</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">cd_coefficient</span><span class="o">=</span><span class="mf">17.0</span><span class="p">,</span> <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">,</span>
-                  <span class="n">raman_gain_W_km</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;SMF&quot;</span><span class="p">,</span>
-                  <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Agrawal, Nonlinear Fiber Optics, 5th ed., &quot;</span>
-                            <span class="s2">&quot;sections 1.2 and 2.3 (textbook values)&quot;</span><span class="p">),</span>
-        <span class="p">{</span><span class="s2">&quot;beta2&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">21.7</span><span class="p">})</span>
+                  <span class="n">raman_gain_W_km</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">"SMF"</span><span class="p">,</span>
+                  <span class="n">reference</span><span class="o">=</span><span class="s2">"Agrawal, Nonlinear Fiber Optics, 5th ed., "</span>
+                            <span class="s2">"sections 1.2 and 2.3 (textbook values)"</span><span class="p">),</span>
+        <span class="p">{</span><span class="s2">"beta2"</span><span class="p">:</span> <span class="o">-</span><span class="mf">21.7</span><span class="p">})</span>
 
 
-<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">&quot;NZDSF&quot;</span><span class="p">)</span>
+<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">"NZDSF"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_nzdsf</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Non-zero dispersion-shifted fibre at 1550 nm.</span>
+<span class="w">    </span><span class="sd">"""Non-zero dispersion-shifted fibre at 1550 nm.</span>
 
 <span class="sd">    Low dispersion and a smaller effective area, hence a larger Kerr</span>
 <span class="sd">    coefficient than SMF. Round textbook values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">FiberSpec</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1.7</span><span class="p">,</span> <span class="n">cd_coefficient</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
-                     <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;NZDSF&quot;</span><span class="p">,</span>
-                     <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Agrawal, Fiber-Optic Communication Systems, &quot;</span>
-                               <span class="s2">&quot;4th ed., chapter 2 (textbook values)&quot;</span><span class="p">)</span>
+                     <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">"NZDSF"</span><span class="p">,</span>
+                     <span class="n">reference</span><span class="o">=</span><span class="s2">"Agrawal, Fiber-Optic Communication Systems, "</span>
+                               <span class="s2">"4th ed., chapter 2 (textbook values)"</span><span class="p">)</span>
 
 
-<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">&quot;DCF&quot;</span><span class="p">)</span>
+<span class="nd">@register_fiber</span><span class="p">(</span><span class="s2">"DCF"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_dcf</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FiberSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispersion-compensating fibre at 1550 nm.</span>
+<span class="w">    </span><span class="sd">"""Dispersion-compensating fibre at 1550 nm.</span>
 
 <span class="sd">    Large negative dispersion, higher loss and a much smaller effective</span>
 <span class="sd">    area. The sign of ``cd_coefficient`` is what makes it compensating,</span>
 <span class="sd">    and it is the reason the constructor accepts either sign.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">FiberSpec</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">cd_coefficient</span><span class="o">=-</span><span class="mf">100.0</span><span class="p">,</span>
-                     <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">&quot;DCF&quot;</span><span class="p">,</span>
-                     <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;Agrawal, Fiber-Optic Communication Systems, &quot;</span>
-                               <span class="s2">&quot;4th ed., chapter 8 (textbook values)&quot;</span><span class="p">)</span>
+                     <span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">1550.0</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s2">"DCF"</span><span class="p">,</span>
+                     <span class="n">reference</span><span class="o">=</span><span class="s2">"Agrawal, Fiber-Optic Communication Systems, "</span>
+                               <span class="s2">"4th ed., chapter 8 (textbook values)"</span><span class="p">)</span>
 </pre></div>
 
                 </article>

@@ -734,7 +734,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">hard_projector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_alphabet</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SymbolMapper&quot;</span><span class="p">,</span> <span class="s2">&quot;SymbolDemapper&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SymbolMapper"</span><span class="p">,</span> <span class="s2">"SymbolDemapper"</span><span class="p">]</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># matplotlib stays out of the import path (D36)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
@@ -744,7 +744,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/mappers.html#comnumpy.core.mappers.SymbolMapper">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SymbolMapper</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Symbol mapper converting integer indices to constellation symbols.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Symbol mapper converting integer indices to constellation symbols.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -763,7 +763,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Constellation alphabet :math:`\mathcal{M} = \{s_0, \ldots, s_{M-1}\}`</span>
 <span class="sd">        as a 1-D array of :math:`M` complex symbols.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the symbol mapper instance. Default is ``&quot;Symbol Mapper&quot;``.</span>
+<span class="sd">        Name of the symbol mapper instance. Default is ``"Symbol Mapper"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -773,13 +773,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; mapper = SymbolMapper(get_alphabet(&quot;QAM&quot;, 4))</span>
+<span class="sd">    &gt;&gt;&gt; mapper = SymbolMapper(get_alphabet("QAM", 4))</span>
 <span class="sd">    &gt;&gt;&gt; y = mapper(np.array([0, 3, 2, 1]))</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(y, 2))</span>
 <span class="sd">    [-0.71+0.71j  0.71-0.71j  0.71+0.71j -0.71-0.71j]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Symbol Mapper&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"Symbol Mapper"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># accept anything array-like, so a Constellation (or a list) can</span>
@@ -789,8 +789,8 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_alphabet</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-             <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Symbol Constellation&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Axes&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Axes"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Symbol Constellation"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Axes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">plot_alphabet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -803,7 +803,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/core/mappers.html#comnumpy.core.mappers.SymbolDemapper">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SymbolDemapper</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Symbol demapper: minimum-distance (hard) decisions or bit LLRs (soft).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Symbol demapper: minimum-distance (hard) decisions or bit LLRs (soft).</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -845,7 +845,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Noise variance :math:`\sigma^2` scaling the LLRs. Default 1.0</span>
 <span class="sd">        (the scaling does not affect Viterbi decoding).</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the symbol demapper instance. Default is ``&quot;Symbol Demapper&quot;``.</span>
+<span class="sd">        Name of the symbol demapper instance. Default is ``"Symbol Demapper"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -858,25 +858,25 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    J. G. Proakis, M. Salehi, *Digital Communications*, 5th ed.,</span>
 <span class="sd">    McGraw-Hill, 2008, Chapter 4; P. Robertson, E. Villebrun,</span>
-<span class="sd">    P. Hoeher, &quot;A comparison of optimal and sub-optimal MAP decoding</span>
-<span class="sd">    algorithms operating in the log domain,&quot; ICC 1995 (max-log</span>
+<span class="sd">    P. Hoeher, "A comparison of optimal and sub-optimal MAP decoding</span>
+<span class="sd">    algorithms operating in the log domain," ICC 1995 (max-log</span>
 <span class="sd">    approximation).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; from comnumpy.core.utils import get_alphabet</span>
-<span class="sd">    &gt;&gt;&gt; demapper = SymbolDemapper(get_alphabet(&quot;QAM&quot;, 4))</span>
+<span class="sd">    &gt;&gt;&gt; demapper = SymbolDemapper(get_alphabet("QAM", 4))</span>
 <span class="sd">    &gt;&gt;&gt; x = np.array([-0.7+0.7j, 0.7-0.7j, 0.7+0.7j, -0.7-0.7j])</span>
 <span class="sd">    &gt;&gt;&gt; print(demapper(x))</span>
 <span class="sd">    [0 3 2 1]</span>
-<span class="sd">    &gt;&gt;&gt; soft = SymbolDemapper(get_alphabet(&quot;QAM&quot;, 4), soft=True)</span>
+<span class="sd">    &gt;&gt;&gt; soft = SymbolDemapper(get_alphabet("QAM", 4), soft=True)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(soft(x[:2]), 2))  # LLR &gt; 0 favors bit 0</span>
 <span class="sd">    [ 1.98  1.98 -1.98 -1.98]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">alphabet</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">soft</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Symbol Demapper&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"Symbol Demapper"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># precomputed bit patterns of the alphabet indices (parametric)</span>
     <span class="n">_bits</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -886,8 +886,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">M</span><span class="p">))</span>
         <span class="k">if</span> <span class="mi">2</span><span class="o">**</span><span class="n">k</span> <span class="o">!=</span> <span class="n">M</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;soft demapping needs an alphabet size that is a power of &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;two, got M=</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"soft demapping needs an alphabet size that is a power of "</span>
+                <span class="sa">f</span><span class="s2">"two, got M=</span><span class="si">{</span><span class="n">M</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
         <span class="c1"># (M, k) bit table, MSB first -- same convention as sym_2_bin</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bits</span> <span class="o">=</span> <span class="p">((</span><span class="n">indices</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>

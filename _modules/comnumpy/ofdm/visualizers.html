@@ -726,29 +726,29 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.ofdm.visualizers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Plotting functions for frequency-domain OFDM signals.</span>
+<span></span><span class="sd">"""Plotting functions for frequency-domain OFDM signals.</span>
 
 <span class="sd">Like the core visualizers, these are plain functions operating on</span>
-<span class="sd">arrays extracted with ``Sequential(taps=...)`` -- never in-chain</span>
+<span class="sd">arrays extracted with ``Sequential(observations=...)`` -- never in-chain</span>
 <span class="sd">blocks. Every function takes ``ax=None`` and returns the axis</span>
 <span class="sd">(decision D25).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;plot_subcarrier_amplitude&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"plot_subcarrier_amplitude"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="plot_subcarrier_amplitude">
 <a class="viewcode-back" href="../../../documentation/ofdm/visualizers.html#comnumpy.ofdm.visualizers.plot_subcarrier_amplitude">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_subcarrier_amplitude</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-                              <span class="n">reduction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
-                              <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Subcarrier amplitude&quot;</span><span class="p">,</span>
+                              <span class="n">reduction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">"mean"</span><span class="p">,</span>
+                              <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Subcarrier amplitude"</span><span class="p">,</span>
                               <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stem plot of the per-subcarrier amplitude of a Block-layout signal.</span>
+<span class="w">    </span><span class="sd">"""Stem plot of the per-subcarrier amplitude of a Block-layout signal.</span>
 
 <span class="sd">    Useful before an IFFT or after an FFT block in an OFDM system.</span>
 
@@ -756,8 +756,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    X : np.ndarray</span>
 <span class="sd">        Frequency-domain signal in Block layout ``(..., T, F)``.</span>
-<span class="sd">    reduction : {&quot;mean&quot;, None}, keyword-only</span>
-<span class="sd">        ``&quot;mean&quot;`` (default) averages the amplitude over the OFDM-symbol</span>
+<span class="sd">    reduction : {"mean", None}, keyword-only</span>
+<span class="sd">        ``"mean"`` (default) averages the amplitude over the OFDM-symbol</span>
 <span class="sd">        axis ``T``; ``None`` superimposes one stem series per symbol.</span>
 <span class="sd">    title : str, keyword-only</span>
 <span class="sd">        Axis title.</span>
@@ -767,25 +767,25 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    matplotlib.axes.Axes</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">amplitudes</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;expected a Block layout (..., T, F), got </span><span class="si">{</span><span class="n">amplitudes</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"expected a Block layout (..., T, F), got </span><span class="si">{</span><span class="n">amplitudes</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">N_sc</span> <span class="o">=</span> <span class="n">amplitudes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">subcarrier_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">N_sc</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">N_sc</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">reduction</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">reduction</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">subcarrier_indices</span><span class="p">,</span> <span class="n">amplitudes</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">))</span>
     <span class="k">elif</span> <span class="n">reduction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">amplitudes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_sc</span><span class="p">):</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">subcarrier_indices</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid reduction option. Choose None or &#39;mean&#39;.&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;subcarrier index&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;amplitude&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid reduction option. Choose None or 'mean'."</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"subcarrier index"</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"amplitude"</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span></div>
 

@@ -522,7 +522,7 @@ forward method to define their specific processing logic.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="comnumpy.core.generics.Sequential">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Sequential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">module_list:</span> <span class="pre">~typing.List[~comnumpy.core.generics.Processor],</span> <span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'sequential',</span> <span class="pre">callbacks:</span> <span class="pre">~typing.Dict[str</span> <span class="pre">|</span> <span class="pre">int,</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">None]]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">*,</span> <span class="pre">taps:</span> <span class="pre">~typing.List[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">wiring:</span> <span class="pre">~typing.Dict[str,</span> <span class="pre">str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Sequential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">module_list:</span> <span class="pre">~typing.List[~comnumpy.core.generics.Processor],</span> <span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'sequential',</span> <span class="pre">callbacks:</span> <span class="pre">~typing.Dict[str</span> <span class="pre">|</span> <span class="pre">int,</span> <span class="pre">~typing.Callable[[~typing.Any],</span> <span class="pre">None]]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">*,</span> <span class="pre">observations:</span> <span class="pre">~typing.List[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">wiring:</span> <span class="pre">~typing.Dict[str,</span> <span class="pre">str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential" title="Link to this definition">#</a></dt>
 <dd><p>A sequential container for processing modules.</p>
 <p>This class allows to create complex chain by stacking <span class="math notranslate nohighlight">\(L\)</span> different processor modules. These processors are executed in the order they are added.</p>
 <section id="id1">
@@ -594,15 +594,17 @@ accepting the processor output.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.taps">
-<span class="sig-name descname"><span class="pre">taps</span></span><a class="headerlink" href="#comnumpy.core.generics.Sequential.taps" title="Link to this definition">#</a></dt>
-<dd><p>Block ids (see <a class="reference internal" href="#comnumpy.core.generics.Sequential.block_ids" title="comnumpy.core.generics.Sequential.block_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">block_ids()</span></code></a>) whose output should be recorded
-during <code class="docutils literal notranslate"><span class="pre">forward</span></code>. Taps are the <em>only</em> observation mechanism:
-they are chain metadata, so the module list describes the
-communication system and nothing else, and the cost is one
-dictionary store per tapped block (a reference is kept, no copy
-– blocks allocate fresh outputs, so the reference stays valid).
-Retrieve with <a class="reference internal" href="#comnumpy.core.generics.Sequential.tap" title="comnumpy.core.generics.Sequential.tap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tap()</span></code></a>.</p>
+<dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.observations">
+<span class="sig-name descname"><span class="pre">observations</span></span><a class="headerlink" href="#comnumpy.core.generics.Sequential.observations" title="Link to this definition">#</a></dt>
+<dd><p>Block ids (see <a class="reference internal" href="#comnumpy.core.generics.Sequential.block_ids" title="comnumpy.core.generics.Sequential.block_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">block_ids()</span></code></a>) whose output should be retained
+during <code class="docutils literal notranslate"><span class="pre">forward</span></code>. An observation is simply the output of a
+named mechanism, kept for experimental analysis: it performs no
+computation and does not alter the signal. Observations are chain
+metadata, so the module list describes the communication system
+and nothing else, and the cost is one dictionary store per
+observed block (a reference is kept, no copy – blocks allocate
+fresh outputs, so the reference stays valid). Retrieve with
+<a class="reference internal" href="#comnumpy.core.generics.Sequential.observation" title="comnumpy.core.generics.Sequential.observation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">observation()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list of str, optional, keyword-only</p>
@@ -632,10 +634,11 @@ down block by block.</p>
 Before a target block runs, the chain assigns it the signal
 produced by the source block <em>in the same pass</em> – this is how a
 data-aided estimator receives a reference generated upstream
-(<code class="docutils literal notranslate"><span class="pre">{&quot;phase_comp.reference&quot;:</span> <span class="pre">&quot;tx&quot;}</span></code>). The source is tapped
+(<code class="docutils literal notranslate"><span class="pre">{&quot;phase_comp.reference&quot;:</span> <span class="pre">&quot;tx&quot;}</span></code>). The source is observed
 automatically and must come earlier in the chain, so the value is
-never stale. Like taps, the edge is chain metadata: blocks stay
-declarative and never hold a reference to another block.</p>
+never stale. Like observations, the edge is chain metadata:
+blocks stay declarative and never hold a reference to another
+block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict, optional, keyword-only</p>
@@ -647,9 +650,9 @@ declarative and never hold a reference to another block.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">10</span><span class="p">)],</span>
-<span class="gp">... </span>                   <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;generator&quot;</span><span class="p">])</span>
+<span class="gp">... </span>                   <span class="n">observations</span><span class="o">=</span><span class="p">[</span><span class="s2">"generator"</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">tap</span><span class="p">(</span><span class="s2">&quot;generator&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">observation</span><span class="p">(</span><span class="s2">"generator"</span><span class="p">))</span>
 <span class="go">[0 0 3 1 3]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span><span class="o">.</span><span class="n">elapsed_</span> <span class="o">&gt;</span> <span class="mi">0</span>
 <span class="go">True</span>
@@ -713,7 +716,7 @@ re-run, so the block state stays consistent.</p>
 </pre></div>
 </div>
 <p>The dotted form is the one to use when the address is computed:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;awgn.sigma2&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">"awgn.sigma2"</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sigma2</span>
 <span class="go">0.02</span>
 </pre></div>
@@ -725,9 +728,9 @@ re-run, so the block state stays consistent.</p>
 <span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.summary" title="Link to this definition">#</a></dt>
 <dd><p>Run the chain on <code class="docutils literal notranslate"><span class="pre">X</span></code> and tabulate each block’s output shape,
 dtype and execution time (decision D33b). Returns the rows.</p>
-<p>The pass is the ordinary one: taps are recorded and the data
-edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so the chain summarized is
-the chain that runs.</p>
+<p>The pass is the ordinary one: observations are retained and the
+data edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so the chain
+summarized is the chain that runs.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -742,15 +745,16 @@ chain must show or it is not telling the truth.</p>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>dict</em> – <code class="docutils literal notranslate"><span class="pre">nodes</span></code> (list of <code class="docutils literal notranslate"><span class="pre">{&quot;id&quot;,</span> <span class="pre">&quot;type&quot;}</span></code>), <code class="docutils literal notranslate"><span class="pre">signal_edges</span></code>
 (list of <code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target)</span></code>), <code class="docutils literal notranslate"><span class="pre">data_edges</span></code> (list of
-<code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target,</span> <span class="pre">param)</span></code>) and <code class="docutils literal notranslate"><span class="pre">taps</span></code> (observed ids).</p>
+<code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target,</span> <span class="pre">param)</span></code>) and <code class="docutils literal notranslate"><span class="pre">observations</span></code> (observed
+ids).</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">10</span><span class="p">)])</span><span class="o">.</span><span class="n">graph</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">&quot;signal_edges&quot;</span><span class="p">])</span>
-<span class="go">[(&#39;generator&#39;, &#39;awgn&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"signal_edges"</span><span class="p">])</span>
+<span class="go">[('generator', 'awgn')]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -762,20 +766,20 @@ chain must show or it is not telling the truth.</p>
 sphinxcontrib-mermaid, GitHub, or any mermaid viewer.</p>
 <p>Signal flow is drawn with solid arrows, declared data edges
 (<code class="docutils literal notranslate"><span class="pre">wiring</span></code>, D42c) with dashed arrows labelled by the parameter
-they feed, and tapped blocks are outlined – so the picture shows
-every edge the chain actually has.</p>
+they feed, and observed blocks are outlined – so the picture
+shows every edge the chain actually has.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolGenerator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">10</span><span class="p">)],</span>
-<span class="gp">... </span>                   <span class="n">taps</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;generator&quot;</span><span class="p">])</span>
+<span class="gp">... </span>                   <span class="n">observations</span><span class="o">=</span><span class="p">[</span><span class="s2">"generator"</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">to_mermaid</span><span class="p">())</span>
 <span class="go">flowchart LR</span>
-<span class="go">    generator[&quot;SymbolGenerator&quot;]</span>
-<span class="go">    awgn[&quot;AWGN&quot;]</span>
+<span class="go">    generator["SymbolGenerator"]</span>
+<span class="go">    awgn["AWGN"]</span>
 <span class="go">    generator --&gt; awgn</span>
-<span class="go">    classDef tapped stroke-dasharray: 4 2</span>
-<span class="go">    class generator tapped</span>
+<span class="go">    classDef observed stroke-dasharray: 4 2</span>
+<span class="go">    class generator observed</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -790,9 +794,9 @@ every edge the chain actually has.</p>
 <dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.profile_execution_time">
 <span class="sig-name descname"><span class="pre">profile_execution_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.profile_execution_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.profile_execution_time" title="Link to this definition">#</a></dt>
 <dd><p>Time each block over one pass, keyed by block id.</p>
-<p>The pass is the ordinary one: taps are recorded and the data
-edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so a chain that profiles is
-the chain that runs. The keys are the ids of <a class="reference internal" href="#comnumpy.core.generics.Sequential.block_ids" title="comnumpy.core.generics.Sequential.block_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">block_ids()</span></code></a>,
+<p>The pass is the ordinary one: observations are retained and the
+data edges declared in <code class="docutils literal notranslate"><span class="pre">wiring</span></code> are fed, so a chain that
+profiles is the chain that runs. The keys are the ids of <a class="reference internal" href="#comnumpy.core.generics.Sequential.block_ids" title="comnumpy.core.generics.Sequential.block_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">block_ids()</span></code></a>,
 so two blocks sharing a name still get one entry each.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -808,7 +812,7 @@ with a source block.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWGN</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">SymbolGenerator</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">AWGN</span><span class="p">(</span><span class="n">snr_dB</span><span class="o">=</span><span class="mi">10</span><span class="p">)])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">profile_execution_time</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
-<span class="go">[&#39;generator&#39;, &#39;awgn&#39;]</span>
+<span class="go">['generator', 'awgn']</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -820,9 +824,11 @@ with a source block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.tap">
-<span class="sig-name descname"><span class="pre">tap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.tap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.tap" title="Link to this definition">#</a></dt>
-<dd><p>Return the signal recorded at a declared tap during the last run.</p>
+<dt class="sig sig-object py" id="comnumpy.core.generics.Sequential.observation">
+<span class="sig-name descname"><span class="pre">observation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/comnumpy/core/generics.html#Sequential.observation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#comnumpy.core.generics.Sequential.observation" title="Link to this definition">#</a></dt>
+<dd><p>Return the output retained at a declared observation during the
+last run. The signal comes back exactly as the block produced
+it – same shape, same dtype, no computation.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -907,7 +913,7 @@ with a source block.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.debug"><code class="docutils literal notranslate"><span class="pre">Sequential.debug</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.name"><code class="docutils literal notranslate"><span class="pre">Sequential.name</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.callbacks"><code class="docutils literal notranslate"><span class="pre">Sequential.callbacks</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.taps"><code class="docutils literal notranslate"><span class="pre">Sequential.taps</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.observations"><code class="docutils literal notranslate"><span class="pre">Sequential.observations</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.elapsed_"><code class="docutils literal notranslate"><span class="pre">Sequential.elapsed_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.wiring"><code class="docutils literal notranslate"><span class="pre">Sequential.wiring</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.block_ids"><code class="docutils literal notranslate"><span class="pre">Sequential.block_ids()</span></code></a></li>
@@ -920,7 +926,7 @@ with a source block.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.set_debug"><code class="docutils literal notranslate"><span class="pre">Sequential.set_debug()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.profile_execution_time"><code class="docutils literal notranslate"><span class="pre">Sequential.profile_execution_time()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.forward"><code class="docutils literal notranslate"><span class="pre">Sequential.forward()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.tap"><code class="docutils literal notranslate"><span class="pre">Sequential.tap()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.observation"><code class="docutils literal notranslate"><span class="pre">Sequential.observation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.get_module_by_index"><code class="docutils literal notranslate"><span class="pre">Sequential.get_module_by_index()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.set_module_by_index"><code class="docutils literal notranslate"><span class="pre">Sequential.set_module_by_index()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comnumpy.core.generics.Sequential.get_module_by_name"><code class="docutils literal notranslate"><span class="pre">Sequential.get_module_by_name()</span></code></a></li>

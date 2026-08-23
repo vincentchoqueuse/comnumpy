@@ -726,10 +726,10 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.serialization</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Chain serialization (decisions D31/D32).</span>
+<span></span><span class="sd">"""Chain serialization (decisions D31/D32).</span>
 
-<span class="sd">A chain exports to JSON as a list of blocks ``{&quot;id&quot;, &quot;type&quot;, &quot;params&quot;,</span>
-<span class="sd">&quot;inputs&quot;}``. The *intent* is serialized -- block types and constructor</span>
+<span class="sd">A chain exports to JSON as a list of blocks ``{"id", "type", "params",</span>
+<span class="sd">"inputs"}``. The *intent* is serialized -- block types and constructor</span>
 <span class="sd">parameters -- never derived state. Free arrays (an explicit alphabet, a</span>
 <span class="sd">carrier-type mask) go to a companion ``.npz`` file; the JSON stays</span>
 <span class="sd">readable and editable.</span>
@@ -745,8 +745,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">&gt;&gt;&gt; text = to_json(chain)</span>
 <span class="sd">&gt;&gt;&gt; chain2 = from_json(text)</span>
 <span class="sd">&gt;&gt;&gt; chain2.block_ids()</span>
-<span class="sd">[&#39;generator&#39;, &#39;awgn&#39;]</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">['generator', 'awgn']</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
@@ -759,35 +759,35 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span><span class="p">,</span> <span class="n">Sequential</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;to_json&quot;</span><span class="p">,</span> <span class="s2">&quot;from_json&quot;</span><span class="p">,</span> <span class="s2">&quot;register_block&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"to_json"</span><span class="p">,</span> <span class="s2">"from_json"</span><span class="p">,</span> <span class="s2">"register_block"</span><span class="p">]</span>
 
-<span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s2">&quot;1.0&quot;</span>
+<span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s2">"1.0"</span>
 
 <span class="c1"># modules scanned for Processor subclasses (name -&gt; class registry)</span>
 <span class="n">_SCAN_MODULES</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;comnumpy.core.generators&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.core.mappers&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.core.channels&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.core.filters&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.core.processors&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.core.frames&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.core.compensators&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.core.impairments&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.core.devices&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.ofdm.processors&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.ofdm.chains&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.ofdm.compensators&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.ofdm.predistorders&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.mimo.channels&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.mimo.detectors&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.mimo.compensators&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.fec.convolutional&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.fec.ldpc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.optical.channels&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.optical.links&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.optical.dbp&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.optical.devices&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;comnumpy.optical.compensators&quot;</span><span class="p">,</span> <span class="s2">&quot;comnumpy.optical.wdm&quot;</span><span class="p">,</span>
+    <span class="s2">"comnumpy.core.generators"</span><span class="p">,</span> <span class="s2">"comnumpy.core.mappers"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.core.channels"</span><span class="p">,</span> <span class="s2">"comnumpy.core.filters"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.core.processors"</span><span class="p">,</span> <span class="s2">"comnumpy.core.frames"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.core.compensators"</span><span class="p">,</span> <span class="s2">"comnumpy.core.impairments"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.core.devices"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.ofdm.processors"</span><span class="p">,</span> <span class="s2">"comnumpy.ofdm.chains"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.ofdm.compensators"</span><span class="p">,</span> <span class="s2">"comnumpy.ofdm.predistorders"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.mimo.channels"</span><span class="p">,</span> <span class="s2">"comnumpy.mimo.detectors"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.mimo.compensators"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.fec.convolutional"</span><span class="p">,</span> <span class="s2">"comnumpy.fec.ldpc"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.optical.channels"</span><span class="p">,</span> <span class="s2">"comnumpy.optical.links"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.optical.dbp"</span><span class="p">,</span> <span class="s2">"comnumpy.optical.devices"</span><span class="p">,</span>
+    <span class="s2">"comnumpy.optical.compensators"</span><span class="p">,</span> <span class="s2">"comnumpy.optical.wdm"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># Value dataclasses that are not blocks but appear as block *parameters*</span>
 <span class="c1"># (a shared allocation, a frame structure). The encoder already writes</span>
 <span class="c1"># them by value; the decoder needs to know how to build them back.</span>
 <span class="n">_VALUE_MODULES</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">(</span><span class="s2">&quot;comnumpy.ofdm.allocation&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;CarrierAllocation&quot;</span><span class="p">]),</span>
-    <span class="p">(</span><span class="s2">&quot;comnumpy.core.frames&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;FrameStructure&quot;</span><span class="p">,</span> <span class="s2">&quot;FrameField&quot;</span><span class="p">]),</span>
-    <span class="p">(</span><span class="s2">&quot;comnumpy.optical.wdm&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;WDMGrid&quot;</span><span class="p">]),</span>
-    <span class="p">(</span><span class="s2">&quot;comnumpy.optical.fiber&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;FiberSpec&quot;</span><span class="p">]),</span>
+    <span class="p">(</span><span class="s2">"comnumpy.ofdm.allocation"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"CarrierAllocation"</span><span class="p">]),</span>
+    <span class="p">(</span><span class="s2">"comnumpy.core.frames"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"FrameStructure"</span><span class="p">,</span> <span class="s2">"FrameField"</span><span class="p">]),</span>
+    <span class="p">(</span><span class="s2">"comnumpy.optical.wdm"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"WDMGrid"</span><span class="p">]),</span>
+    <span class="p">(</span><span class="s2">"comnumpy.optical.fiber"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"FiberSpec"</span><span class="p">]),</span>
 <span class="p">]</span>
 
 <span class="n">_EXTRA_BLOCKS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -796,18 +796,18 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="register_block">
 <a class="viewcode-back" href="../../documentation/toplevel/serialization.html#comnumpy.serialization.register_block">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_block</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class decorator adding a user block to the deserialization registry.</span>
+<span class="w">    </span><span class="sd">"""Class decorator adding a user block to the deserialization registry.</span>
 
 <span class="sd">    Works for ``Processor`` subclasses and for the plain dataclasses a</span>
 <span class="sd">    block may take as a parameter.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_EXTRA_BLOCKS</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
     <span class="k">return</span> <span class="bp">cls</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_registry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Types instantiable as chain blocks: Processor subclasses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Types instantiable as chain blocks: Processor subclasses."""</span>
     <span class="n">registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">module_name</span> <span class="ow">in</span> <span class="n">_SCAN_MODULES</span><span class="p">:</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
@@ -817,13 +817,13 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">registry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
     <span class="c1"># a nested Sequential is a block too: the encoder recurses into it as</span>
     <span class="c1"># a dataclass, so the decoder must know how to build one back</span>
-    <span class="n">registry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;Sequential&quot;</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">)</span>
+    <span class="n">registry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"Sequential"</span><span class="p">,</span> <span class="n">Sequential</span><span class="p">)</span>
     <span class="n">registry</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_EXTRA_BLOCKS</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">registry</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_value_registry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Types instantiable as block parameters: blocks plus value dataclasses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Types instantiable as block parameters: blocks plus value dataclasses."""</span>
     <span class="n">registry</span> <span class="o">=</span> <span class="n">_registry</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">_VALUE_MODULES</span><span class="p">:</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
@@ -839,14 +839,14 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">complex</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complexfloating</span><span class="p">)):</span>
         <span class="c1"># JSON has no complex type; a complex gain or tap is common here</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;__complex__&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">real</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">imag</span><span class="p">)]}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"__complex__"</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">real</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">imag</span><span class="p">)]}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
         <span class="n">arrays</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;__ndarray__&quot;</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"__ndarray__"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">_encode_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_encode_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;__block__&quot;</span><span class="p">:</span> <span class="n">_encode_block</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">key</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"__block__"</span><span class="p">:</span> <span class="n">_encode_block</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">key</span><span class="p">)}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
         <span class="c1"># An empty hook table is the *default* of FiberLink.callbacks, so</span>
         <span class="c1"># rejecting it meant no FiberLink was ever serializable -- while</span>
@@ -854,16 +854,16 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># it holds callables, the documented frontier.</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;cannot serialize parameter </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;only scalars, strings, arrays, lists and dataclass blocks are &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;supported (callables are a documented frontier of decision D31)&quot;</span><span class="p">)</span>
+        <span class="sa">f</span><span class="s2">"cannot serialize parameter </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: "</span>
+        <span class="sa">f</span><span class="s2">"only scalars, strings, arrays, lists and dataclass blocks are "</span>
+        <span class="sa">f</span><span class="s2">"supported (callables are a documented frontier of decision D31)"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_encode_block</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) is not a dataclass and &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;cannot be serialized&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"block </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) is not a dataclass and "</span>
+            <span class="sa">f</span><span class="s2">"cannot be serialized"</span><span class="p">)</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
@@ -874,8 +874,8 @@ window.runMermaid = runMermaid;</script>
             <span class="n">default</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span>
             <span class="k">if</span> <span class="n">_is_trivially_equal</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
                 <span class="k">continue</span>  <span class="c1"># keep the JSON minimal: defaults are implied</span>
-        <span class="n">params</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_encode_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">}</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_encode_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">"params"</span><span class="p">:</span> <span class="n">params</span><span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_trivially_equal</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -889,7 +889,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../documentation/toplevel/serialization.html#comnumpy.serialization.to_json">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="n">chain</span><span class="p">:</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">npz_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a Sequential chain to JSON (+ optional array sidecar).</span>
+<span class="w">    </span><span class="sd">"""Serialize a Sequential chain to JSON (+ optional array sidecar).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -907,55 +907,55 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    -------</span>
 <span class="sd">    str</span>
 <span class="sd">        The JSON document.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">blocks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">ids</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">block_ids</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">block_id</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">chain</span><span class="o">.</span><span class="n">module_list</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
-        <span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">block_id</span><span class="p">}</span>
+        <span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">block_id</span><span class="p">}</span>
         <span class="n">entry</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_encode_block</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">block_id</span><span class="p">))</span>
         <span class="c1"># explicit inputs field from day one (decision D31): implicit chain</span>
-        <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 
-    <span class="n">document</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;comnumpy&quot;</span><span class="p">:</span> <span class="n">FORMAT_VERSION</span><span class="p">,</span> <span class="s2">&quot;blocks&quot;</span><span class="p">:</span> <span class="n">blocks</span><span class="p">}</span>
+    <span class="n">document</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"comnumpy"</span><span class="p">:</span> <span class="n">FORMAT_VERSION</span><span class="p">,</span> <span class="s2">"blocks"</span><span class="p">:</span> <span class="n">blocks</span><span class="p">}</span>
     <span class="c1"># chain-level metadata is intent too: dropping it would rebuild a chain</span>
     <span class="c1"># that no longer records or feeds what its author declared</span>
-    <span class="k">if</span> <span class="n">chain</span><span class="o">.</span><span class="n">taps</span><span class="p">:</span>
-        <span class="n">document</span><span class="p">[</span><span class="s2">&quot;taps&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">taps</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chain</span><span class="o">.</span><span class="n">observations</span><span class="p">:</span>
+        <span class="n">document</span><span class="p">[</span><span class="s2">"observations"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">observations</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">chain</span><span class="o">.</span><span class="n">wiring</span><span class="p">:</span>
-        <span class="n">document</span><span class="p">[</span><span class="s2">&quot;wiring&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">wiring</span><span class="p">)</span>
+        <span class="n">document</span><span class="p">[</span><span class="s2">"wiring"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">wiring</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">arrays</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">npz_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the chain contains array parameters (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">arrays</span><span class="p">)</span><span class="si">}</span><span class="s2">); &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;pass npz_path= to store them in a companion .npz file&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"the chain contains array parameters (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">arrays</span><span class="p">)</span><span class="si">}</span><span class="s2">); "</span>
+                <span class="sa">f</span><span class="s2">"pass npz_path= to store them in a companion .npz file"</span><span class="p">)</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="n">npz_path</span><span class="p">,</span> <span class="o">**</span><span class="n">arrays</span><span class="p">)</span>  <span class="c1"># pyright: ignore[reportArgumentType, reportCallIssue]</span>
-        <span class="n">document</span><span class="p">[</span><span class="s2">&quot;arrays&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">npz_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">document</span><span class="p">[</span><span class="s2">"arrays"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">npz_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
 
     <span class="n">text</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">text</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_decode_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">arrays</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">if</span> <span class="s2">&quot;__ndarray__&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"__ndarray__"</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arrays</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;the document references array </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="s1">&#39;__ndarray__&#39;</span><span class="p">]</span><span class="si">!r}</span><span class="s2">; &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;pass npz_path= to from_json&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">arrays</span><span class="p">[</span><span class="n">value</span><span class="p">[</span><span class="s2">&quot;__ndarray__&quot;</span><span class="p">]]</span>
-        <span class="k">if</span> <span class="s2">&quot;__complex__&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-            <span class="n">real</span><span class="p">,</span> <span class="n">imag</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="s2">&quot;__complex__&quot;</span><span class="p">]</span>
+                    <span class="sa">f</span><span class="s2">"the document references array </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="s1">'__ndarray__'</span><span class="p">]</span><span class="si">!r}</span><span class="s2">; "</span>
+                    <span class="sa">f</span><span class="s2">"pass npz_path= to from_json"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arrays</span><span class="p">[</span><span class="n">value</span><span class="p">[</span><span class="s2">"__ndarray__"</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="s2">"__complex__"</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">real</span><span class="p">,</span> <span class="n">imag</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="s2">"__complex__"</span><span class="p">]</span>
             <span class="k">return</span> <span class="nb">complex</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;__block__&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_build</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="s2">&quot;__block__&quot;</span><span class="p">],</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">_value_registry</span><span class="p">())</span>
+        <span class="k">if</span> <span class="s2">"__block__"</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_build</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="s2">"__block__"</span><span class="p">],</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">_value_registry</span><span class="p">())</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{}</span>      <span class="c1"># the empty hook table the encoder writes</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown JSON object </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown JSON object </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">_decode_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">arrays</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">value</span>
@@ -963,18 +963,18 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">arrays</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
            <span class="n">registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="n">type_name</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
+    <span class="n">type_name</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">type_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;unknown type </span><span class="si">{</span><span class="n">type_name</span><span class="si">!r}</span><span class="s2">; register user blocks and parameter &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;dataclasses with @register_block&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"unknown type </span><span class="si">{</span><span class="n">type_name</span><span class="si">!r}</span><span class="s2">; register user blocks and parameter "</span>
+            <span class="sa">f</span><span class="s2">"dataclasses with @register_block"</span><span class="p">)</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">_decode_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">arrays</span><span class="p">)</span>
-              <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+              <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"params"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="k">return</span> <span class="n">registry</span><span class="p">[</span><span class="n">type_name</span><span class="p">](</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_instantiate</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">arrays</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Processor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a chain block; only Processor subclasses are valid here.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a chain block; only Processor subclasses are valid here."""</span>
     <span class="k">return</span> <span class="n">_build</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">_registry</span><span class="p">())</span>
 
 
@@ -982,7 +982,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../documentation/toplevel/serialization.html#comnumpy.serialization.from_json">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
               <span class="n">npz_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequential</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild a Sequential chain from :func:`to_json` output.</span>
+<span class="w">    </span><span class="sd">"""Rebuild a Sequential chain from :func:`to_json` output.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -990,37 +990,37 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        JSON text, or path to a JSON file.</span>
 <span class="sd">    npz_path : str or Path, optional</span>
 <span class="sd">        Companion array file, required when the document references one.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"{"</span><span class="p">:</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="n">document</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;comnumpy&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">FORMAT_VERSION</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"comnumpy"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">FORMAT_VERSION</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;unsupported format version </span><span class="si">{</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;comnumpy&#39;</span><span class="p">)</span><span class="si">!r}</span><span class="s2">; &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;this comnumpy reads version </span><span class="si">{</span><span class="n">FORMAT_VERSION</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="sa">f</span><span class="s2">"unsupported format version </span><span class="si">{</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'comnumpy'</span><span class="p">)</span><span class="si">!r}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"this comnumpy reads version </span><span class="si">{</span><span class="n">FORMAT_VERSION</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">arrays</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">npz_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">arrays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">npz_path</span><span class="p">)</span>
 
-    <span class="n">blocks</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;blocks&quot;</span><span class="p">]</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">"blocks"</span><span class="p">]</span>
     <span class="c1"># only implicit linear chains are executable today; the inputs field</span>
     <span class="c1"># keeps the door open to a DAG without a format break (D31)</span>
-    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">blocks</span><span class="p">):</span>
         <span class="n">expected</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> has non-linear inputs &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">; only linear chains are supported&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"block </span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> has non-linear inputs "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">'inputs'</span><span class="p">]</span><span class="si">}</span><span class="s2">; only linear chains are supported"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">Sequential</span><span class="p">([</span><span class="n">_instantiate</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">arrays</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">],</span>
-                      <span class="n">taps</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;taps&quot;</span><span class="p">),</span>
-                      <span class="n">wiring</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wiring&quot;</span><span class="p">))</span></div>
+                      <span class="n">observations</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"observations"</span><span class="p">),</span>
+                      <span class="n">wiring</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wiring"</span><span class="p">))</span></div>
 
 </pre></div>
 

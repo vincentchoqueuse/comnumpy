@@ -733,15 +733,15 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_chromatic_dispersion</span><span class="p">,</span> <span class="n">apply_kerr_nonlinearity</span><span class="p">,</span> <span class="n">compute_beta2</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">CD_COEFFICIENT</span><span class="p">,</span> <span class="n">SPEED_OF_LIGHT</span><span class="p">,</span> <span class="n">WAVELENGTH</span><span class="p">,</span> <span class="n">KERR_COEFFICIENT</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PhaseNoise&quot;</span><span class="p">,</span> <span class="s2">&quot;ChromaticDispersion&quot;</span><span class="p">,</span> <span class="s2">&quot;KerrNonLinearity&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;PMDEmulator&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"PhaseNoise"</span><span class="p">,</span> <span class="s2">"ChromaticDispersion"</span><span class="p">,</span> <span class="s2">"KerrNonLinearity"</span><span class="p">,</span>
+           <span class="s2">"PMDEmulator"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PhaseNoise">
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.PhaseNoise">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseNoise</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Wiener (random-walk) phase noise channel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Wiener (random-walk) phase noise channel.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -759,14 +759,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    samples. What shares one walk is declared by ``per``, which names</span>
 <span class="sd">    the *event* -- the slice of the array that sees one laser:</span>
 
-<span class="sd">    - ``&quot;pair&quot;`` (default): one walk per trailing ``(2, N)`` block --</span>
+<span class="sd">    - ``"pair"`` (default): one walk per trailing ``(2, N)`` block --</span>
 <span class="sd">      the two rows of a polarization pair come from one laser, and</span>
 <span class="sd">      every leading axis is batch: independent draws per trial. A 2-D</span>
 <span class="sd">      or deeper input whose axis -2 is not 2 is refused, because it</span>
-<span class="sd">      cannot be read both ways: use ``&quot;row&quot;`` for independent rows or</span>
-<span class="sd">      ``&quot;signal&quot;`` for one shared walk.</span>
-<span class="sd">    - ``&quot;row&quot;``: one independent walk per 1-D row.</span>
-<span class="sd">    - ``&quot;signal&quot;``: one walk broadcast over the whole array.</span>
+<span class="sd">      cannot be read both ways: use ``"row"`` for independent rows or</span>
+<span class="sd">      ``"signal"`` for one shared walk.</span>
+<span class="sd">    - ``"row"``: one independent walk per 1-D row.</span>
+<span class="sd">    - ``"signal"``: one walk broadcast over the whole array.</span>
 
 <span class="sd">    A 1-D input sees one walk under every setting.</span>
 
@@ -775,18 +775,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    sigma2 : float</span>
 <span class="sd">        Variance :math:`\sigma^2` of the per-sample phase increments, in</span>
 <span class="sd">        rad^2.</span>
-<span class="sd">    per : {&quot;pair&quot;, &quot;row&quot;, &quot;signal&quot;}, optional, keyword-only</span>
-<span class="sd">        The event that shares one laser. Default is ``&quot;pair&quot;``.</span>
+<span class="sd">    per : {"pair", "row", "signal"}, optional, keyword-only</span>
+<span class="sd">        The event that shares one laser. Default is ``"pair"``.</span>
 <span class="sd">    seed : int, optional, keyword-only</span>
 <span class="sd">        Local RNG seed.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Name of the channel instance. Default is ``&quot;phase noise&quot;``.</span>
+<span class="sd">        Name of the channel instance. Default is ``"phase noise"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, &quot;Hardware-Efficient Coherent Digital</span>
+<span class="sd">    T. Pfau, S. Hoffmann, R. Noe, "Hardware-Efficient Coherent Digital</span>
 <span class="sd">    Receiver Concept With Feedforward Carrier Recovery for M-QAM</span>
-<span class="sd">    Constellations,&quot; Journal of Lightwave Technology, vol. 27, no. 8,</span>
+<span class="sd">    Constellations," Journal of Lightwave Technology, vol. 27, no. 8,</span>
 <span class="sd">    pp. 989-999, 2009.</span>
 
 <span class="sd">    Examples</span>
@@ -795,12 +795,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = PhaseNoise(0.01, seed=0)(x)</span>
 <span class="sd">    &gt;&gt;&gt; print(np.round(np.abs(y), 6))</span>
 <span class="sd">    [1. 1. 1.]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">sigma2</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">per</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;pair&quot;</span><span class="p">,</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="s2">&quot;signal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;pair&quot;</span><span class="p">,</span>
+    <span class="n">per</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pair"</span><span class="p">,</span> <span class="s2">"row"</span><span class="p">,</span> <span class="s2">"signal"</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"pair"</span><span class="p">,</span>
                                                   <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;phase noise&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"phase noise"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># internal state (declared for slots, D40a)</span>
     <span class="n">rng</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">_b</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -810,26 +810,26 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;pair&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">"pair"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;PhaseNoise(per=&#39;pair&#39;) expects a polarization pair &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(..., 2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- an axis -2 of &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;size </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be read as a pair. Use &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;per=&#39;row&#39; for one independent laser per row, or &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;per=&#39;signal&#39; for one walk shared by the whole array.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"PhaseNoise(per='pair') expects a polarization pair "</span>
+                <span class="sa">f</span><span class="s2">"(..., 2, N), got shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2"> -- an axis -2 of "</span>
+                <span class="sa">f</span><span class="s2">"size </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be read as a pair. Use "</span>
+                <span class="sa">f</span><span class="s2">"per='row' for one independent laser per row, or "</span>
+                <span class="sa">f</span><span class="s2">"per='signal' for one walk shared by the whole array."</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PhaseNoise.noise_rvs">
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.PhaseNoise.noise_rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">noise_rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw one Wiener walk per event declared by ``per``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Draw one Wiener walk per event declared by ``per``."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>      <span class="c1"># set in __post_init__</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;signal&quot;</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">"signal"</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="p">,)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">&quot;pair&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">per</span> <span class="o">==</span> <span class="s2">"pair"</span><span class="p">:</span>
             <span class="c1"># one walk per trailing (2, N) block, broadcast over the pair</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>                            <span class="c1"># &quot;row&quot;</span>
+        <span class="k">else</span><span class="p">:</span>                            <span class="c1"># "row"</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">),</span>
                                 <span class="n">size</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
@@ -846,7 +846,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.ChromaticDispersion">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ChromaticDispersion</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Chromatic dispersion (CD) of a fiber span, applied exactly in the frequency domain.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Chromatic dispersion (CD) of a fiber span, applied exactly in the frequency domain.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -904,16 +904,16 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    c : float, keyword-only</span>
 <span class="sd">        Speed of light :math:`c` in m/s. Default is ``SPEED_OF_LIGHT``.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Identifier for the dispersion instance. Default is ``&quot;cd&quot;``.</span>
+<span class="sd">        Identifier for the dispersion instance. Default is ``"cd"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    * G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
 <span class="sd">      2013, Section 3.2.</span>
-<span class="sd">    * S. J. Savory, &quot;Digital filters for coherent optical receivers,&quot;</span>
+<span class="sd">    * S. J. Savory, "Digital filters for coherent optical receivers,"</span>
 <span class="sd">      Optics Express, vol. 16, no. 2, pp. 804-817, 2008.</span>
-<span class="sd">    * A. Shahkarami, &quot;Complexity reduction over bi-RNN-based Kerr nonlinearity equalization</span>
-<span class="sd">      in dual-polarization fiber-optic communications via a CRNN-based approach,&quot;</span>
+<span class="sd">    * A. Shahkarami, "Complexity reduction over bi-RNN-based Kerr nonlinearity equalization</span>
+<span class="sd">      in dual-polarization fiber-optic communications via a CRNN-based approach,"</span>
 <span class="sd">      Dissertation, Institut polytechnique de Paris, 2022.</span>
 <span class="sd">      URL: https://www.theses.fr/2022IPPAT034.</span>
 
@@ -925,12 +925,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; cd_back = ChromaticDispersion(80.0, fs=10e9, direction=-1)</span>
 <span class="sd">    &gt;&gt;&gt; bool(np.allclose(cd_back(cd(x)), x))</span>
 <span class="sd">    True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">z</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">alpha_dB</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;cd&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"cd"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">WAVELENGTH</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">CD_COEFFICIENT</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">SPEED_OF_LIGHT</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -948,7 +948,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.KerrNonLinearity">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">KerrNonLinearity</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Kerr nonlinearity (self-phase modulation) of a fiber segment.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Kerr nonlinearity (self-phase modulation) of a fiber segment.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -988,14 +988,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    gain : float, keyword-only</span>
 <span class="sd">        Amplitude gain :math:`g` (linear). Default is 1.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Identifier for the nonlinearity instance. Default is ``&quot;nl&quot;``.</span>
+<span class="sd">        Identifier for the nonlinearity instance. Default is ``"nl"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    * G. P. Agrawal, *Nonlinear Fiber Optics*, 5th ed., Academic Press,</span>
 <span class="sd">      2013, Section 4.1.</span>
-<span class="sd">    * C. Häger and H. D. Pfister, &quot;Physics-based deep learning for fiber-optic</span>
-<span class="sd">      communication systems,&quot; IEEE Journal on Selected Areas in Communications,</span>
+<span class="sd">    * C. Häger and H. D. Pfister, "Physics-based deep learning for fiber-optic</span>
+<span class="sd">      communication systems," IEEE Journal on Selected Areas in Communications,</span>
 <span class="sd">      vol. 39, no. 1, pp. 280-294, 2021.</span>
 
 <span class="sd">    Examples</span>
@@ -1004,11 +1004,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; y = KerrNonLinearity(10, gamma=1.3)(x)</span>
 <span class="sd">    &gt;&gt;&gt; print(round(float(np.angle(y[0])), 4))</span>
 <span class="sd">    0.4336</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">z</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;nl&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"nl"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">KERR_COEFFICIENT</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -1024,11 +1024,11 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/optical/channels.html#comnumpy.optical.channels.PMDEmulator">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PMDEmulator</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Polarization rotation and first-order PMD, as a section emulator.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Polarization rotation and first-order PMD, as a section emulator.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
-<span class="sd">    The fibre&#39;s random birefringence is emulated by :math:`K` sections,</span>
+<span class="sd">    The fibre's random birefringence is emulated by :math:`K` sections,</span>
 <span class="sd">    each a random unitary Jones rotation followed by a differential</span>
 <span class="sd">    group delay (DGD) of :math:`\tau / \sqrt{K}` between the two</span>
 <span class="sd">    principal states, applied exactly in the frequency domain:</span>
@@ -1072,7 +1072,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    seed : int, optional, keyword-only</span>
 <span class="sd">        Local RNG seed for the section rotations. Same seed, same fibre.</span>
 <span class="sd">    name : str, optional, keyword-only</span>
-<span class="sd">        Block name. Default ``&quot;pmd&quot;``.</span>
+<span class="sd">        Block name. Default ``"pmd"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -1081,10 +1081,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    C. D. Poole and R. E. Wagner, &quot;Phenomenological approach to</span>
-<span class="sd">    polarisation dispersion in long single-mode fibres,&quot; Electronics</span>
+<span class="sd">    C. D. Poole and R. E. Wagner, "Phenomenological approach to</span>
+<span class="sd">    polarisation dispersion in long single-mode fibres," Electronics</span>
 <span class="sd">    Letters, vol. 22, no. 19, pp. 1029-1030, 1986.</span>
-<span class="sd">    S. J. Savory, &quot;Digital filters for coherent optical receivers,&quot;</span>
+<span class="sd">    S. J. Savory, "Digital filters for coherent optical receivers,"</span>
 <span class="sd">    Optics Express, vol. 16, no. 2, pp. 804-817, 2008.</span>
 
 <span class="sd">    Examples</span>
@@ -1095,12 +1095,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    True</span>
 <span class="sd">    &gt;&gt;&gt; bool(np.abs(y[1, 0]) &gt; 0)      # the rotation mixes the two rows</span>
 <span class="sd">    True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">dgd</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">n_sections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;pmd&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"pmd"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">rotations_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                              <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
@@ -1119,11 +1119,11 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>  <span class="c1"># local import (D36)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_polarization_pair</span>     <span class="c1"># local import (D36)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_polarization_pair</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;PMDEmulator&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_polarization_pair</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"PMDEmulator"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;PMDEmulator expects a polarization pair (..., 2, N), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- PMD is a two-polarization &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;effect, there is nothing to delay against on one.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"PMDEmulator expects a polarization pair (..., 2, N), "</span>
+                <span class="sa">f</span><span class="s2">"got shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- PMD is a two-polarization "</span>
+                <span class="sa">f</span><span class="s2">"effect, there is nothing to delay against on one."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotations_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>   <span class="c1"># set in __post_init__</span>
@@ -1132,7 +1132,7 @@ window.runMermaid = runMermaid;</script>
                        <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_sections</span><span class="p">)))</span>
         <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">rotation</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotations_</span><span class="p">:</span>
-            <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,...jn-&gt;...in&quot;</span><span class="p">,</span> <span class="n">rotation</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">)</span>
+            <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"ij,...jn-&gt;...in"</span><span class="p">,</span> <span class="n">rotation</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">)</span>
             <span class="n">spectrum</span> <span class="o">=</span> <span class="n">spectrum</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">delay</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">delay</span><span class="p">)])</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 

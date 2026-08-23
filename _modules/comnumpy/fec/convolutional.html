@@ -726,13 +726,13 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for comnumpy.fec.convolutional</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Convolutional coding: encoder and Viterbi decoder (decision D4).</span>
+<span></span><span class="sd">"""Convolutional coding: encoder and Viterbi decoder (decision D4).</span>
 
 <span class="sd">Batch-vectorized implementations: the only Python loop is over time</span>
 <span class="sd">(the trellis recursion is irreducible); everything across batch and</span>
 <span class="sd">states is numpy. Branch metrics are computed inside the time loop, so</span>
 <span class="sd">memory stays bounded (architecture document, section 8).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
@@ -743,22 +743,22 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.core.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Processor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">comnumpy.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShapeError</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ConvolutionalEncoder&quot;</span><span class="p">,</span> <span class="s2">&quot;ViterbiDecoder&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ConvolutionalEncoder"</span><span class="p">,</span> <span class="s2">"ViterbiDecoder"</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_generators</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint length K and generator taps from octal generators.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Constraint length K and generator taps from octal generators."""</span>
     <span class="n">g</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gi</span><span class="p">)</span> <span class="k">for</span> <span class="n">gi</span> <span class="ow">in</span> <span class="n">g</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;need at least 2 generator polynomials, got </span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"need at least 2 generator polynomials, got </span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">K</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gi</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="k">for</span> <span class="n">gi</span> <span class="ow">in</span> <span class="n">g</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">K</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;generators </span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2"> imply a constraint length K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2"> &lt; 2&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"generators </span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2"> imply a constraint length K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2"> &lt; 2"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">K</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_output_table</span><span class="p">(</span><span class="n">g</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;(2**K, n) table: coded bits for every register content.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""(2**K, n) table: coded bits for every register content."""</span>
     <span class="n">regs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">K</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
     <span class="n">taps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">g</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
     <span class="n">ands</span> <span class="o">=</span> <span class="n">regs</span> <span class="o">&amp;</span> <span class="n">taps</span>
@@ -773,7 +773,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/convolutional.html#comnumpy.fec.convolutional.ConvolutionalEncoder">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConvolutionalEncoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rate :math:`1/n` convolutional encoder.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Rate :math:`1/n` convolutional encoder.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -802,7 +802,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    terminated : bool, keyword-only</span>
 <span class="sd">        Append :math:`K - 1` zero tail bits. Default True.</span>
 <span class="sd">    name : str, keyword-only</span>
-<span class="sd">        Name of the processor. Default ``&quot;conv_encoder&quot;``.</span>
+<span class="sd">        Name of the processor. Default ``"conv_encoder"``.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -815,10 +815,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; bits = np.array([1, 0, 1, 1])</span>
 <span class="sd">    &gt;&gt;&gt; print(encoder(bits))</span>
 <span class="sd">    [1 1 0 1 0 0 1 0 1 0 1 1]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)</span>
     <span class="n">terminated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;conv_encoder&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"conv_encoder"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># precomputed trellis tables (parametric, allowed in __post_init__)</span>
     <span class="n">K</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">n_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -831,7 +831,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Code rate :math:`1/n` (tail bits not counted).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Code rate :math:`1/n` (tail bits not counted)."""</span>
         <span class="k">return</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_streams</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -856,7 +856,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../documentation/fec/convolutional.html#comnumpy.fec.convolutional.ViterbiDecoder">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ViterbiDecoder</span><span class="p">(</span><span class="n">Processor</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Maximum-likelihood decoder for a rate :math:`1/n` convolutional code.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Maximum-likelihood decoder for a rate :math:`1/n` convolutional code.</span>
 
 <span class="sd">    Signal Model</span>
 <span class="sd">    ------------</span>
@@ -888,7 +888,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Assume :math:`K - 1` zero tail bits (decoding ends in state 0).</span>
 <span class="sd">        Default True.</span>
 <span class="sd">    name : str, keyword-only</span>
-<span class="sd">        Name of the processor. Default ``&quot;viterbi&quot;``.</span>
+<span class="sd">        Name of the processor. Default ``"viterbi"``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -898,8 +898,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    A. J. Viterbi, &quot;Error bounds for convolutional codes and an</span>
-<span class="sd">    asymptotically optimum decoding algorithm,&quot; IEEE Trans. Inf.</span>
+<span class="sd">    A. J. Viterbi, "Error bounds for convolutional codes and an</span>
+<span class="sd">    asymptotically optimum decoding algorithm," IEEE Trans. Inf.</span>
 <span class="sd">    Theory 13(2), 1967; Proakis &amp; Salehi, 5th ed., Section 8.2.</span>
 
 <span class="sd">    Examples</span>
@@ -910,11 +910,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &gt;&gt;&gt; coded[2] ^= 1  # one channel error</span>
 <span class="sd">    &gt;&gt;&gt; print(decoder(coded))</span>
 <span class="sd">    [1 0 1 1]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">g</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mo">0o133</span><span class="p">,</span> <span class="mo">0o171</span><span class="p">)</span>
     <span class="n">soft</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">terminated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;viterbi&quot;</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"viterbi"</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># precomputed trellis tables (parametric, allowed in __post_init__)</span>
     <span class="n">K</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">n_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -928,8 +928,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">S</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">out_table</span> <span class="o">=</span> <span class="n">_output_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
 
-        <span class="c1"># arrival-state view of the trellis: state s&#39; has two predecessor</span>
-        <span class="c1"># registers reg = 2 s&#39; + j, j in {0, 1}</span>
+        <span class="c1"># arrival-state view of the trellis: state s' has two predecessor</span>
+        <span class="c1"># registers reg = 2 s' + j, j in {0, 1}</span>
         <span class="n">s_prime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">S</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
         <span class="n">regs</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s_prime</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>     <span class="c1"># (S, 2)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_state</span> <span class="o">=</span> <span class="n">regs</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">S</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>                    <span class="c1"># (S, 2)</span>
@@ -937,7 +937,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">expected</span> <span class="o">=</span> <span class="n">out_table</span><span class="p">[</span><span class="n">regs</span><span class="p">]</span>                     <span class="c1"># (S, 2, n) coded bits</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_branch_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r_t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;(batch..., S, 2) cost of every branch for one received n-tuple.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""(batch..., S, 2) cost of every branch for one received n-tuple."""</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">r_t</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>          <span class="c1"># (batch..., 1, 1, n)</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected</span>                    <span class="c1"># (S, 2, n)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">soft</span><span class="p">:</span>
@@ -950,16 +950,16 @@ window.runMermaid = runMermaid;</script>
         <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_streams</span>
         <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ViterbiDecoder expects a coded length multiple of n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- check the encoder rate.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"ViterbiDecoder expects a coded length multiple of n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -- check the encoder rate."</span><span class="p">)</span>
         <span class="n">T</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n</span>
         <span class="n">n_tail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminated</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="c1"># strictly shorter: T == n_tail is the tail alone, the codeword the</span>
         <span class="c1"># encoder produces for an empty message, and decodes to an empty one</span>
         <span class="k">if</span> <span class="n">T</span> <span class="o">&lt;</span> <span class="n">n_tail</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ShapeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;coded length </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is shorter than the tail &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">n_tail</span><span class="si">}</span><span class="s2"> steps of </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> bits) -- nothing to decode.&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"coded length </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is shorter than the tail "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">n_tail</span><span class="si">}</span><span class="s2"> steps of </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> bits) -- nothing to decode."</span><span class="p">)</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
