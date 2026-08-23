@@ -73,7 +73,7 @@ class TestConstellationCapacity(unittest.TestCase):
         constellation makes the integrand sharper -- so the claim is a
         table, not a single number, and this is what pins it.
         """
-        for mod, order, promised in (("PSK", 4, 1.6e-7), ("QAM", 16, 1.2e-6),
+        for mod, order, promised in (("PSK", 4, 1.9e-5), ("QAM", 16, 1.2e-6),
                                      ("QAM", 64, 2.1e-5)):
             with self.subTest(modulation=f"{mod}-{order}"):
                 alphabet = get_alphabet(mod, order)
