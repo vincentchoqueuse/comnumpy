@@ -63,7 +63,7 @@ forcing:
 
 .. code::
 
-   ZF, one channel draw: SER = 0.0025
+   ZF, one channel draw: SER = 0.0035
 
 Received Constellations
 """""""""""""""""""""""
@@ -248,15 +248,15 @@ The five curves come from the same dictionary, shown twice:
 .. code::
 
    SER
-   snr_dB       ZF     MMSE     OSIC         ML         SD
-   -------------------------------------------------------
-        0  0.33427  0.28820  0.28735  2.851e-01  2.868e-01
-        3  0.21634  0.17955  0.16855  1.613e-01  1.620e-01
-        6  0.11209  0.09271  0.07311  6.785e-02  6.871e-02
-        9  0.04911  0.04034  0.02546  2.057e-02  2.095e-02
-       12  0.01876  0.01570  0.00779  4.700e-03  4.950e-03
-       15  0.00719  0.00583  0.00243  8.125e-04  6.875e-04
-       18  0.00286  0.00196  0.00100  1.000e-04  2.500e-05
+   snr_dB       ZF     MMSE       OSIC         ML         SD
+   ---------------------------------------------------------
+        0  0.33381  0.28915  2.871e-01  2.842e-01  2.870e-01
+        3  0.21559  0.17933  1.676e-01  1.616e-01  1.621e-01
+        6  0.11125  0.09208  7.504e-02  6.799e-02  6.800e-02
+        9  0.04969  0.03982  2.499e-02  2.054e-02  2.142e-02
+       12  0.01900  0.01571  7.213e-03  4.837e-03  5.300e-03
+       15  0.00715  0.00554  2.325e-03  8.125e-04  7.375e-04
+       18  0.00284  0.00187  9.250e-04  1.000e-04  8.750e-05
 
 .. image:: img/monte_carlo_mimo_fig3.png
    :width: 100%
@@ -290,12 +290,21 @@ where that product no longer fits. We therefore time both detectors on
 
 .. code::
 
-     ML  0 dB    176.7 ms    65536 nodes   SER 0.7900
-     ML  9 dB    113.7 ms    65536 nodes   SER 0.5044
-     ML 18 dB    119.0 ms    65536 nodes   SER 0.0112
-     SD  0 dB    163.4 ms     91.8 nodes   SER 0.7900
-     SD  9 dB     33.3 ms     19.2 nodes   SER 0.5044
-     SD 18 dB     10.8 ms      5.8 nodes   SER 0.0112
+   16-QAM, 4x4: same decision, what it costs
+     ML  0 dB    149.0 ms    65536 nodes   SER 0.7900
+     SD  0 dB    237.1 ms     91.8 nodes   SER 0.7900
+     ML  3 dB    111.9 ms    65536 nodes   SER 0.7288
+     SD  3 dB    131.5 ms     51.3 nodes   SER 0.7288
+     ML  6 dB    109.4 ms    65536 nodes   SER 0.6369
+     SD  6 dB     76.6 ms     29.8 nodes   SER 0.6369
+     ML  9 dB    107.6 ms    65536 nodes   SER 0.5044
+     SD  9 dB     49.3 ms     19.2 nodes   SER 0.5044
+     ML 12 dB     93.4 ms    65536 nodes   SER 0.3381
+     SD 12 dB     34.1 ms     12.8 nodes   SER 0.3381
+     ML 15 dB    101.0 ms    65536 nodes   SER 0.1256
+     SD 15 dB     23.8 ms      8.6 nodes   SER 0.1256
+     ML 18 dB    112.2 ms    65536 nodes   SER 0.0112
+     SD 18 dB     16.8 ms      5.8 nodes   SER 0.0112
 
 .. image:: img/monte_carlo_mimo_fig4.png
    :width: 100%

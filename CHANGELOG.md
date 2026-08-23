@@ -45,6 +45,24 @@ one release; there is no compatibility layer.
 | `core.metrics.calculate_acpr` | `compute_acpr` — it was the only `calculate_*` in the library, against 17 `compute_*` |
 | `core.metrics.compute_effective_SNR`, `ofdm.metrics.compute_PAPR` | `compute_effective_snr`, `compute_papr` — the two capitalized outliers among functions otherwise all lowercase (`compute_ser`, `compute_ber`, `compute_evm`, `compute_ccdf`, `compute_mi`) |
 
+### Changed — QPSK carries the pi/4 offset of the standards
+
+`get_alphabet("PSK", 4)` sampled the raw circle
+:math:`e^{2j\pi m/4}`: points on the axes, a constellation rotated by
+pi/4 from the QPSK of the standards (3GPP, 802.11) and of every
+textbook figure. QPSK now sits on the diagonals -- the same point set
+as QAM-4; BPSK and :math:`M \ge 8` keep the phase-0 convention. No
+error rate moves (mapper and demapper share the alphabet, the noise is
+circular -- the Monte-Carlo tables of the Alamouti and MIMO pages shift
+only by the draws now hitting rotated symbols), but the pi/4 surprise
+against any other tool is gone, along with the tx-`PSK`/rx-`QAM` mixing
+trap whose points landed exactly on the decision boundaries. The
+historical-table pin now asserts the one deliberate deviation as the
+relationship it is (built = table times :math:`e^{j\pi/4}`), and the
+Gauss-Hermite accuracy table of `capacity.py` is re-measured for the
+diagonal orientation (the node grid is axis-aligned, so the quadrature
+error is not rotation-invariant even though the capacity is).
+
 ### Changed — `taps` becomes `observations`
 
 The retained-signal mechanism of `Sequential` is renamed after what it
